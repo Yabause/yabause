@@ -1610,49 +1610,51 @@ static const char vdp2blit_end_f[] =
 "  startW1 = int(lineW1.r*255.0) + (int(lineW1.g*255.0)<<8);\n"
 "  endW1 = int(lineW1.b*255.0) + (int(lineW1.a*255.0)<<8);\n"
 "}\n"
-
-"bool inNormalWindow(int id) {\n"
-"  int validw0 = 1; \n"
-"  int validw1 = 1; \n"
-"  if ((win0[id] == 0) && (win1[id] == 0)) return true;\n"
-"  int pos = int(gl_FragCoord.x);\n"
-"  int valid = 0; \n"
-"  if (win_op[id] != 0) valid = 1;\n"
-"  if (win0[id] != 0) {\n"
-"    if (win0_mode[id] != 0) { \n"
-"      if ((startW0 < endW0) && ((pos < startW0) || (pos >= endW0))) validw0 = 0;\n"
-"      if (startW0 == endW0) validw0 = 0;\n"
-"    } else { \n"
-"      if ((startW0 < endW0) && ((pos >= startW0) && (pos < endW0))) validw0 = 0;\n"
-"    }\n"
-"  } else validw0 = valid;\n"
-"  if (win1[id] != 0) {\n"
-"    if (win1_mode[id] != 0) { \n"
-"      if ((startW1 < endW1) && ((pos < startW1) || (pos >= endW1))) validw1 = 0;\n"
-"      if (startW1 == endW1) validw1 = 0;\n"
-"    } else { \n"
-"      if ((startW1 < endW1) && ((pos >= startW1) && (pos < endW1))) validw1 = 0;\n"
-"    }\n"
-"  } else validw1 = valid;\n"
-"  if (win_op[id] != 0) { \n"
-"    return ((validw0 == 1) && (validw1 == 1));\n"
+"bool inNormalWindow0(int id, int pos) {\n"
+"  bool valid = true; \n"
+"  if (win0_mode[id] != 0) { \n"
+"    if ((startW0 < endW0) && ((pos < startW0) || (pos >= endW0))) valid = false;\n"
+"    if (startW0 == endW0) valid = false;\n"
 "  } else { \n"
-"    return ((validw0 == 1) || (validw1 == 1));\n"
+"    if ((startW0 < endW0) && ((pos >= startW0) && (pos < endW0))) valid = false;\n"
 "  }\n"
+"  return valid;\n"
+"}\n"
+"bool inNormalWindow1(int id, int pos) {\n"
+"  bool valid = true; \n"
+"  if (win1_mode[id] != 0) { \n"
+"    if ((startW1 < endW1) && ((pos < startW1) || (pos >= endW1))) valid = false;\n"
+"    if (startW1 == endW1) valid = false;\n"
+"  } else { \n"
+"    if ((startW1 < endW1) && ((pos >= startW1) && (pos < endW1))) valid = false;\n"
+"  }\n"
+"  return valid;\n"
 "}\n"
 "bool inSpriteWindow(int id) {\n"
 " if (win_s_mode[id] == 0) return FBSPwin;\n"
 " else return !FBSPwin;\n"
 "}\n"
 "bool inWindow(int id) {\n"
-" if ((use_sp_win == 0) || (win_s[id] == 0)) return inNormalWindow(id);\n"
-" else {\n"
-"   if (win_op[id] == 0) return (inNormalWindow(id) || inSpriteWindow(id));\n"
-"   else return (inNormalWindow(id) && inSpriteWindow(id));\n"
-" }\n"
+"  int pos = int(gl_FragCoord.x);\n"
+"  bool valid = true;\n"
+"  if (win_op[id] != 0) {\n"
+    //And
+"    if (win0[id] != 0) valid = valid && inNormalWindow0(id,pos);\n"
+"    if (win1[id] != 0) valid = valid && inNormalWindow1(id,pos);\n"
+"    if (win_s[id] != 0) valid = valid && inSpriteWindow(id);\n"
+"  } else {\n"
+    //Or
+"    if ((win1[id] != 0) || (win0[id] != 0) || (win_s[id] != 0)) valid = false;\n"
+"    if (win0[id] != 0) valid = valid || inNormalWindow0(id,pos);\n"
+"    if (win1[id] != 0) valid = valid || inNormalWindow1(id,pos);\n"
+"    if (win_s[id] != 0) valid = valid || inSpriteWindow(id);\n"
+"  }\n"
+"  return valid;\n"
 "}\n"
 "bool inCCWindow() {\n"
-"  return inWindow(7);\n"
+"  if ((win1[7] != 0) || (win0[7] != 0) || (win_s[7] != 0)) {\n"
+"    return inWindow(7);\n"
+"  } else {return false;}\n"
 "}\n"
 "Col getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
@@ -2024,7 +2026,7 @@ static const char vdp2blit_end_f[] =
 "    meshCol = FBShadow.rgb;\n"
 "  }\n"
 //Take care  of the extended coloration mode
-"  if (inCCWindow()) {\n"
+"  if (!inCCWindow()) {\n"
 "    if (extended_cc != 0) { \n"
 "      if (ram_mode == 0) { \n"
 "        if (use_lncl == 0) { \n"
@@ -2812,13 +2814,13 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), 8, Win_s);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), 8, Win_s_mode);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0"), 8, Win0);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0_mode"), 8, Win0_mode);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1"), 8, Win1);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1_mode"), 8, Win1_mode);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_op"), 8, Win_op);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), enBGMAX+1, Win_s);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), enBGMAX+1, Win_s_mode);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0"), enBGMAX+1, Win0);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0_mode"), enBGMAX+1, Win0_mode);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1"), enBGMAX+1, Win1);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1_mode"), enBGMAX+1, Win1_mode);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_op"), enBGMAX+1, Win_op);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);

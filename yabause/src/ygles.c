@@ -3236,13 +3236,13 @@ void YglRender(Vdp2 *varVdp2Regs) {
    int img[6] = {0};
    int lncl[7] = {0};
    int lncl_draw[7] = {0};
-   int winS_draw[7] = {0};
-   int winS_mode_draw[7] = {0};
-   int win0_draw[7] = {0};
-   int win0_mode_draw[7] = {0};
-   int win1_draw[7] = {0};
-   int win1_mode_draw[7] = {0};
-   int win_op_draw[7] = {0};
+   int winS_draw[enBGMAX+1] = {0};
+   int winS_mode_draw[enBGMAX+1] = {0};
+   int win0_draw[enBGMAX+1] = {0};
+   int win0_mode_draw[enBGMAX+1] = {0};
+   int win1_draw[enBGMAX+1] = {0};
+   int win1_mode_draw[enBGMAX+1] = {0};
+   int win_op_draw[enBGMAX+1] = {0};
    int drawScreen[enBGMAX];
    SpriteMode mode;
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
@@ -3393,6 +3393,14 @@ void YglRender(Vdp2 *varVdp2Regs) {
     win1_mode_draw[i] = _Ygl->Win1_mode[i];
     win_op_draw[i] = _Ygl->Win_op[i];
   }
+
+#if 0
+  for (int i = 0; i < 8; i++) {
+    printf("Enable %d Win 0:%d 1:%d S:%d\n", i, win0_draw[i], win1_draw[i], winS_draw[i]);
+    printf("Mode %d Win 0:%d 1:%d S:%d\n", i, win0_mode_draw[i], win1_mode_draw[i], winS_mode_draw[i]);
+    printf("Op %d Op :%d\n", i, win_op_draw[i]);
+  }
+#endif
 
   isShadow[6] = setupShadow(varVdp2Regs, SPRITE); //Use sprite index for background suuport
 
