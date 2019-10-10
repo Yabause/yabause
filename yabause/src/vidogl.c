@@ -420,11 +420,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
 u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
 {
-  int col = cmd->CMDCOLR;
-  int mode = (varVdp2Regs->SPCTL & 0x20);
-  if (((col & 0x8000) != 0) && (mode != 0)) col = 0x00;
-
-  return VDP1COLOR(cmd->CMDPMOD, col);
+  return VDP1COLOR(cmd->CMDPMOD, cmd->CMDCOLR);
 }
 
 static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, int spriteh, YglTexture *texture, Vdp2 *varVdp2Regs)
