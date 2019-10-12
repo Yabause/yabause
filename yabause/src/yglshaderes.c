@@ -1641,13 +1641,13 @@ static const char vdp2blit_end_f[] =
     //And
 "    if (win0[id] != 0) valid = valid && inNormalWindow0(id,pos);\n"
 "    if (win1[id] != 0) valid = valid && inNormalWindow1(id,pos);\n"
-"    if (win_s[id] != 0) valid = valid && inSpriteWindow(id);\n"
+"    if ((win_s[id] != 0)&&(use_sp_win != 0)) valid = valid && inSpriteWindow(id);\n"
 "  } else {\n"
     //Or
-"    if ((win1[id] != 0) || (win0[id] != 0) || (win_s[id] != 0)) valid = false;\n"
+"    if ((win1[id] != 0) || (win0[id] != 0) || ((win_s[id] != 0)&&(use_sp_win != 0))) valid = false;\n"
 "    if (win0[id] != 0) valid = valid || inNormalWindow0(id,pos);\n"
 "    if (win1[id] != 0) valid = valid || inNormalWindow1(id,pos);\n"
-"    if (win_s[id] != 0) valid = valid || inSpriteWindow(id);\n"
+"    if ((win_s[id] != 0)&&(use_sp_win != 0)) valid = valid || inSpriteWindow(id);\n"
 "  }\n"
 "  return valid;\n"
 "}\n"
