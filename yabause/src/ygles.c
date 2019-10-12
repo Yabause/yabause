@@ -2746,49 +2746,47 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
     needUpdate |= 1;
   }
 
-  int use_sp_win = ((varVdp2Regs->SPCTL>>4)&0x1);
-
   Win0[NBG0] = (varVdp2Regs->WCTLA >> 1) & 0x01;
   Win1[NBG0] = (varVdp2Regs->WCTLA >> 3) & 0x01;
-  WinS[NBG0] = (use_sp_win != 0)?(varVdp2Regs->WCTLA >> 5) & 0x01:0;
+  WinS[NBG0] = (varVdp2Regs->WCTLA >> 5) & 0x01;
   Win0[NBG1] = (varVdp2Regs->WCTLA >> 9) & 0x01;
   Win1[NBG1] = (varVdp2Regs->WCTLA >> 11) & 0x01;
-  WinS[NBG1] = (use_sp_win != 0)?(varVdp2Regs->WCTLA >> 1) & 0x01:0;
+  WinS[NBG1] = (varVdp2Regs->WCTLA >> 13) & 0x01;
 
   Win0[NBG2] = (varVdp2Regs->WCTLB >> 1) & 0x01;
   Win1[NBG2] = (varVdp2Regs->WCTLB >> 3) & 0x01;
-  WinS[NBG2] = (use_sp_win != 0)?(varVdp2Regs->WCTLB >> 5) & 0x01:0;
+  WinS[NBG2] = (varVdp2Regs->WCTLB >> 5) & 0x01;
   Win0[NBG3] = (varVdp2Regs->WCTLB >> 9) & 0x01;
   Win1[NBG3] = (varVdp2Regs->WCTLB >> 11) & 0x01;
-  WinS[NBG3] = (use_sp_win != 0)?(varVdp2Regs->WCTLB >> 13) & 0x01:0;
+  WinS[NBG3] = (varVdp2Regs->WCTLB >> 13) & 0x01;
 
   Win0[RBG0] = (varVdp2Regs->WCTLC >> 1) & 0x01;
   Win1[RBG0] = (varVdp2Regs->WCTLC >> 3) & 0x01;
-  WinS[RBG0] = (use_sp_win != 0)?(varVdp2Regs->WCTLC >> 5) & 0x01:0;
+  WinS[RBG0] = (varVdp2Regs->WCTLC >> 5) & 0x01;
   Win0[SPRITE] = (varVdp2Regs->WCTLC >> 9) & 0x01;
   Win1[SPRITE] = (varVdp2Regs->WCTLC >> 11) & 0x01;
-  WinS[SPRITE] = (use_sp_win != 0)?(varVdp2Regs->WCTLC >> 13) & 0x01:0;
+  WinS[SPRITE] = (varVdp2Regs->WCTLC >> 13) & 0x01;
 
   Win0_mode[NBG0] = (varVdp2Regs->WCTLA) & 0x01;
   Win1_mode[NBG0] = (varVdp2Regs->WCTLA >> 2) & 0x01;
-  WinS_mode[NBG0] = (use_sp_win != 0)?(varVdp2Regs->WCTLA >> 4) & 0x01:0;
+  WinS_mode[NBG0] = (varVdp2Regs->WCTLA >> 4) & 0x01;
   Win0_mode[NBG1] = (varVdp2Regs->WCTLA >> 8) & 0x01;
   Win1_mode[NBG1] = (varVdp2Regs->WCTLA >> 10) & 0x01;
-  WinS_mode[NBG1] = (use_sp_win != 0)?(varVdp2Regs->WCTLA >> 12) & 0x01:0;
+  WinS_mode[NBG1] = (varVdp2Regs->WCTLA >> 12) & 0x01;
 
   Win0_mode[NBG2] = (varVdp2Regs->WCTLB) & 0x01;
   Win1_mode[NBG2] = (varVdp2Regs->WCTLB >> 2) & 0x01;
-  WinS_mode[NBG2] = (use_sp_win != 0)?(varVdp2Regs->WCTLB >> 4) & 0x01:0;
+  WinS_mode[NBG2] = (varVdp2Regs->WCTLB >> 4) & 0x01;
   Win0_mode[NBG3] = (varVdp2Regs->WCTLB >> 8) & 0x01;
   Win1_mode[NBG3] = (varVdp2Regs->WCTLB >> 10) & 0x01;
-  WinS_mode[NBG3] = (use_sp_win != 0)?(varVdp2Regs->WCTLB >> 12) & 0x01:0;
+  WinS_mode[NBG3] = (varVdp2Regs->WCTLB >> 12) & 0x01;
 
   Win0_mode[RBG0] = (varVdp2Regs->WCTLC) & 0x01;
   Win1_mode[RBG0] = (varVdp2Regs->WCTLC >> 2) & 0x01;
-  WinS_mode[RBG0] = (use_sp_win != 0)?(varVdp2Regs->WCTLC >> 4) & 0x01:0;
+  WinS_mode[RBG0] = (varVdp2Regs->WCTLC >> 4) & 0x01;
   Win0_mode[SPRITE] = (varVdp2Regs->WCTLC >> 8) & 0x01;
   Win1_mode[SPRITE] = (varVdp2Regs->WCTLC >> 10) & 0x01;
-  WinS_mode[SPRITE] = (use_sp_win != 0)?(varVdp2Regs->WCTLC >> 12) & 0x01:0;
+  WinS_mode[SPRITE] = (varVdp2Regs->WCTLC >> 12) & 0x01;
 
   Win_op[NBG0] = (varVdp2Regs->WCTLA >> 7) & 0x01;
   Win_op[NBG1] = (varVdp2Regs->WCTLA >> 15) & 0x01;
@@ -2802,7 +2800,7 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
   Win1_mode[SPRITE+1] = ((varVdp2Regs->WCTLD >> 10) & 0x01 == 0);
   Win1[SPRITE+1] = (varVdp2Regs->WCTLD >> 11) & 0x01;
   WinS_mode[SPRITE+1] = ((varVdp2Regs->WCTLD >> 12) & 0x01 == 0);
-  WinS[SPRITE+1] = (use_sp_win != 0)?(varVdp2Regs->WCTLD >> 13) & 0x01:0;
+  WinS[SPRITE+1] = (varVdp2Regs->WCTLD >> 13) & 0x01;
   Win_op[SPRITE+1] = (varVdp2Regs->WCTLD >> 15) & 0x01;
 
   Win0[RBG1] = Win0[NBG0];
