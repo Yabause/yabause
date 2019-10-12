@@ -32,6 +32,7 @@
 #include "debug.h"
 #include "junzip.h"
 #include "zlib.h"
+#include "chd.h"
 
 #include "streams/file_stream.h"
 #include "compat/posix_string.h"
@@ -1769,10 +1770,6 @@ static void ISOCDReadAheadFAD(UNUSED u32 FAD)
 
 //////////////////////////////////////////////////////////////////////////////
 
-// Don't rely on libretro-common's chdr lib, somehow it's breaking this chd stuff
-
-#include "chd.h"
-
 #define CD_MAX_SECTOR_DATA      (2352)
 #define CD_MAX_SUBCODE_DATA     (96)
 #define CD_FRAME_SIZE           (CD_MAX_SECTOR_DATA + CD_MAX_SUBCODE_DATA)
@@ -1926,13 +1923,14 @@ static int LoadCHD(const char *chd_filename, RFILE *iso_file)
     {
       trk[num_tracks].ctl_addr = 0x01;
       trk[num_tracks].sector_size = 2352;
+      //trk[num_tracks].pregap = 0;
     }
    
-    trk[num_tracks].fad_start = trk[num_tracks].fad_start + pregap;
-    trk[num_tracks].fad_end = trk[num_tracks].fad_start + (frame - 1) - pregap;
-    frame = trk[num_tracks].fad_end+1;
+    //trk[num_tracks].fad_start = trk[num_tracks].fad_start + pregap;
+    //trk[num_tracks].fad_end = trk[num_tracks].fad_start + (frame - 1) + postgap;
+    //frame = trk[num_tracks].fad_end+1;
     num_tracks++;
-    trk[num_tracks].fad_start = frame;
+    //trk[num_tracks].fad_start = frame;
   }
   free(buf);
 
@@ -1941,17 +1939,20 @@ static int LoadCHD(const char *chd_filename, RFILE *iso_file)
 
   u32 chdofs = 0;
   u32 physofs = 0;
-  u32 logofs = 0;
+  u32 logofs = 150;
   int i;
   for (i = 0; i < num_tracks; i++)
   {
-    trk[i].logframeofs = logofs;
+    trk[i].fad_start = logofs + trk[i].pregap;
+    
     trk[i].physframeofs = physofs;
     trk[i].chdframeofs = chdofs;
+    trk[i].logframeofs = logofs;
 
-    logofs += trk[i].pregap;
-    logofs += trk[i].postgap;
+    //logofs += trk[i].pregap;
+    //logofs += trk[i].postgap;
     logofs += trk[i].frames;
+    trk[i].fad_end = logofs;
 
     physofs += trk[i].frames;
 
@@ -1999,18 +2000,24 @@ static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer) {
   track_info_struct *track = NULL;
   u32 chdlba;
   u32 physlba;
-  u32 loglba = FAD - 150;
+  u32 loglba = FAD;
 
   chdlba = loglba;
   for (i = 0; i < disc.session_num; i++)
   {
     for (j = 0; j < disc.session[i].track_num; j++)
     {
+      //if (j == 1) {
+      //  int a = 0;
+      //}
       if (loglba < disc.session[i].track[j+1].logframeofs) {
-        if ((loglba > disc.session[i].track[j].pregap)) {
-          loglba -= disc.session[i].track[j].pregap;
-        }
+        //if ((loglba > disc.session[i].track[j].pregap)) {
+       //   loglba -= disc.session[i].track[j].pregap;
+       // }
         physlba = disc.session[i].track[j].physframeofs + (loglba - disc.session[i].track[j].logframeofs);
+        //if (disc.session[i].track[j].ctl_addr == 0x01) {
+        //  physlba += disc.session[i].track[j].pregap;
+        //}
         chdlba = physlba - disc.session[i].track[j].physframeofs + disc.session[i].track[j].chdframeofs;
         track = &disc.session[i].track[j];
         break;
@@ -2044,3 +2051,4 @@ static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer) {
 
   return 1;
 }
+
