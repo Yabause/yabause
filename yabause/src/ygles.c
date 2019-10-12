@@ -28,6 +28,8 @@
 #include "debug.h"
 #include "frameprofile.h"
 
+#define NUM_TEXTURE_BUFFER 1
+
 #define YGLDEBUG
 //#define YGLDEBUG printf
 //#define YGLDEBUG LOG
@@ -497,7 +499,7 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 
   YglTMReset(tm);
 
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < NUM_TEXTURE_BUFFER; i++) {
 
     glGenBuffers(1, &tm->pixelBufferID_in[i]);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID_in[i]);
@@ -539,7 +541,7 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 
 void YglTMDeInit(YglTextureManager * tm) {
 
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < NUM_TEXTURE_BUFFER; i++) {
     glBindTexture(GL_TEXTURE_2D, tm->textureID_in[i]);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -606,7 +608,7 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
       abort();
     }
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
+/*    
     if (flg == 0) {
       if (tm->current == 0) {
         tm->current = 1;
@@ -615,11 +617,8 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
         tm->current = 0;
       }
     }
-
+*/    
     tm->texture = tm->texture_in[tm->current];
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tm->textureID_in[tm->current]);
-
   }
 }
 
@@ -643,7 +642,7 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
 
   glGetError();
 
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < NUM_TEXTURE_BUFFER; i++) {
     glGenTextures(1, &new_textureID[i]);
     glBindTexture(GL_TEXTURE_2D, new_textureID[i]);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -677,7 +676,7 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
   glBindBuffer(GL_COPY_READ_BUFFER, 0);
   glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
 
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < NUM_TEXTURE_BUFFER; i++) {
 
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID[i]);
     new_texture[i] = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, width * height * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
@@ -3601,8 +3600,11 @@ void YglRender(void) {
      YglDrawBackScreen(GlWidth, GlHeight);
    }
    else {
-     glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
-     glClear(GL_COLOR_BUFFER_BIT);
+
+     if (_Ygl->clear_r != 0.0 &&  _Ygl->clear_g != 0.0 && _Ygl->clear_b != 0.0) {
+       glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
+       glClear(GL_COLOR_BUFFER_BIT);
+     }
    }
    
    if (_Ygl->texture_manager == NULL) goto render_finish;

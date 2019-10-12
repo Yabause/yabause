@@ -1014,6 +1014,7 @@ void vdp2VBlankOUT(void) {
          framestoskip = 1;
       }else if ((onesecondticks+diffticks) < ((yabsys.OneFrameTime * (u64)framecount) - (yabsys.OneFrameTime / 2)))
       {
+#if 0
          // Check to see if we need to limit speed at all
          for (;;)
          {
@@ -1022,6 +1023,7 @@ void vdp2VBlankOUT(void) {
             if ((onesecondticks+diffticks) >= (yabsys.OneFrameTime * (u64)framecount))
                break;
          }
+#endif
       }
 
       onesecondticks += diffticks;
