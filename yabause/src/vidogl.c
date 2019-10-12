@@ -3554,11 +3554,14 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
 
   if (vdp2height >= 448) {
     lineInc <<= 1;
+    info->drawh = (vdp2height >> 1);
     info->hres_shift = 1;
   }
   else {
     info->hres_shift = 0;
+    info->drawh = vdp2height;
   }
+
   vres = rbg->vres/ rbg->rotate_mval_v;
   hres = rbg->hres/ rbg->rotate_mval_h;
   cellw = rbg->info.cellw;

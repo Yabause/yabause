@@ -128,6 +128,8 @@ const char prg_generate_rbg[] =
 "  float alpha_;"
 "  int cram_shift;"
 "  int hires_shift;"
+"  int specialprimode;"
+"  uint priority;"
 "};\n"
 " struct vdp2WindowInfo\n"
 "{\n"
@@ -210,6 +212,20 @@ const char prg_generate_rbg[] =
 "}\n"
 
 
+"int PixelIsSpecialPriority( uint specialcode, uint dot ) { \n"
+"  dot &= 0xfu; \n"
+"  if ( (specialcode & 0x01u) != 0u && (dot == 0u || dot == 1u) ){ return 1;} \n"
+"  if ( (specialcode & 0x02u) != 0u && (dot == 2u || dot == 3u) ){ return 1;} \n"
+"  if ( (specialcode & 0x04u) != 0u && (dot == 4u || dot == 5u) ){ return 1;} \n"
+"  if ( (specialcode & 0x08u) != 0u && (dot == 6u || dot == 7u) ){ return 1;} \n"
+"  if ( (specialcode & 0x10u) != 0u && (dot == 8u || dot == 9u) ){ return 1;} \n"
+"  if ( (specialcode & 0x20u) != 0u && (dot == 0xau || dot == 0xbu) ){ return 1;} \n"
+"  if ( (specialcode & 0x40u) != 0u && (dot == 0xcu || dot == 0xdu) ){ return 1;} \n"
+"  if ( (specialcode & 0x80u) != 0u && (dot == 0xeu || dot == 0xfu) ){ return 1;} \n"
+"  return 0; \n"
+"} \n"
+
+
 //----------------------------------------------------------------------
 // Main
 //----------------------------------------------------------------------
@@ -223,11 +239,15 @@ const char prg_generate_rbg[] =
 "  float ky; \n"
 "  uint kdata;\n"
 "  uint patternname = 0xFFFFFFFFu;\n"
+"  uint specialfunction_in = 0u;\n"
+"  uint specialcolorfunction_in = 0u;\n"
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.xy);\n"
 "  ivec2 size = imageSize(outSurface);\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
 "  float posx = float(texel.x) * hres_scale;\n"
-"  float posy = float(texel.y) * vres_scale;\n";
+"  float posy = float(texel.y) * vres_scale;\n"
+"  specialfunction_in = (supplementdata >> 9) & 0x1u; \n"
+"  specialcolorfunction_in = (supplementdata >> 8) & 0x1u; \n";
 
 const char prg_rbg_rpmd0_2w[] =
 "  paramid = 0; \n"
@@ -425,8 +445,8 @@ const char prg_rbg_get_pattern_data_2w[] =
 "  tmp1 = (((tmp1 >> 8) & 0xFFu) | ((tmp1) & 0xFFu) << 8);\n"
 "  uint flipfunction = (tmp1 & 0xC000u) >> 14;\n"
 "  if(colornumber==0) paladdr = tmp1 & 0x7Fu; else paladdr = tmp1 & 0x70u;\n" // not in 16 colors
-"  uint specialfunction_in = (tmp1 & 0x2000u) >> 13;\n"
-"  uint specialcolorfunction_in = (tmp1 & 0x1000u) >> 12;\n"
+"  specialfunction_in = (tmp1 & 0x2000u) >> 13;\n"
+"  specialcolorfunction_in = (tmp1 & 0x1000u) >> 12;\n"
 "  charaddr &= 0x3FFFu;\n"
 "  charaddr *= 0x20u;\n";
 
@@ -485,6 +505,15 @@ const char prg_rbg_getcolor_4bpp[] =
 "    alpha = 0.0;\n"
 "  } else {\n"
 "    cramindex = (coloroffset + ((paladdr << 4) | (dot & 0xFu)));\n"
+"    if (specialprimode == 2) { \n"
+"      uint spriority = priority & 0xEu; \n"
+"      if ( (specialfunction_in & 0x01u) != 0u ) { \n"
+"        if( PixelIsSpecialPriority(specialcode, dot ) == 1 ){ \n"
+"          spriority |= 0x1u; \n"
+"        }\n"
+"      }\n"
+"      cramindex |= spriority << 16; \n"
+"    }\n"
 "    switch (specialcolormode)\n"
 "    {\n"
 "    case 1:\n"
@@ -517,6 +546,15 @@ const char prg_rbg_getcolor_8bpp[] =
 "    alpha = 0.0;\n"
 "  } else {\n"
 "    cramindex = (coloroffset + ((paladdr << 4) | dot));\n"
+"    if (specialprimode == 2) { \n"
+"      uint spriority = priority & 0xEu; \n"
+"      if ( (specialfunction_in & 0x01u) != 0u) { \n"
+"        if( PixelIsSpecialPriority(specialcode, dot ) == 1 ){ \n"
+"          spriority |= 0x1u; \n"
+"        }\n"
+"      }\n"
+"      cramindex |= spriority << 16; \n"
+"    }\n"
 "    switch (specialcolormode)\n"
 "    {\n"
 "    case 1:\n"
@@ -827,10 +865,12 @@ struct RBGUniform {
     specialcolormode = 0;
     specialcolorfunction=0;
     specialcode=0;
-	window_area_mode = 0;
-	alpha_ = 0.0;
-	cram_shift = 1;
-  hires_shift = 0;
+	  window_area_mode = 0;
+	  alpha_ = 0.0;
+	  cram_shift = 1;
+    hires_shift = 0;
+    specialprimode = 0;
+    priority = 0;
   }
   float hres_scale;
   float vres_scale;
@@ -855,6 +895,8 @@ struct RBGUniform {
   float alpha_;
   int cram_shift;
   int hires_shift;
+  int specialprimode;
+  unsigned int priority;
 };
 
 class RBGGenerator{
@@ -2260,6 +2302,9 @@ public:
 	uniform.colornumber = rbg->info.colornumber;
 	uniform.window_area_mode = rbg->info.WindwAreaMode;
 	uniform.alpha_ = (float)rbg->info.alpha / 255.0f;
+  uniform.specialprimode = rbg->info.specialprimode;
+  uniform.priority = rbg->info.priority;
+
 	if (Vdp2Internal.ColorMode < 2) {
 		uniform.cram_shift = 1;
 	}

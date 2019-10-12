@@ -2659,6 +2659,8 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
    //vtxa = (program->vertexAttribute + (program->currentQuad * 2));
    //memset(vtxa,0,sizeof(float)*24);
 
+  int line_height = 0;
+
   if (_Ygl->rbg_use_compute_shader) {
 	  
 	  if(rbg_type == 0 )
@@ -2674,9 +2676,12 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
 	  tmp[2].t = tmp[4].t = tmp[5].t = (float)(input->cellh);
 	  //tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0;
 	  //tmp[0].q = tmp[1].q = tmp[2].q = tmp[3].q = tmp[4].q = tmp[5].q = 0;
+    line_height = input->drawh;
 
   }
   else {
+
+    line_height = input->cellh;
 
 	  program->interuput_texture = 0;
 
@@ -2703,7 +2708,7 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
   if (prg == PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET) {
     tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0;
     tmp[0].q = tmp[1].q = tmp[3].q = 0;
-    tmp[2].q = tmp[4].q = tmp[5].q = input->cellh;
+    tmp[2].q = tmp[4].q = tmp[5].q = line_height;
   }
   else {
 
