@@ -1814,6 +1814,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   u8 dot;
   u32 alpha = 0xFF;
 
+  alpha = info->alpha;
   dot = (dotw & 0xF000) >> 12;
   if (!(dot & 0xF) && info->transparencyenable) {
     *texture->textdata++ = 0x00000000;
@@ -2724,6 +2725,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
     if (!(dot & 0xF) && info->transparencyenable) return 0x00000000;
     else {
       cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
+      Vdp2SetSpecialPriority(info, dot, &cramindex);
       switch (info->specialcolormode)
       {
       case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
@@ -2742,6 +2744,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
     if (!(dot & 0xFF) && info->transparencyenable) return 0x00000000;
     else {
       cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
+      Vdp2SetSpecialPriority(info, dot, &cramindex);
       switch (info->specialcolormode)
       {
       case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
@@ -2760,6 +2763,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
     if ((dot == 0) && info->transparencyenable) return 0x00000000;
     else {
       cramindex = (info->coloroffset + dot);
+      Vdp2SetSpecialPriority(info, dot, &cramindex);
       switch (info->specialcolormode)
       {
       case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
@@ -5952,7 +5956,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
           linebuf[line] = 0xFF000000;
         }
 
-        if (Vdp2Lines[line >> line_shift].CLOFEN  & bit) {
+        if ( (Vdp2Lines[line >> line_shift].CLOFEN  & bit) != 0) {
           ReadVdp2ColorOffset(&Vdp2Lines[line >> line_shift], info, bit);
           linebuf[line] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 16;
           linebuf[line] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
@@ -6153,7 +6157,7 @@ static void Vdp2DrawNBG0(void)
   ReadMosaicData(&info, 0x1, fixVdp2Regs);
 
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x100);
-  info.specialprimode = fixVdp2Regs->SFPRMD & 0x3;
+  info.specialprimode = (fixVdp2Regs->SFPRMD>>8) & 0x3;
   info.specialcolormode = fixVdp2Regs->SFCCMD & 0x3;
   if (fixVdp2Regs->SFSEL & 0x1)
     info.specialcode = fixVdp2Regs->SFCODE >> 8;
