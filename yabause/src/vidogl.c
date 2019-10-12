@@ -2830,9 +2830,9 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture) {
   else
     info->drawh = vdp2height;
 
-  int incv = 1.0 / info->coordincy*256.0;
-  int res_shift = 0;
-  if (vdp2height >= 440) res_shift = 1;
+  const int incv = 1.0 / info->coordincy*256.0;
+  const int res_shift = 0;
+  //if (vdp2height >= 440) res_shift = 0;
 
   int linemask = 0;
   switch (info->lineinc) {
@@ -2851,7 +2851,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture) {
   }
 
 
-  for (v = 0; v < info->drawh; v += 1) {  // ToDo: info->coordincy
+  for (v = 0; v < vdp2height; v += 1) {  // ToDo: info->coordincy
 
     int targetv = 0;
 
@@ -6669,9 +6669,9 @@ static void Vdp2DrawNBG1(void)
       info.vertices[7] = vdp2height;
       vdp2draw_struct infotmp = info;
       infotmp.cellw = vdp2width;
-      if (vdp2height >= 448)
-        infotmp.cellh = (vdp2height >> 1);
-      else
+      //if (vdp2height >= 448)
+      //  infotmp.cellh = (vdp2height >> 1);
+      //else
         infotmp.cellh = vdp2height;
       infotmp.flipfunction = 0;
       YglQuad(&infotmp, &texture, &tmpc);
