@@ -2822,12 +2822,10 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
     if (Win_op[i] != _Ygl->Win_op[i]) needUpdate |= 1;
   #ifdef WINDOW_DEBUG
     //DEBUG
-    if (WinS[i] == 1)
-      if ((Win0[i] == 1) || (Win1[i] == 1))
-        if (Win_op[i] == 0)
-          YuiMsg("Sprite window OR any windows is not supported yet, there is an issue on layer %d\n", i);
     if ((Win0[i] == 1) || (Win1[i] == 1) || (WinS[i] == 1))
-      YuiMsg("Windows are used on layer %d (%d, %d, %d, mode %s, op %s)\n", i, Win0[i], Win1[i], WinS[i], (WinS_mode[i]==0)?"INSIDE":"OUTSIDE", (Win_op[i]==0)?"OR":"AND");
+      YuiMsg("Windows are used on layer %d (WO:%d, W1:%d, WS:%d, WS mode %s, WS op %s)\n", i, Win0[i], Win1[i], WinS[i], (WinS_mode[i]==0)?"INSIDE":"OUTSIDE", (Win_op[i]==0)?"OR":"AND");
+    else
+      YuiMsg("Windows are not used on layer %d\n", i);
   #endif
   }
   memcpy(&_Ygl->Win0[0], &Win0[0], (enBGMAX+1)*sizeof(int));
