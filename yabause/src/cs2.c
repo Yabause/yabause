@@ -557,7 +557,7 @@ int Cs2ChangeCDCore(int coreid, const char *cdpath)
    Cs2Area->status = CDB_STAT_PAUSE;
    SmpcRecheckRegion();
 
-   if (Cs2GetRegionID() == 0xC) YabauseSetVideoFormat(VIDEOFORMATTYPE_PAL);
+   if (Cs2GetRegionID() >= 0xA) YabauseSetVideoFormat(VIDEOFORMATTYPE_PAL);
    else YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
 
    return 0;

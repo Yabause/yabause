@@ -611,7 +611,7 @@ int YabauseInit(yabauseinit_struct *init)
       }
    }
 
-   if (Cs2GetRegionID() == 0xC) YabauseSetVideoFormat(VIDEOFORMATTYPE_PAL);
+   if (Cs2GetRegionID() >= 0xA) YabauseSetVideoFormat(VIDEOFORMATTYPE_PAL);
    else YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
 
 #ifdef HAVE_GDBSTUB
