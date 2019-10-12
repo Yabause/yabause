@@ -1007,9 +1007,11 @@ void Cs2Exec(u32 timing) {
 
                            if (Cs2Area->playtype == CDB_PLAYTYPE_FILE){
                              Cs2SetIRQ(CDB_HIRQ_EFLS);
+                             Cs2SetIRQ(CDB_HIRQ_EHST); // Need for Assault Leynos 2
                            }
 
                            CDLOG("PLAY HAS ENDED\n");
+
                         }
                         else {
 
