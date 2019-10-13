@@ -264,7 +264,7 @@ int orderTable[NB_MSG];
 static int getCCProgramId(int CMDPMOD) {
   int cctype = CMDPMOD & 0x7;
   int MSB = IS_MSB_SHADOW(CMDPMOD)?1:0;
-  int Mesh = IS_MESH(CMDPMOD)?1:0;
+  int Mesh = IS_MESH(CMDPMOD)?((_Ygl->meshmode == ORIGINAL_MESH)?1:2):0;
   int SPD = IS_SPD(CMDPMOD)?1:0;
   int END = IS_END(CMDPMOD)?1:0;
   int TESS = (_Ygl->polygonmode == GPU_TESSERATION)?1:0;
