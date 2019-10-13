@@ -238,7 +238,7 @@ int yabauseinit()
   yinit.rotate_screen = 0;
   yinit.scsp_sync_count_per_frame = g_scsp_sync;
   yinit.extend_backup = 1;
-  yinit.scsp_main_mode = 1;
+  yinit.scsp_main_mode = 0;
   yinit.rbg_resolution_mode = 0;
 
   //std::string::size_type pos = std::string((const char*)glGetString(GL_VERSION)).find( std::string("3.2"));
