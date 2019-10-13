@@ -629,37 +629,37 @@ void Vdp2HBlankOUT(void) {
    //if (yabsys.LineCount == 0){
    //  vdp2VBlankOUT();
    //}
-  if (yabsys.LineCount == 0){
+  if (yabsys.LineCount == 0) {
     FrameProfileAdd("VOUT event");
     // Manual Change
-    if (Vdp1External.manualchange == 1){
+    if (Vdp1External.manualchange == 1) {
       Vdp1External.swap_frame_buffer = 1;
       Vdp1External.manualchange = 0;
     }
 
     // One Cyclemode
-    if ((Vdp1Regs->FBCR & 0x03) == 0x00 || 
+    if ((Vdp1Regs->FBCR & 0x03) == 0x00 ||
       (Vdp1Regs->FBCR & 0x03) == 0x01) {  // 0x01 is treated as one cyscle mode in Sonic R.
       Vdp1External.swap_frame_buffer = 1;
     }
 
     // Plot trigger mode = Draw when frame is changed
-    if (Vdp1Regs->PTMR == 2){
+    if (Vdp1Regs->PTMR == 2) {
       Vdp1External.frame_change_plot = 1;
       FRAMELOG("frame_change_plot 1");
     }
-    else{
+    else {
       Vdp1External.frame_change_plot = 0;
       FRAMELOG("frame_change_plot 0");
     }
 #if defined(YAB_ASYNC_RENDERING)
-    if (vdp_proc_running == 0){
+    if (vdp_proc_running == 0) {
       YuiRevokeOGLOnThisThread();
       evqueue = YabThreadCreateQueue(32);
       vdp_proc_running = 1;
       YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
     }
-    if (Vdp1External.swap_frame_buffer == 1 )
+    if (Vdp1External.swap_frame_buffer == 1)
     {
       Vdp1Regs->EDSR >>= 1;
       if (Vdp1External.frame_change_plot == 1) {
@@ -676,20 +676,28 @@ void Vdp2HBlankOUT(void) {
     //YabThreadUSleep(10000);
 
   }
-  if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count){
+  if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
 
-    FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
-    yabsys.wait_line_count = -1;
-    //do {
+    if (Vdp1External.status == VDP1_STATUS_IDLE) {
+      FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
+      yabsys.wait_line_count = -1;
+      //do {
       YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
     //} while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
       YabClearEventQueue(vdp1_rcv_evqueue);
       FRAMELOG("**WAIT END**");
-    FrameProfileAdd("DirectDraw sync");
-    
-    Vdp1Regs->EDSR |= 2;
-    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
-    ScuSendDrawEnd();
+      FrameProfileAdd("DirectDraw sync");
+
+      Vdp1Regs->EDSR |= 2;
+      Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
+      ScuSendDrawEnd();
+    }
+    else {
+      yabsys.wait_line_count += 10;
+      if (yabsys.wait_line_count > yabsys.VBlankLineCount) {
+        yabsys.wait_line_count = 0;
+      }
+    }
     FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
   }
 #else
@@ -698,10 +706,19 @@ void Vdp2HBlankOUT(void) {
   else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
     //Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
     //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
-    ScuSendDrawEnd();
+
+    if ( Vdp1External.status == VDP1_STATUS_IDLE) {
+      ScuSendDrawEnd();
     FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
-    yabsys.wait_line_count = -1;
-    Vdp1Regs->EDSR |= 2;
+      yabsys.wait_line_count = -1;
+      Vdp1Regs->EDSR |= 2;
+    }
+    else {
+      yabsys.wait_line_count += 10;
+      if (yabsys.wait_line_count > yabsys.VBlankLineCount) {
+        yabsys.wait_line_count = 0;
+      }
+    }
     //VIDCore->Vdp1DrawEnd();
   }
   
@@ -932,11 +949,19 @@ void vdp2VBlankOUT(void) {
     FRAMELOG("[VDP1] Displayed framebuffer changed. EDSR=%02X", Vdp1Regs->EDSR);
 
     // if Plot Trigger mode == 0x02 draw start
-    if (Vdp1External.frame_change_plot == 1){
+    if (Vdp1External.frame_change_plot == 1 || Vdp1External.status == VDP1_STATUS_RUNNING ){
       FRAMELOG("[VDP1] frame_change_plot == 1 start drawing immidiatly", Vdp1Regs->EDSR);
+      LOG("[VDP1] Start Drawing");
       Vdp1Draw();
       isrender = 1;
     }
+  }
+  else {
+    if ( Vdp1External.status == VDP1_STATUS_RUNNING) {
+      LOG("[VDP1] Start Drawing continue");
+      Vdp1Draw();
+      isrender = 1;
+  }
   }
 
 #if defined(YAB_ASYNC_RENDERING)
@@ -1134,10 +1159,10 @@ u16 FASTCALL Vdp2ReadWord(u32 addr) {
 
          // if TVMD's DISP bit is cleared, TVSTAT's VBLANK bit is always set
          if (Vdp2Regs->TVMD & 0x8000)
-            return tvstat;
+           return tvstat;
          else
-            return (tvstat | 0x8);
-      }
+           return (tvstat | 0x8);
+         }
       case 0x006:         
          return Vdp2Regs->VRSIZE;
       case 0x008:

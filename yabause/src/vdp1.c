@@ -41,7 +41,7 @@ extern VideoInterface_struct *VIDCoreList[];
 extern YabEventQueue * rcv_evqueue;
 
 Vdp1 * Vdp1Regs;
-Vdp1External_struct Vdp1External;
+Vdp1External_struct Vdp1External = {0};
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -193,6 +193,7 @@ int Vdp1Init(void) {
    if ((Vdp1FrameBuffer[1] = T1MemoryInit(0x40000)) == NULL)
      return -1;
 
+   Vdp1External.status = VDP1_STATUS_IDLE;
    Vdp1External.disptoggle = 1;
 
    Vdp1Regs->TVMR = 0;
@@ -430,10 +431,13 @@ void FASTCALL Vdp1WriteLong(u32 addr, UNUSED u32 val) {
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    u16 command = T1ReadWord(ram, regs->addr);
-   u32 commandCounter = 0;
+   Vdp1External.status = VDP1_STATUS_RUNNING;
+   int command_count = 0;
    u32 returnAddr = 0xffffffff;
 
-   while (!(command & 0x8000) && commandCounter < 4096) { // fix me
+   LOG("Vdp1DrawCommands - %08X\n", regs->addr);
+
+   while (!(command & 0x8000) && command_count < 4096) { // fix me
       regs->COPR = regs->addr >> 3;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
@@ -526,9 +530,14 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       }
 
       command = T1ReadWord(ram, regs->addr);
-      commandCounter++;
+      command_count++;
+      if (command & 0x8000) {
+        Vdp1External.status = VDP1_STATUS_IDLE;
+      }
    }
-   FRAMELOG("comand count = %d", commandCounter);
+   if (Vdp1External.status == VDP1_STATUS_RUNNING) {
+     LOG("comand count = %d", command_count);
+   }
 }
 
 //ensure that registers are set correctly 
@@ -609,15 +618,16 @@ void Vdp1Draw(void)
       return;
    }
 
-   Vdp1Regs->addr = 0;
-
-   // beginning of a frame
-   // BEF <- CEF
-   // CEF <- 0
-   //Vdp1Regs->EDSR >>= 1;
-   /* this should be done after a frame change or a plot trigger */
-   Vdp1Regs->COPR = 0;
-   //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
+   if (Vdp1External.status == VDP1_STATUS_IDLE) {
+     Vdp1Regs->addr = 0;
+     // beginning of a frame
+     // BEF <- CEF
+     // CEF <- 0
+     //Vdp1Regs->EDSR >>= 1;
+     /* this should be done after a frame change or a plot trigger */
+     Vdp1Regs->COPR = 0;
+     //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
+   }
 
    VIDCore->Vdp1DrawStart();
 
