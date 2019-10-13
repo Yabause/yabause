@@ -431,6 +431,10 @@ void FASTCALL Vdp1WriteLong(u32 addr, UNUSED u32 val) {
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    u16 command = T1ReadWord(ram, regs->addr);
+   if (command & 0x8000) {
+     Vdp1External.status = VDP1_STATUS_IDLE;
+     return;
+   }
    Vdp1External.status = VDP1_STATUS_RUNNING;
    int command_count = 0;
    u32 returnAddr = 0xffffffff;
@@ -478,6 +482,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             regs->EDSR |= 2;
             regs->LOPR = regs->addr >> 3;
             regs->COPR = regs->addr >> 3;
+            Vdp1External.status = VDP1_STATUS_IDLE;
             return;
          }
       }
@@ -529,12 +534,13 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          break;
       }
 
-      command = T1ReadWord(ram, regs->addr);
+      command = T1ReadWord(ram, regs->addr & 0x7FFF );
       command_count++;
       if (command & 0x8000) {
         Vdp1External.status = VDP1_STATUS_IDLE;
       }
    }
+
    if (Vdp1External.status == VDP1_STATUS_RUNNING) {
      LOG("comand count = %d", command_count);
    }
