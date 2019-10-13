@@ -258,6 +258,7 @@ int orderTable[NB_MSG];
 
 #define IS_MESH(a) ((a&0x100) == 0x100)
 #define IS_SPD(a) ((a&0x40) == 0x40)
+#define IS_END(a) ((a&0x80) == 0x80)
 #define IS_MSB_SHADOW(a) ((a&0x8000)!=0)
 
 static int getCCProgramId(int CMDPMOD) {
@@ -265,13 +266,14 @@ static int getCCProgramId(int CMDPMOD) {
   int MSB = IS_MSB_SHADOW(CMDPMOD)?1:0;
   int Mesh = IS_MESH(CMDPMOD)?1:0;
   int SPD = IS_SPD(CMDPMOD)?1:0;
+  int END = IS_END(CMDPMOD)?1:0;
   int TESS = (_Ygl->polygonmode == GPU_TESSERATION)?1:0;
   if (cctype == 5) return -1;
   if (cctype > 5) cctype -=1;
 
   YGLLOG("Setup program %d %d %d %d %d\n", cctype, SPD, Mesh, MSB, TESS);
 
-  return cctype+7*(SPD+2*(Mesh+3*(MSB+2*TESS)))+PG_VDP1_START;
+  return cctype+7*(END+2*(SPD+2*(Mesh+3*(MSB+2*TESS))))+PG_VDP1_START;
 }
 
 void Vdp2DrawCell_in_async(void *p)
@@ -420,7 +422,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
 u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
 {
-  return VDP1COLOR(cmd->CMDPMOD, cmd->CMDCOLR);
+  return VDP1COLOR(0x0, cmd->CMDCOLR);
 }
 
 static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, int spriteh, YglTexture *texture, Vdp2 *varVdp2Regs)
@@ -434,6 +436,7 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
   Pattern* pattern = NULL;
 #endif
   int endcnt = 0;
+  int endTag = 0x0;
   int normal_shadow = 0;
   u32 charAddr = cmd->CMDSRCA * 8;
   u32 dot;
@@ -465,6 +468,7 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
     }
   }
 #endif
+
   switch ((cmd->CMDPMOD >> 3) & 0x7)
   {
   case 0:
@@ -475,16 +479,29 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
 
     for (i = 0; i < spriteh; i++) {
       u16 j;
+      endcnt = 0;
       j = 0;
       while (j < spritew) {
+        endTag = 0;
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
-        if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = 0x00;
-        else if (((dot >> 4) == 0x0F) && !END) *texture->textdata++ = 0x00;
-        else *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot >> 4) | colorBank));
+        if (!END && endcnt >= 2) {
+          endTag = 0xFF;
+        } else if (((dot >> 4) == 0x0F) && !END) {
+          endTag = 0xFF;
+          endcnt++;
+        }
+        if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = VDP1COLOR(endTag, 0x00);
+        else *texture->textdata++ = VDP1COLOR(endTag, ((dot >> 4) | colorBank));
         j += 1;
-        if (((dot & 0xF) == 0) && !SPD) *texture->textdata++ = 0x00;
-        else if (((dot & 0xF) == 0x0F) && !END) *texture->textdata++ = 0x00;
-        else *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot & 0xF) | colorBank));
+        if (!END && endcnt >= 2) {
+          endTag = 0xFF;
+        }
+        else if (((dot & 0xF) == 0x0F) && !END) {
+          endTag = 0xFF;
+          endcnt++;
+        }
+        if (((dot & 0xF) == 0) && !SPD) *texture->textdata++ = VDP1COLOR(endTag, 0x00);
+        else *texture->textdata++ = VDP1COLOR(endTag, ((dot & 0xF) | colorBank));
         j += 1;
         charAddr += 1;
       }
@@ -506,40 +523,39 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
       endcnt = 0;
       while (j < spritew)
       {
+        endTag = 0x0;
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         if (!END && endcnt >= 2) {
-          *texture->textdata++ = 0;
-        }
-        else if (((dot >> 4) == 0) && !SPD)
+          endTag = 0xFF;
+        } else if (((dot >> 4) == 0x0F) && !END) // 6. Commandtable end code
         {
-          *texture->textdata++ = 0;
-        }
-        else if (((dot >> 4) == 0x0F) && !END) // 6. Commandtable end code
-        {
-          *texture->textdata++ = 0;
+          endTag = 0xFF;
           endcnt++;
+        }
+        if (((dot >> 4) == 0) && !SPD)
+        {
+          *texture->textdata++ = VDP1COLOR(endTag, 0);
         }
         else {
           u16 temp = Vdp1RamReadWord(NULL, Vdp1Ram, ((dot >> 4) * 2 + colorLut));
-          *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, temp);
+          *texture->textdata++ = VDP1COLOR(endTag, temp);
         }
         j += 1;
         if (!END && endcnt >= 2)
         {
-          *texture->textdata++ = 0x00;
-        }
-        else if (((dot & 0xF) == 0) && !SPD)
+          endTag = 0xFF;
+        } else if (((dot & 0x0F) == 0x0F) && !END)
         {
-          *texture->textdata++ = 0x00;
-        }
-        else if (((dot & 0x0F) == 0x0F) && !END)
-        {
-          *texture->textdata++ = 0x0;
+          endTag = 0xFF;
           endcnt++;
+        }
+        if (((dot & 0xF) == 0) && !SPD)
+        {
+          *texture->textdata++ = VDP1COLOR(endTag, 0);;
         }
         else {
           temp = Vdp1RamReadWord(NULL, Vdp1Ram, ((dot & 0xF) * 2 + colorLut));
-          *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, temp);
+          *texture->textdata++ = VDP1COLOR(endTag, temp);
         }
         j += 1;
         charAddr += 1;
@@ -559,11 +575,12 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
     {
       for (j = 0; j < spritew; j++)
       {
+        endTag = 0x0;
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-        else if ((dot == 0xFF) && !END) *texture->textdata++ = 0x00;
-        else *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot & 0x3F) | colorBank));
+        if ((dot == 0xFF) && !END) endTag = 0xFF;
+        if ((dot == 0) && !SPD) *texture->textdata++ = VDP1COLOR(endTag, 0x00);
+        else *texture->textdata++ = VDP1COLOR(endTag, ((dot & 0x3F) | colorBank));
       }
       texture->textdata += texture->w;
     }
@@ -579,11 +596,12 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
     {
       for (j = 0; j < spritew; j++)
       {
+        endTag = 0x0;
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-        else if ((dot == 0xFF) && !END) *texture->textdata++ = 0x00;
-        else *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot & 0x7F) | colorBank));
+        if ((dot == 0xFF) && !END) endTag = 0xFF;
+        if ((dot == 0) && !SPD) *texture->textdata++ = VDP1COLOR(endTag, 0x00);
+        else *texture->textdata++ = VDP1COLOR(endTag, ((dot & 0x7F) | colorBank));
       }
       texture->textdata += texture->w;
     }
@@ -597,11 +615,12 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
 
     for (i = 0; i < spriteh; i++) {
       for (j = 0; j < spritew; j++) {
+        endTag = 0x0;
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-        else if ((dot == 0xFF) && !END) *texture->textdata++ = 0x0;
-        else *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, (dot | colorBank));
+        if ((dot == 0xFF) && !END) endTag = 0xFF;
+        if ((dot == 0) && !SPD) *texture->textdata++ = VDP1COLOR(endTag,0x00);
+        else *texture->textdata++ = VDP1COLOR(endTag, (dot | colorBank));
       }
       texture->textdata += texture->w;
     }
@@ -617,26 +636,25 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
     u8 *cclist = (u8 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1F;
 
-
     for (i = 0; i < spriteh; i++)
     {
       endcnt = 0;
       for (j = 0; j < spritew; j++)
       {
         temp = Vdp1RamReadWord(NULL, Vdp1Ram, charAddr);
-        if (((temp & 0x8000) == 0) && !SPD) temp = 0x00;
 
         charAddr += 2;
-
+        endTag = 0x0;
         if (endcnt == 2) {
-          *texture->textdata++ = 0x0;
+          endTag = 0xFF;
         }
         else if ((temp == 0x7FFF) && !END) {
-          *texture->textdata++ = 0x0;
+          endTag = 0xFF;
           endcnt++;
         }
+        if (((temp & 0x8000) == 0) && !SPD) *texture->textdata++ = VDP1COLOR(endTag, 0x00);
         else
-          *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, temp);
+          *texture->textdata++ = VDP1COLOR(endTag, temp);
       }
       texture->textdata += texture->w;
     }
