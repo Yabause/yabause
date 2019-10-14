@@ -3601,7 +3601,7 @@ void YglRender(void) {
    }
    else {
 
-     if (_Ygl->clear_r != 0.0 &&  _Ygl->clear_g != 0.0 && _Ygl->clear_b != 0.0) {
+     if (_Ygl->clear_r != 0.0 || _Ygl->clear_g != 0.0 || _Ygl->clear_b != 0.0) {
        glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
        glClear(GL_COLOR_BUFFER_BIT);
      }
