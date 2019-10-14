@@ -83,7 +83,7 @@ void FASTCALL Vdp1RamWriteWord(u32 addr, u16 val) {
 void FASTCALL Vdp1RamWriteLong(u32 addr, u32 val) {
    addr &= 0x7FFFF;
    if(addr == 0x00000)
-    LOG("Vdp1RamWriteLong @ %08X", CurrentSH2->regs.PC);
+   LOG("Vdp1RamWriteLong @ %08X", CurrentSH2->regs.PC);
 
    T1WriteLong(Vdp1Ram, addr, val);
 }
@@ -491,6 +491,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	  if (regs->EDSR & 0x02){
 		  regs->LOPR = regs->addr >> 3;
 		  regs->COPR = regs->addr >> 3;
+      Vdp1External.status = VDP1_STATUS_IDLE;
 		  return;
 	  }
 
@@ -534,7 +535,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          break;
       }
 
-      command = T1ReadWord(ram, regs->addr & 0x7FFF );
+      command = T1ReadWord(ram, regs->addr & 0x7FFFF);
       command_count++;
       if (command & 0x8000) {
         Vdp1External.status = VDP1_STATUS_IDLE;

@@ -715,9 +715,7 @@ void Vdp2HBlankOUT(void) {
     }
     else {
       yabsys.wait_line_count += 10;
-      if (yabsys.wait_line_count > yabsys.VBlankLineCount) {
-        yabsys.wait_line_count = 0;
-      }
+      yabsys.wait_line_count %= yabsys.VBlankLineCount;
     }
     //VIDCore->Vdp1DrawEnd();
   }
