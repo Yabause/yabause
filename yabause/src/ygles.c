@@ -2658,8 +2658,6 @@ void YglRenderVDP1(void) {
 
   if (Vdp1Regs->TVMR & 0x02) {
     YglMatrix rotate, scale;
-    int x = (_Ygl->rwidth - Vdp1Regs->systemclipX2)/2 * (_Ygl->width/_Ygl->rwidth);
-    int y = ( Vdp1Regs->systemclipY2 - _Ygl->rheight)/2 * (_Ygl->height/_Ygl->rheight);
     YglLoadIdentity(&rotate);
     rotate.m[0][0] = Vdp1ParaA.deltaX;
     rotate.m[0][1] = Vdp1ParaA.deltaY;
@@ -2667,12 +2665,14 @@ void YglRenderVDP1(void) {
     rotate.m[1][1] = Vdp1ParaA.deltaYst;
     YglTranslatef(&rotate, -Vdp1ParaA.Xst, -Vdp1ParaA.Yst, 0.0f);
     YglMatrixMultiply(&m, mat, &rotate);
-    YglLoadIdentity(&scale);
-    scale.m[0][0] = 1.0;
-    scale.m[1][1] = 1.0 / (1.0 + Vdp1ParaA.deltaY);
-    scale.m[0][3] = 0.0;
-    scale.m[1][3] = 1.0 - scale.m[1][1];
-    YglMatrixMultiply(&m, &scale, &m);
+    //This is not in the spec. but it fixes the Capcom Gen4 second game - The question is where is coming this 0.5...
+    //It looks Cz is different from Pz  this case.
+    // YglLoadIdentity(&scale);
+    // scale.m[0][0] = 1.0;
+    // scale.m[1][1] = 0.5;
+    // scale.m[0][3] = 0.0;
+    // scale.m[1][3] = 1.0 - scale.m[1][1];
+    // YglMatrixMultiply(&m, &scale, &m);
     mat = &m;
   }
   glViewport(0, 0, _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio);
