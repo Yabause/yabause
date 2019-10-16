@@ -1011,7 +1011,8 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  FBCol ret = zeroFBCol();\n"
 "  FBCol mesh = zeroFBCol();\n"
 "  if (fbon != 1) return ret;\n"
-"  int line = int((u_vheight-gl_FragCoord.y) * u_emu_height)*24;\n"
+"  vec4 lineCoord = vec4(gl_FragCoord.x, (u_vheight-gl_FragCoord.y), 0.0, 0.0);\n"
+"  int line = int(lineCoord.y * u_emu_height)*24;\n"
 "  vec3 u_coloroffset = vec3(texelFetch(s_vdp2reg, ivec2(17 + line,0), 0).r, texelFetch(s_vdp2reg, ivec2(18+line,0), 0).r, texelFetch(s_vdp2reg, ivec2(19+line,0), 0).r);\n"
 "  vec3 u_coloroffset_sign = vec3(texelFetch(s_vdp2reg, ivec2(20 + line, 0), 0).r, texelFetch(s_vdp2reg, ivec2(21+line,0), 0).r, texelFetch(s_vdp2reg, ivec2(22+line,0), 0).r);\n"
 "  if (u_coloroffset_sign.r != 0.0) u_coloroffset.r = float(int(u_coloroffset.r*255.0)-256.0)/255.0;\n"
@@ -1020,7 +1021,8 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  int u_color_ram_offset = int(texelFetch(s_vdp2reg, ivec2(23+line,0), 0).r*255.0)<<8;\n"
 "  fbmode = 1;\n"
 "  vdp1mode = 1;\n"
-"  vec4 col = texelFetch(s_vdp1FrameBuffer, ivec2(v_texcoord.st * textureSize(s_vdp1FrameBuffer, 0)+ivec2(x, 0)), 0);\n"
+"  vec4 fbCoord = vec4(v_texcoord.st * textureSize(s_vdp1FrameBuffer, 0)+vec2(x, 0), 1.0, 1.0) * fbMat;\n"
+"  vec4 col = texelFetch(s_vdp1FrameBuffer, ivec2(fbCoord.xy), 0);\n"
 "  ret = getVDP1PixelCode(col.rg);\n"
 "  mesh = getVDP1PixelCode(col.ba);"
 "  if (mesh.valid != 0) { \n"
@@ -1542,6 +1544,7 @@ SHADER_VERSION
 "uniform int isRGB[6]; \n"
 "uniform int isBlur[7]; \n"
 "uniform int isShadow[6]; \n"
+"uniform mat4 fbMat;\n"
 "uniform int win_s[8]; \n"
 "uniform int win_s_mode[8]; \n"
 "uniform int win0[8]; \n"
@@ -2808,6 +2811,29 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
     0.0f, 1.0f
   };
     float offsetcol[4];
+    YglMatrix vdp1Mat;
+
+    YglLoadIdentity(&vdp1Mat);
+
+    if (Vdp1Regs->TVMR & 0x02) {
+      YglMatrix translate, rotation;
+      //Translate to center of rotation
+      YglLoadIdentity(&translate);
+      translate.m[0][3] = -Vdp1ParaA.Cx - (float)_Ygl->rwidth/2.0f;
+      translate.m[1][3] = -Vdp1ParaA.Cy - (float)_Ygl->rheight/2.0f;
+
+      //Rotate and translate back to the (Xst,Yst) from (0,0)
+      YglLoadIdentity(&rotation);
+      rotation.m[0][0] = Vdp1ParaA.deltaX;
+      rotation.m[0][1] = Vdp1ParaA.deltaY;
+      rotation.m[0][3] = Vdp1ParaA.Cx + (float)_Ygl->rwidth/2.0f + Vdp1ParaA.Xst;
+      rotation.m[1][0] = Vdp1ParaA.deltaXst;
+      rotation.m[1][1] = Vdp1ParaA.deltaYst;
+      rotation.m[1][3] = Vdp1ParaA.Cy + (float)_Ygl->rheight/2.0f + Vdp1ParaA.Yst;
+
+      //merge transformations
+      YglMatrixMultiply(&vdp1Mat, &rotation, &translate);
+    }
 
     glBindVertexArray(_Ygl->vao);
 
@@ -2843,6 +2869,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isShadow"), 6, isShadow);
+  glUniformMatrix4fv(glGetUniformLocation(vdp2blit_prg, "fbMat"), 1, GL_FALSE, vdp1Mat.m);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbon"), (_Ygl->vdp1On[_Ygl->readframe] != 0));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x400) != 0) );
