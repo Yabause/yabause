@@ -1021,7 +1021,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  int u_color_ram_offset = int(texelFetch(s_vdp2reg, ivec2(23+line,0), 0).r*255.0)<<8;\n"
 "  fbmode = 1;\n"
 "  vdp1mode = 1;\n"
-"  vec4 fbCoord = vec4(v_texcoord.st * textureSize(s_vdp1FrameBuffer, 0)+vec2(x, 0), 1.0, 1.0) * fbMat;\n"
+"  vec4 fbCoord = vec4(v_texcoord.st * vdp1Ratio * textureSize(s_vdp1FrameBuffer, 0)+vec2(x, (u_vheight/vdp1Ratio.y)*(1.0-vdp1Ratio.y)), 1.0, 1.0) * fbMat;\n"
 "  vec4 col = texelFetch(s_vdp1FrameBuffer, ivec2(fbCoord.xy), 0);\n"
 "  ret = getVDP1PixelCode(col.rg);\n"
 "  mesh = getVDP1PixelCode(col.ba);"
@@ -1538,6 +1538,7 @@ SHADER_VERSION
 "uniform sampler2D s_texture5;  \n"
 "uniform sampler2D s_win0;  \n"
 "uniform sampler2D s_win1;  \n"
+"uniform vec2 vdp1Ratio;\n"
 "uniform int fbon;  \n"
 "uniform int screen_nb;  \n"
 "uniform int mode[7];  \n"
@@ -2816,23 +2817,31 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
     YglLoadIdentity(&vdp1Mat);
 
     if (Vdp1Regs->TVMR & 0x02) {
-      YglMatrix translate, rotation;
+      YglMatrix translate, rotation, scale, fuse;
       //Translate to center of rotation
       YglLoadIdentity(&translate);
       translate.m[0][3] = -Vdp1ParaA.Cx - (float)_Ygl->rwidth/2.0f;
       translate.m[1][3] = -Vdp1ParaA.Cy - (float)_Ygl->rheight/2.0f;
 
+      //Il faut calculer ou partent les points...
+
       //Rotate and translate back to the (Xst,Yst) from (0,0)
       YglLoadIdentity(&rotation);
       rotation.m[0][0] = Vdp1ParaA.deltaX;
       rotation.m[0][1] = Vdp1ParaA.deltaY;
-      rotation.m[0][3] = Vdp1ParaA.Cx + (float)_Ygl->rwidth/2.0f + Vdp1ParaA.Xst;
+      rotation.m[0][3] = Vdp1ParaA.Xst + Vdp1ParaA.Cx + (float)_Ygl->rwidth/2.0f;
       rotation.m[1][0] = Vdp1ParaA.deltaXst;
       rotation.m[1][1] = Vdp1ParaA.deltaYst;
-      rotation.m[1][3] = Vdp1ParaA.Cy + (float)_Ygl->rheight/2.0f + Vdp1ParaA.Yst;
+      rotation.m[1][3] = Vdp1ParaA.Yst + Vdp1ParaA.Cy + (float)_Ygl->rheight/2.0f;
 
+      YglLoadIdentity(&scale);
+      float scaleX = rotation.m[0][0]*rotation.m[0][0]+rotation.m[0][1]*rotation.m[0][1];
+      float scaleY = rotation.m[1][0]*rotation.m[1][0]+rotation.m[1][1]*rotation.m[1][1];
+      scale.m[0][0] = (scaleX!=0)?1/(scaleX):1.0;
+      scale.m[1][1] = (scaleY!=0)?1/(scaleY):1.0;
       //merge transformations
-      YglMatrixMultiply(&vdp1Mat, &rotation, &translate);
+      YglMatrixMultiply(&fuse, &rotation, &translate);
+      YglMatrixMultiply(&vdp1Mat, &scale, &fuse);
     }
 
     glBindVertexArray(_Ygl->vao);
@@ -2864,6 +2873,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_cc_win"), 13);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
+
+  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), (float)_Ygl->width/(float)_Ygl->vdp1width, (float)_Ygl->height/(float)_Ygl->vdp1height);
 
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);

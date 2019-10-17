@@ -541,6 +541,8 @@ typedef struct {
    // VDP1 Framebuffer
    int rwidth;
    int rheight;
+   int vdp1width;
+   int vdp1height;
    float widthRatio;
    float heightRatio;
    int density;
