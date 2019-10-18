@@ -103,6 +103,9 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
 
   glUniform2f(prg->ids->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
 
+  glUniform3i(prg->ids->sysclip, Vdp1Regs->systemclipX2, Vdp1Regs->systemclipY2, _Ygl->vdp1height);
+
+
   if (prg->ids->sprite != -1){
     glUniform1i(prg->ids->sprite, 0);
   }
@@ -742,6 +745,7 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs,
       _Ygl->vdp1_stencil_mode =3;
       glStencilFunc(GL_ALWAYS,0,0xFF);
    }
+   glUniform3i(prg->ids->sysclip, Vdp1Regs->systemclipX2, Vdp1Regs->systemclipY2, _Ygl->vdp1height);
 
    glEnableVertexAttribArray(0);
    glEnableVertexAttribArray(1);
@@ -786,10 +790,12 @@ const GLchar vdp1drawstart[] = {
   "#endif\n"
   "uniform sampler2D u_sprite;\n"
   "uniform sampler2D u_fbo;\n"
+  "uniform ivec3 sysClip;\n"
   "in vec4 v_texcoord;\n"
   "in vec4 v_vtxcolor; \n"
   "out vec4 fragColor; \n"
   "void main() {\n"
+  "  if (any(greaterThan(ivec2(gl_FragCoord.x, sysClip.z - gl_FragCoord.y), sysClip.xy))) discard;\n"
   "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
   "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
   "  vec2 tag = vec2(0.0);\n"
@@ -2565,6 +2571,7 @@ void initVDPProg(YglProgram* prog, int id) {
     _ids[id].vaid = glGetAttribLocation(_prgid[id], (const GLchar *)"a_grcolor");
     _ids[id].vertexp = glGetAttribLocation(_prgid[id], (const GLchar *)"a_position");
     _ids[id].texcoordp = glGetAttribLocation(_prgid[id], (const GLchar *)"a_texcoord");
+    _ids[id].sysclip = glGetUniformLocation(_prgid[id], (const GLchar *)"sysClip");
   }
   prog->prgid=id;
   prog->prg=_prgid[id];

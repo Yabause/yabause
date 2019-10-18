@@ -327,6 +327,7 @@ typedef struct {
     GLint  fbo;
     GLint  texsize;
     GLuint mtxModelView;
+    GLuint sysclip;
     GLuint tex0;
     GLint vaid;
     GLint vertexp;
