@@ -102,8 +102,7 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   }
 
   glUniform2f(prg->ids->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
-
-  glUniform3i(prg->ids->sysclip, Vdp1Regs->systemclipX2, Vdp1Regs->systemclipY2, _Ygl->vdp1height);
+  glUniform3i(prg->ids->sysclip, (int)(Vdp1Regs->systemclipX2 * _Ygl->vdp1width)/512, (int)(Vdp1Regs->systemclipY2 * _Ygl->vdp1height)/256, _Ygl->vdp1height);
 
 
   if (prg->ids->sprite != -1){
@@ -745,7 +744,7 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs,
       _Ygl->vdp1_stencil_mode =3;
       glStencilFunc(GL_ALWAYS,0,0xFF);
    }
-   glUniform3i(prg->ids->sysclip, Vdp1Regs->systemclipX2, Vdp1Regs->systemclipY2, _Ygl->vdp1height);
+   glUniform3i(prg->ids->sysclip, (int)(Vdp1Regs->systemclipX2 * _Ygl->vdp1width)/512, (int)(Vdp1Regs->systemclipY2 * _Ygl->vdp1height)/256, _Ygl->vdp1height);
 
    glEnableVertexAttribArray(0);
    glEnableVertexAttribArray(1);
@@ -1027,7 +1026,8 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  int u_color_ram_offset = int(texelFetch(s_vdp2reg, ivec2(23+line,0), 0).r*255.0)<<8;\n"
 "  fbmode = 1;\n"
 "  vdp1mode = 1;\n"
-"  vec4 fbCoord = vec4(v_texcoord.st * vdp1Ratio * textureSize(s_vdp1FrameBuffer, 0)+vec2(x, (u_vheight/vdp1Ratio.y)*(1.0-vdp1Ratio.y)), 1.0, 1.0) * fbMat;\n"
+"  vec4 fbCoord = vec4(v_texcoord.st * vdp1Ratio * textureSize(s_vdp1FrameBuffer, 0)+vec2(x, 0), 1.0, 1.0);\n"
+"  fbCoord = vec4(fbCoord.x, fbCoord.y+vdp1shift, fbCoord.zw) * fbMat;\n"
 "  vec4 col = texelFetch(s_vdp1FrameBuffer, ivec2(fbCoord.xy), 0);\n"
 "  ret = getVDP1PixelCode(col.rg);\n"
 "  mesh = getVDP1PixelCode(col.ba);"
@@ -1545,6 +1545,7 @@ SHADER_VERSION
 "uniform sampler2D s_win0;  \n"
 "uniform sampler2D s_win1;  \n"
 "uniform vec2 vdp1Ratio;\n"
+"uniform int vdp1shift;\n"
 "uniform int fbon;  \n"
 "uniform int screen_nb;  \n"
 "uniform int mode[7];  \n"
@@ -2881,8 +2882,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
 
-  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), (float)_Ygl->width/(float)_Ygl->vdp1width, (float)_Ygl->height/(float)_Ygl->vdp1height);
-
+  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), (float)_Ygl->rwidth/(float)512.0, (float)_Ygl->rheight/(float)256.0);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "vdp1shift"), (int)((float)_Ygl->vdp1height - (float)(Vdp1Regs->systemclipY2 * _Ygl->vdp1height)/256.0));
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);

@@ -1336,7 +1336,7 @@ int YglInit(int width, int height, unsigned int depth) {
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
   YglLoadIdentity(&_Ygl->mtxModelView);
-  YglOrtho(&_Ygl->mtxModelView, 0.0f, 320.0f, 224.0f, 0.0f, 10.0f, 0.0f);
+  YglOrtho(&_Ygl->mtxModelView, 0.0f, 512.0f, 256.0f, 0.0f, 10.0f, 0.0f);
 
   glDisable(GL_BLEND);
 
@@ -3271,9 +3271,9 @@ void YglRender(Vdp2 *varVdp2Regs) {
 #endif
   }
    glDepthMask(GL_FALSE);
-   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
+   glViewport(0, 0, _Ygl->width, _Ygl->height);
    glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
-   glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
+   glScissor(0, 0, _Ygl->width, _Ygl->height);
    glEnable(GL_SCISSOR_TEST);
 
    if ((YglTM_vdp2 == NULL)||((Vdp2Regs->TVMD & 0x8000) == 0)) {
@@ -3798,9 +3798,9 @@ void YglChangeResolution(int w, int h) {
   _Ygl->rheight = h;
 
   _Ygl->vdp1width = ceil((float)_Ygl->width/512.0) * 512;
-  _Ygl->vdp1height = ceil((float)_Ygl->height/256) * 256;
+  _Ygl->vdp1height = (float)_Ygl->vdp1width/2.0;
 
-  YglOrtho(&_Ygl->mtxModelView, 0.0f, (float)_Ygl->vdp1width, (float)_Ygl->vdp1height, 0.0f, 10.0f, 0.0f);
+  YglOrtho(&_Ygl->mtxModelView, 0.0f, _Ygl->vdp1width, _Ygl->vdp1height, 0.0f, 10.0f, 0.0f);
   rebuild_frame_buffer = 1;
 
   _Ygl->widthRatio = (float)_Ygl->width/(float)_Ygl->rwidth;
@@ -3809,7 +3809,7 @@ void YglChangeResolution(int w, int h) {
   if (_Ygl->rheight >= 448) _Ygl->heightRatio *= 2.0f;
   if (_Ygl->rwidth >= 640) _Ygl->widthRatio *= 2.0f;
 
-  YglOrtho(&_Ygl->rbgModelView, 0.0f, (float)_Ygl->width, (float)_Ygl->height, 0.0f, 10.0f, 0.0f);
+  YglOrtho(&_Ygl->rbgModelView, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
 }
 
 void YglSetDensity(int d) {
