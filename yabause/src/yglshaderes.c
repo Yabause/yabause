@@ -2828,8 +2828,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
       YglMatrix translate, rotation, scale, fuse;
       //Translate to center of rotation
       YglLoadIdentity(&translate);
-      translate.m[0][3] = -Vdp1ParaA.Cx - (float)_Ygl->rwidth/2.0f;
-      translate.m[1][3] = -Vdp1ParaA.Cy - (float)_Ygl->rheight/2.0f;
+      translate.m[0][3] = (-Vdp1ParaA.Cx - (float)_Ygl->rwidth/2.0f )* (float)_Ygl->vdp1width/512.0f;
+      translate.m[1][3] = (-Vdp1ParaA.Cy - (float)_Ygl->rheight/2.0f)* (float)_Ygl->vdp1height/256.0f;
 
       //Il faut calculer ou partent les points...
 
@@ -2837,10 +2837,10 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
       YglLoadIdentity(&rotation);
       rotation.m[0][0] = Vdp1ParaA.deltaX;
       rotation.m[0][1] = Vdp1ParaA.deltaY;
-      rotation.m[0][3] = Vdp1ParaA.Xst + Vdp1ParaA.Cx + (float)_Ygl->rwidth/2.0f;
+      rotation.m[0][3] = (Vdp1ParaA.Xst + Vdp1ParaA.Cx + (float)_Ygl->rwidth/2.0f)* (float)_Ygl->vdp1width/512.0f;
       rotation.m[1][0] = Vdp1ParaA.deltaXst;
       rotation.m[1][1] = Vdp1ParaA.deltaYst;
-      rotation.m[1][3] = Vdp1ParaA.Yst + Vdp1ParaA.Cy + (float)_Ygl->rheight/2.0f;
+      rotation.m[1][3] = (Vdp1ParaA.Yst + Vdp1ParaA.Cy + (float)_Ygl->rheight/2.0f)* (float)_Ygl->vdp1height/256.0f;
 
       YglLoadIdentity(&scale);
       float scaleX = rotation.m[0][0]*rotation.m[0][0]+rotation.m[0][1]*rotation.m[0][1];
