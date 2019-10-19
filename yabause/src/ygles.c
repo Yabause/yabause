@@ -3621,8 +3621,27 @@ void YglRender(void) {
 
    FRAMELOG("YglRenderFrameBuffer: fb %d", _Ygl->readframe);
 
+   // This is workaround for Azel disc 2
+   // Only top and second prioriy pixel is calculated
+   int highpri = 0;
+   if ( (fixVdp2Regs->CCCTL & 0x500) == 0x100 ) {
+     for (i = 0; i < _Ygl->depth; i++)
+     {
+       level = _Ygl->levels + i;
+       if (level->prgcurrent != 0) {
+         for (j = 0; j < (level->prgcurrent + 1); j++) {
+           if (level->prg[j].blendmode != 0) {
+             highpri = i;
+           }
+         }
+       }
+     }
+   }
+
+
+
   // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
-   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
+  if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
     YglRenderDestinationAlpha();
   }
   else
@@ -3681,12 +3700,25 @@ void YglRender(void) {
               glDisable(GL_BLEND);
             }
             else if ((level->prg[j].blendmode & 0x03) == VDP2_CC_RATE){
-              glEnable(GL_BLEND);
-              glBlendFunc(blendfunc_src, blendfunc_dst);
+                glEnable(GL_BLEND);
+                glBlendFunc(blendfunc_src, blendfunc_dst);
             }
             else if ( (level->prg[j].blendmode&0x03) == VDP2_CC_ADD){
-              glEnable(GL_BLEND);
-              glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+
+              // This is workaround for Azel disc 2
+              if ((fixVdp2Regs->CCCTL & 0x500) == 0x100) {
+                if (highpri == i || highpri - 1 == i) {
+                  glEnable(GL_BLEND);
+                  glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+                }
+                else {
+                  glDisable(GL_BLEND);
+                }
+              }
+              else {
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+              }
             }
           }
 
