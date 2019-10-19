@@ -2883,7 +2883,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
 
   glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), (float)_Ygl->rwidth/(float)512.0, (float)_Ygl->rheight/(float)256.0);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "vdp1shift"), (int)((float)_Ygl->vdp1height - (float)(Vdp1Regs->systemclipY2 * _Ygl->vdp1height)/256.0));
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "vdp1shift"), (int)((float)_Ygl->vdp1height - (float)(_Ygl->rheight * _Ygl->vdp1height)/256.0));
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
