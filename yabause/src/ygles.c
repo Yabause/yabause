@@ -3907,7 +3907,7 @@ int YglCleanUpWindow(YglProgram * prg){
       // Disable Color clacuration then draw outside of window
       glDisable(GL_STENCIL_TEST);
       glEnable(GL_DEPTH_TEST);
-      glDepthFunc(GL_GREATER);
+      glDepthFunc(GL_GEQUAL);
       glDisable(GL_BLEND);
       Ygl_setNormalshader(prg);
       glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)prg->quads);
