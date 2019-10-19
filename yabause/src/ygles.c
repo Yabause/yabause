@@ -4006,7 +4006,7 @@ void YglRenderDestinationAlpha(void) {
     {
       to = i;
 
-      if (highpri == i){
+      if (highpri == i ){
         glEnable(GL_BLEND);
         glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
       }else{
@@ -4060,7 +4060,8 @@ void YglRenderDestinationAlpha(void) {
           }
         }
 
-        if (i != highpri){
+        // workaround for "KURO NO DANSYOU #657"
+        if (i != highpri && highpri - 1 != i ){
           glDisable(GL_BLEND);
         }
 
