@@ -566,7 +566,6 @@ void Vdp2HBlankIN(void) {
 
 void Vdp2HBlankOUT(void) {
   int i;
-  ScuHBlankOut();
   if (yabsys.LineCount < yabsys.VBlankLineCount)
   {
     Vdp2Regs->TVSTAT &= ~0x0004;
