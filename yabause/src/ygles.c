@@ -3623,18 +3623,23 @@ void YglRender(void) {
 
    // This is workaround for Azel disc 2
    // Only top and second prioriy pixel is calculated
-   int highpri = 0;
+   int lowpri = -1;
+   int hitcnt = 0;
    if ( (fixVdp2Regs->CCCTL & 0x500) == 0x100 ) {
-     for (i = 0; i < _Ygl->depth; i++)
+     for (i = _Ygl->depth; i > 0 ; i--)
      {
        level = _Ygl->levels + i;
        if (level->prgcurrent != 0) {
-         for (j = 0; j < (level->prgcurrent + 1); j++) {
-           if (level->prg[j].blendmode != 0) {
-             highpri = i;
+         for (j = (level->prgcurrent + 1); j > 0 ; j--) {
+           if (level->prg[j].blendmode & VDP2_CC_ADD) {
+             lowpri = i;
+             hitcnt++;
            }
          }
        }
+     }
+     if (hitcnt < 3) {
+       lowpri = -1;
      }
    }
 
@@ -3707,12 +3712,18 @@ void YglRender(void) {
 
               // This is workaround for Azel disc 2
               if ((fixVdp2Regs->CCCTL & 0x500) == 0x100) {
-                if (highpri == i || highpri - 1 == i) {
-                  glEnable(GL_BLEND);
-                  glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+                if (lowpri == i) {
+                  glDisable(GL_BLEND);
                 }
                 else {
-                  glDisable(GL_BLEND);
+                  glEnable(GL_BLEND);
+
+                  if (level->prg[j].specialcolormode == 0) {
+                    glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+                  }
+                  else {
+                    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                  }
                 }
               }
               else {
