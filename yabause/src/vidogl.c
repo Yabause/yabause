@@ -927,8 +927,9 @@ static void Vdp1SetTextureRatio(int vdp2widthratio, int vdp2heightratio)
     vdp1_interlace = 0;
   }
 
-  _Ygl->vdp1wratio = (float)vdp2widthratio / vdp1w;
-  _Ygl->vdp1hratio = (float)vdp2heightratio / vdp1h;
+  //adjust vdp1 upscale ratio
+  _Ygl->vdp1wratio /= vdp1w;
+  _Ygl->vdp1hratio /= vdp1h;
 }
 
 //////////////////////////////////////////////////////////////////////////////

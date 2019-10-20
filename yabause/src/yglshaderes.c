@@ -102,8 +102,7 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   }
 
   glUniform2f(prg->ids->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
-  glUniform3i(prg->ids->sysclip, (int)(Vdp1Regs->systemclipX2 * _Ygl->vdp1width)/512, (int)(Vdp1Regs->systemclipY2 * _Ygl->vdp1height)/256, _Ygl->vdp1height);
-
+  glUniform3i(prg->ids->sysclip, (int)(Vdp1Regs->systemclipX2 * _Ygl->vdp1wratio), (int)(Vdp1Regs->systemclipY2 * _Ygl->vdp1hratio), _Ygl->vdp1height);
 
   if (prg->ids->sprite != -1){
     glUniform1i(prg->ids->sprite, 0);
@@ -2881,8 +2880,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_cc_win"), 13);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
-  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), (float)_Ygl->width/(float)_Ygl->vdp1width, (float)_Ygl->height/(float)_Ygl->vdp1height);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "vdp1shift"), _Ygl->vdp1height-_Ygl->height);
+  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), ((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio)/(float)_Ygl->vdp1width, ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio)/(float)_Ygl->vdp1height);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "vdp1shift"), _Ygl->vdp1height-((float)_Ygl->rheight*(float)_Ygl->vdp1hratio));
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);

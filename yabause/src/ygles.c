@@ -3741,6 +3741,7 @@ void YglChangeResolution(int w, int h) {
   _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && getVdp2CSUsage();
   YglLoadIdentity(&_Ygl->mtxModelView);
   YglLoadIdentity(&_Ygl->rbgModelView);
+  float ratio = (float)w/(float)h;
   releaseVDP1FB();
        YGLDEBUG("YglChangeResolution %d,%d\n",w,h);
        if (_Ygl->smallfbo != 0) {
@@ -3773,36 +3774,39 @@ void YglChangeResolution(int w, int h) {
 
      switch (_Ygl->resolution_mode) {
        case RES_480p: //480p
-         _Ygl->width = 720;
-         _Ygl->height = 480;
+       _Ygl->height = 480;
        break;
        case RES_720p: //720p
-       _Ygl->width = 1280;
        _Ygl->height = 720;
        break;
        case RES_1080p: //1080p
-       _Ygl->width = 1920;
        _Ygl->height = 1080;
        break;
        case RES_NATIVE: //Native
-       _Ygl->width = GlWidth;
-       _Ygl->height = GlHeight;
+       _Ygl->height = (GlHeight < GlWidth)?GlHeight:GlWidth/ratio;
        break;
        case RES_ORIGINAL: //Original
        default:
-        _Ygl->width = w;
         _Ygl->height = h;
      }
+     _Ygl->width = _Ygl->height * ratio;
 
+  //Game original resolution (VDP2 texture size)
   _Ygl->rwidth = w;
   _Ygl->rheight = h;
 
+  // Texture size for vdp1
   _Ygl->vdp1width = ceil((float)_Ygl->width/512.0) * 512;
   _Ygl->vdp1height = (float)_Ygl->vdp1width/2.0;
+
+  //upscale Ratio of effective original vdp1FB
+  _Ygl->vdp1wratio = (float)_Ygl->vdp1width / (512.0f);
+  _Ygl->vdp1hratio = (float)_Ygl->vdp1height / (256.0f);
 
   YglOrtho(&_Ygl->mtxModelView, 0.0f, _Ygl->vdp1width, _Ygl->vdp1height, 0.0f, 10.0f, 0.0f);
   rebuild_frame_buffer = 1;
 
+  //Effective vdp2 upscale ratio
   _Ygl->widthRatio = (float)_Ygl->width/(float)_Ygl->rwidth;
   _Ygl->heightRatio = (float)_Ygl->height/(float)_Ygl->rheight;
 
