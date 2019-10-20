@@ -413,6 +413,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
          break;
       case 0xC:
          Vdp1Regs->ENDR = val;
+         Vdp1External.status = VDP1_STATUS_IDLE;
          break;
       default:
          LOG("trying to write a Vdp1 read-only register - %08X\n", addr);
