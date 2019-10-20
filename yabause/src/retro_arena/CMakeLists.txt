@@ -68,7 +68,6 @@ set(yabause_ra_SOURCES
 ) 
 link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} )
 include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" )
-link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} )
 add_executable(yabause-retro-arena ${yabause_ra_SOURCES})
 target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui stdc++fs  ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${LIBCHDR_LIBRARIES} )

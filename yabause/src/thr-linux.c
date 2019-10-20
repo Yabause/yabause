@@ -252,6 +252,9 @@ void YabThreadFreeMutex( YabMutex * mtx ){
 
 void YabThreadSetCurrentThreadAffinityMask(int mask)
 {
+#if defined(__XU4__)
+	return;
+#endif
 #if !defined(ANDROID) // it needs more than android-21
     int err, syscallres;
 #ifdef SYS_gettid
