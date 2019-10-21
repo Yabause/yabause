@@ -2880,8 +2880,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_cc_win"), 13);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
-  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), ((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio)/(float)_Ygl->vdp1width, ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio)/(float)_Ygl->vdp1height);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "vdp1shift"), _Ygl->vdp1height-((float)_Ygl->rheight*(float)_Ygl->vdp1hratio));
+  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), ((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "vdp1shift"), (int)((_Ygl->vdp1height-((float)_Ygl->rheight*(float)_Ygl->vdp1hratio))/(float)_Ygl->vdp2hdensity));
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);

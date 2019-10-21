@@ -3800,8 +3800,8 @@ void YglChangeResolution(int w, int h) {
   _Ygl->vdp1height = (float)_Ygl->vdp1width/2.0;
 
   //upscale Ratio of effective original vdp1FB
-  _Ygl->vdp1wratio = (float)_Ygl->vdp1width / (512.0f);
-  _Ygl->vdp1hratio = (float)_Ygl->vdp1height / (256.0f);
+  _Ygl->vdp1wratio = (float)_Ygl->vdp1width / (512.0f * _Ygl->vdp1wdensity);
+  _Ygl->vdp1hratio = (float)_Ygl->vdp1height / (256.0f * _Ygl->vdp1hdensity);
 
   YglOrtho(&_Ygl->mtxModelView, 0.0f, _Ygl->vdp1width, _Ygl->vdp1height, 0.0f, 10.0f, 0.0f);
   rebuild_frame_buffer = 1;

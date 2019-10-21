@@ -685,6 +685,12 @@ typedef struct {
    float vdp1wratio;
    float vdp1hratio;
 
+   float vdp1wdensity;
+   float vdp1hdensity;
+
+   float vdp2wdensity;
+   float vdp2hdensity;
+
 } Ygl;
 
 extern Ygl * _Ygl;

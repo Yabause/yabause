@@ -894,8 +894,8 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
 
 static void Vdp1SetTextureRatio(int vdp2widthratio, int vdp2heightratio)
 {
-  float vdp1w = 1;
-  float vdp1h = 1;
+  int vdp1w = 1;
+  int vdp1h = 1;
 
   // may need some tweaking
   if (Vdp1Regs->TVMR & 0x1) VDP1_MASK = 0xFF;
@@ -927,9 +927,11 @@ static void Vdp1SetTextureRatio(int vdp2widthratio, int vdp2heightratio)
     vdp1_interlace = 0;
   }
 
-  //adjust vdp1 upscale ratio
-  _Ygl->vdp1wratio /= vdp1w;
-  _Ygl->vdp1hratio /= vdp1h;
+  _Ygl->vdp1wdensity = vdp1w;
+  _Ygl->vdp1hdensity = vdp1h;
+
+  _Ygl->vdp2wdensity = vdp2widthratio;
+  _Ygl->vdp2hdensity = vdp2heightratio;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3112,6 +3114,12 @@ int VIDOGLInit(void)
 
   _Ygl->vdp1wratio = 1.0;
   _Ygl->vdp1hratio = 1.0;
+
+  _Ygl->vdp1wdensity = 1.0;
+  _Ygl->vdp1hdensity = 1.0;
+
+  _Ygl->vdp2wdensity = 1.0;
+  _Ygl->vdp2hdensity = 1.0;
 
   vidogl_renderer_started = 1;
 
@@ -6508,6 +6516,7 @@ void VIDOGLVdp2SetResolution(u16 TVMD)
   }
 
   Vdp1SetTextureRatio(wratio, hratio);
+
   if ((width != _Ygl->rwidth) || (height != _Ygl->rheight))SetSaturnResolution(width, height);
 }
 
