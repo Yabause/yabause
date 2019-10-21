@@ -3592,22 +3592,18 @@ void YglRender(void) {
      }
      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->fxaa_fbo);
      _Ygl->targetfbo = _Ygl->fxaa_fbo;
-     glClearDepthf(0.0f);
-     glDepthMask(GL_TRUE);
-     glEnable(GL_DEPTH_TEST);
-     glDisable(GL_SCISSOR_TEST);
-     glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
    } else {
      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
      _Ygl->targetfbo = _Ygl->default_fbo;
-     glClearDepthf(0.0f);
-     glDepthMask(GL_TRUE);
-     glEnable(GL_DEPTH_TEST);
-     glDisable(GL_SCISSOR_TEST);
-     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
    }
+
+   glClearDepthf(0.0f);
+   glDepthMask(GL_TRUE);
+   glEnable(GL_DEPTH_TEST);
+   glDisable(GL_SCISSOR_TEST);
+   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
    glEnable(GL_SCISSOR_TEST);
    if (_Ygl->resolution_mode != RES_NATIVE) {
