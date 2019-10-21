@@ -279,6 +279,7 @@ void VideoDeInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp1Reset(void) {
+  memset(Vdp1Regs, 0, sizeof(Vdp1Regs));
    Vdp1Regs->PTMR = 0;
    Vdp1Regs->MODR = 0x1000; // VDP1 Version 1
    Vdp1Regs->TVMR = 0;
@@ -287,6 +288,16 @@ void Vdp1Reset(void) {
    Vdp1Regs->EWRR = 0;
    Vdp1Regs->ENDR = 0;
    VIDCore->Vdp1Reset();
+
+   Vdp1Regs->userclipX1 = 0;
+   Vdp1Regs->userclipY1 = 0;
+   Vdp1Regs->userclipX2 = 1024;
+   Vdp1Regs->userclipY2 = 1024;
+   Vdp1Regs->systemclipX1 = 0;
+   Vdp1Regs->systemclipY1 = 0;
+   Vdp1Regs->systemclipX2 = 1024;
+   Vdp1Regs->systemclipY2 = 1024;
+
 }
 
 int VideoSetSetting( int type, int value )
