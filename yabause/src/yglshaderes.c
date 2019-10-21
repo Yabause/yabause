@@ -245,7 +245,6 @@ SHADER_VERSION
 "uniform vec4 u_color_offset;\n"
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
-"uniform float u_emu_width;\n"
 "uniform float u_vwidth; \n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_perline;  \n"
@@ -1533,6 +1532,7 @@ SHADER_VERSION
 "out vec4 fourthColor; \n"
 #endif
 "uniform float u_emu_height;\n"
+"uniform float u_emu_width;\n"
 "uniform float u_vheight; \n"
 
 "uniform sampler2D s_texture0;  \n"
@@ -1640,13 +1640,13 @@ static const char vdp2blit_end_f[] =
 "void initLineWindow() {\n"
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
-"  linepos.x = int(u_vheight-gl_FragCoord.y);\n"
+"  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  vec4 lineW0 = texelFetch(s_win0,linepos,0);\n"
-"  startW0 = int(lineW0.r*255.0) + (int(lineW0.g*255.0)<<8);\n"
-"  endW0 = int(lineW0.b*255.0) + (int(lineW0.a*255.0)<<8);\n"
+"  startW0 = int(((lineW0.r*255.0) + (int(lineW0.g*255.0)<<8)) * u_emu_width);\n"
+"  endW0 = int(((lineW0.b*255.0) + (int(lineW0.a*255.0)<<8)) * u_emu_width);\n"
 "  vec4 lineW1 = texelFetch(s_win1,linepos,0);\n"
-"  startW1 = int(lineW1.r*255.0) + (int(lineW1.g*255.0)<<8);\n"
-"  endW1 = int(lineW1.b*255.0) + (int(lineW1.a*255.0)<<8);\n"
+"  startW1 = int(((lineW1.r*255.0) + (int(lineW1.g*255.0)<<8)) * u_emu_width);\n"
+"  endW1 = int(((lineW1.b*255.0) + (int(lineW1.a*255.0)<<8)) * u_emu_width);\n"
 "}\n"
 "bool inNormalWindow0(int id, int pos) {\n"
 "  bool valid = true; \n"
@@ -2525,7 +2525,6 @@ int YglProgramInit()
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
   id_normal_cram_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_emu_height");
   id_normal_cram_vheight = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_vheight");
-  id_normal_cram_emu_width = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_emu_width");
   id_normal_cram_vwidth = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_vwidth");
 
 
@@ -2893,6 +2892,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_width"),(float)(_Ygl->vdp1width) / (float)(_Ygl->rwidth));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), enBGMAX+1, Win_s);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), enBGMAX+1, Win_s_mode);
