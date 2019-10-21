@@ -739,9 +739,9 @@ static u32* getVdp1DrawingFBMem() {
     executeTMVDP1(_Ygl->drawframe, _Ygl->drawframe);
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex, 0);
-    glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
+    glViewport(0,0,512,256);
     glClearBufferfv(GL_COLOR, 0, col);
-    YglBlitVDP1(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->width, _Ygl->height, 0);
+    YglBlitVDP1(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->vdp1width, _Ygl->vdp1height, 0);
     glReadPixels(0, 0, 512, 256, GL_RGBA, GL_UNSIGNED_BYTE, write_fb);
     manualfb = write_fb;
   }
@@ -2994,7 +2994,7 @@ static void YglUpdateVDP1FB(void) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
     glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
     glViewport(0,0, _Ygl->vdp1width, _Ygl->vdp1height);
-    YglBlitVDP1(_Ygl->vdp1AccessTex, _Ygl->rwidth, _Ygl->rheight, 1);
+    YglBlitVDP1(_Ygl->vdp1AccessTex, 512, 256, 1);
     // clean up
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
     _Ygl->vdp1IsNotEmpty = 0;
