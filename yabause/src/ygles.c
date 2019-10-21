@@ -2681,7 +2681,7 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
   }
   else {
 
-    line_height = input->cellh;
+    line_height = input->drawh;
 
 	  program->interuput_texture = 0;
 
