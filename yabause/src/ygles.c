@@ -3637,10 +3637,10 @@ void YglRender(void) {
    }
    
    if (_Ygl->texture_manager == NULL) goto render_finish;
+   YglUpdateVdp2Reg();
+
    glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
-   YglUpdateVdp2Reg();
 
   // Color Calcurate Window  
    ccwindow = ((Vdp2Regs->WCTLD >> 9) & 0x01);
