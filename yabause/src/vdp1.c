@@ -671,6 +671,7 @@ void Vdp1NoDraw(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram) {
+  addr &= 0x7FFFF;
    cmd->CMDCTRL = T1ReadWord(ram, addr);
    cmd->CMDLINK = T1ReadWord(ram, addr + 0x2);
    cmd->CMDPMOD = T1ReadWord(ram, addr + 0x4);
