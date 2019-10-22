@@ -57,43 +57,44 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Calendar;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+
 public class GameSelectPresenter {
 
     private FirebaseAnalytics mFirebaseAnalytics;
     public  interface GameSelectPresenterListener {
-        void onUpdateGameList( );
+        //void onUpdateGameList( );
         void onShowMessage( int string_id );
     }
 
-    class UpdateGameDatabaseTask extends AsyncTask<String, Integer, Integer> {
-
-        @Override
-        protected Integer doInBackground(String ... i) {
-            YabauseStorage ybs = YabauseStorage.getStorage();
-            ybs.generateGameDB(refresh_level_);
-            refresh_level_ = 0;
-            return 0;
-        }
-
-        @Override
-        protected void onPostExecute(Integer result) {
-            // The results of the above method
-            // Processing the results here
-            myHandler.sendEmptyMessage(0);
-        }
-
+    void updateGameDatabaseRx( Observer observer ){
+        Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(ObservableEmitter<String> emitter){
+                YabauseStorage ybs = YabauseStorage.getStorage();
+                ybs.setProcessEmmiter(emitter);
+                ybs.generateGameDB(refresh_level_);
+                ybs.setProcessEmmiter(null);
+                refresh_level_ = 0;
+                emitter.onComplete();
+            }
+        }).observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(Schedulers.io())
+            .subscribe(observer);
     }
+
 
     int refresh_level_ = 0;
     android.app.Fragment target_ = null ;
     GameSelectPresenterListener listener_ = null ;
 
     public static final int RC_SIGN_IN = 123;
-
-    public static
-
-    Handler myHandler;
-    UpdateGameDatabaseTask mUpdateThread = null;
 
     private String username_;
     private Uri photo_url_;
@@ -102,22 +103,11 @@ public class GameSelectPresenter {
         target_ = target;
         listener_ = listener;
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(target_.getActivity());
-        myHandler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                switch (msg.what) {
-                    case 0:
-                        mUpdateThread = null;
-                        listener_.onUpdateGameList();
-                        break;
-                    default:
-                        break;
-                }
-            }
-        };
     }
 
-    public void updateGameList( int refresh_level ){
+
+
+    public void updateGameList( int refresh_level, Observer observer ){
 
         refresh_level_ = refresh_level;
         Activity activity = target_.getActivity();
@@ -144,11 +134,7 @@ public class GameSelectPresenter {
             editor.putString("pref_game_download_directory", "0");
             editor.apply();
         }
-
-        if( mUpdateThread == null ) {
-            mUpdateThread = new UpdateGameDatabaseTask();
-            mUpdateThread.execute("init");
-        }
+        updateGameDatabaseRx( observer );
     }
 
 
@@ -171,7 +157,7 @@ public class GameSelectPresenter {
                         // user is now signed out
                         //startActivity(new Intent(MyActivity.this, SignInActivity.class));
                         //finish();
-                        listener_.onUpdateGameList();
+                        //listener_.onUpdateGameList();
                     }
                 });
     }
@@ -182,7 +168,7 @@ public class GameSelectPresenter {
         if (resultCode == Activity.RESULT_OK) {
             response.getIdpToken();
             String token = response.getIdpToken();
-            listener_.onUpdateGameList();
+            //listener_.onUpdateGameList();
             FirebaseAuth auth = FirebaseAuth.getInstance();
             DatabaseReference baseref  = FirebaseDatabase.getInstance().getReference();
             String baseurl = "/user-posts/" + auth.getCurrentUser().getUid();

@@ -64,6 +64,8 @@ import org.apache.commons.io.filefilter.*;
 import org.apache.commons.io.IOCase;
 import org.uoyabause.uranus.R;
 
+import io.reactivex.ObservableEmitter;
+
 class BiosFilter implements FilenameFilter {
     public boolean accept(File dir, String filename) {
         if (filename.endsWith(".bin")) return true;
@@ -109,6 +111,12 @@ public class YabauseStorage {
     private File state;
     private File screenshots;
     private File external = null;
+
+    private ObservableEmitter<String> progress_emitter = null;
+
+    void setProcessEmmiter( ObservableEmitter<String> emitter ){
+        progress_emitter = emitter;
+    }
 
     private YabauseStorage() {
         File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
@@ -369,6 +377,9 @@ public class YabauseStorage {
             if( gameinfo != null ) {
                 gameinfo.updateState();
                 gameinfo.save();
+                if( progress_emitter != null ){
+                    progress_emitter.onNext(gameinfo.game_title);
+                }
             }
         }
 
