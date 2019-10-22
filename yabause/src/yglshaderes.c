@@ -1532,7 +1532,8 @@ SHADER_VERSION
 "out vec4 fourthColor; \n"
 #endif
 "uniform float u_emu_height;\n"
-"uniform float u_emu_width;\n"
+"uniform float u_emu_vdp1_width;\n"
+"uniform float u_emu_vdp2_width;\n"
 "uniform float u_vheight; \n"
 
 "uniform sampler2D s_texture0;  \n"
@@ -1642,15 +1643,15 @@ static const char vdp2blit_end_f[] =
 "  linepos.y = 0; \n "
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  vec4 lineW0 = texelFetch(s_win0,linepos,0);\n"
-"  startW0.x = int(((lineW0.r*255.0) + (int(lineW0.g*255.0)<<8)));\n"
-"  endW0.x = int(((lineW0.b*255.0) + (int(lineW0.a*255.0)<<8)));\n"
-"  startW0.y = int(startW0.x * u_emu_width);\n"
-"  endW0.y = int(endW0.x * u_emu_width);\n"
+"  startW0.x = int(((lineW0.r*255.0) + (int(lineW0.g*255.0)<<8))*u_emu_vdp2_width);\n"
+"  endW0.x = int(((lineW0.b*255.0) + (int(lineW0.a*255.0)<<8))*u_emu_vdp2_width);\n"
+"  startW0.y = int(((lineW0.r*255.0) + (int(lineW0.g*255.0)<<8))*u_emu_vdp1_width);\n"
+"  endW0.y = int(((lineW0.b*255.0) + (int(lineW0.a*255.0)<<8))*u_emu_vdp1_width);\n"
 "  vec4 lineW1 = texelFetch(s_win1,linepos,0);\n"
-"  startW1.x = int(((lineW1.r*255.0) + (int(lineW1.g*255.0)<<8)));\n"
-"  endW1.x = int(((lineW1.b*255.0) + (int(lineW1.a*255.0)<<8)));\n"
-"  startW1.y = int(startW1.x * u_emu_width);\n"
-"  endW1.y = int(endW1.x * u_emu_width);\n"
+"  startW1.x = int(((lineW1.r*255.0) + (int(lineW1.g*255.0)<<8))*u_emu_vdp2_width);\n"
+"  endW1.x = int(((lineW1.b*255.0) + (int(lineW1.a*255.0)<<8))*u_emu_vdp2_width);\n"
+"  startW1.y = int(((lineW1.r*255.0) + (int(lineW1.g*255.0)<<8))*u_emu_vdp1_width);\n"
+"  endW1.y = int(((lineW1.b*255.0) + (int(lineW1.a*255.0)<<8))*u_emu_vdp1_width);\n"
 "}\n"
 "bool inNormalWindow0(int id, int pos) {\n"
 "  bool valid = true; \n"
@@ -2902,7 +2903,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
-  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_width"),(float)(_Ygl->vdp1width) / (float)(_Ygl->rwidth));
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp1_width"),(float)(_Ygl->vdp1width) / (float)(_Ygl->rwidth));
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp2_width"),(float)(_Ygl->width) / (float)(_Ygl->rwidth));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), enBGMAX+1, Win_s);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), enBGMAX+1, Win_s_mode);
