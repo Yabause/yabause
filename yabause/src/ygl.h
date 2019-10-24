@@ -209,7 +209,7 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
 #include "vidshared.h"
 #include "vdp1.h"
 
-//#define DEBUG_BLIT
+// #define DEBUG_BLIT
 
 #ifdef DEBUG_BLIT
 #define NB_RENDER_LAYER 5
@@ -544,6 +544,7 @@ typedef struct {
    int rheight;
    int vdp1width;
    int vdp1height;
+   float vdp1expand;
    float widthRatio;
    float heightRatio;
    int density;

@@ -31,6 +31,8 @@
 
 #define YGLLOG //YuiMsg
 
+#define ALIGN(A,B) (((A)%(B))? A + (B - ((A)%(B))) : A)
+
 #define QuoteIdent(ident) #ident
 #define Stringify(macro) QuoteIdent(macro)
 
@@ -1010,7 +1012,7 @@ refrence:
 */
 
 const GLchar Yglprg_vdp2_drawfb_cram_f[] =
-"  FBCol getFB(int x){ \n"
+"  FBCol getFB(int x, ivec2 addr){ \n"
 "  FBCol ret = zeroFBCol();\n"
 "  FBCol mesh = zeroFBCol();\n"
 "  if (fbon != 1) return ret;\n"
@@ -1024,9 +1026,10 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  int u_color_ram_offset = int(texelFetch(s_vdp2reg, ivec2(23+line,0), 0).r*255.0)<<8;\n"
 "  fbmode = 1;\n"
 "  vdp1mode = 1;\n"
-"  vec4 fbCoord = vec4(v_texcoord.st * textureSize(s_vdp1FrameBuffer, 0) + vec2(x, 0.0), 1.0, 1.0);\n"
-"  fbCoord = vec4(vdp1Ratio.x* fbCoord.x, vdp1Ratio.y*(fbCoord.y+vdp1shift), fbCoord.zw) * fbMat;\n"
-"  vec4 col = texelFetch(s_vdp1FrameBuffer, ivec2(fbCoord.xy), 0);\n"
+"  ivec2 fbCoord = addr + ivec2(x, 0);\n"
+"  fbCoord = ivec2(vec4(vdp1Ratio.x* fbCoord.x, vdp1Ratio.y*(fbCoord.y), 1.0, 1.0) * fbMat).xy;\n"
+"  vec4 col = texelFetch(s_vdp1FrameBuffer, fbCoord, 0);\n"
+"  FBTest = col;\n"
 "  ret = getVDP1PixelCode(col.rg);\n"
 "  mesh = getVDP1PixelCode(col.ba);"
 "  if (mesh.valid != 0) { \n"
@@ -1516,6 +1519,7 @@ SHADER_VERSION
 "vec4 vdp2col4 = vec4(0.0);\n"
 "vec4 vdp2col5 = vec4(0.0);\n"
 "vec4 FBShadow = vec4(0.0);\n"
+"vec4 FBTest = vec4(0.0);\n"
 "int FBPrio = 0;\n"
 "bool FBSPwin = false;\n"
 "int FBMesh = 0;\n"
@@ -1545,7 +1549,6 @@ SHADER_VERSION
 "uniform sampler2D s_win0;  \n"
 "uniform sampler2D s_win1;  \n"
 "uniform vec2 vdp1Ratio;\n"
-"uniform int vdp1shift;\n"
 "uniform int fbon;  \n"
 "uniform int screen_nb;  \n"
 "uniform int mode[7];  \n"
@@ -1564,6 +1567,7 @@ SHADER_VERSION
 "uniform int extended_cc; \n"
 "uniform int use_sp_win; \n"
 "uniform int use_trans_shadow; \n"
+"uniform ivec2 tvSize;\n"
 
 "struct Col \n"
 "{ \n"
@@ -1836,8 +1840,8 @@ static const char vdp2blit_end_f[] =
 "  vec4 txcolll;\n"
 "  vec4 txcol = pix.Color;\n"
 "  if (pix.layer == 6) { \n"
-"    txcoll = getFB(-1).color;\n"
-"    txcolll = getFB(-2).color;\n"
+"    txcoll = getFB(-1, addr).color;\n"
+"    txcolll = getFB(-2, addr).color;\n"
 "  }\n"
 "  if (pix.layer == 0) { \n"
 "    txcoll = texelFetch( s_texture0, ivec2(addr.x-1, addr.y),0 );      \n"
@@ -1895,12 +1899,13 @@ static const char vdp2blit_end_f[] =
 "  float alphafourth = 1.0; \n"
 "  ivec2 addr = ivec2(textureSize(s_back, 0) * v_texcoord.st); \n"
 "  colorback = texelFetch( s_back, addr,0 ); \n"
-"  addr = ivec2(textureSize(s_texture0, 0) * v_texcoord.st); \n"
+"  addr = ivec2(tvSize * v_texcoord.st); \n"
+"  addr.y += int(float(textureSize(s_vdp1FrameBuffer, 0).y)/vdp1Ratio.y) - tvSize.y;\n"
 "  initLineWindow();\n"
 "  colortop = colorback; \n"
 "  isRGBtop = 1; \n"
 "  alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n"
-"  FBCol tmp = getFB(0); \n"
+"  FBCol tmp = getFB(0, addr); \n"
 "  FBColor = tmp.color;\n"
 "  FBPrio = tmp.prio;\n"
 "  FBSPwin = tmp.spwin;\n"
@@ -2140,7 +2145,7 @@ static const char vdp2blit_end_f[] =
 #ifdef DEBUG_BLIT
 "  topColor = colortop;\n"
 "  secondColor = colorsecond;\n"
-"  thirdColor = FBShadow;\n"
+"  thirdColor = FBTest;\n"
 "  fourthColor = FBShadow;\n"
 #endif
 "} \n";
@@ -2890,8 +2895,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_cc_win"), 13);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
-  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), ((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "vdp1shift"), (int)((_Ygl->vdp1height-((float)_Ygl->rheight*(float)_Ygl->vdp1hratio))/(float)_Ygl->vdp2hdensity));
+  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), _Ygl->vdp1expand, _Ygl->vdp1expand);//((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));
+  glUniform2i(glGetUniformLocation(vdp2blit_prg, "tvSize"), _Ygl->rwidth, _Ygl->rheight);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);

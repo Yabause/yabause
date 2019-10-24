@@ -1267,6 +1267,7 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->rheight = 240;
   _Ygl->vdp1width = 512;
   _Ygl->vdp1height = 256;
+  _Ygl->vdp1expand = 1.0f;
   _Ygl->widthRatio = 1.0f;
   _Ygl->heightRatio = 1.0f;
   _Ygl->density = 1;
@@ -3774,13 +3775,13 @@ void YglChangeResolution(int w, int h) {
 
      switch (_Ygl->resolution_mode) {
        case RES_480p: //480p
-       _Ygl->height = 480;
+       _Ygl->height = 512;
        break;
        case RES_720p: //720p
-       _Ygl->height = 720;
+       _Ygl->height = 768;
        break;
        case RES_1080p: //1080p
-       _Ygl->height = 1080;
+       _Ygl->height = 1024;
        break;
        case RES_NATIVE: //Native
        _Ygl->height = (GlHeight < GlWidth)?GlHeight:GlWidth/ratio;
@@ -3798,6 +3799,8 @@ void YglChangeResolution(int w, int h) {
   // Texture size for vdp1
   _Ygl->vdp1width = ceil((float)_Ygl->width/512.0) * 512;
   _Ygl->vdp1height = (float)_Ygl->vdp1width/2.0;
+
+  _Ygl->vdp1expand = _Ygl->vdp1width/(ceil((float)_Ygl->rwidth/512.0) * 512);
 
   //upscale Ratio of effective original vdp1FB
   _Ygl->vdp1wratio = (float)_Ygl->vdp1width / (512.0f * _Ygl->vdp1wdensity);
