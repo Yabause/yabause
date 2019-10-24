@@ -767,12 +767,13 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   u8 priority = Vdp2Regs->PRISA &0x7;
   u16 full = 0;
   _Ygl->vdp1fb_buf =  getVdp1DrawingFBMem();
+
   switch (type)
   {
   case 0:
     full = T1ReadLong((u8*)_Ygl->vdp1fb_buf, (addr&(~0x1))*2);
-    if (addr & 0x1) full = (full & 0xFF) | ((val& 0xFF) << 8);
-    else full = (full & 0xFF00) | (val& 0xFF);
+    if (addr & 0x1) full = (full & 0xFF00) | (val& 0xFF);
+    else full = (full & 0xFF) | ((val& 0xFF) << 8);
     T1WriteLong(_Ygl->vdp1fb_buf, (addr&(~0x1))*2, VDP1COLORFB(full&0xFFFF));
     break;
   case 1:
