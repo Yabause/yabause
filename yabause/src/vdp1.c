@@ -288,7 +288,6 @@ u8 FASTCALL Vdp1ReadByte(SH2_struct *context, u8* mem, u32 addr) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-u16 COPR[313*(int)(DECILINE_STEP)];
 
 u16 FASTCALL Vdp1ReadWord(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0xFF;
@@ -301,8 +300,7 @@ u16 FASTCALL Vdp1ReadWord(SH2_struct *context, u8* mem, u32 addr) {
          return Vdp1Regs->LOPR;
       case 0x14:
         FRAMELOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
-         //return Vdp1Regs->COPR;
-         return COPR[(yabsys.LineCount-1)*20 + yabsys.DecilineCount];
+         return Vdp1Regs->COPR;
       case 0x16:
          return 0x1000 | ((Vdp1Regs->PTMR & 2) << 7) | ((Vdp1Regs->FBCR & 0x1E) << 3) | (Vdp1Regs->TVMR & 0xF);
       default:
@@ -400,31 +398,14 @@ void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 v
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void setupCOPR(u16 *addr, u32 commandCounter) {
-  float step = (float)((yabsys.MaxLineCount - yabsys.LineCount) * DECILINE_STEP) / (float)(commandCounter+1);
-  for (int i=0; i<yabsys.LineCount*DECILINE_STEP; i++) {
-    COPR[i] = 0;
-  }
-  float hstep = step;
-  int p = 0;
-  for (int i=yabsys.LineCount*DECILINE_STEP; i< yabsys.MaxLineCount*DECILINE_STEP; i++) {
-    COPR[i] = addr[p];
-    hstep -= 1.0;
-    if (hstep < 0.0) {
-      hstep += step;
-      p++;
-    }
-  }
-}
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
-   u16 addr[2000];
    u16 command = T1ReadWord(ram, regs->addr);
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
 
-   addr[commandCounter] = regs->addr >> 3;
+   regs->COPR = regs->addr >> 3;
 
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       // First, process the command
@@ -465,8 +446,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
             regs->LOPR = regs->addr >> 3;
-            addr[commandCounter] = regs->addr >> 3;
-            setupCOPR(&addr[0], commandCounter);
+            regs->COPR = regs->addr >> 3;
             return;
          }
       }
@@ -474,8 +454,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
 	  if (regs->EDSR & 0x02){
 		  regs->LOPR = regs->addr >> 3;
-		  addr[commandCounter] = regs->addr >> 3;
-      setupCOPR(&addr[0], commandCounter);
+		  regs->COPR = regs->addr >> 3;
 		  return;
 	  }
 
@@ -504,10 +483,9 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       }
 
       command = T1ReadWord(ram, regs->addr);
-      addr[commandCounter] = regs->addr >> 3;
+      regs->COPR = regs->addr >> 3;
       commandCounter++;
    }
-   setupCOPR(&addr[0], commandCounter-1);
 }
 
 //ensure that registers are set correctly
@@ -1659,7 +1637,7 @@ static void startField(void) {
       VIDCore->Vdp1EraseWrite();
       Vdp1External.manualerase = 0;
     }
-    
+
     VIDCore->Vdp1FrameChange();
     Vdp1External.current_frame = !Vdp1External.current_frame;
     Vdp1Regs->EDSR >>= 1;

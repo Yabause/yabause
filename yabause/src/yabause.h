@@ -28,8 +28,6 @@
 extern "C" {
 #endif
 
-#define DECILINE_STEP (20.0)
-
 typedef struct
 {
    int percoretype;
