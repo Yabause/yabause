@@ -72,9 +72,14 @@ ifneq (,$(findstring unix,$(platform)))
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
 	#DYNAREC = 2
-	FLAGS += -pthread
-	LDFLAGS += -pthread
-	ARCH_IS_LINUX = 1
+	ifneq (,$(findstring Haiku,$(shell uname -s)))
+		LDFLAGS += -lroot
+	else
+		FLAGS += -pthread
+		LDFLAGS += -pthread
+		ARCH_IS_LINUX = 1
+	endif
+
 	# ARM
 	ifneq (,$(findstring armv,$(platform)))
 		ifneq (,$(findstring cortexa8,$(platform)))
