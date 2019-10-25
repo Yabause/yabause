@@ -39,7 +39,7 @@
 int Ygl_useTmpBuffer();
 int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
 int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, int * mosaic);
-int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, u32 perline);
+int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, u32 perline, u32 enable_special_color_function);
 int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
 
 extern float vdp1wratio;
@@ -339,7 +339,6 @@ static int id_normal_cram_sp_s_color = -1;
 static int id_normal_cram_sp_color_offset = -1;
 static int id_normal_cram_sp_matrix = -1;
 
-
 int Ygl_uniformNormalCram(void * p)
 {
 
@@ -391,6 +390,64 @@ int Ygl_uniformNormalCramSpecialPriority(void * p)
 
   return 0;
 }
+
+
+const GLchar Yglprg_normal_cram_special_priority_colf_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+"precision highp float;\n"
+"precision highp int;\n"
+#else
+"#version 330 \n"
+#endif
+"in vec4 v_texcoord;\n"
+"uniform highp sampler2D s_texture;\n"
+"uniform sampler2D s_color;\n"
+"uniform sampler2D s_linetexture;\n"
+"out vec4 fragColor;\n"
+"void main()\n"
+"{\n"
+"  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
+"  if(txindex.a == 0.0) { discard; }\n"
+"  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*65280.0) | int(txindex.r*255.0)) ,0 )  , 0 );\n"
+"  vec4 color_offset = texelFetch( s_linetexture, ivec2( int(v_texcoord.q), 0), 0 ); \n"
+"  fragColor.r = txcol.r + (color_offset.r-0.5)*2.0;\n"
+"  fragColor.g = txcol.g + (color_offset.g-0.5)*2.0;\n"
+"  fragColor.b = txcol.b + (color_offset.b-0.5)*2.0;\n"
+"  fragColor.a = txindex.a;\n"
+"  gl_FragDepth = ((txindex.b*255.0/10.0) +1.0)/2.0 ; \n"
+"}\n";
+
+const GLchar * pYglprg_normal_cram_special_priority_colf_f[] = { Yglprg_normal_cram_special_priority_colf_f, NULL };
+static int id_normal_cram_spc_s_texture = -1;
+static int id_normal_cram_spc_s_color = -1;
+static int id_normal_cram_spc_s_line = -1;
+static int id_normal_cram_spc_matrix = -1;
+
+int Ygl_uniformNormalCramSPC(void * p)
+{
+  YglProgram * prg;
+  prg = p;
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
+  glUniform1i(id_normal_cram_spc_s_texture, 0);
+  glUniform1i(id_normal_cram_spc_s_color, 1);
+  glUniform1i(id_normal_cram_spc_s_line, 2);
+
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, prg->lineTexture);
+  
+  if (prg->interuput_texture != 0) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture(prg->interuput_texture));
+  }
+  return 0;
+}
+
 
 
 
@@ -750,7 +807,7 @@ int Ygl_cleanupPerLineAlpha(void * p)
   }
 
   // call blit method
-  YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
+  YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture, prg->specialcolormode);
 
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
   glActiveTexture(GL_TEXTURE0);
@@ -2763,6 +2820,14 @@ int YglProgramInit()
   id_normal_cram_sp_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"u_color_offset");
   id_normal_cram_sp_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"u_mvpMatrix");
 
+  if (YglInitShader(PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET, pYglprg_normal_v, pYglprg_normal_cram_special_priority_colf_f, 1, NULL, NULL, NULL) != 0)
+    return -1;
+
+  id_normal_cram_spc_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET], (const GLchar *)"s_texture");
+  id_normal_cram_spc_s_color = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET], (const GLchar *)"s_color");
+  id_normal_cram_spc_s_line = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET], (const GLchar *)"s_linetexture");
+  id_normal_cram_spc_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET], (const GLchar *)"u_mvpMatrix");
+
 
   if (YglInitShader(PG_VDP2_ADDCOLOR_CRAM, pYglprg_normal_v, pYglprg_normal_cram_addcol_f, 1, NULL, NULL, NULL) != 0)
     return -1;
@@ -3120,6 +3185,17 @@ int YglProgramChange( YglLevel * level, int prgid )
    else if (prgid == PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY)
    {
      current->setupUniform = Ygl_uniformNormalCramSpecialPriority;
+     current->cleanupUniform = Ygl_cleanupNormalCram;
+
+     current->vertexp = 0;
+     current->texcoordp = 1;
+     current->mtxModelView = id_normal_cram_sp_matrix;
+     current->color_offset = id_normal_cram_sp_color_offset;
+
+   }
+   else if (prgid == PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET)
+   {
+     current->setupUniform = Ygl_uniformNormalCramSPC;
      current->cleanupUniform = Ygl_cleanupNormalCram;
 
      current->vertexp = 0;
@@ -4377,6 +4453,7 @@ const GLchar perlinealpha_blit_f[] =
 "uniform sampler2D u_Line;                        \n"
 "uniform float u_tw; \n"
 "uniform float u_th; \n"
+"uniform int u_specialColorFunc; \n"
 "out vec4 fragColor;            \n"
 "void main()                                         \n"
 "{                                                   \n"
@@ -4387,7 +4464,11 @@ const GLchar perlinealpha_blit_f[] =
 "  if(txcol.a > 0.0){\n                                 "
 "    addr.x = int(u_th * v_texcoord.y);\n"
 "    addr.y = 0; \n"
-"    txcol.a = texelFetch( u_Line, addr,0 ).a;      \n"
+"    if(u_specialColorFunc == 0 ) { "
+"        txcol.a = texelFetch( u_Line, addr,0 ).a;      \n"
+"    }else{ \n"
+"       if( txcol.a != 1.0 ) txcol.a = texelFetch( u_Line, addr,0 ).a; \n"
+"    }"
 "    txcol.r += (texelFetch( u_Line, addr,0 ).r-0.5)*2.0;\n"
 "    txcol.g += (texelFetch( u_Line, addr,0 ).g-0.5)*2.0;\n"
 "    txcol.b += (texelFetch( u_Line, addr,0 ).b-0.5)*2.0;\n"
@@ -4404,9 +4485,10 @@ static int perlinealpha_prg = -1;
 static int u_perlinealpha_mtxModelView = -1;
 static int u_perlinealpha_tw = -1;
 static int u_perlinealpha_th = -1;
+static int u_special_color_function = -1;
 
 
-int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, u32 lineTexture) {
+int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, u32 lineTexture, u32 enable_special_color_function) {
 
   float vb[] = { 0, 0,
     2.0, 0.0,
@@ -4484,6 +4566,8 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
     int id_line = glGetUniformLocation(perlinealpha_prg, "u_Line");
     glUniform1i(id_line, 1);
 
+    u_special_color_function = glGetUniformLocation(perlinealpha_prg, "u_specialColorFunc");
+
     u_perlinealpha_mtxModelView = glGetUniformLocation(perlinealpha_prg, (const GLchar *)"u_mvpMatrix");
     u_perlinealpha_tw = glGetUniformLocation(perlinealpha_prg, "u_tw");
     u_perlinealpha_th = glGetUniformLocation(perlinealpha_prg, "u_th");
@@ -4492,6 +4576,9 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
   else{
     glUseProgram(perlinealpha_prg);
   }
+
+
+  glUniform1i(u_special_color_function, enable_special_color_function);
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);

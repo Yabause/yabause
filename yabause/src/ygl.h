@@ -320,6 +320,7 @@ enum
    PG_VDP2_PER_LINE_ALPHA,
    PG_VDP2_NORMAL_CRAM,
    PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY,
+   PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET,
    PG_VDP2_ADDCOLOR_CRAM,
    PG_VDP2_BLUR_CRAM,
    PG_VDP2_MOSAIC_CRAM,
@@ -442,6 +443,7 @@ typedef struct {
    int id;
    int colornumber;
    GLuint interuput_texture;
+   u32 specialcolormode;
 } YglProgram;
 
 typedef struct {

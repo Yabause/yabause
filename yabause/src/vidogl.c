@@ -1814,6 +1814,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   u8 dot;
   u32 alpha = 0xFF;
 
+  alpha = info->alpha;
   dot = (dotw & 0xF000) >> 12;
   if (!(dot & 0xF) && info->transparencyenable) {
     *texture->textdata++ = 0x00000000;
@@ -2023,6 +2024,7 @@ static void FASTCALL Vdp2DrawBitmap(vdp2draw_struct *info, YglTexture *texture)
   case 4: // 32 BPP
     for (i = 0; i < info->cellh; i++)
     {
+/*
       if (info->char_bank[info->charaddr >> 17] == 0) {
         for (j = 0; j < info->cellw; j++)
         {
@@ -2037,6 +2039,12 @@ static void FASTCALL Vdp2DrawBitmap(vdp2draw_struct *info, YglTexture *texture)
           *texture->textdata++ = Vdp2GetPixel32bppbmp(info, info->charaddr);
           info->charaddr += 4;
         }
+      }
+*/
+      for (j = 0; j < info->cellw; j++)
+      {
+        *texture->textdata++ = Vdp2GetPixel32bppbmp(info, info->charaddr);
+        info->charaddr += 4;
       }
       texture->textdata += texture->w;
     }
@@ -2717,6 +2725,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
     if (!(dot & 0xF) && info->transparencyenable) return 0x00000000;
     else {
       cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
+      Vdp2SetSpecialPriority(info, dot, &cramindex);
       switch (info->specialcolormode)
       {
       case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
@@ -2735,6 +2744,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
     if (!(dot & 0xFF) && info->transparencyenable) return 0x00000000;
     else {
       cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
+      Vdp2SetSpecialPriority(info, dot, &cramindex);
       switch (info->specialcolormode)
       {
       case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
@@ -2753,6 +2763,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
     if ((dot == 0) && info->transparencyenable) return 0x00000000;
     else {
       cramindex = (info->coloroffset + dot);
+      Vdp2SetSpecialPriority(info, dot, &cramindex);
       switch (info->specialcolormode)
       {
       case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
@@ -2819,9 +2830,9 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture) {
   else
     info->drawh = vdp2height;
 
-  int incv = 1.0 / info->coordincy*256.0;
-  int res_shift = 0;
-  if (vdp2height >= 440) res_shift = 1;
+  const int incv = 1.0 / info->coordincy*256.0;
+  const int res_shift = 0;
+  //if (vdp2height >= 440) res_shift = 0;
 
   int linemask = 0;
   switch (info->lineinc) {
@@ -2840,7 +2851,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture) {
   }
 
 
-  for (v = 0; v < info->drawh; v += 1) {  // ToDo: info->coordincy
+  for (v = 0; v < vdp2height; v += 1) {  // ToDo: info->coordincy
 
     int targetv = 0;
 
@@ -3543,11 +3554,14 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
 
   if (vdp2height >= 448) {
     lineInc <<= 1;
+    info->drawh = (vdp2height >> 1);
     info->hres_shift = 1;
   }
   else {
     info->hres_shift = 0;
+    info->drawh = vdp2height;
   }
+
   vres = rbg->vres/ rbg->rotate_mval_v;
   hres = rbg->hres/ rbg->rotate_mval_h;
   cellw = rbg->info.cellw;
@@ -5945,7 +5959,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
           linebuf[line] = 0xFF000000;
         }
 
-        if (Vdp2Lines[line >> line_shift].CLOFEN  & bit) {
+        if ( (Vdp2Lines[line >> line_shift].CLOFEN  & bit) != 0) {
           ReadVdp2ColorOffset(&Vdp2Lines[line >> line_shift], info, bit);
           linebuf[line] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 16;
           linebuf[line] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
@@ -6146,7 +6160,7 @@ static void Vdp2DrawNBG0(void)
   ReadMosaicData(&info, 0x1, fixVdp2Regs);
 
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x100);
-  info.specialprimode = fixVdp2Regs->SFPRMD & 0x3;
+  info.specialprimode = (fixVdp2Regs->SFPRMD>>8) & 0x3;
   info.specialcolormode = fixVdp2Regs->SFCCMD & 0x3;
   if (fixVdp2Regs->SFSEL & 0x1)
     info.specialcode = fixVdp2Regs->SFCODE >> 8;
@@ -6357,6 +6371,8 @@ static void Vdp2DrawNBG0(void)
           infotmp.cellh = (vdp2height >> 1);
         else
           infotmp.cellh = vdp2height;
+
+        infotmp.flipfunction = 0;
         YglQuad(&infotmp, &texture, &tmpc);
         Vdp2DrawMapPerLine(&info, &texture);
       }
@@ -6653,10 +6669,11 @@ static void Vdp2DrawNBG1(void)
       info.vertices[7] = vdp2height;
       vdp2draw_struct infotmp = info;
       infotmp.cellw = vdp2width;
-      if (vdp2height >= 448)
-        infotmp.cellh = (vdp2height >> 1);
-      else
+      //if (vdp2height >= 448)
+      //  infotmp.cellh = (vdp2height >> 1);
+      //else
         infotmp.cellh = vdp2height;
+      infotmp.flipfunction = 0;
       YglQuad(&infotmp, &texture, &tmpc);
       Vdp2DrawMapPerLine(&info, &texture);
     }

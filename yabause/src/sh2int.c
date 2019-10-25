@@ -170,7 +170,7 @@ void SH2HandleInterrupts(SH2_struct *context)
       MappedMemoryWriteLong(context->regs.R[15], context->regs.PC);
       context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts - 1].level;
       context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2));  
-      LOG("[%s] Exception %u, vecnum=%02x, saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", 9, context->interrupts[context->NumberOfInterrupts - 1].vector, oldpc, context->regs.PC);
+      //LOG("[%s] Exception %u, vecnum=%02x, saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", 9, context->interrupts[context->NumberOfInterrupts - 1].vector, oldpc, context->regs.PC);
       context->NumberOfInterrupts--;
       context->isIdle = 0;
       context->isSleeping = 0;
@@ -2431,7 +2431,7 @@ static void FASTCALL SH2trapa(SH2_struct * sh)
    MappedMemoryWriteLong(sh->regs.R[15],sh->regs.PC + 2);
    sh->regs.PC = MappedMemoryReadLong(sh->regs.VBR+(imm<<2));
 
-   LOG("[%s] Exception %u, vecnum=%u, saved PC=0x%08x --- New PC=0x%08x\n", sh->isslave ? "SH2-S" : "SH2-M", 8, imm, oldpc, sh->regs.PC);
+   //LOG("[%s] Exception %u, vecnum=%u, saved PC=0x%08x --- New PC=0x%08x\n", sh->isslave ? "SH2-S" : "SH2-M", 8, imm, oldpc, sh->regs.PC);
 
    sh->cycles += 8;
 }

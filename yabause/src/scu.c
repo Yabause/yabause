@@ -1017,20 +1017,32 @@ void dsp_dma08(scudspregs_struct *sc, u32 inst)
     sc->WA0 = saveWa0;
 }
 
+INLINE void ScuTimer1Exec( u32 timing ) {
+  if (ScuRegs->timer1_counter > 0) {
+    ScuRegs->timer1_counter = (ScuRegs->timer1_counter - (timing >> 1));
+    if (ScuRegs->timer1_counter <= 0) {
+      ScuRegs->timer1_set = 1;
+      if ((ScuRegs->T1MD & 0x80) == 0) {
+        ScuSendTimer1();
+      }
+      else if (ScuRegs->timer0_set == 1) {
+        ScuSendTimer1();
+      }
+    }
+  }
+}
+
 //////////////////////////////////////////////////////////////////////////////
 void ScuExec(u32 timing) {
    int i;
 
    if ( ScuRegs->T1MD & 0x1 ){
-     if (ScuRegs->timer1_counter > 0) {
-       ScuRegs->timer1_counter = (ScuRegs->timer1_counter - (timing >> 1));
-       if (ScuRegs->timer1_counter <= 0) {
-         ScuRegs->timer1_set = 1;
-         if ((ScuRegs->T1MD & 0x80) == 0) {
-             ScuSendTimer1();
-         }else if (ScuRegs->timer0_set == 1) {
-             ScuSendTimer1();
-         }
+     if (ScuRegs->T1MD & 0x80 == 0) {
+       ScuTimer1Exec(timing);
+     }
+     else {
+       if (yabsys.LineCount == ScuRegs->T0C) {
+         ScuTimer1Exec(timing);
        }
      }
    }
@@ -2405,7 +2417,7 @@ u32 FASTCALL ScuReadLong(u32 addr) {
          else
             return 0;
       case 0xA4:
-         LOG("Read IST %08X", ScuRegs->IST);
+         //LOG("Read IST %08X", ScuRegs->IST);
          return ScuRegs->IST;
       case 0xA8:
          return ScuRegs->AIACK;
@@ -2603,14 +2615,14 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          break;
       case 0xA0:
          ScuRegs->IMS = val;
-         LOG("scu\t: IMS = %X PC=%X frame=%d:%d", val, CurrentSH2->regs.PC, yabsys.frame_count,yabsys.LineCount);
+         //LOG("scu\t: IMS = %X PC=%X frame=%d:%d", val, CurrentSH2->regs.PC, yabsys.frame_count,yabsys.LineCount);
          ScuTestInterruptMask();
          break;
       case 0xA4: {
         u32 after = ScuRegs->IST & val;
         ScuRemoveInterruptByCPU(ScuRegs->IST, after);
         ScuRegs->IST = after;
-        LOG("scu\t: IST = %X PC=%X frame=%d:%d", val, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
+        //LOG("scu\t: IST = %X PC=%X frame=%d:%d", val, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
         ScuTestInterruptMask();
       }
          break;
@@ -2763,7 +2775,7 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
     }
   }else if (!(ScuRegs->IMS & mask)){
     //if (vector != 0x41) LOG("INT %d", vector);
-    LOG("%s(%x) at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
+    //LOG("%s(%x) at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
     SH2SendInterrupt(MSH2, vector, level);
     if (yabsys.IsSSH2Running) {
       if (vector == 0x41 || vector == 0x42 || vector == 0x43) {
@@ -2773,7 +2785,7 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
   }
   else
    {
-      LOG("%s(%x) is Queued %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
+      //LOG("%s(%x) is Queued %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
       ScuQueueInterrupt(vector, level, mask, statusbit);
       ScuRegs->IST |= statusbit;
    }

@@ -620,6 +620,12 @@ void Vdp2HBlankOUT(void) {
 
       *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
     }
+
+    if (Vdp2Lines[0].CLOFSL != Vdp2Lines[yabsys.LineCount].CLOFSL) {
+
+      *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+    }
+
     if (Vdp2Lines[0].PRISA != Vdp2Lines[yabsys.LineCount].PRISA) {
 
       *Vdp2External.perline_alpha |= 0x40;
@@ -629,37 +635,37 @@ void Vdp2HBlankOUT(void) {
    //if (yabsys.LineCount == 0){
    //  vdp2VBlankOUT();
    //}
-  if (yabsys.LineCount == 0){
+  if (yabsys.LineCount == 0) {
     FrameProfileAdd("VOUT event");
     // Manual Change
-    if (Vdp1External.manualchange == 1){
+    if (Vdp1External.manualchange == 1) {
       Vdp1External.swap_frame_buffer = 1;
       Vdp1External.manualchange = 0;
     }
 
     // One Cyclemode
-    if ((Vdp1Regs->FBCR & 0x03) == 0x00 || 
+    if ((Vdp1Regs->FBCR & 0x03) == 0x00 ||
       (Vdp1Regs->FBCR & 0x03) == 0x01) {  // 0x01 is treated as one cyscle mode in Sonic R.
       Vdp1External.swap_frame_buffer = 1;
     }
 
     // Plot trigger mode = Draw when frame is changed
-    if (Vdp1Regs->PTMR == 2){
+    if (Vdp1Regs->PTMR == 2) {
       Vdp1External.frame_change_plot = 1;
       FRAMELOG("frame_change_plot 1");
     }
-    else{
+    else {
       Vdp1External.frame_change_plot = 0;
       FRAMELOG("frame_change_plot 0");
     }
 #if defined(YAB_ASYNC_RENDERING)
-    if (vdp_proc_running == 0){
+    if (vdp_proc_running == 0) {
       YuiRevokeOGLOnThisThread();
       evqueue = YabThreadCreateQueue(32);
       vdp_proc_running = 1;
       YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
     }
-    if (Vdp1External.swap_frame_buffer == 1 )
+    if (Vdp1External.swap_frame_buffer == 1)
     {
       Vdp1Regs->EDSR >>= 1;
       if (Vdp1External.frame_change_plot == 1) {
@@ -676,20 +682,18 @@ void Vdp2HBlankOUT(void) {
     //YabThreadUSleep(10000);
 
   }
-  if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count){
-
-    FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
-    yabsys.wait_line_count = -1;
-    //do {
+  if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
+      FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
       YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
-    //} while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
       YabClearEventQueue(vdp1_rcv_evqueue);
       FRAMELOG("**WAIT END**");
-    FrameProfileAdd("DirectDraw sync");
-    
-    Vdp1Regs->EDSR |= 2;
-    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
-    ScuSendDrawEnd();
+      FrameProfileAdd("DirectDraw sync");
+      if (Vdp1External.status == VDP1_STATUS_IDLE) {
+        yabsys.wait_line_count = -1;
+        Vdp1Regs->EDSR |= 2;
+        Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
+        ScuSendDrawEnd();
+      }
     FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
   }
 #else
@@ -698,10 +702,17 @@ void Vdp2HBlankOUT(void) {
   else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
     //Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
     //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
-    ScuSendDrawEnd();
+
+    if ( Vdp1External.status == VDP1_STATUS_IDLE) {
+      ScuSendDrawEnd();
     FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
-    yabsys.wait_line_count = -1;
-    Vdp1Regs->EDSR |= 2;
+      yabsys.wait_line_count = -1;
+      Vdp1Regs->EDSR |= 2;
+    }
+    else {
+      yabsys.wait_line_count += 10;
+      yabsys.wait_line_count %= yabsys.VBlankLineCount;
+    }
     //VIDCore->Vdp1DrawEnd();
   }
   
@@ -854,7 +865,9 @@ void vdp2VBlankOUT(void) {
   if (g_vdp_debug_dmp == 2) {
     g_vdp_debug_dmp = 0;
     dumpvram();
+    Vdp2GenerateCCode();
   }
+ 
 
   if (pre_swap_frame_buffer == 0 && skipnextframe && Vdp1External.swap_frame_buffer ){
     skipnextframe = 0;
@@ -932,11 +945,19 @@ void vdp2VBlankOUT(void) {
     FRAMELOG("[VDP1] Displayed framebuffer changed. EDSR=%02X", Vdp1Regs->EDSR);
 
     // if Plot Trigger mode == 0x02 draw start
-    if (Vdp1External.frame_change_plot == 1){
+    if (Vdp1External.frame_change_plot == 1 || Vdp1External.status == VDP1_STATUS_RUNNING ){
       FRAMELOG("[VDP1] frame_change_plot == 1 start drawing immidiatly", Vdp1Regs->EDSR);
+      LOG("[VDP1] Start Drawing");
       Vdp1Draw();
       isrender = 1;
     }
+  }
+  else {
+    if ( Vdp1External.status == VDP1_STATUS_RUNNING) {
+      LOG("[VDP1] Start Drawing continue");
+      Vdp1Draw();
+      isrender = 1;
+  }
   }
 
 #if defined(YAB_ASYNC_RENDERING)
@@ -1113,43 +1134,457 @@ u16 FASTCALL Vdp2ReadWord(u32 addr) {
 
    switch (addr)
    {
-      case 0x000:
-         return Vdp2Regs->TVMD;
-      case 0x002:
-         if (!(Vdp2Regs->EXTEN & 0x200))
-         {
-            // Latch HV counter on read
-            // Vdp2Regs->HCNT = ?;
-            Vdp2Regs->VCNT = yabsys.LineCount;
-            Vdp2Regs->TVSTAT |= 0x200;
-         }
+   case 0x000:
+     return Vdp2Regs->TVMD;
+   case 0x002:
+     if (!(Vdp2Regs->EXTEN & 0x200))
+     {
+       // Latch HV counter on read
+       // Vdp2Regs->HCNT = ?;
+       Vdp2Regs->VCNT = yabsys.LineCount;
+       Vdp2Regs->TVSTAT |= 0x200;
+     }
 
-         return Vdp2Regs->EXTEN;
-      case 0x004:
-      {
-         u16 tvstat = Vdp2Regs->TVSTAT;
+     return Vdp2Regs->EXTEN;
+   case 0x004:
+   {
+     u16 tvstat = Vdp2Regs->TVSTAT;
 
-         // Clear External latch and sync flags
-         Vdp2Regs->TVSTAT &= 0xFCFF;
+     // Clear External latch and sync flags
+     Vdp2Regs->TVSTAT &= 0xFCFF;
 
-         // if TVMD's DISP bit is cleared, TVSTAT's VBLANK bit is always set
-         if (Vdp2Regs->TVMD & 0x8000)
-            return tvstat;
-         else
-            return (tvstat | 0x8);
-      }
-      case 0x006:         
-         return Vdp2Regs->VRSIZE;
-      case 0x008:
-		  return Vdp2Regs->HCNT;
-      case 0x00A:
-         return Vdp2Regs->VCNT;
-      default:
-      {
-         LOG("Unhandled VDP2 word read: %08X\n", addr);
-         break;
-      }
+     // if TVMD's DISP bit is cleared, TVSTAT's VBLANK bit is always set
+     if (Vdp2Regs->TVMD & 0x8000)
+       return tvstat;
+     else
+       return (tvstat | 0x8);
    }
+   case 0x006:
+     return Vdp2Regs->VRSIZE;
+   case 0x008:
+     return Vdp2Regs->HCNT;
+   case 0x00A:
+     return Vdp2Regs->VCNT;
+   case 0x00C:
+     return 0 ;
+   case 0x00E:
+     return Vdp2Regs->RAMCTL;
+   case 0x010:
+     return Vdp2Regs->CYCA0L ;
+     
+   case 0x012:
+     return Vdp2Regs->CYCA0U ;
+     
+   case 0x014:
+     return Vdp2Regs->CYCA1L ;
+     
+   case 0x016:
+     return Vdp2Regs->CYCA1U ;
+     
+   case 0x018:
+     return Vdp2Regs->CYCB0L ;
+     
+   case 0x01A:
+     return Vdp2Regs->CYCB0U ;
+     
+   case 0x01C:
+     return Vdp2Regs->CYCB1L ;
+     
+   case 0x01E:
+     return Vdp2Regs->CYCB1U ;
+     
+   case 0x020:
+     return Vdp2Regs->BGON ;
+     
+   case 0x022:
+     return Vdp2Regs->MZCTL ;
+     
+   case 0x024:
+     return Vdp2Regs->SFSEL ;
+     
+   case 0x026:
+     return Vdp2Regs->SFCODE ;
+     
+   case 0x028:
+     return Vdp2Regs->CHCTLA ;
+     
+   case 0x02A:
+     return Vdp2Regs->CHCTLB ;
+     
+   case 0x02C:
+     return Vdp2Regs->BMPNA ;
+     
+   case 0x02E:
+     return Vdp2Regs->BMPNB ;
+     
+   case 0x030:
+     return Vdp2Regs->PNCN0 ;
+     
+   case 0x032:
+     return Vdp2Regs->PNCN1 ;
+     
+   case 0x034:
+     return Vdp2Regs->PNCN2 ;
+     
+   case 0x036:
+     return Vdp2Regs->PNCN3 ;
+     
+   case 0x038:
+     return Vdp2Regs->PNCR ;
+     
+   case 0x03A:
+     return Vdp2Regs->PLSZ ;
+     
+   case 0x03C:
+     return Vdp2Regs->MPOFN ;
+     
+   case 0x03E:
+     return Vdp2Regs->MPOFR ;
+     
+   case 0x040:
+     return Vdp2Regs->MPABN0 ;
+     
+   case 0x042:
+     return Vdp2Regs->MPCDN0 ;
+     
+   case 0x044:
+     return Vdp2Regs->MPABN1 ;
+     
+   case 0x046:
+     return Vdp2Regs->MPCDN1 ;
+     
+   case 0x048:
+     return Vdp2Regs->MPABN2 ;
+     
+   case 0x04A:
+     return Vdp2Regs->MPCDN2 ;
+     
+   case 0x04C:
+     return Vdp2Regs->MPABN3 ;
+     
+   case 0x04E:
+     return Vdp2Regs->MPCDN3 ;
+     
+   case 0x050:
+     return Vdp2Regs->MPABRA ;
+     
+   case 0x052:
+     return Vdp2Regs->MPCDRA ;
+     
+   case 0x054:
+     return Vdp2Regs->MPEFRA ;
+     
+   case 0x056:
+     return Vdp2Regs->MPGHRA ;
+     
+   case 0x058:
+     return Vdp2Regs->MPIJRA ;
+     
+   case 0x05A:
+     return Vdp2Regs->MPKLRA ;
+     
+   case 0x05C:
+     return Vdp2Regs->MPMNRA ;
+     
+   case 0x05E:
+     return Vdp2Regs->MPOPRA ;
+     
+   case 0x060:
+     return Vdp2Regs->MPABRB ;
+     
+   case 0x062:
+     return Vdp2Regs->MPCDRB ;
+     
+   case 0x064:
+     return Vdp2Regs->MPEFRB ;
+     
+   case 0x066:
+     return Vdp2Regs->MPGHRB ;
+     
+   case 0x068:
+     return Vdp2Regs->MPIJRB ;
+     
+   case 0x06A:
+     return Vdp2Regs->MPKLRB ;
+     
+   case 0x06C:
+     return Vdp2Regs->MPMNRB ;
+     
+   case 0x06E:
+     return Vdp2Regs->MPOPRB ;
+     
+   case 0x070:
+     return Vdp2Regs->SCXIN0 ;
+     
+   case 0x072:
+     return Vdp2Regs->SCXDN0 ;
+     
+   case 0x074:
+     return Vdp2Regs->SCYIN0 ;
+     
+   case 0x076:
+     return Vdp2Regs->SCYDN0 ;
+     
+   case 0x078:
+     return Vdp2Regs->ZMXN0.part.I ;
+     
+   case 0x07A:
+     return Vdp2Regs->ZMXN0.part.D ;
+     
+   case 0x07C:
+     return Vdp2Regs->ZMYN0.part.I ;
+     
+   case 0x07E:
+     return Vdp2Regs->ZMYN0.part.D ;
+     
+   case 0x080:
+     return Vdp2Regs->SCXIN1 ;
+     
+   case 0x082:
+     return Vdp2Regs->SCXDN1 ;
+     
+   case 0x084:
+     return Vdp2Regs->SCYIN1 ;
+     
+   case 0x086:
+     return Vdp2Regs->SCYDN1 ;
+     
+   case 0x088:
+     return Vdp2Regs->ZMXN1.part.I ;
+     
+   case 0x08A:
+     return Vdp2Regs->ZMXN1.part.D ;
+     
+   case 0x08C:
+     return Vdp2Regs->ZMYN1.part.I ;
+     
+   case 0x08E:
+     return Vdp2Regs->ZMYN1.part.D ;
+     
+   case 0x090:
+     return Vdp2Regs->SCXN2 ;
+     
+   case 0x092:
+     return Vdp2Regs->SCYN2 ;
+     
+   case 0x094:
+     return Vdp2Regs->SCXN3 ;
+     
+   case 0x096:
+     return Vdp2Regs->SCYN3 ;
+     
+   case 0x098:
+     return Vdp2Regs->ZMCTL ;
+     
+   case 0x09A:
+     return Vdp2Regs->SCRCTL ;
+     
+   case 0x09C:
+     return Vdp2Regs->VCSTA.part.U ;
+     
+   case 0x09E:
+     return Vdp2Regs->VCSTA.part.L ;
+     
+   case 0x0A0:
+     return Vdp2Regs->LSTA0.part.U ;
+     
+   case 0x0A2:
+     return Vdp2Regs->LSTA0.part.L ;
+     
+   case 0x0A4:
+     return Vdp2Regs->LSTA1.part.U ;
+     
+   case 0x0A6:
+     return Vdp2Regs->LSTA1.part.L ;
+     
+   case 0x0A8:
+     return Vdp2Regs->LCTA.part.U ;
+     
+   case 0x0AA:
+     return Vdp2Regs->LCTA.part.L ;
+     
+   case 0x0AC:
+     return Vdp2Regs->BKTAU ;
+     
+   case 0x0AE:
+     return Vdp2Regs->BKTAL ;
+     
+   case 0x0B0:
+     return Vdp2Regs->RPMD ;
+     
+   case 0x0B2:
+     return Vdp2Regs->RPRCTL ;
+     
+   case 0x0B4:
+     return Vdp2Regs->KTCTL ;
+     
+   case 0x0B6:
+     return Vdp2Regs->KTAOF ;
+     
+   case 0x0B8:
+     return Vdp2Regs->OVPNRA ;
+     
+   case 0x0BA:
+     return Vdp2Regs->OVPNRB ;
+     
+   case 0x0BC:
+     return Vdp2Regs->RPTA.part.U ;
+     
+   case 0x0BE:
+     return Vdp2Regs->RPTA.part.L ;
+     
+   case 0x0C0:
+     return Vdp2Regs->WPSX0 ;
+     
+   case 0x0C2:
+     return Vdp2Regs->WPSY0 ;
+     
+   case 0x0C4:
+     return Vdp2Regs->WPEX0 ;
+     
+   case 0x0C6:
+     return Vdp2Regs->WPEY0 ;
+     
+   case 0x0C8:
+     return Vdp2Regs->WPSX1 ;
+     
+   case 0x0CA:
+     return Vdp2Regs->WPSY1 ;
+     
+   case 0x0CC:
+     return Vdp2Regs->WPEX1 ;
+     
+   case 0x0CE:
+     return Vdp2Regs->WPEY1 ;
+     
+   case 0x0D0:
+     return Vdp2Regs->WCTLA ;
+     
+   case 0x0D2:
+     return Vdp2Regs->WCTLB ;
+     
+   case 0x0D4:
+     return Vdp2Regs->WCTLC ;
+     
+   case 0x0D6:
+     return Vdp2Regs->WCTLD ;
+     
+   case 0x0D8:
+     return Vdp2Regs->LWTA0.part.U ;
+     
+   case 0x0DA:
+     return Vdp2Regs->LWTA0.part.L ;
+     
+   case 0x0DC:
+     return Vdp2Regs->LWTA1.part.U ;
+     
+   case 0x0DE:
+     return Vdp2Regs->LWTA1.part.L ;
+     
+   case 0x0E0:
+     return Vdp2Regs->SPCTL ;
+     
+   case 0x0E2:
+     return Vdp2Regs->SDCTL ;
+     
+   case 0x0E4:
+     return Vdp2Regs->CRAOFA ;
+     
+   case 0x0E6:
+     return Vdp2Regs->CRAOFB ;
+     
+   case 0x0E8:
+     return Vdp2Regs->LNCLEN ;
+     
+   case 0x0EA:
+     return Vdp2Regs->SFPRMD ;
+     
+   case 0x0EC:
+     return Vdp2Regs->CCCTL ;
+     
+   case 0x0EE:
+     return Vdp2Regs->SFCCMD ;
+     
+   case 0x0F0:
+     return Vdp2Regs->PRISA ;
+     
+   case 0x0F2:
+     return Vdp2Regs->PRISB ;
+     
+   case 0x0F4:
+     return Vdp2Regs->PRISC ;
+     
+   case 0x0F6:
+     return Vdp2Regs->PRISD ;
+     
+   case 0x0F8:
+     return Vdp2Regs->PRINA ;
+     
+   case 0x0FA:
+     return Vdp2Regs->PRINB ;
+     
+   case 0x0FC:
+     return Vdp2Regs->PRIR ;
+     
+   case 0x0FE:
+     // Reserved
+     return 0;
+     
+   case 0x100:
+     return Vdp2Regs->CCRSA ;
+     
+   case 0x102:
+     return Vdp2Regs->CCRSB ;
+     
+   case 0x104:
+     return Vdp2Regs->CCRSC ;
+     
+   case 0x106:
+     return Vdp2Regs->CCRSD ;
+     
+   case 0x108:
+     return Vdp2Regs->CCRNA ;
+     
+   case 0x10A:
+     return Vdp2Regs->CCRNB ;
+     
+   case 0x10C:
+     return Vdp2Regs->CCRR ;
+     
+   case 0x10E:
+     return Vdp2Regs->CCRLB ;
+     
+   case 0x110:
+     return Vdp2Regs->CLOFEN ;
+     
+   case 0x112:
+     return Vdp2Regs->CLOFSL ;
+     
+   case 0x114:
+     return Vdp2Regs->COAR ;
+     
+   case 0x116:
+     return Vdp2Regs->COAG ;
+     
+   case 0x118:
+     return Vdp2Regs->COAB ;
+     
+   case 0x11A:
+     return Vdp2Regs->COBR ;
+     
+   case 0x11C:
+     return Vdp2Regs->COBG ;
+     
+   case 0x11E:
+     return Vdp2Regs->COBB ;
+     
+   default:
+   {
+     LOG("Unhandled VDP2 word write: %08X\n", addr);
+     break;
+   }
+   }
+
 
    return 0;
 }
@@ -1765,5 +2200,98 @@ void VdpRevoke( void ){
 }
 
 //////////////////////////////////////////////////////////////////////////////
+// This dump code can be used by the real SEGA saturn link this code.
+/*
+#include	"sgl.h"
+
+extern short vreg[];
+extern char vram[];
+extern short cram[];
+
+volatile Uint8* vrm_dst = (Uint8*)0x25E00000;
+volatile Uint16* const crm_dst = (Uint8*)0x25F00000;
+volatile Uint16* const vreg_dst = (Uint16*)0x260ffcc0; //0x25F80000;
+volatile Uint16* const frame_dst = (Uint16*)0x25C00000;
+
+#define N0ON 0x01
+#define N1ON 0x02
+#define N2ON 0x04
+#define N3ON 0x08
+#define R0ON 0x10
+#define R1ON 0x20
+  
+void ss_main(void)
+{
+	int i;
+
+	slInitSystem(TV_320x224, NULL, 1);
+	slTVOn();
+	for (i = 0; i < (0xFFF>>1) ; i++ ) {
+		crm_dst[i] = cram[i];
+	}
+
+	for (i = 0; i < 0x7FFFF; i += 1) {
+		vrm_dst[i] = vram[i];
+	}
+
+	while(1){
+
+    for (i = 7; i < (0x11E>>1); i++) {
+			vreg_dst[i] = vreg[i];
+		}		
+
+    slSynch();
+	}
+}
+
+*/
+int Vdp2GenerateCCode() {
+
+  FILE * regfp = fopen("vreg.c", "w");
+  fprintf(regfp, "short vreg[] = { \n");
+  for (int i = 0; i < 0x11E; i += 2) {
+    u16 data = Vdp2ReadWord(i);
+    fprintf(regfp, "0x%04X", data);
+    if (i != 0 && (i % 16) == 0) {
+      fprintf(regfp, ",\n");
+    }
+    else {
+      fprintf(regfp, ",");
+    }
+  }
+  fprintf(regfp, "};\n");
+  fclose(regfp);
 
 
+  FILE * ramfp = fopen("vram.c","w");
+  fprintf(ramfp, "char vram[] = { \n");
+  for (int i = 0; i < 0x7FFFF; i++) {
+    u8 data = Vdp2RamReadByte(i);
+    fprintf(ramfp, "0x%02X", data);
+    if ( i != 0 && (i % 16) == 0) {
+      fprintf(ramfp, ",\n");
+    }
+    else {
+      fprintf(ramfp, ",");
+    }
+  }
+  fprintf(ramfp, "};\n");
+  fclose(ramfp);
+
+  FILE * cramfp = fopen("cram.c", "w");
+  fprintf(cramfp, "short cram[] = { \n");
+  for (int i = 0; i < 0xFFF; i += 2) {
+    u16 data = Vdp2ColorRamReadWord(i);
+    fprintf(cramfp, "0x%04X", data);
+    if (i != 0 && (i % 16) == 0) {
+      fprintf(cramfp, ",\n");
+    }
+    else {
+      fprintf(cramfp, ",");
+    }
+  }
+  fprintf(cramfp, "};\n");
+  fclose(cramfp);
+
+  return 0;
+}
