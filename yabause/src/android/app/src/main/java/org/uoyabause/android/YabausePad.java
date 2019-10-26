@@ -209,12 +209,14 @@ class AnalogPad extends PadButton {
     }
 }
 
-interface OnPadListener {
-    boolean onPad(PadEvent event);
-}
 
 public class YabausePad extends View implements OnTouchListener {
-    private PadButton buttons[];
+
+  interface OnPadListener {
+    boolean onPad(PadEvent event);
+  }
+
+  private PadButton buttons[];
     private OnPadListener listener = null;
     private HashMap<Integer, Integer> active;
    // private DisplayMetrics metrics = null;

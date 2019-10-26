@@ -3019,16 +3019,27 @@ int YglProgramInit()
 
 int YglTesserationProgramInit()
 {
+  if (_prgid[PG_VFP1_GOURAUDSAHDING_TESS] != 0 &&
+    _prgid[PG_VFP1_GOURAUDSAHDING_SPD_TESS] != 0 &&
+    _prgid[PG_VFP1_MESH_TESS] != 0 &&
+    _prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS] != 0 &&
+    _prgid[PG_VFP1_SHADOW_TESS] != 0 &&
+    _prgid[PG_VFP1_HALFTRANS_TESS] != 0) {
+    return 0;
+  }
+    
+
   //-----------------------------------------------------------------------------------------------------------
     YGLLOG("PG_VFP1_GOURAUDSAHDING_TESS");
     if (YglInitShader(PG_VFP1_GOURAUDSAHDING_TESS,
-      pYglprg_vdp1_gouraudshading_tess_v,
-      pYglprg_vdp1_gouraudshading_f,
-      1,
-      pYglprg_vdp1_gouraudshading_tess_c,
-      pYglprg_vdp1_gouraudshading_tess_e,
-      pYglprg_vdp1_gouraudshading_tess_g) != 0)
-      return -1;
+        pYglprg_vdp1_gouraudshading_tess_v,
+        pYglprg_vdp1_gouraudshading_f,
+        1,
+        pYglprg_vdp1_gouraudshading_tess_c,
+        pYglprg_vdp1_gouraudshading_tess_e,
+        pYglprg_vdp1_gouraudshading_tess_g) != 0)
+        return -1;
+    
 
     Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], &grow_tess);
 

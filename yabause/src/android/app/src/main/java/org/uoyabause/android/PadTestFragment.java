@@ -34,7 +34,7 @@ import androidx.fragment.app.Fragment;
 import org.uoyabause.android.backup.TabBackupFragment;
 import org.uoyabause.uranus.R;
 
-public class PadTestFragment extends Fragment implements org.uoyabause.android.OnPadListener{
+public class PadTestFragment extends Fragment implements org.uoyabause.android.YabausePad.OnPadListener{
 
   YabausePad mPadView;
   SeekBar mSlide;

@@ -419,6 +419,7 @@ public class GameSelectFragmentPhone extends Fragment
         );
         Intent intent = new Intent(getActivity(), Yabause.class);
         intent.putExtra("org.uoyabause.android.FileNameEx", apath);
+        intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number);
         startActivity(intent);
 
     }
@@ -790,6 +791,7 @@ public class GameSelectFragmentPhone extends Fragment
         );
         Intent intent = new Intent(getActivity(), Yabause.class);
         intent.putExtra("org.uoyabause.android.FileNameEx", item.file_path );
+        intent.putExtra("org.uoyabause.android.gamecode", item.product_number);
         startActivityForResult(intent, YABAUSE_ACTIVITY);
 
     }

@@ -113,6 +113,7 @@
     <string name="poly_gpu_tess">GPUテッセレーション</string>
     <string name="res_native">ネイティブ(このデバイスの解像度で描画)</string>
     <string name="res_original">オリジナル(サターンの解像度)</string>
+    <string name="ar_original">オリジナル(サターンのアスペクト比)</string>
     <string name="sound_curent">最新(クオリティは高いが遅い)</string>
     <string name="sound_legacy">旧エンジン(クオリティは低いが速い)</string>
     <string name="poly_triangle">パースペクティブコレクション</string>

@@ -1623,7 +1623,7 @@ void VIDDummyDeInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyResize(int x, int y, UNUSED unsigned int i, UNUSED unsigned int j, UNUSED int on, int keep_aspect)
+void VIDDummyResize(int x, int y, UNUSED unsigned int i, UNUSED unsigned int j, UNUSED int on, int aspect_rate_mode)
 {
 }
 

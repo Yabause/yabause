@@ -514,6 +514,13 @@ typedef enum
   RBG_RES_FIT_TO_EMULATION
 } RBG_RESOLUTION_MODE;
 
+typedef enum
+{
+  ORIGINAL = 0,
+  _4_3,
+  _16_9,
+  FULL,
+} ASPECT_RATE_MODE;
 
 typedef enum {
 	NBG0 = 0,
@@ -640,8 +647,9 @@ typedef struct {
 
    int screen_width;
    int screen_height;
-   int keep_aspect;
    int isFullScreen;
+
+   ASPECT_RATE_MODE aspect_rate_mode;
 
 }  Ygl;
 

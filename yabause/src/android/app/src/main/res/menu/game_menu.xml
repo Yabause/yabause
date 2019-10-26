@@ -42,6 +42,14 @@
 
     <group
         android:id="@+id/menu_other" >
+
+
+        <item
+            android:id="@+id/menu_in_game_setting"
+            android:icon="@drawable/baseline_settings_white_24"
+            android:title="@string/setting" />
+        -
+
         <item
             android:id="@+id/menu_item_backup"
             android:icon="@drawable/ic_save_black_24dp"

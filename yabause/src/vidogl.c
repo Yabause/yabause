@@ -4043,50 +4043,61 @@ static void SetSaturnResolution(int width, int height)
       GlHeight = _Ygl->screen_height;
       _Ygl->originx = 0;
       _Ygl->originy = 0;
-      if (_Ygl->keep_aspect == 1) {
+
+      if (_Ygl->aspect_rate_mode != FULL) {
+
+        float hrate;
+        float wrate;
+        switch (_Ygl->aspect_rate_mode) {
+        case ORIGINAL:
+          hrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
+          wrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight);
+          break;
+        case _4_3:
+          hrate = 3.0 / 4.0;
+          wrate = 4.0 / 3.0;
+          break;
+        case _16_9:
+          hrate = 9.0 / 16.0;
+          wrate = 16.0 / 9.0;
+          break;
+        }
 
         if (_Ygl->rotate_screen) {
           if (_Ygl->isFullScreen) {
             if (GlHeight > GlWidth) {
-              float hrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight);
-              _Ygl->originy = (GlHeight - GlWidth  * hrate);
-              GlHeight = _Ygl->screen_width * hrate;
+              _Ygl->originy = (GlHeight - GlWidth  * wrate);
+              GlHeight = _Ygl->screen_width * wrate;
             }
             else {
-              float wrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
-              _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
-              GlWidth = GlHeight * wrate;
+              _Ygl->originx = (GlWidth - GlHeight * hrate) / 2.0f;
+              GlWidth = GlHeight * hrate;
             }
           }
           else {
-            float wrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
-            _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
-            GlWidth = GlHeight * wrate;
+            _Ygl->originx = (GlWidth - GlHeight * hrate) / 2.0f;
+            GlWidth = GlHeight * hrate;
           }
         }
         else {
-
           if (_Ygl->isFullScreen) {
             if (GlHeight > GlWidth) {
-              float hrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
               _Ygl->originy = (GlHeight - GlWidth  * hrate);
               GlHeight = _Ygl->screen_width * hrate;
             }
             else {
-              float wrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight);
               _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
               GlWidth = GlHeight * wrate;
             }
           }
           else {
-            float hrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
             _Ygl->originy = (GlHeight - GlWidth  * hrate) / 2.0f;
             GlHeight = GlWidth * hrate;
           }
-
         }
       }
     }
+
     if (_Ygl->resolution_mode == RES_NATIVE && (_Ygl->width != GlWidth || _Ygl->height != GlHeight)) {
       _Ygl->width = GlWidth;
       _Ygl->height = GlHeight;
@@ -4140,7 +4151,7 @@ void VIDOGLDeInit(void)
 //////////////////////////////////////////////////////////////////////////////
 
 
-void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int on, int keep_aspect)
+void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int on, int aspect_rate_mode)
 {
 
   if (originx == 0 && originy == 0 && w == 0 && h == 0 && on == 0) {
@@ -4158,7 +4169,7 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
   _Ygl->originy = originy;
   _Ygl->screen_width = w;
   _Ygl->screen_height = h;
-  _Ygl->keep_aspect = keep_aspect;
+  _Ygl->aspect_rate_mode = aspect_rate_mode;
   YglGLInit(2048, 1024);
 
   int tmpw = vdp2width;
@@ -7894,7 +7905,10 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     _Ygl->aamode = value;
     break;
   case VDP_SETTING_RESOLUTION_MODE:
-    _Ygl->resolution_mode = value;
+    if(_Ygl->resolution_mode != value){
+      _Ygl->resolution_mode = value;
+      YglRebuildGramebuffer();
+    }
     break;
   case VDP_SETTING_RBG_RESOLUTION_MODE:
     _Ygl->rbg_resolution_mode = value;
@@ -7909,11 +7923,7 @@ void VIDOGLSetSettingValueMode(int type, int value) {
 		  g_rgb0.async = 1;
 	  }
 	  break;
-
   case VDP_SETTING_POLYGON_MODE:
-    if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION) {
-      YglTesserationProgramInit();
-    }
     _Ygl->polygonmode = value;
   case VDP_SETTING_ROTATE_SCREEN:
     _Ygl->rotate_screen = value;

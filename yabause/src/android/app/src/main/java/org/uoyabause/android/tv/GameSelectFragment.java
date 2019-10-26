@@ -344,6 +344,7 @@ public class GameSelectFragment extends BrowseFragment
 
                 Intent intent_game = new Intent(getActivity(), Yabause.class);
                 intent_game.putExtra("org.uoyabause.android.FileNameEx", game.file_path);
+                intent.putExtra("org.uoyabause.android.gamecode", game.product_number );
                 startActivityForResult(intent_game, YABAUSE_ACTIVITY);
             }
         }
@@ -788,6 +789,7 @@ public class GameSelectFragment extends BrowseFragment
 
                 Intent intent = new Intent(getActivity(), Yabause.class);
                 intent.putExtra("org.uoyabause.android.FileNameEx", game.file_path );
+                intent.putExtra("org.uoyabause.android.gamecode", game.product_number );
                 startActivityForResult(intent, YABAUSE_ACTIVITY);
             } else if (item instanceof String) {
                 if (((String) item).indexOf(getString(R.string.sign_in)) >= 0) {
