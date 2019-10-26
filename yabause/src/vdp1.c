@@ -317,6 +317,10 @@ void Vdp1Reset(void) {
    Vdp1Regs->systemclipX2 = 1024;
    Vdp1Regs->systemclipY2 = 1024;
 
+   for (int i = 0; i < 0x80000; i += 2) {
+     T1WriteWord(Vdp1Ram, i, 0x8000);
+   }
+
 }
 
 int VideoSetSetting( int type, int value )
