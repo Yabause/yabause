@@ -2474,14 +2474,12 @@ int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache *
 //////////////////////////////////////////////////////////////////////////////
 void YglEraseWriteVDP1(void) {
 
-  float col[4];
-  float colclear[4] = {0.0f};
+  float col[4] = {0.0};
   u16 color;
   int priority;
   u32 alpha = 0;
   int status = 0;
-  GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
-  if (_Ygl->vdp1On[_Ygl->readframe] == 0) return; //No update on the fb, no need to clear
+  GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
   _Ygl->vdp1On[_Ygl->readframe] = 0;
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
 
@@ -2501,26 +2499,11 @@ void YglEraseWriteVDP1(void) {
   _Ygl->vdp1levels[_Ygl->readframe].blendmode = 0;
 
   color = Vdp1Regs->EWDR;
-  priority = 0;
 
-  if ((color & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) {
-    alpha = 0;
-  }
-  else{
-    int rgb = ((color&0x8000) == 0);
-    int shadow, normalshadow, colorcalc;
-    Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &normalshadow, &priority, &colorcalc);
-//    alpha = VDP1COLOR(rgb, colorcalc, priority, 0, 0);
-//on doit utiliser simplement color partout
-    alpha >>= 24;
-  }
-  col[0] = (color & 0x1F) / 31.0f;
-  col[1] = ((color >> 5) & 0x1F) / 31.0f;
-  col[2] = ((color >> 10) & 0x1F) / 31.0f;
-  col[3] = alpha / 255.0f;
+  col[0] = (color & 0xFF) / 255.0f;
+  col[1] = ((color >> 8) & 0xFF) / 255.0f;
 
   glClearBufferfv(GL_COLOR, 0, col);
-  glClearBufferfv(GL_COLOR, 1, colclear);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
   FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
   //Get back to drawframe
