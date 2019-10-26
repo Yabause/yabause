@@ -48,6 +48,8 @@ using namespace std;
 
 #include "Preference.h"
 
+#include "yabause.h"
+
 //#define MENU_LOG
 #define MENU_LOG printf
 
@@ -280,6 +282,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
   cb->setCallbackSelect([this,preference]( int idx ) {
     popActiveMenu();
     preference->setInt("Resolution",idx);
+    VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, idx);
   });
 
   new Label(popup, "Aspect rate");
@@ -319,6 +322,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
   cb->setCallbackSelect([this,preference]( int idx ) {
     popActiveMenu();
     preference->setInt("Rotate screen resolution",idx);
+    VideoSetSetting(VDP_SETTING_RBG_RESOLUTION_MODE, idx);
   });
 
 
@@ -327,6 +331,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
   ba->setPushed( preference->getBool("Use compute shader",false) );
   ba->setChangeCallback([this,preference](bool state) { 
     preference->setBool("Use compute shader",state);
+    VideoSetSetting(VDP_SETTING_RBG_USE_COMPUTESHADER, state);
   });
 
 
@@ -335,6 +340,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
   ba->setPushed( preference->getBool("Rotate screen",false) );
   ba->setChangeCallback([this,preference](bool state) { 
     preference->setBool("Rotate screen",state);
+    VideoSetSetting(VDP_SETTING_ROTATE_SCREEN, state);
   });
 
 }

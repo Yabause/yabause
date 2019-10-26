@@ -386,8 +386,10 @@ int main(int argc, char** argv)
       return -1;
   }
 
-  VIDCore->Resize(0,0,width,height,1,g_keep_aspect_rate);
-
+  Preference * p = new Preference(cdpath);
+  VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
+  delete p;
+  
   SDL_GL_MakeCurrent(wnd,nullptr);
 #if defined(__RP64__) || defined(__N2__)
   YabThreadSetCurrentThreadAffinityMask(0x4);
@@ -452,6 +454,9 @@ int main(int argc, char** argv)
       }
       else if(e.type == evToggleMenu){
         if( menu_show ){
+            Preference * p = new Preference(cdpath);
+            VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
+            delete p;
           hideMenuScreen();           
         }else{
           menu_show = true;
