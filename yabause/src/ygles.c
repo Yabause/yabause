@@ -3651,6 +3651,7 @@ void YglRender(void) {
 
    // This is workaround for Azel disc 2
    // Only top and second prioriy pixel is calculated
+#if 0 // There are many regressions...
    int lowpri = -1;
    int hitcnt = 0;
    if ( (fixVdp2Regs->CCCTL & 0x500) == 0x100 ) {
@@ -3670,7 +3671,7 @@ void YglRender(void) {
        lowpri = -1;
      }
    }
-
+#endif
 
 
   // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
@@ -3738,6 +3739,10 @@ void YglRender(void) {
             }
             else if ( (level->prg[j].blendmode&0x03) == VDP2_CC_ADD){
 
+#if 1 // There are many regressions...
+              glEnable(GL_BLEND);
+              glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+#else
               // This is workaround for Azel disc 2
               if ((fixVdp2Regs->CCCTL & 0x500) == 0x100) {
                 if (lowpri == i) {
@@ -3758,6 +3763,7 @@ void YglRender(void) {
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_ONE, GL_SRC_ALPHA);
               }
+#endif
             }
           }
 
