@@ -46,6 +46,7 @@ using namespace std;
 
 #include "about.h"
 
+#include "Preference.h"
 
 //#define MENU_LOG
 #define MENU_LOG printf
@@ -56,11 +57,12 @@ int MenuScreen::onShow(){
   //setupPlayerPsuhButton( 1, player2, "Player2 Input Settings", &p2cb );
 }
 
-MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std::string & fname )
+MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std::string & fname, const std::string & game )
 : nanogui::Screen( pwindow, Eigen::Vector2i(rwidth, rheight), "Menu Screen"){
   
   mFocus = nullptr;
   config_file_ = fname;
+  current_game_path_ = game;
   swindow = nullptr;
   imageWindow = nullptr;
   std::string title = "Yaba Sanshiro "+ std::string(YAB_VERSION) +" Menu";
@@ -81,6 +83,13 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
         setupPlayerPsuhButton( 1, tmp.player, "Player2 Input Settings", &tmp.cb );
         player_configs_.push_back(tmp);
 
+       
+        PopupButton * ps_config = new PopupButton(tools, "Config");
+        ps_config->setFixedWidth(248);
+        showConfigDialog(ps_config);
+        ps_config->setCallback([this,ps_config]() {      
+          pushActiveMenu(ps_config->popup(),ps_config); 
+        });
 
         Button *b0 = new Button(tools, "Exit");
         b0->setFixedWidth(248);
@@ -243,6 +252,93 @@ inline bool ends_with(std::string const & value, std::string const & ending)
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
+
+void MenuScreen::showConfigDialog( PopupButton *parent ){
+
+  // Todo setCurrentGamePath
+  std::shared_ptr<Preference> preference(new Preference( current_game_path_ ));
+
+  Popup *popup = parent->popup();    
+  popup->setLayout(new GroupLayout(4,2,2,2)); 
+  new Label(popup, "Resolution");
+  ComboBox * cb = new ComboBox(popup);  
+  vector<string> items;
+  items.push_back("Native");
+  items.push_back("4x");
+  items.push_back("2x");
+  items.push_back("Original");
+  items.push_back("720p");
+  items.push_back("1080p");
+
+  cb->setItems(items);
+  Popup *cbpopup = cb->popup(); 
+  cb->setCallback([this,cbpopup,cb]() {       
+    pushActiveMenu(cbpopup, cb );
+  });
+
+  cb->setSelectedIndex( preference->getInt("Resolution",0) );
+  cb->setCallbackSelect([this,preference]( int idx ) {
+    popActiveMenu();
+    preference->setInt("Resolution",idx);
+  });
+
+  new Label(popup, "Aspect rate");
+  cb = new ComboBox(popup);  
+  items.clear();
+  items.push_back("Original");
+  items.push_back("4:3");
+  items.push_back("16:9");
+  items.push_back("Full Screen");
+  cb->setItems(items);
+  cbpopup = cb->popup(); 
+  cb->setCallback([this,cbpopup,cb]() {       
+    pushActiveMenu(cbpopup, cb );
+  });
+
+  cb->setSelectedIndex( preference->getInt("Aspect rate",0) );
+  cb->setCallbackSelect([this,preference]( int idx ) {
+    popActiveMenu();
+    preference->setInt("Aspect rate",idx);
+  });
+
+  new Label(popup, "Rotate screen resolution");
+  cb = new ComboBox(popup);  
+  items.clear();
+  items.push_back("Original");
+  items.push_back("2x");
+  items.push_back("720p");
+  items.push_back("1080p");
+  items.push_back("Native");
+  cb->setItems(items);
+  cbpopup = cb->popup(); 
+  cb->setCallback([this,cbpopup,cb]() {       
+    pushActiveMenu(cbpopup, cb );
+  });
+
+  cb->setSelectedIndex( preference->getInt("Rotate screen resolution",0) );
+  cb->setCallbackSelect([this,preference]( int idx ) {
+    popActiveMenu();
+    preference->setInt("Rotate screen resolution",idx);
+  });
+
+
+  Button * ba = new Button(popup,"Use compute shader");  
+  ba->setFlags(Button::ToggleButton); 
+  ba->setPushed( preference->getBool("Use compute shader",false) );
+  ba->setChangeCallback([this,preference](bool state) { 
+    preference->setBool("Use compute shader",state);
+  });
+
+
+  ba = new Button(popup,"Rotate screen");  
+  ba->setFlags(Button::ToggleButton); 
+  ba->setPushed( preference->getBool("Rotate screen",false) );
+  ba->setChangeCallback([this,preference](bool state) { 
+    preference->setBool("Rotate screen",state);
+  });
+
+}
+
 void MenuScreen::showSaveStateDialog( Popup *popup ){
 
   while (popup->childCount() != 0)
@@ -273,7 +369,7 @@ void MenuScreen::showSaveStateDialog( Popup *popup ){
       const tm* lt = std::localtime(&t);
       std::ostringstream ss;
       stream << "  " << std::put_time(lt, "%c");
-      printf(stream.str().c_str());
+      printf("%s",stream.str().c_str());
       printf("\n");
     }
 
@@ -335,7 +431,7 @@ void MenuScreen::showLoadStateDialog( Popup *popup ){
       const tm* lt = std::localtime(&t);
       std::ostringstream ss;
       stream << "  " << std::put_time(lt, "%c");
-      printf(stream.str().c_str());
+      printf("%s",stream.str().c_str());
       printf("\n");
 
       Button *tmp = new Button(popup, stream.str() );
@@ -832,7 +928,7 @@ bool MenuScreen::keyboardEvent( std::string & keycode , int scancode, int action
       if( wrapper != nullptr ){
           auto vscroll = wrapper->parent();
           if( vscroll != nullptr && dynamic_cast<VScrollPanel*>(vscroll) != nullptr  ){
-              MENU_LOG("pos=%f vpod = %f\n",mFocus->position().y(),((VScrollPanel*)vscroll)->getScrollPos()  );
+              MENU_LOG("pos=%d vpod = %f\n",mFocus->position().y(),((VScrollPanel*)vscroll)->getScrollPos()  );
               if( mFocus->position().y() - ((VScrollPanel*)vscroll)->getScrollPos() > vscroll->height() ){
                 Vector2i p(0,0);
                 Vector2f rel(0.0,-1.0);
@@ -852,7 +948,7 @@ bool MenuScreen::keyboardEvent( std::string & keycode , int scancode, int action
       if( wrapper != nullptr ){
           auto vscroll = wrapper->parent();
           if( vscroll != nullptr ){
-              MENU_LOG("pos=%f vpod = %f\n",mFocus->position().y(),((VScrollPanel*)vscroll)->getScrollPos()  );
+              MENU_LOG("pos=%d vpod = %f\n",mFocus->position().y(),((VScrollPanel*)vscroll)->getScrollPos()  );
               if( mFocus->position().y() - ((VScrollPanel*)vscroll)->getScrollPos() < 0 ){
                 Vector2i p(0,0);
                 Vector2f rel(0.0,1.0);

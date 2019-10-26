@@ -62,6 +62,7 @@ extern "C" {
 
 #include "InputManager.h"
 #include "MenuScreen.h"
+#include "Preference.h"
 
 #define YUI_LOG printf
 
@@ -203,6 +204,8 @@ int yabauseinit()
   int res;
   yabauseinit_struct yinit = {};
 
+  Preference pre( cdpath );
+
   yinit.m68kcoretype = M68KCORE_MUSASHI;
   yinit.percoretype = PERCORE_DUMMY;
 #if defined(__PC__)
@@ -234,19 +237,19 @@ int yabauseinit()
   yinit.video_filter_type = 0;
   yinit.polygon_generation_mode = PERSPECTIVE_CORRECTION; /*GPU_TESSERATION;*/
   yinit.use_new_scsp = 1;
-  yinit.resolution_mode = g_resolution_mode;
-  yinit.rotate_screen = 0;
+  yinit.resolution_mode = pre.getInt( "Resolution" ,g_resolution_mode);
+  yinit.rotate_screen = pre.getBool( "Rotate screen" , false );
   yinit.scsp_sync_count_per_frame = g_scsp_sync;
   yinit.extend_backup = 1;
   yinit.scsp_main_mode = 0;
-  yinit.rbg_resolution_mode = 0;
+  yinit.rbg_resolution_mode = pre.getInt( "Rotate screen resolution" ,0);
 
   //std::string::size_type pos = std::string((const char*)glGetString(GL_VERSION)).find( std::string("3.2"));
   //if( pos != std::string::npos) {
   //  yinit.rbg_use_compute_shader = 1;
   //  printf("Compute shader is enabled!\n");
   //}else{
-    yinit.rbg_use_compute_shader = 0;
+    yinit.rbg_use_compute_shader = pre.getBool( "Use compute shader" , true);
   //}
 
   res = YabauseInit(&yinit);
@@ -374,8 +377,9 @@ int main(int argc, char** argv)
   printf("Extentions: %s\n",glGetString(GL_EXTENSIONS));
 
   inputmng->init(g_keymap_filename);
-  menu = new MenuScreen(wnd,width,height, g_keymap_filename);
+  menu = new MenuScreen(wnd,width,height, g_keymap_filename, cdpath);
   menu->setConfigFile(g_keymap_filename);  
+  menu->setCurrentGamePath(cdpath);
 
   if( yabauseinit() == -1 ) {
       printf("Fail to yabauseinit Bye! (%s)", SDL_GetError() );
