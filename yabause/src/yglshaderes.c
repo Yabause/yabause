@@ -521,8 +521,9 @@ const GLchar Yglprg_userclip_f[] =
       "#endif\n"
       "out vec4 fragColor;            \n"
       "void main()                                         \n"
-      "{                                                   \n"
-      "  fragColor = vec4( 0.0 );\n";
+      "{ \n"
+      "  vec2 tag = vec2(0.0);\n"
+      "  vec4 spriteColor = vec4( 0.0 );\n";
 
 #define MESH_PROCESS \
 "if( (int(gl_FragCoord.y) & 0x01) == 0 ){ \n \
