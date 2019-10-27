@@ -1268,7 +1268,8 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->rheight = 240;
   _Ygl->vdp1width = 512;
   _Ygl->vdp1height = 256;
-  _Ygl->vdp1expand = 1.0f;
+  _Ygl->vdp1expandW = 1.0f;
+  _Ygl->vdp1expandH = 1.0f;
   _Ygl->widthRatio = 1.0f;
   _Ygl->heightRatio = 1.0f;
   _Ygl->density = 1;
@@ -3784,7 +3785,8 @@ void YglChangeResolution(int w, int h) {
   _Ygl->vdp1width = ceil((float)_Ygl->width/512.0) * 512;
   _Ygl->vdp1height = (float)_Ygl->vdp1width/2.0;
 
-  _Ygl->vdp1expand = _Ygl->vdp1width/(ceil((float)_Ygl->rwidth/512.0) * 512);
+  _Ygl->vdp1expandW = _Ygl->vdp1width/(ceil((float)_Ygl->rwidth/512.0) * 512);
+  _Ygl->vdp1expandH = _Ygl->vdp1height/(ceil((float)_Ygl->rheight/256.0) * 256);
 
   //upscale Ratio of effective original vdp1FB
   _Ygl->vdp1wratio = (float)_Ygl->vdp1width / (512.0f * _Ygl->vdp1wdensity);

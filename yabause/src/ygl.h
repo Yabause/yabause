@@ -544,7 +544,8 @@ typedef struct {
    int rheight;
    int vdp1width;
    int vdp1height;
-   float vdp1expand;
+   float vdp1expandW;
+   float vdp1expandH;
    float widthRatio;
    float heightRatio;
    int density;
