@@ -523,7 +523,7 @@ const GLchar Yglprg_userclip_f[] =
       "void main()                                         \n"
       "{ \n"
       "  vec2 tag = vec2(0.0);\n"
-      "  vec4 spriteColor = vec4( 0.0 );\n";
+      "  vec4 outColor = vec4( 0.0 );\n";
 
 #define MESH_PROCESS \
 "if( (int(gl_FragCoord.y) & 0x01) == 0 ){ \n \
@@ -927,7 +927,7 @@ const GLchar* vdp1drawmode[8]= {
 
 //ENd of shaders
 const GLchar vdp1drawend[] = {
-  "  fragColor.rgba = vec4(spriteColor.rg, tag);\n"
+  "  fragColor.rgba = vec4(outColor.rg, tag);\n"
   "}\n"
 };
 
