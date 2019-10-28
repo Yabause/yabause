@@ -1101,12 +1101,12 @@ const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
  Color calculation option
   hard/vdp2/hon/p09_21.htm
 */
-const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " alpha = opaque; \n";
+const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " fbmode = 0; \n";
 
-const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ alpha = opaque; fbmode = 0;} \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ alpha = opaque; fbmode = 0;} \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ alpha = opaque; fbmode = 0;} \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ alpha = opaque; fbmode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ fbmode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ fbmode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ fbmode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ fbmode = 0;} \n ";
 
 
 const GLchar Yglprg_vdp2_sprite_palette_only[] =
