@@ -157,7 +157,7 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
    {
       int hstart=0, vstart=0, hend=0, vend=0;
 
-      AddString(outstring, "Window W0 Enabled:\r\n");
+      AddString(outstring, "Using Window W0:\r\n");
 
       // Retrieve Window Points
       if (Vdp2Regs->LWTA0.all & 0x80000000)
@@ -182,7 +182,7 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
    {
       int hstart=0, vstart=0, hend=0, vend=0;
 
-      AddString(outstring, "Window W1 Enabled:\r\n");
+      AddString(outstring, "Using Window W1:\r\n");
 
       // Retrieve Window Points
       if (Vdp2Regs->LWTA1.all & 0x80000000)
@@ -205,7 +205,7 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
 
    if (wctl & 0x20)
    {
-      AddString(outstring, "Sprite Window Enabled:\r\n");
+      AddString(outstring, "Using Sprite Window:\r\n");
       AddString(outstring, "Display %s of Window\r\n", (wctl & 0x10) ? "inside" : "outside");
    }
 
