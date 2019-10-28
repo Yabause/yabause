@@ -1584,7 +1584,7 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
          AddString(outstring, "Transparent Shadow Enabled\r\n");
       }
 
-      if (Vdp2Regs->SPCTL & 0x20)
+      if (Vdp2Regs->SPCTL & 0x10)
       {
          AddString(outstring, "Sprite Window Enabled\r\n");
          AddString(outstring, "Sprite Gradation Calculation %s\n", (getBlur(Vdp2Regs, SPRITE)==0)?"Disabled":"Enabled");
