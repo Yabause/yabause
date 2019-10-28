@@ -2380,6 +2380,9 @@ int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, SpriteMode mode, Vdp2* var
   int colormode =  (varVdp2Regs->SPCTL & 0x20) != 0;
   int spritetype =  (varVdp2Regs->SPCTL & 0xF);
 
+  //When sprite type is effectively active, consider the VDP1 framebuffer as palette only
+  if (((varVdp2Regs->SPCTL>>4)&0x1) && (spritetype>=2) && (spritetype<=7)) colormode = 0;
+
   pgid += (mode-NONE)*16*2 + colormode*16 + spritetype;
 
   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF_NONE;
