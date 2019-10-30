@@ -44,6 +44,18 @@
 #define Y_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define Y_MIN(a, b) ((a) < (b) ? (a) : (b))
 
+
+#define DEBUG_BAD_COORD //YuiMsg
+
+#define  CONVERTCMD(A) {\
+  s32 toto = (A);\
+  if (((A)&0x7000) != 0) (A) |= 0xF000;\
+  else (A) &= ~0xF800;\
+  ((A) = (s32)(s16)(A));\
+  if (((A)) < -1024) { DEBUG_BAD_COORD("Bad(-1024) %x (%d, 0x%x)\n", (A), (A), toto);}\
+  if (((A)) > 1023) { DEBUG_BAD_COORD("Bad(1023) %x (%d, 0x%x)\n", (A), (A), toto);}\
+}
+
 #define CLAMP(A,LOW,HIGH) ((A)<(LOW)?(LOW):((A)>(HIGH))?(HIGH):(A))
 
 #define LOG_AREA
@@ -103,8 +115,8 @@ extern void VIDOGLVdp2Draw(void);
 extern void VIDOGLVdp2SetResolution(u16 TVMD);
 extern void YglGetGlSize(int *width, int *height);
 extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
-extern void YglCSVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
-extern void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
+extern void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
+extern void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 extern void VIDOGLSetSettingValueMode(int type, int value);
 extern void VIDOGLSync();
 extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
@@ -130,8 +142,8 @@ VIDCSVdp1LineDraw,
 VIDCSVdp1UserClipping,
 VIDCSVdp1SystemClipping,
 VIDOGLVdp1LocalCoordinate,
-YglCSVdp1ReadFrameBuffer,
-YglCSVdp1WriteFrameBuffer,
+VIDOGLVdp1ReadFrameBuffer,
+VIDOGLVdp1WriteFrameBuffer,
 YglEraseWriteCSVDP1,
 YglFrameChangeCSVDP1,
 VIDOGLVdp2Reset,
@@ -160,11 +172,11 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   vdp1cmd_struct cmd;
   YglTexture texture;
-  int badgeometry = 1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-  if (cmd.CMDSIZE == 0) {
+  if ((cmd.CMDSIZE & 0x8000)) {
+    regs->EDSR |= 2;
     return; // BAD Command
   }
 
@@ -176,13 +188,12 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
 
-  if (badgeometry == 1) return;
-
-  cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
+  if (cmd.w == 0 || cmd.h == 0) {
+    return; //bad command
+  }
 
   cmd.CMDXB = cmd.CMDXA + cmd.w;
   cmd.CMDYB = cmd.CMDYA;
@@ -222,7 +233,6 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   vdp1cmd_struct cmd;
   YglTexture texture;
-  int badgeometry = 1;
   s16 rw = 0, rh = 0;
   s16 x, y;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
@@ -240,25 +250,15 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
+  CONVERTCMD(cmd.CMDXB);
+  CONVERTCMD(cmd.CMDYB);
+  CONVERTCMD(cmd.CMDXC);
+  CONVERTCMD(cmd.CMDYC);
 
-  if (((cmd.CMDCTRL & 0xF00) >> 8) == 0) {
-    if (((cmd.CMDXC & 0xFC00) == 0x0) || ((cmd.CMDXC & 0xFC00) == 0xFC00)) badgeometry = 0;
-    if (((cmd.CMDYC & 0xFC00) == 0x0) || ((cmd.CMDYC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  } else {
-    if (((cmd.CMDXB & 0xFC00) == 0x0) || ((cmd.CMDXB & 0xFC00) == 0xFC00)) badgeometry = 0;
-    if (((cmd.CMDYB & 0xFC00) == 0x0) || ((cmd.CMDYB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  }
-
-  if (badgeometry == 1) return;
-
-  cmd.CMDXA = (s16)cmd.CMDXA;
-  cmd.CMDYA = (s16)cmd.CMDYA;
-  cmd.CMDXB = (s16)cmd.CMDXB;
-  cmd.CMDYB = (s16)cmd.CMDYB;
-  cmd.CMDXC = (s16)cmd.CMDXC;
-  cmd.CMDYC = (s16)cmd.CMDYC;
+  x = (s16)cmd.CMDXA + Vdp1Regs->localX;
+  y = (s16)cmd.CMDYA + Vdp1Regs->localY;
 
   x = cmd.CMDXA;
   y = cmd.CMDYA;
@@ -361,7 +361,6 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   vdp1cmd_struct cmd;
   YglTexture texture;
-  int badgeometry = 1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
@@ -377,17 +376,14 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
-
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXB & 0xFC00) == 0x0) || ((cmd.CMDXB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYB & 0xFC00) == 0x0) || ((cmd.CMDYB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXC & 0xFC00) == 0x0) || ((cmd.CMDXC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYC & 0xFC00) == 0x0) || ((cmd.CMDYC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXD & 0xFC00) == 0x0) || ((cmd.CMDXD & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYD & 0xFC00) == 0x0) || ((cmd.CMDYD & 0xFC00) == 0xFC00)) badgeometry = 0;
-
-  if (badgeometry == 1) return;
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
+  CONVERTCMD(cmd.CMDXB);
+  CONVERTCMD(cmd.CMDYB);
+  CONVERTCMD(cmd.CMDXC);
+  CONVERTCMD(cmd.CMDYC);
+  CONVERTCMD(cmd.CMDXD);
+  CONVERTCMD(cmd.CMDYD);
 
   cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
   cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
@@ -426,21 +422,18 @@ if ((cmd.CMDPMOD & 4))
 void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   vdp1cmd_struct cmd;
-  int badgeometry = 1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXB & 0xFC00) == 0x0) || ((cmd.CMDXB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYB & 0xFC00) == 0x0) || ((cmd.CMDYB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXC & 0xFC00) == 0x0) || ((cmd.CMDXC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYC & 0xFC00) == 0x0) || ((cmd.CMDYC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXD & 0xFC00) == 0x0) || ((cmd.CMDXD & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYD & 0xFC00) == 0x0) || ((cmd.CMDYD & 0xFC00) == 0xFC00)) badgeometry = 0;
-
-  if (badgeometry == 1) return;
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
+  CONVERTCMD(cmd.CMDXB);
+  CONVERTCMD(cmd.CMDYB);
+  CONVERTCMD(cmd.CMDXC);
+  CONVERTCMD(cmd.CMDYC);
+  CONVERTCMD(cmd.CMDXD);
+  CONVERTCMD(cmd.CMDYD);
 
   cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
   cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
@@ -484,21 +477,18 @@ void VIDCSVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   LOG_CMD("%d\n", __LINE__);
 
   vdp1cmd_struct cmd;
-  int badgeometry = 1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXB & 0xFC00) == 0x0) || ((cmd.CMDXB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYB & 0xFC00) == 0x0) || ((cmd.CMDYB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXC & 0xFC00) == 0x0) || ((cmd.CMDXC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYC & 0xFC00) == 0x0) || ((cmd.CMDYC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXD & 0xFC00) == 0x0) || ((cmd.CMDXD & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYD & 0xFC00) == 0x0) || ((cmd.CMDYD & 0xFC00) == 0xFC00)) badgeometry = 0;
-
-  if (badgeometry == 1) return;
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
+  CONVERTCMD(cmd.CMDXB);
+  CONVERTCMD(cmd.CMDYB);
+  CONVERTCMD(cmd.CMDXC);
+  CONVERTCMD(cmd.CMDYC);
+  CONVERTCMD(cmd.CMDXD);
+  CONVERTCMD(cmd.CMDYD);
 
   cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
   cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
@@ -542,21 +532,18 @@ void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   LOG_CMD("%d\n", __LINE__);
 
   vdp1cmd_struct cmd;
-  int badgeometry = 1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXB & 0xFC00) == 0x0) || ((cmd.CMDXB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYB & 0xFC00) == 0x0) || ((cmd.CMDYB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXC & 0xFC00) == 0x0) || ((cmd.CMDXC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYC & 0xFC00) == 0x0) || ((cmd.CMDYC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXD & 0xFC00) == 0x0) || ((cmd.CMDXD & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYD & 0xFC00) == 0x0) || ((cmd.CMDYD & 0xFC00) == 0xFC00)) badgeometry = 0;
-
-  if (badgeometry == 1) return;
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
+  CONVERTCMD(cmd.CMDXB);
+  CONVERTCMD(cmd.CMDYB);
+  CONVERTCMD(cmd.CMDXC);
+  CONVERTCMD(cmd.CMDYC);
+  CONVERTCMD(cmd.CMDXD);
+  CONVERTCMD(cmd.CMDYD);
 
   cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
   cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
