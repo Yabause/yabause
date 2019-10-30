@@ -920,67 +920,93 @@ static const char vdp1_improved_mesh_f[] =
 "      finalColorAttr.b = float(int(finalColorAttr.b*255.0)&0xFE)/255.0;\n"
 "      newColor = finalColor;\n"
 "      newColor.a = float((int(newColor.a *255.0) & 0xF8)|prio)/255.0;\n";
+
+
+#define COLINDEX(A) \
+"int col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
+
+#define RECOLINDEX(A) \
+"col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
+
+#define SHADOW(A) \
+"if ((col"Stringify(A)" & 0x8000) != 0) { \n\
+  int Rs = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
+  int Gs = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
+  int Bs = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
+  int MSBs = (col"Stringify(A)" & 0x8000) >> 8;\n \
+  "Stringify(A)".r = float(Rs | ((Gs & 0x7)<<5))/255.0;\n \
+  "Stringify(A)".g = float((Gs>>3) | (Bs<<2) | MSBs)/255.0;\n \
+} \n"
+
+#define HALF_LUMINANCE(A) \
+"int Rhl = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
+int Ghl = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
+int Bhl = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
+int MSBhl = (col"Stringify(A)" & 0x8000) >> 8;\n \
+"Stringify(A)".r = float(Rhl | ((Ghl & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((Ghl>>3) | (Bhl<<2) | MSBhl)/255.0;\n"
+
+#define HALF_TRANPARENT_MIX(A, B) \
+"if ((col"Stringify(B)" & 0x8000) != 0) { \
+  int Rht = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int Ght = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int Bht = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int MSBht = (col"Stringify(A)" & 0x8000) >> 8;\n \
+  "Stringify(A)".r = float(Rht | ((Ght & 0x7)<<5))/255.0;\n \
+  "Stringify(A)".g = float((Ght>>3) | (Bht<<2) | MSBht)/255.0;\n \
+}\n"
+
+#define GOURAUD_PROCESS(A) "\
+"Stringify(A)".r = clamp("Stringify(A)".r + mix(mix(pixcmd.G[0],pixcmd.G[4],gouraudcoord.x), mix(pixcmd.G[12],pixcmd.G[8],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
+"Stringify(A)".g = clamp("Stringify(A)".g + mix(mix(pixcmd.G[1],pixcmd.G[5],gouraudcoord.x), mix(pixcmd.G[13],pixcmd.G[9],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
+"Stringify(A)".b = clamp("Stringify(A)".b + mix(mix(pixcmd.G[2],pixcmd.G[6],gouraudcoord.x), mix(pixcmd.G[14],pixcmd.G[10],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
+
 static const char vdp1_continue_f[] =
-"    } else if ((pixcmd.CMDPMOD & 0x8000u)!=0x00u){\n"//IS_MSB
-//Implement PG_VDP1_MSB
-"      int msb = 0;\n"
-"      int oldmsb = (int(finalColorAttr.a * 255.0))>>7;\n"
-"      int prio = int(newColor.a * 255.0) & 0x7;\n"
-"      if ((int(newColor.a * 255.0) & 0xC0) == 0xC0) {\n"
-"        msb = (int(newColor.b*255.0)>>7);\n"
-"      }\n"
-"      if (msb == 0) {\n"
-"        newColor = vec4(0.0);\n"
-"        continue;\n"
-"      }\n"
-"      finalColorAttr.a = float((msb | oldmsb)<<7 | prio)/255.0;\n"
-"    } else if ((pixcmd.CMDPMOD & 0x03u)==0x00u){\n" //REPLACE
-//Implement PG_VDP1_GOURAUDSHADING
-"      int shadow = 0;\n"
-"      int additionnal = int(newColor.a * 255.0)&0xF8;\n"
-"      if (additionnal == 0xC0) {\n"
-"        if (((int(newColor.b * 255.0)&0xFE)==0x80) && (finalColor.rg == vec2(0.0))) shadow = 1;\n"
-"      }\n"
-"      if (shadow != 0) {\n"
-"        finalColorAttr.rgb = vec3(0.0);\n"
-"        finalColorAttr.a = float(0x80)/255.0;\n"
-"        newColor.rgb = vec3(0.0);\n"
-"        useGouraud = false;\n"
-"      } else { \n"
-"        finalColorAttr = vec4(0.0);\n"
-"      }\n"
-"    } else if ((pixcmd.CMDPMOD & 0x03u)==0x01u){\n"//IS_DONOT_DRAW_OR_SHADOW
-//Implement PG_VDP1_SHADOW
-"      int mode = int(newColor.b*255.0)&0x7; \n"
-"      int additional = int(finalColor.a * 255.0);\n"
-"      if( ((additional & 0xC0)==0x80) ) { \n"
-"        newColor = vec4(finalColor.r*0.5,finalColor.g*0.5,finalColor.b*0.5,finalColor.a);\n"
-"        newColor.b = float((int(newColor.b*255.0)&0xF8)|mode)/255.0; \n"
-"      }else{\n"
-"        newColor = vec4(0.0);\n"
-"        continue;\n"
-"      }\n"
-"    } else if ((pixcmd.CMDPMOD & 0x03u)==0x02u){\n"//IS_HALF_LUMINANCE
-//Implement PG_VDP1_HALF_LUMINANCE
-"      newColor.r = newColor.r * 0.5;\n "
-"      newColor.g = newColor.g * 0.5;\n "
-"      newColor.b = newColor.b * 0.5;\n "
-"      finalColorAttr = vec4(0.0);\n"
-"    } else if ((pixcmd.CMDPMOD & 0x03u)==0x03u){\n"//IS_REPLACE_OR_HALF_TRANSPARENT
-//Implement PG_VDP1_GOURAUDSHADING_HALFTRANS
-"      int additional = int(finalColor.a * 255.0);\n"
-"      int mode = int(newColor.b*255.0)&0x7; \n"
-"      newColor.b = float((int(newColor.b*255.0)&0xF8)>>3)/31.0; \n"
-"      if( (additional & 0x40) == 0 ) \n"
-"      { \n"
-"        newColor.rgb = newColor.rgb*0.5 + finalColor.rgb*0.5;     \n"
-"      }   \n"
-"      newColor.b = float((int(newColor.b*255.0)&0xF8)|mode)/255.0; \n"
 "    }\n"
-"    if (useGouraud) {\n"
-"      newColor.r = clamp(newColor.r + mix(mix(pixcmd.G[0],pixcmd.G[4],gouraudcoord.x), mix(pixcmd.G[12],pixcmd.G[8],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
-"      newColor.g = clamp(newColor.g + mix(mix(pixcmd.G[1],pixcmd.G[5],gouraudcoord.x), mix(pixcmd.G[13],pixcmd.G[9],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
-"      newColor.b = clamp(newColor.b + mix(mix(pixcmd.G[2],pixcmd.G[6],gouraudcoord.x), mix(pixcmd.G[14],pixcmd.G[10],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
+     COLINDEX(finalColor)
+     COLINDEX(newColor)
+"    switch (pixcmd.CMDPMOD & 0x7u){\n"//IS_MSB
+"      case 0u: {\n"
+         // replace_mode
+"        finalColor.rg = newColor.rg;\n"
+"        }; break;\n"
+"      case 1u: {\n"
+         //shadow_mode,
+         SHADOW(finalColor)
+"        }; break;\n"
+"      case 2u: {\n"
+         //half_luminance_mode,
+         HALF_LUMINANCE(newColor)
+"        finalColor.rg = newColor.rg;\n"
+"        }; break;\n"
+"      case 3u: {\n"
+         //half_trans_mode,
+         HALF_TRANPARENT_MIX(newColor, finalColor)
+"        finalColor.rg = newColor.rg;\n"
+"        }; break;\n"
+"      case 4u: {\n"
+         //gouraud_mode,
+         GOURAUD_PROCESS(newColor)
+"        finalColor.rg = newColor.rg;\n"
+"        }; break;\n"
+"      case 6u: {\n"
+         //gouraud_half_trans_mode,
+         GOURAUD_PROCESS(newColor)
+         RECOLINDEX(newColor)
+         HALF_TRANPARENT_MIX(newColor, finalColor)
+"        finalColor.rg = newColor.rg;\n"
+"        }; break;\n"
+"      case 7u: {\n"
+         //gouraud_half_luminance_mode,
+         GOURAUD_PROCESS(newColor)
+         RECOLINDEX(newColor)
+         HALF_LUMINANCE(newColor)
+"        finalColor.rg = newColor.rg;\n"
+"        }; break;\n"
+"      default:\n"
+"        newColor = vec4(0.0);\n"
+"        continue;\n"
+"        break;\n"
 "    }\n"
 "    finalColor = newColor;\n"
 "  }\n"
