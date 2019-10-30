@@ -970,8 +970,6 @@ public:
 
 		glActiveTexture(GL_TEXTURE9);
 		glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
-		glActiveTexture(GL_TEXTURE10);
-		glBindTexture(GL_TEXTURE_2D, vdp1fb[1]);
 
 		glActiveTexture(GL_TEXTURE11);
 	  glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);

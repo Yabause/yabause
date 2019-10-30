@@ -35,7 +35,7 @@ static int* clear;
 
 static int generateComputeBuffer(int w, int h);
 
-static GLuint compute_tex[4] = {0};
+static GLuint compute_tex[2] = {0};
 static GLuint ssbo_cmd_ = 0;
 static GLuint ssbo_vdp1ram_ = 0;
 static GLuint ssbo_nbcmd_ = 0;
@@ -158,7 +158,7 @@ static GLuint createProgram(int count, const GLchar** prg_strs) {
 
 static int generateComputeBuffer(int w, int h) {
   if (compute_tex[0] != 0) {
-    glDeleteTextures(4,&compute_tex[0]);
+    glDeleteTextures(2,&compute_tex[0]);
   }
 	if (ssbo_vdp1ram_ != 0) {
     glDeleteBuffers(1, &ssbo_vdp1ram_);
@@ -192,7 +192,7 @@ static int generateComputeBuffer(int w, int h) {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1access_[1]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, 512*256*4, NULL, GL_DYNAMIC_DRAW);
 
-  glGenTextures(4, &compute_tex[0]);
+  glGenTextures(2, &compute_tex[0]);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, compute_tex[0]);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -202,20 +202,6 @@ static int generateComputeBuffer(int w, int h) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glBindTexture(GL_TEXTURE_2D, compute_tex[1]);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, w, h);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glBindTexture(GL_TEXTURE_2D, compute_tex[2]);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, w, h);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glBindTexture(GL_TEXTURE_2D, compute_tex[3]);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, w, h);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -327,8 +313,7 @@ void vdp1_clear(int id, float *col) {
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
   glUseProgram(prg_vdp1[progId]);
 
-	glBindImageTexture(0, compute_tex[id*2], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
-	glBindImageTexture(1, compute_tex[id*2+1], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	glBindImageTexture(0, compute_tex[id], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	glUniform4fv(2, 1, col);
 	glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 }
@@ -339,7 +324,7 @@ static void vdp1_write(int id) {
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
   glUseProgram(prg_vdp1[progId]);
 
-	glBindImageTexture(0, compute_tex[id*2], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	glBindImageTexture(0, compute_tex[id], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vdp1access_[id]);
 	glUniform2f(2, (float)_Ygl->rwidth/(float)(tex_width*tex_ratiow), (float)_Ygl->rheight/(float)(tex_height*tex_ratioh));
 
@@ -355,7 +340,7 @@ static u32* vdp1_read(int id) {
 	  glUseProgram(prg_vdp1[progId]);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_vdp1access_[id]);
-	  glBindImageTexture(1, compute_tex[id*2], 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8);
+	  glBindImageTexture(1, compute_tex[id], 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8);
 		glUniform2f(2, (float)(tex_width*tex_ratiow)/(float)_Ygl->rwidth, (float)(tex_height*tex_ratioh)/(float)_Ygl->rheight);
 
 		glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
@@ -445,15 +430,14 @@ int* vdp1_compute(Vdp2 *varVdp2Regs, int id) {
 		}
   }
 
-  if (needRender == 0) return &compute_tex[id*2];
+  if (needRender == 0) return &compute_tex[id];
 
 	_Ygl->vdp1On[id] = 1;
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_nbcmd_);
   glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int)*NB_COARSE_RAST, (void*)nbCmd);
 
-	glBindImageTexture(0, compute_tex[id*2], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
-	glBindImageTexture(1, compute_tex[id*2+1], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	glBindImageTexture(0, compute_tex[id], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 
 #ifdef USE_VDP1_TEX
 	glUniform1i(2, 0);
@@ -505,5 +489,5 @@ int* vdp1_compute(Vdp2 *varVdp2Regs, int id) {
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-  return &compute_tex[id*2];
+  return &compute_tex[id];
 }
