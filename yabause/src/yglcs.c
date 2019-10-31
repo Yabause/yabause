@@ -71,8 +71,6 @@ void YglEraseWriteCSVDP1(void) {
   col[0] = (color & 0xFF) / 255.0f;
   col[1] = ((color >> 8) & 0xFF) / 255.0f;
 
-  glClearBufferfv(GL_COLOR, 0, col);
-  glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
   FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
   //Get back to drawframe
   vdp1_clear(_Ygl->readframe, col);
