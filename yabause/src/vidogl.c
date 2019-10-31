@@ -6414,10 +6414,7 @@ static void Vdp2DrawNBG0(void)
         info.vertices[7] = vdp2height;
         vdp2draw_struct infotmp = info;
         infotmp.cellw = vdp2width;
-        if (vdp2height >= 448)
-          infotmp.cellh = (vdp2height >> 1);
-        else
-          infotmp.cellh = vdp2height;
+        infotmp.cellh = vdp2height;
 
         infotmp.flipfunction = 0;
         YglQuad(&infotmp, &texture, &tmpc);
@@ -6716,10 +6713,7 @@ static void Vdp2DrawNBG1(void)
       info.vertices[7] = vdp2height;
       vdp2draw_struct infotmp = info;
       infotmp.cellw = vdp2width;
-      //if (vdp2height >= 448)
-      //  infotmp.cellh = (vdp2height >> 1);
-      //else
-        infotmp.cellh = vdp2height;
+      infotmp.cellh = vdp2height;
       infotmp.flipfunction = 0;
       YglQuad(&infotmp, &texture, &tmpc);
       Vdp2DrawMapPerLine(&info, &texture);
