@@ -326,7 +326,7 @@ static void vdp1_write(int id) {
 
 	glBindImageTexture(0, compute_tex[id], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vdp1access_[id]);
-	glUniform2f(2, (float)_Ygl->rwidth/(float)(tex_width*tex_ratiow), (float)_Ygl->rheight/(float)(tex_height*tex_ratioh));
+	glUniform2f(2, 512.0f/(float)(tex_width*tex_ratiow), 256.0f/(float)(tex_height*tex_ratioh));
 
 	glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 }
@@ -341,7 +341,7 @@ static u32* vdp1_read(int id) {
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_vdp1access_[id]);
 	  glBindImageTexture(1, compute_tex[id], 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8);
-		glUniform2f(2, (float)(tex_width*tex_ratiow)/(float)_Ygl->rwidth, (float)(tex_height*tex_ratioh)/(float)_Ygl->rheight);
+		glUniform2f(2, (float)(tex_width*tex_ratiow)/512.0f, (float)(tex_height*tex_ratioh)/256.0f);
 
 		glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 

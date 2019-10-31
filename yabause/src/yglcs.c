@@ -64,9 +64,6 @@ void YglEraseWriteCSVDP1(void) {
   _Ygl->vdp1On[_Ygl->readframe] = 0;
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
 
-  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-  glDrawBuffers(1, &DrawBuffers[_Ygl->readframe]);
-
   _Ygl->vdp1_stencil_mode = 0;
 
   color = Vdp1Regs->EWDR;
@@ -359,7 +356,7 @@ static int YglGenFrameBuffer() {
     return 0;
   }
 
-  vdp1_compute_init(_Ygl->rwidth, _Ygl->rheight, (float)(_Ygl->width)/(float)(_Ygl->rwidth), (float)(_Ygl->height)/(float)(_Ygl->rheight));
+  vdp1_compute_init(512.0f, 256.0f, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
 
   if (_Ygl->upfbo != 0){
     glDeleteFramebuffers(1, &_Ygl->upfbo);
