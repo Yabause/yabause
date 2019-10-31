@@ -672,8 +672,6 @@ SHADER_VERSION_COMPUTE
 "  uint dot;\n"
 "  bool SPD = ((pixcmd.CMDPMOD & 0x40u) != 0);\n"
 "  bool END = ((pixcmd.CMDPMOD & 0x80u) != 0);\n"
-"  bool MSB = ((pixcmd.CMDPMOD & 0x8000u) != 0);\n"
-"  uint SPCCCS = (pixcmd.SPCTL >> 12) & 0x3u;\n"
 "  Vdp1ReadPriority(pixcmd, priority, colorcl, normal_shadow);\n"
 //Pour le end, n a besoin d'une barriere par ligne entre toute les commandes
 "  switch ((pixcmd.CMDPMOD >> 3) & 0x7u)\n"
@@ -948,9 +946,16 @@ int MSBhl = (col"Stringify(A)" & 0x8000) >> 8;\n \
 }\n"
 
 #define GOURAUD_PROCESS(A) "\
-"Stringify(A)".r = clamp("Stringify(A)".r + mix(mix(pixcmd.G[0],pixcmd.G[4],gouraudcoord.x), mix(pixcmd.G[12],pixcmd.G[8],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
-"Stringify(A)".g = clamp("Stringify(A)".g + mix(mix(pixcmd.G[1],pixcmd.G[5],gouraudcoord.x), mix(pixcmd.G[13],pixcmd.G[9],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
-"Stringify(A)".b = clamp("Stringify(A)".b + mix(mix(pixcmd.G[2],pixcmd.G[6],gouraudcoord.x), mix(pixcmd.G[14],pixcmd.G[10],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
+float Rg = float((col"Stringify(A)" >> 00) & 0x1F)/31.0;\n \
+float Gg = float((col"Stringify(A)" >> 05) & 0x1F)/31.0;\n \
+float Bg = float((col"Stringify(A)" >> 10) & 0x1F)/31.0;\n \
+int MSBg = (col"Stringify(A)" & 0x8000) >> 8;\n \
+Rg = clamp(Rg + mix(mix(pixcmd.G[0],pixcmd.G[4],gouraudcoord.x), mix(pixcmd.G[12],pixcmd.G[8],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
+Gg = clamp(Gg+ mix(mix(pixcmd.G[1],pixcmd.G[5],gouraudcoord.x), mix(pixcmd.G[13],pixcmd.G[9],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
+Bg = clamp(Bg + mix(mix(pixcmd.G[2],pixcmd.G[6],gouraudcoord.x), mix(pixcmd.G[14],pixcmd.G[10],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
+"Stringify(A)".r = float(int(Rg*31.0) | ((int(Gg*31.0) & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((int(Gg*31.0)>>3) | (int(Bg*31.0)<<2) | MSBg)/255.0;\n"
+
 
 static const char vdp1_continue_f[] =
 "    }\n"
