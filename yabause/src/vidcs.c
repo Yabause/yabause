@@ -191,6 +191,9 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   CONVERTCMD(cmd.CMDXA);
   CONVERTCMD(cmd.CMDYA);
 
+  cmd.CMDXA += Vdp1Regs->localX;
+  cmd.CMDYA += Vdp1Regs->localY;
+
   if (cmd.w == 0 || cmd.h == 0) {
     return; //bad command
   }
@@ -257,9 +260,6 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   CONVERTCMD(cmd.CMDXC);
   CONVERTCMD(cmd.CMDYC);
 
-  x = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  y = (s16)cmd.CMDYA + Vdp1Regs->localY;
-
   x = cmd.CMDXA;
   y = cmd.CMDYA;
   // Setup Zoom Point
@@ -320,7 +320,7 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   default: break;
   }
 
-  cmd.CMDXA = x  + Vdp1Regs->localX;
+  cmd.CMDXA = x + Vdp1Regs->localX;
   cmd.CMDYA = y + Vdp1Regs->localY;
   cmd.CMDXB = x + rw  + Vdp1Regs->localX;
   cmd.CMDYB = y + Vdp1Regs->localY;
@@ -385,14 +385,14 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   CONVERTCMD(cmd.CMDXD);
   CONVERTCMD(cmd.CMDYD);
 
-  cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
-  cmd.CMDXB = (s16)cmd.CMDXB + Vdp1Regs->localX;
-  cmd.CMDYB = (s16)cmd.CMDYB + Vdp1Regs->localY;
-  cmd.CMDXC = (s16)cmd.CMDXC + Vdp1Regs->localX;
-  cmd.CMDYC = (s16)cmd.CMDYC + Vdp1Regs->localY;
-  cmd.CMDXD = (s16)cmd.CMDXD + Vdp1Regs->localX;
-  cmd.CMDYD = (s16)cmd.CMDYD + Vdp1Regs->localY;
+  cmd.CMDXA += Vdp1Regs->localX;
+  cmd.CMDYA += Vdp1Regs->localY;
+  cmd.CMDXB += Vdp1Regs->localX;
+  cmd.CMDYB += Vdp1Regs->localY;
+  cmd.CMDXC += Vdp1Regs->localX;
+  cmd.CMDYC += Vdp1Regs->localY;
+  cmd.CMDXD += Vdp1Regs->localX;
+  cmd.CMDYD += Vdp1Regs->localY;
 
   if ((cmd.CMDPMOD >> 3) & 0x7u == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
@@ -435,14 +435,14 @@ void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   CONVERTCMD(cmd.CMDXD);
   CONVERTCMD(cmd.CMDYD);
 
-  cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
-  cmd.CMDXB = (s16)cmd.CMDXB + Vdp1Regs->localX;
-  cmd.CMDYB = (s16)cmd.CMDYB + Vdp1Regs->localY;
-  cmd.CMDXC = (s16)cmd.CMDXC + Vdp1Regs->localX;
-  cmd.CMDYC = (s16)cmd.CMDYC + Vdp1Regs->localY;
-  cmd.CMDXD = (s16)cmd.CMDXD + Vdp1Regs->localX;
-  cmd.CMDYD = (s16)cmd.CMDYD + Vdp1Regs->localY;
+  cmd.CMDXA += Vdp1Regs->localX;
+  cmd.CMDYA += Vdp1Regs->localY;
+  cmd.CMDXB += Vdp1Regs->localX;
+  cmd.CMDYB += Vdp1Regs->localY;
+  cmd.CMDXC += Vdp1Regs->localX;
+  cmd.CMDYC += Vdp1Regs->localY;
+  cmd.CMDXD += Vdp1Regs->localX;
+  cmd.CMDYD += Vdp1Regs->localY;
 
   //printf("(%d,%d) (%d,%d) (%d,%d) (%d,%d)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
 
@@ -490,14 +490,14 @@ void VIDCSVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   CONVERTCMD(cmd.CMDXD);
   CONVERTCMD(cmd.CMDYD);
 
-  cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
-  cmd.CMDXB = (s16)cmd.CMDXB + Vdp1Regs->localX;
-  cmd.CMDYB = (s16)cmd.CMDYB + Vdp1Regs->localY;
-  cmd.CMDXC = (s16)cmd.CMDXC + Vdp1Regs->localX;
-  cmd.CMDYC = (s16)cmd.CMDYC + Vdp1Regs->localY;
-  cmd.CMDXD = (s16)cmd.CMDXD + Vdp1Regs->localX;
-  cmd.CMDYD = (s16)cmd.CMDYD + Vdp1Regs->localY;
+  cmd.CMDXA += Vdp1Regs->localX;
+  cmd.CMDYA += Vdp1Regs->localY;
+  cmd.CMDXB += Vdp1Regs->localX;
+  cmd.CMDYB += Vdp1Regs->localY;
+  cmd.CMDXC += Vdp1Regs->localX;
+  cmd.CMDYC += Vdp1Regs->localY;
+  cmd.CMDXD += Vdp1Regs->localX;
+  cmd.CMDYD += Vdp1Regs->localY;
 
 //gouraud
 memset(cmd.G, 0, sizeof(float)*16);
@@ -545,14 +545,14 @@ void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   CONVERTCMD(cmd.CMDXD);
   CONVERTCMD(cmd.CMDYD);
 
-  cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
-  cmd.CMDXB = (s16)cmd.CMDXB + Vdp1Regs->localX;
-  cmd.CMDYB = (s16)cmd.CMDYB + Vdp1Regs->localY;
-  cmd.CMDXC = (s16)cmd.CMDXC + Vdp1Regs->localX;
-  cmd.CMDYC = (s16)cmd.CMDYC + Vdp1Regs->localY;
-  cmd.CMDXD = (s16)cmd.CMDXD + Vdp1Regs->localX;
-  cmd.CMDYD = (s16)cmd.CMDYD + Vdp1Regs->localY;
+  cmd.CMDXA += Vdp1Regs->localX;
+  cmd.CMDYA += Vdp1Regs->localY;
+  cmd.CMDXB += Vdp1Regs->localX;
+  cmd.CMDYB += Vdp1Regs->localY;
+  cmd.CMDXC += Vdp1Regs->localX;
+  cmd.CMDYC += Vdp1Regs->localY;
+  cmd.CMDXD += Vdp1Regs->localX;
+  cmd.CMDYD += Vdp1Regs->localY;
 
   //printf("(%d,%d) (%d,%d) (%d,%d) (%d,%d)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
 
