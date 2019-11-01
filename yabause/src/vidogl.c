@@ -6196,7 +6196,7 @@ static void Vdp2DrawNBG0(void)
   ReadMosaicData(&info, 0x1, fixVdp2Regs);
 
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x100);
-  info.specialprimode = (fixVdp2Regs->SFPRMD>>8) & 0x3;
+  info.specialprimode = (fixVdp2Regs->SFPRMD) & 0x3;
   info.specialcolormode = fixVdp2Regs->SFCCMD & 0x3;
   if (fixVdp2Regs->SFSEL & 0x1)
     info.specialcode = fixVdp2Regs->SFCODE >> 8;
