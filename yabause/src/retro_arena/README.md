@@ -30,6 +30,13 @@ $ cmake ../yabause -DGIT_EXECUTABLE=/usr/bin/git -DYAB_PORTS=retro_arena -DYAB_W
 $ cmake ../yabause -DGIT_EXECUTABLE=/usr/bin/git -DYAB_PORTS=retro_arena -DYAB_WANT_DYNAREC_DEVMIYAX=ON -DYAB_WANT_ARM7=ON -DCMAKE_TOOLCHAIN_FILE=../yabause/src/retro_arena/rp64.cmake -DCMAKE_INSTALL_PREFIX=/opt/retroarena/emulators/yabause/
 ```
 
+### Generate Makefile for Jetson Nano
+
+```
+$ cmake ../yabause -DGIT_EXECUTABLE=/usr/bin/git -DYAB_PORTS=retro_arena -DYAB_WANT_DYNAREC_DEVMIYAX=ON -DCMAKE_TOOLCHAIN_FILE=../yabause/src/retro_arena/jetson.cmake -DCMAKE_INSTALL_PREFIX=/opt/retroarena/emulators/yabause/
+```
+
+
 ### Build
 
 ```
