@@ -16,6 +16,25 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+/*
+        Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+This file is part of YabaSanshiro.
+
+        YabaSanshiro is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+YabaSanshiro is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public License
+along with YabaSanshiro; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
 
 /*! \file osdcore.c
     \brief OSD dummy, glut, and software interfaces.
@@ -319,7 +338,7 @@ void OSDGlutDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w,
    }
 
    msglength = strlen(message->message);
-
+/*
    glBegin(GL_POLYGON);
       glColor3f(0, 0, 0);
       glVertex2i(LeftX, TxtY);
@@ -334,6 +353,7 @@ void OSDGlutDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w,
       glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, message->message[i]);
    }
    glColor3f(1, 1, 1);
+*/
 }
 
 int OSDGlutUseBuffer(void)

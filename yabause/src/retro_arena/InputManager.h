@@ -1,3 +1,23 @@
+/*
+        Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+This file is part of YabaSanshiro.
+
+        YabaSanshiro is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+YabaSanshiro is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public License
+along with YabaSanshiro; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
+
 #ifndef _INPUTMANAGER_H_
 #define _INPUTMANAGER_H_
 
@@ -19,6 +39,7 @@ struct MenuInput {
 };
 
 typedef std::map<std::string, int *> pre_input_map;
+typedef std::map<int,int> AnalogType;
 
 //you should only ever instantiate one of these, by the way
 class InputManager
@@ -89,6 +110,8 @@ public:
 	void saveInputConfig( const std::string & player , const std::string & key , const std::string & type, int id , int value);
 
 	std::vector<MenuInput> menu_inputs_;
+
+	AnalogType _analogType;
 
 public:
 	static void genJoyString( string & out, SDL_JoystickID id, const string & name, const string & guid );

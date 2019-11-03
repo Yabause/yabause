@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Yaba Sanshiro</string>
     <string name="menu_exit">終了</string>
     <string name="menu_save_state">状態保存</string>
     <string name="menu_load_state">状態読込</string>
@@ -29,8 +28,8 @@
     <string name="skip">スキップ</string>
     <string name="donate_message">
                   私たちの開発を支援してください！\n\n
-		uoYabauseの上流プロジェクトYabauseの寄付は http://www.yabause.org/ で承っています。
-		また、下のボタンで直接uoYabauseに寄付を送ることができます。より正確なエミュレーション,より多くの入力デバイス,より多くのプラットフォームのサポートに役立てます。\n
+		Yaba Sanshiroの上流プロジェクトYabauseの寄付は http://www.yabause.org/ で承っています。
+		また、下のボタンで直接Yaba Sanshiroに寄付を送ることができます。より正確なエミュレーション,より多くの入力デバイス,より多くのプラットフォームのサポートに役立てます。\n
         寄付を行うとこの画面と広告画面は表示されなくなります。
     </string>
     <string name="thank_you">寄付をありがとうございました!</string>
@@ -117,9 +116,89 @@
     <string name="sound_curent">最新(クオリティは高いが遅い)</string>
     <string name="sound_legacy">旧エンジン(クオリティは低いが速い)</string>
     <string name="poly_triangle">パースペクティブコレクション</string>
+    <string name="cancel">キャンセル</string>
+    <string name="canceled">キャンセルされました</string>
+    <string name="checking_file">ファイルをチェック中</string>
+    <string name="choose_download_to">ダウンロード先</string>
+    <string name="delete_confirm">削除してよろしいですか？</string>
+    <string name="download_file_is_broken">ダウンロードしたファイルが壊れています</string>
+    <string name="download_to">ダウンロード先</string>
+    <string name="downloading">ダウンロード中</string>
+    <string name="downloading_cd_rom">CD-ROMをダウンロード</string>
+    <string name="external">SDカード</string>
+    <string name="failed">ダウンロード失敗</string>
+    <string name="finished">ダウンロード成功</string>
+    <string name="internal">内部ストレージ</string>
+    <string name="loading">ロード中</string>
+    <string name="menu_delete">削除</string>
+    <string name="menu_load">ロード</string>
+    <string name="network_error">ネットワークエラー</string>
+    <string name="serching_for_a_server">サーバーを探しています</string>
+    <string name="server_error">サーバーでエラー</string>
+    <string name="server_is_not_found">サーバーが見つかりませんでした</string>
+    <string name="unable_to_process_file_for_md5">チェックサムの生成に失敗</string>
+    <string name="you_need_wifi_connection">Wifi接続がありません</string>
+    <string name="waiting_for_reading">読み込み待ち</string>
+    <string name="free_space">空き容量</string>
+    <string name="no_enough_free_space">空き容量が足りません</string>
     <string name="this_func_not_yet">この機能はまだ実装されていません</string>
     <string name="memory_manager">保存データー管理</string>
+    <string name="menu_set_as_gametitle">現在の画面をタイトルに設定</string>
+    <string name="refresh_db">ゲームリストの更新</string>
+    <string name="have_donated">私はuoYabauseに寄付しました</string>
+    <string name="send_your_order_id">uoYabauseに寄付したオーダー番号を送ることで、広告を消すことができます。オーダー番号は　http://payments.google.com　で確認できます。</string>
+    <string name="order_number_not_found">オーダー番号が見つかりませんでした</string>
+    <string name="order_number_used">このオーダー番号はすでに使われています</string>
+    <string name="unsahre">共有をやめる</string>
+    <string name="new_version_available">新しい Yaba Sanshiro がリリースされました</string>
+    <string name="share">共有する</string>
+    <string name="extend_internal_memory">内部メモリを8MBに拡張する</string>
+    <string name="send">送信</string>
+    <string name="send_warning">現在のスクリーンショットと状態を送信する\n(送信サイズは約2MByteになります)</string>
+    <string name="status_report">状況報告:</string>
+    <string name="issue_report">問題報告:</string>
+    <string name="report_message_1">ゲームが起動しない</string>
+    <string name="report_message_2">タイトル画面に到達したがゲームができない</string>
+    <string name="report_message_3">ゲームはできるが、画像と音の問題がたくさんある</string>
+    <string name="report_message_4">ゲームはできるが、画像と音の問題が少しある</string>
+    <string name="report_message_5">ほぼ完ぺきに動作する</string>
+    <string name="report_message_6">完ぺきに動作してエンディングに到達した</string>
+    <string name="siginin_message">
+        サインインすることで以下の機能が有効になります\n
+        *セーブデータをクラウドにバックアップする\n
+        *他のユーザーとのチートコードの共有\n\n
+        しかし,これらの機能は実験的なので期待通り動作しなかったり、事前の予告なしに仕様変更されたり、終了したりすることがあります。
+    </string>
+    <string name="agree">同意します</string>
+    <string name="do_you_want_to_sign_in">ログインしますか？</string>
+    <string name="never_ask_me_again">二度と聞かないでください</string>
+    <string name="sign_in">ログイン</string>
+    <string name="sign_in_cancelled">ログインがキャンセルされました</string>
+    <string name="sign_out">ログアウト</string>
+    <string name="stop">停止</string>
+    <string name="sure_delete">本当に削除してよろしいですか？</string>
+    <string name="accept">了承</string>
+    <string name="activate">有効化</string>
+    <string name="copy_to_cloud">クラウドにコピー</string>
+    <string name="copy_to_external">外部メモリにコピー</string>
+    <string name="copy_to_internal">内部メモリにコピー</string>
+    <string name="decline">拒否</string>
+    <string name="deleting_file">ファイルを削除します</string>
+    <string name="dismiss_error">拒否</string>
+    <string name="no_internet_connection">インターネットに接続していません</string>
+    <string name="ok">OK</string>
+    <string name="oops">しまった！</string>
+    <string name="pause">Pause</string>
+    <string name="play">Play</string>
+    <string name="rate">評価</string>
     <string name="str_rotate_screen">90度回転させる</string>
+    <string name="game_select_screen">ゲーム選択画面</string>
+    <string name="foce_android_tv_mode">強制的にAndroidTV モード</string>
+    <string name="are_you_sure_to_delete">本当に消してよいですか？</string>
+    <string name="unknown_error">原因不明の問題</string>
+    <string name="unknown_sign_in_response">謎の応答</string>
+    <string name="scsp_sync">1フレーム毎にSCSPと同期する回数</string>
+    <string name="need_to_accept">メディアファイルへのアクセスをを許可しないとこのアプリは使用できません。再起動して許可してください。どうやってISOイメージを読むつもりでした? wwwwwwww</string>
     <string name="cpu_sync_per_line">エミュレーションの優先事項</string>
     <string name="sel_cpu_sync_per_line"></string>
     <string name="speed">スピード</string>
@@ -129,4 +208,6 @@
     <string name="choose_time_synchronization_mode">サウンド同期モード</string>
     <string name="cpu_time">CPU time (仮想CPUの時間に同期します。あなたのデバイスが十分早い場合、正確なサウンドが得られます。)</string>
     <string name="real_time">Real time (実世界の時間に同期します。あなたのデバイスが遅くても、音が途切れることはありません。)</string>
+    <string name="already_have_been">" すでに寄付されている場合は、smiyaxdev@gmail.comまでご連絡ください"</string>
+    <string name="close">閉じる</string>
 </resources>

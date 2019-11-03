@@ -1,19 +1,19 @@
-/*  Copyright 2017 devMiyax(smiyaxdev@gmail.com)
+/*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
-    This file is part of Yabause.
+    This file is part of YabaSanshiro.
 
-    Yabause is free software; you can redistribute it and/or modify
+    YabaSanshiro is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 
-    Yabause is distributed in the hope that it will be useful,
+    YabaSanshiro is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Yabause; if not, write to the Free Software
+    along with YabaSanshiro; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
@@ -31,6 +31,7 @@ import com.activeandroid.query.Select;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.uoyabause.uranus.R;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -266,7 +267,19 @@ public class GameInfo extends Model {
         }
     }
 
+    class BasicAuthenticator extends Authenticator {
+        private String password;
+        private String user;
 
+        public BasicAuthenticator(String user, String password){
+            this.password = password;
+            this.user = user;
+        }
+
+        protected PasswordAuthentication getPasswordAuthentication(){
+            return new PasswordAuthentication(user, password.toCharArray());
+        }
+    }
 
     public int updateState(){
 
@@ -291,12 +304,21 @@ public class GameInfo extends Model {
                 e.printStackTrace();
             }
         }else{
-            image_url = status.image_url;
+            image_url = ""; //status.image_url;
             rating = status.rating;
             update_at = status.update_at;
         }
 
-/*
+        String save_path = YabauseStorage.getStorage().getScreenshotPath();
+        String screen_shot_save_path = save_path + product_number + ".png";
+        File fp = new File(screen_shot_save_path);
+        if( fp != null && fp.exists() ){
+            image_url = screen_shot_save_path;
+            fp = null;
+        }else{
+            //image_url = status.image_url;
+        }
+
         if( product_number.equals("")) return -1;
 
         HttpURLConnection con = null;
@@ -350,7 +372,7 @@ public class GameInfo extends Model {
             e.printStackTrace();
         }finally{
         }
-*/
+
         return 0;
     }
 }

@@ -18,6 +18,25 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+/*
+        Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+This file is part of YabaSanshiro.
+
+        YabaSanshiro is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+YabaSanshiro is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public License
+along with YabaSanshiro; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
 
 /*! \file vidogl.c
     \brief OpenGL video renderer
@@ -1783,7 +1802,7 @@ INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex) {
       else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
       break;
     case 3:
-      if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
+      if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xFF; }
       break;
     }
   }
@@ -3198,14 +3217,17 @@ static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int m
 #define RBG_FINIESED 1
 #define RBG_TEXTURE_SYNCED 2
 
-
+#define RBG_PROFILE 0
 
 /*------------------------------------------------------------------------------
  Rotate Screen drawing
  ------------------------------------------------------------------------------*/
 void Vdp2DrawRotationThread(void * p) {
 #if RBG_PROFILE
-
+  u64 before;
+  u64 now;
+  u32 difftime;
+  char str[64];
 #endif
 
   printf("Vdp2DrawRotationThread\n");
@@ -3217,7 +3239,21 @@ void Vdp2DrawRotationThread(void * p) {
     }
     FrameProfileAdd("Vdp2DrawRotationThread start");
     YGL_THREAD_DEBUG("Vdp2DrawRotationThread in %d,%08X\n", curret_rbg->vdp2_sync_flg, curret_rbg->texture.textdata);
+#if RBG_PROFILE
+    before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+#endif
     Vdp2DrawRotation_in(curret_rbg);
+#if RBG_PROFILE    
+    now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+    if (now > before) {
+      difftime = now - before;
+    }
+    else {
+      difftime = now + (ULLONG_MAX - before);
+    }
+    sprintf(str,"Vdp2DrawRotation_in = %d", difftime);
+    DisplayMessage(str);
+#endif
     FrameProfileAdd("Vdp2DrawRotation_in end");
     curret_rbg->vdp2_sync_flg = RBG_FINIESED;
     YGL_THREAD_DEBUG("Vdp2DrawRotationThread end %d,%08X\n", curret_rbg->vdp2_sync_flg, curret_rbg->texture.textdata);
@@ -6788,7 +6824,7 @@ static void Vdp2DrawNBG2(void)
   info.priority = fixVdp2Regs->PRINB & 0x7;;
   info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG2PlaneAddr;
 
-  if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
+  if (/*!(info.enable & Vdp2External.disptoggle) ||*/ (info.priority == 0) ||
     (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
     return;
 
@@ -7290,18 +7326,9 @@ static void Vdp2DrawRBG0(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-#define BG_PROFILE 0
+
 void VIDOGLVdp2DrawScreens(void)
 {
-  u64 before;
-  u64 now;
-  u32 difftime;
-  char str[64];
-
-#if BG_PROFILE
-  before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-#endif
-
   fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
   if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
   memcpy(&baseVdp2Regs, fixVdp2Regs, sizeof(Vdp2));
@@ -7389,17 +7416,6 @@ void VIDOGLVdp2DrawScreens(void)
   FrameProfileAdd("NBG0 end");
 
   Vdp2DrawRotationSync();
-#if BG_PROFILE    
-  now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-  if (now > before) {
-    difftime = now - before;
-  }
-  else {
-    difftime = now + (ULLONG_MAX - before);
-  }
-  sprintf(str, "VIDOGLVdp2DrawScreens = %d", difftime);
-  DisplayMessage(str);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

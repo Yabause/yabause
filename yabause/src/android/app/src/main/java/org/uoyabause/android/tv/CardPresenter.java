@@ -11,23 +11,43 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+/*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+    This file is part of YabaSanshiro.
+
+    YabaSanshiro is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    YabaSanshiro is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with YabaSanshiro; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
 
 package org.uoyabause.android.tv;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.v17.leanback.widget.ImageCardView;
-import android.support.v17.leanback.widget.Presenter;
-import android.support.v4.app.FragmentActivity;
-import android.util.Log;
+import androidx.leanback.widget.ImageCardView;
+import androidx.leanback.widget.Presenter;
+
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
+import com.bumptech.glide.request.RequestOptions;
 
 import org.uoyabause.android.GameInfo;
-import org.uoyabause.android.R;
+import org.uoyabause.uranus.R;
+
+import java.io.File;
 
 /*
  * A CardPresenter is used to generate Views and bind Objects to them on demand. 
@@ -54,7 +74,7 @@ public class CardPresenter extends Presenter {
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
         sDefaultBackgroundColor = parent.getResources().getColor(R.color.default_background);
         sSelectedBackgroundColor = parent.getResources().getColor(R.color.selected_background);
-        mDefaultCardImage = parent.getResources().getDrawable(R.drawable.movie);
+        mDefaultCardImage = parent.getResources().getDrawable(R.drawable.missing);
 
         ImageCardView cardView = new ImageCardView(parent.getContext()) {
             @Override
@@ -92,13 +112,20 @@ public class CardPresenter extends Presenter {
             return;
         }
         if( !game.image_url.equals("")) {
-            Glide.with(viewHolder.view.getContext())
-                    .load(game.image_url)
-                    .centerCrop()
-                    .error(mDefaultCardImage)
-                    .into(cardView.getMainImageView());
-        }else{
+            if( game.image_url.startsWith("http")){
+                Glide.with(viewHolder.view.getContext())
+                        .load(game.image_url)
+                        .apply(new RequestOptions().transforms(new CenterCrop() ).error(mDefaultCardImage))
+                        .into(cardView.getMainImageView());
 
+            }else {
+                Glide.with(viewHolder.view.getContext())
+                        .load(new File(game.image_url))
+                        .apply(  new RequestOptions().transforms(new CenterCrop() ).error(mDefaultCardImage)  )
+                        .into(cardView.getMainImageView());
+            }
+        }else{
+            cardView.getMainImageView().setImageDrawable(mDefaultCardImage);
         }
     }
 

@@ -1,3 +1,23 @@
+/*
+        Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+This file is part of YabaSanshiro.
+
+        YabaSanshiro is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+YabaSanshiro is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public License
+along with YabaSanshiro; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
+
 #include "InputManager.h"
 #include "InputConfig.h"
 //#include "Settings.h"
@@ -136,10 +156,23 @@ int setPlayerKeys( void * padbits, int user, int joyId, const json & player ){
     if( player.find("z") != player.end()) PerSetKey(genidjson(user,joyId,player["z"]),PERPAD_Z, padbits);
     if( player.find("l") != player.end()) PerSetKey(genidjson(user,joyId,player["l"]),PERPAD_LEFT_TRIGGER, padbits);
     if( player.find("r") != player.end())PerSetKey(genidjson(user,joyId,player["r"]),PERPAD_RIGHT_TRIGGER, padbits);    
-    if( player.find("analogx") != player.end())  PerSetKey(genidAnalogjson(user,joyId,player["analogx"]), PERANALOG_AXIS1, padbits);
-    if( player.find("analogy") != player.end()) PerSetKey(genidAnalogjson(user,joyId,player["analogy"]), PERANALOG_AXIS2, padbits);
-    if( player.find("analogleft") != player.end()) PerSetKey(genidAnalogjson(user,joyId,player["analogleft"]), PERANALOG_AXIS3, padbits);
-    if( player.find("analogright") != player.end()) PerSetKey(genidAnalogjson(user,joyId,player["analogright"]), PERANALOG_AXIS4, padbits);  
+    if( player.find("analogx") != player.end())  {
+        PerSetKey(genidAnalogjson(user,joyId,player["analogx"]), PERANALOG_AXIS1, padbits);
+	InputManager::getInstance()->_analogType[joyId] = 0;
+    }
+    if( player.find("analogy") != player.end()) {
+        PerSetKey(genidAnalogjson(user,joyId,player["analogy"]), PERANALOG_AXIS2, padbits);
+        InputManager::getInstance()->_analogType[joyId] = 0; 
+    }
+    if( player.find("analogl") != player.end()) {
+        PerSetKey(genidAnalogjson(user,joyId,player["analogl"]), PERANALOG_AXIS4, padbits);
+	InputManager::getInstance()->_analogType[joyId] = 1;
+    }
+    if( player.find("analogr") != player.end()) {
+	PerSetKey(genidAnalogjson(user,joyId,player["analogr"]), PERANALOG_AXIS3, padbits);  
+	InputManager::getInstance()->_analogType[joyId] = 1; 
+    }
+
 }
 
 void InputManager::genJoyString( string & out, SDL_JoystickID id, const string & name, const string & guid ){
@@ -822,8 +855,12 @@ int InputManager::handleJoyEvents(void) {
     for ( i = 0; i < SDL_JoystickNumAxes( joy ); i++ )
     {
       cur = SDL_JoystickGetAxis( joy, i );
-      
-      PerAxisValue((joyId << 18) | SDL_MEDIUM_AXIS_VALUE | i, (u8)(((int)cur+32768) >> 8));
+     
+      if( _analogType[joyId] == 1 ){ 
+        PerAxisValue((joyId << 18) | SDL_MEDIUM_AXIS_VALUE | i, (u8)(((int)cur+32768) >> 8));
+      }else{
+	PerAxisValue((joyId << 18) | SDL_MEDIUM_AXIS_VALUE | i, (u8)(((int)cur+32768) >> 8)-128 );
+      }
 
       if ( cur < -SDL_MEDIUM_AXIS_VALUE )
       {

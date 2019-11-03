@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
-    <string name="app_name">uoYabause</string>
     <string name="menu_exit">Выход</string>
     <string name="menu_reset">Сброс</string>
     <string name="menu_save_state">Сохранение</string>
@@ -35,7 +34,7 @@
     <string name="donation">Поддержать проект</string>
     <string name="donate_message">
         Поддержите разработку!\n\n
-	Вы можете помочь развитию uoYabause сделав пожертвование на официальном сайте http://yabause.org. 
+	Вы можете помочь развитию Yaba Sanshiro сделав пожертвование на официальном сайте http://yabause.org.
 	Вы также можете оказать поддержку перечислив любую указанную сумму - это ускорит работу по повышению точности эмуляции, поддержке новых геймпадов и устройств.
 	Данное сообщение не отображается, если вы уже помогли проекту.
     </string>
@@ -127,7 +126,6 @@
     <string name="dismiss_error">Отклонить</string>
     <string name="oops">Oops</string>
 
-    <string name="title_activity_game_select" translatable="false">uoYabause</string>
     <string name="polygon_generation_type">Полигональная генерация</string>
     <string name="choose_polygon_generation_type">Выбор метода полигональной генерации</string>
     <string name="sound_engine">Звуковой движок</string>
@@ -161,5 +159,7 @@
 
     <string name="menu_load">Загрузить</string>
     <string name="menu_delete">Удалить</string>
+    <string name="already_have_been">Если вы уже были пожертвованы, свяжитесь с smiyaxdev@gmail.com</string>
+    <string name="close">Close</string>
 
 </resources>

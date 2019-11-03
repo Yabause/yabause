@@ -1,21 +1,19 @@
-/*  Copyright 2005-2006 Guillaume Duhamel
-    Copyright 2005-2006 Theo Berkau
-    Copyright 2011-2015 Shinya Miyamoto(devmiyax)
+/*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
-    This file is part of Yabause.
+    This file is part of YabaSanshiro.
 
-    Yabause is free software; you can redistribute it and/or modify
+    YabaSanshiro is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 
-    Yabause is distributed in the hope that it will be useful,
+    YabaSanshiro is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Yabause; if not, write to the Free Software
+    along with YabaSanshiro; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
  
@@ -1137,7 +1135,10 @@ int YglGenFrameBuffer() {
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil);
   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
-    YGLDEBUG("YglGLInit:Framebuffer status = %08X\n", status);
+    YGLDEBUG("YglGLInit:Framebuffer status = %08X w=%d h=%d fbo=%d, tex=%d, depth=%d, stencil=%d\n", 
+    status,_Ygl->width, _Ygl->height,
+    _Ygl->vdp1fbo,_Ygl->vdp1FrameBuff[0],
+    _Ygl->rboid_depth,_Ygl->rboid_stencil);
     abort();
   }
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -3000,9 +3001,7 @@ void YglRenderVDP1(void) {
       }
 
       if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING_TESS ) {
-#if !defined(__XU4__)
         if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
-#endif
         glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
       }else{
         glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
@@ -4562,7 +4561,7 @@ void VIDOGLSync(){
   //  glDeleteSync(_Ygl->frame_sync);
   //  _Ygl->frame_sync = 0;
   //}
-  //glFlush();
+  //glFinish();
   //_Ygl->frame_sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 }
 

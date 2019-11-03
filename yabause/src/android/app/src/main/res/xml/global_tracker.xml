@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- How long a session exists before giving up -->
+    <integer name="ga_sessionTimeout">300</integer>
+    <!-- Enable automatic Activity measurement -->
+    <bool name="ga_autoActivityTracking">true</bool>
+    <!-- The screen names that will appear in reports -->
+    <screenName name="com.example.activity.HogeActivity">
+</screenName>
+    <!--  The following value should be replaced with correct property id. -->
+<string name="ga_trackingId">UA-XXXXXXX-X</string>
+
+</resources>

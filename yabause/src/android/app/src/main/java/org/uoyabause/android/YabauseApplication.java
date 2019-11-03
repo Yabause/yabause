@@ -1,51 +1,83 @@
-/*  Copyright 2017 devMiyax(smiyaxdev@gmail.com)
+/*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
-    This file is part of Yabause.
+    This file is part of YabaSanshiro.
 
-    Yabause is free software; you can redistribute it and/or modify
+    YabaSanshiro is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 
-    Yabause is distributed in the hope that it will be useful,
+    YabaSanshiro is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Yabause; if not, write to the Free Software
+    along with YabaSanshiro; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+
 
 package org.uoyabause.android;
 
 import android.content.Context;
-import android.util.Log;
+
+import androidx.multidex.MultiDex;
+import androidx.multidex.MultiDexApplication;
 
 import com.activeandroid.ActiveAndroid;
+import com.activeandroid.Configuration;
+import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.ndk.CrashlyticsNdk;
 import com.google.android.gms.analytics.GoogleAnalytics;
-import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.iid.FirebaseInstanceId;
 
-public class YabauseApplication extends com.activeandroid.app.Application {
+import org.uoyabause.android.cheat.Cheat;
+import org.uoyabause.uranus.R;
+
+import io.fabric.sdk.android.Fabric;
+
+public class YabauseApplication extends MultiDexApplication {
 
     private static Context context;
     private Tracker mTracker;
     final String TAG ="YabauseApplication";
 
     @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
+    }
+
+    Crashlytics _crash  = new Crashlytics();
+    CrashlyticsNdk _crashndk = new CrashlyticsNdk();
+
+    @Override
     public void onCreate() {
         super.onCreate();
-        ActiveAndroid.initialize(this);
+        Configuration config = new Configuration.Builder(this)
+                .setDatabaseName("localgameinfo.db")
+                .setDatabaseVersion(2)
+                .setModelClasses(org.uoyabause.android.GameInfo.class,
+                        org.uoyabause.android.GameStatus.class,
+                        Cheat.class )
+                .create();
+        ActiveAndroid.initialize(config);
+
         YabauseApplication.context = getApplicationContext();
+        Fabric fabric = new Fabric.Builder(this)
+                .kits(_crash, _crashndk)
+                .build();
+        Fabric.with(fabric);
 
         FirebaseApp.initializeApp(YabauseApplication.context);
+
+       // Log.d(TAG,"Firebase token: " + FirebaseInstanceId.getInstance().getToken() );
     }
+
+    Crashlytics getCrashlytics() { return _crash; }
+
 
     public static Context getAppContext() {
         return YabauseApplication.context;

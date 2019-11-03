@@ -1,11 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+    This file is part of YabaSanshiro.
+
+    YabaSanshiro is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    YabaSanshiro is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with YabaSanshiro; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+-->
 <resources>
-    <string name="basic_user" translatable="false" >girigiri</string>
-    <string name="basic_password" translatable="false" >yoyuu</string>
-    <string name="ad_app_id" translatable="false" >ca-app-pub-2526043010907640~9753807977</string>
-    <string name="banner_ad_unit_id" translatable="false" >ca-app-pub-2526043010907640/2230541172</string>
-    <string name="banner_ad_unit_id2" translatable="false" >ca-app-pub-2526043010907640/1438560370</string>
-    <string name="global_tracker" translatable="false" >UA-65284337-1</string>
-    <string name="donation_publickey" translatable="false">MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5K7wJEIgbd+9VX5GaOoB0sRcUdbhdlKd1JKLVg5imgx0nuW7+BjGUJM5uE+1wLFsjt56ZuZw1SI63TE5JWIllEqatMOscRNg2yFWd7pcGFrjeKGrF7xtq6VfNQ7PfplW2bWjmGtJ20j+aKbDFzMFYO4mXEFZSmAt09kjF4OggmfrKAjYt3B2OVD3PKEAFS6FZhuvjNLZCCfIZ0dXFOvAX15oFXg06Efj8xMeAQmGhzaZJOi4iT69TCYvAwDaOqtkytAzaf0VeagTY6VklZ+FYyn6fjxCOyc6Auo1niSB+6zDQw9KwIA+JMz//gVmSW0pF1WItXa9zKkzMzmZKqzXEwIDAQAB</string>
-    <string name="donation_payload" translatable="false">operation_mind_crime</string>
+    <string name="basic_user" translatable="false" >jfonvwe</string>
+    <string name="basic_password" translatable="false" >in23408vnwer</string>
+    <string name="ad_app_id" translatable="false" >ca-app-pub-1</string>
+    <string name="banner_ad_unit_id" translatable="false" >ca-app-pub-2</string>
+    <string name="banner_ad_unit_id2" translatable="false" >ca-app-pub-3</string>
+    <string name="global_tracker" translatable="false" >UA-9999999-1</string>
+    <string name="donation_publickey" translatable="false">ddddd</string>
+    <string name="donation_payload" translatable="false">ddddd</string>
+    <string name="check_order_url" translatable="false">https://www.uoyabause.org/</string>
+    <string name="host" translatable="false">dq344</string>
+    <string name="schema" translatable="false">fkweorijc</string>
+    <string name="nend_spoid" translatable="false">000000</string>
+    <string name="nend_apikey" translatable="false">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</string>
+    <!--
+    <string name="check_order_url" translatable="false">http://192.168.0.8:3000</string>
+    -->
 </resources>

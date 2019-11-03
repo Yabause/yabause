@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">uoYabause</string>
     <string name="menu_exit">Sair</string>
     <string name="menu_save_state">Salvar Estado</string>
     <string name="menu_load_state">Carregar Estado</string>
@@ -30,8 +29,8 @@
     <string name="donation">Ajude-nos</string>
     <string name="donate_message">
         Ajude no desenvolvimento!\n\n
-		Você pode ajudar o desenvolvimento do uoYabause fazendo uma doação diretamente no nosso site http://yabause.org . 
-		Você também pode doar para o projeto uoYabause no botão de doação abaixo, isso ajudará o desenvolvimento de uma emulação mais apurada, novos controles e uma gama maior de dispositivos suportados.
+		Você pode ajudar o desenvolvimento do Yaba Sanshiro fazendo uma doação diretamente no nosso site http://yabause.org .
+		Você também pode doar para o projeto Yaba Sanshiro no botão de doação abaixo, isso ajudará o desenvolvimento de uma emulação mais apurada, novos controles e uma gama maior de dispositivos suportados.
     </string>
     <string name="thank_you">Obrigado pela sua doação!</string>
     <string name="error_consume">Falha na transação.</string>
@@ -71,6 +70,8 @@
 	<string name="select_from_other_directory">Escolha a partir de outro diretório.</string>
 	
 	<string name="menu_save_screenshot">Captura de Tela</string>
-	
-		
+    <string name="already_have_been">Se você já foi doado, por favor entre em contato com smiyaxdev@gmail.com</string>
+    <string name="close">Close</string>
+
+
 </resources>

@@ -1,21 +1,22 @@
-/*  Copyright 2017 devMiyax(smiyaxdev@gmail.com)
+/*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
-    This file is part of Yabause.
+    This file is part of YabaSanshiro.
 
-    Yabause is free software; you can redistribute it and/or modify
+    YabaSanshiro is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 
-    Yabause is distributed in the hope that it will be useful,
+    YabaSanshiro is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Yabause; if not, write to the Free Software
+    along with YabaSanshiro; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+
 
 package org.uoyabause.android;
 
@@ -25,12 +26,19 @@ import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.RatingBar;
 import android.widget.TextView;
+
+import org.uoyabause.uranus.R;
 
 public class ReportDialog extends DialogFragment implements DialogInterface.OnClickListener,RatingBar.OnRatingBarChangeListener {
 
@@ -38,6 +46,23 @@ public class ReportDialog extends DialogFragment implements DialogInterface.OnCl
     TextView _rateText;
     EditText _edt;
     CheckBox _chk;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //setStyle(DialogFragment.STYLE_NORMAL, R.style.FullScreenDialogStyle);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Dialog dialog = getDialog();
+        if (dialog != null) {
+            //int width = ViewGroup.LayoutParams.MATCH_PARENT;
+            //int height = ViewGroup.LayoutParams.MATCH_PARENT;
+            //dialog.getWindow().setLayout(width, height);
+        }
+    }
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -58,11 +83,12 @@ public class ReportDialog extends DialogFragment implements DialogInterface.OnCl
         onRatingChanged(_GameStatusRating,3.0f,false);
         builder.setView(content);
 
-        builder.setMessage("Report emulation status of this game.")
-                .setPositiveButton("Send", this)
-                .setNegativeButton("Cancel",this);
-        // Create the AlertDialog object and return it
-        return builder.create();
+        builder.setPositiveButton(R.string.send, this)
+               .setNegativeButton(R.string.cancel,this);
+
+        AlertDialog dialog = builder.create();
+
+        return dialog;
     }
 
     @Override
@@ -87,22 +113,22 @@ public class ReportDialog extends DialogFragment implements DialogInterface.OnCl
         int iRate = (int)rating;
         switch(iRate){
             case 0:
-                _rateText.setText("This game does not boot.");
+                _rateText.setText(R.string.report_message_1);
                 break;
             case 1:
-                _rateText.setText("This game boots to title screen, but game is not playable.");
+                _rateText.setText(R.string.report_message_2);
                 break;
             case 2:
-                _rateText.setText("This game is playable, but there are many graphics and sound glitches.");
+                _rateText.setText(R.string.report_message_3);
                 break;
             case 3:
-                _rateText.setText("This game is playable, but there are a few graphics and sound glitches.");
+                _rateText.setText(R.string.report_message_4);
                 break;
             case 4:
-                _rateText.setText("This game runs almost perfectly.");
+                _rateText.setText(R.string.report_message_5);
                 break;
             case 5:
-                _rateText.setText("This game runs perfectly and is confirmed to reach the ending.");
+                _rateText.setText(R.string.report_message_6);
                 break;
             default:
                 break;
