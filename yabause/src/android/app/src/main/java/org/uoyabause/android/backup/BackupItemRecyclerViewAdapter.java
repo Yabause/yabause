@@ -1,18 +1,34 @@
+/*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+    This file is part of YabaSanshiro.
+
+    YabaSanshiro is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    YabaSanshiro is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with YabaSanshiro; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
+
 package org.uoyabause.android.backup;
 
-import android.graphics.Color;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.RecyclerView;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import org.uoyabause.android.R;
-import org.uoyabause.android.backup.BackupItemFragment.OnListFragmentInteractionListener;
+import org.uoyabause.uranus.R;
 
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 public class BackupItemRecyclerViewAdapter extends RecyclerView.Adapter<BackupItemRecyclerViewAdapter.ViewHolder> {
@@ -92,10 +108,11 @@ public class BackupItemRecyclerViewAdapter extends RecyclerView.Adapter<BackupIt
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        holder.mNameView.setText(mValues.get(position)._filename);
-        holder.tvComment.setText(mValues.get(position)._comment);
-        holder.mSizeView.setText(String.format("%,dByte",mValues.get(position)._datasize));
-        holder.mDateView.setText(new SimpleDateFormat(DATE_PATTERN).format(mValues.get(position)._savedate));
+        holder.mNameView.setText(mValues.get(position).filename);
+        holder.tvComment.setText(mValues.get(position).comment);
+        holder.mSizeView.setText(String.format("%,dByte",mValues.get(position).datasize));
+        //holder.mDateView.setText(new SimpleDateFormat(DATE_PATTERN).format(mValues.get(position)._savedate));
+        holder.mDateView.setText(mValues.get(position).savedate);
         final int position_ = position;
 
         holder.itemView.setSelected(focusedItem == position);

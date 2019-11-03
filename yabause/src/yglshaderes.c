@@ -1,22 +1,21 @@
-/*  Copyright 2005-2006 Guillaume Duhamel
-    Copyright 2005-2006 Theo Berkau
-    Copyright 2011-2015 Shinya Miyamoto(devmiyax)
+/*
+        Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
-    This file is part of Yabause.
+This file is part of YabaSanshiro.
 
-    Yabause is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+        YabaSanshiro is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
 
-    Yabause is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+YabaSanshiro is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Yabause; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+        You should have received a copy of the GNU General Public License
+along with YabaSanshiro; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
    
  
@@ -556,7 +555,7 @@ const GLchar Yglprg_rgb_cram_line_f[] =
 "  if(txindex.a > 0.0) {\n"
 "    highp int highg = int(txindex.g*255.0);"
 "    vec4 txcol = texelFetch( s_color, ivec2( ((highg&0x7F)<<8) | int(txindex.r*255.0) , 0 ) , 0 );\n"
-"    txcol.a = txindex.a;\n"
+"    txcol.a = txindex.a; \n"
 "    if( (highg & 0x80)  != 0) {\n"
 "      int coef = int(txindex.b*255.0);\n"
 "      vec4 linecol;\n"
@@ -574,10 +573,9 @@ const GLchar Yglprg_rgb_cram_line_f[] =
 "        txcol = clamp(txcol+linecol,vec4(0.0),vec4(1.0)); txcol.a = txindex.a; \n"
 "      }\n"
 "    }\n"
-"    fragColor = txcol+u_color_offset;\n"
-"  }else{ \n"
+"    fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n"
+"  }else \n"
 "    discard;\n"
-"  }\n"
 "}\n";
 
 const GLchar * pYglprg_rbg_cram_line_f[] = { Yglprg_rgb_cram_line_f, NULL };
@@ -3241,6 +3239,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = id_normal_cram_matrix;
+     current->color_offset = id_normal_cram_color_offset;
    }
    else if (prgid == PG_VDP2_BLUR_CRAM)
    {
@@ -3267,8 +3266,8 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->cleanupUniform = Ygl_cleanupPerLineAlpha;
      current->vertexp = 0;
      current->texcoordp = 1;
-     current->color_offset = glGetUniformLocation(_prgid[PG_VDP2_PER_LINE_ALPHA], (const GLchar *)"u_color_offset");
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_PER_LINE_ALPHA], (const GLchar *)"u_mvpMatrix");
+     current->mtxModelView = id_normal_cram_matrix;
+     current->color_offset = id_normal_cram_color_offset;
 
    }else if( prgid == PG_VDP1_NORMAL )
    {

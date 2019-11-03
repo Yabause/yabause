@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
-    <string name="app_name">uoYabause</string>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="menu_exit">Exit</string>
     <string name="menu_reset">Reset</string>
     <string name="menu_save_state">Save State</string>
@@ -35,8 +34,8 @@
     <string name="donation">Support</string>
     <string name="donate_message">
         Support our development! \n\n
-        You can support the upstream project of uoYabause by making a donation directly on their website http://yabause.org.
-        You can also support this project uoYabause by clicking the donate button below, this will help towards development of more accurate emulation, input devices and a wider range of devices.
+        You can support the upstream project of Yaba Sanshiro by making a donation directly on their website http://yabause.org.
+        You can also support this project Yaba Sanshiro by clicking the donate button below, this will help towards development of more accurate emulation, input devices and a wider range of devices.
         This screen and advertisement screen will not be shown, If you have donated.
     </string>
     <string name="thank_you">Thank you for your donation!</string>
@@ -128,15 +127,15 @@
     <string name="dismiss_error">Dismiss</string>
     <string name="oops">Oops</string>
 
-    <string name="title_activity_game_select" translatable="false">uoYabause</string>
+    <string name="title_activity_game_select" translatable="false">Yaba Sanshiro</string>
     <string name="polygon_generation_type">Polygon Generation Type</string>
     <string name="choose_polygon_generation_type">Choose Polygon Generation type</string>
     <string name="sound_engine">Sound Engine</string>
     <string name="choose_sound_engine">Choose sound engine</string>
     <string name="invitation_title">Send App Invite uoYabause</string>
     <string name="invitation_message">Play SEGA Saturn games using this app!</string>
-    <string name="invitation_deep_link"  translatable="false" >https://b472u.app.goo.gl/YJ5F</string>
-    <string name="invitation_custom_image"  translatable="false" >https://lh3.googleusercontent.com/orp-j3lNGj24xvfVBEQvwWyaVhOQ_aTGc0nwIInDXBlNGUnSOdB_hb8sPGSmgmd0Jvkx=h310-rw</string>
+    <string name="invitation_deep_link" translatable="false">https://b472u.app.goo.gl/YJ5F</string>
+    <string name="invitation_custom_image" translatable="false">https://lh3.googleusercontent.com/orp-j3lNGj24xvfVBEQvwWyaVhOQ_aTGc0nwIInDXBlNGUnSOdB_hb8sPGSmgmd0Jvkx=h310-rw</string>
     <string name="invitation_cta">Install!</string>
     <string name="invite">Introduce</string>
     <string name="invite_message">Would you like to introduce this app?</string>
@@ -147,6 +146,7 @@
     <string name="open_cd_tray">Open CD Tray</string>
     <string name="close_cd_tray">Close CD Tray</string>
     <string name="menu_analog">Enable Analog Control</string>
+    <string name="menu_set_as_gametitle">Set As Title Icon</string>
     <string name="menu_cheat">Cheat</string>
     <string name="add_new_code">Add New Code</string>
     <string name="str_use_compute_shader">Use Compute Shader</string>
@@ -171,13 +171,92 @@
     <string name="poly_gpu_tess">GPU Tessellation</string>
     <string name="menu_load">Load</string>
     <string name="menu_delete">Delete</string>
+    <string name="title_activity_iso_download">IsoDownload</string>
+
+
+    <string name="download_to">Download to ..</string>
+    <string name="choose_download_to">Download to ..</string>
+
+    <string name="internal">Internal Storage</string>
+    <string name="external">SD card</string>
+    <string name="network_error">Network error.</string>
+    <string name="server_is_not_found">Server is not found or not accessible.</string>
+    <string name="server_error">Server error.</string>
+    <string name="unable_to_process_file_for_md5">Unable to process file for MD5</string>
+    <string name="downloading_cd_rom">Downloading CD-ROM</string>
+    <string name="downloading">Downloading</string>
+    <string name="finished">Download Finished!</string>
+    <string name="failed">Download Failed</string>
+    <string name="canceled">Download Cancelled</string>
+    <string name="serching_for_a_server">Searching for a server..</string>
+    <string name="waiting_for_reading">Waiting for reading to finish.</string>
+    <string name="checking_file">Checking file.</string>
+    <string name="download_file_is_broken">Download file is broken.</string>
+    <string name="you_need_wifi_connection">You need Wifi connection.</string>
+    <string name="free_space">Free space</string>
+    <string name="no_enough_free_space">You don\'t have enough free space.</string>
+
     <string name="extend_internal_memory">Extend Internal Memory to 8MByte</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="this_func_not_yet">This function is not implemented yet.</string>
     <string name="memory_manager">Memory Manager</string>
+    <string name="have_donated">I have already donated to uoYabause(not Yaba Sanshiro)</string>
+    <string name="title_activity_check_payment">CheckPaymentActivity</string>
+    <string name="send_your_order_id">Send your order number for uoYabause to dismiss Ad.   You can check your order id at http://payments.google.com</string>
+    <string name="order_number_not_found">This order number does not be found.</string>
+    <string name="order_number_used">This order number has been used.</string>
+    <string name="new_version_available">New Yaba Sanshiro is available</string>
+
+    <string name="sign_in_cancelled">Sign in is calcelled</string>
+    <string name="no_internet_connection">No internet connection</string>
+    <string name="unknown_error">Unknown Error</string>
+    <string name="unknown_sign_in_response">Unknown sign in response</string>
+    <string name="are_you_sure_to_delete">Are you sure to delete</string>
+    <string name="share">Share</string>
+    <string name="unsahre">UnShare</string>
+    <string name="send">Send</string>
+    <string name="issue_report">ISSUE REPORT:</string>
+    <string name="status_report">STATUS REPORT:</string>
+    <string name="send_warning">Send current screenshot and state  (Upload size is about 2MByte)</string>
+    <string name="report_message_1">This game does not boot.</string>
+    <string name="report_message_2">This game boots to title screen, but game is not playable.</string>
+    <string name="report_message_3">This game is playable, but there are many graphics and sound glitches.</string>
+    <string name="report_message_4">This game is playable, but there are a few graphics and sound glitches.</string>
+    <string name="report_message_5">This game runs almost perfectly.</string>
+    <string name="report_message_6">This game runs perfectly and is confirmed to reach the ending.</string>
+    <string name="accept">Accept</string>
+    <string name="decline">Decline</string>
+    <string name="sign_out">Sign out</string>
+    <string name="sign_in">Sign in</string>
+    <string name="siginin_message">
+        Signing in will enable the following functions.\n
+        * Back up saved data to the cloud\n
+        * Share cheat code with other users\n\n
+        However, these functions are experimental, so they do not work as expected, specifications may be changed or terminated without prior notice.
+    </string>
+    <string name="agree">I agree</string>
+    <string name="do_you_want_to_sign_in">Do you want to sign in?</string>
+    <string name="never_ask_me_again">Never ask me again</string>
+    <string name="deleting_file">Deleting file</string>
+    <string name="sure_delete">Are you sure want to delete this file?</string>
+    <string name="copy_to_cloud">Copy to cloud</string>
+    <string name="copy_to_external">Copy to external</string>
+    <string name="copy_to_internal">Copy to internal</string>
+    <string name="activate">Activate</string>
+    <string name="rate">Rate</string>
+
     <string name="str_rotate_screen">90 degree rotation</string>
+    <string name="title_activity_game_select_phone">GameSelectActivityPhone</string>
+
+    <string name="drawer_open">drawer_open</string>
+    <string name="drawer_close">drawer_close</string>
+    <string name="title_activity_startup">StartupActivity</string>
+    <string name="foce_android_tv_mode">Force Android TV mode</string>
+    <string name="game_select_screen">Game Select Screen</string>
+    <string name="scsp_sync">Scsp synchronization count per a frame(1 - 255)</string>
+    <string name="need_to_accept">You need to accept the permission request for using this app. Please restart again.</string>
 
     <string name="cpu_sync_per_line">Emulation Priority</string>
     <string name="sel_cpu_sync_per_line"></string>
@@ -188,6 +267,9 @@
     <string name="choose_time_synchronization_mode">Sound time synchronization mode</string>
     <string name="cpu_time">CPU time (Synchronize to emulated cpu time. If your device is fast enough, Sound emulation is very accurate.)</string>
     <string name="real_time">Real time (Synchronize to real world time. Although your device is not so fast, Sound is not corrupted.)</string>
-
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="information">Infromation</string>
+    <string name="already_have_been">If you already have been donated, Please contact smiyaxdev@gmail.com</string>
+    <string name="close">Close</string>
 </resources>
 	

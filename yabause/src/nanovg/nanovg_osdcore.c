@@ -329,6 +329,8 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int 
   nvgText(vg, LeftX, TxtY, message->message, NULL);
   TxtY += fontsize;
 #if 1
+  fontsize = 16;
+  nvgFontSize(vg, fontsize);
   int linecnt = (vidheight - TxtY) / fontsize;
   int start_point = current_log_history_index - linecnt;
   if (start_point < 0) {

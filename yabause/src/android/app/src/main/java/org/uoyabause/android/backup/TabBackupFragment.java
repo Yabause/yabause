@@ -1,28 +1,41 @@
+/*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+    This file is part of YabaSanshiro.
+
+    YabaSanshiro is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    YabaSanshiro is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with YabaSanshiro; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
+
 package org.uoyabause.android.backup;
 
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.ViewPager;
+import com.google.android.material.tabs.TabLayout;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.PopupMenu;
-import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.uoyabause.android.R;
+import org.uoyabause.uranus.R;
 import org.uoyabause.android.YabauseRunnable;
 
 import java.util.ArrayList;
@@ -107,6 +120,11 @@ public class TabBackupFragment extends Fragment  {
                 backup_devices_.add(tmp);
             }
 
+            BackupDevice tmp = new BackupDevice();
+            tmp.name_ = "cloud";
+            tmp.id_= BackupDevice.DEVICE_CLOUD;
+            backup_devices_.add(tmp);
+
         }catch(JSONException e){
             Log.e(TAG, "Fail to convert to json", e);
         }
@@ -126,6 +144,27 @@ public class TabBackupFragment extends Fragment  {
         return  mainv_;
     }
 
+    void enableFullScreen(){
+        View decorView = getActivity().findViewById(R.id.drawer_layout);
+        if (decorView != null) {
+            decorView.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
+    }
+
+    void disableFullScreen(){
+        View decorView = getActivity().findViewById(R.id.drawer_layout);
+        if (decorView != null) {
+            decorView.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        }
+    }
+
     @Override
     public void onDestroyView (){
         tablayout_.setupWithViewPager(null);
@@ -141,6 +180,7 @@ public class TabBackupFragment extends Fragment  {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        disableFullScreen();
 /*
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
@@ -153,6 +193,7 @@ public class TabBackupFragment extends Fragment  {
 
     @Override
     public void onDetach() {
+        enableFullScreen();
         super.onDetach();
         mListener = null;
     }

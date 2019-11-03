@@ -365,7 +365,12 @@ static void SNDOpenSLUnMuteAudio(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#include <math.h>
 static void SNDOpenSLSetVolume(int volume)
 {
+    if(bqPlayerVolume){
+        float vol = (float)volume / 100.0f;
+        (*bqPlayerVolume)->SetVolumeLevel(bqPlayerVolume, (vol >= 1.0f) ? 0 : ((vol < 0.01f) ? -16000   
+                                                          : (SLmillibel)(8000.0f*log10f(vol))));
+    }
 }

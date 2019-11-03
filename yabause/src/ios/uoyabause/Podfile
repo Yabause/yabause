@@ -1,7 +1,7 @@
 # Uncomment the next line to define a global platform for your project
-# platform :ios, '9.3'
+platform :ios, '9.3'
 
-target 'uoyabause' do
+target 'YabaSnashiro' do
   # Comment the next line if you're not using Swift and don't want to use dynamic frameworks
   use_frameworks!
   pod 'Firebase/Core'
@@ -9,12 +9,12 @@ target 'uoyabause' do
 
   # Pods for uoyabause
 
-  target 'uoyabauseTests' do
+  target 'YabaSnashiroTests' do
     inherit! :search_paths
     # Pods for testing
   end
 
-  target 'uoyabauseUITests' do
+  target 'YabaSnashiroUITests' do
     inherit! :search_paths
     # Pods for testing
   end

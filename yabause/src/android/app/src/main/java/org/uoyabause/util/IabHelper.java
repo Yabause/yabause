@@ -22,6 +22,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -193,6 +195,7 @@ public class IabHelper {
         public void onIabSetupFinished(IabResult result);
     }
 
+
     /**
      * Starts the setup process. This will start up the setup process asynchronously.
      * You will be notified through the listener when the setup process is complete.
@@ -205,6 +208,7 @@ public class IabHelper {
         checkNotDisposed();
         if (mSetupDone) throw new IllegalStateException("IAB helper is already set up.");
 
+        mService = null;
         // Connection to IAB service
         logDebug("Starting in-app billing setup.");
         mServiceConn = new ServiceConnection() {
@@ -264,7 +268,9 @@ public class IabHelper {
 
         Intent serviceIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
         serviceIntent.setPackage("com.android.vending");
-        if (!mContext.getPackageManager().queryIntentServices(serviceIntent, 0).isEmpty()) {
+        PackageManager pm=mContext.getPackageManager();
+        List<ResolveInfo> intentServices = pm.queryIntentServices(serviceIntent, 0);
+        if (intentServices != null && !intentServices.isEmpty()){
             // service available to handle that Intent
             mContext.bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
         }
@@ -289,7 +295,9 @@ public class IabHelper {
         mSetupDone = false;
         if (mServiceConn != null) {
             logDebug("Unbinding from service.");
-            if (mContext != null) mContext.unbindService(mServiceConn);
+            if (mContext != null && mService != null ){
+                mContext.unbindService(mServiceConn);
+            }
         }
         mDisposed = true;
         mContext = null;
@@ -829,9 +837,73 @@ public class IabHelper {
         mAsyncInProgress = false;
     }
 
+    public ArrayList<Purchase> queryPurchases(  ) throws JSONException, RemoteException {
+        ArrayList<Purchase> purchaseList = null;
+        checkNotDisposed();
+        if( mContext == null ) {
+            return null;
+        }
+        logDebug("Package name: " + mContext.getPackageName());
+        boolean verificationFailed = false;
+        String continueToken = null;
+        Bundle ownedItems = mService.getPurchases(3, mContext.getPackageName(),"inapp", continueToken);
+
+        int response = getResponseCodeFromBundle(ownedItems);
+        logDebug("Owned items response: " + String.valueOf(response));
+        if (response != BILLING_RESPONSE_RESULT_OK) {
+            logDebug("getPurchases() failed: " + getResponseDesc(response));
+            return null;
+        }
+        if (!ownedItems.containsKey(RESPONSE_INAPP_ITEM_LIST)
+                || !ownedItems.containsKey(RESPONSE_INAPP_PURCHASE_DATA_LIST)
+                || !ownedItems.containsKey(RESPONSE_INAPP_SIGNATURE_LIST)) {
+            logError("Bundle returned from getPurchases() doesn't contain required fields.");
+            return null;
+        }
+
+        ArrayList<String> ownedSkus = ownedItems.getStringArrayList(
+                RESPONSE_INAPP_ITEM_LIST);
+        ArrayList<String> purchaseDataList = ownedItems.getStringArrayList(
+                RESPONSE_INAPP_PURCHASE_DATA_LIST);
+        ArrayList<String> signatureList = ownedItems.getStringArrayList(
+                RESPONSE_INAPP_SIGNATURE_LIST);
+
+        purchaseList = new ArrayList<Purchase>();
+
+        for (int i = 0; i < purchaseDataList.size(); ++i) {
+            String purchaseData = purchaseDataList.get(i);
+            String signature = signatureList.get(i);
+            String sku = ownedSkus.get(i);
+            if (Security.verifyPurchase(mSignatureBase64, purchaseData, signature)) {
+                logDebug("Sku is owned: " + sku);
+                Purchase purchase = new Purchase("inapp", purchaseData, signature);
+
+                if (TextUtils.isEmpty(purchase.getToken())) {
+                    logWarn("BUG: empty/null token!");
+                    logDebug("Purchase data: " + purchaseData);
+                }
+
+                purchaseList.add(purchase);
+
+            }
+            else {
+                logWarn("Purchase signature verification **FAILED**. Not adding item.");
+                logDebug("   Purchase data: " + purchaseData);
+                logDebug("   Signature: " + signature);
+                verificationFailed = true;
+            }
+        }
+
+        return purchaseList;
+    }
+
 
     int queryPurchases(Inventory inv, String itemType) throws JSONException, RemoteException {
         // Query purchases
+        checkNotDisposed();
+        if( mContext == null ) {
+            return IABHELPER_VERIFICATION_FAILED;
+        }
         logDebug("Querying owned items, item type: " + itemType);
         logDebug("Package name: " + mContext.getPackageName());
         boolean verificationFailed = false;

@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		2E2E650D500362BD39966316 /* Pods_uoyabauseUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8576A34B5AB321AF90CD3CF9 /* Pods_uoyabauseUITests.framework */; };
+		592FA568C31514C157C8C8DF /* Pods_YabaSnashiroUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A3953C38AF483C1F1F5E89 /* Pods_YabaSnashiroUITests.framework */; };
+		6048E9F865F471B405FC8E1E /* Pods_YabaSnashiroTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AFB002D17E54BEC336A1DFE /* Pods_YabaSnashiroTests.framework */; };
+		6290C255003441A8128FE03D /* Pods_YabaSnashiro.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C8BA1D770E151F00A6BA938B /* Pods_YabaSnashiro.framework */; };
 		640323881C67575B00DA91D8 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 640323861C673BE200DA91D8 /* OpenAL.framework */; };
 		64204ADE1D84878E002EA3F5 /* GameRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64204ADD1D84878E002EA3F5 /* GameRevealViewController.m */; };
 		64204AE11D84A440002EA3F5 /* SidebarViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64204AE01D84A440002EA3F5 /* SidebarViewController.m */; };
@@ -45,13 +48,11 @@
 		64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D450081D7C0E6C004E2615 /* MainScreenController.swift */; };
 		6DB209252095D1F200C9CC4B /* GLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 6DB209242095D1F200C9CC4B /* GLView.m */; };
 		6DB209272097037300C9CC4B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6DB209262097037200C9CC4B /* GoogleService-Info.plist */; };
-		6DB209292097088800C9CC4B /* GoogleToolboxForMac.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6DB209282097088800C9CC4B /* GoogleToolboxForMac.framework */; };
 		6DB2092B2097088D00C9CC4B /* nanopb.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6DB2092A2097088D00C9CC4B /* nanopb.framework */; };
 		6DB2092E2097DB5D00C9CC4B /* PadButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 6DB2092D2097DB5D00C9CC4B /* PadButton.m */; };
 		921C9D6E1E108E1F009065E6 /* KeyMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 921C9D6D1E108E1F009065E6 /* KeyMapper.m */; };
 		921C9D721E1628B5009065E6 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 921C9D711E1628B4009065E6 /* QuartzCore.framework */; };
 		A9A09038CE42F043D36CB033 /* Pods_uoyabauseTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 06D1ECCE10B74C210FE0691E /* Pods_uoyabauseTests.framework */; };
-		C6A65D4CA352B4D4A03AE05B /* Pods_uoyabause.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8118FC0A4919DED802B09AEF /* Pods_uoyabause.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +74,8 @@
 
 /* Begin PBXFileReference section */
 		06D1ECCE10B74C210FE0691E /* Pods_uoyabauseTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_uoyabauseTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		20115D1C6B2FC0F24C85EE33 /* Pods-YabaSnashiroUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiroUITests.release.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiroUITests/Pods-YabaSnashiroUITests.release.xcconfig"; sourceTree = "<group>"; };
+		3AFB002D17E54BEC336A1DFE /* Pods_YabaSnashiroTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_YabaSnashiroTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CE09E5047FB606A37FDCB1C /* Pods-uoyabauseTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabauseTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabauseTests/Pods-uoyabauseTests.release.xcconfig"; sourceTree = "<group>"; };
 		640323861C673BE200DA91D8 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		64204ADC1D8486FB002EA3F5 /* GameRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameRevealViewController.h; sourceTree = "<group>"; };
@@ -132,15 +135,22 @@
 		6DB2092C2097DB5D00C9CC4B /* PadButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PadButton.h; sourceTree = "<group>"; };
 		6DB2092D2097DB5D00C9CC4B /* PadButton.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PadButton.m; sourceTree = "<group>"; };
 		7248E5EAC500018B32B8151B /* Pods-uoyabauseUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabauseUITests.release.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabauseUITests/Pods-uoyabauseUITests.release.xcconfig"; sourceTree = "<group>"; };
+		782A38C51C8F726D479DADEF /* Pods-YabaSnashiroTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiroTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiroTests/Pods-YabaSnashiroTests.release.xcconfig"; sourceTree = "<group>"; };
 		8118FC0A4919DED802B09AEF /* Pods_uoyabause.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_uoyabause.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		838B0540FBC7F0B9BB97B8C4 /* Pods-YabaSnashiro.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiro.debug.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiro/Pods-YabaSnashiro.debug.xcconfig"; sourceTree = "<group>"; };
 		8576A34B5AB321AF90CD3CF9 /* Pods_uoyabauseUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_uoyabauseUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		921C9D6C1E108E1E009065E6 /* KeyMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KeyMapper.h; sourceTree = "<group>"; };
 		921C9D6D1E108E1F009065E6 /* KeyMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KeyMapper.m; sourceTree = "<group>"; };
 		921C9D6F1E109021009065E6 /* SaturnControllerKeys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SaturnControllerKeys.h; sourceTree = "<group>"; };
 		921C9D711E1628B4009065E6 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		9B185CBB7D967968C3447782 /* Pods-YabaSnashiroTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiroTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiroTests/Pods-YabaSnashiroTests.debug.xcconfig"; sourceTree = "<group>"; };
 		9EFEF6EB5806EAC705E55B7D /* Pods-uoyabause.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabause.release.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabause/Pods-uoyabause.release.xcconfig"; sourceTree = "<group>"; };
 		A8146B869F23239E27223063 /* Pods-uoyabauseTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabauseTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabauseTests/Pods-uoyabauseTests.debug.xcconfig"; sourceTree = "<group>"; };
+		C6A3953C38AF483C1F1F5E89 /* Pods_YabaSnashiroUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_YabaSnashiroUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8BA1D770E151F00A6BA938B /* Pods_YabaSnashiro.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_YabaSnashiro.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CCB1CB6709D254B83DC2B910 /* Pods-uoyabause.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabause.debug.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabause/Pods-uoyabause.debug.xcconfig"; sourceTree = "<group>"; };
+		CD439AACD73A3F0ECAC8B612 /* Pods-YabaSnashiroUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiroUITests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiroUITests/Pods-YabaSnashiroUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		CE0A948D22A1A8E0A2DA1D98 /* Pods-YabaSnashiro.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiro.release.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiro/Pods-YabaSnashiro.release.xcconfig"; sourceTree = "<group>"; };
 		E441550DF2B7E73FC083A81F /* Pods-uoyabauseUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabauseUITests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabauseUITests/Pods-uoyabauseUITests.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -150,7 +160,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				6DB2092B2097088D00C9CC4B /* nanopb.framework in Frameworks */,
-				6DB209292097088800C9CC4B /* GoogleToolboxForMac.framework in Frameworks */,
 				921C9D721E1628B5009065E6 /* QuartzCore.framework in Frameworks */,
 				645EA6C21D95647200A7A5D8 /* libz.1.1.3.tbd in Frameworks */,
 				64228EF71D8886AE00588323 /* MobileCoreServices.framework in Frameworks */,
@@ -169,7 +178,7 @@
 				64228ED71D88817300588323 /* GoogleMobileAds.framework in Frameworks */,
 				640323881C67575B00DA91D8 /* OpenAL.framework in Frameworks */,
 				646C87B51C66DDD20091B3B6 /* libyabause_ios.a in Frameworks */,
-				C6A65D4CA352B4D4A03AE05B /* Pods_uoyabause.framework in Frameworks */,
+				6290C255003441A8128FE03D /* Pods_YabaSnashiro.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,6 +187,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A9A09038CE42F043D36CB033 /* Pods_uoyabauseTests.framework in Frameworks */,
+				6048E9F865F471B405FC8E1E /* Pods_YabaSnashiroTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -186,6 +196,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2E2E650D500362BD39966316 /* Pods_uoyabauseUITests.framework in Frameworks */,
+				592FA568C31514C157C8C8DF /* Pods_YabaSnashiroUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -315,6 +326,9 @@
 				8118FC0A4919DED802B09AEF /* Pods_uoyabause.framework */,
 				06D1ECCE10B74C210FE0691E /* Pods_uoyabauseTests.framework */,
 				8576A34B5AB321AF90CD3CF9 /* Pods_uoyabauseUITests.framework */,
+				C8BA1D770E151F00A6BA938B /* Pods_YabaSnashiro.framework */,
+				3AFB002D17E54BEC336A1DFE /* Pods_YabaSnashiroTests.framework */,
+				C6A3953C38AF483C1F1F5E89 /* Pods_YabaSnashiroUITests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -328,6 +342,12 @@
 				3CE09E5047FB606A37FDCB1C /* Pods-uoyabauseTests.release.xcconfig */,
 				E441550DF2B7E73FC083A81F /* Pods-uoyabauseUITests.debug.xcconfig */,
 				7248E5EAC500018B32B8151B /* Pods-uoyabauseUITests.release.xcconfig */,
+				838B0540FBC7F0B9BB97B8C4 /* Pods-YabaSnashiro.debug.xcconfig */,
+				CE0A948D22A1A8E0A2DA1D98 /* Pods-YabaSnashiro.release.xcconfig */,
+				9B185CBB7D967968C3447782 /* Pods-YabaSnashiroTests.debug.xcconfig */,
+				782A38C51C8F726D479DADEF /* Pods-YabaSnashiroTests.release.xcconfig */,
+				CD439AACD73A3F0ECAC8B612 /* Pods-YabaSnashiroUITests.debug.xcconfig */,
+				20115D1C6B2FC0F24C85EE33 /* Pods-YabaSnashiroUITests.release.xcconfig */,
 			);
 			name = Pods;
 			sourceTree = "<group>";
@@ -476,18 +496,18 @@
 			files = (
 			);
 			inputPaths = (
-				"${SRCROOT}/Pods/Target Support Files/Pods-uoyabause/Pods-uoyabause-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/GoogleToolboxForMac/GoogleToolboxForMac.framework",
+				"${SRCROOT}/Pods/Target Support Files/Pods-YabaSnashiro/Pods-YabaSnashiro-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
 				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleToolboxForMac.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-uoyabause/Pods-uoyabause-frameworks.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-YabaSnashiro/Pods-YabaSnashiro-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		A87F9C65EEE5D1D0889ABB00 /* [CP] Check Pods Manifest.lock */ = {
@@ -501,7 +521,7 @@
 			);
 			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-uoyabause-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-YabaSnashiro-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -519,7 +539,7 @@
 			);
 			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-uoyabauseTests-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-YabaSnashiroTests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -537,7 +557,7 @@
 			);
 			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-uoyabauseUITests-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-YabaSnashiroUITests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -702,7 +722,7 @@
 		};
 		644232D41C6580010050611E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CCB1CB6709D254B83DC2B910 /* Pods-uoyabause.debug.xcconfig */;
+			baseConfigurationReference = 838B0540FBC7F0B9BB97B8C4 /* Pods-YabaSnashiro.debug.xcconfig */;
 			buildSettings = {
 				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -754,13 +774,7 @@
 					"-framework",
 					"\"FirebaseInstanceID\"",
 					"-framework",
-					"\"FirebaseNanoPB\"",
-					"-framework",
-					"\"GLKit\"",
-					"-framework",
 					"\"GoogleMobileAds\"",
-					"-framework",
-					"\"GoogleToolboxForMac\"",
 					"-framework",
 					"\"MediaPlayer\"",
 					"-framework",
@@ -821,13 +835,9 @@
 					"-framework",
 					"\"FirebaseInstanceID\"",
 					"-framework",
-					"\"FirebaseNanoPB\"",
-					"-framework",
 					"\"GLKit\"",
 					"-framework",
 					"\"GoogleMobileAds\"",
-					"-framework",
-					"\"GoogleToolboxForMac\"",
 					"-framework",
 					"\"MediaPlayer\"",
 					"-framework",
@@ -869,7 +879,7 @@
 		};
 		644232D51C6580010050611E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9EFEF6EB5806EAC705E55B7D /* Pods-uoyabause.release.xcconfig */;
+			baseConfigurationReference = CE0A948D22A1A8E0A2DA1D98 /* Pods-YabaSnashiro.release.xcconfig */;
 			buildSettings = {
 				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -921,13 +931,7 @@
 					"-framework",
 					"\"FirebaseInstanceID\"",
 					"-framework",
-					"\"FirebaseNanoPB\"",
-					"-framework",
-					"\"GLKit\"",
-					"-framework",
 					"\"GoogleMobileAds\"",
-					"-framework",
-					"\"GoogleToolboxForMac\"",
 					"-framework",
 					"\"MediaPlayer\"",
 					"-framework",
@@ -973,7 +977,7 @@
 		};
 		644232D71C6580010050611E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A8146B869F23239E27223063 /* Pods-uoyabauseTests.debug.xcconfig */;
+			baseConfigurationReference = 9B185CBB7D967968C3447782 /* Pods-YabaSnashiroTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -987,7 +991,7 @@
 		};
 		644232D81C6580010050611E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3CE09E5047FB606A37FDCB1C /* Pods-uoyabauseTests.release.xcconfig */;
+			baseConfigurationReference = 782A38C51C8F726D479DADEF /* Pods-YabaSnashiroTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				INFOPLIST_FILE = uoyabauseTests/Info.plist;
@@ -1000,7 +1004,7 @@
 		};
 		644232DA1C6580010050611E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E441550DF2B7E73FC083A81F /* Pods-uoyabauseUITests.debug.xcconfig */;
+			baseConfigurationReference = CD439AACD73A3F0ECAC8B612 /* Pods-YabaSnashiroUITests.debug.xcconfig */;
 			buildSettings = {
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				INFOPLIST_FILE = uoyabauseUITests/Info.plist;
@@ -1014,7 +1018,7 @@
 		};
 		644232DB1C6580010050611E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7248E5EAC500018B32B8151B /* Pods-uoyabauseUITests.release.xcconfig */;
+			baseConfigurationReference = 20115D1C6B2FC0F24C85EE33 /* Pods-YabaSnashiroUITests.release.xcconfig */;
 			buildSettings = {
 				INFOPLIST_FILE = uoyabauseUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";

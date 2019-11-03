@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
-    <string name="app_name">uoYabause</string>
     <string name="menu_exit">退出</string>
     <string name="menu_reset">复位</string>
     <string name="menu_save_state">保存进度</string>
@@ -35,8 +34,8 @@
     <string name="donation">支持</string>
     <string name="donate_message">
         支持我们的发展！ \n\n
-        您可以通过在网站 http://yabause.org 上直接捐款来支持 uoYabause 的 upstream 项目。
-        您还可以通过单击下面的"捐赠"按钮来支持此 uoYabause 项目, 这将有助于开发更精确的模拟、输入设备和更广泛的设备。
+        您可以通过在网站 http://yabause.org 上直接捐款来支持 Yaba Sanshiro 的 upstream 项目。
+        您还可以通过单击下面的"捐赠"按钮来支持此 Yaba Sanshiro 项目, 这将有助于开发更精确的模拟、输入设备和更广泛的设备。
         如果你已经捐赠,此屏幕和广告屏幕将不会显示。
     </string>
     <string name="thank_you">感谢您的捐赠！</string>
@@ -128,7 +127,6 @@
     <string name="dismiss_error">忽略</string>
     <string name="oops">抱歉</string>
 
-    <string name="title_activity_game_select" translatable="false">uoYabause</string>
     <string name="polygon_generation_type">多边形生成类型</string>
     <string name="choose_polygon_generation_type">选择多边形生成类型</string>
     <string name="sound_engine">声音引擎</string>
@@ -160,6 +158,8 @@
 
     <string name="menu_load">加载</string>
     <string name="menu_delete">删除</string>
+    <string name="already_have_been">" 如果您已经捐赠，请联系smiyaxdev@gmail.com"</string>
+    <string name="close">Close</string>
 
 </resources>
 	

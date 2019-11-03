@@ -1,36 +1,29 @@
-/*  Copyright 2017 devMiyax(smiyaxdev@gmail.com)
+/*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
-    This file is part of Yabause.
+    This file is part of YabaSanshiro.
 
-    Yabause is free software; you can redistribute it and/or modify
+    YabaSanshiro is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 
-    Yabause is distributed in the hope that it will be useful,
+    YabaSanshiro is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Yabause; if not, write to the Free Software
+    along with YabaSanshiro; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
 package org.uoyabause.android;
 
 import android.app.Activity;
-import android.app.DialogFragment;
-import android.app.FragmentTransaction;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.res.Resources;
-import android.os.Environment;
 import android.preference.DialogPreference;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.AttributeSet;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +34,7 @@ import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 
 import org.uoyabause.android.tv.GameSelectFragment;
+import org.uoyabause.uranus.R;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -116,10 +110,10 @@ public class GameDirectoriesDialogPreference extends DialogPreference implements
     ListView listView;
    // File currentRootDirectory = Environment.getExternalStorageDirectory();
 
-    public GameDirectoriesDialogPreference(Context context) {
-        super(context);
-        InitObjects(context);
-    }
+    //public GameDirectoriesDialogPreference(Context context) {
+    //    super(context);
+    //    InitObjects(context);
+    //}
 
     public GameDirectoriesDialogPreference(Context context, AttributeSet attrs) {
         super(context, attrs);

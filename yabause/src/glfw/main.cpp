@@ -44,7 +44,8 @@ extern "C" {
   //static char biospath[256] = "G:/wkcvs/Emulation/Saturn/satourne v1.0.2p/roms/saturn_bios.bin";
   static char * biospath = NULL;
   //static char cdpath[256] = "C:/ext/osusume/SonycR.cue";
-  static char cdpath[256] = "C:/ext/osusume/AfterBuner2.cue";
+  //static char cdpath[256] = "C:/ext/osusume/AfterBuner2.cue";
+  static char cdpath[256] = "C:/ext/osusume/HARRIER.cue";
   //static char cdpath[256] = "C:/ext/osusume/akumazyou/ws-dracula_x.bin";
   //static char cdpath[256] = "C:/ext/osusume/thunder_force_v[www.segasoluce.net]/thunder_force.iso";
   //static char cdpath[256] = "C:/ext/osusume/Slam & Jam '96 featuring Magic & Kareem (U)(Saturn)/Slam & Jam '96 featuring Magic & Kareem (U)(Saturn).mds";

@@ -1,3 +1,21 @@
+/*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+    This file is part of YabaSanshiro.
+
+    YabaSanshiro is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    YabaSanshiro is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with YabaSanshiro; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
 /*
  * Copyright (C) 2014 The Android Open Source Project
  *
@@ -15,25 +33,20 @@
 package org.uoyabause.android.tv;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.app.UiModeManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -42,77 +55,63 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.Message;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v17.leanback.app.BackgroundManager;
-import android.support.v17.leanback.app.BrowseFragment;
-import android.support.v17.leanback.widget.ArrayObjectAdapter;
-import android.support.v17.leanback.widget.HeaderItem;
-import android.support.v17.leanback.widget.ListRow;
-import android.support.v17.leanback.widget.ListRowPresenter;
-import android.support.v17.leanback.widget.OnItemViewClickedListener;
-import android.support.v17.leanback.widget.OnItemViewSelectedListener;
-import android.support.v17.leanback.widget.Presenter;
-import android.support.v17.leanback.widget.Row;
-import android.support.v17.leanback.widget.RowHeaderPresenter;
-import android.support.v17.leanback.widget.RowPresenter;
-import android.app.AlertDialog;
-import android.support.v4.app.ActivityCompat;
+import androidx.annotation.NonNull;
+import androidx.leanback.app.BackgroundManager;
+import androidx.leanback.app.BrowseFragment;
+import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.HeaderItem;
+import androidx.leanback.widget.ListRow;
+import androidx.leanback.widget.ListRowPresenter;
+import androidx.leanback.widget.OnItemViewClickedListener;
+import androidx.leanback.widget.OnItemViewSelectedListener;
+import androidx.leanback.widget.Presenter;
+import androidx.leanback.widget.Row;
+import androidx.leanback.widget.RowPresenter;
+import androidx.core.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.activeandroid.query.Select;
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
 
+import org.uoyabause.android.AdActivity;
 import org.uoyabause.android.DonateActivity;
 import org.uoyabause.android.FileDialog;
 import org.uoyabause.android.GameInfo;
-import org.uoyabause.android.GameList;
-import org.uoyabause.android.R;
+import org.uoyabause.android.GameSelectPresenter;
+import org.uoyabause.android.download.IsoDownload;
+import org.uoyabause.uranus.BuildConfig;
+import org.uoyabause.uranus.R;
 import org.uoyabause.android.Yabause;
 import org.uoyabause.android.YabauseApplication;
 import org.uoyabause.android.YabauseSettings;
 import org.uoyabause.android.YabauseStorage;
+import org.uoyabause.uranus.StartupActivity;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.analytics.GoogleAnalytics;
-import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.appinvite.AppInvite;
-import com.google.android.gms.appinvite.AppInviteInvitation;
-import com.google.android.gms.appinvite.AppInviteInvitationResult;
-import com.google.android.gms.appinvite.AppInviteReferral;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.google.firebase.crash.FirebaseCrash;
+import com.google.firebase.auth.FirebaseAuth;
 
-import static android.R.attr.bitmap;
 
-import static android.R.attr.bitmap;
-
-public class GameSelectFragment extends BrowseFragment implements FileDialog.FileSelectedListener  {
+public class GameSelectFragment extends BrowseFragment
+        implements FileDialog.FileSelectedListener,GameSelectPresenter.GameSelectPresenterListener  {
     private static final String TAG = "GameSelectFragment";
 
     private static final int BACKGROUND_UPDATE_DELAY = 300;
@@ -133,9 +132,14 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private Tracker mTracker;
     private InterstitialAd mInterstitialAd;
     private FirebaseAnalytics mFirebaseAnalytics;
+    boolean isfisrtupdate = true;
 
-    static public int refresh_level = 2;
-    static public GameSelectFragment isForeground = null;
+    //public static final int RC_SIGN_IN = 123;
+    public static int refresh_level = 2;
+    public static  GameSelectFragment isForeground = null;
+    View v_;
+
+    GameSelectPresenter presenter_;
 
     String alphabet[]={ "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z" };
 
@@ -190,12 +194,11 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                     != PackageManager.PERMISSION_GRANTED) {
                 // Contacts permissions have not been granted.
                 Log.i(TAG, "Storage permissions has NOT been granted. Requesting permissions.");
-                if (shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)
-                        || shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-
-                } else {
+                //if (shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)
+                //        || shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                //} else {
                     requestPermissions(PERMISSIONS_STORAGE, REQUEST_STORAGE);
-                }
+                //}
                 return -1;
 
             }
@@ -252,34 +255,28 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         }
     }
 
-
-    class UpdateGameDatabaseTask extends AsyncTask<String, Integer, Integer> {
-
-        @Override
-        protected Integer doInBackground(String ... i) {
-            YabauseStorage ybs = YabauseStorage.getStorage();
-            ybs.generateGameDB(refresh_level);
-            refresh_level = 0;
-            return 0;
-        }
-
-        @Override
-        protected void onPostExecute(Integer result) {
-            // The results of the above method
-            // Processing the results here
-            myHandler.sendEmptyMessage(0);
-        }
-
+    @Override
+    public void fileSelected(File file) {
+        presenter_.fileSelected(file);
     }
 
-    Handler myHandler;
-    UpdateGameDatabaseTask mUpdateThread = null;
+    @Override
+    public void onUpdateGameList() {
+        loadRows();
+        dismissDialog();
+        if(isfisrtupdate) {
+            isfisrtupdate = false;
+            presenter_.checkSignIn();
+        }
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        presenter_ = new GameSelectPresenter((android.app.Fragment)this,this);
     }
+
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -287,34 +284,8 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         super.onActivityCreated(savedInstanceState);
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
-
         YabauseApplication application = (YabauseApplication) getActivity().getApplication();
         mTracker = application.getDefaultTracker();
-
-        prepareBackgroundManager();
-        setupUIElements();
-        setupEventListeners();
-
-        if( mRowsAdapter == null ) {
-            mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-            HeaderItem gridHeader = new HeaderItem(0, "PREFERENCES");
-            GridItemPresenter mGridPresenter = new GridItemPresenter();
-            ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
-            gridRowAdapter.add(getResources().getString(R.string.setting));
-
-            UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
-            if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
-                //    gridRowAdapter.add(getResources().getString(R.string.invite));
-            }
-            gridRowAdapter.add(getResources().getString(R.string.donation));
-            gridRowAdapter.add(getString(R.string.load_game));
-            gridRowAdapter.add(getResources().getString(R.string.refresh_db));
-            //gridRowAdapter.add("GoogleDrive");
-
-            mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
-            setAdapter(mRowsAdapter);
-        }
-
         MobileAds.initialize(application, getActivity().getString(R.string.ad_app_id));
         mInterstitialAd = new InterstitialAd(getActivity());
         mInterstitialAd.setAdUnitId(getActivity().getString(R.string.banner_ad_unit_id));
@@ -327,44 +298,115 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             }
         });
 
-        myHandler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                switch (msg.what) {
-                    case 0:
-                        mUpdateThread = null;
-                        loadRows();
-                        dismissDialog();
-                        break;
-                    default:
-                        break;
+        Intent intent = getActivity().getIntent();
+        Uri uri = intent.getData();
+        if ( uri != null && !uri.getPathSegments().isEmpty()) {
+/*
+            ComponentName componentName = new ComponentName(getActivity(), CheckPSerivce.class);
+            JobInfo.Builder builder = new JobInfo.Builder(1, componentName);
+            builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
+            JobScheduler scheduler = (JobScheduler) getActivity().getSystemService(Context.JOB_SCHEDULER_SERVICE);
+            scheduler.schedule(builder.build());
+*/
+            List<String> pathSegments = uri.getPathSegments();
+            String filename = pathSegments.get(1);
+            Log.d(TAG,"filename: " + filename );
+            try { filename = URLDecoder.decode(filename,"UTF-8"); } catch( Exception e ){}
+            GameInfo game = (GameInfo) GameInfo.getFromFileName(filename);
+            if( game != null ) {
+                Calendar c = Calendar.getInstance();
+                game.lastplay_date = c.getTime();
+                game.save();
+
+                if (mTracker != null) {
+                    mTracker.send(new HitBuilders.EventBuilder()
+                            .setCategory("Action")
+                            .setAction(game.game_title)
+                            .build());
                 }
+
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "PLAY");
+                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game.game_title);
+                mFirebaseAnalytics.logEvent(
+                        FirebaseAnalytics.Event.SELECT_CONTENT, bundle
+                );
+
+                Intent intent_game = new Intent(getActivity(), Yabause.class);
+                intent_game.putExtra("org.uoyabause.android.FileNameEx", game.file_path);
+                startActivityForResult(intent_game, YABAUSE_ACTIVITY);
             }
-        };
+        }
+
+        prepareBackgroundManager();
+        setupUIElements();
+        setupEventListeners();
+
+        if( mRowsAdapter == null ) {
+            mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+            HeaderItem gridHeader = new HeaderItem(0, "PREFERENCES");
+            GridItemPresenter mGridPresenter = new GridItemPresenter();
+            ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
+
+            gridRowAdapter.add(getResources().getString(R.string.setting));
+
+            UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
+            if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+                //    gridRowAdapter.add(getResources().getString(R.string.invite));
+            }
+            SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
+            //Boolean hasDonated = prefs.getBoolean("donated", false);
+            //if( !hasDonated) {
+            //    gridRowAdapter.add(getResources().getString(R.string.donation));
+            //}
+            gridRowAdapter.add(getString(R.string.load_game));
+            gridRowAdapter.add(getResources().getString(R.string.refresh_db));
+            //gridRowAdapter.add("GoogleDrive");
+            FirebaseAuth auth = FirebaseAuth.getInstance();
+            if (auth.getCurrentUser() != null) {
+                gridRowAdapter.add(getResources().getString(R.string.sign_out));
+            } else {
+                gridRowAdapter.add(getResources().getString(R.string.sign_in));
+            }
+
+            mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
+            setSelectedPosition(0,false);
+            setAdapter(mRowsAdapter);
+        }
 
         if( checkStoragePermission() == 0 ) {
             updateBackGraound();
             updateGameList();
         }
+/*
+        View rootView = getTitleView();
+        TextView tv = (TextView) rootView.findViewById(R.id.title_text);
+        if( tv != null ) {
+            tv.setTextSize(14);
+        }
+*/
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState){
+        v_ = super.onCreateView(inflater,container,savedInstanceState);
+
+        UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+            View rootView = getTitleView();
+            TextView tv = (TextView) rootView.findViewById(R.id.title_text);
+            if (tv != null) {
+                tv.setTextSize(24);
+            }
+        }
+        return v_;
     }
 
     void updateGameList(){
-
-        if (Build.VERSION.SDK_INT >= 23) {
-            // Verify that all required contact permissions have been granted.
-            if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED
-                    || ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-        }
-
-        if( mUpdateThread == null ) {
-            showDialog();
-            mUpdateThread = new UpdateGameDatabaseTask();
-            mUpdateThread.execute("init");
-        }
+        showDialog();
+        presenter_.updateGameList(refresh_level);
+        refresh_level = 0;
     }
 
     @Override
@@ -437,16 +479,29 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         HeaderItem gridHeader = new HeaderItem(addindex, "PREFERENCES");
         GridItemPresenter mGridPresenter = new GridItemPresenter();
         ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
+        //gridRowAdapter.add("Backup");
+
         gridRowAdapter.add(getResources().getString(R.string.setting));
 
         UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
         if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
         //    gridRowAdapter.add(getResources().getString(R.string.invite));
         }
-        gridRowAdapter.add(getResources().getString(R.string.donation));
+        SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
+        //Boolean hasDonated = prefs.getBoolean("donated", false);
+        //if( !hasDonated) {
+        //    gridRowAdapter.add(getResources().getString(R.string.donation));
+        //}
         gridRowAdapter.add(getString(R.string.load_game));
         gridRowAdapter.add(getResources().getString(R.string.refresh_db));
         //gridRowAdapter.add("GoogleDrive");
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() != null) {
+            gridRowAdapter.add(getResources().getString(R.string.sign_out));
+        } else {
+            gridRowAdapter.add(getResources().getString(R.string.sign_in));
+        }
+
 
         mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
         addindex++;
@@ -516,7 +571,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         mBackgroundManager = BackgroundManager.getInstance(getActivity());
         mBackgroundManager.setAutoReleaseOnStop(false);
         mBackgroundManager.attach(getActivity().getWindow());
-        mDefaultBackground = getResources().getDrawable(R.drawable.saturn);
+        mDefaultBackground = null; //getBrandColor(); //getResources().getDrawable(R.drawable.saturn);
         mMetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
     }
@@ -526,11 +581,15 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String image_path = sp.getString("select_image", "err");
         if( image_path.equals("err") ) {
-            mDefaultBackground = getResources().getDrawable(R.drawable.saturn);
+            mDefaultBackground = null; //getResources().getDrawable(R.drawable.saturn);
             mBackgroundManager.setDrawable(mDefaultBackground);
         }else{
             try {
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                Bitmap bitmap = BitmapFactory.decodeFile(image_path, options);
 
+/*
                 getActivity().grantUriPermission("org.uoyabause.android",
                         Uri.parse(image_path),
                         Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -564,10 +623,11 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 
                 inputStream.close();
                 //mDefaultBackground = Drawable.createFromStream(inputStream, image_path );
+     */
                 mBackgroundManager.setBitmap(bitmap);
 
             } catch (Exception e) {
-                mDefaultBackground = getResources().getDrawable(R.drawable.saturn);
+                mDefaultBackground = null; //getResources().getDrawable(R.drawable.saturn);
                 mBackgroundManager.setDrawable(mDefaultBackground);
             }
 
@@ -600,6 +660,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 
     private void setupUIElements() {
         //setBadgeDrawable(getActivity().getResources().getDrawable( R.drawable.banner));
+
         setTitle(getString(R.string.app_name) + getVersionName(getActivity())); // Badge, when set, takes precedent
         // over title
         setHeadersState(HEADERS_HIDDEN);
@@ -656,6 +717,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 */
     final int SETTING_ACTIVITY = 0x01;
     final int YABAUSE_ACTIVITY = 0x02;
+    final int DOWNLOAD_ACTIVITY = 0x03;
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
         @Override
@@ -686,7 +748,38 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 intent.putExtra("org.uoyabause.android.FileNameEx", game.file_path );
                 startActivityForResult(intent, YABAUSE_ACTIVITY);
             } else if (item instanceof String) {
-                if (((String) item).indexOf(getString(R.string.setting)) >= 0) {
+                if (((String) item).indexOf(getString(R.string.sign_in)) >= 0) {
+                    presenter_.signIn();
+                }else if (((String) item).indexOf(getString(R.string.sign_out)) >= 0) {
+                    presenter_.signOut();
+                }else if (((String) item).indexOf("Backup") >= 0) {
+                    Intent intent = new Intent(getActivity(), IsoDownload.class);
+
+                    String savepath;
+                    YabauseStorage ys = YabauseStorage.getStorage();
+                    if( ys.hasExternalSD() == false ) {
+                        savepath = ys.getGamePath();
+                    }else{
+                        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                        String sel = sharedPref.getString("pref_game_download_directory","0");
+                        if( sel != null ) {
+                            if (sel.equals("0")) {   // internal
+                                savepath = ys.getGamePath();
+                            } else if (sel.equals("1")) { // external
+                                savepath = ys.getExternalGamePath();
+                            } else {
+                                savepath = ys.getGamePath(); // Error
+                            }
+                        }else{
+                            savepath = ys.getGamePath(); // Error
+                        }
+                    }
+                    intent.putExtra("save_path", savepath );
+                    startActivityForResult(intent, DOWNLOAD_ACTIVITY );
+                    //FragmentTransaction ft = getFragmentManager().beginTransaction();
+                    //DownloadDialog newFragment = new DownloadDialog();
+                    //newFragment.show(ft, "dialog");
+                }else if (((String) item).indexOf(getString(R.string.setting)) >= 0) {
                     Intent intent = new Intent(getActivity(), YabauseSettings.class);
                     startActivityForResult(intent, SETTING_ACTIVITY );
                 }else if (((String) item).indexOf(getString(R.string.load_game)) >= 0){
@@ -703,9 +796,9 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                     if( checkStoragePermission() == 0 ) {
                         updateGameList();
                     }
-                }else if(  ((String) item).indexOf(getString(R.string.donation)) >= 0){
-                    Intent intent = new Intent(getActivity(), DonateActivity.class);
-                    startActivity(intent);
+                //}else if(  ((String) item).indexOf(getString(R.string.donation)) >= 0){
+                //    Intent intent = new Intent(getActivity(), DonateActivity.class);
+                //    startActivity(intent);
                 }else if(  ((String) item).indexOf(getString(R.string.invite)) >= 0){
                     onInviteClicked();
                 }else if( ((String) item).indexOf("GoogleDrive") >= 0) {
@@ -736,6 +829,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     }
 
     private void onInviteClicked() {
+/*
         Intent intent = new AppInviteInvitation.IntentBuilder(getString(R.string.invitation_title))
                 .setMessage(getString(R.string.invitation_message))
                 .setDeepLink(Uri.parse(getString(R.string.invitation_deep_link)))
@@ -749,6 +843,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         SharedPreferences.Editor editor = prefs.edit();
         editor.putLong("introduce", date.getTime());
         editor.commit();
+*/
     }
 
     private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
@@ -803,80 +898,87 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         }
     }
 
-    @Override
-    public void fileSelected(File file) {
-        String apath;
-        if( file == null ){ // canceled
-            return;
-        }
-
-        apath = file.getAbsolutePath();
-
-        YabauseStorage storage = YabauseStorage.getStorage();
-
-        // save last selected dir
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString("pref_last_dir", file.getParent());
-        editor.apply();
-
-        GameInfo gameinfo = GameInfo.getFromFileName(apath);
-        if( gameinfo == null ) {
-            if (apath.endsWith("CUE") || apath.endsWith("cue")) {
-                gameinfo = GameInfo.genGameInfoFromCUE(apath);
-            } else if (apath.endsWith("MDS") || apath.endsWith("mds")) {
-                gameinfo = GameInfo.genGameInfoFromMDS(apath);
-            } else if (apath.endsWith("CCD") || apath.endsWith("ccd")) {
-                gameinfo = GameInfo.genGameInfoFromMDS(apath);
-            } else {
-                gameinfo = GameInfo.genGameInfoFromIso(apath);
-            }
-        }
-        if( gameinfo != null ) {
-            gameinfo.updateState();
-            Calendar c = Calendar.getInstance();
-            gameinfo.lastplay_date = c.getTime();
-            gameinfo.save();
-        }else{
-            return;
-        }
-
-        Intent intent = new Intent(getActivity(), Yabause.class);
-        intent.putExtra("org.uoyabause.android.FileNameEx", apath);
-        startActivity(intent);
-    }
 
     public static final int GAMELIST_NEED_TO_UPDATED = 0x8001;
+    public static final int GAMELIST_NEED_TO_RESTART = 0x8002;
+
+    @Override
+    public void onShowMessage( int string_id ){
+        showSnackbar( string_id );
+    }
+
+    private void showSnackbar( int id ) {
+        Toast.makeText(getActivity(), getString(id), Toast.LENGTH_SHORT).show();
+/*
+        Snackbar
+                .make(v_, getString(id), Snackbar.LENGTH_SHORT)
+                .show();
+*/
+
+/*
+        new AlertDialog.Builder(this)
+                .setMessage(getString(id))
+                .setPositiveButton("OK", null)
+                .show();
+*/
+    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         //Bundle bundle = data.getExtras();
         switch (requestCode) {
+            case GameSelectPresenter.RC_SIGN_IN:{
+                presenter_.onSignIn(resultCode,data);
+            }
+            break;
+
+            case DOWNLOAD_ACTIVITY:
+                if( resultCode == 0 ){
+                    refresh_level = 3;
+                    if( checkStoragePermission() == 0 ) {
+                        updateGameList();
+                    }
+                }
             case SETTING_ACTIVITY:
                 if( resultCode == GAMELIST_NEED_TO_UPDATED ){
                     refresh_level = 3;
                     if( checkStoragePermission() == 0 ) {
                         updateGameList();
                     }
+                    this.updateBackGraound();
+                }else if( resultCode == GAMELIST_NEED_TO_RESTART ){
+                    Intent intent = new Intent(getActivity(), StartupActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    getActivity().finish();
+                }else{
+                    this.updateBackGraound();
                 }
-                this.updateBackGraound();
                 break;
             case YABAUSE_ACTIVITY:
-                SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
-                Boolean hasDonated = prefs.getBoolean("donated", false);
-                if( hasDonated == false ) {
-                    double rn = Math.random();
-                    if (rn <= 0.5) {
-                        UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
-                        if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
-                            if (mInterstitialAd.isLoaded()) {
-                                mInterstitialAd.show();
+                if( !BuildConfig.BUILD_TYPE.equals("pro") ) {
+                    SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
+                    Boolean hasDonated = prefs.getBoolean("donated", false);
+                    if (hasDonated == false) {
+                        double rn = Math.random();
+                        if (rn <= 0.5) {
+                            UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
+                            if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+                                if (mInterstitialAd.isLoaded()) {
+                                    mInterstitialAd.show();
+                                } else {
+                                    Intent intent = new Intent(getActivity(), AdActivity.class);
+                                    startActivity(intent);
+                                }
+                            } else {
+                                Intent intent = new Intent(getActivity(), AdActivity.class);
+                                startActivity(intent);
                             }
+                        } else if (rn > 0.5) {
+                            Intent intent = new Intent(getActivity(), AdActivity.class);
+                            startActivity(intent);
                         }
-                    } else if (rn > 0.5) {
-                        Intent intent = new Intent(getActivity(), DonateActivity.class);
-                        startActivity(intent);
                     }
                 }
                 break;
