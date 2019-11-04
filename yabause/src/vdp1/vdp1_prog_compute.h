@@ -635,45 +635,46 @@ SHADER_VERSION_COMPUTE
      COLINDEX(finalColor)
      COLINDEX(newColor)
 "    if ((pixcmd.CMDPMOD & 0x8000u) == 0x8000u) {\n"
-  //MSB shadow
-  MSB_SHADOW(finalColor)
+       //MSB shadow
+       MSB_SHADOW(finalColor)
 "    } else {"
 "      switch (pixcmd.CMDPMOD & 0x7u){\n"
 "        case 0u: {\n"
-      // replace_mode
+           // replace_mode
 "          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        case 1u: {\n"
-      //shadow_mode,
-      SHADOW(finalColor)
+           //shadow_mode,
+           SHADOW(finalColor)
+"          outColor.rg = finalColor.rg;\n"           
 "          }; break;\n"
 "        case 2u: {\n"
-      //half_luminance_mode,
-      HALF_LUMINANCE(newColor)
+           //half_luminance_mode,
+           HALF_LUMINANCE(newColor)
 "          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        case 3u: {\n"
-      //half_trans_mode,
-      HALF_TRANPARENT_MIX(newColor, finalColor)
+           //half_trans_mode,
+           HALF_TRANPARENT_MIX(newColor, finalColor)
 "          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        case 4u: {\n"
-      //gouraud_mode,
-      GOURAUD_PROCESS(newColor)
+           //gouraud_mode,
+           GOURAUD_PROCESS(newColor)
 "          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        case 6u: {\n"
-      //gouraud_half_trans_mode,
-      GOURAUD_PROCESS(newColor)
-      RECOLINDEX(newColor)
-      HALF_TRANPARENT_MIX(newColor, finalColor)
+           //gouraud_half_trans_mode,
+           GOURAUD_PROCESS(newColor)
+           RECOLINDEX(newColor)
+           HALF_TRANPARENT_MIX(newColor, finalColor)
 "          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        case 7u: {\n"
-      //gouraud_half_luminance_mode,
-      GOURAUD_PROCESS(newColor)
-      RECOLINDEX(newColor)
-      HALF_LUMINANCE(newColor)
+           //gouraud_half_luminance_mode,
+           GOURAUD_PROCESS(newColor)
+           RECOLINDEX(newColor)
+           HALF_LUMINANCE(newColor)
 "          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        default:\n"
