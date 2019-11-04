@@ -84,6 +84,59 @@ SHADER_VERSION_COMPUTE
 "  imageStore(outSurfaceAttr,texel,vec4(0.0));\n"
 "}\n";
 
+#define COLINDEX(A) \
+"int col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
+
+#define RECOLINDEX(A) \
+"col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
+
+#define SHADOW(A) \
+"if ((col"Stringify(A)" & 0x8000) != 0) { \n\
+  int Rs = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
+  int Gs = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
+  int Bs = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
+  int MSBs = (col"Stringify(A)" & 0x8000) >> 8;\n \
+  "Stringify(A)".r = float(Rs | ((Gs & 0x7)<<5))/255.0;\n \
+  "Stringify(A)".g = float((Gs>>3) | (Bs<<2) | MSBs)/255.0;\n \
+} \n"
+
+#define MSB_SHADOW(A) \
+"int Rm = ((col"Stringify(A)" >> 00) & 0x1F);\n \
+int Gm = ((col"Stringify(A)" >> 05) & 0x1F);\n \
+int Bm = ((col"Stringify(A)" >> 10) & 0x1F);\n \
+int MSBm = 0x80;\n \
+"Stringify(A)".r = float(Rm | ((Gm & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((Gm>>3) | (Bm<<2) | MSBm)/255.0;\n"
+
+#define HALF_LUMINANCE(A) \
+"int Rhl = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
+int Ghl = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
+int Bhl = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
+int MSBhl = (col"Stringify(A)" & 0x8000) >> 8;\n \
+"Stringify(A)".r = float(Rhl | ((Ghl & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((Ghl>>3) | (Bhl<<2) | MSBhl)/255.0;\n"
+
+#define HALF_TRANPARENT_MIX(A, B) \
+"if ((col"Stringify(B)" & 0x8000) != 0) { \
+  int Rht = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int Ght = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int Bht = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int MSBht = (col"Stringify(A)" & 0x8000) >> 8;\n \
+  "Stringify(A)".r = float(Rht | ((Ght & 0x7)<<5))/255.0;\n \
+  "Stringify(A)".g = float((Ght>>3) | (Bht<<2) | MSBht)/255.0;\n \
+}\n"
+
+#define GOURAUD_PROCESS(A) "\
+float Rg = float((col"Stringify(A)" >> 00) & 0x1F)/31.0;\n \
+float Gg = float((col"Stringify(A)" >> 05) & 0x1F)/31.0;\n \
+float Bg = float((col"Stringify(A)" >> 10) & 0x1F)/31.0;\n \
+int MSBg = (col"Stringify(A)" & 0x8000) >> 8;\n \
+Rg = clamp(Rg + mix(mix(pixcmd.G[0],pixcmd.G[4],gouraudcoord.x), mix(pixcmd.G[12],pixcmd.G[8],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
+Gg = clamp(Gg+ mix(mix(pixcmd.G[1],pixcmd.G[5],gouraudcoord.x), mix(pixcmd.G[13],pixcmd.G[9],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
+Bg = clamp(Bg + mix(mix(pixcmd.G[2],pixcmd.G[6],gouraudcoord.x), mix(pixcmd.G[14],pixcmd.G[10],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
+"Stringify(A)".r = float(int(Rg*31.0) | ((int(Gg*31.0) & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((int(Gg*31.0)>>3) | (int(Bg*31.0)<<2) | MSBg)/255.0;\n"
+
 static const char vdp1_start_f[] =
 SHADER_VERSION_COMPUTE
 "#ifdef GL_ES\n"
@@ -781,6 +834,8 @@ SHADER_VERSION_COMPUTE
 "{\n"
 "  vec4 finalColor = vec4(0.0);\n"
 "  vec4 newColor = vec4(0.0);\n"
+"  vec4 outColor = vec4(0.0);\n"
+"  vec2 tag = vec2(0.0);\n"
 "  cmdparameter_struct pixcmd;\n"
 "  uint discarded = 0;\n"
 "  vec2 texcoord = vec2(0);\n"
@@ -802,6 +857,7 @@ SHADER_VERSION_COMPUTE
 "  bool useGouraud = false;\n"
 "  while ((cmdindex != -1) && (idCmd<nbCmd[lindex]) ) {\n"
 "    newColor = vec4(0.0);\n"
+"    outColor = vec4(0.0);\n"
 "    cmdindex = getCmd(texel, cmdIndex, idCmd, nbCmd[lindex], zone);\n"
 "    if (cmdindex == -1) continue;\n"
 "    idCmd = cmdindex + 1 - cmdIndex;\n"
@@ -886,141 +942,91 @@ SHADER_VERSION_COMPUTE
 #endif
 "    }\n"
 "    if (newColor == vec4(0.0)) continue;\n"
-"    if ((pixcmd.CMDPMOD & 0x100u)==0x100u){\n";//IS_MESH
-static const char vdp1_standard_mesh_f[] =
-     //Normal mesh
-"      if( (texel.y & 0x01) == 0 ){ \n"
-"        if( (texel.x & 0x01) == 0 ){ \n"
-"          newColor = vec4(0.0);\n"
-"          continue;\n"
-"        }\n"
-"      }else{ \n"
-"        if( (texel.x & 0x01) == 1 ){ \n"
-"          newColor = vec4(0.0);\n"
-"          continue;\n"
-"        } \n"
-"      } \n";
-static const char vdp1_improved_mesh_f[] =
-     //Improved mesh
-"      int alpha = 0x0;\n"
-"      int prio = 0;\n"
-"      prio = (int(newColor.a *255.0) & 0x7);\n"
-"      if ((int(newColor.a * 255.0) & 0x40) == 0) alpha = 0x08;\n"
-"      alpha = alpha | 0x40 | prio;\n"
-"      newColor = finalColor;\n"
-"      newColor.a = float((int(newColor.a *255.0) & 0xF8)|prio)/255.0;\n";
-
-
-#define COLINDEX(A) \
-"int col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
-
-#define RECOLINDEX(A) \
-"col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
-
-#define SHADOW(A) \
-"if ((col"Stringify(A)" & 0x8000) != 0) { \n\
-  int Rs = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
-  int Gs = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
-  int Bs = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
-  int MSBs = (col"Stringify(A)" & 0x8000) >> 8;\n \
-  "Stringify(A)".r = float(Rs | ((Gs & 0x7)<<5))/255.0;\n \
-  "Stringify(A)".g = float((Gs>>3) | (Bs<<2) | MSBs)/255.0;\n \
-} \n"
-
-#define MSB_SHADOW(A) \
-"int Rm = ((col"Stringify(A)" >> 00) & 0x1F);\n \
-int Gm = ((col"Stringify(A)" >> 05) & 0x1F);\n \
-int Bm = ((col"Stringify(A)" >> 10) & 0x1F);\n \
-int MSBm = 0x80;\n \
-"Stringify(A)".r = float(Rm | ((Gm & 0x7)<<5))/255.0;\n \
-"Stringify(A)".g = float((Gm>>3) | (Bm<<2) | MSBm)/255.0;\n"
-
-#define HALF_LUMINANCE(A) \
-"int Rhl = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
-int Ghl = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
-int Bhl = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
-int MSBhl = (col"Stringify(A)" & 0x8000) >> 8;\n \
-"Stringify(A)".r = float(Rhl | ((Ghl & 0x7)<<5))/255.0;\n \
-"Stringify(A)".g = float((Ghl>>3) | (Bhl<<2) | MSBhl)/255.0;\n"
-
-#define HALF_TRANPARENT_MIX(A, B) \
-"if ((col"Stringify(B)" & 0x8000) != 0) { \
-  int Rht = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-  int Ght = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-  int Bht = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-  int MSBht = (col"Stringify(A)" & 0x8000) >> 8;\n \
-  "Stringify(A)".r = float(Rht | ((Ght & 0x7)<<5))/255.0;\n \
-  "Stringify(A)".g = float((Ght>>3) | (Bht<<2) | MSBht)/255.0;\n \
-}\n"
-
-#define GOURAUD_PROCESS(A) "\
-float Rg = float((col"Stringify(A)" >> 00) & 0x1F)/31.0;\n \
-float Gg = float((col"Stringify(A)" >> 05) & 0x1F)/31.0;\n \
-float Bg = float((col"Stringify(A)" >> 10) & 0x1F)/31.0;\n \
-int MSBg = (col"Stringify(A)" & 0x8000) >> 8;\n \
-Rg = clamp(Rg + mix(mix(pixcmd.G[0],pixcmd.G[4],gouraudcoord.x), mix(pixcmd.G[12],pixcmd.G[8],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
-Gg = clamp(Gg+ mix(mix(pixcmd.G[1],pixcmd.G[5],gouraudcoord.x), mix(pixcmd.G[13],pixcmd.G[9],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
-Bg = clamp(Bg + mix(mix(pixcmd.G[2],pixcmd.G[6],gouraudcoord.x), mix(pixcmd.G[14],pixcmd.G[10],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n \
-"Stringify(A)".r = float(int(Rg*31.0) | ((int(Gg*31.0) & 0x7)<<5))/255.0;\n \
-"Stringify(A)".g = float((int(Gg*31.0)>>3) | (int(Bg*31.0)<<2) | MSBg)/255.0;\n"
-
-
-static const char vdp1_continue_f[] =
-"    }\n"
      COLINDEX(finalColor)
      COLINDEX(newColor)
 "    if ((pixcmd.CMDPMOD & 0x8000u) == 0x8000u) {\n"
-       //MSB shadow
-       MSB_SHADOW(finalColor)
+  //MSB shadow
+  MSB_SHADOW(finalColor)
 "    } else {"
 "      switch (pixcmd.CMDPMOD & 0x7u){\n"
 "        case 0u: {\n"
-           // replace_mode
-"          finalColor.rg = newColor.rg;\n"
+      // replace_mode
+"          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        case 1u: {\n"
-           //shadow_mode,
-           SHADOW(finalColor)
+      //shadow_mode,
+      SHADOW(finalColor)
 "          }; break;\n"
 "        case 2u: {\n"
-           //half_luminance_mode,
-           HALF_LUMINANCE(newColor)
-"          finalColor.rg = newColor.rg;\n"
+      //half_luminance_mode,
+      HALF_LUMINANCE(newColor)
+"          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        case 3u: {\n"
-           //half_trans_mode,
-           HALF_TRANPARENT_MIX(newColor, finalColor)
-"          finalColor.rg = newColor.rg;\n"
+      //half_trans_mode,
+      HALF_TRANPARENT_MIX(newColor, finalColor)
+"          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        case 4u: {\n"
-           //gouraud_mode,
-           GOURAUD_PROCESS(newColor)
-"          finalColor.rg = newColor.rg;\n"
+      //gouraud_mode,
+      GOURAUD_PROCESS(newColor)
+"          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        case 6u: {\n"
-           //gouraud_half_trans_mode,
-           GOURAUD_PROCESS(newColor)
-           RECOLINDEX(newColor)
-           HALF_TRANPARENT_MIX(newColor, finalColor)
-"          finalColor.rg = newColor.rg;\n"
+      //gouraud_half_trans_mode,
+      GOURAUD_PROCESS(newColor)
+      RECOLINDEX(newColor)
+      HALF_TRANPARENT_MIX(newColor, finalColor)
+"          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        case 7u: {\n"
-           //gouraud_half_luminance_mode,
-           GOURAUD_PROCESS(newColor)
-           RECOLINDEX(newColor)
-           HALF_LUMINANCE(newColor)
-"          finalColor.rg = newColor.rg;\n"
+      //gouraud_half_luminance_mode,
+      GOURAUD_PROCESS(newColor)
+      RECOLINDEX(newColor)
+      HALF_LUMINANCE(newColor)
+"          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        default:\n"
-"          newColor = vec4(0.0);\n"
+"          outColor = vec4(0.0);\n"
 "          continue;\n"
 "          break;\n"
 "      }\n"
-"    }\n"
-"  }\n"
-"  if ((finalColor == vec4(0.0))) return;\n";
+"    }\n";
+
+static const char vdp1_continue_f[] =
+"    finalColor.ba = tag;\n"
+"    finalColor.rg = outColor.rg;\n";
+
 static const char vdp1_end_f[] =
+"  }\n"
+"  if ((finalColor == vec4(0.0))) return;\n"
 "    imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
 "}\n";
 
+static const char vdp1_standard_mesh_f[] =
+//Normal mesh
+"  if ((pixcmd.CMDPMOD & 0x100u)==0x100u){\n"//IS_MESH
+"    if( (texel.y & 0x01) == 0 ){ \n"
+"      if( (texel.x & 0x01) == 0 ){ \n"
+"        newColor = vec4(0.0);\n"
+"        continue;\n"
+"      }\n"
+"    }else{ \n"
+"      if( (texel.x & 0x01) == 1 ){ \n"
+"        newColor = vec4(0.0);\n"
+"        continue;\n"
+"      } \n"
+"    } \n"
+"  } else {\n"
+"    tag = vec2(0.0);\n"
+"  }\n";
+
+static const char vdp1_improved_mesh_f[] =
+//Improved mesh
+"  if ((pixcmd.CMDPMOD & 0x100u)==0x100u){\n"//IS_MESH
+"    tag = outColor.rg;\n"
+"    outColor.rg = finalColor.rg;\n"
+"  } else {\n"
+"    tag = vec2(0.0);\n"
+"  }\n";
 #endif //VDP1_PROG_COMPUTE_H
