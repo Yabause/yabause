@@ -454,6 +454,95 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 
 
 
+static INLINE void Vdp1MaskSpritePixel(int type, u16 * pixel)
+{
+  switch (type)
+  {
+  case 0x0:
+  {
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x1:
+  {
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x2:
+  {
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x3:
+  {
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x4:
+  {
+    *pixel &= 0x3FF;
+    break;
+  }
+  case 0x5:
+  {
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x6:
+  {
+    *pixel &= 0x3FF;
+    break;
+  }
+  case 0x7:
+  {
+    *pixel &= 0x1FF;
+    break;
+  }
+  case 0x8:
+  {
+    *pixel &= 0x7F;
+    break;
+  }
+  case 0x9:
+  {
+    *pixel &= 0x3F;
+    break;
+  }
+  case 0xA:
+  {
+    *pixel &= 0x3F;
+    break;
+  }
+  case 0xB:
+  {
+    *pixel &= 0x3F;
+    break;
+  }
+  case 0xC:
+  {
+    *pixel &= 0xFF;
+    break;
+  }
+  case 0xD:
+  {
+    *pixel &= 0xFF;
+    break;
+  }
+  case 0xE:
+  {
+    *pixel &= 0xFF;
+    break;
+  }
+  case 0xF:
+  {
+    *pixel &= 0xFF;
+    break;
+  }
+  default: break;
+  }
+}
+
+
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture)
 {
   int shadow = 0;
@@ -755,7 +844,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
           } else {
-            Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &colorindex, &shadow, &normalshadow, &priority, &colorcl);
+            Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &colorindex);
             *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
           }
         }
@@ -800,7 +889,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
           }
           else {
-            Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &shadow, &normalshadow, &priority, &colorcl);
+            Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot);
             *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, dot );
           }
         }
