@@ -454,47 +454,55 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 
 
 
-static INLINE void Vdp1MaskSpritePixel(int type, u16 * pixel)
+static INLINE void Vdp1MaskSpritePixel(int type, u16 * pixel, int *colorcalc)
 {
   switch (type)
   {
   case 0x0:
   {
+    *colorcalc = (*pixel >> 11) & 0x7;
     *pixel &= 0x7FF;
     break;
   }
   case 0x1:
   {
+    *colorcalc = (*pixel >> 11) & 0x3;
     *pixel &= 0x7FF;
     break;
   }
   case 0x2:
   {
+    *colorcalc = (*pixel >> 11) & 0x7;
     *pixel &= 0x7FF;
     break;
   }
   case 0x3:
   {
+    *colorcalc = (*pixel >> 11) & 0x3;
     *pixel &= 0x7FF;
     break;
   }
   case 0x4:
   {
+    *colorcalc = (*pixel >> 10) & 0x7;
     *pixel &= 0x3FF;
     break;
   }
   case 0x5:
   {
+    *colorcalc = (*pixel >> 11) & 0x1;
     *pixel &= 0x7FF;
     break;
   }
   case 0x6:
   {
+    *colorcalc = (*pixel >> 10) & 0x3;
     *pixel &= 0x3FF;
     break;
   }
   case 0x7:
   {
+    *colorcalc = (*pixel >> 9) & 0x7;
     *pixel &= 0x1FF;
     break;
   }
@@ -505,6 +513,7 @@ static INLINE void Vdp1MaskSpritePixel(int type, u16 * pixel)
   }
   case 0x9:
   {
+    *colorcalc = (*pixel >> 6) & 0x1;
     *pixel &= 0x3F;
     break;
   }
@@ -515,6 +524,7 @@ static INLINE void Vdp1MaskSpritePixel(int type, u16 * pixel)
   }
   case 0xB:
   {
+    *colorcalc = (*pixel >> 6) & 0x3;
     *pixel &= 0x3F;
     break;
   }
@@ -525,6 +535,7 @@ static INLINE void Vdp1MaskSpritePixel(int type, u16 * pixel)
   }
   case 0xD:
   {
+    *colorcalc = (*pixel >> 6) & 0x1;
     *pixel &= 0xFF;
     break;
   }
@@ -535,6 +546,7 @@ static INLINE void Vdp1MaskSpritePixel(int type, u16 * pixel)
   }
   case 0xF:
   {
+    *colorcalc = (*pixel >> 6) & 0x3;
     *pixel &= 0xFF;
     break;
   }
@@ -844,7 +856,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
           } else {
-            Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &colorindex);
+            Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &colorindex,&colorcl);
             *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
           }
         }
@@ -889,7 +901,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
           }
           else {
-            Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot);
+            Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &colorcl);
             *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, dot );
           }
         }
