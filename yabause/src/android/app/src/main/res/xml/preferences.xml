@@ -133,10 +133,10 @@
 
         <ListPreference
             android:key="pref_aspect_rate"
-            android:title="@string/video_aspect_rate"
-            android:dialogTitle="@string/choose_video_aspect_rate"
-            android:entries="@array/entries_video_aspect_rate_list_preference"
-            android:entryValues="@array/entryvalues_video_aspect_rate_list_preference"
+            android:title="@string/video_aspect_ratio"
+            android:dialogTitle="@string/choose_video_aspect_ratio"
+            android:entries="@array/entries_video_aspect_ratio_list_preference"
+            android:entryValues="@array/entryvalues_video_aspect_ratio_list_preference"
             android:defaultValue="0" />
 
         <ListPreference

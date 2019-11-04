@@ -3,16 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
-        app:title="Game Setting"
+        app:title="@string/game_setting"
         >
     <CheckBoxPreference
         app:key="pref_fps"
-        app:title="Show FPS"
+        app:title="@string/show_fps"
         app:defaultValue="false"/>
 
     <CheckBoxPreference
         app:key="pref_frameskip"
-        app:title="Enable Frame skip"
+        app:title="@string/enable_frame_skip"
         app:defaultValue="true"/>
 
     <CheckBoxPreference
@@ -38,10 +38,10 @@
 
     <ListPreference
         app:key="pref_aspect_rate"
-        app:title="@string/video_aspect_rate"
-        app:dialogTitle="@string/choose_video_aspect_rate"
-        app:entries="@array/entries_video_aspect_rate_list_preference"
-        app:entryValues="@array/entryvalues_video_aspect_rate_list_preference"
+        app:title="@string/video_aspect_ratio"
+        app:dialogTitle="@string/choose_video_aspect_ratio"
+        app:entries="@array/entries_video_aspect_ratio_list_preference"
+        app:entryValues="@array/entryvalues_video_aspect_ratio_list_preference"
         app:defaultValue="0" />
 
 

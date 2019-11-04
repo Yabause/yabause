@@ -140,10 +140,10 @@
     <string name="invite">Introduce</string>
     <string name="invite_message">Would you like to introduce this app?</string>
     <string name="video_resolution">Rendering Resolution</string>
-    <string name="video_aspect_rate">Aspect Rate</string>
+    <string name="video_aspect_ratio">Aspect Ratio</string>
     <string name="rbg_resolution">RBG Resolution</string>
     <string name="choose_video_resolution">Choose rendering resolution</string>
-    <string name="choose_video_aspect_rate">Choose rendering aspect rate</string>
+    <string name="choose_video_aspect_ratio">Choose rendering aspect ratio</string>
     <string name="choose_rbg_resolution">Choose RBG(Rotate Background) Screen Resolution</string>
     <string name="open_cd_tray">Open CD Tray</string>
     <string name="close_cd_tray">Close CD Tray</string>
@@ -279,5 +279,8 @@
     <string name="information">Infromation</string>
     <string name="already_have_been">If you already have been donated, Please contact smiyaxdev@gmail.com</string>
     <string name="close">Close</string>
+    <string name="show_fps">Show FPS</string>
+    <string name="enable_frame_skip">Enable Frame skip</string>
+    <string name="game_setting">Game Setting</string>
 </resources>
 	
