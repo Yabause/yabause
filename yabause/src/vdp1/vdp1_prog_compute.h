@@ -409,11 +409,7 @@ SHADER_VERSION_COMPUTE
 
 "vec4 ReadSpriteColor(cmdparameter_struct pixcmd, vec2 uv, ivec2 texel){\n"
 "  vec4 color = vec4(0.0);\n"
-"  uint shadow = 0;\n"
-"  uint normalshadow = 0;\n"
-"  uint colorcl = 0;\n"
 "  uint endcnt = 0;\n"
-"  uint normal_shadow = 0;\n"
 "  uint x = uint(uv.x*pixcmd.w - 0.001);\n"
 "  uint pos = (uint(pixcmd.h*uv.y - 0.001)*pixcmd.w+uint(uv.x*pixcmd.w - 0.001));\n"
 "  uint charAddr = pixcmd.CMDSRCA * 8 + pos;\n"
