@@ -354,7 +354,7 @@ static int YglGenFrameBuffer() {
     return 0;
   }
 
-  vdp1_compute_init(512.0f, 256.0f, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
+  vdp1_compute_init(_Ygl->vdp1width, _Ygl->vdp1height, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
 
   if (_Ygl->upfbo != 0){
     glDeleteFramebuffers(1, &_Ygl->upfbo);
@@ -373,24 +373,21 @@ static int YglGenFrameBuffer() {
   glGenTextures(3, _Ygl->vdp1FrameBuff);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[1]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[2]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -421,7 +418,7 @@ static int YglGenFrameBuffer() {
   if (_Ygl->rboid_depth_win != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth_win);
   glGenRenderbuffers(1, &_Ygl->rboid_depth_win);
   glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth_win);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->vdp1width, _Ygl->vdp1height);
 
   if (_Ygl->vdp1fbowin != 0)
     glDeleteFramebuffers(1, &_Ygl->vdp1fbowin);

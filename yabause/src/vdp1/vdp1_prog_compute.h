@@ -637,7 +637,7 @@ SHADER_VERSION_COMPUTE
 "    if ((pixcmd.CMDPMOD & 0x8000u) == 0x8000u) {\n"
        //MSB shadow
        MSB_SHADOW(finalColor)
-"      outColor.rg = finalColor.rg;\n" 
+"      outColor.rg = finalColor.rg;\n"
 "    } else {"
 "      switch (pixcmd.CMDPMOD & 0x7u){\n"
 "        case 0u: {\n"

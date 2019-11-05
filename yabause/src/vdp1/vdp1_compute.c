@@ -222,9 +222,6 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	int maxx = 0;
 	int maxy = 0;
 
-  int *C = &cmd->CMDXA;
-	for (int i = 0; i<4; i++) C[i*2] = (C[i*2] * _Ygl->vdp1wratio);
-	for (int i = 0; i<4; i++) C[i*2+1] = (C[i*2+1] * _Ygl->vdp1hratio);
 	if (clipcmd == 0) {
     int border = 1;
 		if (cmd->type == NORMAL) border = 0;
@@ -283,6 +280,7 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	  cmd->B[1] = maxx*tex_ratiow;
 	  cmd->B[2] = miny*tex_ratioh;
 	  cmd->B[3] = maxy*tex_ratioh;
+
 	}
   int intersectX = -1;
   int intersectY = -1;
@@ -290,10 +288,10 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
     int blkx = i * (tex_width/NB_COARSE_RAST_X);
     for (int j = 0; j<NB_COARSE_RAST_Y; j++) {
       int blky = j*(tex_height/NB_COARSE_RAST_Y);
-      if (!(blkx > maxx
-        || (blkx + (tex_width/NB_COARSE_RAST_X)) < minx
-        || (blky + (tex_height/NB_COARSE_RAST_Y)) < miny
-        || blky > maxy)
+      if (!(blkx > maxx*_Ygl->vdp1wratio
+        || (blkx + (tex_width/NB_COARSE_RAST_X)) < minx*_Ygl->vdp1wratio
+        || (blky + (tex_height/NB_COARSE_RAST_Y)) < miny*_Ygl->vdp1hratio
+        || blky > maxy*_Ygl->vdp1hratio)
 			  || (clipcmd!=0)) {
 					memcpy(&cmdVdp1[(i+j*NB_COARSE_RAST_X)*2000 + nbCmd[i+j*NB_COARSE_RAST_X]], cmd, sizeof(vdp1cmd_struct));
           nbCmd[i+j*NB_COARSE_RAST_X]++;
@@ -341,6 +339,7 @@ static u32* vdp1_read(int id) {
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_vdp1access_[id]);
 	  glBindImageTexture(1, compute_tex[id], 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8);
+
 		glUniform2f(2, (float)(tex_width*tex_ratiow)/512.0f, (float)(tex_height*tex_ratioh)/256.0f);
 
 		glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
@@ -368,9 +367,9 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
   }
 	memset(vdp1_access[0], 0, 512*256*4);
   memset(vdp1_access[1], 0, 512*256*4);
-  work_groups_x = (tex_width*tex_ratiow) / local_size_x;
-  work_groups_y = (tex_height*tex_ratioh) / local_size_y;
-  generateComputeBuffer(tex_width*tex_ratiow, tex_height*tex_ratioh);
+  work_groups_x = _Ygl->vdp1width / local_size_x;
+  work_groups_y = _Ygl->vdp1height / local_size_y;
+  generateComputeBuffer(_Ygl->vdp1width, _Ygl->vdp1height);
 	if (nbCmd == NULL)
   	nbCmd = (int*)malloc(NB_COARSE_RAST *sizeof(int));
   if (cmdVdp1 == NULL)
