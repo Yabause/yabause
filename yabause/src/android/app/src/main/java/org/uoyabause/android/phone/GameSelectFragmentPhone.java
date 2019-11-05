@@ -90,6 +90,9 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+
 import static org.uoyabause.android.tv.GameSelectFragment.GAMELIST_NEED_TO_UPDATED;
 import static org.uoyabause.android.tv.GameSelectFragment.GAMELIST_NEED_TO_RESTART;
 
@@ -416,6 +419,7 @@ public class GameSelectFragmentPhone extends Fragment
         );
         Intent intent = new Intent(getActivity(), Yabause.class);
         intent.putExtra("org.uoyabause.android.FileNameEx", apath);
+        intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number);
         startActivity(intent);
 
     }
@@ -429,6 +433,14 @@ public class GameSelectFragmentPhone extends Fragment
             mProgressDialog.show();
         }
     }
+
+    public void updateDialogString( String msg) {
+        if( mProgressDialog != null  ) {
+            mProgressDialog.setMessage("Updating... " + msg);
+        }
+    }
+
+
     public void dismissDialog() {
         if( mProgressDialog != null ) {
             if( mProgressDialog.isShowing() ) {
@@ -573,7 +585,7 @@ public class GameSelectFragmentPhone extends Fragment
             MenuItem mi_login = m.findItem(R.id.menu_item_login);
             mi_login.setTitle(R.string.sign_in);
         }
-        updateGameList();
+        //updateGameList();
         if( checkStoragePermission() == 0 ) {
             updateGameList();
         }
@@ -604,9 +616,41 @@ public class GameSelectFragmentPhone extends Fragment
         return super.onOptionsItemSelected(item);
     }
 
+    private Observer observer = null;
+
+
     void updateGameList(){
-        showDialog();
-        presenter_.updateGameList(refresh_level);
+
+        observer = new Observer<String>() {
+            //GithubRepositoryApiCompleteEventEntity eventResult = new GithubRepositoryApiCompleteEventEntity();
+
+            @Override
+            public void onSubscribe(Disposable d) {
+                showDialog();
+            }
+
+            @Override
+            public void onNext(String response) {
+                updateDialogString(response);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                dismissDialog();
+            }
+
+            @Override
+            public void onComplete() {
+                loadRows();
+                dismissDialog();
+                if(isfisrtupdate) {
+                    isfisrtupdate = false;
+                    presenter_.checkSignIn();
+                }
+            }
+        };
+
+        presenter_.updateGameList(refresh_level,observer);
         refresh_level = 0;
     }
 
@@ -747,6 +791,7 @@ public class GameSelectFragmentPhone extends Fragment
         );
         Intent intent = new Intent(getActivity(), Yabause.class);
         intent.putExtra("org.uoyabause.android.FileNameEx", item.file_path );
+        intent.putExtra("org.uoyabause.android.gamecode", item.product_number);
         startActivityForResult(intent, YABAUSE_ACTIVITY);
 
     }
@@ -777,15 +822,15 @@ public class GameSelectFragmentPhone extends Fragment
         super.onDestroy();
     }
 
-    @Override
-    public void onUpdateGameList( ){
-        loadRows();
-        dismissDialog();
-        if(isfisrtupdate) {
-            isfisrtupdate = false;
-            presenter_.checkSignIn();
-        }
-    }
+    //@Override
+    //public void onUpdateGameList( ){
+    //    loadRows();
+    //    dismissDialog();
+    //    if(isfisrtupdate) {
+    //        isfisrtupdate = false;
+    //        presenter_.checkSignIn();
+    //    }
+    //}
 
     @Override
     public void onShowMessage( int string_id ){showSnackbar( string_id );}

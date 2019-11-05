@@ -113,6 +113,7 @@
     <string name="poly_gpu_tess">GPUテッセレーション</string>
     <string name="res_native">ネイティブ(このデバイスの解像度で描画)</string>
     <string name="res_original">オリジナル(サターンの解像度)</string>
+    <string name="ar_original">オリジナル(サターンのアスペクト比)</string>
     <string name="sound_curent">最新(クオリティは高いが遅い)</string>
     <string name="sound_legacy">旧エンジン(クオリティは低いが速い)</string>
     <string name="poly_triangle">パースペクティブコレクション</string>
@@ -210,4 +211,25 @@
     <string name="real_time">Real time (実世界の時間に同期します。あなたのデバイスが遅くても、音が途切れることはありません。)</string>
     <string name="already_have_been">" すでに寄付されている場合は、smiyaxdev@gmail.comまでご連絡ください"</string>
     <string name="close">閉じる</string>
+    <string name="video_aspect_ratio">画面縦横比</string>
+    <string name="rbg_resolution">回転スクロール面の解像度</string>
+    <string name="str_use_compute_shader">回転スクロール面の描画にComputeShaderを使用する</string>
+    <string name="res_full_screen">フルスクリーン</string>
+    <string name="about_app">このアプリについて</string>
+    <string name="privacy_policy">プライバシーポリシー</string>
+    <string name="preferences">設定</string>
+    <string name="popular_header">人気のビデオ</string>
+    <string name="play_pause_description">再生・停止ボタン</string>
+    <string name="related_movies">関連ビデオ</string>
+    <string name="res_1080p">1080p</string>
+    <string name="res_16p9">16:9</string>
+    <string name="res_2x">2x</string>
+    <string name="res_4p3">4:3</string>
+    <string name="res_4x">4x</string>
+    <string name="res_720p">720p</string>
+    <string name="version">Version: %1$s</string>
+    <string name="show_fps">FPSを表示する</string>
+    <string name="enable_frame_skip">フレームスキップを有効にする</string>
+    <string name="choose_rbg_resolution">回転スクロール面の解像度</string>
+    <string name="choose_video_aspect_ratio">アスペクト比の選択</string>
 </resources>

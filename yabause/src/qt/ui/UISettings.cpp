@@ -381,9 +381,10 @@ void UISettings::loadCores()
    for (int i = 0; M68KCoreList[i] != NULL; i++)
       cb68kCore->addItem(QtYabause::translate(M68KCoreList[i]->Name), M68KCoreList[i]->id);
 
-	cbAspectRatio->addItem( QtYabause::translate( "Fit to window" ), 0 );
+  cbAspectRatio->addItem(QtYabause::translate("Original aspect ratio"), 0);
 	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 4:3" ), 1 );
 	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 16:9" ), 2 );
+  cbAspectRatio->addItem(QtYabause::translate("Fit to window"), 3);
 }
 
 void UISettings::loadSupportedResolutions()
@@ -501,7 +502,7 @@ void UISettings::loadSettings()
 	cbOSDCore->setCurrentIndex( cbOSDCore->findData( s->value( "Video/OSDCore", QtYabause::defaultOSDCore().id ).toInt() ) );
 #endif
 
-	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 1 ).toInt() );
+	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 0 ).toInt() );
 	leWinWidth->setText( s->value( "Video/WindowWidth", s->value( "Video/Width", 640 ) ).toString() );
 	leWinHeight->setText( s->value( "Video/WindowHeight", s->value( "Video/Height", 480 ) ).toString() );
 	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width", 1920 ) ).toString(),

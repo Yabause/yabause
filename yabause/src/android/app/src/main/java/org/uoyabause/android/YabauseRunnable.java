@@ -53,7 +53,7 @@ public class YabauseRunnable implements Runnable
     public static native void pause();
     public static native void resume();
     public static native void setPolygonGenerationMode( int pg );
-    public static native void setKeepAspect( int ka);
+    public static native void setAspectRateMode( int ka);
     public static native void setSoundEngine( int engine );
     public static native void setResolutionMode( int resoution_mode );
     public static native void setRbgResolutionMode( int resoution_mode );

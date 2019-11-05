@@ -45,8 +45,8 @@ android {
         minSdkVersion 21
         targetSdkVersion 28
         multiDexEnabled true
-        versionCode 94
-        versionName '2.9.0'
+        versionCode 98
+        versionName '2.10.Beta2'
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.pro
@@ -73,16 +73,18 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             applicationVariants.all { variant ->
                 renameAPK(variant, defaultConfig, 'R')
             }
             resValue "string", "app_name", "Yaba Sanshiro"
         }
         pro {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             applicationIdSuffix ".pro"
             versionNameSuffix '-PRO'
             buildConfigField 'String', 'AUTHORITY', '"org.uoyabause.uranus.pro.contentprovider"'
@@ -193,6 +195,15 @@ dependencies {
 
     // Add the In-App Messaging dependency:
     implementation 'com.google.firebase:firebase-inappmessaging-display:19.0.0'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.14'
+
+    def preference_version = "1.1.0"
+
+    // Java
+    implementation "androidx.preference:preference:$preference_version"
+    // Kotlin
+    implementation "androidx.preference:preference-ktx:$preference_version"
 }
 
 // ADD THIS AT THE BOTTOM

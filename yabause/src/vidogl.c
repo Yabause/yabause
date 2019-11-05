@@ -454,6 +454,107 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 
 
 
+static INLINE void Vdp1MaskSpritePixel(int type, u16 * pixel, int *colorcalc)
+{
+  switch (type)
+  {
+  case 0x0:
+  {
+    *colorcalc = (*pixel >> 11) & 0x7;
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x1:
+  {
+    *colorcalc = (*pixel >> 11) & 0x3;
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x2:
+  {
+    *colorcalc = (*pixel >> 11) & 0x7;
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x3:
+  {
+    *colorcalc = (*pixel >> 11) & 0x3;
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x4:
+  {
+    *colorcalc = (*pixel >> 10) & 0x7;
+    *pixel &= 0x3FF;
+    break;
+  }
+  case 0x5:
+  {
+    *colorcalc = (*pixel >> 11) & 0x1;
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x6:
+  {
+    *colorcalc = (*pixel >> 10) & 0x3;
+    *pixel &= 0x3FF;
+    break;
+  }
+  case 0x7:
+  {
+    *colorcalc = (*pixel >> 9) & 0x7;
+    *pixel &= 0x1FF;
+    break;
+  }
+  case 0x8:
+  {
+    *pixel &= 0x7F;
+    break;
+  }
+  case 0x9:
+  {
+    *colorcalc = (*pixel >> 6) & 0x1;
+    *pixel &= 0x3F;
+    break;
+  }
+  case 0xA:
+  {
+    *pixel &= 0x3F;
+    break;
+  }
+  case 0xB:
+  {
+    *colorcalc = (*pixel >> 6) & 0x3;
+    *pixel &= 0x3F;
+    break;
+  }
+  case 0xC:
+  {
+    *pixel &= 0xFF;
+    break;
+  }
+  case 0xD:
+  {
+    *colorcalc = (*pixel >> 6) & 0x1;
+    *pixel &= 0xFF;
+    break;
+  }
+  case 0xE:
+  {
+    *pixel &= 0xFF;
+    break;
+  }
+  case 0xF:
+  {
+    *colorcalc = (*pixel >> 6) & 0x3;
+    *pixel &= 0xFF;
+    break;
+  }
+  default: break;
+  }
+}
+
+
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture)
 {
   int shadow = 0;
@@ -755,6 +856,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
           } else {
+            Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &colorindex,&colorcl);
             *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
           }
         }
@@ -799,7 +901,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
           }
           else {
-            Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &shadow, &normalshadow, &priority, &colorcl);
+            Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &colorcl);
             *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, dot );
           }
         }
@@ -4043,50 +4145,61 @@ static void SetSaturnResolution(int width, int height)
       GlHeight = _Ygl->screen_height;
       _Ygl->originx = 0;
       _Ygl->originy = 0;
-      if (_Ygl->keep_aspect == 1) {
+
+      if (_Ygl->aspect_rate_mode != FULL) {
+
+        float hrate;
+        float wrate;
+        switch (_Ygl->aspect_rate_mode) {
+        case ORIGINAL:
+          hrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
+          wrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight);
+          break;
+        case _4_3:
+          hrate = 3.0 / 4.0;
+          wrate = 4.0 / 3.0;
+          break;
+        case _16_9:
+          hrate = 9.0 / 16.0;
+          wrate = 16.0 / 9.0;
+          break;
+        }
 
         if (_Ygl->rotate_screen) {
           if (_Ygl->isFullScreen) {
             if (GlHeight > GlWidth) {
-              float hrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight);
-              _Ygl->originy = (GlHeight - GlWidth  * hrate);
-              GlHeight = _Ygl->screen_width * hrate;
+              _Ygl->originy = (GlHeight - GlWidth  * wrate);
+              GlHeight = _Ygl->screen_width * wrate;
             }
             else {
-              float wrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
-              _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
-              GlWidth = GlHeight * wrate;
+              _Ygl->originx = (GlWidth - GlHeight * hrate) / 2.0f;
+              GlWidth = GlHeight * hrate;
             }
           }
           else {
-            float wrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
-            _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
-            GlWidth = GlHeight * wrate;
+            _Ygl->originx = (GlWidth - GlHeight * hrate) / 2.0f;
+            GlWidth = GlHeight * hrate;
           }
         }
         else {
-
           if (_Ygl->isFullScreen) {
             if (GlHeight > GlWidth) {
-              float hrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
               _Ygl->originy = (GlHeight - GlWidth  * hrate);
               GlHeight = _Ygl->screen_width * hrate;
             }
             else {
-              float wrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight);
               _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
               GlWidth = GlHeight * wrate;
             }
           }
           else {
-            float hrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
             _Ygl->originy = (GlHeight - GlWidth  * hrate) / 2.0f;
             GlHeight = GlWidth * hrate;
           }
-
         }
       }
     }
+
     if (_Ygl->resolution_mode == RES_NATIVE && (_Ygl->width != GlWidth || _Ygl->height != GlHeight)) {
       _Ygl->width = GlWidth;
       _Ygl->height = GlHeight;
@@ -4140,7 +4253,7 @@ void VIDOGLDeInit(void)
 //////////////////////////////////////////////////////////////////////////////
 
 
-void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int on, int keep_aspect)
+void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int on, int aspect_rate_mode)
 {
 
   if (originx == 0 && originy == 0 && w == 0 && h == 0 && on == 0) {
@@ -4158,7 +4271,7 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
   _Ygl->originy = originy;
   _Ygl->screen_width = w;
   _Ygl->screen_height = h;
-  _Ygl->keep_aspect = keep_aspect;
+  _Ygl->aspect_rate_mode = aspect_rate_mode;
   YglGLInit(2048, 1024);
 
   int tmpw = vdp2width;
@@ -6196,7 +6309,7 @@ static void Vdp2DrawNBG0(void)
   ReadMosaicData(&info, 0x1, fixVdp2Regs);
 
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x100);
-  info.specialprimode = (fixVdp2Regs->SFPRMD>>8) & 0x3;
+  info.specialprimode = (fixVdp2Regs->SFPRMD) & 0x3;
   info.specialcolormode = fixVdp2Regs->SFCCMD & 0x3;
   if (fixVdp2Regs->SFSEL & 0x1)
     info.specialcode = fixVdp2Regs->SFCODE >> 8;
@@ -6403,10 +6516,7 @@ static void Vdp2DrawNBG0(void)
         info.vertices[7] = vdp2height;
         vdp2draw_struct infotmp = info;
         infotmp.cellw = vdp2width;
-        if (vdp2height >= 448)
-          infotmp.cellh = (vdp2height >> 1);
-        else
-          infotmp.cellh = vdp2height;
+        infotmp.cellh = vdp2height;
 
         infotmp.flipfunction = 0;
         YglQuad(&infotmp, &texture, &tmpc);
@@ -6705,10 +6815,7 @@ static void Vdp2DrawNBG1(void)
       info.vertices[7] = vdp2height;
       vdp2draw_struct infotmp = info;
       infotmp.cellw = vdp2width;
-      //if (vdp2height >= 448)
-      //  infotmp.cellh = (vdp2height >> 1);
-      //else
-        infotmp.cellh = vdp2height;
+      infotmp.cellh = vdp2height;
       infotmp.flipfunction = 0;
       YglQuad(&infotmp, &texture, &tmpc);
       Vdp2DrawMapPerLine(&info, &texture);
@@ -7894,7 +8001,10 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     _Ygl->aamode = value;
     break;
   case VDP_SETTING_RESOLUTION_MODE:
-    _Ygl->resolution_mode = value;
+    if(_Ygl->resolution_mode != value){
+      _Ygl->resolution_mode = value;
+      YglRebuildGramebuffer();
+    }
     break;
   case VDP_SETTING_RBG_RESOLUTION_MODE:
     _Ygl->rbg_resolution_mode = value;
@@ -7909,11 +8019,7 @@ void VIDOGLSetSettingValueMode(int type, int value) {
 		  g_rgb0.async = 1;
 	  }
 	  break;
-
   case VDP_SETTING_POLYGON_MODE:
-    if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION) {
-      YglTesserationProgramInit();
-    }
     _Ygl->polygonmode = value;
   case VDP_SETTING_ROTATE_SCREEN:
     _Ygl->rotate_screen = value;

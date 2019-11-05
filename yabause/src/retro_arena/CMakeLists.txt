@@ -63,6 +63,8 @@ set(yabause_ra_SOURCES
 	InputConfig.cpp
 	MenuScreen.h
     MenuScreen.cpp
+    Preference.h
+    Preference.cpp
     ../about.h
     ../about.c
 ) 

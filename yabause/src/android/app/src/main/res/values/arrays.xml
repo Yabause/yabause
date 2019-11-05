@@ -79,6 +79,22 @@
         <item>3</item>
     </string-array>
 
+    <string-array name="entries_video_aspect_ratio_list_preference" translatable="false" >
+        <item>@string/ar_original</item>
+        <item>@string/res_4p3</item>
+        <item>@string/res_16p9</item>
+        <item>@string/res_full_screen</item>
+    </string-array>
+
+    <string-array name="entryvalues_video_aspect_ratio_list_preference" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+
     <string-array name="entries_rbg_resolution_list_preference" translatable="false" >
         <item>@string/res_original</item>
         <item>@string/res_2x</item>

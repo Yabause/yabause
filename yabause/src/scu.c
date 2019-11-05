@@ -239,8 +239,15 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
                          || ((ReadAddress & 0x1FF00000) == 0x05A00000)
                          || ((ReadAddress & 0x1DF00000) == 0x05C00000);
 
+      
       if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
             && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
+
+          // hard/scu_/hon/p03_02.htm 
+          // B-bus read address is always 4
+          constant_source = 0;
+          ReadAdd = 4;
+
          // Fill a 32-bit value in 16-bit units.  We have to be careful to
          // avoid misaligned 32-bit accesses, because some hardware (e.g.
          // PSP) crashes on such accesses.
@@ -255,8 +262,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             }
             while (counter < TransferSize) {
                MappedMemoryWriteWord(WriteAddress, (u16)(val >> 16));
-               WriteAddress += WriteAdd;
-               MappedMemoryWriteWord(WriteAddress, (u16)val);
+               MappedMemoryWriteWord(WriteAddress+2, (u16)val);
                WriteAddress += WriteAdd;
                counter += 4;
             }
@@ -265,8 +271,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             while (counter < TransferSize) {
                u32 tmp = MappedMemoryReadLong(ReadAddress);
                MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
-               WriteAddress += WriteAdd;
-               MappedMemoryWriteWord(WriteAddress, (u16)tmp);
+               MappedMemoryWriteWord(WriteAddress+2, (u16)tmp);
                WriteAddress += WriteAdd;
                ReadAddress += ReadAdd;
                counter += 4;
@@ -779,6 +784,8 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
     sc->ProgControlPort.part.T0 = 0;
 }
 
+extern u8 * HighWram;
+
 void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
 
   int i;
@@ -826,7 +833,7 @@ void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
         {
           u32 Val = sc->MD[sel][sc->CT[sel] & 0x3F];
           Adr = (sc->WA0 << 2);
-          MappedMemoryWriteLong(Adr, Val);
+          T2WriteLong(HighWram, Adr & 0xFFFFC, Val);
           sc->CT[sel]++;
           sc->CT[sel] &= 0x3F;
           sc->WA0 += 1;
@@ -838,7 +845,7 @@ void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
         {
           u32 Val = sc->MD[sel][sc->CT[sel] & 0x3F];
           Adr = (sc->WA0 << 2);
-          MappedMemoryWriteLong(Adr, Val);
+          T2WriteLong(HighWram, Adr & 0xFFFFC, Val);
           sc->CT[sel]++;
           sc->CT[sel] &= 0x3F;
           sc->WA0 += (add >> 1);
@@ -1105,7 +1112,8 @@ void ScuExec(u32 timing) {
        fprintf(slogp, "*********************************************\n");
      }
 #endif
-      while (timing > 0) {
+     s32 dsp_counter = (s32)timing;
+      while (dsp_counter > 0) {
          u32 instruction;
 
          // Make sure it isn't one of our breakpoints
@@ -1641,7 +1649,7 @@ void ScuExec(u32 timing) {
 
                      LOG("dsp has ended\n");
                      ScuDsp->ProgControlPort.part.P = ScuDsp->PC+1;
-                     timing = 1;
+                     dsp_counter = 1;
                      break;
                   default: break;
                }
@@ -1668,12 +1676,12 @@ void ScuExec(u32 timing) {
             {
                ScuDsp->PC = (unsigned char)ScuDsp->jmpaddr;
                ScuDsp->jmpaddr = 0xFFFFFFFF;
+               dsp_counter += 1; // hold clock
             }
             else
                ScuDsp->delayed = 1;
          }
-
-         timing--;
+         dsp_counter--;
       }
    }
 }

@@ -39,7 +39,7 @@
     <color name="colorPrimary">#6f7c91</color>
     <color name="colorPrimaryDark">#373e48</color>
     <color name="colorAccent">#B7BEC8</color>
-    <color name="halfTransparent">#80000000</color>
+    <color name="halfTransparent">#CC000000</color>
     <color name="cardview_initial_background">#6f7c91</color>
     <color name="title_back">#dadee2</color>
 </resources>

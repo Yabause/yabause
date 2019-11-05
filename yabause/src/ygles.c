@@ -1572,6 +1572,7 @@ static int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * out
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache){
 
   if (_Ygl->polygonmode == GPU_TESSERATION) {
+    YglTesserationProgramInit();
     YglQuadGrowShading_tesselation_in(input, NULL, colors, cache, 0);
   }
   else if (_Ygl->polygonmode == CPU_TESSERATION) {
@@ -1591,6 +1592,7 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c){
 
   if (_Ygl->polygonmode == GPU_TESSERATION) {
+    YglTesserationProgramInit();
     return YglQuadGrowShading_tesselation_in(input, output, colors, c, 1);
   }
   else if (_Ygl->polygonmode == CPU_TESSERATION) {
@@ -3651,6 +3653,7 @@ void YglRender(void) {
 
    // This is workaround for Azel disc 2
    // Only top and second prioriy pixel is calculated
+#if 0 // There are many regressions...
    int lowpri = -1;
    int hitcnt = 0;
    if ( (fixVdp2Regs->CCCTL & 0x500) == 0x100 ) {
@@ -3670,7 +3673,7 @@ void YglRender(void) {
        lowpri = -1;
      }
    }
-
+#endif
 
 
   // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
@@ -3738,6 +3741,10 @@ void YglRender(void) {
             }
             else if ( (level->prg[j].blendmode&0x03) == VDP2_CC_ADD){
 
+#if 1 // There are many regressions...
+              glEnable(GL_BLEND);
+              glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+#else
               // This is workaround for Azel disc 2
               if ((fixVdp2Regs->CCCTL & 0x500) == 0x100) {
                 if (lowpri == i) {
@@ -3758,6 +3765,7 @@ void YglRender(void) {
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_ONE, GL_SRC_ALPHA);
               }
+#endif
             }
           }
 
@@ -4469,6 +4477,40 @@ void YglSetBackColor(int size) {
   return;
 }
 
+void YglRebuildGramebuffer(){
+  switch (_Ygl->resolution_mode) {
+  case RES_NATIVE:
+    _Ygl->width = GlWidth;
+    _Ygl->height = GlHeight;
+    rebuild_frame_buffer = 1;
+    break;
+  case RES_4x:
+    _Ygl->width = _Ygl->rwidth * 4;
+    _Ygl->height = _Ygl->rheight * 4;
+    rebuild_frame_buffer = 1;
+    break;
+  case RES_2x:
+    _Ygl->width = _Ygl->rwidth * 2;
+    _Ygl->height = _Ygl->rheight * 2;
+    rebuild_frame_buffer = 1;
+    break;
+  case RES_ORIGINAL:
+    _Ygl->width = _Ygl->rwidth;
+    _Ygl->height = _Ygl->rheight;
+    rebuild_frame_buffer = 1;
+    break;
+  case RES_720P:
+    _Ygl->width = 1280;
+    _Ygl->height = 720;
+    rebuild_frame_buffer = 1;
+    break;
+  case RES_1080P:
+    _Ygl->width = 1920;
+    _Ygl->height = 1080;
+    rebuild_frame_buffer = 1;
+    break;
+  }
+}
 //////////////////////////////////////////////////////////////////////////////
 
 void YglChangeResolution(int w, int h) {

@@ -317,6 +317,10 @@ void Vdp1Reset(void) {
    Vdp1Regs->systemclipX2 = 1024;
    Vdp1Regs->systemclipY2 = 1024;
 
+   for (int i = 0; i < 0x80000; i += 2) {
+     T1WriteWord(Vdp1Ram, i, 0x8000);
+   }
+
 }
 
 int VideoSetSetting( int type, int value )
@@ -461,7 +465,11 @@ void FASTCALL Vdp1WriteLong(u32 addr, UNUSED u32 val) {
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
-   u16 command = T1ReadWord(ram, regs->addr);
+  if (regs->addr > 0x7FFFF) {
+    Vdp1External.status = VDP1_STATUS_IDLE;
+    return; // address error
+  }
+   u16 command = T1ReadWord(ram, regs->addr );
    if (command & 0x8000) {
      Vdp1External.status = VDP1_STATUS_IDLE;
      return;
@@ -1615,7 +1623,7 @@ void VIDDummyDeInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyResize(int x, int y, UNUSED unsigned int i, UNUSED unsigned int j, UNUSED int on, int keep_aspect)
+void VIDDummyResize(int x, int y, UNUSED unsigned int i, UNUSED unsigned int j, UNUSED int on, int aspect_rate_mode)
 {
 }
 

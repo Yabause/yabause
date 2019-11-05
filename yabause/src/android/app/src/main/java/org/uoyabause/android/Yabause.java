@@ -72,6 +72,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.transition.Fade;
 
 import android.util.Base64;
 import android.util.Log;
@@ -85,6 +86,7 @@ import android.preference.PreferenceManager;
 import android.app.ActivityManager;
 import android.content.pm.ConfigurationInfo;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import org.json.JSONObject;
@@ -103,6 +105,9 @@ import com.google.android.material.navigation.NavigationView;
 import org.uoyabause.android.cheat.TabCheatFragment;
 import org.uoyabause.uranus.BuildConfig;
 import org.uoyabause.uranus.R;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+
 import static org.uoyabause.android.SelInputDeviceFragment.PLAYER1;
 import static org.uoyabause.android.SelInputDeviceFragment.PLAYER2;
 
@@ -148,6 +153,7 @@ public class Yabause extends AppCompatActivity implements
 
   private ProgressDialog mProgressDialog;
   private Boolean isShowProgress;
+  private String gameCode;
 
   void print(String msg) {
     StackTraceElement calledClass = Thread.currentThread().getStackTrace()[3];
@@ -244,7 +250,7 @@ public class Yabause extends AppCompatActivity implements
 
       @Override
       public void onDrawerOpened(View view) {
-        if (menu_showing == false) {
+        if (!menu_showing) {
           menu_showing = true;
           YabauseRunnable.pause();
           audio.mute(audio.SYSTEM);
@@ -268,7 +274,7 @@ public class Yabause extends AppCompatActivity implements
                       find = true;
                     }
                   }
-                  if (find == false) {
+                  if (!find) {
                     lp.addView(adView);
                   }
                   AdRequest adRequest = new AdRequest.Builder().addTestDevice("303A789B146C169D4BDB5652D928FF8E").build();
@@ -311,8 +317,16 @@ public class Yabause extends AppCompatActivity implements
       gamepath = exgame;
     }
 
+    String gameCode = intent.getStringExtra("org.uoyabause.android.gamecode");
+    if (gameCode != null) {
+      this.gameCode = gameCode;
+    }else {
+      GameInfo gf = GameInfo.getFromFileName(gamepath);
+      this.gameCode = gf.product_number;
+    }
+
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-    readPreferences();
+    readPreferences(gameCode);
 
     padm = PadManager.getPadManager();
     padm.loadSettings();
@@ -422,7 +436,7 @@ public class Yabause extends AppCompatActivity implements
         if (!save_root.exists()) save_root.mkdir();
 
         String save_filename = YabauseRunnable.savestate(save_path + current_gamecode);
-        if (save_filename != "") {
+        if ( !save_filename.equals("") ) {
           int point = save_filename.lastIndexOf(".");
           if (point != -1) {
             save_filename = save_filename.substring(0, point);
@@ -593,6 +607,102 @@ public class Yabause extends AppCompatActivity implements
         }
         finish();
         android.os.Process.killProcess(android.os.Process.myPid());
+      }
+      break;
+      case R.id.menu_in_game_setting:{
+        waiting_reault = true;
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+        final String currentGameCode = YabauseRunnable.getCurrentGameCode();
+
+        final InGamePreference fragment = new InGamePreference(currentGameCode);
+
+        Observer observer = new Observer<String>() {
+          //GithubRepositoryApiCompleteEventEntity eventResult = new GithubRepositoryApiCompleteEventEntity();
+
+          @Override
+          public void onSubscribe(Disposable d) {
+          }
+
+          @Override
+          public void onNext(String response) {
+          }
+
+          @Override
+          public void onError(Throwable e) {
+            waiting_reault = false;
+            YabauseRunnable.resume();
+            audio.unmute(audio.SYSTEM);
+          }
+
+          @Override
+          public void onComplete() {
+            //getSupportFragmentManager().popBackStack();
+
+            YabauseRunnable.lockGL();
+            SharedPreferences gamePreference = getSharedPreferences(Yabause.this.gameCode,Context.MODE_PRIVATE);
+            YabauseRunnable.enableRotateScreen(gamePreference.getBoolean("pref_rotate_screen", false) ? 1 : 0);
+            boolean fps = gamePreference.getBoolean("pref_fps", false);
+            YabauseRunnable.enableFPS(fps ? 1 : 0);
+            Log.d(TAG, "enable FPS " + fps);
+
+            String sPg = gamePreference.getString("pref_polygon_generation", "0");
+            Integer iPg = new Integer(sPg);
+            YabauseRunnable.setPolygonGenerationMode(iPg);
+            Log.d(TAG, "setPolygonGenerationMode " + iPg.toString());
+
+            boolean frameskip = gamePreference.getBoolean("pref_frameskip", true);
+            YabauseRunnable.enableFrameskip(frameskip ? 1 : 0);
+            Log.d(TAG, "enable enableFrameskip " + frameskip);
+
+            Integer sKa = new Integer(gamePreference.getString("pref_polygon_generation", "0"));
+            YabauseRunnable.setPolygonGenerationMode(sKa);
+
+            YabauseRunnable.setAspectRateMode(new Integer(gamePreference.getString("pref_aspect_rate", "0")));
+
+
+            Integer resolution_setting = new Integer(gamePreference.getString("pref_resolution", "0"));
+            YabauseRunnable.setResolutionMode(resolution_setting);
+
+            YabauseRunnable.enableComputeShader(gamePreference.getBoolean("pref_use_compute_shader", false) ? 1 : 0);
+            Integer rbg_resolution_setting = new Integer(gamePreference.getString("pref_rbg_resolution", "0"));
+            YabauseRunnable.setRbgResolutionMode(rbg_resolution_setting);
+            YabauseRunnable.unlockGL();
+
+            // Recreate Yabause View
+            View v = findViewById(R.id.yabause_view);
+            FrameLayout layout = findViewById(R.id.content_main);
+            layout.removeView(v);
+            YabauseView yv = new YabauseView(Yabause.this);
+            yv.setId(R.id.yabause_view);
+            layout.addView(yv,0);
+
+
+            Fade exitFade = new Fade();
+            exitFade.setDuration(500);
+            fragment.setExitTransition(exitFade);
+
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.remove(fragment);
+            transaction.commit();
+
+
+            waiting_reault = false;
+            menu_showing = false;
+            View mainview = (View) findViewById(R.id.yabause_view);
+            mainview.requestFocus();
+            YabauseRunnable.resume();
+            audio.unmute(audio.SYSTEM);
+          }
+        };
+
+        fragment.setonEndObserver(observer);
+
+        transaction.setCustomAnimations(R.anim.slide_in_up, R.anim.slide_out_up,R.anim.slide_in_up, R.anim.slide_out_up);
+        transaction.replace(R.id.ext_fragment, fragment, InGamePreference.TAG);
+        //transaction.addToBackStack(InGamePreference.TAG);
+        transaction.commit();
+
       }
       break;
     }
@@ -998,6 +1108,12 @@ public class Yabause extends AppCompatActivity implements
 
       if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
 
+        InGamePreference fg_ingame = (InGamePreference) getSupportFragmentManager().findFragmentByTag(InGamePreference.TAG);
+        if (fg_ingame != null) {
+          fg_ingame.onBackPressed();
+          return true;
+        }
+
         Fragment fg = getSupportFragmentManager().findFragmentByTag(StateListFragment.TAG);
         if (fg != null) {
           this.cancelStateLoad();
@@ -1139,25 +1255,53 @@ public class Yabause extends AppCompatActivity implements
 
   }
 
-  private void readPreferences() {
+  private void readPreferences(String gamecode) {
+
+    org.uoyabause.android.GameSharedPreference.setupInGamePreferences(this,gamecode);
+
+    //------------------------------------------------------------------------------------------------
+    // Load per game setting
+    SharedPreferences gamePreference = getSharedPreferences(gameCode,Context.MODE_PRIVATE);
+    YabauseRunnable.enableComputeShader(gamePreference.getBoolean("pref_use_compute_shader", false) ? 1 : 0);
+    YabauseRunnable.enableRotateScreen(gamePreference.getBoolean("pref_rotate_screen", false) ? 1 : 0);
+    boolean fps = gamePreference.getBoolean("pref_fps", false);
+    YabauseRunnable.enableFPS(fps ? 1 : 0);
+    Log.d(TAG, "enable FPS " + fps);
+
+    String sPg = gamePreference.getString("pref_polygon_generation", "0");
+    Integer iPg = new Integer(sPg);
+    YabauseRunnable.setPolygonGenerationMode(iPg);
+    Log.d(TAG, "setPolygonGenerationMode " + iPg.toString());
+
+    boolean frameskip = gamePreference.getBoolean("pref_frameskip", true);
+    YabauseRunnable.enableFrameskip(frameskip ? 1 : 0);
+    Log.d(TAG, "enable enableFrameskip " + frameskip);
+
+    Integer sKa = new Integer(gamePreference.getString("pref_polygon_generation", "0"));
+    YabauseRunnable.setPolygonGenerationMode(sKa);
+
+    // ToDo: list
+    //boolean keep_aspectrate = gamePreference.getBoolean("pref_keepaspectrate", true);
+    //if(keep_aspectrate) {
+    //  YabauseRunnable.setKeepAspect(1);
+    //}else {
+    //  YabauseRunnable.setKeepAspect(0);
+    //}
+
+    Integer resolution_setting = new Integer(gamePreference.getString("pref_resolution", "0"));
+    YabauseRunnable.setResolutionMode(resolution_setting);
+
+    Integer rbg_resolution_setting = new Integer(gamePreference.getString("pref_rbg_resolution", "0"));
+    YabauseRunnable.setRbgResolutionMode(rbg_resolution_setting);
+
+
+    //-------------------------------------------------------------------------------------
+    // Load common setting
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
     boolean extmemory = sharedPref.getBoolean("pref_extend_internal_memory", true);
     YabauseRunnable.enableExtendedMemory(extmemory ? 1 : 0);
     Log.d(TAG, "enable Extended Memory " + extmemory);
-
-
-    YabauseRunnable.enableComputeShader(sharedPref.getBoolean("pref_use_compute_shader", false) ? 1 : 0);
-
-    YabauseRunnable.enableRotateScreen(sharedPref.getBoolean("pref_rotate_screen", false) ? 1 : 0);
-
-    boolean fps = sharedPref.getBoolean("pref_fps", false);
-    YabauseRunnable.enableFPS(fps ? 1 : 0);
-    Log.d(TAG, "enable FPS " + fps);
-
-    boolean frameskip = sharedPref.getBoolean("pref_frameskip", true);
-    YabauseRunnable.enableFrameskip(frameskip ? 1 : 0);
-    Log.d(TAG, "enable enableFrameskip " + frameskip);
 
     String cpu = sharedPref.getString("pref_cpu", "3");
     Integer icpu = new Integer(cpu);
@@ -1176,20 +1320,7 @@ public class Yabause extends AppCompatActivity implements
     YabauseRunnable.setFilter(ifilter);
     Log.d(TAG, "setFilter " + ifilter.toString());
 
-    String sPg = sharedPref.getString("pref_polygon_generation", "0");
-    Integer iPg = new Integer(sPg);
-    YabauseRunnable.setPolygonGenerationMode(iPg);
-    Log.d(TAG, "setPolygonGenerationMode " + iPg.toString());
-
-
-    String sKa = sharedPref.getString("pref_polygon_generation", "0");
-    boolean keep_aspectrate = sharedPref.getBoolean("pref_keepaspectrate", true);
-
-    if(keep_aspectrate) {
-      YabauseRunnable.setKeepAspect(1);
-    }else {
-      YabauseRunnable.setKeepAspect(0);
-    }
+    YabauseRunnable.setAspectRateMode(0);
 
     boolean audioout = sharedPref.getBoolean("pref_audio", true);
     if (audioout) {
@@ -1244,13 +1375,6 @@ public class Yabause extends AppCompatActivity implements
     Integer isound = new Integer(ssound);
     YabauseRunnable.setSoundEngine(isound);
     Log.d(TAG, "setSoundEngine " + isound.toString());
-
-    Integer resolution_setting = new Integer(sharedPref.getString("pref_resolution", "0"));
-    YabauseRunnable.setResolutionMode(resolution_setting);
-
-    Integer rbg_resolution_setting = new Integer(sharedPref.getString("pref_rbg_resolution", "0"));
-    YabauseRunnable.setRbgResolutionMode(rbg_resolution_setting);
-
 
     Integer scsp_sync = new Integer(sharedPref.getString("pref_scsp_sync_per_frame", "1"));
     YabauseRunnable.setScspSyncPerFrame(scsp_sync);
@@ -1478,6 +1602,13 @@ public class Yabause extends AppCompatActivity implements
     if (fg != null) {
       fg.onBackPressed();
     }
+
+    InGamePreference fg2 = (InGamePreference) getSupportFragmentManager().findFragmentByTag(InGamePreference.TAG);
+    if (fg2 != null) {
+      fg2.onBackPressed();
+    }
+
+
   }
 
   @Override

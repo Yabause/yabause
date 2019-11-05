@@ -109,6 +109,9 @@ import com.google.android.gms.analytics.HitBuilders;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseAuth;
 
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+
 
 public class GameSelectFragment extends BrowseFragment
         implements FileDialog.FileSelectedListener,GameSelectPresenter.GameSelectPresenterListener  {
@@ -246,6 +249,13 @@ public class GameSelectFragment extends BrowseFragment
             mProgressDialog.show();
         }
     }
+
+    public void updateDialogString( String msg) {
+        if( mProgressDialog != null  ) {
+            mProgressDialog.setMessage("Updating... " + msg);
+        }
+    }
+
     public void dismissDialog() {
         if( mProgressDialog != null ) {
             if( mProgressDialog.isShowing() ) {
@@ -260,15 +270,15 @@ public class GameSelectFragment extends BrowseFragment
         presenter_.fileSelected(file);
     }
 
-    @Override
-    public void onUpdateGameList() {
-        loadRows();
-        dismissDialog();
-        if(isfisrtupdate) {
-            isfisrtupdate = false;
-            presenter_.checkSignIn();
-        }
-    }
+    //@Override
+    //public void onUpdateGameList() {
+    //    loadRows();
+    //    dismissDialog();
+    //    if(isfisrtupdate) {
+    //        isfisrtupdate = false;
+    //        presenter_.checkSignIn();
+    //    }
+    //}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -334,6 +344,7 @@ public class GameSelectFragment extends BrowseFragment
 
                 Intent intent_game = new Intent(getActivity(), Yabause.class);
                 intent_game.putExtra("org.uoyabause.android.FileNameEx", game.file_path);
+                intent.putExtra("org.uoyabause.android.gamecode", game.product_number );
                 startActivityForResult(intent_game, YABAUSE_ACTIVITY);
             }
         }
@@ -403,9 +414,41 @@ public class GameSelectFragment extends BrowseFragment
         return v_;
     }
 
+    private Observer observer = null;
+
     void updateGameList(){
-        showDialog();
-        presenter_.updateGameList(refresh_level);
+        //showDialog();
+
+        observer = new Observer<String>() {
+            //GithubRepositoryApiCompleteEventEntity eventResult = new GithubRepositoryApiCompleteEventEntity();
+
+            @Override
+            public void onSubscribe(Disposable d) {
+                showDialog();
+            }
+
+            @Override
+            public void onNext(String response) {
+                updateDialogString(response);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                dismissDialog();
+            }
+
+            @Override
+            public void onComplete() {
+                loadRows();
+                dismissDialog();
+                if(isfisrtupdate) {
+                  isfisrtupdate = false;
+                  presenter_.checkSignIn();
+                }
+            }
+        };
+
+        presenter_.updateGameList(refresh_level,observer);
         refresh_level = 0;
     }
 
@@ -746,6 +789,7 @@ public class GameSelectFragment extends BrowseFragment
 
                 Intent intent = new Intent(getActivity(), Yabause.class);
                 intent.putExtra("org.uoyabause.android.FileNameEx", game.file_path );
+                intent.putExtra("org.uoyabause.android.gamecode", game.product_number );
                 startActivityForResult(intent, YABAUSE_ACTIVITY);
             } else if (item instanceof String) {
                 if (((String) item).indexOf(getString(R.string.sign_in)) >= 0) {

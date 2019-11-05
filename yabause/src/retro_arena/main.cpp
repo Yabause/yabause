@@ -62,6 +62,7 @@ extern "C" {
 
 #include "InputManager.h"
 #include "MenuScreen.h"
+#include "Preference.h"
 
 #define YUI_LOG printf
 
@@ -203,6 +204,8 @@ int yabauseinit()
   int res;
   yabauseinit_struct yinit = {};
 
+  Preference pre( cdpath );
+
   yinit.m68kcoretype = M68KCORE_MUSASHI;
   yinit.percoretype = PERCORE_DUMMY;
 #if defined(__PC__)
@@ -232,22 +235,27 @@ int yabauseinit()
   yinit.usethreads = 0;
   yinit.skip_load = 0;    
   yinit.video_filter_type = 0;
-  yinit.polygon_generation_mode = PERSPECTIVE_CORRECTION; /*GPU_TESSERATION;*/
+#if defined(__JETSON__)    
+  yinit.polygon_generation_mode = GPU_TESSERATION;
+#else
+  yinit.polygon_generation_mode = PERSPECTIVE_CORRECTION;
+#endif
   yinit.use_new_scsp = 1;
-  yinit.resolution_mode = g_resolution_mode;
-  yinit.rotate_screen = 0;
+  yinit.resolution_mode = pre.getInt( "Resolution" ,g_resolution_mode);
+  yinit.rotate_screen = pre.getBool( "Rotate screen" , false );
   yinit.scsp_sync_count_per_frame = g_scsp_sync;
   yinit.extend_backup = 1;
+#if defined(__JETSON__)  
   yinit.scsp_main_mode = 1;
-  yinit.rbg_resolution_mode = 0;
-
-  //std::string::size_type pos = std::string((const char*)glGetString(GL_VERSION)).find( std::string("3.2"));
-  //if( pos != std::string::npos) {
-  //  yinit.rbg_use_compute_shader = 1;
-  //  printf("Compute shader is enabled!\n");
-  //}else{
-    yinit.rbg_use_compute_shader = 0;
-  //}
+#else
+  yinit.scsp_main_mode = 0;
+#endif
+  yinit.rbg_resolution_mode = pre.getInt( "Rotate screen resolution" ,0);
+#if defined(__JETSON__)
+  yinit.rbg_use_compute_shader = pre.getBool( "Use compute shader" , true);
+#else
+  yinit.rbg_use_compute_shader = pre.getBool( "Use compute shader" , false);
+#endif
 
   res = YabauseInit(&yinit);
   if( res == -1) {
@@ -341,6 +349,7 @@ int main(int argc, char** argv)
   SDL_GL_SetSwapInterval(0);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
 #if defined(__PC__)
   int width = 1280;
@@ -373,16 +382,19 @@ int main(int argc, char** argv)
   printf("Extentions: %s\n",glGetString(GL_EXTENSIONS));
 
   inputmng->init(g_keymap_filename);
-  menu = new MenuScreen(wnd,width,height, g_keymap_filename);
+  menu = new MenuScreen(wnd,width,height, g_keymap_filename, cdpath);
   menu->setConfigFile(g_keymap_filename);  
+  menu->setCurrentGamePath(cdpath);
 
   if( yabauseinit() == -1 ) {
       printf("Fail to yabauseinit Bye! (%s)", SDL_GetError() );
       return -1;
   }
 
-  VIDCore->Resize(0,0,width,height,1,g_keep_aspect_rate);
-
+  Preference * p = new Preference(cdpath);
+  VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
+  delete p;
+  
   SDL_GL_MakeCurrent(wnd,nullptr);
 #if defined(__RP64__) || defined(__N2__)
   YabThreadSetCurrentThreadAffinityMask(0x4);
@@ -447,6 +459,9 @@ int main(int argc, char** argv)
       }
       else if(e.type == evToggleMenu){
         if( menu_show ){
+            Preference * p = new Preference(cdpath);
+            VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
+            delete p;
           hideMenuScreen();           
         }else{
           menu_show = true;

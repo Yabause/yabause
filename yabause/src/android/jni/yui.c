@@ -115,7 +115,7 @@ static int g_use_compute_shader = 0;
 static int g_scsp_sync_count = 1;
 static int g_cpu_sync_shift = 1;
 static int g_scsp_sync_time_mode = 1;
-static int g_keep_aspect_rate = 1;
+static int g_aspect_rate_mode = 0;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -1118,7 +1118,7 @@ int initEgl( ANativeWindow* window )
 	   {
 		  if (VIDCoreList[i]->id == s_vidcoretype)
 		  {
-			 VIDCoreList[i]->Resize(0,0,width,height,1,g_keep_aspect_rate);
+			 VIDCoreList[i]->Resize(0,0,width,height,1,g_aspect_rate_mode);
             glDisable(GL_SCISSOR_TEST);
             glClearColor( 0.0f, 0.0f,0.0f,1.0f);
             glClear( GL_COLOR_BUFFER_BIT );
@@ -1179,7 +1179,7 @@ int switchWindow( ANativeWindow* window ){
 	  if (VIDCoreList[i]->id == s_vidcoretype)
 	  {
 		YUI_LOG("Resize %d,%s %d,%d",s_vidcoretype,VIDCoreList[i]->Name,width,height);
-		 VIDCoreList[i]->Resize(0,0,width,height,1,g_keep_aspect_rate);
+		 VIDCoreList[i]->Resize(0,0,width,height,1,g_aspect_rate_mode);
          glDisable(GL_SCISSOR_TEST);
          glClearColor( 0.0f,0.0f,0.0f,1.0f);
          glClear( GL_COLOR_BUFFER_BIT );
@@ -1378,12 +1378,14 @@ void
 Java_org_uoyabause_android_YabauseRunnable_enableRotateScreen( JNIEnv* env, jobject obj, jint enable )
 {
     g_rotate_screen = enable;
+    VideoSetSetting(VDP_SETTING_ROTATE_SCREEN,g_rotate_screen);
 }
 
 void
 Java_org_uoyabause_android_YabauseRunnable_enableComputeShader( JNIEnv* env, jobject obj, jint enable )
 {
     g_use_compute_shader = enable;
+    VideoSetSetting(VDP_SETTING_RBG_USE_COMPUTESHADER,g_use_compute_shader);
 }
 
 
@@ -1409,12 +1411,14 @@ void
 Java_org_uoyabause_android_YabauseRunnable_setResolutionMode( JNIEnv* env, jobject obj, jint resolution_mode )
 {
     g_resolution_mode = resolution_mode;
+    VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, g_resolution_mode);
 }
 
 void
 Java_org_uoyabause_android_YabauseRunnable_setRbgResolutionMode( JNIEnv* env, jobject obj, jint resolution_mode )
 {
     g_rbg_resolution_mode = resolution_mode;
+    VideoSetSetting(VDP_SETTING_RBG_RESOLUTION_MODE, g_rbg_resolution_mode);
 }
 
 
@@ -1460,9 +1464,9 @@ Java_org_uoyabause_android_YabauseRunnable_setPolygonGenerationMode(JNIEnv* env,
 }
 
 void
-Java_org_uoyabause_android_YabauseRunnable_setKeepAspect(JNIEnv* env, jobject obj, jint ka )
+Java_org_uoyabause_android_YabauseRunnable_setAspectRateMode(JNIEnv* env, jobject obj, jint ka )
 {
-	g_keep_aspect_rate = ka;
+	g_aspect_rate_mode = ka;
 }
 
 void

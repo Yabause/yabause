@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:title="@string/game_setting"
+        >
+    <CheckBoxPreference
+        app:key="pref_fps"
+        app:title="@string/show_fps"
+        app:defaultValue="false"/>
+
+    <CheckBoxPreference
+        app:key="pref_frameskip"
+        app:title="@string/enable_frame_skip"
+        app:defaultValue="true"/>
+
+    <CheckBoxPreference
+        app:key="pref_rotate_screen"
+        app:title="@string/str_rotate_screen"
+        app:defaultValue="false" />
+
+    <ListPreference
+        app:key="pref_polygon_generation"
+        app:title="@string/polygon_generation_type"
+        app:dialogTitle="@string/choose_polygon_generation_type"
+        app:entries="@array/entries_polygon_generation_type"
+        app:entryValues="@array/entryvalues_polygon_generation_type"
+        app:defaultValue="0" />
+
+    <ListPreference
+        app:key="pref_resolution"
+        app:title="@string/video_resolution"
+        app:dialogTitle="@string/choose_video_resolution"
+        app:entries="@array/entries_video_resolution_list_preference"
+        app:entryValues="@array/entryvalues_video_resolution_list_preference"
+        app:defaultValue="0" />
+
+    <ListPreference
+        app:key="pref_aspect_rate"
+        app:title="@string/video_aspect_ratio"
+        app:dialogTitle="@string/choose_video_aspect_ratio"
+        app:entries="@array/entries_video_aspect_ratio_list_preference"
+        app:entryValues="@array/entryvalues_video_aspect_ratio_list_preference"
+        app:defaultValue="0" />
+
+
+    <ListPreference
+        app:key="pref_rbg_resolution"
+        app:title="@string/rbg_resolution"
+        app:dialogTitle="@string/choose_rbg_resolution"
+        app:entries="@array/entries_rbg_resolution_list_preference"
+        app:entryValues="@array/entryvalues_rbg_resolution_list_preference"
+        app:defaultValue="0" />
+
+    <CheckBoxPreference
+        app:key="pref_use_compute_shader"
+        app:title="@string/str_use_compute_shader"
+        app:defaultValue="false" />
+    </PreferenceCategory>
+
+</androidx.preference.PreferenceScreen>

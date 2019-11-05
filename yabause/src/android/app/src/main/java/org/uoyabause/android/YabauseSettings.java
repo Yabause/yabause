@@ -474,6 +474,9 @@ public class YabauseSettings extends PreferenceActivity
         ListPreference resolution_setting = (ListPreference) getPreferenceManager().findPreference("pref_resolution");
         resolution_setting.setSummary(resolution_setting.getEntry());
 
+        ListPreference aspect_setting = (ListPreference) getPreferenceManager().findPreference("pref_aspect_rate");
+        aspect_setting.setSummary(aspect_setting.getEntry());
+
         ListPreference rbg_resolution_setting = (ListPreference) getPreferenceManager().findPreference("pref_rbg_resolution");
         rbg_resolution_setting.setSummary(rbg_resolution_setting.getEntry());
 
@@ -674,7 +677,9 @@ public class YabauseSettings extends PreferenceActivity
             key.equals("pref_sound_engine" ) ||
             key.equals("pref_resolution") ||
             key.equals("pref_rbg_resolution") ||
-            key.equals("pref_cpu_sync_per_line")
+            key.equals("pref_cpu_sync_per_line") ||
+            key.equals("pref_aspect_rate")
+
         ) {
             ListPreference pref = (ListPreference) findPreference(key);
             pref.setSummary(pref.getEntry());

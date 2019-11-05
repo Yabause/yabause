@@ -78,7 +78,7 @@ public:
     nanogui::Window *imageWindow;
     
     
-    MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std::string & fname  );
+    MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std::string & fname, const std::string & game  );
     virtual bool keyboardEvent( std::string & keycode , int scancode, int action, int modifiers);
     virtual void draw(NVGcontext *ctx);
 
@@ -137,6 +137,7 @@ public:
     void setCurrentGameId( const std::string & id ){ cuurent_game_id_ = id; }
     void showSaveStateDialog( Popup *popup );
     void showLoadStateDialog( Popup *popup );
+    void showConfigDialog( PopupButton *popup );
 
 public:  // events
     int onBackButtonPressed();    
