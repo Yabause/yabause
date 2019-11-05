@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+    This file is part of YabaSanshiro.
+
+    YabaSanshiro is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    YabaSanshiro is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with YabaSanshiro; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+-->
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_item_setting"
+        android:icon="@drawable/baseline_settings_white_24"
+        android:title="@string/setting"
+        />
+
+    <item
+        android:id="@+id/menu_item_load_game"
+        android:icon="@drawable/baseline_launch_white_24"
+        android:title="@string/load_game"
+        />
+
+    <item
+        android:id="@+id/menu_item_update_game_db"
+        android:title="@string/refresh_db"
+        android:icon="@drawable/baseline_sync_white_24"
+        />
+
+
+    <item
+        android:id="@+id/menu_item_login"
+        android:title="@string/sign_in"
+        android:icon="@drawable/ic_baseline_person_24px"
+        />
+
+    <item
+        android:id="@+id/menu_privacy_policy"
+        android:icon="@drawable/baseline_security_white_24"
+        android:title="@string/privacy_policy"
+        />
+</menu>
+

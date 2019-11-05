@@ -5,7 +5,7 @@
 # 1) mkdir build
 # 2) cd build
 # 3) cmake ../yabause -DCMAKE_TOOLCHAIN_FILE=../yabause/src/ios/iOS.cmake \
-# -DCMAKE_OSX_ARCHITECTURES=arm64 -DSH2_DYNAREC=OFF -DYAB_PORTS=ios -DYAB_WANT_C68K=OFF -DYAB_WANT_OPENSL=OFF
+# :q:
 # 4) make
 # 5) open yabause/src/ios/ios/uoyabause/uoyabause.xcodeproj
 # 6) >

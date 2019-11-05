@@ -17,6 +17,25 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+/*
+        Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+This file is part of YabaSanshiro.
+
+        YabaSanshiro is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+YabaSanshiro is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public License
+along with YabaSanshiro; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
 
 /*! \file memory.c
     \brief Memory access functions.
@@ -1593,12 +1612,10 @@ int YabLoadStateStream(FILE *fp)
 
    // Verify version here
  
-   ScspMuteAudio(SCSP_MUTE_SYSTEM);
-   
+      
    if (StateCheckRetrieveHeader(fp, "CART", &version, &chunksize) != 0)
    {
       // Revert back to old state here
-      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    CartLoadState(fp, version, chunksize);
@@ -1606,7 +1623,6 @@ int YabLoadStateStream(FILE *fp)
    if (StateCheckRetrieveHeader(fp, "CS2 ", &version, &chunksize) != 0)
    {
       // Revert back to old state here
-      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    Cs2LoadState(fp, version, chunksize);
@@ -1614,7 +1630,6 @@ int YabLoadStateStream(FILE *fp)
    if (StateCheckRetrieveHeader(fp, "MSH2", &version, &chunksize) != 0)
    {
       // Revert back to old state here
-      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    SH2LoadState(MSH2, fp, version, chunksize);
@@ -1622,7 +1637,6 @@ int YabLoadStateStream(FILE *fp)
    if (StateCheckRetrieveHeader(fp, "SSH2", &version, &chunksize) != 0)
    {
       // Revert back to old state here
-      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    SH2LoadState(SSH2, fp, version, chunksize);
@@ -1630,7 +1644,6 @@ int YabLoadStateStream(FILE *fp)
    if (StateCheckRetrieveHeader(fp, "SCSP", &version, &chunksize) != 0)
    {
       // Revert back to old state here
-      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    SoundLoadState(fp, version, chunksize);
@@ -1638,7 +1651,6 @@ int YabLoadStateStream(FILE *fp)
    if (StateCheckRetrieveHeader(fp, "SCU ", &version, &chunksize) != 0)
    {
       // Revert back to old state here
-      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    ScuLoadState(fp, version, chunksize);
@@ -1646,7 +1658,6 @@ int YabLoadStateStream(FILE *fp)
    if (StateCheckRetrieveHeader(fp, "SMPC", &version, &chunksize) != 0)
    {
       // Revert back to old state here
-      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    SmpcLoadState(fp, version, chunksize);
@@ -1654,7 +1665,6 @@ int YabLoadStateStream(FILE *fp)
    if (StateCheckRetrieveHeader(fp, "VDP1", &version, &chunksize) != 0)
    {
       // Revert back to old state here
-      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    Vdp1LoadState(fp, version, chunksize);
@@ -1662,7 +1672,6 @@ int YabLoadStateStream(FILE *fp)
    if (StateCheckRetrieveHeader(fp, "VDP2", &version, &chunksize) != 0)
    {
       // Revert back to old state here
-      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    Vdp2LoadState(fp, version, chunksize);
@@ -1670,7 +1679,6 @@ int YabLoadStateStream(FILE *fp)
    if (StateCheckRetrieveHeader(fp, "OTHR", &version, &chunksize) != 0)
    {
       // Revert back to old state here
-      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    // Other data
@@ -1748,9 +1756,7 @@ int YabSaveStateSlot(const char *dirpath, u8 slot)
 #else
    sprintf(filename, "%s/%s_%03d.yss", dirpath, cdip->itemnum, slot);
 #endif
-   ScspMuteAudio(1);
    rtn = YabSaveState(filename);
-   ScspUnMuteAudio(1);
    return rtn;
 }
 
@@ -1769,9 +1775,7 @@ int YabLoadStateSlot(const char *dirpath, u8 slot)
 #else
    sprintf(filename, "%s/%s_%03d.yss", dirpath, cdip->itemnum, slot);
 #endif
-   ScspMuteAudio(1);
    rtn = YabLoadState(filename);
-   ScspUnMuteAudio(1);
    return rtn;
 }
 

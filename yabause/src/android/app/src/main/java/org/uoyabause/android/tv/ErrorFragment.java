@@ -1,3 +1,21 @@
+/*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+    This file is part of YabaSanshiro.
+
+    YabaSanshiro is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    YabaSanshiro is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with YabaSanshiro; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
 /*
  * Copyright (C) 2014 The Android Open Source Project
  *
@@ -17,12 +35,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import org.uoyabause.android.R;
+import org.uoyabause.uranus.R;
 
 /*
  * This class demonstrates how to extend ErrorFragment
  */
-public class ErrorFragment extends android.support.v17.leanback.app.ErrorFragment {
+public class ErrorFragment extends androidx.leanback.app.ErrorFragment {
     private static final String TAG = "ErrorFragment";
     private static final boolean TRANSLUCENT = true;
 

@@ -1,19 +1,20 @@
-/*  Copyright 2017 devMiyax(smiyaxdev@gmail.com)
+/*
+        Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
-This file is part of Yabause.
+This file is part of YabaSanshiro.
 
-Yabause is free software; you can redistribute it and/or modify
+        YabaSanshiro is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 
-Yabause is distributed in the hope that it will be useful,
+YabaSanshiro is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Yabause; if not, write to the Free Software
+        You should have received a copy of the GNU General Public License
+along with YabaSanshiro; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
@@ -1503,6 +1504,7 @@ inline int DynarecSh2::Execute(){
         fflush(fp);
     }
 #endif
+//  u32 prepc  = GET_PC();
 //  if(yabsys.frame_count == 7){
 //    logenable_ = true;
 //  }
@@ -1510,8 +1512,7 @@ inline int DynarecSh2::Execute(){
 //    LOG("[%s] dynaExecute start %08X %08X", (is_slave_ == false) ? "M" : "S", GET_PC(), GET_PR());
 //  }
 #if defined(DEBUG_CPU) || defined(EXECUTE_STAT)
-    u32 prepc = GET_PC();
-    if (is_slave_) { //statics_trigger_ == COLLECTING) {
+  if (is_slave_) { //statics_trigger_ == COLLECTING) {
     u64 pretime = YabauseGetTicks();
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
     compie_statics_[prepc].count++;

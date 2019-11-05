@@ -17,6 +17,25 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+/*
+        Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+This file is part of YabaSanshiro.
+
+        YabaSanshiro is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+YabaSanshiro is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public License
+along with YabaSanshiro; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
 
 // Quick hack so nobody else needs to know we're using a different header file
 #ifdef USE_SCSP2
@@ -160,6 +179,11 @@ void scsp_debug_get_envelope(int chan, int * env, int * state);
 void scsp_debug_set_mode(int mode);
 void scsp_set_use_new(int which);
 void new_scsp_exec(s32 cycles);
+
+void ScspLockThread();
+void ScspUnLockThread();
+void setM68kCounter(u64 counter);
+void setM68kDoneCounter(u64 counter);
 
 extern int use_new_scsp;
 #endif

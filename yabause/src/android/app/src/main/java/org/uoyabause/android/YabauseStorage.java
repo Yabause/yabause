@@ -1,3 +1,23 @@
+/*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
+
+    This file is part of YabaSanshiro.
+
+    YabaSanshiro is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    YabaSanshiro is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with YabaSanshiro; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
+
+
 package org.uoyabause.android;
 
 import java.io.BufferedInputStream;
@@ -19,7 +39,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -39,6 +62,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.*;
 import org.apache.commons.io.IOCase;
+import org.uoyabause.uranus.R;
 
 class BiosFilter implements FilenameFilter {
     public boolean accept(File dir, String filename) {
@@ -84,6 +108,7 @@ public class YabauseStorage {
     private File cartridge;
     private File state;
     private File screenshots;
+    private File external = null;
 
     private YabauseStorage() {
         File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
@@ -105,7 +130,8 @@ public class YabauseStorage {
         if (! state.exists()) state.mkdir();
         
         screenshots = new File(yabroot, "screenshots");
-        if (! screenshots.exists()) screenshots.mkdir();        
+        if (! screenshots.exists()) screenshots.mkdir();
+
     }
 
     static public YabauseStorage getStorage() {
@@ -151,6 +177,33 @@ public class YabauseStorage {
 
     public String getGamePath() {
         return games + File.separator;
+    }
+
+    public void setExternalStoragePath( String expath ){
+        File yabroot = new File(expath, "yabause");
+        if (! yabroot.exists()) {
+            if( yabroot.mkdirs() == false ){
+                int a=0;
+            }
+        }
+        external = new File(yabroot, "games");
+        if (! external.exists()) {
+            external.mkdirs();
+        }
+    }
+
+    public boolean hasExternalSD() {
+        if( external != null ){
+            return true;
+        }
+        return false;
+    }
+
+    public String getExternalGamePath() {
+        if( external == null ){
+            return null;
+        }
+        return external + File.separator;
     }
     
     public String[] getMemoryFiles() {
@@ -340,6 +393,9 @@ public class YabauseStorage {
 
     }
 
+    public final static int REFRESH_LEVEL_STATUS_ONLY = 0;
+    public final static int REFRESH_LEVEL_REBUILD = 3;
+
 
     public void generateGameDB( int level ){
 
@@ -359,16 +415,29 @@ public class YabauseStorage {
             list.add(getGamePath());
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putString("pref_game_directory", getGamePath());
+            if( hasExternalSD() == true ) {
+                editor.putString("pref_game_directory", getGamePath() + ";" + getExternalGamePath() );
+                list.add(getExternalGamePath());
+            }
             editor.apply();
         }else {
             String[] paths = data.split(";", 0);
             for( int i=0; i<paths.length; i++ ){
                 list.add(paths[i]);
             }
+            if( hasExternalSD() == true ) {
+                list.add(getExternalGamePath());
+             }
         }
 
-        for( int i=0; i< list.size(); i++ ){
-            generateGameListFromDirectory( list.get(i) );
+        Set<String> set = new HashSet<String>();
+        set.addAll(list);
+        List<String> uniqueList = new ArrayList<String>();
+        uniqueList.addAll(set);
+
+
+        for( int i=0; i< uniqueList.size(); i++ ){
+            generateGameListFromDirectory( uniqueList.get(i) );
         }
 
 /*
