@@ -2843,7 +2843,7 @@ static INLINE void ScuChekIntrruptDMA(int id){
     dmainfo.ReadAddress = ScuRegs->D2R;
     dmainfo.WriteAddress = ScuRegs->D2W;
     dmainfo.TransferNumber = ScuRegs->D2C;
-    dmainfo.AddValue = ScuRegs->D0AD;
+    dmainfo.AddValue = ScuRegs->D2AD;
     dmainfo.ModeAddressUpdate = ScuRegs->D2MD;
     ScuDMA(&dmainfo);
     ScuRegs->D2EN = 0;
