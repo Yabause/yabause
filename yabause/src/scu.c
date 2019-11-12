@@ -239,15 +239,8 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
                          || ((ReadAddress & 0x1FF00000) == 0x05A00000)
                          || ((ReadAddress & 0x1DF00000) == 0x05C00000);
 
-      
       if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
             && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
-
-          // hard/scu_/hon/p03_02.htm 
-          // B-bus read address is always 4
-          constant_source = 0;
-          ReadAdd = 4;
-
          // Fill a 32-bit value in 16-bit units.  We have to be careful to
          // avoid misaligned 32-bit accesses, because some hardware (e.g.
          // PSP) crashes on such accesses.
@@ -262,7 +255,8 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             }
             while (counter < TransferSize) {
                MappedMemoryWriteWord(WriteAddress, (u16)(val >> 16));
-               MappedMemoryWriteWord(WriteAddress+2, (u16)val);
+               WriteAddress += WriteAdd;
+               MappedMemoryWriteWord(WriteAddress, (u16)val);
                WriteAddress += WriteAdd;
                counter += 4;
             }
@@ -271,7 +265,8 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             while (counter < TransferSize) {
                u32 tmp = MappedMemoryReadLong(ReadAddress);
                MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
-               MappedMemoryWriteWord(WriteAddress+2, (u16)tmp);
+               WriteAddress += WriteAdd;
+               MappedMemoryWriteWord(WriteAddress, (u16)tmp);
                WriteAddress += WriteAdd;
                ReadAddress += ReadAdd;
                counter += 4;
@@ -2848,7 +2843,7 @@ static INLINE void ScuChekIntrruptDMA(int id){
     dmainfo.ReadAddress = ScuRegs->D2R;
     dmainfo.WriteAddress = ScuRegs->D2W;
     dmainfo.TransferNumber = ScuRegs->D2C;
-    dmainfo.AddValue = ScuRegs->D0AD;
+    dmainfo.AddValue = ScuRegs->D2AD;
     dmainfo.ModeAddressUpdate = ScuRegs->D2MD;
     ScuDMA(&dmainfo);
     ScuRegs->D2EN = 0;

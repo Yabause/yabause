@@ -45,8 +45,8 @@ android {
         minSdkVersion 21
         targetSdkVersion 28
         multiDexEnabled true
-        versionCode 98
-        versionName '2.10.Beta2'
+        versionCode 101
+        versionName '2.10.2'
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.pro
@@ -73,18 +73,16 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             applicationVariants.all { variant ->
                 renameAPK(variant, defaultConfig, 'R')
             }
             resValue "string", "app_name", "Yaba Sanshiro"
         }
         pro {
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             applicationIdSuffix ".pro"
             versionNameSuffix '-PRO'
             buildConfigField 'String', 'AUTHORITY', '"org.uoyabause.uranus.pro.contentprovider"'
