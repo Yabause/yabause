@@ -246,9 +246,9 @@ int yabauseinit()
   yinit.scsp_sync_count_per_frame = g_scsp_sync;
   yinit.extend_backup = 1;
 #if defined(__JETSON__)  
-  yinit.scsp_main_mode = 1;
-#else
   yinit.scsp_main_mode = 0;
+#else
+  yinit.scsp_main_mode = 1;
 #endif
   yinit.rbg_resolution_mode = pre.getInt( "Rotate screen resolution" ,0);
 #if defined(__JETSON__)
