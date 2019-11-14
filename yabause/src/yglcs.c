@@ -83,7 +83,7 @@ void YglEraseWriteCSVDP1(void) {
 
 void YglCSRenderVDP1(void) {
   FRAMELOG("YglCSRenderVDP1: drawframe =%d", _Ygl->drawframe);
-  _Ygl->vdp1Tex = vdp1_compute(&Vdp2Lines[0], _Ygl->drawframe);
+  _Ygl->vdp1Tex = vdp1_compute(&Vdp2Lines[0]);
   FrameProfileAdd("YglCSRenderVDP1 end");
 }
 
@@ -343,6 +343,67 @@ render_finish:
   return;
 }
 
+static void releaseVDP1DrawingFBMem() {
+  _Ygl->vdp1fb_buf = NULL;
+}
+
+static u32* getVdp1DrawingFBMem() {
+  //Ici le read doit etre different du write. Il faut faire un pack dans le cas du read... et un glReadPixel
+  u32* fbptr = NULL;
+  GLuint error;
+  YglGenFrameBuffer();
+  releaseVDP1DrawingFBMem();
+  fbptr = vdp1_get_directFB();
+  return fbptr;
+}
+
+
+void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val )
+{
+  u16 full = 0;
+  if (_Ygl->vdp1fb_buf == NULL) {
+    _Ygl->vdp1fb_buf =  getVdp1DrawingFBMem();
+  }
+  switch (type)
+  {
+  case 0:
+    full = T1ReadLong((u8*)_Ygl->vdp1fb_buf, (addr&(~0x1))*2);
+    if (addr & 0x1) full = (full & 0xFF00) | (val& 0xFF);
+    else full = (full & 0xFF) | ((val& 0xFF) << 8);
+    T1WriteLong(_Ygl->vdp1fb_buf, (addr&(~0x1))*2, VDP1COLORFB(full&0xFFFF));
+    break;
+  case 1:
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf, addr*2, VDP1COLORFB(val&0xFFFF));
+    break;
+  case 2:
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf, addr*2+4, VDP1COLORFB(val&0xFFFF));
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf, addr*2, VDP1COLORFB((val>>16)&0xFFFF));
+    break;
+  default:
+    break;
+  }
+  _Ygl->vdp1IsNotEmpty = 1;
+}
+
+void YglCSVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
+  if (_Ygl->vdp1fb_buf == NULL) {
+    _Ygl->vdp1fb_buf =  getVdp1DrawingFBMem();
+  }
+  switch (type)
+  {
+  case 0:
+    *(u8*)out = 0x0;
+    break;
+  case 1:
+    *(u16*)out = T1ReadLong((u8*)_Ygl->vdp1fb_buf, addr*2) & 0xFFFF;
+    break;
+  case 2:
+    *(u32*)out = ((T1ReadLong((u8*)_Ygl->vdp1fb_buf, addr*2)&0xFFFF)<<16)|((T1ReadLong((u8*)_Ygl->vdp1fb_buf_read, addr*2+4)&0xFFFF));
+    break;
+  default:
+    break;
+  }
+}
 
 //////////////////////////////////////////////////////////////////////////////
 static int YglGenFrameBuffer() {

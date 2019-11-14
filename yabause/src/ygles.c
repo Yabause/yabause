@@ -728,8 +728,7 @@ void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, 
   YabThreadUnLock(tm->mtx);
 }
 
-static u32 write_fb[512*256];
-static u32 read_fb[512*256];
+static u32 write_fb[512*256] = {0};
 static u32* manualfb = NULL;
 
 static u32* getVdp1DrawingFBMem() {
@@ -764,7 +763,6 @@ static u16 COLOR24TO16(u32 temp) {
 }
 
 void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
-  u8 priority = Vdp2Regs->PRISA &0x7;
   u16 full = 0;
   _Ygl->vdp1fb_buf =  getVdp1DrawingFBMem();
 

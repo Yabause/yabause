@@ -115,8 +115,8 @@ extern void VIDOGLVdp2Draw(void);
 extern void VIDOGLVdp2SetResolution(u16 TVMD);
 extern void YglGetGlSize(int *width, int *height);
 extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
-extern void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
-extern void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
+extern void YglCSVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
+extern void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 extern void VIDOGLSetSettingValueMode(int type, int value);
 extern void VIDOGLSync();
 extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
@@ -142,8 +142,8 @@ VIDCSVdp1LineDraw,
 VIDCSVdp1UserClipping,
 VIDCSVdp1SystemClipping,
 VIDOGLVdp1LocalCoordinate,
-VIDOGLVdp1ReadFrameBuffer,
-VIDOGLVdp1WriteFrameBuffer,
+YglCSVdp1ReadFrameBuffer,
+YglCSVdp1WriteFrameBuffer,
 YglEraseWriteCSVDP1,
 YglFrameChangeCSVDP1,
 VIDOGLVdp2Reset,
@@ -334,7 +334,6 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1Fu;
   }
-//printf("(%d,%d) (%d,%d) (%d,%d) (%d,%d)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
 
 //gouraud
 memset(cmd.G, 0, sizeof(float)*16);
@@ -399,7 +398,6 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1Fu;
   }
-//printf("(%d,%d) (%d,%d) (%d,%d) (%d,%d)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
 
 //gouraud
 memset(cmd.G, 0, sizeof(float)*16);
@@ -444,8 +442,6 @@ void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.CMDXD += Vdp1Regs->localX;
   cmd.CMDYD += Vdp1Regs->localY;
 
-  //printf("(%d,%d) (%d,%d) (%d,%d) (%d,%d)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
-
   //gouraud
   memset(cmd.G, 0, sizeof(float)*16);
   if ((cmd.CMDPMOD & 4))
@@ -467,7 +463,6 @@ void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.SPCTL = varVdp2Regs->SPCTL;
   cmd.type = POLYGON;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
-  //printf("%d %d %d %d %d %d %d %d\n", vdp1cmd.P[0], vdp1cmd.P[1], vdp1cmd.P[2], vdp1cmd.P[3], vdp1cmd.P[4], vdp1cmd.P[5], vdp1cmd.P[6], vdp1cmd.P[7]);
 
   vdp1_add(&cmd,0);
 }
@@ -520,7 +515,6 @@ if ((cmd.CMDPMOD & 4))
   cmd.SPCTL = varVdp2Regs->SPCTL;
   cmd.type = POLYLINE;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
-  //printf("%d %d %d %d %d %d %d %d\n", vdp1cmd.P[0], vdp1cmd.P[1], vdp1cmd.P[2], vdp1cmd.P[3], vdp1cmd.P[4], vdp1cmd.P[5], vdp1cmd.P[6], vdp1cmd.P[7]);
 
   vdp1_add(&cmd,0);
 }
@@ -554,8 +548,6 @@ void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.CMDXD += Vdp1Regs->localX;
   cmd.CMDYD += Vdp1Regs->localY;
 
-  //printf("(%d,%d) (%d,%d) (%d,%d) (%d,%d)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
-
   //gouraud
   memset(cmd.G, 0, sizeof(float)*16);
   if ((cmd.CMDPMOD & 4))
@@ -577,7 +569,6 @@ void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.SPCTL = varVdp2Regs->SPCTL;
   cmd.type = LINE;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
-  //printf("%d %d %d %d %d %d %d %d\n", vdp1cmd.P[0], vdp1cmd.P[1], vdp1cmd.P[2], vdp1cmd.P[3], vdp1cmd.P[4], vdp1cmd.P[5], vdp1cmd.P[6], vdp1cmd.P[7]);
 
   vdp1_add(&cmd,0);
 }
@@ -606,7 +597,6 @@ void VIDCSVdp1SystemClipping(u8 * ram, Vdp1 * regs)
   vdp1_add(&cmd,1);
   Vdp1Regs->systemclipX2 = cmd.CMDXC;
   Vdp1Regs->systemclipY2 = cmd.CMDYC;
-  //printf("System (0,0) (%d,%d)\n", Vdp1Regs->systemclipX2, Vdp1Regs->systemclipY2);
 }
 
 #endif

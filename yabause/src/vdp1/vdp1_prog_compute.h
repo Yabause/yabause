@@ -38,12 +38,9 @@ SHADER_VERSION_COMPUTE
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
 "  int idx = int(texel.x * upscale.x) + int((size.y - 1.0 - texel.y)*512 * upscale.y);\n"
-"  float a = float((Vdp1FB[idx] >> 24) & 0xFFu)/255.0;\n"
+"  float g = float((Vdp1FB[idx] >> 24) & 0xFFu)/255.0;\n"
 "  float r = float((Vdp1FB[idx] >> 16) & 0xFFu)/255.0;\n"
-"  float g = float((Vdp1FB[idx] >> 8) & 0xFFu)/255.0;\n"
-"  float b = float((Vdp1FB[idx] >> 0) & 0xFFu)/255.0;\n"
-"  if ((int(b * 255.0)&0x80) != 0)\n"
-"    imageStore(outSurface,texel,vec4(a,r,g,b));\n"
+"  imageStore(outSurface,texel,vec4(g, r, 0.0, 0.0));\n"
 "}\n";
 
 static const char vdp1_read_f[] =
@@ -62,7 +59,7 @@ SHADER_VERSION_COMPUTE
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
 "  int idx = int(texel.x * upscale.x) + int((size.y - 1.0 - texel.y)*512 * upscale.y);\n"
 "  vec4 pix = imageLoad(s_texture, ivec2(vec2(texel.x,texel.y)*upscale));\n"
-"  uint val = (uint(pix.r*255.0)<<24) | (uint(pix.g*255.0)<<16) | (uint(pix.b*255.0)<<8) | (uint(pix.a*255.0)<<0);\n"
+"  uint val = (uint(pix.r*255.0)<<24) | (uint(pix.g*255.0)<<16);\n"
 "  Vdp1FB[idx] = val;\n"
 "}\n";
 
@@ -73,7 +70,6 @@ SHADER_VERSION_COMPUTE
 "#endif\n"
 "layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
 "layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
-"layout(rgba8, binding = 1) writeonly uniform image2D outSurfaceAttr;\n"
 "layout(location = 2) uniform vec4 col;\n"
 "void main()\n"
 "{\n"
@@ -81,7 +77,6 @@ SHADER_VERSION_COMPUTE
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
 "  imageStore(outSurface,texel,col);\n"
-"  imageStore(outSurfaceAttr,texel,vec4(0.0));\n"
 "}\n";
 
 #define COLINDEX(A) \
@@ -182,7 +177,6 @@ SHADER_VERSION_COMPUTE
 
 "layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
 "layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
-"layout(rgba8, binding = 1) writeonly uniform image2D outSurfaceAttr;\n"
 #ifdef USE_VDP1_TEX
 "layout(location = 2) uniform sampler2D texSurface;\n"
 #endif
