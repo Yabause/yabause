@@ -146,7 +146,9 @@ OSD_struct *OSDCoreList[] = {
 
 
 static SDL_Window* wnd;
+static SDL_Window* subwnd;
 static SDL_GLContext glc;
+static SDL_GLContext subglc;
 int g_EnagleFPS = 0;
 int g_resolution_mode = 0;
 int g_keep_aspect_rate = 0;
@@ -183,16 +185,36 @@ void YuiSwapBuffers(void)
 
 int YuiRevokeOGLOnThisThread(){
   LOG("revoke thread\n");
-  SDL_GL_MakeCurrent(wnd,nullptr);
+  int rc = -1;
+  int retry=0;
+  while( rc != 0 ){
+    usleep(16666);
+    retry++;
+    rc = SDL_GL_MakeCurrent(subwnd,subglc);
+    if( rc != 0 ){ LOG("fail revoke thread\n"); }
+    if( retry > 100){
+      LOG("out of retry cont\n");
+      abort();
+    }
+  }
   return 0;
 }
 
 int YuiUseOGLOnThisThread(){
   LOG("use thread\n");
-  SDL_GL_MakeCurrent(wnd,glc);
+  int rc = -1;
+  int retry=0;
+  while( rc != 0 ){
+    usleep(16666);
+    retry++;
+    rc = SDL_GL_MakeCurrent(wnd,glc);
+    if( rc != 0 ){ LOG("fail revoke thread\n"); }
+    if( retry > 100){
+      LOG("out of retry cont\n");
+      abort();
+    }
+  }
   return 0;
-}
-
 }
 
 int saveScreenshot( const char * filename );
@@ -350,12 +372,17 @@ int main(int argc, char** argv)
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1); 
 
 #if defined(__PC__)
   int width = 1280;
   int height = 720;
   wnd = SDL_CreateWindow("Yaba Snashiro", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
       width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN );
+
+  subwnd = SDL_CreateWindow("Yaba Snashiro sub", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN );
+
 #else
   int width = dsp.w;
   int height = dsp.h;
@@ -365,11 +392,18 @@ int main(int argc, char** argv)
     printf("Fail to SDL_CreateWindow Bye! (%s)", SDL_GetError() );
     return -1;
   }
+  subwnd = SDL_CreateWindow("Yaba Snashiro sub", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN );
 #endif
   dsp.refresh_rate = 60;
   SDL_SetWindowDisplayMode(wnd,&dsp);
   SDL_GetWindowSize(wnd,&width,&height);
   SDL_SetWindowInputFocus(wnd);
+  subglc = SDL_GL_CreateContext(wnd);
+  if(subglc == nullptr ) {
+    printf("Fail to SDL_GL_CreateContext Bye! (%s)", SDL_GetError() );
+    return -1;
+  }
   glc = SDL_GL_CreateContext(wnd);
   if(glc == nullptr ) {
     printf("Fail to SDL_GL_CreateContext Bye! (%s)", SDL_GetError() );
@@ -394,6 +428,7 @@ int main(int argc, char** argv)
   Preference * p = new Preference(cdpath);
   VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
   delete p;
+  
   
   SDL_GL_MakeCurrent(wnd,nullptr);
 #if defined(__RP64__) || defined(__N2__)
@@ -466,14 +501,15 @@ int main(int argc, char** argv)
         }else{
           menu_show = true;
           ScspMuteAudio(1);
+          SDL_GL_MakeCurrent(subwnd,nullptr);
           VdpRevoke();
+          YuiUseOGLOnThisThread();
 
           char pngname_base[256];
           snprintf(pngname_base,256,"%s/%s_", s_savepath, cdip->itemnum);
           menu->setCurrentGameId(pngname_base);
 
           inputmng->setMenuLayer(menu);
-          SDL_GL_MakeCurrent(wnd,glc);
           saveScreenshot(tmpfilename.c_str());
           glUseProgram(0);
           glGetError();
@@ -616,10 +652,11 @@ void hideMenuScreen(){
   glClearColor(0.0f, 0.0f, 0.0f, 1);
   glClear(GL_COLOR_BUFFER_BIT);
   SDL_GL_SwapWindow(wnd);          
-  glClear(GL_COLOR_BUFFER_BIT);
-  SDL_GL_SwapWindow(wnd);          
+  //glClear(GL_COLOR_BUFFER_BIT);
+  //SDL_GL_SwapWindow(wnd);          
   SDL_GL_MakeCurrent(wnd,nullptr);
   VdpResume();
+  YuiRevokeOGLOnThisThread();
   ScspUnMuteAudio(1); 
 }
 
@@ -752,4 +789,5 @@ FINISH:
     if(bufRGB) free(bufRGB);
     if(row_pointers) free(row_pointers);
     return rtn;
+}
 }
