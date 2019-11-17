@@ -190,7 +190,7 @@ extern "C"
 		char dest[512];
 		va_list argptr;
 		va_start(argptr, format);
-		vsprintf(dest, format, argptr);
+		vsnprintf(dest, 512, format, argptr);
 		va_end(argptr);
 		printf(dest);
 }

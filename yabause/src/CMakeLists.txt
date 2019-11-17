@@ -345,6 +345,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			yglshaderes.c
 			rbg_compute.cpp
 			vdp2_compute.cpp
+			common_glshader.c
 			upscale_shader.c
 			yglcs.c
 			vidcs.c
@@ -352,6 +353,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		)
 		set(kronos_HEADERS
 			${kronos_HEADERS}
+			common_glshader.h
 			vdp1/vdp1_compute.h
 			vdp1/vdp1_prog_compute.h
 		)

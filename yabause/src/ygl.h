@@ -762,7 +762,7 @@ extern void executeTMVDP1(int in, int out);
 
 extern u8 * YglGetVDP2RegPointer();
 
-int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs);
+int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, Vdp2* varVdp2Regs);
 
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz);
 void YglTranslatef(YglMatrix *result, GLfloat tx, GLfloat ty, GLfloat tz);
@@ -899,6 +899,12 @@ P priority
 s Shadow Flag
 
 */
+
+#ifdef DEBUG_PROG
+#define GLUSEPROG(A) printf("use prog %s (%d) @ %d\n", #A, A, __LINE__);glUseProgram(A)
+#else
+#define GLUSEPROG(A) glUseProgram(A)
+#endif
 
 extern int VDP1_MASK;
 

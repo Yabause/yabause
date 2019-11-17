@@ -294,6 +294,7 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
           nbCmd[i+j*NB_COARSE_RAST_X]++;
 					if (nbCmd[i+j*NB_COARSE_RAST_X] == 2000) {
 						YuiMsg("This game is processing a lot of graphic commands on the same frame. It might introduce graphical artifacts\n");
+						YuiMsg("CMD %d\n", cmd->type);
 						vdp1_compute();
 					}
       }
