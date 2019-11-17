@@ -728,18 +728,18 @@ void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, 
   YabThreadUnLock(tm->mtx);
 }
 
-static u32 write_fb[512*256] = {0};
-static u32* manualfb = NULL;
+u32 write_fb[512*256] = {0};
+u32* manualfb = NULL;
 
 static u32* getVdp1DrawingFBMem() {
-  float col[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+  // float col[4] = {0.0f, 0.0f, 0.0f, 0.0f};
   if (manualfb == NULL){
-    GLuint error;
+    // GLuint error;
     executeTMVDP1(_Ygl->drawframe, _Ygl->drawframe);
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex, 0);
     glViewport(0,0,512,256);
-    glClearBufferfv(GL_COLOR, 0, col);
+    //glClearBufferfv(GL_COLOR, 0, col);
     YglBlitVDP1(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->vdp1width, _Ygl->vdp1height, 0);
     glReadPixels(0, 0, 512, 256, GL_RGBA, GL_UNSIGNED_BYTE, write_fb);
     manualfb = write_fb;
