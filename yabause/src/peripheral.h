@@ -141,10 +141,12 @@ void PerAxisMove(u32 key, s32 dispx, s32 dispy);
 #define PERPAD_P2_B	14
 #define PERPAD_P2_C	15
 #define PERPAD_P2_X	16
-#define PERPAD_P2_UP	17
-#define PERPAD_P2_RIGHT	18
-#define PERPAD_P2_DOWN	19
-#define PERPAD_P2_LEFT	20
+#define PERPAD_P2_Y	17
+#define PERPAD_P2_Z	18
+#define PERPAD_P2_UP	19
+#define PERPAD_P2_RIGHT	20
+#define PERPAD_P2_DOWN	21
+#define PERPAD_P2_LEFT	22
 
 extern const char * PerPadNames[14];
 
