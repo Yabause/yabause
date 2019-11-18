@@ -36,7 +36,7 @@ SHADER_VERSION_COMPUTE
 "precision highp image2D;\n"
 "#endif\n"
 "layout(local_size_x = 4, local_size_y = 4) in;\n"
-"layout(rgba8, binding = 0) writeonly highp uniform image2D outSurface;\n"
+"layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
 "layout(std430, binding = 1) readonly buffer VDP2 { uint vram[]; };\n"
 " struct vdp2rotationparameter_struct{ \n"
 " uint PlaneAddrv[16];\n"

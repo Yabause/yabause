@@ -36,8 +36,21 @@ SHADER_VERSION_COMPUTE
 "precision highp float; \n"
 "#endif\n"
 "layout(local_size_x = 16, local_size_y = 16) in;\n"
+
+"layout(binding = 0) uniform sampler2D s_texture0;  \n"
+"layout(binding = 1) uniform sampler2D s_texture1;  \n"
+"layout(binding = 2) uniform sampler2D s_texture2;  \n"
+"layout(binding = 3) uniform sampler2D s_texture3;  \n"
+"layout(binding = 4) uniform sampler2D s_texture4;  \n"
+"layout(binding = 5) uniform sampler2D s_texture5;  \n"
+"layout(binding = 7) uniform sampler2D s_back;  \n"
+"layout(binding = 8) uniform sampler2D s_lncl;  \n"
+"layout(binding = 9) uniform sampler2D s_vdp1FrameBuffer;\n"
+"layout(binding = 10) uniform sampler2D s_win0;  \n"
+"layout(binding = 11) uniform sampler2D s_win1;  \n"
+"layout(binding = 12) uniform sampler2D s_color; \n"
 "layout(std430, binding = 13) readonly buffer VDP2reg { int s_vdp2reg[]; }; \n"
-"layout(rgba8, binding = 14) writeonly highp uniform image2D outSurface;\n"
+"layout(rgba8, binding = 14) writeonly uniform image2D outSurface;\n"
 "layout(std430, binding = 15) readonly buffer VDP2DrawInfo { \n"
 "  float u_emu_height;\n"
 "  float u_emu_vdp1_width;\n"
@@ -55,7 +68,16 @@ SHADER_VERSION_COMPUTE
 "  int isBlur[7]; \n"
 "  int isShadow[6]; \n"
 "  int use_sp_win;\n"
+"  int use_trans_shadow; \n"
+"  ivec2 tvSize;\n"
 "  mat4 fbMat;\n"
+"  int win_s[8]; \n"
+"  int win_s_mode[8]; \n"
+"  int win0[8]; \n"
+"  int win0_mode[8]; \n"
+"  int win1[8]; \n"
+"  int win1_mode[8]; \n"
+"  int win_op[8]; \n"
 "};\n"
 
 "vec4 finalColor;\n"
@@ -65,19 +87,7 @@ SHADER_VERSION_COMPUTE
 
 "float getVdp2RegAsFloat(int id) {\n"
 "  return float(s_vdp2reg[id])/255.0;\n"
-"};\n"
-"layout(binding = 0) uniform sampler2D s_texture0;  \n"
-"layout(binding = 1) uniform sampler2D s_texture1;  \n"
-"layout(binding = 2) uniform sampler2D s_texture2;  \n"
-"layout(binding = 3) uniform sampler2D s_texture3;  \n"
-"layout(binding = 4) uniform sampler2D s_texture4;  \n"
-"layout(binding = 5) uniform sampler2D s_texture5;  \n"
-"layout(binding = 7) uniform sampler2D s_back;  \n"
-"layout(binding = 8) uniform sampler2D s_lncl;  \n"
-"layout(binding = 9) uniform sampler2D s_vdp1FrameBuffer;\n"
-"layout(binding = 10) uniform sampler2D s_win0;  \n"
-"layout(binding = 11) uniform sampler2D s_win1;  \n"
-"layout(binding = 12) uniform sampler2D s_color; \n";
+"};\n";
 
 const GLchar Yglprg_vdp2_drawfb_cs_cram_f[] =
 "int getVDP2Reg(int id) {\n"
@@ -120,7 +130,16 @@ struct VDP2DrawInfo {
 	int isBlur[7];
 	int isShadow[6];
 	int use_sp_win;
+  int use_trans_shadow;
+  int tvSize[2];
   float fbMat[4];
+  int win_s[8];
+  int win_s_mode[8];
+  int win0[8];
+  int win0_mode[8];
+  int win1[8];
+  int win1_mode[8];
+  int win_op[8];
 };
 
 class VDP2Generator{
@@ -224,7 +243,7 @@ public:
 #define COMPILE_COLOR_DOT( BASE, COLOR , DOT )
 #define S(A) A, sizeof(A)/sizeof(char*)
 
-	void update( int outputTex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs) {
+	void update( int outputTex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs) {
 
     GLuint error;
     int local_size_x = 16;
@@ -246,13 +265,22 @@ public:
 		memcpy(uniform.isRGB, isRGB, 6*sizeof(int));
 		memcpy(uniform.isBlur, isBlur, 7*sizeof(int));
 		memcpy(uniform.isShadow, isShadow, 6*sizeof(int));
+    memcpy(uniform.win_s, Win_s, (enBGMAX+1)*sizeof(int));
+    memcpy(uniform.win_s_mode,Win_s_mode, (enBGMAX+1)*sizeof(int));
+    memcpy(uniform.win0, Win0, (enBGMAX+1)*sizeof(int));
+    memcpy(uniform.win0_mode, Win0_mode, (enBGMAX+1)*sizeof(int));
+    memcpy(uniform.win1, Win1, (enBGMAX+1)*sizeof(int));
+    memcpy(uniform.win1_mode, Win1_mode, (enBGMAX+1)*sizeof(int));
+    memcpy(uniform.win_op, Win_op, (enBGMAX+1)*sizeof(int));
 		uniform.u_emu_height = (float)_Ygl->rheight / (float)_Ygl->height;
 		uniform.u_vheight = (float)_Ygl->height;
 		uniform.fbon = (_Ygl->vdp1On[_Ygl->readframe] != 0);
 		uniform.ram_mode = Vdp2Internal.ColorMode;
 		uniform.extended_cc = ((varVdp2Regs->CCCTL & 0x400) != 0);
 		uniform.use_sp_win = ((varVdp2Regs->SPCTL>>4)&0x1);
-
+    uniform.tvSize[0] = _Ygl->rwidth;
+    uniform.tvSize[1] =  _Ygl->rheight;
+    uniform.use_trans_shadow = ((varVdp2Regs->SDCTL>>8)&0x1);
 		glActiveTexture(GL_TEXTURE7);
 	  glBindTexture(GL_TEXTURE_2D, _Ygl->back_fbotex[0]);
 
@@ -329,10 +357,10 @@ extern "C" {
 	  VDP2Generator * instance = VDP2Generator::getInstance();
 	  instance->resize(width, height);
   }
-  void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs ) {
+  void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs ) {
     if (_Ygl->vdp2_use_compute_shader == 0) return;
     VDP2Generator * instance = VDP2Generator::getInstance();
-    instance->update(tex, bg, prioscreens, modescreens, isRGB, isShadow, isBlur, lncl, vdp1fb, varVdp2Regs);
+    instance->update(tex, bg, prioscreens, modescreens, isRGB, isShadow, isBlur, lncl, vdp1fb, Win_s, Win_s_mode, Win0, Win0_mode, Win1, Win1_mode, Win_op, varVdp2Regs);
   }
   void VDP2Generator_onFinish() {
 

@@ -820,7 +820,7 @@ extern GLuint RBGGenerator_getTexture( int id );
 extern void RBGGenerator_onFinish();
 
 extern void VDP2Generator_init(int width, int height);
-extern void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isShadow, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs);
+extern void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs);
 extern void VDP2Generator_resize(int width, int height);
 
 
