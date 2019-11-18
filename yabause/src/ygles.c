@@ -1250,6 +1250,7 @@ int YglInit(int width, int height, unsigned int depth) {
 #ifndef __LIBRETRO__
   if (maj*10+min < 42) {
    YabSetError(YAB_ERR_CANNOTINIT, _("OpenGL context"));
+   YuiMsg("Getting only OpenGL %d.%d requesting 4.2 at least\n", maj, min);
    return -1;
   }
 #endif
