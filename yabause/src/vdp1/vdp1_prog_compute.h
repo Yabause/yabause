@@ -15,11 +15,11 @@
 #define SYSTEM_CLIPPING 6
 #define USER_CLIPPING 7
 
-#define NB_COARSE_RAST_X 8
-#define NB_COARSE_RAST_Y 8
+#define NB_COARSE_RAST_X 16
+#define NB_COARSE_RAST_Y 16
 
-#define LOCAL_SIZE_X 8
-#define LOCAL_SIZE_Y 8
+#define LOCAL_SIZE_X 4
+#define LOCAL_SIZE_Y 4
 
 //#define SHOW_QUAD
 
