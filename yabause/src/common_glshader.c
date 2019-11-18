@@ -522,6 +522,7 @@ static const GLchar Yglprg_vdp2_common_start[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_common_draw[] =
+//GetFB()
 "  FBCol ret = zeroFBCol();\n"
 "  FBCol mesh = zeroFBCol();\n"
 "  if (fbon != 1) return ret;\n"
@@ -1352,7 +1353,6 @@ GLuint createCSProgram(int id, int count, const GLchar * cs[]) {
     _prgid[id] = 0;
     return -1;
   }
-  printf("Done %d\n", _prgid[id]);
   return 0;
 }
 

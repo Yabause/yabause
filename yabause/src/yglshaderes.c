@@ -1015,40 +1015,7 @@ SHADER_VERSION
 "precision highp float; \n"
 "#endif\n"
 "in vec2 v_texcoord; \n"
-"uniform int u_lncl[7];  \n"
 "out vec4 finalColor; \n"
-"uniform sampler2D s_vdp2reg; \n"
-"uniform float u_emu_height;\n"
-"uniform float u_emu_vdp1_width;\n"
-"uniform float u_emu_vdp2_width;\n"
-"uniform float u_vheight; \n"
-
-"uniform vec2 vdp1Ratio;\n"
-"uniform int fbon;  \n"
-"uniform int screen_nb;  \n"
-"uniform int mode[7];  \n"
-"uniform int isRGB[6]; \n"
-"uniform int isBlur[7]; \n"
-"uniform int isShadow[6]; \n"
-"uniform mat4 fbMat;\n"
-"uniform int win_s[8]; \n"
-"uniform int win_s_mode[8]; \n"
-"uniform int win0[8]; \n"
-"uniform int win0_mode[8]; \n"
-"uniform int win1[8]; \n"
-"uniform int win1_mode[8]; \n"
-"uniform int win_op[8]; \n"
-"uniform int ram_mode; \n"
-"uniform int extended_cc; \n"
-"uniform int use_sp_win; \n"
-"uniform int use_trans_shadow; \n"
-"uniform ivec2 tvSize;\n"
-#ifdef DEBUG_BLIT
-"out vec4 topColor; \n"
-"out vec4 secondColor; \n"
-"out vec4 thirdColor; \n"
-"out vec4 fourthColor; \n"
-#endif
 "uniform sampler2D s_texture0;  \n"
 "uniform sampler2D s_texture1;  \n"
 "uniform sampler2D s_texture2;  \n"
@@ -1061,6 +1028,38 @@ SHADER_VERSION
 "uniform sampler2D s_win0;  \n"
 "uniform sampler2D s_win1;  \n"
 "uniform sampler2D s_color; \n"
+"uniform sampler2D s_vdp2reg; \n"
+"uniform float u_emu_height;\n"
+"uniform float u_emu_vdp1_width;\n"
+"uniform float u_emu_vdp2_width;\n"
+"uniform float u_vheight; \n"
+"uniform vec2 vdp1Ratio; \n"
+"uniform int fbon; \n"
+"uniform int screen_nb; \n"
+"uniform int ram_mode; \n"
+"uniform int extended_cc; \n"
+"uniform int u_lncl[7];  \n"
+"uniform int mode[7];  \n"
+"uniform int isRGB[6]; \n"
+"uniform int isBlur[7]; \n"
+"uniform int isShadow[6]; \n"
+"uniform int use_sp_win; \n"
+"uniform int use_trans_shadow; \n"
+"uniform ivec2 tvSize;\n"
+"uniform mat4 fbMat;\n"
+"uniform int win_s[8]; \n"
+"uniform int win_s_mode[8]; \n"
+"uniform int win0[8]; \n"
+"uniform int win0_mode[8]; \n"
+"uniform int win1[8]; \n"
+"uniform int win1_mode[8]; \n"
+"uniform int win_op[8]; \n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
 "int PosY = int(gl_FragCoord.y);\n"
 "int PosX = int(gl_FragCoord.x);\n"
 ;
@@ -1643,22 +1642,24 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_lncl"), 8);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
-  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), _Ygl->vdp1expandW, _Ygl->vdp1expandH);//((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));
-  glUniform2i(glGetUniformLocation(vdp2blit_prg, "tvSize"), _Ygl->rwidth, _Ygl->rheight);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isShadow"), 6, isShadow);
-  glUniformMatrix4fv(glGetUniformLocation(vdp2blit_prg, "fbMat"), 1, GL_FALSE, vdp1Mat.m);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbon"), (_Ygl->vdp1On[_Ygl->readframe] != 0));
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x400) != 0) );
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
+
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp1_width"),(float)(_Ygl->vdp1width) / (float)(_Ygl->rwidth));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp2_width"),(float)(_Ygl->width) / (float)(_Ygl->rwidth));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
+  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), _Ygl->vdp1expandW, _Ygl->vdp1expandH);//((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbon"), (_Ygl->vdp1On[_Ygl->readframe] != 0));
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x400) != 0) );
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "u_lncl"), 7, lncl); //_Ygl->prioVa
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isShadow"), 6, isShadow);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
+  glUniform2i(glGetUniformLocation(vdp2blit_prg, "tvSize"), _Ygl->rwidth, _Ygl->rheight);
+  glUniformMatrix4fv(glGetUniformLocation(vdp2blit_prg, "fbMat"), 1, GL_FALSE, vdp1Mat.m);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), enBGMAX+1, Win_s);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), enBGMAX+1, Win_s_mode);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0"), enBGMAX+1, Win0);
@@ -1702,7 +1703,6 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glActiveTexture(gltext[8]);
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
 
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "u_lncl"), 7, lncl); //_Ygl->prioVa
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
