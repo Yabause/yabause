@@ -106,7 +106,7 @@ int ErrorHandle(const char* name)
     case GL_INVALID_FRAMEBUFFER_OPERATION:  msg = "INVALID_FRAMEBUFFER_OPERATION"; break;
     default:  msg = "Unknown"; break;
     }
-    VDP1CPRINT("GLErrorLayer:ERROR:%04x'%s' %s\n", error_code, msg, name);
+    YuiMsg("GLErrorLayer:ERROR:%04x'%s' %s\n", error_code, msg, name);
     error_code = glGetError();
   } while (error_code != GL_NO_ERROR);
   abort();
@@ -134,7 +134,7 @@ static GLuint createProgram(int count, const GLchar** prg_strs) {
     glGetShaderiv(result, GL_INFO_LOG_LENGTH, &length);
     GLchar *info = malloc(sizeof(GLchar) *length);
     glGetShaderInfoLog(result, length, NULL, info);
-    VDP1CPRINT("[COMPILE] %s\n", info);
+    YuiMsg("[COMPILE] %s\n", info);
     free(info);
     abort();
   }
@@ -148,7 +148,7 @@ static GLuint createProgram(int count, const GLchar** prg_strs) {
     glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
     GLchar *info = malloc(sizeof(GLchar) *length);
     glGetProgramInfoLog(program, length, NULL, info);
-    VDP1CPRINT("[LINK] %s\n", info);
+    YuiMsg("[LINK] %s\n", info);
     free(info);
     abort();
   }

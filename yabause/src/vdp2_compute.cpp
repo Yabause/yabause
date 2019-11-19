@@ -223,7 +223,7 @@ public:
       case GL_INVALID_FRAMEBUFFER_OPERATION:  msg = "INVALID_FRAMEBUFFER_OPERATION"; break;
       default:  msg = "Unknown"; break;
       }
-      YGLDEBUG("GLErrorLayer:ERROR:%04x'%s' %s\n", error_code, msg, name);
+      YuiMsg("GLErrorLayer:ERROR:%04x'%s' %s\n", error_code, msg, name);
 	  abort();
       error_code = glGetError();
     } while (error_code != GL_NO_ERROR);

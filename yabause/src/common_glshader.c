@@ -1320,6 +1320,7 @@ int setupVDP2Prog(Vdp2* varVdp2Regs, int CS) {
 
   if (_prgid[pgid] == 0) {
    if (YglInitDrawFrameBufferShaders(pgid, CS) != 0) {
+     YuiMsg("Problem in CS YglInitDrawFrameBufferShaders\n");
      abort();
    }
   }
@@ -1360,9 +1361,9 @@ GLuint createCSProgram(int id, int count, const GLchar * cs[]) {
 void compileVDP2Prog(int id, const GLchar *v, int CS){
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START [%d]--\n", arrayid);
   if (CS == 0) {
-    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 14, NULL, NULL, NULL) != 0) { printf("Error init prog %d\n",id); abort(); }
+    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 14, NULL, NULL, NULL) != 0) { YuiMsg("Error init prog %d\n",id); abort(); }
   } else {
-    if (createCSProgram(id, 14, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0) { printf("Error init prog %d\n",id); abort(); }
+    if (createCSProgram(id, 14, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0) { YuiMsg("Error init prog %d\n",id); abort(); }
   }
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --DONE [%d]--\n", arrayid);
 }
