@@ -674,7 +674,6 @@ SHADER_VERSION_COMPUTE
 "          }; break;\n"
 "        default:\n"
 "          outColor = vec4(0.0);\n"
-"          continue;\n"
 "          break;\n"
 "      }\n"
 "    }\n";
