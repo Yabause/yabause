@@ -558,13 +558,13 @@ int YabauseInit(yabauseinit_struct *init)
 		   }
 		   yabsys.emulatebios = 0;
 	   }
-	   else
+	   else {
 		   yabsys.emulatebios = 1;
+       T2WriteLong(BiosRom, 0x04, 0x06002000); // set base stack pointer
+     }
    }
-   else {
-     yabsys.emulatebios = 1;
-     T2WriteLong(BiosRom, 0x04, 0x06002000); // set base stack pointer
-   }
+   else yabsys.emulatebios = 0;
+
    yabsys.usequickload = 0;
 
    YabauseResetNoLoad();
