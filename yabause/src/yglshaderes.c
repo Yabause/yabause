@@ -834,8 +834,7 @@ MESH_PROCESS
 
 const GLchar improved_mesh[] = {
   "vec4 curColor = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
-  MESH_IMPROVED_PROCESS(spriteColor, curColor)
-  RECOLINDEX(spriteColor)
+  MESH_IMPROVED_PROCESS(outColor, curColor)
 };
 
 const GLchar* vdp1drawmesh[3]= {
