@@ -128,8 +128,8 @@ PerBaseConfig_struct percabinetbaseconfig[] = {
 	{ PERJAMMA_P2_LEFT, PERCB(PerCabP2LeftPressed), PERCB(PerCabP2LeftReleased), NULL, NULL },
 	{ PERJAMMA_P2_BUTTON1, PERCB(PerCabP2Button1Pressed), PERCB(PerCabP2Button1Released), NULL, NULL },
 	{ PERJAMMA_P2_BUTTON2, PERCB(PerCabP2Button2Pressed), PERCB(PerCabP2Button2Released), NULL, NULL },
-	{ PERJAMMA_P2_BUTTON2, PERCB(PerCabP2Button3Pressed), PERCB(PerCabP2Button3Released), NULL, NULL },
-	{ PERJAMMA_P2_BUTTON2, PERCB(PerCabP2Button4Pressed), PERCB(PerCabP2Button4Released), NULL, NULL },
+	{ PERJAMMA_P2_BUTTON3, PERCB(PerCabP2Button3Pressed), PERCB(PerCabP2Button3Released), NULL, NULL },
+	{ PERJAMMA_P2_BUTTON4, PERCB(PerCabP2Button4Pressed), PERCB(PerCabP2Button4Released), NULL, NULL },
 };
 
 PerBaseConfig_struct permousebaseconfig[] = {
