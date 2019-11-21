@@ -766,7 +766,7 @@ CACHE_LOG("rb %x %x\n", addr, addr >> 29);
          return CacheReadByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x2:
-         return UnhandledMemoryReadLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return 0xFFFFFFFF;
       //case 0x4:
       case 0x6:
          // Data Array
@@ -857,7 +857,8 @@ u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct *context, u32 addr)
       case 0x0: //0x0 cache
            return CacheReadWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       case 0x2:
-         return UnhandledMemoryReadLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+      case 0x5:
+         return 0xFFFFFFFF;
       //case 0x4:
       case 0x6:
          // Data Array
@@ -945,8 +946,8 @@ u32 FASTCALL SH2MappedMemoryReadLong(SH2_struct *context, u32 addr)
          return CacheReadLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x2:
-LOG("Unhandled SH2 Memory Long %d\n", (addr >> 29));
-         return UnhandledMemoryReadLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+      case 0x5:
+         return 0xFFFFFFFF;
       case 0x3:
       {
          // Address Array
