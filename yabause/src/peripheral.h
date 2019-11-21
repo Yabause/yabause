@@ -137,16 +137,6 @@ void PerAxisMove(u32 key, s32 dispx, s32 dispy);
 #define PERPAD_X	10
 #define PERPAD_Y	11
 #define PERPAD_Z	12
-#define PERPAD_P2_A	13
-#define PERPAD_P2_B	14
-#define PERPAD_P2_C	15
-#define PERPAD_P2_X	16
-#define PERPAD_P2_Y	17
-#define PERPAD_P2_Z	18
-#define PERPAD_P2_UP	19
-#define PERPAD_P2_RIGHT	20
-#define PERPAD_P2_DOWN	21
-#define PERPAD_P2_LEFT	22
 
 extern const char * PerPadNames[14];
 
@@ -162,12 +152,12 @@ typedef enum {
 	PORT_C,
 	PORT_D,
 	PORT_E,
-        PORT_F,
-        PORT_G,
-        PORT_G0,
-        PORT_G1,
-        PORT_G2,
-        PORT_G3,
+	PORT_F,
+	PORT_G,
+	PORT_G0,
+	PORT_G1,
+	PORT_G2,
+	PORT_G3,
 	ioPortMAX
 } ioPort;
 
