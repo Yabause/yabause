@@ -62,7 +62,7 @@ int ScuInit(void) {
    ScuBP->numcodebreakpoints = 0;
    ScuBP->BreakpointCallBack=NULL;
    ScuBP->inbreakpoint=0;
-   
+
    return 0;
 }
 
@@ -174,7 +174,7 @@ static void DoDMAFill(u32 ReadAddress,
                u32 tmp;
                if (off == 0) {
                  tmp = MappedMemoryReadLong(NULL, ReadAddress);
-                 
+
                }
                MappedMemoryWriteByte(NULL, WriteAddress, (u8)(tmp >> ((4-off)*8)));
                off = (off+1)%4;
@@ -386,7 +386,7 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
 
       switch(dmainfo->mode) {
          case 0:
-           
+
            if (dmainfo->TransferNumber > 1024) {
              ScuRegs->dma0_time = dmainfo->TransferNumber;
            }
@@ -469,7 +469,7 @@ static u32 readgensrc(u8 num)
 
 static void writed1busdest(u8 num, u32 val)
 {
-   switch(num) { 
+   switch(num) {
       case 0x0:
           ScuDsp->MD[0][ScuDsp->CT[0]&0x3F] = val;
           incFlg[0] = 1;
@@ -528,7 +528,7 @@ static void writed1busdest(u8 num, u32 val)
 
 static void writeloadimdest(u8 num, u32 val)
 {
-   switch(num) { 
+   switch(num) {
       case 0x0: // MC0
         ScuDsp->MD[0][ScuDsp->CT[0] & 0x3F] = val;
           incFlg[0] = 1;
@@ -567,7 +567,7 @@ static void writeloadimdest(u8 num, u32 val)
           ScuDsp->jmpaddr = val;
           ScuDsp->delayed = 0;
           return;
-      default: 
+      default:
         LOG("writeloadimdest BAD NUM %d,%d",num,val);
         break;
    }
@@ -639,7 +639,7 @@ void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
       if (add == 0) add = 1;
 
       for (i = 0; i < count; i++)
-      { 
+      {
         u32 Val = sc->MD[sel][sc->CT[sel] & 0x3F];
         MappedMemoryWriteWord(NULL, Adr, (Val>>16));
         MappedMemoryWriteWord(NULL, Adr+2, Val);
@@ -686,9 +686,9 @@ void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
 
 void dsp_dma02(scudspregs_struct *sc, u32 inst)
 {
-    u32 imm = ((inst & 0xFF));      
-    u8  sel = ((inst >> 8) & 0x03); 
-    u8  addr = sc->CT[sel];             
+    u32 imm = ((inst & 0xFF));
+    u8  sel = ((inst >> 8) & 0x03);
+    u8  addr = sc->CT[sel];
     u8  add;
     u32 i;
 
@@ -820,7 +820,7 @@ void dsp_dma04(scudspregs_struct *sc, u32 inst)
     case 0x06: Counter = sc->MD[2][sc->CT[2] & 0x3F]; ScuDsp->CT[2]++; ScuDsp->CT[2] &= 0x3F; break;
     case 0x07: Counter = sc->MD[3][sc->CT[3] & 0x3F]; ScuDsp->CT[3]++; ScuDsp->CT[3] &= 0x3F; break;
     }
-    
+
     switch (((inst >> 15) & 0x07))
     {
     case 0: add = 0; break;
@@ -1043,7 +1043,7 @@ void ScuExec(u32 timing) {
                  ScuDsp->ProgControlPort.part.C = 0;
                }
 
- 
+
                //if (ScuDsp->ALU.part.L ??) // set overflow flag
                //    ScuDsp->ProgControlPort.part.V = 1;
                //else
@@ -1124,13 +1124,13 @@ void ScuExec(u32 timing) {
             case 0x9: // RR
               ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L & 0x1;
                ScuDsp->ALU.part.L = ((u32)(ScuDsp->ProgControlPort.part.C) << 31) | ((u32)(ScuDsp->AC.part.L) >> 1) ;
-               
+
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
                   ScuDsp->ProgControlPort.part.Z = 0;
 
-               //rotating 0x00000001 right will produce 0x80000000 and set 
+               //rotating 0x00000001 right will produce 0x80000000 and set
                //the sign bit.
                if (ScuDsp->ALU.part.L & 0x80000000)
                   ScuDsp->ProgControlPort.part.S = 1;
@@ -1157,17 +1157,17 @@ void ScuExec(u32 timing) {
               ScuDsp->ProgControlPort.part.C = (ScuDsp->AC.part.L >> 31) & 0x01;
 
                ScuDsp->ALU.part.L = (((u32)ScuDsp->AC.part.L << 1) | ScuDsp->ProgControlPort.part.C);
-               
+
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
                   ScuDsp->ProgControlPort.part.Z = 0;
-         
+
                if (ScuDsp->ALU.part.L & 0x80000000)
                   ScuDsp->ProgControlPort.part.S = 1;
                else
                   ScuDsp->ProgControlPort.part.S = 0;
-               
+
                //ScuDsp->AC.part.L = ScuDsp->ALU.part.L;
                break;
             case 0xF: // RL8
@@ -1194,7 +1194,7 @@ void ScuExec(u32 timing) {
             default: break;
          }
 
-         
+
          switch (instruction >> 30) {
          case 0x00: // Operation Commands
                switch ((instruction >> 23) & 0x3)
@@ -1216,7 +1216,7 @@ void ScuExec(u32 timing) {
                }
 
                // Y-bus
-               if ((instruction >> 17) & 0x4) 
+               if ((instruction >> 17) & 0x4)
                {
                   // MOV [s], Y
                   ScuDsp->RY = readgensrc((instruction >> 14) & 0x7);
@@ -1236,7 +1236,7 @@ void ScuExec(u32 timing) {
                   default: break;
                }
 
-   
+
                // D1-bus
                switch ((instruction >> 12) & 0x3)
                {
@@ -1358,14 +1358,14 @@ void ScuExec(u32 timing) {
                            if (!ScuDsp->ProgControlPort.part.Z)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0; 
+                              ScuDsp->delayed = 0;
                            }
                            break;
                         case 0x42: // JMP NS, Imm
                            if (!ScuDsp->ProgControlPort.part.S)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0; 
+                              ScuDsp->delayed = 0;
                            }
 
                            //LOG("scu\t: JMP NS: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
@@ -1374,7 +1374,7 @@ void ScuExec(u32 timing) {
                            if (!ScuDsp->ProgControlPort.part.Z || !ScuDsp->ProgControlPort.part.S)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0; 
+                              ScuDsp->delayed = 0;
                            }
 
                            //LOG("scu\t: JMP NZS: Z = %d, S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
@@ -1383,14 +1383,14 @@ void ScuExec(u32 timing) {
                            if (!ScuDsp->ProgControlPort.part.C)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0; 
+                              ScuDsp->delayed = 0;
                            }
                            break;
                         case 0x48: // JMP NT0, Imm
                            if (!ScuDsp->ProgControlPort.part.T0)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0; 
+                              ScuDsp->delayed = 0;
                            }
 
                            //LOG("scu\t: JMP NT0: T0 = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.T0, (unsigned int)ScuDsp->jmpaddr);
@@ -1399,14 +1399,14 @@ void ScuExec(u32 timing) {
                            if (ScuDsp->ProgControlPort.part.Z)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0; 
+                              ScuDsp->delayed = 0;
                            }
                            break;
                         case 0x62: // JMP S, Imm
                            if (ScuDsp->ProgControlPort.part.S)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0; 
+                              ScuDsp->delayed = 0;
                            }
 
                            //LOG("scu\t: JMP S: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
@@ -1415,7 +1415,7 @@ void ScuExec(u32 timing) {
                            if (ScuDsp->ProgControlPort.part.Z || ScuDsp->ProgControlPort.part.S)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0; 
+                              ScuDsp->delayed = 0;
                            }
 
                            //LOG("scu\t: JMP ZS: Z = %d, S = %d, jmpaddr = %08X\n", ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
@@ -1424,14 +1424,14 @@ void ScuExec(u32 timing) {
                            if (ScuDsp->ProgControlPort.part.C)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0; 
+                              ScuDsp->delayed = 0;
                            }
                            break;
                         case 0x68: // JMP T0,Imm
                            if (ScuDsp->ProgControlPort.part.T0)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0; 
+                              ScuDsp->delayed = 0;
                            }
                            break;
                         default:
@@ -1479,13 +1479,13 @@ void ScuExec(u32 timing) {
                }
                break;
             }
-            default: 
+            default:
                LOG("scu\t: Invalid DSP opcode %08X at offset %02X\n", instruction, ScuDsp->PC);
                break;
          }
 
          //ScuDsp->MUL.all = (s64)ScuDsp->RX * (s32)ScuDsp->RY;
-         
+
          if (incFlg[0] != 0){ ScuDsp->CT[0]++; ScuDsp->CT[0] &= 0x3f; incFlg[0] = 0; };
          if (incFlg[1] != 0){ ScuDsp->CT[1]++; ScuDsp->CT[1] &= 0x3f; incFlg[1] = 0; };
          if (incFlg[2] != 0){ ScuDsp->CT[2]++; ScuDsp->CT[2] &= 0x3f; incFlg[2] = 0; };
@@ -1514,7 +1514,7 @@ void ScuExec(u32 timing) {
 
 static char *disd1bussrc(u8 num)
 {
-   switch(num) { 
+   switch(num) {
       case 0x0:
          return "M0";
       case 0x1:
@@ -1545,7 +1545,7 @@ static char *disd1bussrc(u8 num)
 
 static char *disd1busdest(u8 num)
 {
-   switch(num) { 
+   switch(num) {
       case 0x0:
          return "MC0";
       case 0x1:
@@ -1584,7 +1584,7 @@ static char *disd1busdest(u8 num)
 
 static char *disloadimdest(u8 num)
 {
-   switch(num) { 
+   switch(num) {
       case 0x0:
          return "MC0";
       case 0x1:
@@ -1912,7 +1912,7 @@ void ScuDspDisasm(u8 addr, char *outstring) {
 
                if (instruction & 0x2000)
                {
-                  // Command Format 2                 
+                  // Command Format 2
                   if (instruction & 0x1000)
                      sprintf(outstring, "%s, D0, %s", disdmaram((instruction >> 8) & 0x7), disd1bussrc(instruction & 0x7));
                   else
@@ -1926,7 +1926,7 @@ void ScuDspDisasm(u8 addr, char *outstring) {
                   else
                      sprintf(outstring, "D0, %s, #$%02X", disdmaram((instruction >> 8) & 0x7), (int)(instruction & 0xFF));
                }
-               
+
                break;
             }
             case 0x01: // Jump Commands
@@ -1986,7 +1986,7 @@ void ScuDspDisasm(u8 addr, char *outstring) {
             default: break;
          }
          break;
-      default: 
+      default:
          sprintf(outstring, "Invalid opcode");
          break;
    }
@@ -2169,7 +2169,7 @@ static void ScuDspSortCodeBreakpoints(void) {
             ScuBP->codebreakpoint[i2].addr = tmp;
          }
       }
-   } 
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2188,7 +2188,7 @@ int ScuDspDelCodeBreakpoint(u32 addr) {
          }
       }
    }
-   
+
    return -1;
 }
 
@@ -2645,7 +2645,7 @@ static INLINE void ScuChekIntrruptDMA(int id){
     dmainfo.ReadAddress = ScuRegs->D2R;
     dmainfo.WriteAddress = ScuRegs->D2W;
     dmainfo.TransferNumber = ScuRegs->D2C;
-    dmainfo.AddValue = ScuRegs->D0AD;
+    dmainfo.AddValue = ScuRegs->D2AD;
     dmainfo.ModeAddressUpdate = ScuRegs->D2MD;
     ScuDMA(&dmainfo);
     ScuRegs->D2EN = 0;
