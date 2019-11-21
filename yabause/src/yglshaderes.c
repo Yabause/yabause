@@ -2299,10 +2299,15 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(0);
-  if (textureCoord_buf[yabsys.isRotated] == 0)
-     glGenBuffers(1, &textureCoord_buf[yabsys.isRotated]);
-  glBindBuffer(GL_ARRAY_BUFFER, textureCoord_buf[yabsys.isRotated]);
-  glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), &textureCoord[yabsys.isRotated * 8], GL_STREAM_DRAW);
+#ifndef __LIBRETRO__
+  u32 isRotated = yabsys.isRotated;
+#else
+  u32 isRotated = 0;
+#endif
+  if (textureCoord_buf[isRotated] == 0)
+     glGenBuffers(1, &textureCoord_buf[isRotated]);
+  glBindBuffer(GL_ARRAY_BUFFER, textureCoord_buf[isRotated]);
+  glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), &textureCoord[isRotated * 8], GL_STREAM_DRAW);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(1);
   glUniform1f(u_w, width);

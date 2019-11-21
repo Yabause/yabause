@@ -171,7 +171,9 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
      double dar = (double)GlWidth/(double)GlHeight;
      double par = 4.0/3.0;
 
+#ifndef __LIBRETRO__
      if (yabsys.isRotated) par = 1.0/par;
+#endif
 
      w = (dar>par)?(double)GlHeight*par:GlWidth;
      h = (dar>par)?(double)GlHeight:(double)GlWidth/par;

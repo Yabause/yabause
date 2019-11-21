@@ -1199,6 +1199,11 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.max_width    = max_width;
    info->geometry.max_height   = max_height;
    info->geometry.aspect_ratio = (retro_get_region() == RETRO_REGION_NTSC) ? 4.0 / 3.0 : 5.0 / 4.0;
+   if(yabsys.isRotated == 1)
+   {
+      environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &yabsys.isRotated);
+      info->geometry.aspect_ratio = 1.0 / info->geometry.aspect_ratio;
+   }
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
