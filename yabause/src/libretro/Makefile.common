@@ -65,6 +65,7 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/vdp1.c \
 	$(SOURCE_DIR)/vdp1/vdp1_compute.c \
 	$(SOURCE_DIR)/vdp2.c \
+	$(SOURCE_DIR)/common_glshader.c \
 	$(SOURCE_DIR)/vidshared.c \
 	$(SOURCE_DIR)/vidsoft.c \
 	$(SOURCE_DIR)/titan/titan.c \
