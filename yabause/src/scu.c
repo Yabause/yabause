@@ -868,20 +868,31 @@ void dsp_dma08(scudspregs_struct *sc, u32 inst)
     sc->WA0 = saveWa0;
 }
 
+INLINE void ScuTimer1Exec( u32 timing ) {
+  if (ScuRegs->timer1_counter > 0) {
+    ScuRegs->timer1_counter = (ScuRegs->timer1_counter - (timing >> 1));
+    if (ScuRegs->timer1_counter <= 0) {
+      ScuRegs->timer1_set = 1;
+      if ((ScuRegs->T1MD & 0x100) == 0) {
+        ScuSendTimer1();
+      }else if (ScuRegs->timer0_set == 1) {
+        ScuSendTimer1();
+      }
+    }
+  }
+}
+
 //////////////////////////////////////////////////////////////////////////////
 void ScuExec(u32 timing) {
    int i;
 
    if ( ScuRegs->T1MD & 0x1 ){
-     if (ScuRegs->timer1_counter > 0) {
-       ScuRegs->timer1_counter = (ScuRegs->timer1_counter - (timing >> 1));
-       if (ScuRegs->timer1_counter <= 0) {
-         ScuRegs->timer1_set = 1;
-         if ((ScuRegs->T1MD & 0x100) == 0) {
-             ScuSendTimer1();
-         }else if (ScuRegs->timer0_set == 1) {
-             ScuSendTimer1();
-         }
+     if (ScuRegs->T1MD & 0x80 == 0) {
+       ScuTimer1Exec(timing);
+     }
+     else {
+       if (yabsys.LineCount == ScuRegs->T0C) {
+         ScuTimer1Exec(timing);
        }
      }
    }
