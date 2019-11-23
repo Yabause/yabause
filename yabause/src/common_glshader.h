@@ -14,6 +14,6 @@ extern GLuint _prgid[PG_MAX];
 
 extern int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
 extern void initVDP2DrawCode(const GLchar* start, const GLchar* draw, const GLchar* end, const GLchar* final);
-extern void compileVDP2Prog(int id, const GLchar *v, int CS);
+extern void compileVDP2Prog(int id, const GLchar **v, int CS);
 extern int setupVDP2Prog(Vdp2* varVdp2Regs, int CS);
 #endif //COMMON_GLSHADER_H

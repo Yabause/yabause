@@ -532,8 +532,8 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  int u_color_ram_offset = getVDP2Reg(23+line)<<8;\n"
 "  fbmode = 1;\n"
 "  vdp1mode = 1;\n"
-"  ivec2 fbCoord = addr + ivec2(x, 0);\n"
-"  fbCoord = ivec2(vec4(vdp1Ratio.x* fbCoord.x, vdp1Ratio.y*(fbCoord.y), 1.0, 1.0) * fbMat).xy;\n"
+"  ivec2 fbCoord = addr + ivec2(x*vdp1Ratio.x, 0);\n"
+"  fbCoord = ivec2(vec4(fbCoord.x, fbCoord.y, 1.0, 1.0) * fbMat).xy;\n"
 "  vec4 col = texelFetch(s_vdp1FrameBuffer, fbCoord, 0);\n"
 "  FBTest = col;\n"
 "  ret = getVDP1PixelCode(col.rg);\n"
@@ -848,8 +848,8 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "  float alphafourth = 1.0; \n"
 "  ivec2 addr = ivec2(textureSize(s_back, 0) * v_texcoord.st); \n"
 "  colorback = texelFetch( s_back, addr,0 ); \n"
-"  addr = ivec2(tvSize * v_texcoord.st); \n"
-"  addr.y += int(float(textureSize(s_vdp1FrameBuffer, 0).y)/vdp1Ratio.y) - tvSize.y;\n"
+"  addr = ivec2(tvSize*vdp1Ratio * v_texcoord.st); \n"
+"  addr.y += textureSize(s_vdp1FrameBuffer, 0).y - int(tvSize.y*vdp1Ratio.y);\n"
 "  initLineWindow();\n"
 "  colortop = colorback; \n"
 "  isRGBtop = 1; \n"
@@ -1358,7 +1358,7 @@ GLuint createCSProgram(int id, int count, const GLchar * cs[]) {
 }
 
 
-void compileVDP2Prog(int id, const GLchar *v, int CS){
+void compileVDP2Prog(int id, const GLchar **v, int CS){
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START [%d]--\n", arrayid);
   if (CS == 0) {
     if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 14, NULL, NULL, NULL) != 0) { YuiMsg("Error init prog %d\n",id); abort(); }
