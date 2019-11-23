@@ -659,17 +659,17 @@ SHADER_VERSION_COMPUTE
 "          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        case 6u: {\n"
-           //gouraud_half_trans_mode,
-           GOURAUD_PROCESS(newColor)
-           RECOLINDEX(newColor)
-           HALF_TRANPARENT_MIX(newColor, finalColor)
-"          outColor.rg = newColor.rg;\n"
-"          }; break;\n"
-"        case 7u: {\n"
            //gouraud_half_luminance_mode,
            GOURAUD_PROCESS(newColor)
            RECOLINDEX(newColor)
            HALF_LUMINANCE(newColor)
+"          outColor.rg = newColor.rg;\n"
+"          }; break;\n"
+"        case 7u: {\n"
+           //gouraud_half_trans_mode,
+           GOURAUD_PROCESS(newColor)
+           RECOLINDEX(newColor)
+           HALF_TRANPARENT_MIX(newColor, finalColor)
 "          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        default:\n"
@@ -678,18 +678,10 @@ SHADER_VERSION_COMPUTE
 "      }\n"
 "    }\n";
 
-static const char vdp1_continue_f[] =
-"    finalColor.ba = tag;\n"
-"    finalColor.rg = outColor.rg;\n";
-
-static const char vdp1_end_f[] =
-"  }\n"
-"  if ((finalColor == vec4(0.0))) return;\n"
-"    imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
-"}\n";
 
 static const char vdp1_standard_mesh_f[] =
 //Normal mesh
+"  tag = vec2(0.0);\n"
 "  if ((pixcmd.CMDPMOD & 0x100u)==0x100u){\n"//IS_MESH
 "    if( (texel.y & 0x01) == 0 ){ \n"
 "      if( (texel.x & 0x01) == 0 ){ \n"
@@ -702,8 +694,6 @@ static const char vdp1_standard_mesh_f[] =
 "        continue;\n"
 "      } \n"
 "    } \n"
-"  } else {\n"
-"    tag = vec2(0.0);\n"
 "  }\n";
 
 static const char vdp1_improved_mesh_f[] =
@@ -714,4 +704,14 @@ static const char vdp1_improved_mesh_f[] =
 "  } else {\n"
 "    tag = vec2(0.0);\n"
 "  }\n";
+
+static const char vdp1_continue_f[] =
+"    finalColor.ba = tag;\n"
+"    finalColor.rg = outColor.rg;\n";
+
+static const char vdp1_end_f[] =
+"  }\n"
+"  if ((finalColor == vec4(0.0))) return;\n"
+"    imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
+"}\n";
 #endif //VDP1_PROG_COMPUTE_H
