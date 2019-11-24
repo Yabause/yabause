@@ -604,6 +604,7 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
     if (tm->texture == NULL){
       abort();
     }
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
   }
   YabThreadUnLock(tm->mtx);
 }
