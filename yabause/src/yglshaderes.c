@@ -1059,7 +1059,7 @@ SHADER_VERSION
 "out vec4 thirdColor; \n"
 "out vec4 fourthColor; \n"
 #endif
-"int PosY = int(gl_FragCoord.y);\n"
+"int PosY = int(gl_FragCoord.y)+1;\n"
 "int PosX = int(gl_FragCoord.x);\n"
 ;
 
