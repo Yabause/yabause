@@ -1375,9 +1375,6 @@ int YglProgramChange( YglLevel * level, int prgid )
       free(level->prg);
       level->prg = tmp;
 
-      level->prg[level->prgcurrent].systemClipX2 = Vdp1Regs->systemclipX2;
-      level->prg[level->prgcurrent].systemClipY2 = Vdp1Regs->systemclipY2;
-
       level->prg[level->prgcurrent].currentQuad = 0;
 #if  USEVBO
        level->prg[level->prgcurrent].maxQuad = 14692;
@@ -1405,6 +1402,8 @@ int YglProgramChange( YglLevel * level, int prgid )
 #endif
    }
    current = &level->prg[level->prgcurrent];
+   current->systemClipX2 = Vdp1Regs->systemclipX2;
+   current->systemClipY2 = Vdp1Regs->systemclipY2;
    initVDPProg(current, prgid);
 
    if (prgid == PG_VDP2_NORMAL)
