@@ -390,6 +390,8 @@ typedef struct {
    float emu_width;
    float vwidth;
    GLuint interuput_texture;
+   u16 systemClipX2;
+   u16 systemClipY2;
 } YglProgram;
 
 typedef struct {

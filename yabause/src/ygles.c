@@ -1436,6 +1436,8 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
       progNew = 1;
     }
 
+    program = &level->prg[level->prgcurrent];
+
   // level->blendmode |= (input->blendmode&0x03);
    if( input->uclipmode != level->uclipcurrent ||
      (input->uclipmode !=0 &&
@@ -1482,6 +1484,11 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
      level->prg[level->prgcurrent].blendmode = input->blendmode;
    }
    else if (input->idScreen != level->prg[level->prgcurrent].id ){
+     YglProgramChange(level, prg);
+     level->prg[level->prgcurrent].id = input->idScreen;
+     level->prg[level->prgcurrent].blendmode = input->blendmode;
+   }
+   else if ((level->prg[level->prgcurrent].systemClipX2 != Vdp1Regs->systemclipX2) || (level->prg[level->prgcurrent].systemClipY2 != Vdp1Regs->systemclipY2)) {
      YglProgramChange(level, prg);
      level->prg[level->prgcurrent].id = input->idScreen;
      level->prg[level->prgcurrent].blendmode = input->blendmode;
@@ -1577,7 +1584,6 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
   program->color_offset_val[1] = (float)(input->cog) / 255.0f;
   program->color_offset_val[2] = (float)(input->cob) / 255.0f;
   program->color_offset_val[3] = 0;
-
 
   pos = program->quads + program->currentQuad;
   colv = (program->vertexAttribute + (program->currentQuad * 2));

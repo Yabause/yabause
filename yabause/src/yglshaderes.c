@@ -98,7 +98,7 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   }
 
   glUniform2f(prg->ids->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
-  glUniform3i(prg->ids->sysclip, (int)(Vdp1Regs->systemclipX2 * _Ygl->vdp1wratio), (int)(Vdp1Regs->systemclipY2 * _Ygl->vdp1hratio), _Ygl->vdp1height);
+  glUniform3i(prg->ids->sysclip, (int)(prg->systemClipX2 * _Ygl->vdp1wratio), (int)(prg->systemClipY2 * _Ygl->vdp1hratio), _Ygl->vdp1height);
 
   if (prg->ids->sprite != -1){
     glUniform1i(prg->ids->sprite, 0);
@@ -739,7 +739,7 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs,
       _Ygl->vdp1_stencil_mode =3;
       glStencilFunc(GL_ALWAYS,0,0xFF);
    }
-   glUniform3i(prg->ids->sysclip, (int)(Vdp1Regs->systemclipX2 * _Ygl->vdp1width)/512, (int)(Vdp1Regs->systemclipY2 * _Ygl->vdp1height)/256, _Ygl->vdp1height);
+   glUniform3i(prg->ids->sysclip, (int)(prg->systemClipX2 * _Ygl->vdp1width)/512, (int)(prg->systemClipY2 * _Ygl->vdp1height)/256, _Ygl->vdp1height);
 
    glEnableVertexAttribArray(0);
    glEnableVertexAttribArray(1);
@@ -1375,6 +1375,9 @@ int YglProgramChange( YglLevel * level, int prgid )
       free(level->prg);
       level->prg = tmp;
 
+      level->prg[level->prgcurrent].systemClipX2 = Vdp1Regs->systemclipX2;
+      level->prg[level->prgcurrent].systemClipY2 = Vdp1Regs->systemclipY2;
+
       level->prg[level->prgcurrent].currentQuad = 0;
 #if  USEVBO
        level->prg[level->prgcurrent].maxQuad = 14692;
@@ -1643,7 +1646,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
 
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
-  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp1_width"),(float)(_Ygl->vdp1width) / (float)(_Ygl->rwidth));
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp1_width"),(float)(_Ygl->vdp1width) / 512.0f);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp2_width"),(float)(_Ygl->width) / (float)(_Ygl->rwidth));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
   glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), _Ygl->vdp1expandW, _Ygl->vdp1expandH);//((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));
