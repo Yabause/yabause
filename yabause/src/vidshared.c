@@ -255,6 +255,7 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
    {
       // Rotation Parameter A
       addr &= 0x000FFF7C;
+      parameter->linecoefenab = regs->KTCTL & 0x10;
       parameter->coefenab = regs->KTCTL & 0x1;
       parameter->screenover = (regs->PLSZ >> 10) & 0x3;
    }
@@ -263,6 +264,7 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
       // Rotation Parameter B
       addr = (addr & 0x000FFFFC) | 0x00000080;
       parameter->coefenab = regs->KTCTL & 0x100;
+      parameter->linecoefenab = regs->KTCTL & 0x1000;
       parameter->screenover = (regs->PLSZ >> 14) & 0x3;
    }
 
