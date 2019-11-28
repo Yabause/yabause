@@ -679,10 +679,10 @@ public class YabausePad extends View implements OnTouchListener {
 
         if (width > height) {
             wscale = (float) width / basewidth;
-            hscale = (float) height / baseheight;
+            hscale = wscale; //(float) height / baseheight;
         }else{
             wscale = (float) width / baseheight;
-            hscale = (float) height / basewidth;
+            hscale = wscale; //(float) height / basewidth;
         }
 
         int bitmap_height = bitmap_pad_right.getHeight();
