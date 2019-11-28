@@ -50,6 +50,21 @@ struct retro_core_option_definition option_defs_us[] = {
       "NTSC"
    },
    {
+      "kronos_skipframe",
+      "Frameskip",
+      "Skip rendering of X frames out of X+1",
+      {
+         { "0", "No skipping" },
+         { "1", "Skip rendering of 1 frames out of 2" },
+         { "2", "Skip rendering of 2 frames out of 3" },
+         { "3", "Skip rendering of 3 frames out of 4" },
+         { "4", "Skip rendering of 4 frames out of 5" },
+         { "5", "Skip rendering of 5 frames out of 6" },
+         { NULL, NULL },
+      },
+      "0"
+   },
+   {
       "kronos_sh2coretype",
       "SH-2 cpu core",
       "Select an interpreter for the SH-2 cpus, 'old' is the old interpreter from yabause (we don't provide support for this one). Requires a restart.",

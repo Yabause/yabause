@@ -382,6 +382,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
    yabsys.vsyncon = init->vsyncon;
+   yabsys.skipframe = init->skipframe;
    yabsys.isRotated = 0;
    nextFrameTime = 0;
 
@@ -1125,6 +1126,12 @@ void YabauseSetVideoFormat(int type) {
    Vdp2Regs->TVSTAT = Vdp2Regs->TVSTAT | (type & 0x1);
    ScspChangeVideoFormat(type);
    YabauseChangeTiming(yabsys.CurSH2FreqType);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YabauseSetSkipframe(int skipframe) {
+   yabsys.skipframe = skipframe;
 }
 
 //////////////////////////////////////////////////////////////////////////////

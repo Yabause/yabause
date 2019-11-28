@@ -432,14 +432,15 @@ void Vdp2Reset(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 static int checkFrameSkip(void) {
+#if 0
   int ret = 0;
- #if 0
   if (isAutoFrameSkip() != 0) return ret;
   unsigned long now = YabauseGetTicks();
   if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks();
   if(nextFrameTime < now) ret = 1;
- #endif
   return ret;
+#endif
+  return !(yabsys.frame_count % (yabsys.skipframe+1) == 0);
 }
 
 void resetFrameSkip(void) {

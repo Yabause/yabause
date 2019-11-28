@@ -98,6 +98,7 @@ void YabauseStartSlave(void);
 void YabauseStopSlave(void);
 u64 YabauseGetTicks(void);
 void YabauseSetVideoFormat(int type);
+void YabauseSetSkipframe(int skipframe);
 void YabauseSpeedySetup(void);
 int YabauseQuickLoadGame(void);
 
@@ -133,6 +134,7 @@ typedef struct
    u32 frame_count;
    int usecache;
    int vsyncon;
+   int skipframe;
 #ifdef SPRITE_CACHE
    int useVdp1cache;
 #endif

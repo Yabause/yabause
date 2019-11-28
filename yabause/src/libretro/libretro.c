@@ -69,6 +69,7 @@ static int opengl_version = 330;
 
 static int g_vidcoretype = VIDCORE_OGL;
 static int g_sh2coretype = 8;
+static int g_skipframe = 0;
 static int g_videoformattype = VIDEOFORMATTYPE_NTSC;
 static int resolution_mode = 1;
 static int polygon_mode = PERSPECTIVE_CORRECTION;
@@ -82,6 +83,7 @@ static bool stv_mode = false;
 static bool all_devices_ready = false;
 static bool libretro_supports_bitmasks = false;
 static bool rendering_started = false;
+static bool one_frame_rendered = false;
 static int16_t libretro_input_bitmask[12] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 static int pad_type[12] = {1,1,1,1,1,1,1,1,1,1,1,1};
 static int multitap[2] = {0,0};
@@ -764,6 +766,7 @@ void YuiSwapBuffers(void)
       retro_set_resolution();
    audio_size = soundlen;
    video_cb(RETRO_HW_FRAME_BUFFER_VALID, current_width, current_height, 0);
+   one_frame_rendered = true;
 }
 
 static void context_reset(void)
@@ -913,6 +916,24 @@ void check_variables(void)
          g_videoformattype = VIDEOFORMATTYPE_NTSC;
       else if (strcmp(var.value, "PAL") == 0)
          g_videoformattype = VIDEOFORMATTYPE_PAL;
+   }
+
+   var.key = "kronos_skipframe";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "0") == 0)
+         g_skipframe = 0;
+      else if (strcmp(var.value, "1") == 0)
+         g_skipframe = 1;
+      else if (strcmp(var.value, "2") == 0)
+         g_skipframe = 2;
+      else if (strcmp(var.value, "3") == 0)
+         g_skipframe = 3;
+      else if (strcmp(var.value, "4") == 0)
+         g_skipframe = 4;
+      else if (strcmp(var.value, "5") == 0)
+         g_skipframe = 5;
    }
 
    var.key = "kronos_sh2coretype";
@@ -1401,6 +1422,7 @@ bool retro_load_game_common()
    yinit.buppath                 = bup_path;
    yinit.meshmode                = mesh_mode;
    yinit.use_cs                  = use_cs;
+   yinit.skipframe               = g_skipframe;
 
    return true;
 }
@@ -1553,6 +1575,7 @@ void retro_run(void)
    unsigned i;
    bool updated  = false;
    rendering_started = true;
+   one_frame_rendered = false;
    if (!all_devices_ready)
    {
       // Running first frame, so we can assume all devices id were set
@@ -1577,9 +1600,14 @@ void retro_run(void)
       VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, mesh_mode);
       VIDCore->SetSettingValue(VDP_SETTING_COMPUTE_SHADER, use_cs);
       YabauseSetVideoFormat(g_videoformattype);
+      YabauseSetSkipframe(g_skipframe);
    }
 
    YabauseExec();
+
+   // If no frame rendered, dupe
+   if(!one_frame_rendered)
+      video_cb(NULL, current_width, current_height, 0);
 }
 
 #ifdef ANDROID
