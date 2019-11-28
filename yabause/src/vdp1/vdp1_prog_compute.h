@@ -401,7 +401,7 @@ SHADER_VERSION_COMPUTE
 "  return vec4(float((CMDCOLR>>0)&0xFFu)/255.0,float((CMDCOLR>>8)&0xFFu)/255.0,0.0,0.0);\n"
 "}\n"
 
-"vec4 ReadSpriteColor(cmdparameter_struct pixcmd, vec2 uv, ivec2 texel){\n"
+"vec4 ReadSpriteColor(cmdparameter_struct pixcmd, vec2 uv, ivec2 texel, out bool discarded){\n"
 "  vec4 color = vec4(0.0);\n"
 "  uint endcnt = 0;\n"
 "  uint x = uint(uv.x*pixcmd.w - 0.001);\n"
@@ -410,6 +410,7 @@ SHADER_VERSION_COMPUTE
 "  uint dot;\n"
 "  bool SPD = ((pixcmd.CMDPMOD & 0x40u) != 0);\n"
 "  bool END = ((pixcmd.CMDPMOD & 0x80u) != 0);\n"
+"  discarded = false;\n"
 //Pour le end, n a besoin d'une barriere par ligne entre toute les commandes
 "  switch ((pixcmd.CMDPMOD >> 3) & 0x7u)\n"
 "  {\n"
@@ -422,8 +423,12 @@ SHADER_VERSION_COMPUTE
 "      dot = Vdp1RamReadByte(charAddr);\n"
 "       if ((x & 0x1u) == 0u) dot = (dot>>4)&0xFu;\n"
 "       else dot = (dot)&0xFu;\n"
-"      if ((dot == 0x0Fu) && !END) color = VDP1COLOR(0x00);\n"
-"      else if ((dot == 0) && !SPD) color = VDP1COLOR(0x00);\n"
+"      if ((dot == 0x0Fu) && !END) {\n"
+"        discarded = true;\n"
+"      }\n"
+"      else if ((dot == 0) && !SPD) {\n"
+"        discarded = true;\n"
+"      }\n"
 "      else color = VDP1COLOR(dot | colorBank);\n"
 "      break;\n"
 "    }\n"
@@ -437,8 +442,12 @@ SHADER_VERSION_COMPUTE
 "       dot = Vdp1RamReadByte(charAddr);\n"
 "       if ((x & 0x1u) == 0u) dot = (dot>>4)&0xFu;\n"
 "       else dot = (dot)&0xFu;\n"
-"       if ((dot == 0x0Fu) && !END) color = VDP1COLOR(0x00);\n"
-"       else if ((dot == 0) && !SPD) color = VDP1COLOR(0x00);\n"
+"       if ((dot == 0x0Fu) && !END) {\n"
+"        discarded = true;\n"
+"      }\n"
+"       else if ((dot == 0) && !SPD) {\n"
+"        discarded = true;\n"
+"      }\n"
 "       else {\n"
 "         temp = Vdp1RamReadWord((dot * 2 + colorLut));\n"
 "         color = VDP1COLOR(temp);\n"
@@ -450,8 +459,12 @@ SHADER_VERSION_COMPUTE
       // 8 bpp(64 color) Bank mode
 "      uint colorBank = pixcmd.CMDCOLR & 0xFFC0u;\n"
 "      dot = Vdp1RamReadByte(charAddr);\n"
-"      if ((dot == 0xFFu) && !END) color = VDP1COLOR(0x00);\n"
-"      else if ((dot == 0) && !SPD) color = VDP1COLOR(0x00);\n"
+"      if ((dot == 0xFFu) && !END) {\n"
+"        discarded = true;\n"
+"      }\n"
+"      else if ((dot == 0) && !SPD) {\n"
+"        discarded = true;\n"
+"      }\n"
 "      else {\n"
 "        color = VDP1COLOR((dot & 0x3Fu) | colorBank);\n"
 "      }\n"
@@ -462,8 +475,12 @@ SHADER_VERSION_COMPUTE
       // 8 bpp(128 color) Bank mode
 "      uint colorBank = pixcmd.CMDCOLR & 0xFF80u;\n"
 "      dot = Vdp1RamReadByte(charAddr);\n"
-"      if ((dot == 0xFFu) && !END) color = VDP1COLOR(0x00);\n"
-"      else if ((dot == 0) && !SPD) color = VDP1COLOR(0x00);\n"
+"      if ((dot == 0xFFu) && !END) {\n"
+"        discarded = true;\n"
+"      }\n"
+"      else if ((dot == 0) && !SPD) {\n"
+"        discarded = true;\n"
+"      }\n"
 "      else {\n"
 "        color = VDP1COLOR((dot & 0x7Fu) | colorBank);\n"
 "      }\n"
@@ -474,8 +491,12 @@ SHADER_VERSION_COMPUTE
       // 8 bpp(256 color) Bank mode
 "      uint colorBank = pixcmd.CMDCOLR & 0xFF00u;\n"
 "      dot = Vdp1RamReadByte(charAddr);\n"
-"      if ((dot == 0xFFu) && !END) color = VDP1COLOR(0x00);\n"
-"      else if ((dot == 0) && !SPD) color = VDP1COLOR(0x00);\n"
+"      if ((dot == 0xFFu) && !END) {\n"
+"        discarded = true;\n"
+"      }\n"
+"      else if ((dot == 0) && !SPD) {\n"
+"        discarded = true;\n"
+"      }\n"
 "      else {\n"
 "          color = VDP1COLOR(dot | colorBank);\n"
 "      }\n"
@@ -487,8 +508,12 @@ SHADER_VERSION_COMPUTE
 "      uint temp;\n"
 "      charAddr += pos;\n"
 "      temp = Vdp1RamReadWord(charAddr);\n"
-"      if ((temp == 0x7FFFu) && !END) color = VDP1COLOR(0x00);\n"
-"      else if (((temp & 0x8000u) == 0) && !SPD) color = VDP1COLOR(0x00);\n"
+"      if ((temp == 0x7FFFu) && !END) {\n"
+"        discarded = true;\n"
+"      }\n"
+"      else if (((temp & 0x8000u) == 0) && !SPD) {\n"
+"        discarded = true;\n"
+"      }\n"
 "      else {\n"
 "        color = VDP1COLOR(temp);\n"
 "      }\n"
@@ -521,7 +546,8 @@ SHADER_VERSION_COMPUTE
 "  vec4 outColor = vec4(0.0);\n"
 "  vec2 tag = vec2(0.0);\n"
 "  cmdparameter_struct pixcmd;\n"
-"  uint discarded = 0;\n"
+"  bool discarded = false;\n"
+"  bool noFinal = true;\n"
 "  vec2 texcoord = vec2(0);\n"
 "  vec2 gouraudcoord = vec2(0);\n"
 "  ivec2 size = imageSize(outSurface);\n"
@@ -540,6 +566,7 @@ SHADER_VERSION_COMPUTE
 "  int cmdindex = 0;\n"
 "  bool useGouraud = false;\n"
 "  while ((cmdindex != -1) && (idCmd<nbCmd[lindex]) ) {\n"
+"    discarded = false;\n"
 "    newColor = vec4(0.0);\n"
 "    outColor = vec4(0.0);\n"
 "    cmdindex = getCmd(texel, cmdIndex, idCmd, nbCmd[lindex], zone);\n"
@@ -601,7 +628,7 @@ SHADER_VERSION_COMPUTE
 #ifdef USE_VDP1_TEX
 "        newColor = ReadTexColor(pixcmd, texcoord, texel);\n"
 #else
-"        newColor = ReadSpriteColor(pixcmd, texcoord, texel);\n"
+"        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
 #endif
 "      }\n"
 "    } else if (pixcmd.type == "Stringify(SCALED)") {\n"
@@ -612,7 +639,7 @@ SHADER_VERSION_COMPUTE
 #ifdef USE_VDP1_TEX
 "      newColor = ReadTexColor(pixcmd, texcoord, texel);\n"
 #else
-"        newColor = ReadSpriteColor(pixcmd, texcoord, texel);\n"
+"        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
 #endif
 "    } else if (pixcmd.type == "Stringify(NORMAL)") {\n"
 "      texcoord = vec2(float(texel.x/upscale.x-pixcmd.CMDXA+1)/float(pixcmd.CMDXB-pixcmd.CMDXA), float(texel.y/upscale.y-pixcmd.CMDYA+1)/float(pixcmd.CMDYD-pixcmd.CMDYA));\n"
@@ -622,10 +649,10 @@ SHADER_VERSION_COMPUTE
 #ifdef USE_VDP1_TEX
 "      newColor = ReadTexColor(pixcmd, texcoord, texel);\n"
 #else
-"        newColor = ReadSpriteColor(pixcmd, texcoord, texel);\n"
+"        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
 #endif
 "    }\n"
-"    if (newColor == vec4(0.0)) continue;\n"
+"    if (discarded) continue;\n"
      COLINDEX(finalColor)
      COLINDEX(newColor)
 "    if ((pixcmd.CMDPMOD & 0x8000u) == 0x8000u) {\n"
@@ -673,7 +700,7 @@ SHADER_VERSION_COMPUTE
 "          outColor.rg = newColor.rg;\n"
 "          }; break;\n"
 "        default:\n"
-"          outColor = vec4(0.0);\n"
+"          discarded = true;\n"
 "          break;\n"
 "      }\n"
 "    }\n";
@@ -685,12 +712,12 @@ static const char vdp1_standard_mesh_f[] =
 "  if ((pixcmd.CMDPMOD & 0x100u)==0x100u){\n"//IS_MESH
 "    if( (texel.y & 0x01) == 0 ){ \n"
 "      if( (texel.x & 0x01) == 0 ){ \n"
-"        newColor = vec4(0.0);\n"
+"        discarded = true;\n"
 "        continue;\n"
 "      }\n"
 "    }else{ \n"
 "      if( (texel.x & 0x01) == 1 ){ \n"
-"        newColor = vec4(0.0);\n"
+"        discarded = true;\n"
 "        continue;\n"
 "      } \n"
 "    } \n"
@@ -706,12 +733,15 @@ static const char vdp1_improved_mesh_f[] =
 "  }\n";
 
 static const char vdp1_continue_f[] =
-"    finalColor.ba = tag;\n"
-"    finalColor.rg = outColor.rg;\n";
+"    if (!discarded) {"
+"      finalColor.ba = tag;\n"
+"      finalColor.rg = outColor.rg;\n"
+"      noFinal = false;\n"
+"    }\n";
 
 static const char vdp1_end_f[] =
 "  }\n"
-"  if ((finalColor == vec4(0.0))) return;\n"
-"    imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
+"  if (discarded && noFinal) return;\n"
+"  imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
 "}\n";
 #endif //VDP1_PROG_COMPUTE_H
