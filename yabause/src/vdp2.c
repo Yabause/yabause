@@ -336,7 +336,7 @@ void Vdp2DeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static unsigned long nextFrameTime = 0;
+static unsigned long lastFrameTime = 0;
 
 void Vdp2Reset(void) {
    Vdp2Regs->TVMD = 0x0000;
@@ -425,26 +425,37 @@ void Vdp2Reset(void) {
    Vdp2External.perline_alpha = Vdp2External.perline_alpha_a;
    Vdp2External.perline_alpha_draw = Vdp2External.perline_alpha_b;
 
-   nextFrameTime = 0;
+   lastFrameTime = 0;
 
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+static float lateFramePart = 0.0f;
 static int checkFrameSkip(void) {
-#if 0
-  int ret = 0;
-  if (isAutoFrameSkip() != 0) return ret;
+  if (yabsys.skipframe != 0) {
+    lateFramePart -= 1.0f;
+    if (lateFramePart > 1.0f) {
+      return 1;
+    }
+  }
+  lateFramePart = 0.0f;
+  return 0;
+}
+
+static void updateSkipFrame() {
+  int frameTime = yabsys.tickfreq/(yabsys.IsPal ? 50 : 60);
+  if (lastFrameTime == 0) {
+    lastFrameTime = YabauseGetTicks();
+    lateFramePart = 0;
+    return 0;
+  }
   unsigned long now = YabauseGetTicks();
-  if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks();
-  if(nextFrameTime < now) ret = 1;
-  return ret;
-#endif
-  return !(yabsys.frame_count % (yabsys.skipframe+1) == 0);
+  if ((now - lastFrameTime)>frameTime) lateFramePart += (float)(now - lastFrameTime)/(float)frameTime;
+  lastFrameTime = now;
 }
 
 void resetFrameSkip(void) {
-  nextFrameTime = 0;
+  lastFrameTime = 0;
 }
 
 void Vdp2VBlankIN(void) {
@@ -465,7 +476,8 @@ void Vdp2VBlankIN(void) {
      VIDCore->Vdp2Draw();
      isSkipped = 0;
    }
-   nextFrameTime  += yabsys.OneFrameTime;
+   updateSkipFrame();
+   // lastFrameTime  += yabsys.OneFrameTime;
 
    VIDCore->Sync();
    Vdp2Regs->TVSTAT |= 0x0008;
