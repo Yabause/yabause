@@ -706,8 +706,8 @@ void Vdp2HBlankOUT(void) {
       YabClearEventQueue(vdp1_rcv_evqueue);
       FRAMELOG("**WAIT END**");
       FrameProfileAdd("DirectDraw sync");
+      yabsys.wait_line_count = -1;
       if (Vdp1External.status == VDP1_STATUS_IDLE) {
-        yabsys.wait_line_count = -1;
         Vdp1Regs->EDSR |= 2;
         Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
         ScuSendDrawEnd();
@@ -872,6 +872,7 @@ void vdp2VBlankOUT(void) {
   static u64 onesecondticks = 0;
   static VideoInterface_struct * saved = NULL;
   int isrender = 0;
+  u64 starttime = YabauseGetTicks();
   VdpLockVram();
   FRAMELOG("***** VOUT(T) swap=%d,plot=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
 
@@ -1066,6 +1067,15 @@ void vdp2VBlankOUT(void) {
       lastticks = curticks;
    }
    VdpUnLockVram();
+   static FILE * framefp = NULL;
+   if( framefp == NULL ){
+     framefp = fopen("frame.csv","w");
+   }
+
+   if( framefp != NULL ){
+      fprintf(framefp,"%d,%d\n", g_frame_count, (u32)(YabauseGetTicks()-starttime) );
+      fflush(framefp);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
