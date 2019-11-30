@@ -96,6 +96,7 @@ YabMutex * vrammutex = NULL;
 int g_frame_count = 0;
 
 //#define LOG yprintf
+#define PROFILE_RENDERING 0
 
 YabEventQueue * command_ = NULL;;
 
@@ -872,7 +873,9 @@ void vdp2VBlankOUT(void) {
   static u64 onesecondticks = 0;
   static VideoInterface_struct * saved = NULL;
   int isrender = 0;
+#if PROFILE_RENDERING
   u64 starttime = YabauseGetTicks();
+#endif
   VdpLockVram();
   FRAMELOG("***** VOUT(T) swap=%d,plot=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
 
@@ -1067,15 +1070,21 @@ void vdp2VBlankOUT(void) {
       lastticks = curticks;
    }
    VdpUnLockVram();
+#if PROFILE_RENDERING
    static FILE * framefp = NULL;
    if( framefp == NULL ){
+#if defined(ANDROID)
+     framefp = fopen("/mnt/sdcard/frame.csv", "w");
+#else
      framefp = fopen("frame.csv","w");
+#endif
    }
 
    if( framefp != NULL ){
       fprintf(framefp,"%d,%d\n", g_frame_count, (u32)(YabauseGetTicks()-starttime) );
       fflush(framefp);
    }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
