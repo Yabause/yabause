@@ -6660,15 +6660,6 @@ SoundLoadState (FILE *fp, int version, int size)
       yread(&check, (void *)&scsplines, sizeof(u32), 1, fp);
     }
 
-    if (version >= 3) {
-      yread(&check, (void *)&cdda_next_in, sizeof(u32), 1, fp);
-      yread(&check, (void *)&cdda_out_left, sizeof(u32), 1, fp);
-      yread(&check, (void *)&scsp_mute_flags, sizeof(u32), 1, fp);
-      yread(&check, (void *)&scspsoundlen, sizeof(u32), 1, fp);
-      yread(&check, (void *)&scsplines, sizeof(u32), 1, fp);
-    }
-
-
   return size;
 }
 

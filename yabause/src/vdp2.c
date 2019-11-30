@@ -96,6 +96,7 @@ YabMutex * vrammutex = NULL;
 int g_frame_count = 0;
 
 //#define LOG yprintf
+#define PROFILE_RENDERING 0
 
 YabEventQueue * command_ = NULL;;
 
@@ -706,8 +707,8 @@ void Vdp2HBlankOUT(void) {
       YabClearEventQueue(vdp1_rcv_evqueue);
       FRAMELOG("**WAIT END**");
       FrameProfileAdd("DirectDraw sync");
+      yabsys.wait_line_count = -1;
       if (Vdp1External.status == VDP1_STATUS_IDLE) {
-        yabsys.wait_line_count = -1;
         Vdp1Regs->EDSR |= 2;
         Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
         ScuSendDrawEnd();
@@ -872,6 +873,9 @@ void vdp2VBlankOUT(void) {
   static u64 onesecondticks = 0;
   static VideoInterface_struct * saved = NULL;
   int isrender = 0;
+#if PROFILE_RENDERING
+  u64 starttime = YabauseGetTicks();
+#endif
   VdpLockVram();
   FRAMELOG("***** VOUT(T) swap=%d,plot=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
 
@@ -1052,7 +1056,6 @@ void vdp2VBlankOUT(void) {
          framestoskip = 1;
       }else if ((onesecondticks+diffticks) < ((yabsys.OneFrameTime * (u64)framecount) - (yabsys.OneFrameTime / 2)))
       {
-#if 0
          // Check to see if we need to limit speed at all
          for (;;)
          {
@@ -1061,13 +1064,27 @@ void vdp2VBlankOUT(void) {
             if ((onesecondticks+diffticks) >= (yabsys.OneFrameTime * (u64)framecount))
                break;
          }
-#endif
       }
 
       onesecondticks += diffticks;
       lastticks = curticks;
    }
    VdpUnLockVram();
+#if PROFILE_RENDERING
+   static FILE * framefp = NULL;
+   if( framefp == NULL ){
+#if defined(ANDROID)
+     framefp = fopen("/mnt/sdcard/frame.csv", "w");
+#else
+     framefp = fopen("frame.csv","w");
+#endif
+   }
+
+   if( framefp != NULL ){
+      fprintf(framefp,"%d,%d\n", g_frame_count, (u32)(YabauseGetTicks()-starttime) );
+      fflush(framefp);
+   }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

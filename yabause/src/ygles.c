@@ -520,7 +520,7 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
   
     glBindTexture(GL_TEXTURE_2D, tm->textureID_in[i]);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID_in[i]);
-    tm->texture_in[i] = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+    tm->texture_in[i] = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT );
     if ((error = glGetError()) != GL_NO_ERROR)
     {
       YGLDEBUG("Fail to init YglTM->texture %04X", error);
@@ -597,10 +597,10 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID_in[tm->current]);
 
     if (flg) {
-      tm->texture_in[tm->current] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT /*| GL_MAP_INVALIDATE_BUFFER_BIT*/ | GL_MAP_UNSYNCHRONIZED_BIT);
+      tm->texture_in[tm->current] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT /*| GL_MAP_INVALIDATE_BUFFER_BIT*/ );
     }
     else {
-      tm->texture_in[tm->current] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+      tm->texture_in[tm->current] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
     }
     if (tm->texture_in[tm->current] == NULL) {
       abort();
@@ -677,7 +677,7 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
   for (int i = 0; i < NUM_TEXTURE_BUFFER; i++) {
 
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID[i]);
-    new_texture[i] = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, width * height * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+    new_texture[i] = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, width * height * 4, GL_MAP_WRITE_BIT );
     if ((error = glGetError()) != GL_NO_ERROR) {
       YGLDEBUG("Fail to init new_texture %04X", error);
       abort();
@@ -4385,7 +4385,7 @@ u32 * YglGetLineColorPointer(){
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolor_pbo);
-  _Ygl->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  _Ygl->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT  );
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLLOG("Fail to init YglTM->lincolor_buf %04X", error);
@@ -4449,7 +4449,7 @@ u32* YglGetBackColorPointer() {
   if( _Ygl->backcolor_buf != NULL ){
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   }
-  _Ygl->backcolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  _Ygl->backcolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT );
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLLOG("Fail to init YglTM->backcolor_buf %04X", error);
@@ -4637,7 +4637,7 @@ u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount, int depth ){
 
   glBindTexture(GL_TEXTURE_2D, perline->lincolor_tex);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->linecolor_pbo);
-  perline->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, linecount * 4 * depth, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  perline->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, linecount * 4 * depth, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT  );
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLLOG("Fail to init YglTM->lincolor_buf %04X", error);
