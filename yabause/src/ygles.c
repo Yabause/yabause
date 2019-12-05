@@ -3484,8 +3484,6 @@ void YglOnUpdateColorRamWord(u32 addr) {
   u32 * buf;
   if (_Ygl == NULL) return;
 
-  if (Vdp2ColorRamUpdated[yabsys.LineCount] == 0) printf("Up Line %d\n", yabsys.LineCount);
-  //YabThreadLock(_Ygl->crammutex);
   Vdp2ColorRamUpdated[yabsys.LineCount] = 1;
 
   if (_Ygl->colupd_min_addr[yabsys.LineCount] > addr)
@@ -3527,7 +3525,7 @@ void YglOnUpdateColorRamWord(u32 addr) {
 }
 
 void updateVdp2ColorRam(int line){
-  // if (Vdp2ColorRamUpdated[line] != 0) {
+  if ((Vdp2ColorRamUpdated[line] != 0)||(Vdp2ColorRamToSync[line] != 0)) {
     u32 start_addr,size;
     u32 start, end;
     int index_shft  = 1;
@@ -3541,27 +3539,37 @@ void updateVdp2ColorRam(int line){
     // if (start > end) return;
     start_addr = (start >> index_shft);
     size = ((end - start) >> index_shft) + 1;
-    // printf("Copy %d to %d [%d to %d]\n", line, line+1, start_addr, size);
-    //memcpy(&dst[start_addr], &src[start_addr], size*sizeof(int));
-    memcpy(&dst[0], &src[0], 2048*sizeof(int));
+    memcpy(&dst[start_addr], &src[start_addr], size*sizeof(int));
     _Ygl->colupd_min_addr[line+1] = _Ygl->colupd_min_addr[line];
     _Ygl->colupd_max_addr[line+1] = _Ygl->colupd_max_addr[line];
-    // Vdp2ColorRamUpdated[line+1] = 1;
-  // }
+  }
+  Vdp2ColorRamToSync[line+1] = Vdp2ColorRamToSync[line];
+  Vdp2ColorRamUpdated[line+1] = Vdp2ColorRamUpdated[line];
 }
 
+static int needToSync = 0;
 void syncColorRam(void) {
-  printf("Sync\n");
-  u32* src = YglGetColorRamPointer(yabsys.MaxLineCount-1);
-  // for (int i=0;i<2048;i++) printf("buf[%d]=%x\n", i, src[i]);
-//  for (int l=0; l<yabsys.MaxLineCount-1; l++){
-for (int l=0; l<1; l++){
-    u32* dst = YglGetColorRamPointer(l);
-    printf("Copy line %d sur %d\n", yabsys.MaxLineCount-1, l);
-    memcpy(dst, src, 2048*sizeof(int));
-    _Ygl->colupd_min_addr[l] = _Ygl->colupd_min_addr[yabsys.MaxLineCount-1];
-    _Ygl->colupd_max_addr[l] = _Ygl->colupd_max_addr[yabsys.MaxLineCount-1];
+  if (needToSync != 0) {
+    int index_shft  = 1;
+    u32 start_addr,size;
+    u32 start, end;
+    u32* src = YglGetColorRamPointer(yabsys.MaxLineCount-1);
+    u32* dst = YglGetColorRamPointer(0);
+    start = _Ygl->colupd_min_addr[yabsys.MaxLineCount-1]&0xFFF;
+    end = _Ygl->colupd_max_addr[yabsys.MaxLineCount-1]&0xFFF;
+    if (start <= end) {
+      if (Vdp2Internal.ColorMode == 2) {
+        index_shft = 2;
+      }
+      start_addr = (start >> index_shft);
+      size = ((end - start) >> index_shft) + 1;
+      memcpy(&dst[start_addr], &src[start_addr], size*sizeof(int));
+      _Ygl->colupd_min_addr[0] = _Ygl->colupd_min_addr[yabsys.MaxLineCount-1];
+      _Ygl->colupd_max_addr[0] = _Ygl->colupd_max_addr[yabsys.MaxLineCount-1];
+      Vdp2ColorRamToSync[0] = 1;
+    }
   }
+  needToSync = 0;
 }
 
 static void updateColorRamLine(int lineStart, int start, int end)
@@ -3578,48 +3586,33 @@ static void updateColorRamLine(int lineStart, int start, int end)
   if (start > end) {
     return;
   }
-  printf("Update Texture Line %d\n", lineStart);
   buf = YglGetColorRamPointer(lineStart);
 
   Vdp2ColorRamUpdated[lineStart] = 0;
+  Vdp2ColorRamToSync[lineStart] = 0;
   start_addr = (start >> index_shft);
   size = ((end - start) >> index_shft) + 1;
-  // glTexSubImage2D(GL_TEXTURE_2D,
-  //     0,
-  //     start_addr, lineStart,
-  //     size, 1,
-  //     GL_RGBA, GL_UNSIGNED_BYTE,
-  //     &buf[start_addr] );
   glTexSubImage2D(GL_TEXTURE_2D,
       0,
-      0, lineStart,
-      2048, 1,
+      start_addr, lineStart,
+      size, 1,
       GL_RGBA, GL_UNSIGNED_BYTE,
-      &buf[0] );
+      &buf[start_addr] );
 }
 
-static int nextDirty = 0;
 void YglUpdateColorRam() {
   int startUpdate = -1;
-  int curDirty = nextDirty;
-  nextDirty = 0;
   //YabThreadLock(_Ygl->crammutex);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   int dirty = 0;
-  for (int l=0; l<yabsys.MaxLineCount; l++){
-    // if ((Vdp2ColorRamUpdated[l] != 0) || (curDirty !=0)) {
-      // if ((Vdp2ColorRamUpdated[l] != 0) && (l==(yabsys.MaxLineCount-1))) nextDirty = 1;
-      //updateColorRamLine(l, _Ygl->colupd_min_addr[l], _Ygl->colupd_max_addr[l]);
-      updateColorRamLine(l, 0x0, 0xFFF);
-      Vdp2ColorRamUpdated[l] = 0;
-      _Ygl->colupd_min_addr[l] = 0xFFFFFFFF;
-      _Ygl->colupd_max_addr[l] = 0x00000000;
-    // }
+  for (int l=0; l<yabsys.VBlankLineCount; l++){
+    if ((Vdp2ColorRamUpdated[l] != 0) && (l!=0)) needToSync = 1;
+    updateColorRamLine(l, _Ygl->colupd_min_addr[l], _Ygl->colupd_max_addr[l]);
+    _Ygl->colupd_min_addr[l] = 0xFFFFFFFF;
+    _Ygl->colupd_max_addr[l] = 0x00000000;
   }
-  // if (nextDirty != 0) {
-syncColorRam();
-  // }
+  syncColorRam();
 
   return;
 }
