@@ -746,6 +746,8 @@ int YglVDP1AllocateTexture(vdp1cmd_struct * input, YglTexture * output, YglTextu
 
 void YglOnUpdateColorRamWord(u32 addr);
 void YglUpdateColorRam();
+void updateVdp2ColorRam(int line);
+void syncColorRam(void);
 int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
 
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm);

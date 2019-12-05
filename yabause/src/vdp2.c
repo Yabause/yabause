@@ -51,6 +51,7 @@ extern void waitVdp2DrawScreensEnd(int sync, int abort);
 int isSkipped = 0;
 
 u8 Vdp2ColorRamUpdated[512] = {0};
+u8 Vdp2ColorRamToSync[512] = {0};
 u8 A0_Updated = 0;
 u8 A1_Updated = 0;
 u8 B0_Updated = 0;
@@ -499,6 +500,7 @@ void Vdp2HBlankIN(void) {
 
 void Vdp2HBlankOUT(void) {
   int i;
+  updateVdp2ColorRam(yabsys.LineCount);
   if (yabsys.LineCount < yabsys.VBlankLineCount)
   {
     Vdp2Regs->TVSTAT &= ~0x0004;
@@ -571,6 +573,7 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 void Vdp2VBlankOUT(void) {
   g_frame_count++;
   FRAMELOG("***** VOUT %d *****", g_frame_count);
+  YglUpdateColorRam();
   if (Vdp2External.perline_alpha == Vdp2External.perline_alpha_a){
     Vdp2External.perline_alpha = Vdp2External.perline_alpha_b;
     Vdp2External.perline_alpha_draw = Vdp2External.perline_alpha_a;

@@ -6492,8 +6492,6 @@ static void VIDOGLVdp2DrawScreens(void)
   _Ygl->perLine[RBG0] = 0;
   _Ygl->perLine[RBG1] = 0;
 
-  YglUpdateColorRam();
-
 LOG_ASYN("===================================\n");
   if (Vdp1Regs->TVMR & 0x02) {
     Vdp2ReadRotationTable(0, &Vdp1ParaA, &Vdp2Lines[VDP2_DRAW_LINE], Vdp2Ram);
