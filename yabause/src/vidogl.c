@@ -2172,6 +2172,10 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
   int mapid = 0;
   int premapid = -1;
 
+  if (info->specialprimode == 1) {
+    info->priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
+  }
+
   info->patternpixelwh = 8 * info->patternwh;
   info->draww = _Ygl->rwidth;
 
@@ -2349,7 +2353,6 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
           x &= 8 - 1;
         }
       }
-
       *(texture->textdata++) = Vdp2RotationFetchPixel(info, x, y, info->cellw);
 
     }
@@ -5687,6 +5690,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
         infotmp.cellh = _Ygl->rheight;
 
         infotmp.flipfunction = 0;
+
         YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
         Vdp2DrawMapPerLine(&info, &texture, varVdp2Regs);
       }
@@ -5945,6 +5949,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
       infotmp.cellw = _Ygl->rwidth;
       infotmp.cellh = _Ygl->rheight;
       infotmp.flipfunction = 0;
+
       YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
       Vdp2DrawMapPerLine(&info, &texture, varVdp2Regs);
     }
