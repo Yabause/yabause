@@ -2176,10 +2176,6 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
   int mapid = 0;
   int premapid = -1;
 
-  if (info->specialprimode == 1) {
-    info->priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
-  }
-
   info->patternpixelwh = 8 * info->patternwh;
   info->draww = _Ygl->rwidth;
 
@@ -2299,6 +2295,10 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
         prepagex = pagex;
         prepagey = pagey;
       }
+      int priority = info->priority;
+      if (info->specialprimode == 1) {
+        info->priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
+      }
 
       int x = charx;
       int y = chary;
@@ -2358,7 +2358,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
         }
       }
       *(texture->textdata++) = Vdp2RotationFetchPixel(info, x, y, info->cellw);
-
+      info->priority = priority;
     }
     if((v & linemask) == linemask) lineindex++;
     texture->textdata += texture->w;
@@ -5196,7 +5196,6 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->enable = 0;
 
   info->cellh = 256 << vdp2_interlace;
-  info->specialcolorfunction = 0;
 
 // RBG1 mode
   info->enable = ((varVdp2Regs->BGON & 0x20)!=0);
