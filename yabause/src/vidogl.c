@@ -2068,6 +2068,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
   u32 cramindex;
   u32 alpha = info->alpha;
   u8 lowdot = 0x00;
+  u32 priority = 0;
   switch (info->colornumber)
   {
   case 0: // 4 BPP
@@ -2077,6 +2078,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
     else {
       int cc = 1;
       cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
+      Vdp2SetSpecialPriority(info, dot, &priority, &cramindex);
       switch (info->specialcolormode)
       {
       case 1: if (info->specialcolorfunction == 0) { cc = 0; } break;
@@ -2088,7 +2090,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
         break;
       }
-      return   VDP2COLOR(info->idScreen, alpha, info->priority, cc, cramindex);
+      return   VDP2COLOR(info->idScreen, alpha, priority, cc, cramindex);
     }
   case 1: // 8 BPP
     dot = Vdp2RamReadByte(NULL, Vdp2Ram, (info->charaddr + (y * cellw) + x));
@@ -2096,6 +2098,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
     else {
       int cc = 1;
       cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
+      Vdp2SetSpecialPriority(info, dot, &priority, &cramindex);
       switch (info->specialcolormode)
       {
       case 1: if (info->specialcolorfunction == 0) { cc = 0; } break;
@@ -2107,7 +2110,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
         break;
       }
-      return   VDP2COLOR(info->idScreen, alpha, info->priority, cc, cramindex);
+      return   VDP2COLOR(info->idScreen, alpha, priority, cc, cramindex);
     }
   case 2: // 16 BPP(palette)
     dot = Vdp2RamReadWord(NULL, Vdp2Ram, (info->charaddr + ((y * cellw) + x) * 2));
@@ -2115,6 +2118,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
     else {
       int cc = 1;
       cramindex = (info->coloroffset + dot);
+      Vdp2SetSpecialPriority(info, dot, &priority, &cramindex);
       switch (info->specialcolormode)
       {
       case 1: if (info->specialcolorfunction == 0) { cc = 0; } break;
@@ -2126,7 +2130,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
         break;
       }
-      return   VDP2COLOR(info->idScreen, alpha, info->priority, cc, cramindex);
+      return   VDP2COLOR(info->idScreen, alpha, priority, cc, cramindex);
     }
   case 3: // 16 BPP(RGB)
     dot = Vdp2RamReadWord(NULL, Vdp2Ram, (info->charaddr + ((y * cellw) + x) * 2));
