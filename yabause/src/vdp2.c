@@ -50,7 +50,7 @@ extern void waitVdp2DrawScreensEnd(int sync, int abort);
 
 int isSkipped = 0;
 
-u8 Vdp2ColorRamUpdated = 0;
+u8 Vdp2ColorRamUpdated[512] = {0};
 u8 A0_Updated = 0;
 u8 A1_Updated = 0;
 u8 B0_Updated = 0;
@@ -1134,7 +1134,6 @@ void Vdp2ReadReg(int addr) {
 
 void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    addr &= 0x1FF;
-
    switch (addr)
    {
       case 0x000:

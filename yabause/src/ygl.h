@@ -661,8 +661,8 @@ typedef struct {
    GLuint cram_tex;
    GLuint cram_tex_pbo;
    u32 * cram_tex_buf;
-   u32 colupd_min_addr;
-   u32 colupd_max_addr;
+   u32 colupd_min_addr[512];
+   u32 colupd_max_addr[512];
    YabMutex * crammutex;
 
    int msb_shadow_count_[2];

@@ -256,7 +256,7 @@ SHADER_VERSION
 "  ivec2 addr = ivec2(int(v_texcoord.x),int(v_texcoord.y));\n"
 "  vec4 txindex = texelFetch( s_texture, addr ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
-"  vec4 txcol = texelFetch( s_color,  ivec2( int(txindex.g*255.0)<<8 | int(txindex.r*255.0) ,0 )  , 0 );\n"
+"  vec4 txcol = texelFetch( s_color,  ivec2( int(txindex.g*255.0)<<8 | int(txindex.r*255.0) , linepos.x )  , 0 );\n"
 "  int msb = int(txindex.b * 255.0)&0x1; \n"
 "  if (is_perline == 1) {\n"
 "    vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
