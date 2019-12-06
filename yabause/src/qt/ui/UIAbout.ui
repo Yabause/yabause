@@ -33,20 +33,40 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="lDiscord" >
-     <property name="toolTip" >
-      <string>Youtube Channel</string>
-     </property>
-     <property name="text" >
-      <string>&lt;a href="https://www.youtube.com/channel/UCCmvLrXartUzL7rU5pBnA-A">&lt;img src=":/icons/icons/youtube_social_squircle_red.png">&lt;/a></string>
-     </property>
-     <property name="alignment" >
-      <set>Qt::AlignCenter</set>
-     </property>
-     <property name="openExternalLinks" >
-      <bool>true</bool>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" >
+      <item>
+        <widget class="QLabel" name="lYoutube" >
+         <property name="toolTip" >
+          <string>Youtube Channel</string>
+         </property>
+         <property name="text" >
+          <string>&lt;a href="https://www.youtube.com/channel/UCCmvLrXartUzL7rU5pBnA-A">&lt;img src=":/icons/icons/youtube_social_squircle_red.png">&lt;/a></string>
+         </property>
+         <property name="alignment" >
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="openExternalLinks" >
+          <bool>true</bool>
+         </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QLabel" name="lDiscord" >
+         <property name="toolTip" >
+          <string>Discord Channel</string>
+         </property>
+         <property name="text" >
+          <string>&lt;a href="https://discord.gg/c5q4EU2">&lt;img src=":/icons/icons/Discord-Logo-Color.png">&lt;/a></string>
+         </property>
+         <property name="alignment" >
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="openExternalLinks" >
+          <bool>true</bool>
+         </property>
+        </widget>
+      </item>
+    </layout>
    </item>
    <item>
     <layout class="QHBoxLayout" >

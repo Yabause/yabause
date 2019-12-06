@@ -39,6 +39,9 @@
     </qresource>
     <qresource prefix="/icons">
         <file>icons/youtube_social_squircle_red.png</file>
+        <file>icons/Discord-Logo-Black.png</file>
+        <file>icons/Discord-Logo-Color.png</file>
+        <file>icons/Discord-Logo-White.png</file>
         <file>icons/kronos.icns</file>
         <file>icons/kronos.png</file>
     </qresource>
