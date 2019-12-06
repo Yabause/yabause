@@ -203,51 +203,18 @@ SHADER_VERSION_COMPUTE
 " return vec4(float((ret >> 0)&0xFFu)/255.0,float((ret >> 8)&0xFFu)/255.0, float((ret >> 16)&0xFFu)/255.0, float((ret >> 24)&0xFFu)/255.0);"
 "\n}"
 
-"uint PixelIsSpecialPriority(uint specialcode_, uint dot)\n"
-"{\n"
-"   dot &= 0xfu;\n"
-"   if ((specialcode_ & 0x01u) != 0u)\n"
-"   {\n"
-"      if (dot == 0u || dot == 1u)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x02u) != 0u)\n"
-"   {\n"
-"      if (dot == 2u || dot == 3u)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x04u) != 0u)\n"
-"   {\n"
-"      if (dot == 4u || dot == 5u)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x08u) != 0u)\n"
-"   {\n"
-"      if (dot == 6u || dot == 7u)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x10u) != 0u)\n"
-"   {\n"
-"      if (dot == 8u || dot == 9u)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x20u) != 0u)\n"
-"   {\n"
-"      if (dot == 0xau || dot == 0xbu)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x40u) != 0u)\n"
-"   {\n"
-"      if (dot == 0xcu || dot == 0xdu)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x80u) != 0u)\n"
-"   {\n"
-"      if (dot == 0xeu || dot == 0xfu)\n"
-"         return 1u;\n"
-"   }\n"
-"   return 0u;\n"
-"}\n"
+"int PixelIsSpecialPriority( uint specialcode, uint dot ) { \n"
+"  dot &= 0xfu; \n"
+"  if ( (specialcode & 0x01u) != 0u && (dot == 0u || dot == 1u) ){ return 1;} \n"
+"  if ( (specialcode & 0x02u) != 0u && (dot == 2u || dot == 3u) ){ return 1;} \n"
+"  if ( (specialcode & 0x04u) != 0u && (dot == 4u || dot == 5u) ){ return 1;} \n"
+"  if ( (specialcode & 0x08u) != 0u && (dot == 6u || dot == 7u) ){ return 1;} \n"
+"  if ( (specialcode & 0x10u) != 0u && (dot == 8u || dot == 9u) ){ return 1;} \n"
+"  if ( (specialcode & 0x20u) != 0u && (dot == 0xau || dot == 0xbu) ){ return 1;} \n"
+"  if ( (specialcode & 0x40u) != 0u && (dot == 0xcu || dot == 0xdu) ){ return 1;} \n"
+"  if ( (specialcode & 0x80u) != 0u && (dot == 0xeu || dot == 0xfu) ){ return 1;} \n"
+"  return 0; \n"
+"} \n"
 
 "uint Vdp2SetSpecialPriority(uint dot) {\n"
 "  uint prio = priority;\n"
@@ -2726,7 +2693,7 @@ DEBUGWIP("Init\n");
     error = glGetError();
 
     if (rbg->info.idScreen == RBG0) updateRBG0(rbg, varVdp2Regs);
-               else updateRBG1(rbg, varVdp2Regs);
+    else updateRBG1(rbg, varVdp2Regs);
 
        ErrorHandle("glUseProgram");
 
@@ -2772,8 +2739,8 @@ DEBUGWIP("Init\n");
        ErrorHandle("glBufferSubData");
        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_paraA_);
 
-       uniform.vres_scale = (float)1.0f/_Ygl->heightRatio;
-       uniform.hres_scale = (float)1.0f/_Ygl->widthRatio;
+       uniform.vres_scale = 1.0f/(float)_Ygl->heightRatio;
+       uniform.hres_scale = 1.0f/(float)_Ygl->widthRatio;
        uniform.cellw = rbg->info.cellw;
        uniform.cellh = rbg->info.cellh;
        uniform.paladdr_ = rbg->info.paladdr;
@@ -2813,12 +2780,12 @@ DEBUGWIP("Init\n");
   glBindBufferBase(GL_UNIFORM_BUFFER, 3, scene_uniform);
 
        if (rbg->rgb_type == 0x04  ) {
-               DEBUGWIP("Draw RBG1\n");
+               DEBUGWIP("Draw RBG1 [%d -> %d]\n", uniform.startLine, uniform.endLine);
                glBindImageTexture(0, tex_surface_1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
                ErrorHandle("glBindImageTexture 1");
         }
        else {
-               DEBUGWIP("Draw RBG0\n");
+               DEBUGWIP("Draw RBG0 [%d -> %d]\n", uniform.startLine, uniform.endLine);
                glBindImageTexture(0, tex_surface_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
                ErrorHandle("glBindImageTexture 0");
        }

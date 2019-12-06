@@ -2806,10 +2806,12 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 		  const float vstep = 1.0 / _Ygl->heightRatio;
 		  j = 0.0f;
       int lvres = rbg->vres;
+      int lvstart = vstart;
       if (vres >= 480) {
         lvres >>= 1;
+        lvstart >>= 1;
       }
-		  for (int jj = 0; jj < lvres; jj++) {
+		  for (int jj = lvstart; jj < lvstart+lvres; jj++) {
 			  if ((varVdp2Regs->LCTA.part.U & 0x8000) != 0) {
 				  rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc*(int)(j));
 				  *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
