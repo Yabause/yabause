@@ -1643,9 +1643,7 @@ int Vdp2LoadState(FILE *fp, UNUSED int version, int size)
    if(VIDCore) VIDCore->Resize(0,0,0,0,0);
 
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
-   for (int i = 0; i < 0x1000; i += 2) {
-     YglOnUpdateColorRamWord(i);
-   }
+   YglDirtyColorRamWord();
 #endif
 
    return size;

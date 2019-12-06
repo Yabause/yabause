@@ -745,6 +745,7 @@ void YglEndWindow( vdp2draw_struct * info );
 int YglVDP1AllocateTexture(vdp1cmd_struct * input, YglTexture * output, YglTextureManager *tm);
 
 void YglOnUpdateColorRamWord(u32 addr);
+void YglDirtyColorRamWord(void);
 void YglUpdateColorRam();
 void updateVdp2ColorRam(int line);
 void syncColorRam(void);

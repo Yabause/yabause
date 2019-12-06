@@ -3479,49 +3479,59 @@ u32 * YglGetColorRamPointer(int line) {
   return &_Ygl->cram_tex_buf[2048*line];
 }
 
+
+static void YglOnUpdateColorRamWordLine(u32 addr, int line) {
+
+    u32 * buf;
+    if (_Ygl == NULL) return;
+
+    Vdp2ColorRamUpdated[line] = 1;
+
+    if (_Ygl->colupd_min_addr[line] > addr)
+      _Ygl->colupd_min_addr[line] = addr;
+    if (_Ygl->colupd_max_addr[line] < addr)
+      _Ygl->colupd_max_addr[line] = addr;
+
+    buf = YglGetColorRamPointer(line);
+    if (buf == NULL) {
+      return;
+    }
+
+    switch (Vdp2Internal.ColorMode)
+    {
+    case 0:
+    case 1:
+    {
+      u16 tmp;
+      u8 alpha = 0;
+      tmp = T2ReadWord(Vdp2ColorRam, addr);
+      if (tmp & 0x8000) alpha = 0xF8;
+      buf[(addr >> 1) & 0x7FF] = SAT2YAB1(alpha, tmp);
+      break;
+    }
+    case 2:
+    {
+      u32 tmp1 = T2ReadWord(Vdp2ColorRam, (addr&0xFFC));
+      u32 tmp2 = T2ReadWord(Vdp2ColorRam, (addr&0xFFC)+2);
+      u8 alpha = 0;
+      if (tmp1 & 0x8000) alpha = 0xF8;
+      buf[(addr >> 2) & 0x7FF] = SAT2YAB2(alpha, tmp1, tmp2);
+      break;
+    }
+    default:
+      break;
+    }
+}
+
+void YglDirtyColorRamWord() {
+  for (int l=0; l<512; l++) {
+    for (int i = 0; i < 0x1000; i += 2) {
+      YglOnUpdateColorRamWordLine(i,l);
+    }
+  }
+}
 void YglOnUpdateColorRamWord(u32 addr) {
-
-  u32 * buf;
-  if (_Ygl == NULL) return;
-
-  Vdp2ColorRamUpdated[yabsys.LineCount] = 1;
-
-  if (_Ygl->colupd_min_addr[yabsys.LineCount] > addr)
-    _Ygl->colupd_min_addr[yabsys.LineCount] = addr;
-  if (_Ygl->colupd_max_addr[yabsys.LineCount] < addr)
-    _Ygl->colupd_max_addr[yabsys.LineCount] = addr;
-
-  buf = YglGetColorRamPointer(yabsys.LineCount);
-  if (buf == NULL) {
-    //YabThreadUnLock(_Ygl->crammutex);
-    return;
-  }
-
-  switch (Vdp2Internal.ColorMode)
-  {
-  case 0:
-  case 1:
-  {
-    u16 tmp;
-    u8 alpha = 0;
-    tmp = T2ReadWord(Vdp2ColorRam, addr);
-    if (tmp & 0x8000) alpha = 0xF8;
-    buf[(addr >> 1) & 0x7FF] = SAT2YAB1(alpha, tmp);
-    break;
-  }
-  case 2:
-  {
-    u32 tmp1 = T2ReadWord(Vdp2ColorRam, (addr&0xFFC));
-    u32 tmp2 = T2ReadWord(Vdp2ColorRam, (addr&0xFFC)+2);
-    u8 alpha = 0;
-    if (tmp1 & 0x8000) alpha = 0xF8;
-    buf[(addr >> 2) & 0x7FF] = SAT2YAB2(alpha, tmp1, tmp2);
-    break;
-  }
-  default:
-    break;
-  }
-  //YabThreadUnLock(_Ygl->crammutex);
+  YglOnUpdateColorRamWordLine(addr, yabsys.LineCount);
 }
 
 void updateVdp2ColorRam(int line){
