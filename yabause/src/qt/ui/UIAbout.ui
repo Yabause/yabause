@@ -33,12 +33,12 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="lMonkeyStudio" >
+    <widget class="QLabel" name="lDiscord" >
      <property name="toolTip" >
-      <string>http://www.monkeystudio.org</string>
+      <string>Youtube Channel</string>
      </property>
      <property name="text" >
-      <string>&lt;a href="http://www.monkeystudio.org">&lt;img src=":/icons/icons/made.png">&lt;/a></string>
+      <string>&lt;a href="https://www.youtube.com/channel/UCCmvLrXartUzL7rU5pBnA-A">&lt;img src=":/icons/icons/youtube_social_squircle_red.png">&lt;/a></string>
      </property>
      <property name="alignment" >
       <set>Qt::AlignCenter</set>

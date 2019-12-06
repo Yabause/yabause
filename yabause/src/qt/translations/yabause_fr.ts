@@ -51,16 +51,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/UIAbout.ui" line="38"/>
-        <source>http://www.monkeystudio.org</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/UIAbout.ui" line="41"/>
-        <source>&lt;a href=&quot;http://www.monkeystudio.org&quot;&gt;&lt;img src=&quot;:/icons/icons/made.png&quot;&gt;&lt;/a&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../ui/UIAbout.ui" line="75"/>
         <source>Ok</source>
         <translation type="unfinished"></translation>
