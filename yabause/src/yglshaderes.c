@@ -172,7 +172,6 @@ SHADER_VERSION
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_perline;  \n"
 "uniform int is_perline; \n"
-"uniform sampler2D s_color;\n"
 "out vec4 fragColor;\n"
 "void main()   \n"
 "{  \n"
@@ -242,6 +241,7 @@ SHADER_VERSION
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
 "uniform float u_vwidth; \n"
+"uniform float u_hratio; \n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_perline;  \n"
 "uniform int is_perline; \n"
@@ -256,7 +256,7 @@ SHADER_VERSION
 "  ivec2 addr = ivec2(int(v_texcoord.x),int(v_texcoord.y));\n"
 "  vec4 txindex = texelFetch( s_texture, addr ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
-"  vec4 txcol = texelFetch( s_color,  ivec2( int(txindex.g*255.0)<<8 | int(txindex.r*255.0) , linepos.x )  , 0 );\n"
+"  vec4 txcol = texelFetch( s_color,  ivec2( int(txindex.g*255.0)<<8 | int(txindex.r*255.0) , linepos.x/u_hratio )  , 0 );\n"
 "  int msb = int(txindex.b * 255.0)&0x1; \n"
 "  if (is_perline == 1) {\n"
 "    vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
@@ -276,6 +276,7 @@ static int id_normal_cram_s_texture = -1;
 static int id_normal_cram_s_perline = -1;
 static int id_normal_cram_isperline = -1;
 static int id_normal_cram_emu_height = -1;
+static int id_normal_cram_vdp2_hratio = -1;
 static int id_normal_cram_emu_width = -1;
 static int id_normal_cram_vheight = -1;
 static int id_normal_cram_vwidth = -1;
@@ -295,6 +296,7 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
   glUniform1i(id_normal_cram_s_color, 1);
   glUniform1i(id_normal_cram_s_perline, 2);
   glUniform1i(id_normal_cram_isperline, (_Ygl->perLine[id] != 0));
+  glUniform1f(id_normal_cram_vdp2_hratio, (float)_Ygl->vdp2hdensity);
   if ((id == RBG0) && (_Ygl->rbg_use_compute_shader)){
     glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
     glUniform1f(id_normal_cram_emu_width, (float)_Ygl->rwidth / (float)_Ygl->width);
@@ -1285,6 +1287,7 @@ int YglProgramInit()
   id_normal_cram_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
   id_normal_cram_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_emu_height");
+  id_normal_cram_vdp2_hratio = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_hratio");
   id_normal_cram_vheight = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_vheight");
   id_normal_cram_vwidth = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_vwidth");
 
