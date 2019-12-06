@@ -2541,7 +2541,7 @@ DEBUGWIP("Init\n");
 					}
 				}
 			}
-
+      else {
 				if (rbg->info.isbitmap) {
 					switch (rbg->info.colornumber) {
 					case 0: {
@@ -2676,6 +2676,7 @@ DEBUGWIP("Init\n");
 						}
 					}
 				}
+			}
 			}
 
 	}
