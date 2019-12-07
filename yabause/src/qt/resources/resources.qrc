@@ -42,4 +42,7 @@
         <file>icons/yabause.icns</file>
         <file>icons/yabause.png</file>
     </qresource>
+    <qresource prefix="/images">
+        <file alias="about.png">about.png</file>
+    </qresource>
 </RCC>

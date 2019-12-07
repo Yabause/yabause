@@ -47,7 +47,8 @@
 #include <QUrl>
 #include <QDesktopServices>
 #include <QDateTime>
-
+#include <QWindow>
+#include <QMetaObject>
 #include <QDebug>
 
 extern "C" {
@@ -99,6 +100,7 @@ UIYabause::UIYabause( QWidget* parent )
 	mYabauseGL = new YabauseGL( this );
 	// and set it as central application widget
 	setCentralWidget( mYabauseGL );
+	mYabauseGL->show();
 	// create log widget
 	teLog = new QTextEdit( this );
 	teLog->setReadOnly( true );
@@ -198,6 +200,9 @@ void UIYabause::showEvent( QShowEvent* e )
 		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
 		aViewFPS->setChecked( vs->value( "General/ShowFPS" ).toBool() );
 		mInit = true;
+
+		QMetaObject::invokeMethod(this, "on_aHelpAbout_triggered", Qt::QueuedConnection );
+
 	}
 }
 
@@ -326,10 +331,13 @@ void UIYabause::resizeEvent( QResizeEvent* event )
   mYabauseGL->viewport_origin_x_ = 0;
   mYabauseGL->viewport_origin_y_ = 0;
 
-	if (event->oldSize().width() != event->size().width())
-    fixAspectRatio(event->size().width(), event->size().height());
+	if (event->oldSize().width() != event->size().width()){
+    	fixAspectRatio(event->size().width(), event->size().height());
+		mYabauseGL->updateView( event->size() );
+	}
 
 	QMainWindow::resizeEvent( event );
+
 }
 
 void UIYabause::adjustHeight(int & height)
@@ -396,6 +404,15 @@ void UIYabause::resizeIntegerScaling()
 void UIYabause::swapBuffers()
 { 
    resizeIntegerScaling();
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+    // QOpenGLContext complains if we swap on an non-exposed QWindow
+    if (!mYabauseGL || !mYabauseGL->windowHandle()->isExposed()){
+		printf("Not Exporsed\n");
+        return;
+	}
+#endif
+
 	mYabauseGL->swapBuffers(); 
 	mYabauseGL->makeCurrent();
 }
@@ -556,6 +573,7 @@ void UIYabause::fixAspectRatio( int width , int height )
       setMinimumSize(0, 0);
       break;
 	}
+
 }
 
 void UIYabause::getSupportedResolutions()
@@ -1137,6 +1155,8 @@ void UIYabause::on_aFileQuit_triggered()
 
 void UIYabause::on_aEmulationRun_triggered()
 {
+	mYabauseGL->makeCurrent();
+
 	if ( mYabauseThread->emulationPaused() )
 	{
 		mYabauseThread->pauseEmulation( false, false );

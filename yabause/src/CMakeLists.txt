@@ -353,14 +353,14 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			#)
 			add_definitions(-DYAB_ASYNC_RENDERING)
 		endif()
-		if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-			add_definitions(-D_OGLES3_)
+		#if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+		#	add_definitions(-D_OGLES3_)
 			set(yabause_SOURCES ${yabause_SOURCES} 
 				yglcache.c
 				ygles.c
 				yglshaderes.c
 			)
-		endif()
+		#endif()
 
 		if( USE_EGL )
 		else()
@@ -815,15 +815,15 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "An
 
         if (!ANDROID)
           check_include_file("linux/joystick.h" LINUX_HAS_JOYSTICK)
-          	if (LINUX_HAS_JOYSTICK)
-          		set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
-          		set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
-          	endif()
+          if (LINUX_HAS_JOYSTICK)
+          	set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
+          	set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
+          endif()
 
-		check_c_source_compiles("
-			#include <linux/cdrom.h>
-			int main(int argc, char ** argv) { int i = CDSL_CURRENT; }
-		" LINUX_CDROM_H_OK)
+        check_c_source_compiles("
+				#include <linux/cdrom.h>
+				int main(int argc, char ** argv) { int i = CDSL_CURRENT; }
+			" LINUX_CDROM_H_OK)
 		if (NOT LINUX_CDROM_H_OK)
 				add_definitions(-DLINUX_CDROM_H_IS_BROKEN)
 		endif (NOT LINUX_CDROM_H_OK)
@@ -855,7 +855,7 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 ${YAB_OPTIMIZATION}")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
@@ -942,7 +942,7 @@ endmacro(yab_port_stop)
 macro(yab_port_success YAB_TARGET)
 	if (NOT YAB_MULTIBUILD)
 		set_target_properties(${YAB_TARGET} PROPERTIES OUTPUT_NAME yabasanshiro)
-		set(YAB_PORT_NAME "yabause")
+		set(YAB_PORT_NAME "yabasanshiro")
 	else ()
 		set(YAB_PORT_NAME ${YAB_TARGET})
 	endif ()
