@@ -1057,10 +1057,17 @@ void YabauseStartSlave(void) {
       SSH2->regs.PC = SH2MappedMemoryReadLong(SSH2, 0x06000250);
       if (SH2MappedMemoryReadLong(SSH2, 0x060002AC) != 0)
          SSH2->regs.R[15] = SH2MappedMemoryReadLong(SSH2, 0x060002AC);
+
+      SSH2->regs.SR.part.I = 0;
       SH2SetRegisters(SSH2, &SSH2->regs);
+SH2HandleInterrupts(SSH2);
    }
    else {
      SH2PowerOn(SSH2);
+     SH2GetRegisters(SSH2, &SSH2->regs);
+     SSH2->regs.PC = 0x20000200;
+     SH2SetRegisters(SSH2, &SSH2->regs);
+
    }
 
    yabsys.IsSSH2Running = 1;
