@@ -901,7 +901,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
             context->onchip.DVCR |= 1;
 
             if (context->onchip.DVCR & 0x2)
-               SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (MSH2->onchip.IPRA >> 12) & 0xF);
+               SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (context->onchip.IPRA >> 12) & 0xF);
          }
          else
          {
@@ -915,7 +915,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
                context->onchip.DVDNTH = 0xFFFFFFFE; // fix me
 
                if (context->onchip.DVCR & 0x2)
-                  SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (MSH2->onchip.IPRA >> 12) & 0xF);
+                  SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (context->onchip.IPRA >> 12) & 0xF);
             }
             else if ((s32)(quotient >> 32) < -1)
             {
@@ -924,7 +924,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
                context->onchip.DVDNTH = 0xFFFFFFFE; // fix me
 
                if (context->onchip.DVCR & 0x2)
-                  SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (MSH2->onchip.IPRA >> 12) & 0xF);
+                  SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (context->onchip.IPRA >> 12) & 0xF);
             }
             else
             {
