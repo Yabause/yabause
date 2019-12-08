@@ -559,12 +559,8 @@ void FASTCALL OnchipWriteByte(SH2_struct *context, u32 addr, u8 val) {
       case 0x010:
 
          context->onchip.TIER = (val & 0x8E) | 0x1;
-         if ((val & 0x80) && (context == SSH2) && (SSH2->onchip.FTCSR & 0x80)){
-            SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
-         }
-
-         if ((val & 0x80) && (context == MSH2) && (MSH2->onchip.FTCSR & 0x80)){
-           SH2SendInterrupt(MSH2, (MSH2->onchip.VCRC >> 8) & 0x7F, (MSH2->onchip.IPRB >> 8) & 0xF);
+         if ((val & 0x80) && (context->onchip.FTCSR & 0x80)){
+            SH2SendInterrupt(context, (context->onchip.VCRC >> 8) & 0x7F, (context->onchip.IPRB >> 8) & 0xF);
          }
          return;
       case 0x011:
