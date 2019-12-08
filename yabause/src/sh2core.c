@@ -1056,13 +1056,11 @@ static void UpdateLRU(SH2_struct *context, u8 line, u8 way) {
 
 static u8 getLRU(SH2_struct *context, u8 line) {
 //Table 8.3 SH7604_Hardware_Manual.pdf
-  u8 way = 3;
-  if ((context->cacheLRU[line] & 0x20) != 0) way=0;
-  if ((context->cacheLRU[line] & 0x10) != 0) way=0;
-  if ((context->cacheLRU[line] & 0x08) != 0) way=0;
-  if ((context->cacheLRU[line] & 0x04) != 0) way=1;
-  if ((context->cacheLRU[line] & 0x02) != 0) way=1;
-  if ((context->cacheLRU[line] & 0x01) != 0) way=2;
+  u8 way = 0;
+  if ((context->cacheLRU[line] & 0x38) == 0x38) way=0;
+  else if ((context->cacheLRU[line] & 0x26) == 0x6) way=1;
+  else if ((context->cacheLRU[line] & 0x15) == 0x1) way=2;
+  else if ((context->cacheLRU[line] & 0x0B) == 0x0) way=3;
   context->cacheLRU[line] = 0;
   return way;
 }
