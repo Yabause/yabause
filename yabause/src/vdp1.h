@@ -42,6 +42,8 @@ typedef struct {
    u16 COPR;
    u16 MODR;
 
+   u16 lCOPR;
+
    u32 addr;
 
    s16 localX;
