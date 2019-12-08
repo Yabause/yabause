@@ -858,7 +858,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
                context->onchip.DVDNTL = quotient;
                context->onchip.DVDNTH = remainder;
             }
-
+            context->onchip.DVDNT = context->onchip.DVDNTL;
             context->onchip.DVDNTUL = context->onchip.DVDNTL;
             context->onchip.DVDNTUH = context->onchip.DVDNTH;
          }
@@ -931,7 +931,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
                context->onchip.DVDNTL = quotient;
                context->onchip.DVDNTH = remainder;
             }
-
+            context->onchip.DVDNT = context->onchip.DVDNTL;
             context->onchip.DVDNTUL = context->onchip.DVDNTL;
             context->onchip.DVDNTUH = context->onchip.DVDNTH;
          }
