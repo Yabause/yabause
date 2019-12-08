@@ -401,11 +401,11 @@ void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 v
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
-   u16 command = T1ReadWord(ram, regs->addr);
+   u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
-      regs->COPR = regs->addr >> 3;
+      regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
@@ -443,7 +443,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
-            regs->COPR = regs->addr >> 3;
+            regs->COPR = (regs->addr & 0x7FFFF) >> 3;
             return;
          }
       }
@@ -451,7 +451,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
 	  if (regs->EDSR & 0x02){
 
-		  regs->COPR = regs->addr >> 3;
+		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
 		  return;
 	  }
 
@@ -479,11 +479,11 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          break;
       }
 
-      command = T1ReadWord(ram, regs->addr);
+      command = Vdp1RamReadWord(NULL,ram, regs->addr);
       //If we change directly CPR to last value, scorcher will not boot.
       //If we do not change it, Noon will not start
       //So store the value and update COPR with last value at VBlank In
-      regs->lCOPR = regs->addr >> 3;
+      regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
 }
