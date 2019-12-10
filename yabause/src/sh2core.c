@@ -843,7 +843,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
                   SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (context->onchip.IPRA >> 12) & 0xF);
               }
             }
-            else if ((s32)(quotient >> 32) < -1)
+            else if ((s32)((s64)quotient >> 32) < -1)
             {
                context->onchip.DVCR |= 1;
                context->onchip.DVDNTL = 0x80000000;

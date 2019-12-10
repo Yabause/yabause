@@ -205,7 +205,7 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.CMDXD = cmd.CMDXA;
   cmd.CMDYD = cmd.CMDYA + cmd.h;
 
-  if ((cmd.CMDPMOD >> 3) & 0x7u == 5) {
+  if (((cmd.CMDPMOD >> 3) & 0x7u) == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1Fu;
@@ -329,7 +329,7 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.CMDXD = x + Vdp1Regs->localX;
   cmd.CMDYD = y + rh + Vdp1Regs->localY;
 
-  if ((cmd.CMDPMOD >> 3) & 0x7u == 5) {
+  if (((cmd.CMDPMOD >> 3) & 0x7u) == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1Fu;
@@ -393,7 +393,7 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.CMDXD += Vdp1Regs->localX;
   cmd.CMDYD += Vdp1Regs->localY;
 
-  if ((cmd.CMDPMOD >> 3) & 0x7u == 5) {
+  if (((cmd.CMDPMOD >> 3) & 0x7u) == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1Fu;

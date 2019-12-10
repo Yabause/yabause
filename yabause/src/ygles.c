@@ -2768,11 +2768,11 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
   Win_op[RBG0] = (varVdp2Regs->WCTLC >> 7) & 0x01;
   Win_op[SPRITE] = (varVdp2Regs->WCTLC >> 15) & 0x01;
 
-  Win0_mode[SPRITE+1] = ((varVdp2Regs->WCTLD >> 8) & 0x01 == 0);
+  Win0_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 8) & 0x01) == 0);
   Win0[SPRITE+1] = (varVdp2Regs->WCTLD >> 9) & 0x01;
-  Win1_mode[SPRITE+1] = ((varVdp2Regs->WCTLD >> 10) & 0x01 == 0);
+  Win1_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 10) & 0x01) == 0);
   Win1[SPRITE+1] = (varVdp2Regs->WCTLD >> 11) & 0x01;
-  WinS_mode[SPRITE+1] = ((varVdp2Regs->WCTLD >> 12) & 0x01 == 0);
+  WinS_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 12) & 0x01) == 0);
   WinS[SPRITE+1] = (varVdp2Regs->WCTLD >> 13) & 0x01;
   Win_op[SPRITE+1] = (varVdp2Regs->WCTLD >> 15) & 0x01;
 
@@ -2901,7 +2901,7 @@ void YglSetVDP2Reg(u32 * pbuf, int start, int size){
 void YglUpdateVdp2Reg() {
   int needupdate = 0;
   int size = (_Ygl->vdp2_use_compute_shader == 0)?sizeof(char):sizeof(int);
-  int step = ((Vdp2Lines[0].TVMD >> 6) & 0x3 == 3)?2:1;
+  int step = (((Vdp2Lines[0].TVMD >> 6) & 0x3) == 3)?2:1;
   for (int i = 0; i<_Ygl->rheight; i++) {
     Vdp2 *varVdp2Regs = &Vdp2Lines[i/step];
     u8 bufline[NB_VDP2_REG*4] = {0};

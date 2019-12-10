@@ -887,7 +887,7 @@ void ScuExec(u32 timing) {
    int i;
 
    if ( ScuRegs->T1MD & 0x1 ){
-     if (ScuRegs->T1MD & 0x80 == 0) {
+     if ((ScuRegs->T1MD & 0x80) == 0) {
        ScuTimer1Exec(timing);
      }
      else {

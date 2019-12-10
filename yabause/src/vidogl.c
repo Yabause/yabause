@@ -6534,7 +6534,7 @@ LOG_ASYN("*********************************\n");
 
 int WaitVdp2Async(int sync) {
   int empty = 0;
-  if ((vdp2busy == 1)) {
+  if (vdp2busy == 1) {
 #ifdef RGB_ASYNC
     if (rotq_end != NULL) {
       empty = 1;
@@ -6564,7 +6564,7 @@ int WaitVdp2Async(int sync) {
 void waitVdp2DrawScreensEnd(int sync, int abort) {
   if (abort == 0){
     YglCheckFBSwitch(0);
-    if ((vdp2busy == 1)) {
+    if (vdp2busy == 1) {
       int empty = WaitVdp2Async(sync);
       if (empty == 0) {
         YglTmPush(YglTM_vdp2);
