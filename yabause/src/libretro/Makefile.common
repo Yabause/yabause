@@ -67,8 +67,6 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/vdp2.c \
 	$(SOURCE_DIR)/common_glshader.c \
 	$(SOURCE_DIR)/vidshared.c \
-	$(SOURCE_DIR)/vidsoft.c \
-	$(SOURCE_DIR)/titan/titan.c \
 	$(SOURCE_DIR)/yabause.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \

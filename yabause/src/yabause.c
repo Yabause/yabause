@@ -621,6 +621,7 @@ int YabauseInit(yabauseinit_struct *init)
    GdbStubInit(MSH2, 43434);
 #endif
 
+#ifndef NO_VIDCORE_SOFT
    if (yabsys.UseThreads)
    {
       int num = yabsys.NumThreads < 1 ? 1 : yabsys.NumThreads;
@@ -634,6 +635,7 @@ int YabauseInit(yabauseinit_struct *init)
       VIDSoftSetNumLayerThreads(0);
       VIDSoftSetNumPriorityThreads(0);
    }
+#endif
    return 0;
 }
 
