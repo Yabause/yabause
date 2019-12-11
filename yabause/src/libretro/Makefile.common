@@ -130,13 +130,18 @@ else
 	$(SOURCE_DIR)/m68kc68k.c
 endif
 
-ifeq ($(ARCH_IS_LINUX), 1)
-	SOURCES_C += $(SOURCE_DIR)/thr-linux.c
-else ifeq ($(ARCH_IS_MACOSX), 1)
-	SOURCES_C += $(SOURCE_DIR)/thr-linux.c \
-	$(SOURCE_DIR)/pthread_barrier.c
+ifeq ($(USE_RTHREADS), 1)
+	SOURCES_C += $(SOURCE_DIR)/thr-rthreads.c \
+		$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
 else
-	SOURCES_C += $(SOURCE_DIR)/thr-windows.c
+	ifeq ($(ARCH_IS_LINUX), 1)
+		SOURCES_C += $(SOURCE_DIR)/thr-linux.c
+	else ifeq ($(ARCH_IS_MACOSX), 1)
+		SOURCES_C += $(SOURCE_DIR)/thr-linux.c \
+			$(SOURCE_DIR)/pthread_barrier.c
+	else
+		SOURCES_C += $(SOURCE_DIR)/thr-windows.c
+	endif
 endif
 
 M68KMAKE_EXE = m68kmake$(EXE_EXT)

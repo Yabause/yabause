@@ -13,6 +13,7 @@ ARCH_IS_MACOSX = 0
 FORCE_GLEW = 0
 HAVE_SYS_PARAM_H = 1
 HAVE_FSEEKO = 0
+USE_RTHREADS = 1
 
 ifeq ($(platform),)
 	platform = unix
