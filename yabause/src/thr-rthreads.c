@@ -20,14 +20,16 @@
 
 // Some parts of this file don't use rthreads because rthreads doesn't cover all required functionalities
 
-#ifndef _WIN32
-#include <sched.h>
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <errno.h>
-#include <semaphore.h>
+#if !defined(ARCH_IS_LINUX) && !defined(ARCH_IS_MACOSX)
+	#include <windows.h>
 #else
-#include <windows.h>
+	#include <sched.h>
+	#include <unistd.h>
+	#if defined(ARCH_IS_MACOSX)
+		#include <dispatch/dispatch.h>
+	#else
+		#include <semaphore.h>
+	#endif
 #endif
 
 #include "core.h"
@@ -61,7 +63,7 @@ typedef struct YabMutex_rthreads
 
 static struct thd_s thread_handle[YAB_NUM_THREADS];
 
-#ifdef _WIN32
+#if !defined(ARCH_IS_LINUX) && !defined(ARCH_IS_MACOSX)
 #ifdef HAVE_THREAD_STORAGE
 static sthread_tls_t hnd_key;
 static int hnd_key_once = 0;
@@ -72,7 +74,7 @@ static int hnd_key_once = 0;
 
 int YabThreadStart(unsigned int id, void (*func)(void *), void *arg)
 {
-#ifdef _WIN32
+#if !defined(ARCH_IS_LINUX) && !defined(ARCH_IS_MACOSX)
 #ifdef HAVE_THREAD_STORAGE
 	if (hnd_key_once == 0)
 	{
@@ -115,7 +117,7 @@ void YabThreadWait(unsigned int id)
 
 void YabThreadYield(void)
 {
-#ifdef _WIN32
+#if !defined(ARCH_IS_LINUX) && !defined(ARCH_IS_MACOSX)
 	SleepEx(0, 0);
 #else
 	sched_yield();
@@ -124,7 +126,7 @@ void YabThreadYield(void)
 
 void YabThreadSleep(void)
 {
-#ifdef _WIN32
+#if !defined(ARCH_IS_LINUX) && !defined(ARCH_IS_MACOSX)
 #ifdef HAVE_THREAD_STORAGE
 	struct thd_s *thd = (struct thd_s *)sthread_tls_get(hnd_key);
 	WaitForSingleObject(thd->cond,INFINITE);
@@ -136,7 +138,7 @@ void YabThreadSleep(void)
 
 void YabThreadRemoteSleep(unsigned int id)
 {
-#ifdef _WIN32
+#if !defined(ARCH_IS_LINUX) && !defined(ARCH_IS_MACOSX)
 	if (thread_handle[id].running == 0)
 		return;
 
@@ -166,22 +168,9 @@ void YabAddEventQueue( YabEventQueue * queue_t, void* evcode )
 	scond_broadcast(queue->cond_empty);
 }
 
-int YabClearEventQueue(YabEventQueue * queue_t)
-{
-	YabEventQueue_rthreads * queue = (YabEventQueue_rthreads*)queue_t;
-	slock_lock(queue->mutex);
-	while (queue->size > 0)
-	{
-		--queue->size;
-		++queue->out;
-		queue->out %= queue->capacity;
-	}
-	slock_unlock(queue->mutex);
-}
-
 void YabThreadUSleep( unsigned int stime )
 {
-#ifdef _WIN32
+#if !defined(ARCH_IS_LINUX) && !defined(ARCH_IS_MACOSX)
 	SleepEx(stime/1000, 0);
 #else
 	usleep(stime);
@@ -190,19 +179,6 @@ void YabThreadUSleep( unsigned int stime )
 
 void YabThreadSetCurrentThreadAffinityMask(int mask)
 {
-#if defined(_WIN32)
-	SetThreadIdealProcessor(GetCurrentThread(), mask);
-#elif !defined(ANDROID) // it needs more than android-21
-	int err, syscallres;
-	pid_t pid = syscall(SYS_gettid);
-	mask = 1 << mask;
-	syscallres = syscall(__NR_sched_setaffinity, pid, sizeof(mask), &mask);
-	if (syscallres)
-	{
-		err = errno;
-		//LOG("Error in the syscall setaffinity: mask=%d=0x%x err=%d=0x%x", mask, mask, err, err);
-	}
-#endif
 }
 
 void* YabWaitEventQueue( YabEventQueue * queue_t )
@@ -294,8 +270,10 @@ YabMutex * YabThreadCreateMutex()
 
 typedef struct YabSem_rthreads
 {
-#ifndef _WIN32
+#if defined(ARCH_IS_LINUX)
 	sem_t sem;
+#elif defined(ARCH_IS_MACOSX)
+	dispatch_semaphore_t sem;
 #else
 	HANDLE sem;
 #endif
@@ -305,8 +283,10 @@ void YabSemPost( YabSem * mtx )
 {
 	YabSem_rthreads * pmtx;
 	pmtx = (YabSem_rthreads *)mtx;
-#ifndef _WIN32
+#if defined(ARCH_IS_LINUX)
 	sem_post(&pmtx->sem);
+#elif defined(ARCH_IS_MACOSX)
+	dispatch_semaphore_signal(pmtx->sem);
 #else
 	ReleaseSemaphore(pmtx->sem, 1, NULL);
 #endif
@@ -316,8 +296,10 @@ void YabSemWait( YabSem * mtx )
 {
 	YabSem_rthreads * pmtx;
 	pmtx = (YabSem_rthreads *)mtx;
-#ifndef _WIN32
+#if defined(ARCH_IS_LINUX)
 	sem_wait(&pmtx->sem);
+#elif defined(ARCH_IS_MACOSX)
+	dispatch_semaphore_wait(pmtx->sem, DISPATCH_TIME_FOREVER);
 #else
 	WaitForSingleObject(pmtx->sem, 0L);
 #endif
@@ -326,25 +308,13 @@ void YabSemWait( YabSem * mtx )
 YabSem * YabThreadCreateSem(int val)
 {
 	YabSem_rthreads * mtx = (YabSem_rthreads *)malloc(sizeof(YabSem_rthreads));
-#ifndef _WIN32
+#if defined(ARCH_IS_LINUX)
 	sem_init( &mtx->sem,0,val);
+#elif defined(ARCH_IS_MACOSX)
+	dispatch_semaphore_t *sem = &mtx->sem;
+	*sem = dispatch_semaphore_create(val);
 #else
 	mtx->sem = CreateSemaphore( NULL, val, val, NULL);
 #endif
 	return (YabMutex *)mtx;
-}
-
-void YabThreadFreeSem( YabSem * mtx )
-{
-	if( mtx != NULL )
-	{
-		YabSem_rthreads * pmtx;
-		pmtx = (YabSem_rthreads *)mtx; 
-#ifndef _WIN32       
-		sem_destroy(&pmtx->sem);
-#else
-		CloseHandle(pmtx->sem);
-#endif
-		free(pmtx);
-	}
 }
