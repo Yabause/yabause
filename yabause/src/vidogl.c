@@ -6649,9 +6649,25 @@ void VIDOGLVdp2SetResolution(u16 TVMD)
     break;
   }
 
+  float oldvdp1wd = _Ygl->vdp1wdensity;
+  float oldvdp1hd = _Ygl->vdp1hdensity;
+
+  float oldvdp2wd = _Ygl->vdp2wdensity;
+  float oldvdp2hd = _Ygl->vdp2hdensity;
+
   Vdp1SetTextureRatio(wratio, hratio);
 
-  if ((width != _Ygl->rwidth) || (height != _Ygl->rheight))SetSaturnResolution(width, height);
+  int change = 0;
+
+  change |= (oldvdp1wd != _Ygl->vdp1wdensity);
+  change |= (oldvdp1hd != _Ygl->vdp1hdensity);
+  change |= (oldvdp2wd != _Ygl->vdp2wdensity);
+  change |= (oldvdp2hd != _Ygl->vdp2hdensity);
+
+  change |= (width != _Ygl->rwidth);
+  change |= (height != _Ygl->rheight);
+
+  if (change != 0)SetSaturnResolution(width, height);
 }
 
 //////////////////////////////////////////////////////////////////////////////
