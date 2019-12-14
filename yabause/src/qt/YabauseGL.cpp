@@ -21,11 +21,14 @@
 #include "YabauseGL.h"
 #include "QtYabause.h"
 #include "VolatileSettings.h"
+#include <QWindow>
 
 YabauseGL::YabauseGL( QWidget* p )
   : QGLWidget(p)
 {
 	setFocusPolicy( Qt::StrongFocus );
+
+  windowHandle()->setSurfaceType(QWindow::OpenGLSurface);
 
   QGLFormat fmt;
   fmt.setProfile(QGLFormat::CompatibilityProfile);
@@ -51,7 +54,9 @@ void YabauseGL::showEvent( QShowEvent* e )
 }
 
 void YabauseGL::resizeGL( int w, int h )
-{ updateView( QSize( w, h ) ); }
+{ 
+//	updateView( QSize( w, h ) ); 
+}
 
 void YabauseGL::updateView( const QSize& s )
 {

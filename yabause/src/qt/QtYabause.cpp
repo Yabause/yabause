@@ -73,9 +73,9 @@ PerInterface_struct *PERCoreList[] = {
 #ifdef HAVE_DIRECTINPUT
 &PERDIRECTX,
 #endif
-#ifdef ARCH_IS_LINUX
-&PERLinuxJoy,
-#endif
+//#ifdef ARCH_IS_LINUX
+//&PERLinuxJoy,
+//#endif
 NULL
 };
 
@@ -152,7 +152,9 @@ extern "C"
 	{ QtYabause::mainWindow()->appendLog( string ); }
 	
 	void YuiSwapBuffers()
-	{ QtYabause::mainWindow()->swapBuffers(); }
+	{ 
+		QtYabause::mainWindow()->swapBuffers(); 
+		}
 
 #if defined(HAVE_DIRECTINPUT) || defined(HAVE_DIRECTSOUND)
    HWND DXGetWindow()

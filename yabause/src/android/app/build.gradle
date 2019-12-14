@@ -25,13 +25,21 @@ apply plugin: 'io.fabric'
 android {
     signingConfigs {
         pro {
-            storeFile file(System.getenv('KEY_FILE_NAME'))
+            if( System.getenv('KEY_FILE_NAME') == null ){
+                storeFile file("dmy")
+            }else {
+                storeFile file(System.getenv('KEY_FILE_NAME'))
+            }
             storePassword System.getenv('STORE_PASSWORD')
             keyAlias System.getenv('KEY_ALIAS')
             keyPassword System.getenv('KEY_PASSWORD')
         }
         release {
-            storeFile file(System.getenv('KEY_FILE_NAME'))
+            if( System.getenv('KEY_FILE_NAME') == null ){
+                storeFile file("dmy")
+            }else {
+                storeFile file(System.getenv('KEY_FILE_NAME'))
+            }
             storePassword System.getenv('STORE_PASSWORD')
             keyAlias System.getenv('KEY_ALIAS')
             keyPassword System.getenv('KEY_PASSWORD')

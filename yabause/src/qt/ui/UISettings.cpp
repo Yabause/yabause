@@ -503,8 +503,8 @@ void UISettings::loadSettings()
 #endif
 
 	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 0 ).toInt() );
-	leWinWidth->setText( s->value( "Video/WindowWidth", s->value( "Video/Width", 640 ) ).toString() );
-	leWinHeight->setText( s->value( "Video/WindowHeight", s->value( "Video/Height", 480 ) ).toString() );
+	leWinWidth->setText( s->value( "Video/WindowWidth", s->value( "Video/Width", 800 ) ).toString() );
+	leWinHeight->setText( s->value( "Video/WindowHeight", s->value( "Video/Height", 600 ) ).toString() );
 	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width", 1920 ) ).toString(),
 										s->value( "Video/FullscreenHeight", s->value( "Video/Height", 1080 ) ).toString());	
 	cbFullscreenResolution->setCurrentIndex(cbFullscreenResolution->findText(text));
