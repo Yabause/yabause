@@ -201,7 +201,7 @@ void UIYabause::showEvent( QShowEvent* e )
 		aViewFPS->setChecked( vs->value( "General/ShowFPS" ).toBool() );
 		mInit = true;
 
-		QMetaObject::invokeMethod(this, "on_aHelpAbout_triggered", Qt::QueuedConnection );
+		//QMetaObject::invokeMethod(this, "on_aHelpAbout_triggered", Qt::QueuedConnection );
 
 	}
 }
