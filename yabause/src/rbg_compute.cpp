@@ -538,7 +538,7 @@ const char prg_rbg_getcolor_4bpp[] =
 const char prg_rbg_getcolor_8bpp[] =
 "  uint dot = 0u;\n"
 "  uint cramindex = 0u;\n"
-"  uint dotaddr = charaddr + uint((y*cellw)+x);\n"
+"  uint dotaddr = (charaddr + uint((y*cellw)+x))&0x7FFFFu;\n"
 "  dot = vram[ dotaddr >> 2];\n"
 "  if( (dotaddr & 0x3u) == 0u ) dot >>= 0;\n"
 "  else if( (dotaddr & 0x3u) == 1u ) dot >>= 8;\n"
@@ -557,7 +557,7 @@ const char prg_rbg_getcolor_8bpp[] =
 const char prg_rbg_getcolor_16bpp_palette[] =
 "  uint dot = 0u;\n"
 "  uint cramindex = 0u;\n"
-"  uint dotaddr = charaddr + uint((y*cellw)+x) * 2u;\n"
+"  uint dotaddr = (charaddr + uint((y*cellw)+x) * 2u)&0x7FFFFu;\n"
 "  dot = vram[dotaddr>>2]; \n"
 "  if( (dotaddr & 0x02u) != 0u ) { dot >>= 16; } \n"
 "  dot = (((dot) >> 8 & 0xFF) | ((dot) & 0xFF) << 8);\n"
@@ -572,7 +572,7 @@ const char prg_rbg_getcolor_16bpp_palette[] =
 const char prg_rbg_getcolor_16bpp_rbg[] =
 "  uint dot = 0u;\n"
 "  uint cramindex = 0u;\n"
-"  uint dotaddr = charaddr + uint((y*cellw)+x) * 2u;\n"
+"  uint dotaddr = (charaddr + uint((y*cellw)+x) * 2u)&0x7FFFFu;\n"
 "  dot = vram[dotaddr>>2]; \n"
 "  if( (dotaddr & 0x02u) != 0u ) { dot >>= 16; } \n"
 "  dot = (((dot >> 8) & 0xFFu) | ((dot) & 0xFFu) << 8);\n"
@@ -587,7 +587,7 @@ const char prg_rbg_getcolor_16bpp_rbg[] =
 const char prg_rbg_getcolor_32bpp_rbg[] =
 "  uint dot = 0u;\n"
 "  uint cramindex = 0u;\n"
-"  uint dotaddr = charaddr + uint((y*cellw)+x) * 4u;\n"
+"  uint dotaddr = (charaddr + uint((y*cellw)+x) * 4u)&0x7FFFFu;\n"
 "  dot = vram[dotaddr>>2]; \n"
 "  dot = ((dot&0xFF000000u) >> 24 | ((dot >> 8) & 0xFF00u) | ((dot) & 0xFF00u) << 8 | (dot&0x000000FFu) << 24);\n"
 "  if ( (dot&0x80000000u) == 0u && transparencyenable != 0 ) { \n"
