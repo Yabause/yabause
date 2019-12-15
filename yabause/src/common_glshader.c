@@ -599,9 +599,10 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  int eW0 = endW0.x;\n"
 "  if (id == 6) { sW0 = startW0.y; eW0 = endW0.y;}\n"
 "  if (win0_mode[id] != 0) { \n"
+//outside
 "    if ((sW0 < eW0) && ((pos < sW0) || (pos >= eW0))) valid = false;\n"
-"    if (sW0 == eW0) valid = false;\n"
 "  } else { \n"
+//inside
 "    if ((sW0 < eW0) && ((pos >= sW0) && (pos < eW0))) valid = false;\n"
 "  }\n"
 "  return valid;\n"
@@ -612,9 +613,10 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  int eW1 = endW1.x;\n"
 "  if (id == 6) { sW1 = startW1.y; eW1 = endW1.y;}\n"
 "  if (win1_mode[id] != 0) { \n"
+//outside
 "    if ((sW1 < eW1) && ((pos < sW1) || (pos >= eW1))) valid = false;\n"
-"    if (sW1 == eW1) valid = false;\n"
 "  } else { \n"
+//inside
 "    if ((sW1 < eW1) && ((pos >= sW1) && (pos < eW1))) valid = false;\n"
 "  }\n"
 "  return valid;\n"
