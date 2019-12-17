@@ -281,6 +281,7 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	}
   int intersectX = -1;
   int intersectY = -1;
+	int requireCompute = 0;
   for (int i = 0; i<NB_COARSE_RAST_X; i++) {
     int blkx = i * (tex_width/NB_COARSE_RAST_X);
     for (int j = 0; j<NB_COARSE_RAST_Y; j++) {
@@ -293,12 +294,15 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 					memcpy(&cmdVdp1[(i+j*NB_COARSE_RAST_X)*2000 + nbCmd[i+j*NB_COARSE_RAST_X]], cmd, sizeof(vdp1cmd_struct));
           nbCmd[i+j*NB_COARSE_RAST_X]++;
 					if (nbCmd[i+j*NB_COARSE_RAST_X] == 2000) {
-						YuiMsg("This game is processing a lot of graphic commands on the same frame. It might introduce graphical artifacts\n");
-						YuiMsg("CMD %d\n", cmd->type);
-						vdp1_compute();
+						requireCompute = 1;
 					}
       }
     }
+  }
+	if (requireCompute != 0){
+		YuiMsg("This game is processing a lot of graphic commands on the same frame. It might introduce graphical artifacts\n");
+		YuiMsg("CMD %d\n", cmd->type);
+		vdp1_compute();
   }
   return 0;
 }
