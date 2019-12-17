@@ -94,7 +94,7 @@ void YglEraseWriteCSVDP1(void) {
 
 void YglCSRenderVDP1(void) {
   FRAMELOG("YglCSRenderVDP1: drawframe =%d", _Ygl->drawframe);
-  _Ygl->vdp1Tex = vdp1_compute(&Vdp2Lines[0]);
+  _Ygl->vdp1Tex = vdp1_compute();
 
 #ifdef TEST_FB_RW
   vdp1_read();
