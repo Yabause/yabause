@@ -1010,9 +1010,10 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2));
         short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2);
         u32 temp = (HStart>>HShift) | ((HEnd>>HShift) << 16);
-        if (HStart > HEnd) val = 0x0;
-        else val = temp;
-      } else val = 0x0;
+        val = temp;
+      } else {
+        val = 0x000000FF; //END > START
+      }
       if (val != _Ygl->win[0][v]) {
         _Ygl->win[0][v] = val;
         update = 1;
@@ -1024,9 +1025,10 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
     for (v = 0; v < _Ygl->rheight; v++) {
       if (v >= varVdp2Regs->WPSY0 && v <= varVdp2Regs->WPEY0) {
         u32 temp = (varVdp2Regs->WPSX0 >>HShift) | ((varVdp2Regs->WPEX0>>HShift) << 16);
-        if (varVdp2Regs->WPSX0 > varVdp2Regs->WPEX0) val = 0x0;
-        else val = temp;
-      } else val = 0x0;
+        val = temp;
+      } else {
+        val = 0x000000FF; //END > START
+      }
       if (val != _Ygl->win[0][v]) {
         _Ygl->win[0][v] = val;
         update = 1;
@@ -1043,9 +1045,10 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2));
         short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2);
         u32 temp = (HStart>>HShift) | ((HEnd>>HShift) << 16);
-        if (HStart > HEnd) val = 0x0;
-        else val = temp;
-      } else val = 0x0;
+        val = temp;
+      } else {
+        val = 0x000000FF; //END > START
+      }
       if (val != _Ygl->win[1][v]) {
         _Ygl->win[1][v] = val;
         update = 1;
@@ -1059,7 +1062,9 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
         u32 temp = (varVdp2Regs->WPSX1 >>HShift) | ((varVdp2Regs->WPEX1>>HShift) << 16);
         if (varVdp2Regs->WPSX1 > varVdp2Regs->WPEX1) val = 0x0;
         else val = temp;
-      } else val = 0x0;
+      } else {
+        val = 0x000000FF; //END > START
+      }
       if (val != _Ygl->win[1][v]) {
         _Ygl->win[1][v] = val;
         update = 1;
