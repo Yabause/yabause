@@ -595,6 +595,13 @@ void VIDCSVdp1UserClipping(u8 * ram, Vdp1 * regs)
 {
   vdp1cmd_struct cmd;
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  if (
+    (Vdp1Regs->userclipX1 == cmd.CMDXA) &&
+    (Vdp1Regs->userclipY1 == cmd.CMDYA) &&
+    (Vdp1Regs->userclipX2 == cmd.CMDXC) &&
+    (Vdp1Regs->userclipY2 == cmd.CMDYC)
+  ) return;
+  
   cmd.type = USER_CLIPPING;
   vdp1_add(&cmd,1);
   Vdp1Regs->userclipX1 = cmd.CMDXA;
@@ -609,6 +616,7 @@ void VIDCSVdp1SystemClipping(u8 * ram, Vdp1 * regs)
 {
   vdp1cmd_struct cmd;
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  if ((cmd.CMDXC == Vdp1Regs->systemclipX2) && (Vdp1Regs->systemclipY2 == cmd.CMDYC)) return;
   cmd.type = SYSTEM_CLIPPING;
   vdp1_add(&cmd,1);
   Vdp1Regs->systemclipX2 = cmd.CMDXC;
