@@ -354,6 +354,19 @@ if ((cmd.CMDPMOD & 4))
   LOG_CMD("%d\n", __LINE__);
 }
 
+int isDistorted(vdp1cmd_struct* cmd) {
+  int ret = 1;
+  if (
+    ((cmd->CMDXB - cmd->CMDXA) == (cmd->w-1)) &&
+    ((cmd->CMDXC - cmd->CMDXD) == (cmd->w-1)) &&
+    ((cmd->CMDYC - cmd->CMDYA) == (cmd->h-1)) &&
+    ((cmd->CMDYD - cmd->CMDYB) == (cmd->h-1))
+  ) {
+    ret = 0;
+  }
+  return ret;
+}
+
 void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   LOG_CMD("%d\n", __LINE__);
@@ -412,7 +425,10 @@ if ((cmd.CMDPMOD & 4))
 }
   cmd.priority = 0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
-  cmd.type = DISTORTED;
+  if (isDistorted(&cmd) != 0)
+    cmd.type = DISTORTED;
+  else
+    cmd.type = NORMAL;
   vdp1_add(&cmd,0);
   return;
 }
