@@ -642,7 +642,7 @@ SHADER_VERSION_COMPUTE
 "        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
 #endif
 "    } else if (pixcmd.type == "Stringify(NORMAL)") {\n"
-"      texcoord = vec2(float(texel.x/upscale.x-pixcmd.CMDXA+1)/float(pixcmd.CMDXB-pixcmd.CMDXA), float(texel.y/upscale.y-pixcmd.CMDYA+1)/float(pixcmd.CMDYD-pixcmd.CMDYA));\n"
+"      texcoord = vec2(float(texel.x/upscale.x-pixcmd.CMDXA)/float(pixcmd.w), float(texel.y/upscale.y-pixcmd.CMDYA)/float(pixcmd.h));\n"
 "      gouraudcoord = texcoord;\n"
 "      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
 "      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
