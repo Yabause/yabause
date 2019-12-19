@@ -247,7 +247,7 @@ SHADER_VERSION_COMPUTE
 "  vec2 Quad[5];\n"
 "  vec2 P;\n"
 "  if (cmd[idx].type >= "Stringify(SYSTEM_CLIPPING)") return 6u;\n"
-//"  if (any(lessThan(Pin, ivec2(cmd[idx].B[0],cmd[idx].B[2]))) || any(greaterThan(Pin, ivec2(cmd[idx].B[1],cmd[idx].B[3])))) return 0u;\n"
+"  if (any(lessThan(Pin, ivec2(cmd[idx].B[0],cmd[idx].B[2]))) || any(greaterThan(Pin, ivec2(cmd[idx].B[1],cmd[idx].B[3])))) return 0u;\n"
 "  Quad[0] = vec2(cmd[idx].CMDXA,cmd[idx].CMDYA);\n"
 "  Quad[1] = vec2(cmd[idx].CMDXB,cmd[idx].CMDYB);\n"
 "  Quad[2] = vec2(cmd[idx].CMDXC,cmd[idx].CMDYC);\n"
