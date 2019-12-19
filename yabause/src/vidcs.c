@@ -360,7 +360,9 @@ int isDistorted(vdp1cmd_struct* cmd) {
     ((cmd->CMDXB - cmd->CMDXA) == (cmd->w-1)) &&
     ((cmd->CMDXC - cmd->CMDXD) == (cmd->w-1)) &&
     ((cmd->CMDYC - cmd->CMDYA) == (cmd->h-1)) &&
-    ((cmd->CMDYD - cmd->CMDYB) == (cmd->h-1))
+    ((cmd->CMDYD - cmd->CMDYB) == (cmd->h-1)) &&
+    (cmd->CMDXA == cmd->CMDXD) &&
+    (cmd->CMDYA == cmd->CMDYB)
   ) {
     ret = 0;
   }
