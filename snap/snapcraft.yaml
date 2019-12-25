@@ -68,7 +68,6 @@ parts:
       - libpulse0
       - qtmultimedia5-dev
       - libxcb-xinerama0
-      - libpsm-infinipath1
 
 
   qt5:
