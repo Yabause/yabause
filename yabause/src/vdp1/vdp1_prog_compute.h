@@ -427,7 +427,7 @@ SHADER_VERSION_COMPUTE
 "     break;\n"
 "     case 5:\n"
 "     {\n"
-"       if (Vdp1RamReadWord(pixcmd.CMDSRCA * 8 + (pos+i)+pos) == 0x7FFFu) {\n"
+"       if (Vdp1RamReadWord(pixcmd.CMDSRCA * 8 + 2*(pos+i)) == 0x7FFFu) {\n"
 "         endCnt++;\n"
 "       }\n"
 "       if (endCnt == 2) return endCnt;\n"
