@@ -192,7 +192,7 @@ SHADER_VERSION_COMPUTE
 
 "uint get_cram_msb(uint colorindex) { \n"
 "	uint colorval = 0u; \n"
-"	colorindex = (0x800u + (colorindex&0x7FFu))<< cram_shift; \n"
+"	colorindex = (colorindex&0xFFFu)<< cram_shift; \n"
 "	colorval = cram[colorindex >> 2]; \n"
 "	if ((colorindex & 0x02u) != 0u) { colorval >>= 16; } \n"
 "	return (colorval & 0x8000u); \n"
