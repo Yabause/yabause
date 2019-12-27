@@ -123,6 +123,7 @@ endif
 	SHARED := -dynamiclib
 ifeq ($(arch),ppc)
 	ENDIANNESS_DEFINES := -DWORDS_BIGENDIAN -DMSB_FIRST -D__ppc__
+	HAVE_SSE = 0
 endif
 	#DYNAREC = 2
 	FLAGS += -pthread
