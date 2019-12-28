@@ -972,8 +972,8 @@ static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
     u32 tmp1, tmp2;
     colorindex <<= 2;
     colorindex &= 0xFFF;
-    tmp1 = T2ReadWord(Vdp2ColorRam, colorindex);
-    tmp2 = T2ReadWord(Vdp2ColorRam, colorindex + 2);
+    tmp1 = T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
+    tmp2 = T2ReadWord(Vdp2ColorRam, (colorindex + 2) & 0xFFF);
     return SAT2YAB2(alpha, tmp1, tmp2);
   }
   default: break;
@@ -2719,7 +2719,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
     if (parameter->k_mem_type == 0) { // vram
       kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (parameter->coeftbladdr + (h << 2)) & 0x7FFFF);
     } else { // cram
-      kdata = Vdp2ColorRamReadLong(NULL, Vdp2Ram, ((parameter->coeftbladdr + (int)(h << 2)) & 0x7FF) + 0x800 );
+      kdata = Vdp2ColorRamReadLong(NULL, Vdp2Ram, (parameter->coeftbladdr + (int)(h << 2)) );
     }
     parameter->lineaddr = (kdata >> 24) & 0x7F;
     if (kdata & 0x80000000) { return 0; }
@@ -6708,7 +6708,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_s
     kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (param->coeftbladdr + (index << 2)));
   }
   else { // cram
-    kdata = T2ReadLong((Vdp2ColorRam + 0x800), (param->coeftbladdr + (index << 2)) & 0xFFF);
+    kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)));
   }
   param->lineaddr = (kdata >> 24) & 0x7F;
 
@@ -6741,7 +6741,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W(vdp2rotationparameter_s
     kdata = Vdp2RamReadWord(NULL, Vdp2Ram, (param->coeftbladdr + (index << 1)));
   }
   else { // cram
-    kdata = T2ReadWord((Vdp2ColorRam + 0x800), (param->coeftbladdr + (index << 1)) & 0xFFF);
+    kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1)));
   }
 
   if (kdata & 0x8000) return NULL;
