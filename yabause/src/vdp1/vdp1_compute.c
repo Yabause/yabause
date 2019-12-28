@@ -219,7 +219,7 @@ static int generateComputeBuffer(int w, int h) {
 u8* cmdBuffer;
 
 void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
-	uint endcnt;
+	int endcnt;
 	u32 dot;
 	int pos = (cmd->CMDSRCA * 8) & 0x7FFFF;
   u8 END = ((cmd->CMDPMOD & 0x80) != 0);
