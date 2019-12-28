@@ -31,6 +31,9 @@ static int work_groups_y;
 static vdp1cmd_struct* cmdVdp1;
 static int* nbCmd;
 
+static int cmdRam_update_start = 0x0;
+static int cmdRam_update_end = 0x80000;
+
 static int* clear;
 
 static int generateComputeBuffer(int w, int h);
@@ -213,6 +216,102 @@ static int generateComputeBuffer(int w, int h) {
   return 0;
 }
 
+u8* cmdBuffer;
+
+void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
+	uint endcnt;
+	u32 dot;
+	int pos = (cmd->CMDSRCA * 8) & 0x7FFFF;
+  u8 END = ((cmd->CMDPMOD & 0x80) != 0);
+	u8* buf = &cmdBuffer[0];
+	switch ((cmd->CMDPMOD >> 3) & 0x7) {
+    case 0:
+    case 1:
+			for(int h=0; h < cmd->h; h++) {
+				endcnt = 0;
+				for(int w=0; w < cmd->w/2; w++)
+				{
+					dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
+					if (!END && (endcnt >= 2)) {
+          	dot |= 0xF0;
+					}
+					else if (((dot & 0xF0) == 0xF0) && !END) {
+          	endcnt++;
+        	} else {
+						if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
+							//ColorLut
+							u32 addr = ((dot>>4) * 2 + cmd->CMDCOLR * 8);
+							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr);
+							if (cmdRam_update_start > addr) cmdRam_update_start = addr;
+							if (cmdRam_update_end < (addr + 2)) cmdRam_update_end = addr + 2;
+							T1WriteWord(buf, addr, val);
+						}
+					}
+					if (!END && (endcnt >= 2)) {
+          	dot |= 0xF;
+					}
+					else if (((dot & 0xF) == 0xF) && !END) {
+          	endcnt++;
+					} else {
+						if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
+							//ColorLut
+							u32 addr = ((dot&0xF) * 2 + cmd->CMDCOLR * 8);
+							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr);
+							if (cmdRam_update_start > addr) cmdRam_update_start = addr;
+							if (cmdRam_update_end < (addr + 2)) cmdRam_update_end = addr + 2;
+							T1WriteWord(buf, addr, val);
+						}
+        	}
+					if (cmdRam_update_start > pos) cmdRam_update_start = pos;
+					if (cmdRam_update_end < (pos + 1)) cmdRam_update_end = pos + 1;
+					T1WriteByte(buf, pos, dot);
+					pos += 1;
+	    	}
+			}
+	    break;
+	    case 2:
+	    case 3:
+	    case 4:
+				for(int h=0; h < cmd->h; h++) {
+					endcnt = 0;
+					for(int w = 0; w < cmd->w; w++)
+					{
+						dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
+						if (!END && (endcnt >= 2)) {
+							dot = 0xFF;
+						}
+						else if ((dot == 0xFF) && !END) {
+							endcnt++;
+						}
+						if (cmdRam_update_start > pos) cmdRam_update_start = pos;
+						if (cmdRam_update_end < (pos + 1)) cmdRam_update_end = pos + 1;
+						T1WriteByte(buf, pos, dot);
+						pos += 1;
+		    	}
+				}
+	    break;
+	    case 5:
+			for(int h=0; h < cmd->h; h++) {
+				endcnt = 0;
+				for(int w = 0; w < cmd->w; w++)
+	    	{
+					u16 dot = Vdp1RamReadWord(NULL, Vdp1Ram, pos);
+					if (!END && (endcnt >= 2)) {
+						dot = 0x7FFF;
+					}
+					else if ((dot == 0x7FFF) && !END) {
+						endcnt++;
+					}
+					if (cmdRam_update_start > pos) cmdRam_update_start = pos;
+					if (cmdRam_update_end < (pos + 2)) cmdRam_update_end = pos + 2;
+					T1WriteWord(buf, pos, dot);
+					pos += 2;
+	    	}
+			}
+	    break;
+	  }
+}
+
 int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	int minx = 1024;
 	int miny = 1024;
@@ -220,6 +319,7 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	int maxy = 0;
 
 	if (clipcmd == 0) {
+		vdp1GenerateBuffer(cmd);
     int border = 0;
 		if (cmd->type == NORMAL) border = 0;
 		memcpy(cmd->P,&cmd->CMDXA,8*sizeof(int));
@@ -406,6 +506,7 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
 		cmdVdp1 = (vdp1cmd_struct*)malloc(NB_COARSE_RAST*2000*sizeof(vdp1cmd_struct));
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
 	memset(cmdVdp1, 0, NB_COARSE_RAST*2000*sizeof(vdp1cmd_struct*));
+	cmdBuffer = (u8*)malloc(0x80000);
 	return;
 }
 
@@ -421,11 +522,11 @@ void vdp1_set_directFB() {
 
 void vdp1_setup(void) {
 	if (ssbo_vdp1ram_ == 0) return;
-	if (vdp1Ram_update_start < vdp1Ram_update_end) {
+	if (cmdRam_update_start < cmdRam_update_end) {
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0x0, 0x80000, (void*)(&Vdp1Ram[0]));
-		vdp1Ram_update_start = 0x80000;
-		vdp1Ram_update_end = 0x0;
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, cmdRam_update_start, (cmdRam_update_end - cmdRam_update_start), (void*)(&cmdBuffer[cmdRam_update_start]));
+		cmdRam_update_start = 0x80000;
+		cmdRam_update_end = 0x0;
 	}
 }
 
