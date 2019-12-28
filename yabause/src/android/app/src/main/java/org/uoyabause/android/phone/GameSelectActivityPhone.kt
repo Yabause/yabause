@@ -24,6 +24,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.view.MenuItem
+import android.view.Window
+import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
@@ -34,9 +36,15 @@ import org.uoyabause.uranus.BuildConfig
 import org.uoyabause.uranus.R
 
 class GameSelectActivityPhone : AppCompatActivity(), NendAdListener {
-    var frg_: GameSelectFragmentPhone? = null
+    lateinit var frg_: GameSelectFragmentPhone
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val window: Window = getWindow()
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        window.setStatusBarColor(getResources().getColor(R.color.colorPrimaryDark))
+
         val frame = FrameLayout(this)
         frame.id = CONTENT_VIEW_ID
         setContentView(
@@ -46,11 +54,12 @@ class GameSelectActivityPhone : AppCompatActivity(), NendAdListener {
         )
         if (savedInstanceState == null) {
             frg_ = GameSelectFragmentPhone()
-            val ft = fragmentManager.beginTransaction()
+
+            val ft = supportFragmentManager.beginTransaction()
             ft.add(CONTENT_VIEW_ID, frg_).commit()
         } else {
             frg_ =
-                fragmentManager.findFragmentById(CONTENT_VIEW_ID) as GameSelectFragmentPhone
+                supportFragmentManager.findFragmentById(CONTENT_VIEW_ID) as GameSelectFragmentPhone
         }
         if (BuildConfig.BUILD_TYPE != "pro") {
             val prefs =

@@ -34,6 +34,7 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.ContextThemeWrapper;
@@ -91,7 +92,7 @@ public class GameSelectPresenter {
 
 
     int refresh_level_ = 0;
-    android.app.Fragment target_ = null ;
+    Fragment target_ = null ;
     GameSelectPresenterListener listener_ = null ;
 
     public static final int RC_SIGN_IN = 123;
@@ -99,7 +100,7 @@ public class GameSelectPresenter {
     private String username_;
     private Uri photo_url_;
 
-    public GameSelectPresenter( android.app.Fragment target,  GameSelectPresenterListener listener ){
+    public GameSelectPresenter(Fragment target, GameSelectPresenterListener listener ){
         target_ = target;
         listener_ = listener;
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(target_.getActivity());

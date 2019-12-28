@@ -24,34 +24,50 @@
     android:id="@+id/drawer_layout_game_select"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="false"
     android:background="#000000"
     tools:openDrawer="start"
     >
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/parent"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
+        android:layout_height="match_parent">
 
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/colorPrimaryDark"
+            android:elevation="4dp"
             android:theme="@style/AppTheme.AppBarOverlay">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorPrimary"
-                app:popupTheme="@style/AppTheme.PopupOverlay" />
+                android:background="@color/colorPrimaryDark"
+                app:layout_scrollFlags="scroll|snap"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
-
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tab_game_index"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimaryDark"
+                app:tabIndicatorColor="@color/secondary"
+                app:tabMode="auto" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/view_pager_game_index"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/default_background"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+<!--
         <include layout="@layout/content_game_select_activity_phone" />
+-->
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
@@ -60,10 +76,10 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:background="@color/lb_error_background_color_opaque"
         android:fitsSystemWindows="false"
-        app:insetForeground="#0000"
-        android:background="#80101010"
         app:headerLayout="@layout/nav_header_main"
+        app:insetForeground="#0000"
         app:menu="@menu/game_select_menu" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

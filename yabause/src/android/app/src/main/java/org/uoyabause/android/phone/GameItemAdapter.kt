@@ -18,11 +18,20 @@
 */
 package org.uoyabause.android.phone
 
+import android.os.Build
+import android.util.Log
+import android.view.ContextMenu
 import android.view.LayoutInflater
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.PopupMenu
+import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import org.uoyabause.android.GameInfo
@@ -30,14 +39,15 @@ import org.uoyabause.android.phone.GameItemAdapter.GameViewHolder
 import org.uoyabause.uranus.R
 import java.io.File
 
-class GameItemAdapter(private val dataSet: List<GameInfo?>? ) :
+class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
     RecyclerView.Adapter<GameViewHolder>() {
 
     class GameViewHolder(var rootview: View) :
-        RecyclerView.ViewHolder(rootview) {
+        RecyclerView.ViewHolder(rootview), View.OnCreateContextMenuListener {
         var textViewName: TextView
         var textViewVersion: TextView
         var imageViewIcon: ImageView
+        var menuButton: ImageButton
 
         init {
             textViewName =
@@ -46,12 +56,30 @@ class GameItemAdapter(private val dataSet: List<GameInfo?>? ) :
                 rootview.findViewById<View>(R.id.textViewVersion) as TextView
             imageViewIcon =
                 rootview.findViewById<View>(R.id.imageView) as ImageView
+
+            if (Build.VERSION.SDK_INT > 23) {
+                var card = rootview.findViewById<View>(R.id.card_view_main) as CardView
+                card?.setCardBackgroundColor(rootview.context.getColorStateList(R.color.card_view_selectable))
+                card?.isFocusable = true
+                card.setOnCreateContextMenuListener(this)
+            }
+
+            menuButton = rootview.findViewById<View>(R.id.game_card_menu) as ImageButton
+
             /*
             ViewGroup.LayoutParams lp = imageViewIcon.getLayoutParams();
             lp.width = CARD_WIDTH;
             lp.height = CARD_HEIGHT;
             imageViewIcon.setLayoutParams(lp);
             */
+        }
+
+        override fun onCreateContextMenu(
+            menu: ContextMenu?,
+            v: View?,
+            menuInfo: ContextMenu.ContextMenuInfo?
+        ) {
+            val myActionItem: MenuItem = menu!!.add("Some menu item")
         }
     }
 
@@ -69,6 +97,7 @@ class GameItemAdapter(private val dataSet: List<GameInfo?>? ) :
 
     interface OnItemClickListener {
         fun onItemClick(position: Int, item: GameInfo?, v: View?)
+        fun onGameRemoved( item: GameInfo? )
     }
 
     override fun onBindViewHolder(holder: GameViewHolder, position: Int) {
@@ -92,34 +121,88 @@ class GameItemAdapter(private val dataSet: List<GameInfo?>? ) :
             if (game.image_url != "") { //try {
                 if (game.image_url.startsWith("http")) {
                     Glide.with(ctx)
-                        .load(game.image_url) //.apply(new RequestOptions().transforms(new CenterCrop() ))
+                        .load(game.image_url)
                         .into(imageView)
                 } else {
                     Glide.with(holder.rootview.context)
-                        .load(File(game.image_url)) //.apply(new RequestOptions().transforms(new CenterCrop() ))
-//.error(mDefaultCardImage)
+                        .load(File(game.image_url))
                         .into(imageView)
                 }
             } else {
             }
             holder.rootview.setOnClickListener {
-                //notifyItemChanged(focusedItem);
-//focusedItem = position_;
-//notifyItemChanged(focusedItem);
                 if (null != mListener) {
                     mListener!!.onItemClick(position, dataSet?.get(position), null)
                 }
 
         }
         }
+
+        holder.menuButton.setOnClickListener(View.OnClickListener {
+            showPopupMenu(
+                holder.menuButton,
+                position
+            )
+        })
+    }
+
+    private fun showPopupMenu(
+        view: View,
+        position: Int
+    ) { // inflate menu
+        val popup = PopupMenu(view.context, view)
+        val inflater: MenuInflater = popup.getMenuInflater()
+        inflater.inflate(R.menu.game_item_popup_menu, popup.getMenu())
+        //popup.setOnMenuItemClickListener(MyMenuItemClickListener(position))
+        popup.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.delete -> {
+                    Log.d("textext", "R.id.delete is selected")
+                    AlertDialog.Builder(view.context)
+                        .setTitle("DELETE CONFIRM")
+                        .setMessage("Are you sure delete this game?")
+                        .setPositiveButton("OK") { dialog, which ->
+
+                            var game_info = dataSet?.get(position)!!
+
+                            dataSet?.removeAt(position)
+
+                            if( game_info != null ) {
+                                mListener?.onGameRemoved(game_info)
+                                game_info.removeInstance()
+                            }
+
+                            notifyItemRemoved(position)
+                        }
+                        .setNegativeButton("No") { dialog, which ->
+
+                        }
+                        .show()                }
+                else -> {
+                    Log.d("textext", "Unknown value (value = $it.itemId)")
+                }
+            }
+            true
+
+        })
+        popup.show()
     }
 
     override fun getItemCount(): Int {
         return dataSet!!.size
     }
 
+    fun removeItem( id: Long ){
+        val index = dataSet?.indexOfFirst({it!!.id == id} )
+        if (index != null && index != -1) {
+            dataSet?.removeAt( index )
+            notifyItemRemoved(index)
+        }
+    }
+
     companion object {
         private const val CARD_WIDTH = 320
         private const val CARD_HEIGHT = 224
     }
+
 }

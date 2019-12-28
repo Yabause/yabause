@@ -35,11 +35,14 @@
     <color name="orange_transparent">#AAFADCA7</color>
     <color name="orange">#FADCA7</color>
     <color name="yellow">#EEFF41</color>
-    <color name="default_background">#1c1f24</color>
-    <color name="colorPrimary">#6f7c91</color>
-    <color name="colorPrimaryDark">#373e48</color>
+    <color name="default_background">#121212</color>
+    <color name="colorPrimary">#6F7C91</color>
+    <color name="colorPrimaryDark">#373E48</color>
     <color name="colorAccent">#B7BEC8</color>
     <color name="halfTransparent">#CC000000</color>
     <color name="cardview_initial_background">#6f7c91</color>
     <color name="title_back">#dadee2</color>
+    <color name="error">#CF6679</color>
+    <color name="secondary">#4444DD</color>
 </resources>
+
