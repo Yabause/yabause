@@ -5147,6 +5147,7 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     if ((info->isbitmap = varVdp2Regs->CHCTLA & 0x2) != 0)
     {
       // Bitmap Mode
+      rgb->use_cs = 0;
 
       ReadBitmapSize(info, varVdp2Regs->CHCTLA >> 2, 0x3);
       if (vdp2_interlace) info->cellh *= 2;
@@ -6270,6 +6271,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->isbitmap = varVdp2Regs->CHCTLB & 0x200;
   if (info->isbitmap != 0)
   {
+    rgb->use_cs = 0;
     // Bitmap Mode
     ReadBitmapSize(info, varVdp2Regs->CHCTLB >> 10, 0x1);
 
