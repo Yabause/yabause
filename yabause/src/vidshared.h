@@ -179,7 +179,6 @@ typedef struct
    vdp2rotationparameter_struct * FASTCALL (*GetKValueA)(vdp2rotationparameter_struct*,int);
    vdp2rotationparameter_struct * FASTCALL (*GetKValueB)(vdp2rotationparameter_struct*,int);
    Vdp2GetRParam_func GetRParam;
-   u32 LineColorBase;
 
    void (*LoadLineParams)(void *, void *, int line, Vdp2* lines);
 
