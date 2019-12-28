@@ -1359,7 +1359,7 @@ DEBUGWIP("Init\n");
 					}
 				}
 			}
-			else if ( (varVdp2Regs->RPMD == 1 && rbg->rgb_type == 0)  || rbg->rgb_type == 0x04 ) {
+			else if (varVdp2Regs->RPMD == 1) {
 				if (rbg->info.isbitmap) {
 					switch (rbg->info.colornumber) {
 					case 0: {
