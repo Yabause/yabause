@@ -17,5 +17,30 @@ package org.uoyabause.uranus;
     You should have received a copy of the GNU General Public License
     along with YabaSanshiro; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
-*/public class TestApplication {
+*/
+
+import android.app.Application;
+
+import com.activeandroid.ActiveAndroid;
+import com.activeandroid.Configuration;
+
+import  org.uoyabause.android.GameInfo;
+
+public class TestApplication extends Application {
+  @Override
+  public void onCreate() {
+    super.onCreate();
+    // Create configurations for a temporary mock database
+    Configuration.Builder configuration = new Configuration.Builder(this).setDatabaseName(null);
+    configuration.addModelClasses(GameInfo.class);
+    // Initialize ActiveAndroid DB
+    //ActiveAndroid.initialize(configuration.create());
+  }
+
+  @Override
+  public void onTerminate() {
+    // Dispose temporary database on termination
+    //ActiveAndroid.dispose();
+    super.onTerminate();
+  }
 }
