@@ -709,7 +709,11 @@ typedef struct {
   int rgb_type;
   int pagesize;
   int patternshift;
+  u32 LineColorRamAdress;
+  vdp2draw_struct line_info;
+  YglTexture line_texture;
   YglCache c;
+  YglCache cline;
   int vres;
   int hres;
   int async;
@@ -723,7 +727,7 @@ typedef struct {
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
 float * YglQuad(vdp2draw_struct *, YglTexture *, YglCache * c, YglTextureManager *tm);
-int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, int rbg_type, YglTextureManager *tm, Vdp2 *varVdp2Regs);
+int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache * line, int rbg_type, YglTextureManager *tm, Vdp2 *varVdp2Regs);
 void YglQuadOffset(vdp2draw_struct * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy, YglTextureManager *tm);
 void YglCachedQuadOffset(vdp2draw_struct * input, YglCache * cache, int cx, int cy, float sx, float sy, YglTextureManager *tm);
 void YglCachedQuad(vdp2draw_struct *, YglCache *, YglTextureManager *tm);

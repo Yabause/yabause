@@ -2337,7 +2337,7 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 }
 
 
-int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, int rbg_type, YglTextureManager *tm, Vdp2 *varVdp2Regs) {
+int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache * line, int rbg_type, YglTextureManager *tm, Vdp2 *varVdp2Regs) {
   unsigned int x, y;
   YglProgram *program;
   texturecoordinate_struct *tmp;
@@ -2366,6 +2366,7 @@ int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, int rbg_ty
 
   program->colornumber = input->colornumber;
   program->blendmode = input->blendmode;
+  program->lineTexture = input->lineTexture;
 
   program->mosaic[0] = input->mosaicxmask;
   program->mosaic[1] = input->mosaicymask;
@@ -2450,8 +2451,29 @@ int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, int rbg_ty
     tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
     tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh) - ATLAS_BIAS;
   }
-  tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0;
-  tmp[0].q = tmp[1].q = tmp[2].q = tmp[3].q = tmp[4].q = tmp[5].q = 0;
+  if (line == NULL) {
+    tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0;
+    tmp[0].q = tmp[1].q = tmp[2].q = tmp[3].q = tmp[4].q = tmp[5].q = 0;
+  }
+  else {
+    tmp[0].r = (float)(line->x) + ATLAS_BIAS;
+    tmp[0].q = (float)(line->y) + ATLAS_BIAS;
+
+    tmp[1].r = (float)(line->x) + ATLAS_BIAS;
+    tmp[1].q = (float)(line->y+1) - ATLAS_BIAS;
+
+    tmp[2].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
+    tmp[2].q = (float)(line->y+1) - ATLAS_BIAS;
+
+    tmp[3].r = (float)(line->x) + ATLAS_BIAS;
+    tmp[3].q = (float)(line->y) + ATLAS_BIAS;
+
+    tmp[4].r = (float)(line->x +input->cellh ) - ATLAS_BIAS;
+    tmp[4].q = (float)(line->y + 1 ) - ATLAS_BIAS;
+
+    tmp[5].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
+    tmp[5].q = (float)(line->y) + ATLAS_BIAS;
+  }
   return 0;
 }
 
