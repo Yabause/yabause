@@ -124,15 +124,18 @@ public class GameInfo extends Model {
                 file.delete();
             }
             this.delete();
-        }else if( fname.endsWith("CCD") || fname.endsWith("MDF") ) {
+        }else if( fname.endsWith("CCD") || fname.endsWith("MDS") ) {
 
             File file = new File(file_path);
             File dir = file.getParentFile();
-            final String searchName = file.getName();
-            searchName.replace(".ccd","");
+            String searchName = file.getName();
+            searchName = searchName.replaceAll(".(?i)ccd","");
+            searchName = searchName.replaceAll(".(?i)mds","");
+
+            final String searchNamef = searchName;
             File[] matchingFiles = dir.listFiles(new FilenameFilter() {
                 public boolean accept(File dir, String name) {
-                    return name.startsWith(searchName);
+                    return name.startsWith(searchNamef);
                 }
             });
             for( File removefile : matchingFiles ){
