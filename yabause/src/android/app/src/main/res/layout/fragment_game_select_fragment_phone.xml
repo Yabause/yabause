@@ -58,12 +58,23 @@
 
         </com.google.android.material.appbar.AppBarLayout>
 
+        <TextView
+            android:id="@+id/empty_message"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:gravity="center_vertical"
+            android:text="@string/welcome" />
+
         <androidx.viewpager.widget.ViewPager
             android:id="@+id/view_pager_game_index"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/default_background"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        </androidx.viewpager.widget.ViewPager>
 
 <!--
         <include layout="@layout/content_game_select_activity_phone" />

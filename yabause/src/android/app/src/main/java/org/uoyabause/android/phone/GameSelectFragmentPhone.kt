@@ -46,7 +46,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
-import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
 import com.activeandroid.query.Select
@@ -62,6 +61,7 @@ import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import com.google.firebase.analytics.FirebaseAnalytics
+import io.noties.markwon.Markwon
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import net.cattaka.android.adaptertoolbox.thirdparty.MergeRecyclerAdapter
@@ -111,7 +111,7 @@ internal class GameViewPagerAdapter(var fm: FragmentManager?) :
     }
 
     override fun getCount(): Int {
-        return gameListPages_!!.size
+        return gameListPages_?.size ?: return 0
     }
 
     override fun getPageTitle(position: Int): CharSequence? {
@@ -666,6 +666,35 @@ class GameSelectFragmentPhone : Fragment(),
 
         //-----------------------------------------------------------------
         // Recent Play Game
+        try {
+            val checklist = Select()
+                    .from(GameInfo::class.java)
+                    .limit(1)
+                    .execute<GameInfo?>()
+            if( checklist.size == 0 ){
+
+                val viewMessage = rootview_.findViewById(R.id.empty_message) as TextView
+                val viewPager = rootview_.findViewById(R.id.view_pager_game_index) as? ViewPager
+                viewMessage?.visibility = View.VISIBLE
+                viewPager?.visibility = View.GONE
+
+                val markwon = Markwon.create(this.activity as Context)
+                val welcomeMessage = getResources().getString(R.string.welcome,YabauseStorage.getStorage().gamePath)
+                markwon.setMarkdown(viewMessage, welcomeMessage)
+
+                return
+            }
+        } catch ( e: Exception ){
+        }
+
+        val viewMessage = rootview_.findViewById(R.id.empty_message) as? View
+        val viewPager = rootview_.findViewById(R.id.view_pager_game_index) as? ViewPager
+        viewMessage?.visibility = View.GONE
+        viewPager?.visibility = View.VISIBLE
+
+
+        //-----------------------------------------------------------------
+        // Recent Play Game
         var rlist: MutableList<GameInfo?>? = null
         try {
             rlist = Select()
@@ -737,6 +766,7 @@ class GameSelectFragmentPhone : Fragment(),
             var otherPage = GameListPage("OTHERS", otherAdapter)
             gameListPages!!.add(otherPage)
         }
+
     }
 
     override fun onItemClick(position: Int, item: GameInfo?, v: View?) {

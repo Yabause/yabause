@@ -282,5 +282,20 @@
     <string name="show_fps">Show FPS</string>
     <string name="enable_frame_skip">Enable Frame skip</string>
     <string name="game_setting">Game Setting</string>
+    <string name="welcome">
+        <![CDATA[
+        # Welcome! \n\n
+
+        To play SEGA Saturn games, follow this instructions.\n\n
+
+        1. Generate a image file from your game CD-ROM using DiscImageChef or something. Useful tools are listed [here](http://wiki.redump.org/index.php?title=Useful_Links).\n
+        2. Copy the image files to the directory **\"%1$s\"**  in the smart phone internal storage.\n
+        3. Show drawer menu and tap \"Refresh Game List\". Then game list is shown.\n
+        4. Tap the game title you want to play.\n
+        5. Enjoy!\n
+        \n
+        For more detail checkout our [website](http://www.uoyabause.org/static_pages/guide).\n
+        ]]>
+    </string>
 </resources>
 	
