@@ -337,10 +337,10 @@ public class GameSelectFragment extends BrowseSupportFragment
                 }
 
                 Bundle bundle = new Bundle();
-                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "PLAY");
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, game.product_number);
                 bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game.game_title);
                 mFirebaseAnalytics.logEvent(
-                        FirebaseAnalytics.Event.SELECT_CONTENT, bundle
+                        "yab_start_game", bundle
                 );
 
                 Intent intent_game = new Intent(getActivity(), Yabause.class);
@@ -782,10 +782,10 @@ public class GameSelectFragment extends BrowseSupportFragment
                 }
 
                 Bundle bundle = new Bundle();
-                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "PLAY");
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, game.product_number);
                 bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game.game_title);
                 mFirebaseAnalytics.logEvent(
-                        FirebaseAnalytics.Event.SELECT_CONTENT, bundle
+                        "yab_start_game", bundle
                 );
 
                 Intent intent = new Intent(getActivity(), Yabause.class);

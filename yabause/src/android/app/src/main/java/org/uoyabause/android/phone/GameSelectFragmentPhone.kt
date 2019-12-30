@@ -65,16 +65,9 @@ import io.noties.markwon.Markwon
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import net.cattaka.android.adaptertoolbox.thirdparty.MergeRecyclerAdapter
-import org.uoyabause.android.AdActivity
-import org.uoyabause.android.FileDialog
+import org.uoyabause.android.*
 import org.uoyabause.android.FileDialog.FileSelectedListener
-import org.uoyabause.android.GameInfo
-import org.uoyabause.android.GameSelectPresenter
 import org.uoyabause.android.GameSelectPresenter.GameSelectPresenterListener
-import org.uoyabause.android.Yabause
-import org.uoyabause.android.YabauseApplication
-import org.uoyabause.android.YabauseSettings
-import org.uoyabause.android.YabauseStorage
 import org.uoyabause.android.tv.GameSelectFragment
 import org.uoyabause.uranus.BuildConfig
 import org.uoyabause.uranus.R
@@ -454,10 +447,10 @@ class GameSelectFragmentPhone : Fragment(),
             return
         }
         val bundle = Bundle()
-        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "PLAY")
+        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
         bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
         mFirebaseAnalytics!!.logEvent(
-            FirebaseAnalytics.Event.SELECT_CONTENT, bundle
+                "yab_start_game", bundle
         )
         val intent = Intent(activity, Yabause::class.java)
         intent.putExtra("org.uoyabause.android.FileNameEx", apath)
@@ -778,10 +771,10 @@ class GameSelectFragmentPhone : Fragment(),
             )
         }
         val bundle = Bundle()
-        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "PLAY")
+        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, item?.product_number)
         bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, item?.game_title)
         mFirebaseAnalytics!!.logEvent(
-            FirebaseAnalytics.Event.SELECT_CONTENT, bundle
+            "yab_start_game", bundle
         )
         val intent = Intent(activity, Yabause::class.java)
         intent.putExtra("org.uoyabause.android.FileNameEx", item?.file_path)
