@@ -618,7 +618,7 @@ void VIDCSVdp1SystemClipping(u8 * ram, Vdp1 * regs)
 {
   vdp1cmd_struct cmd;
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-  if ((cmd.CMDXC == Vdp1Regs->systemclipX2) && (Vdp1Regs->systemclipY2 == cmd.CMDYC)) return;
+  if (((cmd.CMDXC+1) == Vdp1Regs->systemclipX2) && (Vdp1Regs->systemclipY2 == (cmd.CMDYC+1))) return;
   cmd.type = SYSTEM_CLIPPING;
   vdp1_add(&cmd,1);
   Vdp1Regs->systemclipX2 = cmd.CMDXC+1;
