@@ -168,15 +168,15 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
 
                     if (!BuildConfig.BUILD_TYPE.equals("pro") && !hasDonated) {
                         AlertDialog.Builder(view.context)
-                                .setTitle("NOT AVAILABLE!")
-                                .setMessage("This function is only available for pro version")
-                                .setPositiveButton("Got it!") { _, _ ->
+                                .setTitle(R.string.not_available)
+                                .setMessage(R.string.only_pro_version)
+                                .setPositiveButton(R.string.got_it) { _, _ ->
                                     val url = "https://play.google.com/store/apps/details?id=org.uoyabause.uranus.pro"
                                     val intent = Intent(Intent.ACTION_VIEW)
                                     intent.data = Uri.parse(url)
                                     intent.setPackage("com.android.vending")
                                     view.context.startActivity(intent)
-                                }.setNegativeButton("Cancel") { _, _ ->
+                                }.setNegativeButton(R.string.cancel) { _, _ ->
 
                                 }
                                 .show()
@@ -184,9 +184,9 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
                     } else {
                         Log.d("textext", "R.id.delete is selected")
                         AlertDialog.Builder(view.context)
-                                .setTitle("DELETE CONFIRM")
-                                .setMessage("Are you sure delete this game?")
-                                .setPositiveButton("OK") { dialog, which ->
+                                .setTitle(R.string.delete_confirm_title)
+                                .setMessage(R.string.delete_confirm)
+                                .setPositiveButton(R.string.ok) { dialog, which ->
 
                                     var game_info = dataSet?.get(position)!!
 
@@ -199,7 +199,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
 
                                     notifyItemRemoved(position)
                                 }
-                                .setNegativeButton("No") { dialog, which ->
+                                .setNegativeButton(R.string.no) { dialog, which ->
 
                                 }
                                 .show()

@@ -297,5 +297,9 @@
         For more detail checkout our [website](http://www.uoyabause.org/static_pages/guide).\n
         ]]>
     </string>
+    <string name="delete_confirm_title">DELETE CONFIRM</string>
+    <string name="not_available">NOT AVAILABLE!</string>
+    <string name="only_pro_version">This function is only available for pro version</string>
+    <string name="got_it">Got it!</string>
 </resources>
 	

@@ -172,4 +172,25 @@
     <string name="already_have_been">Si vous avez déjà fait un don, veuillez contacter smiyaxdev@gmail.com</string>
     <string name="close">Close</string>
 
+    <string name="welcome">
+        <![CDATA[
+        # Bienvenue! \n\n
+
+         Pour jouer aux jeux SEGA Saturn, suivez ces instructions. \n\n
+
+         1. Générez un fichier image à partir de votre CD-ROM de jeu en utilisant DiscImageChef ou quelque chose. Des outils utiles sont répertoriés [ici] (http://wiki.redump.org/index.php?title=Useful_Links).\n
+         2. Copiez les fichiers image dans le répertoire **\"%1$s\"** dans la mémoire interne du téléphone intelligent.\n
+         3. Affichez le menu du tiroir et appuyez sur \"Rafraîchir la Liste de Jeu\". La liste des jeux s'affiche alors.\n
+         4. Appuyez sur le titre du jeu auquel vous souhaitez jouer. \n
+         5. Profitez-en! \n
+         \n
+         Pour plus de détails, consultez notre [site Web] (http://www.uoyabause.org/static_pages/guide).
+        ]]>
+    </string>
+
+    <string name="delete_confirm_title">SUPPRIMER CONFIRMER</string>
+    <string name="not_available">INDISPONIBLE!</string>
+    <string name="only_pro_version">Cette fonction n\'est disponible que pour la version pro</string>
+    <string name="got_it">Je l\'ai!</string>
+
 </resources>
