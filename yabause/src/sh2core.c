@@ -1237,6 +1237,8 @@ u16 FASTCALL OnchipReadWord(u32 addr) {
          return CurrentSH2->onchip.RTCNT;
       case 0x1FA:
          return CurrentSH2->onchip.RTCOR;
+      case 0x092:
+        return CurrentSH2->onchip.CCR;
       default:
          LOG("Unhandled Onchip word read %08X\n", (int)addr);
          return 0;
