@@ -631,17 +631,13 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     private fun showRestartMessage() { //need_to_accept
-/*
-        recyclerView!!.layoutManager = LinearLayoutManager(
-            activity,
-            LinearLayoutManager.VERTICAL,
-            false
-        )
-        mMergeRecyclerAdapter = MergeRecyclerAdapter<RecyclerView.Adapter<*>?>(activity)
-        mStringsHeaderAdapter = GameIndexAdapter(getString(R.string.need_to_accept))
-        mMergeRecyclerAdapter.addAdapter(mStringsHeaderAdapter)
-        recyclerView!!.adapter = mMergeRecyclerAdapter
-*/
+        val viewMessage = rootview_.findViewById(R.id.empty_message) as TextView
+        val viewPager = rootview_.findViewById(R.id.view_pager_game_index) as? ViewPager
+        viewMessage?.visibility = View.VISIBLE
+        viewPager?.visibility = View.GONE
+
+        val welcomeMessage = getResources().getString(R.string.need_to_accept)
+        viewMessage.text = welcomeMessage
     }
 
     internal var gameListPages :MutableList<GameListPage>? = null

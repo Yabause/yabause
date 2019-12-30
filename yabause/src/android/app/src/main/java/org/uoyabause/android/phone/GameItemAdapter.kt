@@ -19,7 +19,9 @@
 package org.uoyabause.android.phone
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.view.ContextMenu
@@ -34,6 +36,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import org.uoyabause.android.GameInfo
@@ -164,7 +167,19 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
                     val hasDonated = prefs.getBoolean("donated", false)
 
                     if (!BuildConfig.BUILD_TYPE.equals("pro") && !hasDonated) {
+                        AlertDialog.Builder(view.context)
+                                .setTitle("NOT AVAILABLE!")
+                                .setMessage("This function is only available for pro version")
+                                .setPositiveButton("Got it!") { _, _ ->
+                                    val url = "https://play.google.com/store/apps/details?id=org.uoyabause.uranus.pro"
+                                    val intent = Intent(Intent.ACTION_VIEW)
+                                    intent.data = Uri.parse(url)
+                                    intent.setPackage("com.android.vending")
+                                    view.context.startActivity(intent)
+                                }.setNegativeButton("Cancel") { _, _ ->
 
+                                }
+                                .show()
 
                     } else {
                         Log.d("textext", "R.id.delete is selected")

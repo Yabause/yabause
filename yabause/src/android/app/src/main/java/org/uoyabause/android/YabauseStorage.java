@@ -121,13 +121,7 @@ public class YabauseStorage {
     }
 
     private YabauseStorage() {
-        File yabroot = null;
-
-        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-            yabroot = new File(YabauseApplication.getAppContext().getExternalFilesDir(null), "yabause");
-        }else {
-            yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
-        }
+        File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
 
         if (! yabroot.exists()) yabroot.mkdir();
 

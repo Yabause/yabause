@@ -164,6 +164,12 @@ allprojects {
     }
 }
 
+task printVersionName {
+    doLast {
+        println android.defaultConfig.versionName
+    }
+}
+
 //repositories {
 //    mavenCentral()
 //    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
