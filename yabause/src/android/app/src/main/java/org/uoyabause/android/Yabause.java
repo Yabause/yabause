@@ -326,7 +326,7 @@ public class Yabause extends AppCompatActivity implements
     }
 
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-    readPreferences(gameCode);
+    readPreferences(this.gameCode);
 
     padm = PadManager.getPadManager();
     padm.loadSettings();
