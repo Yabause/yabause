@@ -324,7 +324,6 @@ public class Yabause extends AppCompatActivity implements
       GameInfo gf = GameInfo.getFromFileName(gamepath);
       this.gameCode = gf.product_number;
     }
-
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
     readPreferences(this.gameCode);
 
