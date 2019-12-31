@@ -32,6 +32,7 @@
 &Slave SH2|SH2 E&sclavo
 &Tools|Herramien&tas
 &Transfer|&Transferir
+&Vertical synchronization|Sincronización vertical
 &View|&Ver
 16-bit|16-bit
 16-bit Relative value(s)|Valor(es) relativo(s) a 16-bit
@@ -80,6 +81,7 @@ Axis Y|Eje Y
 Axis L Trigger|Eje gatillo izq
 Axis R Trigger|Eje gatillo der
 Backup Ram Manager|Gestor de RAM de backup
+BiCubic|Bicúbico
 Bilinear|Bilinear
 Bilinear Filtering (Restart required)|Filtro bilinear (Requiere reinicio)
 Binary Files (*.bin)|Archivos binarios (*.bin)
@@ -128,7 +130,8 @@ COFF Program Files (*.cof *.coff)|Archivos de programa COFF (*.cof *.coff)
 Comment :|Comentario :
 Common Control Registers|Registros comunes de control
 Compatibility List|Listado de compatibilidad
-Compare Type|Comparar tipo			 
+Compare Type|Comparar tipo
+Compute Shader Video Interface|Interfaz de vídeo de cómputo de sombreado
 Couldn't save state file|No se pudo guardar el archivo de estado
 Couldn't load state file|No se pudo cargar el archivo de estado
 CPU Tesselation|Teselado CPU
@@ -177,7 +180,7 @@ Enable Bios Emulation|Habilitar Emulación de Bios
 Enable Code : %1 %2|Habilitar Código : %1 %2
 Enable Frame Skip/Limiter|Habilitar Limitador/Salto de frames
 Enable Multithreading|Habilitar multihilo
-Enable vertical synchronization|Activar sincronización vertical
+Enable vertical synchronization|Activar sincronización verticald
 Enabled|Activado
 Enter new assembly code|Inserte el nuevo código ensamblador
 Enter New Value|Inserte el nuevo valor
@@ -252,7 +255,7 @@ Mouse Configuration|Configuración del Ratón
 Mpeg ROM|ROM Mpeg
 Musashi Interface|Interfaz Musashi
 nanovg OSD Interface|Interfaz nanovg OSD
-Native (native resolution of Window)|Nativa (resolución nativa de ventana)
+Native (current resolution of the window)|
 NBG0|NBG0
 NBG0/RBG1 Info|Información de NBG0/RBG1
 NBG1|NBG1
@@ -354,7 +357,6 @@ Signed 32-bit value|Valor de 32-bit con signo
 Slot Info|Información de ranura
 Slot Number:|Número de ranura:
 Software OSD Interface|Interfaz OSD software
-Software Video Interface|Interfaz de video software
 Sound...|Sonido...
 Sound|Sonido
 Sound Core|Núcleo de sonido
@@ -414,7 +416,6 @@ VDP1 Command Info|Información de comandos del VDP1
 VDP1 Command List|Listado de comandos del VDP1
 VDP2|Vdp2
 VDP2Viewer Viewer|Visor VDP2
-Vertical synchronization|Sincronización vertical
 Video|Vídeo
 Video Core|Núcleo de Vídeo
 Video Driver|Driver de Vídeo
