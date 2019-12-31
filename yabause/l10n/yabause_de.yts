@@ -32,6 +32,7 @@
 &Slave SH2|&Slave SH2
 &Tools|&Werkzeuge
 &Transfer|&Transferieren
+&Vertical synchronization|Vertikale synchronisation
 &View|&Ansicht
 16-bit|16-bit
 16-bit Relative value(s)|16-bit Relative value(s)
@@ -79,7 +80,8 @@ Axis X|Achse X
 Axis Y|Achse Y
 Axis L Trigger|Achse L Abzug
 Axis R Trigger|Achse R Abzug  
-Backup Ram Manager|Backup Ram Manager			  
+Backup Ram Manager|Backup Ram Manager
+BiCubic|Bikubisch
 Bilinear|Bilinear
 Bilinear Filtering (Restart required)|Bilineare Filterung (Neustart erforderlich)	   
 Binary Files (*.bin)|Binary Files (*.bin)	   
@@ -129,6 +131,7 @@ Comment :|Kommentar :
 Common Control Registers|Common Control Registers
 Compatibility List|Kompatibilitätsliste			   
 Compare Type|Vergleiche Typen
+Compute Shader Video Interface|Computer Shader Video Schnittstelle
 Couldn't save state file|Statusdatei konnte nicht gespeichert werden
 Couldn't load state file|Statusdatei konnte nicht geladen werden
 CPU Tesselation|CPU Tesselation
@@ -253,7 +256,7 @@ Mouse Configuration|Mouse Configuration
 Mpeg ROM|Mpeg ROM
 Musashi Interface|Musashi Schnittstelle
 nanovg OSD Interface|nanovg OSD Schnittstelle
-Native (native resolution of Window)|Nativ (native Auflösung von Window)
+Native (current resolution of the window)|Nativ (native Auflösung von Window)
 NBG0|NBG0
 NBG0/RBG1 Info|NBG0/RBG1 Info
 NBG1|NBG1
@@ -304,7 +307,7 @@ Right Stick Axis X|Rechte Stielachse X
 Right Stick Axis Y|Rechte Stielachse Y
 Right Stick Axis Throttle|Steuerknüppel der rechten Achse
 Right trigger|Rechte Schultertaste
-R&un|
+R&un|Lauf
 Save As Bitmap|Als Bitmap speichern
 Save As WAV|Als WAV speichern
 Save Bitmap|Als Bitmap speichern
@@ -315,17 +318,17 @@ Save MD1|Save MD1
 Save MD2|Save MD2
 Save Selected|Save Selected			 
 Save Program|Save Program
-S&ave State|
-Save States|					
+S&ave State|Sicherer Staat
+Save States|Staaten retten    				
 Save Slot Registers|Save Slot Registers
-Save Tab|
+Save Tab|Tab speichern
 Screen Enabled|Bildschirm eingeschaltet
 Screen Select:|Bildschirm auswählen:
 Screenshot|Bildschirmfoto
-Scanline filter|
-Scanline off|
-Scanline on|
-SCSP|
+Scanline filter|Scanline filter
+Scanline off|Scanline aus
+Scanline on|Scanline an
+SCSP|SCSP
 SCSP Channels|SCSP-Kanäle
 SDL Joystick Interface|SDL-Joystick-Schnittstelle
 SDL Sound Interface|SDL-Klingen-Schnittstelle
@@ -340,11 +343,11 @@ Select your iso/cue/bin file|Wählen Sie Ihre iso/cue/bin Datei
 Select your ssf file|						
 Set PC to Start Address|PC zur Startadresse setzen
 Settings|Einstellungen
-SH2 Debugger Interpreter|
-SH2 Interpreter|
-SH2 Kronos Interpreter|
-SH2 Registers|				
-Shortcuts|Shortcuts
+SH2 Debugger Interpreter|SH2 Debugger Interpreter
+SH2 Interpreter|SH2 Interpreter
+SH2 Kronos Interpreter|SH2 Kronos Interpreter
+SH2 Registers|SH2 Registriert
+Shortcuts|Verknüpfungen
 Show FPS|FPS anzeigen
 Show Log Window|Show Log Window
 Signed|Signiert
@@ -354,14 +357,13 @@ Signed 32-bit value|Signed 32-bit value
 Slot Info|Slot Info
 Slot Number:|Slot Number:
 Software OSD Interface|Software OSD Oberfläche
-Software Video Interface|Software Video Oberfläche
+Sound...|Sound...
 Sound|Sound
-Sound|		   
 Sound Core|Sound Kern
 Spanish|Spanisch
-ST-V cabinet Configuration|
-ST-V Cabinet|
-STV Rom game|			 
+ST-V cabinet Configuration|ST-V Schrankkonfiguration
+ST-V Cabinet|Kabinett
+STV Rom game|STV Rom-Spiel	 
 Start|Start
 Start Address:|Adressenanfang:
 Start in Fullscreen|Start in Fullscreen
@@ -374,7 +376,7 @@ Stick left button: same as A \nStick right button: same as B \nStick trigger: sa
 Stick Left|Bleib links
 Stick Right|Bleib rechts
 Stick Up|Bleib auf
-Stop|
+Stop|Halt
 Stretch to window|Zum Fenster strecken								
 Synchronize Saturn internal clock with set time|Synchronize Saturn internal clock with set time
 Tesselation|Tessellation
@@ -404,7 +406,7 @@ Unable to open file for loading|Datei konnte nicht zum Laden geöffnet werden
 Unable to open file for saving|Datei konnte nicht zum Speichern geöffnet werden
 Unable to remove code|Code konnte nicht entfernt werden
 Unknow (%1)|Unbekannt (%1)
-Upscale Filter :|
+Upscale Filter :|Hochwertiger Filter
 Use Vdp1 Cache|Verwenden Sie den Vdp1-Cache
 Value|Wert
 Value:|Value:
@@ -414,7 +416,6 @@ VDP1 Command Info|VDP1 Command Info
 VDP1 Command List|VDP1 Command List
 VDP2|VDP2
 VDP2Viewer Viewer|
-Vertical synchronization|Vertikale synchronisation
 Video|Video
 Video Core|Video Kern
 Video Driver|Video Treiber
@@ -423,7 +424,7 @@ View|Ansicht
 Viewer|Viewer
 WAV Files (*.wav)|WAV-Dateien (* .wav)
 Wheel|Rad
-Wheel Configuration|		  
+Wheel Configuration|Rad Konfiguration
 Window Resolution|Bildschirmauflösung
 Windows SPTI Driver|Windows SPTI Treiber
 Word|Word
