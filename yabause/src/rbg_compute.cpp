@@ -123,7 +123,6 @@ SHADER_VERSION_COMPUTE
 "  int window_area_mode;"
 "  uint alpha;\n"
 "  uint priority;\n"
-"  int cram_shift;\n"
 "  int startLine;\n"
 "  int endLine;\n"
 "  uint specialprimode;\n"
@@ -142,7 +141,7 @@ SHADER_VERSION_COMPUTE
 "      if( (addr & 0x02u) != 0u ) { kdata >>= 16; } \n"
 "      kdata = (((kdata) >> 8 & 0xFFu) | ((kdata) & 0xFFu) << 8);\n"
 "    }else{\n"
-"      kdata = cram[ (((addr << cram_shift)&0xFFFu)>>2)  ]; \n"
+"      kdata = cram[ (0x800u + (addr&0xFFFu)>>2)  ]; \n"
 "      if( (addr & 0x02u) != 0u ) { kdata >>= 16; } \n"
 "    }\n"
 "    if ( (kdata & 0x8000u) != 0u) { return -1; }\n"
@@ -154,7 +153,7 @@ SHADER_VERSION_COMPUTE
 "	     kdata = vram[ addr>>2 ]; \n"
 "      kdata = ((kdata&0xFF000000u) >> 24 | ((kdata) >> 8 & 0xFF00u) | ((kdata) & 0xFF00u) << 8 | (kdata&0x000000FFu) << 24);\n"
 "    }else{\n"
-"      kdata = cram[ (((addr<< cram_shift)&0xFFFu )>>2) ]; \n"
+"      kdata = cram[ 0x800u + ((addr&0x7FFu )>>2) ]; \n"
 "      kdata = ((kdata&0xFFFF0000u)>>16|(kdata&0x0000FFFFu)<<16);\n"
 "    }\n"
 "	 if( para[paramid].linecoefenab != 0) lineaddr = (kdata >> 24) & 0x7Fu; else lineaddr = 0u;\n"
@@ -192,7 +191,7 @@ SHADER_VERSION_COMPUTE
 
 "uint get_cram_msb(uint colorindex) { \n"
 "	uint colorval = 0u; \n"
-"	colorindex = (colorindex&0xFFFu)<< cram_shift; \n"
+"	colorindex = (0x800u + colorindex&0x7FFu); \n"
 "	colorval = cram[colorindex >> 2]; \n"
 "	if ((colorindex & 0x02u) != 0u) { colorval >>= 16; } \n"
 "	return (colorval & 0x8000u); \n"
@@ -887,7 +886,6 @@ struct RBGUniform {
 		window_area_mode = 0;
 		alpha = 0;
 		priority = 0;
-		cram_shift = 1;
 		startLine = 0;
 		endLine = 0;
   }
@@ -913,7 +911,6 @@ struct RBGUniform {
   int window_area_mode;
   unsigned int alpha;
   unsigned int priority;
-  int cram_shift;
 	int startLine;
 	int endLine;
 	unsigned int specialprimode;
@@ -2133,14 +2130,6 @@ DEBUGWIP("Init\n");
        uniform.window_area_mode = rbg->info.RotWinMode;
        uniform.alpha = rbg->info.alpha;
        uniform.priority = rbg->info.priority;
-
-       if (Vdp2Internal.ColorMode < 2) {
-               uniform.cram_shift = 1;
-       }
-       else {
-               uniform.cram_shift = 2;
-       }
-
        uniform.startLine = rbg->info.startLine;
        uniform.endLine = rbg->info.endLine;
        uniform.specialprimode = rbg->info.specialprimode;
