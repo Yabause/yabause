@@ -597,7 +597,7 @@ SHADER_VERSION_COMPUTE
 #endif
 "      }\n"
 "    } else if (pixcmd.type == "Stringify(SCALED)") {\n"
-"      texcoord = getTexCoord(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
+"      texcoord = getTexCoord(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2]+1,pixcmd.P[3])/2.0, vec2(pixcmd.P[4]+1,pixcmd.P[5]+1)/2.0, vec2(pixcmd.P[6],pixcmd.P[7]+1)/2.0);\n"
 "      gouraudcoord = texcoord;\n"
 "      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
 "      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically

@@ -320,7 +320,7 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 
 	if (clipcmd == 0) {
 		vdp1GenerateBuffer(cmd);
-    int border = 1;
+    int border = 0;
 		if (cmd->type == NORMAL) border = 0;
 		memcpy(cmd->P,&cmd->CMDXA,8*sizeof(int));
 

@@ -354,8 +354,8 @@ if ((cmd.CMDPMOD & 4))
   LOG_CMD("%d\n", __LINE__);
 }
 
-int isDistorted(vdp1cmd_struct* cmd) {
-  int ret = 1;
+int getBestMode(vdp1cmd_struct* cmd) {
+  int ret = DISTORTED;
   if (
     ((cmd->CMDXB - cmd->CMDXA) == (cmd->w-1)) &&
     ((cmd->CMDXC - cmd->CMDXD) == (cmd->w-1)) &&
@@ -364,7 +364,16 @@ int isDistorted(vdp1cmd_struct* cmd) {
     (cmd->CMDXA == cmd->CMDXD) &&
     (cmd->CMDYA == cmd->CMDYB)
   ) {
-    ret = 0;
+    ret = NORMAL;
+  } else {
+    if (
+      (abs(cmd->CMDYB - cmd->CMDYA) <= 1) &&
+      (abs(cmd->CMDYC - cmd->CMDYD) <= 1) &&
+      (abs(cmd->CMDXC - cmd->CMDXB) <= 1) &&
+      (abs(cmd->CMDXD - cmd->CMDXA) <= 1)
+    ) {
+      ret = SCALED;
+    }
   }
   return ret;
 }
@@ -427,10 +436,7 @@ if ((cmd.CMDPMOD & 4))
 }
   cmd.priority = 0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
-  if (isDistorted(&cmd) != 0)
-    cmd.type = DISTORTED;
-  else
-    cmd.type = NORMAL;
+  cmd.type = getBestMode(&cmd);
   vdp1_add(&cmd,0);
   return;
 }
