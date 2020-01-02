@@ -9,6 +9,10 @@
 #include <windows.h>
 #endif
 
+#ifdef __LIBRETRO__
+#include <file/file_path.h>
+#endif
+
 #include "stv.h"
 #include "cs0.h"
 #include "junzip.h"
@@ -1940,8 +1944,8 @@ int recordCallback(JZFile *zip, int idx, JZFileHeader *header, char *filename, v
     }
 
     LOGSTV("%s\n", filename);
-#if defined(_WIN32) && defined(__LIBRETRO__)
-    char *last = strrchr(info->filename, '\\');
+#ifdef __LIBRETRO__
+    char *last = strrchr(info->filename, path_default_slash_c());
 #else
     char *last = strrchr(info->filename, '/');
 #endif
@@ -2299,9 +2303,11 @@ int STVSingleInit(const char *gamepath, const char *biospath) {
 int STVInit(int id, const char* path){
   cryptoReset();
   if (CartridgeArea->carttype != CART_ROMSTV) return 0;
+#ifndef __LIBRETRO__
   int nbGames = STVGetRomList(path, 0);
   if (nbGames == 0) return -1;
   if (nbGames <= id) return -1;
+#endif
   if (loadGame(id) == 0) {
     yabsys.isSTV = 1;
     return 0;
