@@ -10,10 +10,11 @@ FASTMATH = 1
 UNROLL_LOOPS = 1
 ARCH_IS_LINUX = 0
 ARCH_IS_MACOSX = 0
+ARCH_IS_WINDOWS = 0
 FORCE_GLEW = 0
 HAVE_SYS_PARAM_H = 1
 HAVE_FSEEKO = 0
-USE_RTHREADS = 1
+USE_RTHREADS = 0
 
 ifeq ($(platform),)
 	platform = unix
@@ -50,10 +51,6 @@ CORE_DIR := .
 
 TARGET_NAME = kronos
 CC_AS ?= $(CC)
-GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
-ifneq ($(GIT_VERSION)," unknown")
-	CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
-endif
 
 # Unix
 ifneq (,$(findstring unix,$(platform)))
@@ -243,12 +240,13 @@ else ifeq ($(platform), gcw0)
 # Windows
 else
 	TARGET := $(TARGET_NAME)_libretro.dll
-	CC = gcc
-	CXX = g++
+	CC ?= gcc
+	CXX ?= g++
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
 	LDFLAGS += -static-libgcc -static-libstdc++ -lwinmm -lopengl32
 	FLAGS += -D_WINDOWS
 	HAVE_FSEEKO = 1
+	ARCH_IS_WINDOWS = 1
 
 endif
 
@@ -287,56 +285,6 @@ else
 	FLAGS += -O3 -DNDEBUG
 endif
 
-ifeq ($(HAVE_MUSASHI), 1)
-	FLAGS += -DHAVE_MUSASHI=1
-else
-	OBJECTS += $(C68KEXEC_OBJECT)
-endif
-
-ifeq ($(FORCE_GLES), 1)
-	FLAGS += -D_OGLES3_
-	LDFLAGS += -lGLESv2
-	ifeq ($(FORCE_GLEW), 0)
-		FLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES3
-	endif
-else
-	FLAGS += -D_OGL3_
-endif
-
-ifeq ($(ARCH_IS_LINUX), 1)
-	FLAGS += -DARCH_IS_LINUX=1
-endif
-
-ifeq ($(ARCH_IS_MACOSX), 1)
-	FLAGS += -DARCH_IS_MACOSX=1
-endif
-
-ifeq ($(FASTMATH), 1)
-	ifeq (,$(findstring msvc,$(platform)))
-		FLAGS += -ffast-math
-	endif
-endif
-
-ifeq ($(UNROLL_LOOPS), 1)
-	ifeq (,$(findstring msvc,$(platform)))
-		FLAGS += -funroll-loops
-	endif
-endif
-
-ifeq ($(FORCE_GLEW), 1)
-	FLAGS += -DGLEW_STATIC -D_USEGLEW_ -DGLEW_NO_GLU
-else
-	FLAGS += -DHAVE_GLSYM_PRIVATE
-endif
-
-ifeq ($(HAVE_SYS_PARAM_H), 1)
-	FLAGS += -DHAVE_SYS_PARAM_H
-endif
-
-ifeq ($(HAVE_FSEEKO), 1)
-	FLAGS += -DHAVE_FSEEKO
-endif
-
 OBJECTS += $(OBJECTS_C) $(OBJECTS_CXX) $(OBJECTS_S)
 
 LDFLAGS += $(fpic) $(SHARED)
@@ -345,14 +293,10 @@ FLAGS += $(fpic)
 INCFLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
 
 WARNINGS :=
-FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) $(WARNINGS) -DVERSION=\"2.0.1\" \
-	-DNO_CLI -DDYNAREC_KRONOS=1 -DHAVE_BUILTIN_BSWAP16=1 -DHAVE_BUILTIN_BSWAP32=1 -DHAVE_C99_VARIADIC_MACROS=1 \
-	-DHAVE_FLOORF=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES \
-	-DSPRITE_CACHE=1 -DHAVE_LIBGL -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1 \
-	-DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0 -DNO_VIDCORE_SOFT
+FLAGS += $(INCFLAGS) $(ENDIANNESS_DEFINES) $(WARNINGS)
 
-CFLAGS += $(FLAGS) -std=gnu11
 CXXFLAGS += $(FLAGS) -std=gnu++11
+CFLAGS += $(FLAGS) -std=gnu11
 
 all: $(TARGET)
 

@@ -71,6 +71,15 @@ extern RGLSYMGLTEXTUREBARRIERPROC __rglgen_glTextureBarrier;
 #ifndef GL_SHADER_IMAGE_ACCESS_BARRIER_BIT
 #define GL_SHADER_IMAGE_ACCESS_BARRIER_BIT 0x00000020
 #endif
+#ifndef GL_BUFFER_UPDATE_BARRIER_BIT
+#define GL_BUFFER_UPDATE_BARRIER_BIT       0x00000200
+#endif
+#ifndef GL_READ_ONLY
+#define GL_READ_ONLY                       0x88B8
+#endif
+#ifndef GL_SHADER_STORAGE_BARRIER_BIT
+#define GL_SHADER_STORAGE_BARRIER_BIT      0x2000
+#endif
 
 #ifdef __cplusplus
 }
