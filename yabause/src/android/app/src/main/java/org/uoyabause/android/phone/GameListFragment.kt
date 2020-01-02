@@ -1,19 +1,18 @@
 package org.uoyabause.android.phone
 
-import android.os.Build
+import android.app.Activity
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.activeandroid.query.Select
-import org.uoyabause.android.GameInfo
-import org.uoyabause.android.backup.BackupItemFragment
 import org.uoyabause.uranus.R
+
 
 /*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
@@ -41,6 +40,17 @@ class GameListFragment  : Fragment() {
     var gameList:GameItemAdapter? = null
     var index:String? = null
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Checks the orientation of the screen
+        if (newConfig.orientation === Configuration.ORIENTATION_LANDSCAPE) {
+            recyclerView.layoutManager = GridLayoutManager(activity, 2)
+        } else if (newConfig.orientation === Configuration.ORIENTATION_PORTRAIT) {
+            recyclerView.layoutManager =
+                    LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -57,9 +67,14 @@ class GameListFragment  : Fragment() {
         if( rootview_ != null ) {
             recyclerView = rootview_!!.findViewById<View>(R.id.my_recycler_view) as RecyclerView
             recyclerView.setHasFixedSize(true)
-            recyclerView.itemAnimator = DefaultItemAnimator()
-            recyclerView.layoutManager =
-                LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
+            recyclerView.itemAnimator = DefaultItemAnimator() as RecyclerView.ItemAnimator?
+
+            if( activity?.resources?.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                recyclerView.layoutManager = GridLayoutManager(activity, 2)
+            }else{
+                recyclerView.layoutManager =
+                        LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
+            }
             recyclerView.adapter = gameList
         }
         return rootview_

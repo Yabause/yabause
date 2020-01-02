@@ -84,6 +84,18 @@ internal class GameViewPagerAdapter(var fm: FragmentManager?) :
     var gameListPages_: List<GameListPage>? = null
 
     fun setGameList(gameListPages: List<GameListPage>?) {
+
+        var fragments = fm?.fragments
+        if (fragments != null) {
+            val ft = fm?.beginTransaction();
+            for (f in fragments) {
+                if(f is GameListFragment) {
+                    ft?.remove(f);
+                }
+            }
+            ft?.commitNow()
+        }
+
         var position = 0
         if (gameListPages != null) {
             gameListPageFragments = ArrayList()
@@ -111,6 +123,9 @@ internal class GameViewPagerAdapter(var fm: FragmentManager?) :
         return gameListPages_!![position].pageTitle
     }
 
+    override fun destroyItem(container: ViewGroup, position: Int, `object`: Any) {
+        super.destroyItem(container, position, `object`)
+    }
 
     override fun getItemPosition( xobj: Any) : Int {
         for ((i, myobj) in gameListPages_!!.withIndex()) {
@@ -432,6 +447,8 @@ class GameSelectFragmentPhone : Fragment(),
                 GameInfo.genGameInfoFromCUE(apath)
             } else if (apath.endsWith("MDS") || apath.endsWith("mds")) {
                 GameInfo.genGameInfoFromMDS(apath)
+            } else if (apath.endsWith("CHD") || apath.endsWith("chd")) {
+                GameInfo.genGameInfoFromCHD(apath)
             } else if (apath.endsWith("CCD") || apath.endsWith("ccd")) {
                 GameInfo.genGameInfoFromMDS(apath)
             } else {
@@ -605,10 +622,12 @@ class GameSelectFragmentPhone : Fragment(),
             override fun onComplete() {
                 loadRows()
                 val viewPager = rootview_.findViewById(R.id.view_pager_game_index) as? ViewPager
+                viewPager!!.setSaveFromParentEnabled(false)
+                viewPager!!.removeAllViews()
                 tabpage_adapter = GameViewPagerAdapter(this@GameSelectFragmentPhone.childFragmentManager)
                 tabpage_adapter.setGameList(gameListPages)
-                tabpage_adapter.notifyDataSetChanged()
                 viewPager!!.adapter = tabpage_adapter
+                viewPager!!.adapter!!.notifyDataSetChanged()
                 tablayout_!!.removeAllTabs()
                 tablayout_!!.setupWithViewPager(viewPager)
 

@@ -57,7 +57,7 @@ public class CardPresenter extends Presenter {
     private static final String TAG = "CardPresenter";
 
     private static int CARD_WIDTH = 320;
-    private static int CARD_HEIGHT = 224;
+    private static int CARD_HEIGHT = (int) (CARD_WIDTH * 12.5/14.0);
     private static int sSelectedBackgroundColor;
     private static int sDefaultBackgroundColor;
     private Drawable mDefaultCardImage;
@@ -115,13 +115,14 @@ public class CardPresenter extends Presenter {
             if( game.image_url.startsWith("http")){
                 Glide.with(viewHolder.view.getContext())
                         .load(game.image_url)
-                        .apply(new RequestOptions().transforms(new CenterCrop() ).error(mDefaultCardImage))
+                        //.apply(new RequestOptions().transforms(new CenterCrop() )
+                        //       .error(mDefaultCardImage))
                         .into(cardView.getMainImageView());
 
             }else {
                 Glide.with(viewHolder.view.getContext())
                         .load(new File(game.image_url))
-                        .apply(  new RequestOptions().transforms(new CenterCrop() ).error(mDefaultCardImage)  )
+                        //.apply(  new RequestOptions().transforms(new CenterCrop() ).error(mDefaultCardImage)  )
                         .into(cardView.getMainImageView());
             }
         }else{

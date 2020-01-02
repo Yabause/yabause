@@ -29,6 +29,8 @@
         android:focusable="true"
         android:foreground="?android:attr/selectableItemBackground"
         app:cardCornerRadius="6dp"
+        app:cardUseCompatPadding="true"
+        card_view:contentPadding="0dp"
         card_view:cardCornerRadius="10dp"
         card_view:cardElevation="1dp"
         card_view:cardMaxElevation="8dp"
@@ -42,7 +44,7 @@
 
         <ImageView
             android:id="@+id/imageView"
-            android:layout_width="320dp"
+            android:layout_width="240dp"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
             android:contentDescription="TODO"
@@ -84,8 +86,8 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="#00000000"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_more_vert_black_24dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
