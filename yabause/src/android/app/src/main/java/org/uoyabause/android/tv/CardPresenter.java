@@ -33,8 +33,13 @@
 package org.uoyabause.android.tv;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.leanback.widget.ImageCardView;
 import androidx.leanback.widget.Presenter;
 
@@ -43,6 +48,9 @@ import android.view.ViewGroup;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 import org.uoyabause.android.GameInfo;
 import org.uoyabause.uranus.R;
@@ -93,7 +101,7 @@ public class CardPresenter extends Presenter {
     @Override
     public void onBindViewHolder(Presenter.ViewHolder viewHolder, Object item) {
         GameInfo game = (GameInfo) item;
-        ImageCardView cardView = (ImageCardView) viewHolder.view;
+        final ImageCardView cardView = (ImageCardView) viewHolder.view;
         cardView.setTitleText(game.game_title);
         String rate="";
         for( int i=0; i < game.rating; i++ ){
@@ -106,7 +114,7 @@ public class CardPresenter extends Presenter {
         }
 
         cardView.setContentText(rate);
-        cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT);
+        cardView.setMainImageDimensions(CARD_WIDTH,CARD_HEIGHT);
         Activity activity = (Activity)viewHolder.view.getContext();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && activity.isDestroyed()) {
             return;
@@ -114,14 +122,42 @@ public class CardPresenter extends Presenter {
         if( !game.image_url.equals("")) {
             if( game.image_url.startsWith("http")){
                 Glide.with(viewHolder.view.getContext())
+                        .asBitmap()
                         .load(game.image_url)
+                        //.centerCrop()
+                        //.centerInside()
+                        .placeholder(mDefaultCardImage)
                         //.apply(new RequestOptions().transforms(new CenterCrop() )
                         //       .error(mDefaultCardImage))
-                        .into(cardView.getMainImageView());
+                        //.into(cardView.getMainImageView());
+                        .into(new CustomTarget() {
+                            @Override
+                            public void onResourceReady(@NonNull Object resource, @Nullable Transition transition) {
+
+                                Bitmap bmp = (Bitmap)resource;
+                                int w = bmp.getWidth();
+                                int h = bmp.getHeight();
+
+                                if( w < h ){
+                                    cardView.setMainImageDimensions((int)(CARD_HEIGHT*(float)w/(float)h),CARD_HEIGHT);
+                                }else{
+                                    cardView.setMainImageDimensions(CARD_WIDTH,(int)(CARD_WIDTH*(float)h/(float)w));
+                                }
+
+                                cardView.getMainImageView().setImageBitmap(bmp);
+                            }
+
+                            @Override
+                            public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                            }
+                        });
 
             }else {
                 Glide.with(viewHolder.view.getContext())
                         .load(new File(game.image_url))
+                        //.centerCrop()
+                        .placeholder(mDefaultCardImage)
                         //.apply(  new RequestOptions().transforms(new CenterCrop() ).error(mDefaultCardImage)  )
                         .into(cardView.getMainImageView());
             }
