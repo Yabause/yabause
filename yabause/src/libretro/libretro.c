@@ -237,17 +237,181 @@ static int input_state_cb_wrapper(unsigned port, unsigned device, unsigned index
       return input_state_cb(port, device, index, id);
 }
 
-static int PERLIBRETROHandleEvents(void)
+static int update_inputs(void)
 {
-   if (!stv_mode)
+   unsigned i = 0;
+
+   input_poll_cb();
+
+   for (i = 0; i < players; i++)
    {
-      unsigned i = 0;
-
-      input_poll_cb();
-
-      for (i = 0; i < players; i++)
+      libretro_input_bitmask[i] = -1;
+      if (stv_mode)
       {
-         libretro_input_bitmask[i] = -1;
+         if (service_enabled && i == 0)
+         {
+            if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
+               PerKeyDown(PERJAMMA_TEST);
+            else
+               PerKeyUp(PERJAMMA_TEST);
+
+            if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
+               PerKeyDown(PERJAMMA_SERVICE);
+            else
+               PerKeyUp(PERJAMMA_SERVICE);
+         }
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT))
+         {
+            if(i == 0)
+               PerKeyDown(PERJAMMA_COIN1);
+            else
+               PerKeyDown(PERJAMMA_COIN2);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERJAMMA_COIN1);
+            else
+               PerKeyUp(PERJAMMA_COIN2);
+         }
+
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+         {
+            if(i == 0)
+               PerKeyDown(PERJAMMA_START1);
+            else
+               PerKeyDown(PERJAMMA_START2);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERJAMMA_START1);
+            else
+               PerKeyUp(PERJAMMA_START2);
+         }
+
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
+         {
+            if(i == 0)
+               PerKeyDown(PERPAD_UP);
+            else
+               PerKeyDown(PERJAMMA_P2_UP);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERPAD_UP);
+            else
+               PerKeyUp(PERJAMMA_P2_UP);
+         }
+
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
+         {
+            if(i == 0)
+               PerKeyDown(PERPAD_RIGHT);
+            else
+               PerKeyDown(PERJAMMA_P2_RIGHT);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERPAD_RIGHT);
+            else
+               PerKeyUp(PERJAMMA_P2_RIGHT);
+         }
+
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
+         {
+            if(i == 0)
+               PerKeyDown(PERPAD_DOWN);
+            else
+               PerKeyDown(PERJAMMA_P2_DOWN);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERPAD_DOWN);
+            else
+               PerKeyUp(PERJAMMA_P2_DOWN);
+         }
+
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
+         {
+            if(i == 0)
+               PerKeyDown(PERPAD_LEFT);
+            else
+               PerKeyDown(PERJAMMA_P2_LEFT);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERPAD_LEFT);
+            else
+               PerKeyUp(PERJAMMA_P2_LEFT);
+         }
+
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+         {
+            if(i == 0)
+               PerKeyDown(PERPAD_A);
+            else
+               PerKeyDown(PERJAMMA_P2_BUTTON1);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERPAD_A);
+            else
+               PerKeyUp(PERJAMMA_P2_BUTTON1);
+         }
+
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
+         {
+            if(i == 0)
+               PerKeyDown(PERPAD_B);
+            else
+               PerKeyDown(PERJAMMA_P2_BUTTON2);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERPAD_B);
+            else
+               PerKeyUp(PERJAMMA_P2_BUTTON2);
+         }
+
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
+         {
+            if(i == 0)
+               PerKeyDown(PERPAD_C);
+            else
+               PerKeyDown(PERJAMMA_P2_BUTTON3);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERPAD_C);
+            else
+               PerKeyUp(PERJAMMA_P2_BUTTON3);
+         }
+
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
+         {
+            if(i == 0)
+               PerKeyDown(PERPAD_X);
+            else
+               PerKeyDown(PERJAMMA_P2_BUTTON4);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERPAD_X);
+            else
+               PerKeyUp(PERJAMMA_P2_BUTTON4);
+         }
+      }
+      else
+      {
          int analog_left_x = 0;
          int analog_left_y = 0;
          int analog_right_x = 0;
@@ -352,6 +516,11 @@ static int PERLIBRETROHandleEvents(void)
    }
 
    return 0;
+}
+
+static int PERLIBRETROHandleEvents(void)
+{
+   update_inputs();
 }
 
 void PERLIBRETRODeInit(void) {}
@@ -1439,181 +1608,8 @@ void retro_run(void)
       YabauseSetSkipframe(g_skipframe);
    }
 
-   // Lots of ST-V games don't call HandleEvents (it might be a bug ?)
-   // Polling inputs here seems like the safest way to handle inputs for all ST-V games
-   if (stv_mode)
-   {
-      unsigned i = 0;
-
-      input_poll_cb();
-
-      for (i = 0; i < players; i++)
-      {
-         libretro_input_bitmask[i] = -1;
-         if (service_enabled && i == 0)
-         {
-            if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
-               PerKeyDown(PERJAMMA_TEST);
-            else
-               PerKeyUp(PERJAMMA_TEST);
-
-            if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
-               PerKeyDown(PERJAMMA_SERVICE);
-            else
-               PerKeyUp(PERJAMMA_SERVICE);
-         }
-         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT))
-         {
-            if(i == 0)
-               PerKeyDown(PERJAMMA_COIN1);
-            else
-               PerKeyDown(PERJAMMA_COIN2);
-         }
-         else
-         {
-            if(i == 0)
-               PerKeyUp(PERJAMMA_COIN1);
-            else
-               PerKeyUp(PERJAMMA_COIN2);
-         }
-
-         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
-         {
-            if(i == 0)
-               PerKeyDown(PERJAMMA_START1);
-            else
-               PerKeyDown(PERJAMMA_START2);
-         }
-         else
-         {
-            if(i == 0)
-               PerKeyUp(PERJAMMA_START1);
-            else
-               PerKeyUp(PERJAMMA_START2);
-         }
-
-         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
-         {
-            if(i == 0)
-               PerKeyDown(PERPAD_UP);
-            else
-               PerKeyDown(PERJAMMA_P2_UP);
-         }
-         else
-         {
-            if(i == 0)
-               PerKeyUp(PERPAD_UP);
-            else
-               PerKeyUp(PERJAMMA_P2_UP);
-         }
-
-         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
-         {
-            if(i == 0)
-               PerKeyDown(PERPAD_RIGHT);
-            else
-               PerKeyDown(PERJAMMA_P2_RIGHT);
-         }
-         else
-         {
-            if(i == 0)
-               PerKeyUp(PERPAD_RIGHT);
-            else
-               PerKeyUp(PERJAMMA_P2_RIGHT);
-         }
-
-         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
-         {
-            if(i == 0)
-               PerKeyDown(PERPAD_DOWN);
-            else
-               PerKeyDown(PERJAMMA_P2_DOWN);
-         }
-         else
-         {
-            if(i == 0)
-               PerKeyUp(PERPAD_DOWN);
-            else
-               PerKeyUp(PERJAMMA_P2_DOWN);
-         }
-
-         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
-         {
-            if(i == 0)
-               PerKeyDown(PERPAD_LEFT);
-            else
-               PerKeyDown(PERJAMMA_P2_LEFT);
-         }
-         else
-         {
-            if(i == 0)
-               PerKeyUp(PERPAD_LEFT);
-            else
-               PerKeyUp(PERJAMMA_P2_LEFT);
-         }
-
-         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
-         {
-            if(i == 0)
-               PerKeyDown(PERPAD_A);
-            else
-               PerKeyDown(PERJAMMA_P2_BUTTON1);
-         }
-         else
-         {
-            if(i == 0)
-               PerKeyUp(PERPAD_A);
-            else
-               PerKeyUp(PERJAMMA_P2_BUTTON1);
-         }
-
-         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
-         {
-            if(i == 0)
-               PerKeyDown(PERPAD_B);
-            else
-               PerKeyDown(PERJAMMA_P2_BUTTON2);
-         }
-         else
-         {
-            if(i == 0)
-               PerKeyUp(PERPAD_B);
-            else
-               PerKeyUp(PERJAMMA_P2_BUTTON2);
-         }
-
-         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
-         {
-            if(i == 0)
-               PerKeyDown(PERPAD_C);
-            else
-               PerKeyDown(PERJAMMA_P2_BUTTON3);
-         }
-         else
-         {
-            if(i == 0)
-               PerKeyUp(PERPAD_C);
-            else
-               PerKeyUp(PERJAMMA_P2_BUTTON3);
-         }
-
-         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
-         {
-            if(i == 0)
-               PerKeyDown(PERPAD_X);
-            else
-               PerKeyDown(PERJAMMA_P2_BUTTON4);
-         }
-         else
-         {
-            if(i == 0)
-               PerKeyUp(PERPAD_X);
-            else
-               PerKeyUp(PERJAMMA_P2_BUTTON4);
-         }
-      }
-   }
-
+   // It appears polling can happen outside of HandleEvents
+   update_inputs();
    YabauseExec();
 
    // If no frame rendered, dupe
