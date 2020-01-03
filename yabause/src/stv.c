@@ -25,7 +25,7 @@
 //YuiMsg
 #define ROTATED 1
 
-#define NB_STV_GAMES 97
+#define NB_STV_GAMES 98
 
 GameLink availableGames[NB_STV_GAMES];
 GameLink biosLink;
@@ -384,6 +384,23 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr18140.4",   0x0c00000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18141.5",   0x1000000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18142.6",   0x1400000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Fantasy Zone (J 990202 V1.000)",
+    0,
+    0,
+    NULL,
+    NULL,
+    {
+	GAME_WORD_BLOB, "epr-21440a.ic13",  0x0000000, 0x0080000,
+	GAME_WORD_BLOB, "mpr-21441.ic2",  0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-21445.ic1",  0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-21442.ic4",  0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-21446.ic3",   0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-21443.ic6",   0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-21447.ic5",   0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-21444.ic8",   0x1c00000, 0x0400000,
         GAME_END, "", 0, 0
     },
   },
