@@ -101,8 +101,8 @@ void FASTCALL Vdp1RamWriteWord(u32 addr, u16 val) {
 //////////////////////////////////////////////////////////////////////////////
 void FASTCALL Vdp1RamWriteLong(u32 addr, u32 val) {
    addr &= 0x7FFFF;
-   if(addr == 0x00000)
-   LOG("Vdp1RamWriteLong @ %08X", CurrentSH2->regs.PC);
+   //if(addr == 0x00000)
+   //LOG("Vdp1RamWriteLong @ %08X", CurrentSH2->regs.PC);
 
    T1WriteLong(Vdp1Ram, addr, val);
 }
@@ -448,6 +448,8 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       case 0xC:
          Vdp1Regs->ENDR = val;
          Vdp1External.status = VDP1_STATUS_IDLE;
+         yabsys.wait_line_count = -1;
+         LOG("Force to stop Vdp1\n", addr);
          break;
       default:
          LOG("trying to write a Vdp1 read-only register - %08X\n", addr);
@@ -465,20 +467,23 @@ void FASTCALL Vdp1WriteLong(u32 addr, UNUSED u32 val) {
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
+  LOG("VDP1: DrawCommands - %08X\n", regs->addr);
+  regs->COPR = regs->addr >> 3;
+
   if (regs->addr > 0x7FFFF) {
     Vdp1External.status = VDP1_STATUS_IDLE;
+    LOG("VDP1: Address error - %08X\n", regs->addr);
     return; // address error
   }
    u16 command = T1ReadWord(ram, regs->addr );
    if (command & 0x8000) {
      Vdp1External.status = VDP1_STATUS_IDLE;
+     LOG("VDP1: Imidiate Finish - %08X\n", regs->addr);
      return;
    }
    Vdp1External.status = VDP1_STATUS_RUNNING;
    int command_count = 0;
    u32 returnAddr = 0xffffffff;
-
-   LOG("Vdp1DrawCommands - %08X\n", regs->addr);
 
    while (!(command & 0x8000) && command_count < 4096) { // fix me
       regs->COPR = regs->addr >> 3;
@@ -517,7 +522,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             VIDCore->Vdp1LocalCoordinate(ram, regs);
             break;
          default: // Abort
-            VDP1LOG("vdp1\t: Bad command: %x\n", command);
+            VDP1LOG("VDP1: Bad command: %x\n", command);
             regs->EDSR |= 2;
             regs->LOPR = regs->addr >> 3;
             regs->COPR = regs->addr >> 3;
@@ -531,6 +536,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 		  regs->LOPR = regs->addr >> 3;
 		  regs->COPR = regs->addr >> 3;
       Vdp1External.status = VDP1_STATUS_IDLE;
+      VDP1LOG("VDP1: Force to quit internal command error %x\n", command);
 		  return;
 	  }
 
@@ -577,12 +583,13 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       command = T1ReadWord(ram, regs->addr & 0x7FFFF);
       command_count++;
       if (command & 0x8000) {
+        LOG("VDP1: Command Finished! count = %d @ %08X", command_count, regs->addr);
         Vdp1External.status = VDP1_STATUS_IDLE;
       }
    }
 
    if (Vdp1External.status == VDP1_STATUS_RUNNING) {
-     LOG("comand count = %d", command_count);
+     LOG("VDP1: Readched to max comand count = %d", command_count);
    }
 }
 
