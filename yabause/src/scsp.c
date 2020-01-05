@@ -617,9 +617,9 @@ void op3(struct Slot * slot)
       return;
 
    if (!slot->regs.pcm8b)
-     slot->state.wave = T2ReadWord(SoundRam, addr); //SoundRamReadWord(addr);
+     slot->state.wave = SoundRamReadWord(NULL, SoundRam, addr); //SoundRamReadWord(addr);
    else
-     slot->state.wave = T2ReadByte(SoundRam, addr) << 8; //SoundRamReadByte(addr) << 8;
+     slot->state.wave = SoundRamReadByte(NULL, SoundRam, addr) << 8; //SoundRamReadByte(addr) << 8;
 
    slot->state.output = slot->state.wave;
 }
@@ -1940,7 +1940,7 @@ scsp_dma (void)
       for (int i = 0; i < cnt; i++) {
         u16 val = scsp_r_w(NULL, NULL, from);
         //if (scsp.dmfl & 0x40) val = 0;
-        T2WriteWord(SoundRam, to & 0x7FFFF, val);
+        SoundRamWriteWord(NULL, SoundRam, to, val);
         from += 2;
         to += 2;
       }
@@ -1955,7 +1955,7 @@ scsp_dma (void)
       u32 to = scsp.drga;
       u32 cnt = scsp.dmlen>>1;
       for (int i = 0; i < cnt; i++) {
-        u16 val = T2ReadWord(SoundRam, from & 0x7FFFF); 
+        u16 val = SoundRamReadWord(NULL, SoundRam, from);
         //if (scsp.dmfl & 0x40) val = 0;
         scsp_w_w(NULL, NULL, to,val);
         from += 2;
@@ -4704,7 +4704,7 @@ c68k_byte_read (const u32 adr)
   u32 rtn = 0;
   if (adr < 0x100000) {
     if (adr < 0x80000) {
-      rtn = T2ReadByte(SoundRam, adr & 0x7FFFF);
+      rtn = SoundRamReadByte(NULL, SoundRam, adr);
     }
   }
   else
@@ -4718,12 +4718,7 @@ static void FASTCALL
 c68k_byte_write (const u32 adr, u32 data)
 {
   if (adr < 0x100000){
-    //if ((adr & 0xFFF) == 0x790){
-    //  SCSPLOG("c68k_word_write %08X:%02X\n", adr, data);
-    //}
-    if (adr < 0x80000) {
-      T2WriteByte(SoundRam, adr & 0x7FFFF, data);
-    }
+    SoundRamWriteByte(NULL, SoundRam, adr, data);
   }
   else{
     scsp_w_b(NULL, NULL, adr, data);
@@ -4738,9 +4733,7 @@ c68k_word_read (const u32 adr)
 {
   u32 rtn = 0;
   if (adr < 0x100000) {
-    if (adr < 0x80000) {
-      rtn = T2ReadWord(SoundRam, adr);
-    }
+    rtn = SoundRamReadWord(NULL, SoundRam, adr);
   }
   else
     rtn = scsp_r_w(NULL, NULL, adr);
@@ -4753,12 +4746,7 @@ static void FASTCALL
 c68k_word_write (const u32 adr, u32 data)
 {
   if (adr < 0x100000){
-//    if ((adr & 0x7FFF0) == 0x3c20){
-//      SCSPLOG("c68k_word_write %08X:%04X @ %d\n", adr, data, (m68kcycle >> CLOCK_SYNC_SHIFT) );
-//    }
-    if (adr < 0x80000) {
-      T2WriteWord(SoundRam, adr, data);
-    }
+    SoundRamWriteWord(NULL, SoundRam, adr, data);
   }
   else{
     scsp_w_w(NULL, NULL, adr, data);
@@ -4794,10 +4782,11 @@ SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
-  else if (addr > 0x7FFFF)
-    val = 0xFF;
-
-  val = T2ReadByte(mem, addr);
+  else
+    if (addr > 0x7FFFF)
+      val = 0xFF;
+    else
+      val = T2ReadByte(mem, addr);
   //SCSPLOG("SoundRamReadByte %08X:%02X",addr,val);
   return val;
 }
