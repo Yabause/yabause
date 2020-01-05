@@ -22,6 +22,7 @@ typedef enum{
   HEADER_BLOB,
   GAME_BYTE_BLOB,
   GAME_WORD_BLOB,
+  EEPROM_BLOB,
   GAME_END
 } blobType;
 

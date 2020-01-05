@@ -564,7 +564,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	HEADER_BLOB,    "flash.ic13", 0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "flash.ic13",  0x0200000, 0x0100000,
@@ -575,6 +575,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr-19357.ic5",    0x1000000, 0x0400000,
 	GAME_WORD_BLOB, "mpr-19358.ic6",    0x1400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr-19359.ic1",    0x1800000, 0x0400000,
+	EEPROM_BLOB,    "magzun.nv",        0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1321,11 +1322,12 @@ const Game GameList[NB_STV_GAMES]={
     0,
     ROTATED,
     NULL,
-    ShienryuNV,
+    NULL,
     {
 	GAME_WORD_BLOB, "mpr19631.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr19632.2",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr19633.3",    0x0800000, 0x0400000,
+	EEPROM_BLOB,    "eeprom-shienryu.bin",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1741,6 +1743,7 @@ const Game GameList[NB_STV_GAMES]={
 
 
 u8 hasBios = 0;
+u8 hasEeprom = 0;
 u8 fileFound[NB_STV_GAMES][MAX_GAME_FILES];
 u8 biosFound[MAX_GAME_FILES];
 
@@ -1938,6 +1941,10 @@ int copyFile(JZFile *zip, void* id) {
               for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
                 T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j, data[j]);
               }
+              break;
+            case EEPROM_BLOB:
+              eeprom_start(data);
+              hasEeprom = 1;
               break;
           }
         } else LOGSTV("Error : No data read from %s\n", filename);
@@ -2143,7 +2150,8 @@ int loadGame(int gameId){
   }
   if (isBlobFound & (isBiosFound|hasBios)) {
     LOGSTV("%s has been sucessfully loaded\n", availableGames[gameId].entry->name);
-    eeprom_start(availableGames[gameId].entry->eeprom);
+    if (availableGames[gameId].entry->eeprom != NULL || hasEeprom == 0)
+      eeprom_start(availableGames[gameId].entry->eeprom);
     cyptoSetKey(availableGames[gameId].entry->key);
     yabsys.isRotated = availableGames[gameId].entry->rotated;
     if (availableGames[gameId].entry->init != NULL) availableGames[gameId].entry->init();
