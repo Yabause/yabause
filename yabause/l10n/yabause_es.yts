@@ -32,7 +32,6 @@
 &Slave SH2|SH2 E&sclavo
 &Tools|Herramien&tas
 &Transfer|&Transferir
-&Vertical synchronization|Sincronización vertical
 &View|&Ver
 16-bit|16-bit
 16-bit Relative value(s)|Valor(es) relativo(s) a 16-bit
@@ -81,7 +80,6 @@ Axis Y|Eje Y
 Axis L Trigger|Eje gatillo izq
 Axis R Trigger|Eje gatillo der
 Backup Ram Manager|Gestor de RAM de backup
-BiCubic|Bicúbico
 Bilinear|Bilinear
 Bilinear Filtering (Restart required)|Filtro bilinear (Requiere reinicio)
 Binary Files (*.bin)|Archivos binarios (*.bin)
@@ -130,8 +128,8 @@ COFF Program Files (*.cof *.coff)|Archivos de programa COFF (*.cof *.coff)
 Comment :|Comentario :
 Common Control Registers|Registros comunes de control
 Compatibility List|Listado de compatibilidad
-Compare Type|Comparar tipo
-Compute Shader Video Interface|Interfaz de vídeo de cómputo de sombreado
+Compare Type|Comparar tipo	
+Compute Shader Video Interface|Interfaz de sombreadores de cómputo
 Couldn't save state file|No se pudo guardar el archivo de estado
 Couldn't load state file|No se pudo cargar el archivo de estado
 CPU Tesselation|Teselado CPU
@@ -180,7 +178,7 @@ Enable Bios Emulation|Habilitar Emulación de Bios
 Enable Code : %1 %2|Habilitar Código : %1 %2
 Enable Frame Skip/Limiter|Habilitar Limitador/Salto de frames
 Enable Multithreading|Habilitar multihilo
-Enable vertical synchronization|Activar sincronización verticald
+Enable vertical synchronization|Activar sincronización vertical
 Enabled|Activado
 Enter new assembly code|Inserte el nuevo código ensamblador
 Enter New Value|Inserte el nuevo valor
@@ -224,7 +222,16 @@ Kronos Qt GUI|Interfaz gráfica Qt
 Kronos Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Kronos Qt Gui<br />Basada en Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />El Equipo Yabause<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>										  
 Kronos Save State (*.yss)|Guardado de estado de Kronos (*.yss)
 Kronos is not initialized, can't manage backup ram.|Kronos no está inicializado. No se puede gestionar el editor de la memoria de backup.			  
-Language :|Idioma :																	
+Language :|Idioma :	
+Load1|Cargar1
+Load2|Cargar2
+Load3|Cargar3
+Load4|Cargar4
+Load5|Cargar5
+Load6|Cargar6
+Load7|Cargar7
+Load8|Cargar8
+Load9|Cargar9															
 L&oad State|Cargar Estad&o
 Left|Izquierda
 Left stick:\nTrigger:      X\nLeft button:  Y\nRight button: Z|Stick izq:\nGatillo:      X\nBotón izq:  Y\nBotón der: Z
@@ -255,7 +262,7 @@ Mouse Configuration|Configuración del Ratón
 Mpeg ROM|ROM Mpeg
 Musashi Interface|Interfaz Musashi
 nanovg OSD Interface|Interfaz nanovg OSD
-Native (current resolution of the window)|
+Native (current resolution of the window)|Nativa (resolución nativa de ventana)
 NBG0|NBG0
 NBG0/RBG1 Info|Información de NBG0/RBG1
 NBG1|NBG1
@@ -307,6 +314,15 @@ Right Stick Axis Y|Eje Y Stick der
 Right Stick Axis Throttle|Acelerar Eje Stick der
 Right trigger|Gatillo derecho
 R&un|E&jecutar
+Save1|Guardado1
+Save2|Guardado2
+Save3|Guardado3
+Save4|Guardado4
+Save5|Guardado5
+Save6|Guardado6
+Save7|Guardado7
+Save8|Guardado8
+Save9|Guardado9
 Save As Bitmap|Guardar como mapa de bits
 Save As WAV|Guardar como WAV
 Save Bitmap|Guardar mapa de bits
@@ -339,7 +355,7 @@ Search Memory|Buscar en memoria
 Search Value:|Valor a buscar:
 Sega Saturn Sound Format files (*.ssf *.minissf)|Formato de archivos de sonido de Sega Saturn  (*.ssf *.minissf)
 Select a file to load your state|Selecciona el archivo para cargar tu estado
-Select your iso/cue/bin/zip file|Selecciona tu archivo iso/cue/bin/zip
+Select your iso/cue/bin/zip/chd file|Selecciona tu archivo iso/cue/bin/zip/chd
 Select your ssf file|Selecciona tu archivo ssf
 Set PC to Start Address|Establecer PC a posición de inicio
 Settings|Configuración
@@ -357,6 +373,7 @@ Signed 32-bit value|Valor de 32-bit con signo
 Slot Info|Información de ranura
 Slot Number:|Número de ranura:
 Software OSD Interface|Interfaz OSD software
+Software Video Interface|Interfaz de video software
 Sound...|Sonido...
 Sound|Sonido
 Sound Core|Núcleo de sonido
@@ -416,6 +433,7 @@ VDP1 Command Info|Información de comandos del VDP1
 VDP1 Command List|Listado de comandos del VDP1
 VDP2|Vdp2
 VDP2Viewer Viewer|Visor VDP2
+Vertical synchronization|Sincronización vertical
 Video|Vídeo
 Video Core|Núcleo de Vídeo
 Video Driver|Driver de Vídeo
