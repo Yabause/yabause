@@ -32,7 +32,6 @@
 &Slave SH2|&Slave SH2
 &Tools|&Werkzeuge
 &Transfer|&Transferieren
-&Vertical synchronization|Vertikale synchronisation
 &View|&Ansicht
 16-bit|16-bit
 16-bit Relative value(s)|16-bit Relative value(s)
@@ -80,8 +79,7 @@ Axis X|Achse X
 Axis Y|Achse Y
 Axis L Trigger|Achse L Abzug
 Axis R Trigger|Achse R Abzug  
-Backup Ram Manager|Backup Ram Manager
-BiCubic|Bikubisch
+Backup Ram Manager|Backup Ram Manager			  
 Bilinear|Bilinear
 Bilinear Filtering (Restart required)|Bilineare Filterung (Neustart erforderlich)	   
 Binary Files (*.bin)|Binary Files (*.bin)	   
@@ -131,7 +129,7 @@ Comment :|Kommentar :
 Common Control Registers|Common Control Registers
 Compatibility List|Kompatibilitätsliste			   
 Compare Type|Vergleiche Typen
-Compute Shader Video Interface|Computer Shader Video Schnittstelle
+Compute Shader Video Interface|Shader berechnen Video-Schnittstelle
 Couldn't save state file|Statusdatei konnte nicht gespeichert werden
 Couldn't load state file|Statusdatei konnte nicht geladen werden
 CPU Tesselation|CPU Tesselation
@@ -225,6 +223,15 @@ Kronos Qt Gui<br />Based on Kronos %1<br /><a href="http://yabause.org">http://y
 Kronos Save State (*.yss)|Kronos Speicherstände (*.yss)
 Kronos is not initialized, can't manage backup ram.|Kronos ist nicht initialisiert, Backup Ram kann nicht verwaltet werden.						  
 Language :|Sprache :
+Load1|
+Load2|
+Load3|
+Load4|
+Load5|
+Load6|
+Load7|
+Load8|
+Load9|
 L&oad State|L&ade Spielstand
 Left|Links
 Left trigger|Linke Schultertaste
@@ -271,7 +278,7 @@ Never|Niemals
 No matches found.|Keine Treffer gefunden
 None|Keine
 None|Keine
-Normal format not available, trying alternative|										
+Normal format not available, trying alternative|Normales Format nicht verfügbar, versuche es alternativ										
 North America (NTSC)|Nordamerika (NTSC)
 Number of Threads|
 On fullscreen|Auf Vollbild
@@ -307,7 +314,16 @@ Right Stick Axis X|Rechte Stielachse X
 Right Stick Axis Y|Rechte Stielachse Y
 Right Stick Axis Throttle|Steuerknüppel der rechten Achse
 Right trigger|Rechte Schultertaste
-R&un|Lauf
+R&un|
+Save1|Speichern1
+Save2|Speichern2
+Save3|Speichern3
+Save4|Speichern4
+Save5|Speichern5
+Save6|Speichern6
+Save7|Speichern7
+Save8|Speichern8
+Save9|Speichern9
 Save As Bitmap|Als Bitmap speichern
 Save As WAV|Als WAV speichern
 Save Bitmap|Als Bitmap speichern
@@ -318,17 +334,17 @@ Save MD1|Save MD1
 Save MD2|Save MD2
 Save Selected|Save Selected			 
 Save Program|Save Program
-S&ave State|Sicherer Staat
-Save States|Staaten retten    				
+S&ave State|
+Save States|					
 Save Slot Registers|Save Slot Registers
-Save Tab|Tab speichern
+Save Tab|
 Screen Enabled|Bildschirm eingeschaltet
 Screen Select:|Bildschirm auswählen:
 Screenshot|Bildschirmfoto
-Scanline filter|Scanline filter
-Scanline off|Scanline aus
-Scanline on|Scanline an
-SCSP|SCSP
+Scanline filter|
+Scanline off|
+Scanline on|
+SCSP|
 SCSP Channels|SCSP-Kanäle
 SDL Joystick Interface|SDL-Joystick-Schnittstelle
 SDL Sound Interface|SDL-Klingen-Schnittstelle
@@ -339,15 +355,15 @@ Search Memory|Speichersuche
 Search Value:|Suchwert:
 Sega Saturn Sound Format files (*.ssf *.minissf)|Sega Saturn Sound Format-Dateien (* .ssf * .minissf)
 Select a file to load your state|Wählen Sie eine Datei zum Laden des Spielstandes aus
-Select your iso/cue/bin file|Wählen Sie Ihre iso/cue/bin Datei
+Select your iso/cue/bin/zip/chd file|Wählen Sie Ihre iso/cue/bin/zip/chd Datei
 Select your ssf file|						
 Set PC to Start Address|PC zur Startadresse setzen
 Settings|Einstellungen
-SH2 Debugger Interpreter|SH2 Debugger Interpreter
-SH2 Interpreter|SH2 Interpreter
-SH2 Kronos Interpreter|SH2 Kronos Interpreter
-SH2 Registers|SH2 Registriert
-Shortcuts|Verknüpfungen
+SH2 Debugger Interpreter|
+SH2 Interpreter|
+SH2 Kronos Interpreter|
+SH2 Registers|				
+Shortcuts|Shortcuts
 Show FPS|FPS anzeigen
 Show Log Window|Show Log Window
 Signed|Signiert
@@ -357,13 +373,14 @@ Signed 32-bit value|Signed 32-bit value
 Slot Info|Slot Info
 Slot Number:|Slot Number:
 Software OSD Interface|Software OSD Oberfläche
-Sound...|Sound...
+Software Video Interface|Software Video Oberfläche
 Sound|Sound
+Sound|		   
 Sound Core|Sound Kern
 Spanish|Spanisch
-ST-V cabinet Configuration|ST-V Schrankkonfiguration
-ST-V Cabinet|Kabinett
-STV Rom game|STV Rom-Spiel	 
+ST-V cabinet Configuration|
+ST-V Cabinet|
+STV Rom game|			 
 Start|Start
 Start Address:|Adressenanfang:
 Start in Fullscreen|Start in Fullscreen
@@ -376,7 +393,7 @@ Stick left button: same as A \nStick right button: same as B \nStick trigger: sa
 Stick Left|Bleib links
 Stick Right|Bleib rechts
 Stick Up|Bleib auf
-Stop|Halt
+Stop|
 Stretch to window|Zum Fenster strecken								
 Synchronize Saturn internal clock with set time|Synchronize Saturn internal clock with set time
 Tesselation|Tessellation
@@ -406,7 +423,7 @@ Unable to open file for loading|Datei konnte nicht zum Laden geöffnet werden
 Unable to open file for saving|Datei konnte nicht zum Speichern geöffnet werden
 Unable to remove code|Code konnte nicht entfernt werden
 Unknow (%1)|Unbekannt (%1)
-Upscale Filter :|Hochwertiger Filter
+Upscale Filter :|
 Use Vdp1 Cache|Verwenden Sie den Vdp1-Cache
 Value|Wert
 Value:|Value:
@@ -416,6 +433,7 @@ VDP1 Command Info|VDP1 Command Info
 VDP1 Command List|VDP1 Command List
 VDP2|VDP2
 VDP2Viewer Viewer|
+Vertical synchronization|Vertikale synchronisation
 Video|Video
 Video Core|Video Kern
 Video Driver|Video Treiber
@@ -424,7 +442,7 @@ View|Ansicht
 Viewer|Viewer
 WAV Files (*.wav)|WAV-Dateien (* .wav)
 Wheel|Rad
-Wheel Configuration|Rad Konfiguration
+Wheel Configuration|		  
 Window Resolution|Bildschirmauflösung
 Windows SPTI Driver|Windows SPTI Treiber
 Word|Word
