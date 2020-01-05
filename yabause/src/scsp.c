@@ -327,7 +327,7 @@ struct Scsp
    struct Slot slots[32];
 
    int debug_mode;
-}new_scsp;
+}new_scsp = {0};
 
 //samples per step through a 256 entry lfo table
 const int lfo_step_table[0x20] = {
