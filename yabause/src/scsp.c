@@ -4814,7 +4814,7 @@ SoundRamWriteByte (SH2_struct *context, u8* mem, u32 addr, u8 val)
 // From CPU
 int sh2_read_req = 0;
 static int mem_access_counter = 0;
-void SyncSh2And68k(){
+void SyncSh2And68k(SH2_struct *context){
   if (IsM68KRunning) {
     /*
     #if defined(ARCH_IS_LINUX)
@@ -4827,8 +4827,7 @@ void SyncSh2And68k(){
     */
     // Memory Access cycle = 128 times per 44.1Khz
     // 28437500 / 4410 / 128 = 50
-    SH2Core->AddCycle(MSH2, 50);
-    SH2Core->AddCycle(SSH2, 50);
+    SH2Core->AddCycle(context, 50);
 
     if (mem_access_counter++ >= 128) {
 #if defined(ARCH_IS_LINUX)
@@ -4856,7 +4855,7 @@ SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
     return 0xFFFF;
 
   //SCSPLOG("SoundRamReadLong %08X:%08X time=%d", addr, val, MSH2->cycles);
-  SyncSh2And68k();
+  if (context != NULL) SyncSh2And68k(context);
 
   val = T2ReadWord (mem, addr);
 
@@ -4896,12 +4895,12 @@ SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
     addr &= 0x3FFFF;
   else if (addr > 0x7FFFF) {
     val = 0xFFFFFFFF;
-    SyncSh2And68k();
+    if (context != NULL) SyncSh2And68k(context);
     return val;
   }
 
   //SCSPLOG("SoundRamReadLong %08X:%08X time=%d PC=%08X", addr, val, MSH2->cycles, MSH2->regs.PC);
-  SyncSh2And68k();
+  if (context != NULL) SyncSh2And68k(context);
 
   val = T2ReadLong(mem, addr);
 
