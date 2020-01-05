@@ -1464,15 +1464,15 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
          s16 disdl_applied = (s->slots[last_step].state.output >> disdl);
 
-         s16 mixs_input = s->slots[last_step].state.output >> 
+         s16 mixs_input = s->slots[last_step].state.output >>
             get_sdl_shift(s->slots[last_step].regs.imxl);
 
          int pan_val_l = 0, pan_val_r = 0;
 
          get_panning(s->slots[last_step].regs.dipan, &pan_val_l, &pan_val_r);
 
-         outl32 = outl32 + ((disdl_applied >> pan_val_l) >> 1);
-         outr32 = outr32 + ((disdl_applied >> pan_val_r) >> 1);
+         outl32 = outl32 + ((disdl_applied >> pan_val_l));
+         outr32 = outr32 + ((disdl_applied >> pan_val_r));
          scsp_dsp.mixs[s->slots[last_step].regs.isel] += mixs_input << 4;
       }
    }
@@ -1522,14 +1522,14 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
       get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
 
-      panned_l = (efsdl_applied >> pan_val_l)>>1;
-      panned_r = (efsdl_applied >> pan_val_r)>>1;
+      panned_l = (efsdl_applied >> pan_val_l);
+      panned_r = (efsdl_applied >> pan_val_r);
 
       outl32 = outl32 + panned_l;
       outr32 = outr32 + panned_r;
    }
-
    mvol_shift = 0xf - mvol;
+
 
    outl32 = outl32 >> mvol_shift;
    *out_l = min(SHRT_MAX, max(SHRT_MIN, outl32));
