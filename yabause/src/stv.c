@@ -1195,13 +1195,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	HEADER_BLOB,   "epr18737.13",    0x0000000, 0x0080000,
 	GAME_BYTE_BLOB, "epr18737.13",    0x0100000, 0x0080000,
 	GAME_WORD_BLOB, "mpr18738.2",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18739.3",    0x0800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18740.4",    0x0c00000, 0x0200000,
+	EEPROM_BLOB, "kiwames.nv",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
