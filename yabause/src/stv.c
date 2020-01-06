@@ -178,7 +178,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
-    NV_1P,
+    NULL,
     {
 	GAME_WORD_BLOB,    "ic22.bin",   0x0200000, 0x200000,
 	GAME_WORD_BLOB, "ic24.bin",   0x0400000, 0x200000,
@@ -188,6 +188,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "ic32.bin",    0x0c00000, 0x200000,
 	GAME_WORD_BLOB, "ic34.bin",    0x0e00000, 0x200000,
 	GAME_WORD_BLOB, "ic36.bin",    0x1000000, 0x200000,
+	EEPROM_BLOB, "choroqhr.nv",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -242,7 +243,7 @@ const Game GameList[NB_STV_GAMES]={
     0x0,
     0,
     NULL,
-    NV_1P,
+    NULL,
     {
 	BIOS_BLOB, "epr-17954a.ic8",   0x0000000, 0x0080000,
 	HEADER_BLOB, "epr-18821.ic13",    0x0000000, 0x0080000,
@@ -251,6 +252,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_BYTE_BLOB, "epr-18821.ic13",    0x0300000, 0x0080000,
 	GAME_WORD_BLOB, "mpr-18789.ic8",    0x1c00000, 0x0400000,
 	GAME_WORD_BLOB, "mpr-18788.ic9",    0x2000000, 0x0400000,
+	EEPROM_BLOB,    "critcrsh.nv",        0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -461,7 +463,7 @@ const Game GameList[NB_STV_GAMES]={
     0x0524ac01,
     0,
     NULL,
-    NV_1P,
+    NULL,
     {
 	HEADER_BLOB,    "fr18541a.13",   0x0000000, 0x0100000,
 	GAME_WORD_BLOB, "mpr18538.7",    0x0200000, 0x0200000,
@@ -473,6 +475,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr18532.1",    0x1800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18539.8",    0x1c00000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18540.9",    0x2000000, 0x0400000,
+	EEPROM_BLOB,    "fhboxers.nv",   0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -532,13 +535,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x200000,
 	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x200000,
 	GAME_WORD_BLOB, "ic26.bin",    0x0600000, 0x200000,
 	GAME_WORD_BLOB, "ic28.bin",    0x0800000, 0x200000,
 	GAME_WORD_BLOB, "ic30.bin",    0x0a00000, 0x200000,
+	EEPROM_BLOB, "patocar.nv", 0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -622,7 +626,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "ic22", 0x0200000, 0x200000,
 	GAME_WORD_BLOB, "ic24", 0x0400000, 0x200000,
@@ -632,6 +636,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "ic32", 0x0c00000, 0x200000,
 	GAME_WORD_BLOB, "ic34", 0x0e00000, 0x200000,
 	GAME_WORD_BLOB, "ic36", 0x1200000, 0x200000,
+	EEPROM_BLOB, "micrombc.nv", 0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -639,12 +644,13 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "ic22",  0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24",  0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "ic26",  0x0a00000, 0x0200000,
 	GAME_WORD_BLOB, "ic28",  0x0e00000, 0x0200000,
+	EEPROM_BLOB, "nameclub.nv", 0x0000, 0x0080,	
         GAME_END, "", 0, 0
     },
   },
@@ -652,12 +658,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "nclubv2.ic22",  0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "nclubv2.ic24",  0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "nclubv2.ic26",  0x0a00000, 0x0200000,
 	GAME_WORD_BLOB, "nclubv2.ic28",  0x0e00000, 0x0200000,
+	EEPROM_BLOB, "nclubv2.nv", 0x0000, 0x0080,	
+
         GAME_END, "", 0, 0
     },
   },
@@ -665,7 +673,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "ic22",  0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24",  0x0400000, 0x0200000,
@@ -677,6 +685,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "ic36",  0x1000000, 0x0200000,
 	GAME_WORD_BLOB, "ic23",  0x1200000, 0x0200000,
 	GAME_WORD_BLOB, "ic25",  0x1400000, 0x0200000,
+	EEPROM_BLOB, "nclubv3.nv",  0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -684,13 +693,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "ic22.bin",  0x0200000, 0x200000,
 	GAME_WORD_BLOB, "ic24.bin",  0x0400000, 0x200000,
 	GAME_WORD_BLOB, "ic26.bin",  0x0600000, 0x200000,
 	GAME_WORD_BLOB, "ic28.bin",  0x0800000, 0x200000,
 	GAME_WORD_BLOB, "ic30.bin",  0x0a00000, 0x200000,
+	EEPROM_BLOB, "supgoal.nv",  0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -743,7 +753,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "prc298sp_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "prc298sp_ic24",    0x0400000, 0x0200000,
@@ -753,6 +763,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "prc298sp_ic32",    0x0c00000, 0x0200000,
 	GAME_WORD_BLOB, "prc298sp_ic34",    0x0e00000, 0x0200000,
 	GAME_WORD_BLOB, "prc298sp_ic36",    0x1000000, 0x0200000,
+	EEPROM_BLOB, "prc298su.nv",      0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -760,7 +771,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "prc298au_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "prc298au_ic24",    0x0400000, 0x0200000,
@@ -770,6 +781,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "prc298au_ic32",    0x0c00000, 0x0200000,
 	GAME_WORD_BLOB, "prc298au_ic34",    0x0e00000, 0x0200000,
 	GAME_WORD_BLOB, "prc298au_ic36",    0x1000000, 0x0200000,
+	EEPROM_BLOB, "prc298au.nv",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -808,13 +820,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "pclub2v7.ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2v7.ic24",    0x0400000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2v7.ic26",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2v7.ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2v7.ic30",    0x0a00000, 0x0200000,
+	EEPROM_BLOB,  "pclub27s.nvv",     0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -839,7 +852,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
 	GAME_WORD_BLOB, "pclub2_ic22",    0x0200000, 0x0200000,
@@ -847,6 +860,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "pclub2_ic26",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2_ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2_ic30",    0x0a00000, 0x0200000,
+	EEPROM_BLOB, "pclub2.nv",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -854,13 +868,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "pclbvol6w_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclbvol6w_ic24",    0x0400000, 0x0200000,
 	GAME_WORD_BLOB, "pclbvol6w_ic26",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "pclbvol6w_ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "pclbvol6w_ic30",    0x0a00000, 0x0200000,
+	EEPROM_BLOB, "pclub26w.nv",      0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -868,13 +883,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24.bin",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "ic26.bin",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "ic28.bin",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "ic30.bin",    0x0a00000, 0x0200000,
+	EEPROM_BLOB, "pclub26w.nv",      0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -912,13 +928,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x0200000,
 	GAME_WORD_BLOB, "ic26.bin",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "ic28.bin",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "ic30.bin",    0x0a00000, 0x0200000,
+	EEPROM_BLOB, "prc2ksu.nv",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -926,7 +943,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x0200000,
@@ -936,6 +953,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "ic32.bin",    0x0c00000, 0x0200000,
 	GAME_WORD_BLOB, "ic34.bin",    0x0e00000, 0x0200000,
 	GAME_WORD_BLOB, "ic36.bin",    0x1000000, 0x0200000,
+	EEPROM_BLOB, "pclb2elk.nv",    0x0000, 0x0080,	
         GAME_END, "", 0, 0
     },
   },
@@ -943,13 +961,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "pclub2fc_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2fc_ic24",    0x0400000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2fc_ic26",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2fc_ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2fc_ic30",    0x0a00000, 0x0200000,
+	EEPROM_BLOB, "pclub2fc.nv",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -957,7 +976,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "pclubor_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclubor_ic24",    0x0400000, 0x0200000,
@@ -967,6 +986,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "pclubor_ic32",    0x0c00000, 0x0200000,
 	GAME_WORD_BLOB, "pclubor_ic34",    0x0e00000, 0x0200000,
 	GAME_WORD_BLOB, "pclubor_ic36",    0x1000000, 0x0200000,
+	EEPROM_BLOB, "pclubor.nv",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1005,7 +1025,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "pclblove.ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclblove.ic24",    0x0400000, 0x0200000,
@@ -1013,6 +1033,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "pclblove.ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "pclblove.ic30",    0x0a00000, 0x0200000,
 	GAME_WORD_BLOB, "pclblove.ic32",    0x0c00000, 0x0200000,
+	EEPROM_BLOB, "pclove.nv",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1020,7 +1041,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24",    0x0400000, 0x0200000,
@@ -1028,6 +1049,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "ic30",    0x0a00000, 0x0200000,
 	GAME_WORD_BLOB, "ic32",    0x0c00000, 0x0200000,
+	EEPROM_BLOB, "pclove2.nv",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1052,13 +1074,15 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "pclb2psi_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2psi_ic24",    0x0400000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2psi_ic26",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2psi_ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2psi_ic30",    0x0a00000, 0x0200000,
+	EEPROM_BLOB, "pclub2pe.nv",    0x0000, 0x0080,
+	
         GAME_END, "", 0, 0
     },
   },
@@ -1066,7 +1090,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
 	GAME_WORD_BLOB, "pclubpok_ic22",    0x0200000, 0x0200000,
@@ -1074,6 +1098,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "pclubpok_ic26",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "pclubpok_ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "pclubpok_ic30",    0x0a00000, 0x0200000,
+	EEPROM_BLOB, "pclubpok.nv",     0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1081,13 +1106,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "pclb2puf.ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2puf.ic24",    0x0400000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2puf.ic26",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2puf.ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2puf.ic30",    0x0a00000, 0x0200000,
+	EEPROM_BLOB, "pclub2pf.nv",     0x0000, 0x0080,
         GAME_END, "", 0, 0
    },
   },
@@ -1095,7 +1121,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
 	GAME_WORD_BLOB, "pclub2v3_ic22",    0x0200000, 0x0200000,
@@ -1103,6 +1129,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "pclub2v3_ic26",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2v3_ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2v3_ic30",    0x0a00000, 0x0200000,
+	EEPROM_BLOB, "pclub2v3.nv",     0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1110,13 +1137,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "pclb2wb_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2wb_ic24",    0x0400000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2wb_ic26",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2wb_ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2wb_ic30",    0x0a00000, 0x0200000,
+	EEPROM_BLOB, "pclub2wb.nv",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1152,13 +1180,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	GAME_WORD_BLOB, "pclbyov2.ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclbyov2.ic24",    0x0400000, 0x0200000,
 	GAME_WORD_BLOB, "pclbyov2.ic26",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "pclbyov2.ic28",    0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "pclbyov2.ic30",    0x0a00000, 0x0200000,
+	EEPROM_BLOB, "pclub2kc.nv",    0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1166,13 +1195,14 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NV_1P,
+   NULL,
    {
 	HEADER_BLOB,   "epr18737.13",    0x0000000, 0x0080000,
 	GAME_BYTE_BLOB, "epr18737.13",    0x0100000, 0x0080000,
 	GAME_WORD_BLOB, "mpr18738.2",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18739.3",    0x0800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18740.4",    0x0c00000, 0x0200000,
+	EEPROM_BLOB,    "20091.bin",   0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1290,7 +1320,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
-    NV_1P,
+    NULL,
     {
 	HEADER_BLOB, "seabassf.13",    0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "seabassf.13",    0x0200000, 0x0100000,
@@ -1303,7 +1333,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr20550.1",    0x1800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20556.8",   0x1c00000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20557.9",   0x2000000, 0x0400000,
-
+	EEPROM_BLOB,    "seabass.nv",        0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1335,7 +1365,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
-    NV_1P,
+    NULL,
     {
 	GAME_WORD_BLOB, "ic22.bin",   0x0200000, 0x200000,
 	GAME_WORD_BLOB, "ic24.bin",   0x0400000, 0x200000,
@@ -1343,6 +1373,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "ic28.bin",   0x0800000, 0x200000,
 	GAME_WORD_BLOB, "ic30.bin",   0x0a00000, 0x200000,
 	GAME_WORD_BLOB, "ic32.bin",   0x0c00000, 0x200000,
+	EEPROM_BLOB, "skychal.nv", 0x0000, 0x0080,	
         GAME_END, "", 0, 0
     },
   },
@@ -1415,7 +1446,7 @@ const Game GameList[NB_STV_GAMES]={
     0x052b6901,
     0,
     NULL,
-    NV_1P,
+    NULL,
     {
 	HEADER_BLOB,    "epr21488.13",  0x0000000, 0x0080000,
 	HEADER_BLOB,    "epr21488.13",  0x0100000, 0x0080000,
@@ -1425,7 +1456,8 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr21490.3",   0x0800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr21491.4",   0x0c00000, 0x0400000,
 	GAME_WORD_BLOB, "mpr21492.5",   0x1000000, 0x0400000,
-	GAME_WORD_BLOB, "mpr21493.6",   0x1400000, 0x0400000,	
+	GAME_WORD_BLOB, "mpr21493.6",   0x1400000, 0x0400000,
+	EEPROM_BLOB,    "sss.nv",        0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1528,13 +1560,14 @@ const Game GameList[NB_STV_GAMES]={
     0x05200913,
     0,
     NULL,
-    NV_1P,
+    NULL,
     {
 	GAME_WORD_BLOB, "ic22",   0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24",   0x0400000, 0x0200000,
 	GAME_WORD_BLOB, "ic26",   0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "ic28",   0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "ic30",   0x0a00000, 0x0200000,
+	EEPROM_BLOB,    "techbowl.nv",        0x0000, 0x0080,	
         GAME_END, "", 0, 0
     },
   },
@@ -1626,7 +1659,7 @@ const Game GameList[NB_STV_GAMES]={
     0x0,
     0,
     NULL,
-    NV_1P,
+    NULL,
     {
 	GAME_WORD_BLOB, "mpr19620.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr19615.2",    0x0400000, 0x0400000,
@@ -1636,6 +1669,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr19619.6",    0x1400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr19614.1",    0x1800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr19621.8",    0x1c00000, 0x0400000,
+	EEPROM_BLOB,    "vmahjong.nv",   0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1643,7 +1677,7 @@ const Game GameList[NB_STV_GAMES]={
     0x0,
     0,
     NULL,
-    NV_1P,
+    NULL,
     {
 	GAME_WORD_BLOB, "mpr21000.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr20995.2",    0x0400000, 0x0400000,
@@ -1653,6 +1687,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr20999.6",    0x1400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20994.1",    0x1800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr21001.8",    0x1c00000, 0x0400000,
+	EEPROM_BLOB,    "myfairld.nv",   0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
@@ -1721,7 +1756,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
-    NV_1P,
+    NULL,
     {
 	HEADER_BLOB,   "epr20424.13",    0x0000000, 0x0100000,
 	GAME_WORD_BLOB, "mpr20431.7",    0x0200000, 0x0200000,
@@ -1736,6 +1771,7 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr20434.10",   0x2400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20435.11",   0x2800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20436.12",   0x2c00000, 0x0400000,
+	EEPROM_BLOB,    "findlove.nv",   0x0000, 0x0080,
         GAME_END, "", 0, 0
     },
   },
