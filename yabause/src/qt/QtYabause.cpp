@@ -192,7 +192,7 @@ extern "C"
 		va_start(argptr, format);
 		vsnprintf(dest, 512, format, argptr);
 		va_end(argptr);
-		printf(dest);
+		printf("%s", dest);
 }
 
 #endif
