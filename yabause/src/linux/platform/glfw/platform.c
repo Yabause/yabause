@@ -127,7 +127,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     break;
     case GLFW_REPEAT:
       k_call(inputMap[key], 0);
-      k_call(inputMap[key], 1); 
+      k_call(inputMap[key], 1);
     break;
     default:
     break;
@@ -148,11 +148,11 @@ int platform_SetupOpenGL(int w, int h, int fullscreen) {
   glfwSetErrorCallback(error_callback);
 #ifdef _OGLES3_
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API) ;
 #else
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);  
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 #endif
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -190,7 +190,7 @@ int platform_SetupOpenGL(int w, int h, int fullscreen) {
    int maj, min;
    glGetIntegerv(GL_MAJOR_VERSION, &maj);
    glGetIntegerv(GL_MINOR_VERSION, &min);
-   
+
   printf("OpenGL version is %d.%d (%s, %s)\n", maj, min, glGetString(GL_VENDOR), glGetString(GL_RENDERER));
 
   for (i=0; i< 512; i++)
@@ -244,4 +244,3 @@ void platform_HandleEvent(void) {
 void platform_SetKeyCallback(k_callback call) {
   k_call = call;
 }
-

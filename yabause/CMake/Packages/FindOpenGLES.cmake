@@ -10,7 +10,7 @@
 
 # - Try to find OpenGLES
 # Once done this will define
-#  
+#
 #  OPENGLES_FOUND        - system has OpenGLES
 #  OPENGLES_INCLUDE_DIR  - the GL include directory
 #  OPENGLES_LIBRARIES    - Link these to use OpenGLES
@@ -56,6 +56,20 @@ ELSE (WIN32)
       /opt/vc/include
     )
 
+    FIND_PATH(OPENGLES3_INCLUDE_DIR GLES3/gl3.h
+      /usr/openwin/share/include
+      /opt/graphics/OpenGL/include /usr/X11R6/include
+      /usr/include
+      /opt/vc/include
+    )
+
+    FIND_PATH(OPENGLES31_INCLUDE_DIR GLES3/gl31.h
+      /usr/openwin/share/include
+      /opt/graphics/OpenGL/include /usr/X11R6/include
+      /usr/include
+      /opt/vc/include
+    )
+
     FIND_LIBRARY(OPENGLES_gl_LIBRARY
       NAMES GLES_CM GLESv1_CM
       PATHS /opt/graphics/OpenGL/lib
@@ -74,9 +88,18 @@ ELSE (WIN32)
             /opt/vc/lib
     )
 
+    FIND_LIBRARY(OPENGLES_gl3_LIBRARY
+      NAMES GLESv2
+      PATHS /opt/graphics/OpenGL/lib
+            /usr/openwin/lib
+            /usr/shlib /usr/X11R6/lib
+            /usr/lib
+            /opt/vc/lib
+    )
+
 
     # On Unix OpenGL most certainly always requires X11.
-    # Feel free to tighten up these conditions if you don't 
+    # Feel free to tighten up these conditions if you don't
     # think this is always true.
 
     IF (OPENGLES_gl_LIBRARY)
@@ -94,7 +117,7 @@ ENDIF (WIN32)
 SET( OPENGLES_FOUND "NO" )
 IF(OPENGLES_gl_LIBRARY)
 
-    SET( OPENGLES_LIBRARIES ${OPENGLES_gl_LIBRARY} ${OPENGLES_LIBRARIES})
+    SET( OPENGLES_LIBRARIES ${OPENGLES_LIBRARIES} ${OPENGLES_gl_LIBRARY} ${OPENGLES_LIBRARIES})
 
     SET( OPENGLES_FOUND "YES" )
 
@@ -102,16 +125,29 @@ ENDIF(OPENGLES_gl_LIBRARY)
 
 SET( OPENGLES2_FOUND "NO" )
 IF(OPENGLES_gl2_LIBRARY)
-SET( OPENGLES2_LIBRARIES ${OPENGLES_gl2_LIBRARY} ${OPENGLES2_LIBRARIES})
+SET( OPENGLES_LIBRARIES ${OPENGLES_LIBRARIES} ${OPENGLES_gl2_LIBRARY} ${OPENGLES2_LIBRARIES})
 
     SET( OPENGLES2_FOUND "YES" )
 
 ENDIF(OPENGLES_gl2_LIBRARY)
 
+SET( OPENGLES3_FOUND "NO" )
+IF(OPENGLES_gl3_LIBRARY)
+  SET( OPENGLES_LIBRARIES ${OPENGLES_LIBRARIES} ${OPENGLES_gl3_LIBRARY} ${OPENGLES3_LIBRARIES})
+  SET( OPENGLES3_FOUND "YES" )
+  IF(OPENGLES31_INCLUDE_DIR)
+    SET( OPENGLES31_FOUND "YES" )
+  ENDIF(OPENGLES31_INCLUDE_DIR)
+
+ENDIF(OPENGLES_gl3_LIBRARY)
+
 
 MARK_AS_ADVANCED(
   OPENGLES_INCLUDE_DIR
   OPENGLES2_INCLUDE_DIR
+  OPENGLES3_INCLUDE_DIR
+  OPENGLES31_INCLUDE_DIR
   OPENGLES_gl_LIBRARY
   OPENGLES_gl2_LIBRARY
+  OPENGLES_gl3_LIBRARY
 )
