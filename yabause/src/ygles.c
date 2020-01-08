@@ -2587,9 +2587,11 @@ static int renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat, 
         glEnableVertexAttribArray(level->prg[j].vaid);
       }
       if ( level->prg[j].prgid >= (PG_VDP1_VDP2>>1) ) {
+#if defined(_OGL3_)
         if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
         glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
       }else{
+#endif
         glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
       }
     }

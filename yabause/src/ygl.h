@@ -188,13 +188,21 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
     #include <OpenGL/gl3.h>
 
 #else // Linux?
-    #if defined(_OGLES3_)||defined(_OGL3_)
-        #define GL_GLEXT_PROTOTYPES 1
-        #define GLX_GLXEXT_PROTOTYPES 1
-        #include <GL/glew.h>
+#if defined(_USEGLEW_)
+    #define GL_GLEXT_PROTOTYPES 1
+    #define GLX_GLXEXT_PROTOTYPES 1
+    #include <GL/glew.h>
+#endif
+    #if defined(_OGL3_)
         #include <GL/gl.h>
-    #else
-        #include <GL/gl.h>
+    #endif
+    #if defined(_OGLES3_)
+    #include <GL/gl.h>
+        //#include <GLES3/gl3.h>
+    #endif
+    #if defined(_OGLES31_)
+    #include <GL/gl.h>
+        //#include <GLES3/gl31.h>
     #endif
 #endif
 
@@ -830,7 +838,7 @@ extern void VDP2Generator_resize(int width, int height);
 
 
 // Keep a way to switch to gles shaders for embedded devices
-#if defined(_OGLES3_)
+#if defined(_OGLES3_) || defined(_OGLES31_)
 #define SHADER_VERSION "#version 310 es \n"
 #define SHADER_VERSION_TESS "#version 310 es \n#extension GL_ANDROID_extension_pack_es31a : enable \n"
 #define SHADER_VERSION_COMPUTE "#version 310 es \n"
@@ -841,7 +849,7 @@ extern void VDP2Generator_resize(int width, int height);
 #define SHADER_VERSION_COMPUTE "#version 430 core \n"
 #endif
 
-#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_) && !defined(__LIBRETRO__)
+#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_) && !defined(_OGLES31_) && !defined(__LIBRETRO__)
 
 extern GLuint (STDCALL *glCreateProgram)(void);
 extern GLuint (STDCALL *glCreateShader)(GLenum);

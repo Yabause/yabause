@@ -4990,7 +4990,7 @@ static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs)
 
   ReadVdp2ColorOffset(varVdp2Regs, &info, 0x20);
 
-#if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
+#if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGLES31_) || defined(_OGL3_)
   if ((varVdp2Regs->BKTAU & 0x8000) != 0 ) {
     // per line background color
     u32* back_pixel_data = YglGetBackColorPointer();
@@ -7084,11 +7084,8 @@ void VIDOGLSetSettingValueMode(int type, int value) {
       int maj, min;
       glGetIntegerv(GL_MAJOR_VERSION, &maj);
       glGetIntegerv(GL_MINOR_VERSION, &min);
-#if defined(_OGLES3_)
-      if ((maj >=3) && (min >=1)) {
-#else
+#if defined(_OGL3_)
       if ((maj >=4) && (min >=2)) {
-#endif
         if (glPatchParameteri) {
           _Ygl->polygonmode = value;
         } else {
@@ -7099,6 +7096,9 @@ void VIDOGLSetSettingValueMode(int type, int value) {
         YuiMsg("GPU tesselation is not possible - fallback on CPU tesselation\n");
         _Ygl->polygonmode = CPU_TESSERATION;
       }
+#else
+      _Ygl->polygonmode = CPU_TESSERATION;
+#endif
     } else {
 
 

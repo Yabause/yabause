@@ -25,7 +25,7 @@ if(YAB_USE_QT5)
   SET(CMAKE_PREFIX_PATH ${OLD_CMAKE_PREFIX_PATH})
 endif()
 
-if(Qt5_FOUND) 
+if(Qt5_FOUND)
     message(STATUS "Qt5 Found")
 
     add_definitions(-DHAVE_QT_MULTIMEDIA=1)
@@ -41,7 +41,7 @@ if(Qt5_FOUND)
 else()
 	message(STATUS "NO Qt5_FOUND")
 	return ()
-endif() 
+endif()
 
 # qt resources file
 set( kronos_qt_RESOURCES resources/resources.qrc )
@@ -72,20 +72,20 @@ set( kronos_qt_FORMS
 	ui/UICheatSearch.ui
 	ui/UIBackupRam.ui
 	ui/UIPortManager.ui
-	ui/UIPadSetting.ui 
+	ui/UIPadSetting.ui
 	ui/UISTVSetting.ui
-	ui/UI3DControlPadSetting.ui 
-    ui/UIWheelSetting.ui 
-    ui/UIMissionStickSetting.ui 
-    ui/UIDoubleMissionStickSetting.ui 
+	ui/UI3DControlPadSetting.ui
+    ui/UIWheelSetting.ui
+    ui/UIMissionStickSetting.ui
+    ui/UIDoubleMissionStickSetting.ui
 	ui/UIGunSetting.ui
-	ui/UIMouseSetting.ui 
+	ui/UIMouseSetting.ui
     ui/UIDebugVDP1.ui
     ui/UIDebugVDP2.ui
     ui/UIDebugVDP2Viewer.ui
     ui/UIHexInput.ui
-    ui/UIMemoryTransfer.ui 
-    ui/UIMemoryEditor.ui 
+    ui/UIMemoryTransfer.ui
+    ui/UIMemoryEditor.ui
     ui/UIMemorySearch.ui )
 
 # pure C headers
@@ -169,17 +169,17 @@ set( kronos_qt_SOURCES
 	YabauseThread.cpp
 	Arguments.cpp )
 
-if( OPENGL_FOUND )
+if( OPENGL_SUPPORTED )
 	set( kronos_qt_SOURCES ${kronos_qt_SOURCES} YabauseGL.cpp )
 else()
 	set( kronos_qt_SOURCES ${kronos_qt_SOURCES} YabauseSoftGL.cpp )
 endif()
 
-if(Qt5_FOUND) 
+if(Qt5_FOUND)
 	QT5_ADD_RESOURCES( kronos_qt_RCC_RESOURCES ${kronos_qt_RESOURCES} )
 	QT5_WRAP_UI( kronos_qt_UI_FORMS ${kronos_qt_FORMS} )
 	QT5_WRAP_CPP( kronos_qt_MOC_SOURCES ${kronos_qt_MOC_HEADERS} )
-endif() 
+endif()
 
 set( kronos_qt_SOURCES ${kronos_qt_SOURCES} resources/icons/kronos.icns )
 set_source_files_properties( resources/icons/kronos.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
@@ -200,7 +200,7 @@ include_directories(
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/ui
 	${Qt5Widgets_INCLUDE_DIRS}
-	${Qt5OpenGL_INCLUDE_DIRS} 
+	${Qt5OpenGL_INCLUDE_DIRS}
 	${Qt5Multimedia_INCLUDE_DIRS} )
 endif()
 
@@ -289,7 +289,7 @@ if (WIN32)
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../COPYING    DESTINATION "." RENAME COPYING.txt)
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../README     DESTINATION "." RENAME README.txt)
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../README.WIN DESTINATION "." RENAME README.WIN.txt)
-	
+
 	if (MINGW)
 		get_filename_component( Mingw_Path ${CMAKE_CXX_COMPILER} PATH )
 		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "AMD64")
@@ -310,7 +310,7 @@ if (WIN32)
 			install(FILES ${QT_BINARY_DIR}/zlib1.dll DESTINATION ".")
 		endif()
   	endif()
-  if (MSVC)    
+  if (MSVC)
     set (CMAKE_EXE_LINKER_FLAGS /SAFESEH:NO )
   endif (MSVC)
 else ()

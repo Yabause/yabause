@@ -314,23 +314,35 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		include(FindOpenGL)
 	endif (NOT YAB_FORCE_GLES31)
   include(FindOpenGLES)
-
+	include(FindEGL)
 
 	if (OPENGL_FOUND)
+	  message(STATUS "OPENGL Core supported")
 		add_definitions(-D_OGL3_)
-		SET( OPENGL_CURRENT_LIBRARIES "OPENGL_LIBRARIES" )
+		SET( NEED_GLEW "YES")
+		SET( OPENGL_CURRENT_LIBRARIES ${OPENGL_LIBRARIES} )
 		SET( OPENGL_SUPPORTED "YES" )
 	else (OPENGL_FOUND)
 		if (OPENGLES31_FOUND)
+		  if (NOT EGL_FOUND)
+				message(ERROR "No EGL found")
+			endif (NOT EGL_FOUND)
 		  message(STATUS "OPENGL ES 3.1 supported")
 			add_definitions(-D_OGLES31_)
-			SET( OPENGL_CURRENT_LIBRARIES "OPENGLES_LIBRARIES" )
+			add_definitions(-DGLEW_EGL)
+			SET( NEED_GLEW "YES")
+			SET( OPENGL_CURRENT_LIBRARIES ${OPENGLES_LIBRARIES} ${EGL_LIBRARIES} )
 			SET( OPENGL_SUPPORTED "YES" )
 		else (OPENGLES31_FOUND)
 			if (OPENGLES3_FOUND)
+				if (NOT EGL_FOUND)
+					message(ERROR "No EGL found")
+				endif (NOT EGL_FOUND)
 		  	message(STATUS "OPENGL ES 3.0 supported")
 				add_definitions(-D_OGLES3_)
-				SET( OPENGL_CURRENT_LIBRARIES "OPENGLES_LIBRARIES" )
+				add_definitions(-DGLEW_EGL)
+				SET( NEED_GLEW "YES")
+				SET( OPENGL_CURRENT_LIBRARIES ${OPENGLES_LIBRARIES} ${EGL_LIBRARIES} )
 				SET( OPENGL_SUPPORTED "YES" )
 			else (OPENGLES3_FOUND)
 				SET( OPENGL_SUPPORTED "NO" )
@@ -366,13 +378,18 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
 		endif()
 
-    include(FindGLEW)
-    add_definitions(-D_USEGLEW_)
-    add_definitions(-DGLEW_STATIC)
-    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
+		if (NEED_GLEW)
+	    include(FindGLEW)
+	    add_definitions(-D_USEGLEW_)
+	    add_definitions(-DGLEW_STATIC)
+	    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
+			set(kronos_SOURCES
+				${kronos_SOURCES}
+				gllibs/glew/glew.c
+			)
+		endif (NEED_GLEW)
 		set(kronos_SOURCES
-			${kronos_SOURCES}
-			gllibs/glew/glew.c
+				${kronos_SOURCES}
 			yglcache.c
 			ygles.c
 			vidogl.c

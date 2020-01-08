@@ -1211,6 +1211,7 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
      }
     glAttachShader(_prgid[id], vshader);
     glAttachShader(_prgid[id], fshader);
+#if defined(_OGL3_)
   if (tc != NULL){
     if (tc[0] != NULL){
       tcsHandle = glCreateShader(GL_TESS_CONTROL_SHADER);
@@ -1265,6 +1266,7 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
       glAttachShader(_prgid[id], gsHandle);
     }
   }
+#endif
     glLinkProgram(_prgid[id]);
     glGetProgramiv(_prgid[id], GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
