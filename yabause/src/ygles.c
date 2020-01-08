@@ -1248,11 +1248,27 @@ int YglInit(int width, int height, unsigned int depth) {
   glGetIntegerv(GL_MINOR_VERSION, &min);
 
 #ifndef __LIBRETRO__
+#ifdef _OGL3_
   if (maj*10+min < 42) {
    YabSetError(YAB_ERR_CANNOTINIT, _("OpenGL context"));
    YuiMsg("Getting only OpenGL %d.%d requesting 4.2 at least\n", maj, min);
    return -1;
   }
+#endif
+#ifdef D_OGLES3_
+  if (maj*10+min < 30) {
+   YabSetError(YAB_ERR_CANNOTINIT, _("OpenGL ES context"));
+   YuiMsg("Getting only OpenGL %d.%d requesting 3.0 at least\n", maj, min);
+   return -1;
+  }
+#endif
+#ifdef D_OGLES31_
+  if (maj*10+min < 31) {
+   YabSetError(YAB_ERR_CANNOTINIT, _("OpenGL ES context"));
+   YuiMsg("Getting only OpenGL %d.%d requesting 3.1 at least\n", maj, min);
+   return -1;
+  }
+#endif
 #endif
   YuiMsg("Using OpenGL %d.%d\n", maj, min);
 

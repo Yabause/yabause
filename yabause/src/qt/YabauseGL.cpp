@@ -42,13 +42,13 @@ YabauseGL::YabauseGL( ) : QOpenGLWindow()
 #ifdef _OGLES3_
   format.setMajorVersion(3);
   format.setMinorVersion(0);
-  // format.setRenderableType(QSurfaceFormat::OpenGLES);
+  format.setRenderableType(QSurfaceFormat::OpenGLES);
 #endif
 
 #ifdef _OGLES31_
   format.setMajorVersion(3);
   format.setMinorVersion(1);
-  // format.setRenderableType(QSurfaceFormat::OpenGLES);
+  format.setRenderableType(QSurfaceFormat::OpenGLES);
 #endif
 
   format.setProfile(QSurfaceFormat::CoreProfile);
