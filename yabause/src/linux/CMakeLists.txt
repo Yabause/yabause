@@ -52,7 +52,7 @@ add_executable(${PROJECT_TEST_NAME} ${TEST_GL_SRC_FILES})
 target_link_libraries(${PROJECT_TEST_NAME}
    kronos ${KRONOS_LIBRARIES} ${PORT_LIBRARIES}
 )
-        
+
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
@@ -117,7 +117,7 @@ target_link_libraries(${PROJECT_TEST_NAME}
    ${GTEST_LIBS_DIR}/libgtest_main.a
    kronos ${KRONOS_LIBRARIES} ${PORT_LIBRARIES}
 )
-        
+
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(test1 ${PROJECT_TEST_NAME})

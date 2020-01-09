@@ -479,7 +479,9 @@ u32* vdp1_read() {
 
   glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 
+#ifdef _OGL3_
 	glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0x0, 512*256*4, (void*)(&write_fb[0]));
+#endif
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	return &write_fb[0];

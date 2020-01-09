@@ -1627,7 +1627,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
 
   int gltext[16] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15};
 
-
+#ifdef _OGL3_
 #ifdef DEBUG_BLIT
     glBindFragDataLocation(vdp2blit_prg, 1, "topColor");
     glBindFragDataLocation(vdp2blit_prg, 2, "secondColor");
@@ -1635,7 +1635,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
     glBindFragDataLocation(vdp2blit_prg, 4, "fourthColor");
 #endif
     glBindFragDataLocation(vdp2blit_prg, 0, "finalColor");
-
+#endif
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture0"), 0);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture1"), 1);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture2"), 2);
