@@ -7,6 +7,13 @@
 #include <GL/glew.h>
 #endif
 
+#ifdef _OGLES31_
+#define GLFW_INCLUDE_ES31
+#else
+#ifdef _OGLES3_
+#define GLFW_INCLUDE_ES3
+#endif
+#endif
 #include <GLFW/glfw3.h>
 
 static GLFWwindow* g_window = NULL;
@@ -146,13 +153,19 @@ int platform_SetupOpenGL(int w, int h, int fullscreen) {
     return 0;
 
   glfwSetErrorCallback(error_callback);
-#ifdef _OGLES3_
+#ifdef _OGLES31_
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API) ;
 #else
+#ifdef _OGLES3_
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API) ;
+#else
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+#endif
 #endif
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);

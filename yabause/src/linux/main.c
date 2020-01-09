@@ -378,7 +378,6 @@ int main(int argc, char *argv[]) {
 
   if (lowres_mode == 0){
     if (yinit.vidcoretype == VIDCORE_OGL) {
-      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_2x);
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BILINEAR_FILTER);
       VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, UP_4XBRZ);
       VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, scanline);
@@ -386,7 +385,6 @@ int main(int argc, char *argv[]) {
     VIDCore->Resize(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, 1);
   } else {
     if (yinit.vidcoretype == VIDCORE_OGL) {
-      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_ORIGINAL);
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BILINEAR_FILTER);
       VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, UP_2XBRZ);
       VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, scanline);

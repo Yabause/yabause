@@ -197,12 +197,10 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
         #include <GL/gl.h>
     #endif
     #if defined(_OGLES3_)
-    #include <GL/gl.h>
-        //#include <GLES3/gl3.h>
+        #include <GLES3/gl3.h>
     #endif
     #if defined(_OGLES31_)
-    #include <GL/gl.h>
-        //#include <GLES3/gl31.h>
+        #include <GLES3/gl31.h>
     #endif
 #endif
 

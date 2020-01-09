@@ -184,12 +184,13 @@ render(struct graphics_context *context)
 static int SetupOpenGL() {
   if (!platform_SetupOpenGL(800,600,0))
     exit(EXIT_FAILURE);
-
+#if defined(_USEGLEW_)
   glewExperimental=GL_TRUE;
   if (glewInit() != 0) {
     printf("Glew can not init\n");
     exit(EXIT_FAILURE);
   }
+#endif
 }
 
 void YuiMsg(const char *format, ...) {
@@ -262,9 +263,9 @@ int main(int argc, char *argv[]) {
     /* Start main loop */
     context.lastframe = glfwGetTime();
     context.framecount = 0;
-   
+
     render(&context);
-    sleep(10); 
+    sleep(10);
 
     fprintf(stdout, "Exiting ...\n");
 
