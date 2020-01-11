@@ -2401,7 +2401,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
     linestart = vdp1_interlace - 1;
   }
 
-  for (i = linestart; i < lineinc*height; i += lineinc)
+  for (i = linestart; i < height; i += lineinc)
   {
     int sh, sv;
     int v;
@@ -6444,8 +6444,11 @@ static void Vdp2DrawNBG0(void)
           infotmp.cellh = (vdp2height >> 1);
         else
           infotmp.cellh = vdp2height;
+        texture.textdata = 0;
         YglQuad(&infotmp, &texture, &tmpc);
-        Vdp2DrawBitmapCoordinateInc(&info, &texture);
+        if( texture.textdata != 0 ){
+            Vdp2DrawBitmapCoordinateInc(&info, &texture);
+        }
       }
       else {
 
