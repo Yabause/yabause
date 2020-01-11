@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Authenticator;
@@ -49,7 +50,9 @@ import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -112,6 +115,72 @@ public class GameInfo extends Model {
 
     @Column(name = "lastplay_date")
     public Date lastplay_date;
+
+    public void removeInstance(){
+        String fname = file_path.toUpperCase();
+        if( fname.endsWith("CHD")) {
+            File file = new File(file_path);
+            if (file.exists()) {
+                file.delete();
+            }
+            this.delete();
+        }else if( fname.endsWith("CCD") || fname.endsWith("MDS") ) {
+
+            File file = new File(file_path);
+            File dir = file.getParentFile();
+            String searchName = file.getName();
+            searchName = searchName.replaceAll(".(?i)ccd","");
+            searchName = searchName.replaceAll(".(?i)mds","");
+
+            final String searchNamef = searchName;
+            File[] matchingFiles = dir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.startsWith(searchNamef);
+                }
+            });
+            for( File removefile : matchingFiles ){
+                if (removefile.exists()) {
+                    removefile.delete();
+                }
+            }
+            this.delete();
+        }else if( fname.endsWith("CUE") ) {
+
+            List<String> delete_files = new ArrayList<String>();
+            try {
+                FileReader filereader = new FileReader(file_path);
+                BufferedReader br = new BufferedReader(filereader);
+
+                String str = br.readLine();
+                while (str != null) {
+                    //System.out.println(str);
+                    Pattern p = Pattern.compile("FILE \"(.*)\"");
+                    Matcher m = p.matcher(str);
+                    if (m.find()) {
+                        delete_files.add(m.group(1));
+                    }
+                    str = br.readLine();
+                }
+                br.close();
+
+                File file = new File(file_path);
+                for( String removefile : delete_files ){
+                    String delname = file.getParentFile().getAbsolutePath() + "/" + removefile;
+                    File f = new File(delname);
+                    if (f.exists()) {
+                        f.delete();
+                    }
+                }
+                file.delete();
+                this.delete();
+
+            } catch (FileNotFoundException e) {
+            } catch (IOException e) {
+            }
+
+        }
+
+    }
 
     static public GameInfo getFromFileName(String file_path) {
         Log.d("GameInfo :", file_path);

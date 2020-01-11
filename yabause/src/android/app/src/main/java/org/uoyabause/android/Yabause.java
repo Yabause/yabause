@@ -325,8 +325,9 @@ public class Yabause extends AppCompatActivity implements
       this.gameCode = gf.product_number;
     }
 
+
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-    readPreferences(gameCode);
+    readPreferences(this.gameCode);
 
     padm = PadManager.getPadManager();
     padm.loadSettings();

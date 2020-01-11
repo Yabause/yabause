@@ -232,4 +232,24 @@
     <string name="enable_frame_skip">フレームスキップを有効にする</string>
     <string name="choose_rbg_resolution">回転スクロール面の解像度</string>
     <string name="choose_video_aspect_ratio">アスペクト比の選択</string>
+    <string name="welcome">
+        <![CDATA[
+        # ようこそ! \n\n
+
+       以下の手順でセガサターンのゲームを実行します。\n\n
+
+        1. CD Manipulatorなどを使ってCD-ROMのイメージ作成します。そのほかのイメージ作成ツールは[ここ](http://wiki.redump.org/index.php?title=Useful_Links)にあります。\n
+        2. 作成されたCD-ROMイメージをスマホの **\"%1$s\"** にコピーします。 \n
+        3. 画面左端をスワイプしてドローワーメニューを表示して \"ゲームリストの更新\" をタップします。ゲーム一覧が更新されます。\n
+        4. 一覧をタップするとゲームが始まります。\n
+        5. 遊ぶ!\n
+        \n
+        より詳しい使い方は私たちの[サイト](http://www.uoyabause.org/static_pages/guide)を見てください。\n
+        ]]>
+    </string>
+    <string name="delete_confirm_title">削除確認</string>
+    <string name="not_available">利用できません!</string>
+    <string name="only_pro_version">この機能はPro versionのみ使用できます</string>
+    <string name="got_it">了解!</string>
+
 </resources>

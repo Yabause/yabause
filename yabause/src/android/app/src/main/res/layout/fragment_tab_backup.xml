@@ -29,7 +29,7 @@
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_devices"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"></com.google.android.material.tabs.TabLayout>
+        android:layout_height="wrap_content"/>
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/view_pager_backup"

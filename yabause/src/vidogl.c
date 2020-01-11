@@ -2401,7 +2401,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
     linestart = vdp1_interlace - 1;
   }
 
-  for (i = linestart; i < lineinc*height; i += lineinc)
+  for (i = linestart; i < height; i += lineinc)
   {
     int sh, sv;
     int v;
@@ -4782,70 +4782,80 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 #if 0
   isSquare = 0;
 #else
-  isSquare = 1;
 
-  for (i = 0; i < 3; i++) {
-    float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
-    float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
-    if ((dx <= 1.0f && dx >= -1.0f) && (dy <= 1.0f && dy >= -1.0f)) {
-      isSquare = 0;
-      break;
-    }
-
-    float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
-    float d2y = sprite.vertices[(((i + 2) & 0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
-    if ((d2x <= 1.0f && d2x >= -1.0f) && (d2y <= 1.0f && d2y >= -1.0f)) {
-      isSquare = 0;
-      break;
-    }
-
-    float dot = dx*d2x + dy*d2y;
-    if (dot > EPSILON || dot < -EPSILON) {
-      isSquare = 0;
-      break;
-    }
+  if (sprite.vertices[1] == sprite.vertices[3] &&
+    sprite.vertices[3] == sprite.vertices[5] &&
+    sprite.vertices[5] == sprite.vertices[7]) {
+    sprite.vertices[5] += 1;
+    sprite.vertices[7] += 1;
   }
+  else {
 
-  if (isSquare) {
-    float minx;
-    float miny;
-    int lt_index;
+    isSquare = 1;
 
-    sprite.dst = 0;
+    for (i = 0; i < 3; i++) {
+      float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
+      float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
+      if ((dx <= 1.0f && dx >= -1.0f) && (dy <= 1.0f && dy >= -1.0f)) {
+        isSquare = 0;
+        break;
+      }
 
-    // find upper left opsition
-    minx = 65535.0f;
-    miny = 65535.0f;
-    lt_index = -1;
-    for (i = 0; i < 4; i++) {
-      if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny) {
-        minx = sprite.vertices[(i << 1) + 0];
-        miny = sprite.vertices[(i << 1) + 1];
-        lt_index = i;
+      float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
+      float d2y = sprite.vertices[(((i + 2) & 0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
+      if ((d2x <= 1.0f && d2x >= -1.0f) && (d2y <= 1.0f && d2y >= -1.0f)) {
+        isSquare = 0;
+        break;
+      }
+
+      float dot = dx*d2x + dy*d2y;
+      if (dot > EPSILON || dot < -EPSILON) {
+        isSquare = 0;
+        break;
       }
     }
 
-    for (i = 0; i < 4; i++) {
-      if (i != lt_index) {
-        float nx;
-        float ny;
-        // vectorize
-        float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
-        float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+    if (isSquare) {
+      float minx;
+      float miny;
+      int lt_index;
 
-        // normalize
-        float len = fabsf(sqrtf(dx*dx + dy*dy));
-        if (len <= EPSILON) {
-          continue;
+      sprite.dst = 0;
+
+      // find upper left opsition
+      minx = 65535.0f;
+      miny = 65535.0f;
+      lt_index = -1;
+      for (i = 0; i < 4; i++) {
+        if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny) {
+          minx = sprite.vertices[(i << 1) + 0];
+          miny = sprite.vertices[(i << 1) + 1];
+          lt_index = i;
         }
-        nx = dx / len;
-        ny = dy / len;
-        if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
-        if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
+      }
 
-        // expand vertex
-        sprite.vertices[(i << 1) + 0] += nx;
-        sprite.vertices[(i << 1) + 1] += ny;
+      for (i = 0; i < 4; i++) {
+        if (i != lt_index) {
+          float nx;
+          float ny;
+          // vectorize
+          float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
+          float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+
+          // normalize
+          float len = fabsf(sqrtf(dx*dx + dy*dy));
+          if (len <= EPSILON) {
+            continue;
+          }
+          nx = dx / len;
+          ny = dy / len;
+          if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
+          if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
+
+          // expand vertex
+          sprite.vertices[(i << 1) + 0] += nx;
+          sprite.vertices[(i << 1) + 1] += ny;
+        }
       }
     }
   }
@@ -4868,6 +4878,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
 #endif
 #endif
+
 
   sprite.vertices[0] = (sprite.vertices[0] + Vdp1Regs->localX) * vdp1wratio;
   sprite.vertices[1] = (sprite.vertices[1] + Vdp1Regs->localY) * vdp1hratio;
@@ -6433,8 +6444,11 @@ static void Vdp2DrawNBG0(void)
           infotmp.cellh = (vdp2height >> 1);
         else
           infotmp.cellh = vdp2height;
+        texture.textdata = 0;
         YglQuad(&infotmp, &texture, &tmpc);
-        Vdp2DrawBitmapCoordinateInc(&info, &texture);
+        if( texture.textdata != 0 ){
+            Vdp2DrawBitmapCoordinateInc(&info, &texture);
+        }
       }
       else {
 

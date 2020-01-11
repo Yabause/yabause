@@ -65,6 +65,7 @@ import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.leanback.app.BackgroundManager;
 import androidx.leanback.app.BrowseFragment;
+import androidx.leanback.app.BrowseSupportFragment;
 import androidx.leanback.widget.ArrayObjectAdapter;
 import androidx.leanback.widget.HeaderItem;
 import androidx.leanback.widget.ListRow;
@@ -113,7 +114,7 @@ import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
 
-public class GameSelectFragment extends BrowseFragment
+public class GameSelectFragment extends BrowseSupportFragment
         implements FileDialog.FileSelectedListener,GameSelectPresenter.GameSelectPresenterListener  {
     private static final String TAG = "GameSelectFragment";
 
@@ -284,7 +285,7 @@ public class GameSelectFragment extends BrowseFragment
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        presenter_ = new GameSelectPresenter((android.app.Fragment)this,this);
+        presenter_ = new GameSelectPresenter(this,this);
     }
 
 
@@ -336,10 +337,10 @@ public class GameSelectFragment extends BrowseFragment
                 }
 
                 Bundle bundle = new Bundle();
-                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "PLAY");
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, game.product_number);
                 bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game.game_title);
                 mFirebaseAnalytics.logEvent(
-                        FirebaseAnalytics.Event.SELECT_CONTENT, bundle
+                        "yab_start_game", bundle
                 );
 
                 Intent intent_game = new Intent(getActivity(), Yabause.class);
@@ -781,10 +782,10 @@ public class GameSelectFragment extends BrowseFragment
                 }
 
                 Bundle bundle = new Bundle();
-                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "PLAY");
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, game.product_number);
                 bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game.game_title);
                 mFirebaseAnalytics.logEvent(
-                        FirebaseAnalytics.Event.SELECT_CONTENT, bundle
+                        "yab_start_game", bundle
                 );
 
                 Intent intent = new Intent(getActivity(), Yabause.class);

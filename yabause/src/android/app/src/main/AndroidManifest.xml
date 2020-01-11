@@ -65,13 +65,15 @@
 
     <application
         android:name="org.uoyabause.android.YabauseApplication"
+        android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher"
         android:isGame="true"
         android:label="@string/app_name"
         android:logo="@drawable/banner"
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        tools:targetApi="q">
         <activity android:name="org.uoyabause.android.AdActivity"></activity>
 
         <meta-data
@@ -181,6 +183,7 @@
             android:theme="@style/AppTheme" />
         <activity
             android:name="org.uoyabause.android.phone.GameSelectActivityPhone"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:label="@string/title_activity_game_select_phone"
             android:theme="@style/AppTheme">
 

@@ -3,6 +3,7 @@ package org.uoyabause.android
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,7 +18,11 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import org.uoyabause.uranus.R
 
 
-fun setupInGamePreferences(context: Context, gameCode: String ){
+fun setupInGamePreferences(context: Context, gameCode: String? ){
+    if( gameCode == null ){
+        Log.d("setupInGamePreferences","gamecode is null. can not read game setting" )
+        return;
+    }
     val gamePreference = context.getSharedPreferences(gameCode,Context.MODE_PRIVATE)
     val defaultPreference = PreferenceManager.getDefaultSharedPreferences(context)
     if( !gamePreference.contains("pref_fps") ){
