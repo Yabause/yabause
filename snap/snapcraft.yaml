@@ -45,7 +45,7 @@ parts:
     after: [qt5]    
     override-pull: |
       snapcraftctl pull
-      sed -i 's|^Icon=.*|Icon=usr/share/pixmaps/yabasanshiro.png|' /root/parts/yabasanshiro/src/yabause/src/qt/yabause.desktop.in   
+      sed -i 's|^Icon=.*|Icon=usr/share/pixmaps/yabasanshiro.png|' ./yabause/src/qt/yabause.desktop.in   
     override-build: |
       cmake ./yabause -DCMAKE_INSTALL_PREFIX=/usr
       snapcraftctl build
