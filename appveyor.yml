@@ -8,7 +8,7 @@ environment:
   matrix:
     # Visual Studio build
     - generator: "Visual Studio 14 2015"
-      QT_PATH: "C:/Qt/5.9.7/msvc2015"
+      QT_PATH: "C:/Qt/5.9.8/msvc2015"
       CMAKE_PREFIX_PATH: "%QT_PATH%"
       compiler_type: "vs14-x32"
       sdl_filename: SDL2-devel-2.0.3-VC.zip
@@ -46,6 +46,7 @@ init:
 
 before_build:
   - dir "%DXSDK_DIR%/Lib/x86/"
+  - dir "%QT_PATH%"
   # fetch appropriate sdl lib for visual studio or mingw
   - cd c:\
   - appveyor DownloadFile https://www.libsdl.org/release/%sdl_filename%
@@ -76,6 +77,7 @@ after_build:
   #- ps: $git_hash_date += "-"
   #- ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
   #- ps: ${env:yab_name} = "yabasanhiro-${git_hash_date}-${env:compiler_type}"
+  - ps: Get-ChildItem -Path ${env:QT_PATH}\bin\
   - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Core.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
   - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Gui.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
   - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Multimedia.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
