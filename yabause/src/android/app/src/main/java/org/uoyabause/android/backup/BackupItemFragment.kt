@@ -54,6 +54,7 @@ import org.uoyabause.android.backup.BackupItemFragment
 import org.uoyabause.android.backup.BackupItemFragment.OnListFragmentInteractionListener
 import org.uoyabause.uranus.R
 import java.util.*
+import kotlin.collections.MutableList
 
 internal class BackupDevice {
     @JvmField
@@ -136,7 +137,7 @@ class BackupItem {
  */
 class BackupItemFragment : AuthFragment(),
     BackupItemRecyclerViewAdapter.OnItemClickListener {
-    internal lateinit var backup_devices_: MutableList<BackupDevice>
+    internal var backup_devices_: MutableList<BackupDevice>? = null
     private var mListener: OnListFragmentInteractionListener? =
         null
     private var _items: ArrayList<BackupItem>? = null
@@ -163,7 +164,7 @@ class BackupItemFragment : AuthFragment(),
         }
         val jsonstr: String
         jsonstr = YabauseRunnable.getDevicelist()
-        backup_devices_ = ArrayList()
+        backup_devices_ = mutableListOf()
         try {
             val json = JSONObject(jsonstr)
             val array = json.getJSONArray("devices")
@@ -172,16 +173,17 @@ class BackupItemFragment : AuthFragment(),
                 val tmp = BackupDevice()
                 tmp.name_ = data.getString("name")
                 tmp.id_ = data.getInt("id")
-                backup_devices_.add(tmp)
+                backup_devices_?.add(tmp)
             }
             val tmp = BackupDevice()
             tmp.name_ = "cloud"
             tmp.id_ = BackupDevice.DEVICE_CLOUD
-            backup_devices_.add(tmp)
+            backup_devices_?.add(tmp)
         } catch (e: JSONException) {
             Log.e(TAG, "Fail to convert to json", e)
         }
-        if (backup_devices_.size == 0) {
+
+        if (backup_devices_?.size == 0) {
             Log.e(TAG, "Can't find device")
         }
     }
