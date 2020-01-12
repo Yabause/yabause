@@ -428,7 +428,7 @@ class GameSelectFragmentPhone : Fragment(),
         }
     }
 
-    override fun fileSelected(file: File) {
+    override fun fileSelected(file: File?) {
         val apath: String
         if (file == null) { // canceled
             return
