@@ -646,13 +646,22 @@ u8 FASTCALL SmpcReadByte(SH2_struct *context, u8* mem, u32 addr) {
      return val;
    }
 
-   if (addr == 0x21) { //OREG[0]
-     if (SmpcRegs->SF == 1){
-       //Output register are read but a command is pending
+   if ((addr >= 0x21) && (addr <= 0x5D)) { //OREG[0-30]
+     if ((SmpcRegs->SF == 1) && (SmpcRegs->COMREG == 0x10)){
+       //Output register [0-30] are read but a intback command is pending
        //Force the command processing
        processCommand();
      }
    }
+
+   if ((addr == 0x5F) && (addr <= 0x5D)) { //OREG[31]
+     if (SmpcRegs->SF == 1){
+       //Output register 31 is read but a command is pending
+       //Force the command processing
+       processCommand();
+     }
+   }
+
 
    SMPCLOG("Read SMPC[0x%x] = 0x%x\n",addr, SmpcRegsT[addr >> 1]);
    return SmpcRegsT[addr >> 1];
