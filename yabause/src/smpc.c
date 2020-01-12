@@ -517,6 +517,86 @@ static void SmpcRESDISA(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+static void processCommand(void) {
+  intback_wait_for_line = 0;
+  switch(SmpcRegs->COMREG) {
+     case 0x0:
+        SMPCLOG("smpc\t: MSHON not implemented\n");
+        SmpcRegs->OREG[31]=0x0;
+        SmpcRegs->SF = 0;
+        break;
+     case 0x2:
+        SMPCLOG("smpc\t: SSHON\n");
+        SmpcSSHON();
+        SmpcRegs->SF = 0;
+        break;
+     case 0x3:
+        SMPCLOG("smpc\t: SSHOFF\n");
+        SmpcSSHOFF();
+        SmpcRegs->SF = 0;
+        break;
+     case 0x6:
+        SMPCLOG("smpc\t: SNDON\n");
+        SmpcSNDON();
+        SmpcRegs->SF = 0;
+        break;
+     case 0x7:
+        SMPCLOG("smpc\t: SNDOFF\n");
+        SmpcSNDOFF();
+        SmpcRegs->SF = 0;
+        break;
+     case 0x8:
+        SMPCLOG("smpc\t: CDON not implemented\n");
+        SmpcRegs->SF = 0;
+        break;
+     case 0x9:
+        SMPCLOG("smpc\t: CDOFF not implemented\n");
+        SmpcRegs->SF = 0;
+        break;
+     case 0xD:
+        SMPCLOG("smpc\t: SYSRES not implemented\n");
+        SmpcSYSRES();
+        SmpcRegs->SF = 0;
+        break;
+     case 0xE:
+        SMPCLOG("smpc\t: CKCHG352\n");
+        SmpcCKCHG352();
+        SmpcRegs->SF = 0;
+        break;
+     case 0xF:
+        SMPCLOG("smpc\t: CKCHG320\n");
+        SmpcCKCHG320();
+        SmpcRegs->SF = 0;
+        break;
+     case 0x10:
+        SMPCLOG("smpc\t: INTBACK\n");
+        SmpcINTBACK();
+        break;
+     case 0x17:
+        SMPCLOG("smpc\t: SETSMEM\n");
+        SmpcSETSMEM();
+        SmpcRegs->SF = 0;
+        break;
+     case 0x18:
+        SMPCLOG("smpc\t: NMIREQ\n");
+        SmpcNMIREQ();
+        SmpcRegs->SF = 0;
+        break;
+     case 0x19:
+        SMPCLOG("smpc\t: RESENAB\n");
+        SmpcRESENAB();
+        SmpcRegs->SF = 0;
+        break;
+     case 0x1A:
+        SMPCLOG("smpc\t: RESDISA\n");
+        SmpcRESDISA();
+        SmpcRegs->SF = 0;
+        break;
+     default:
+        printf("smpc\t: Command %02X not implemented\n", SmpcRegs->COMREG);
+        break;
+  }
+}
 
 void SmpcExec(s32 t) {
    if (SmpcInternalVars->timing > 0) {
@@ -531,84 +611,7 @@ void SmpcExec(s32 t) {
       }
       SmpcInternalVars->timing -= t;
       if (SmpcInternalVars->timing <= 0) {
-         intback_wait_for_line = 0;
-         switch(SmpcRegs->COMREG) {
-            case 0x0:
-               SMPCLOG("smpc\t: MSHON not implemented\n");
-               SmpcRegs->OREG[31]=0x0;
-               SmpcRegs->SF = 0;
-               break;
-            case 0x2:
-               SMPCLOG("smpc\t: SSHON\n");
-               SmpcSSHON();
-               SmpcRegs->SF = 0;
-               break;
-            case 0x3:
-               SMPCLOG("smpc\t: SSHOFF\n");
-               SmpcSSHOFF();
-               SmpcRegs->SF = 0;
-               break;
-            case 0x6:
-               SMPCLOG("smpc\t: SNDON\n");
-               SmpcSNDON();
-               SmpcRegs->SF = 0;
-               break;
-            case 0x7:
-               SMPCLOG("smpc\t: SNDOFF\n");
-               SmpcSNDOFF();
-               SmpcRegs->SF = 0;
-               break;
-            case 0x8:
-               SMPCLOG("smpc\t: CDON not implemented\n");
-               SmpcRegs->SF = 0;
-               break;
-            case 0x9:
-               SMPCLOG("smpc\t: CDOFF not implemented\n");
-               SmpcRegs->SF = 0;
-               break;
-            case 0xD:
-               SMPCLOG("smpc\t: SYSRES not implemented\n");
-               SmpcSYSRES();
-               SmpcRegs->SF = 0;
-               break;
-            case 0xE:
-               SMPCLOG("smpc\t: CKCHG352\n");
-               SmpcCKCHG352();
-               SmpcRegs->SF = 0;
-               break;
-            case 0xF:
-               SMPCLOG("smpc\t: CKCHG320\n");
-               SmpcCKCHG320();
-               SmpcRegs->SF = 0;
-               break;
-            case 0x10:
-               SMPCLOG("smpc\t: INTBACK\n");
-               SmpcINTBACK();
-               break;
-            case 0x17:
-               SMPCLOG("smpc\t: SETSMEM\n");
-               SmpcSETSMEM();
-               SmpcRegs->SF = 0;
-               break;
-            case 0x18:
-               SMPCLOG("smpc\t: NMIREQ\n");
-               SmpcNMIREQ();
-               SmpcRegs->SF = 0;
-               break;
-            case 0x19:
-               SMPCLOG("smpc\t: RESENAB\n");
-               SmpcRESENAB();
-               SmpcRegs->SF = 0;
-               break;
-            case 0x1A:
-               SMPCLOG("smpc\t: RESDISA\n");
-               SmpcRESDISA();
-               SmpcRegs->SF = 0;
-               break;
-            default:
-               printf("smpc\t: Command %02X not implemented\n", SmpcRegs->COMREG);
-               break;
-         }
+         processCommand();
       }
    }
 }
@@ -634,16 +637,24 @@ u8 FASTCALL SmpcReadByte(SH2_struct *context, u8* mem, u32 addr) {
      return bustmp;
    }
 
-   if ((addr == 0x77) && ((SmpcRegs->DDR[1] & 0x7F) == 0x18)) { //PDR2 
+   if ((addr == 0x77) && ((SmpcRegs->DDR[1] & 0x7F) == 0x18)) { //PDR2
      u8 val = (((0x67 & ~0x19) | 0x18 | (eeprom_do_read()<<0)) & ~SmpcRegs->DDR[1]) | m_pdr2_readback;
-     return val; //Shall use eeprom normally look at mame stv driver 
+     return val; //Shall use eeprom normally look at mame stv driver
    }
-   if ((addr == 0x75) && ((SmpcRegs->DDR[0] & 0x7F) == 0x3f)) { //PDR1 
+   if ((addr == 0x75) && ((SmpcRegs->DDR[0] & 0x7F) == 0x3f)) { //PDR1
      u8 val = (((0x40 & 0x40) | 0x3f) & ~SmpcRegs->DDR[0]) | m_pdr1_readback;
      return val;
    }
 
-   SMPCLOG("Read SMPC[0x%x] = 0x%x\n",addr, SmpcRegsT[addr >> 1]); 
+   if (addr == 0x21) { //OREG[0]
+     if (SmpcRegs->SF == 1){
+       //Output register are read but a command is pending
+       //Force the command processing
+       processCommand();
+     }
+   }
+
+   SMPCLOG("Read SMPC[0x%x] = 0x%x\n",addr, SmpcRegsT[addr >> 1]);
    return SmpcRegsT[addr >> 1];
 }
 
