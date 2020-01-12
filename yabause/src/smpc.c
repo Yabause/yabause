@@ -805,6 +805,7 @@ void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
                // Continue
                SMPCLOG("INTBACK Continue\n");
                SmpcSetTiming();
+               SmpcRegs->SF = 1;
             }
          }
          return;
