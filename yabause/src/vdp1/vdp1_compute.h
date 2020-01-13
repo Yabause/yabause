@@ -15,7 +15,8 @@ enum
 };
 
 extern void vdp1_compute_init(int width, int height, float ratiow, float ratioh);
-extern int* vdp1_compute();
+extern void vdp1_compute();
+extern int* get_vdp1_tex();
 extern int vdp1_add(vdp1cmd_struct* cmd, int clipcmd);
 extern void vdp1_clear(int id, float *col);
 extern u32* vdp1_get_directFB();

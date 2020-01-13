@@ -565,7 +565,6 @@ typedef struct {
    GLuint vdp1fbo;
    GLuint vdp1fbowin;
    GLuint vdp1FrameBuff[3];
-   GLuint* vdp1Tex; //Texture for VDP1 CS
    GLuint smallfbo;
    GLuint smallfbotex;
    GLuint vdp1pixelBufferID;

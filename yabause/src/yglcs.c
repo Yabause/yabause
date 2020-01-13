@@ -94,7 +94,7 @@ void YglEraseWriteCSVDP1(void) {
 
 void YglCSRenderVDP1(void) {
   FRAMELOG("YglCSRenderVDP1: drawframe =%d", _Ygl->drawframe);
-  _Ygl->vdp1Tex = vdp1_compute();
+  vdp1_compute();
 
 #ifdef TEST_FB_RW
   vdp1_read();
@@ -323,7 +323,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
     glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
   }
 
-  VDP1fb = _Ygl->vdp1Tex;
+  VDP1fb = get_vdp1_tex();
 
   if (_Ygl->vdp2_use_compute_shader == 0) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);

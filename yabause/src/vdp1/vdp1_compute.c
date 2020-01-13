@@ -517,6 +517,7 @@ void vdp1_set_directFB() {
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1access_);
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0x0, 512*256*4, (void*)(_Ygl->vdp1fb_buf));
 		vdp1_write();
+		_Ygl->vdp1On[_Ygl->drawframe] = 1;
 		//vdp1_fb_map = NULL;
 		_Ygl->vdp1IsNotEmpty = 0;
 	}
@@ -532,7 +533,11 @@ void vdp1_setup(void) {
 	}
 }
 
-int* vdp1_compute() {
+int * get_vdp1_tex() {
+	return &compute_tex[_Ygl->readframe];
+}
+
+void vdp1_compute() {
   GLuint error;
 	int progId = getProgramId();
 	int needRender = _Ygl->vdp1IsNotEmpty;
@@ -550,7 +555,9 @@ int* vdp1_compute() {
 		}
   }
 
-  if (needRender == 0) return &compute_tex[_Ygl->drawframe];
+  if (needRender == 0) {
+		return;
+	}
 
 	_Ygl->vdp1On[_Ygl->drawframe] = 1;
 
@@ -608,5 +615,5 @@ int* vdp1_compute() {
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-  return &compute_tex[_Ygl->drawframe];
+  return;
 }
