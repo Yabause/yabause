@@ -64,10 +64,10 @@ void YglEraseWriteCSVDP1(void) {
   int priority;
   u32 alpha = 0;
   int status = 0;
-  _Ygl->vdp1On[_Ygl->readframe] = 0;
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
   manualfb = NULL;
 
+  _Ygl->vdp1On[_Ygl->readframe] = 0;
   _Ygl->vdp1_stencil_mode = 0;
 
   _Ygl->vdp1levels[_Ygl->readframe].ux1 = 0;
@@ -78,6 +78,8 @@ void YglEraseWriteCSVDP1(void) {
   _Ygl->vdp1levels[_Ygl->readframe].blendmode = 0;
 
   color = Vdp1Regs->EWDR;
+	
+  if (color != 0x0) _Ygl->vdp1On[_Ygl->readframe] = 1;
 
   col[0] = (color & 0xFF) / 255.0f;
   col[1] = ((color >> 8) & 0xFF) / 255.0f;
