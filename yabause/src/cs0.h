@@ -36,11 +36,14 @@
 #define CART_JAPMODEM          10
 #define CART_USBDEV            11
 #define CART_ROMSTV            12
+#define CART_DRAM128MBIT       13
 
 #define CART_BUP4MBIT_SIZE  0x080000
 #define CART_BUP8MBIT_SIZE  0x100000
 #define CART_BUP16MBIT_SIZE 0x200000
 #define CART_BUP32MBIT_SIZE 0x400000
+#define CART_DRAM128MBIT_SIZE 0x1000000
+
 
 typedef struct
 {

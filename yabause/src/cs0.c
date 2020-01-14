@@ -1028,6 +1028,57 @@ static void FASTCALL BUP32MBITCs1WriteLong(SH2_struct *context, UNUSED u8* memor
 }
 
 //////////////////////////////////////////////////////////////////////////////
+// 128 Mbit Backup Ram
+//////////////////////////////////////////////////////////////////////////////
+
+static u8 FASTCALL BUP128MBITCs1ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
+{
+  u32 ret = T1ReadByte(CartridgeArea->dram, addr & 0xFFFFFF);
+  return ret;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u16 FASTCALL BUP128MBITCs1ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
+{
+  u32 ret = T1ReadWord(CartridgeArea->dram, addr & 0xFFFFFF);
+  return ret;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL BUP128MBITCs1ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
+{
+  u32 ret = T1ReadLong(CartridgeArea->dram, addr & 0xFFFFFF);
+  return ret;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL BUP128MBITCs1WriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
+{
+  addr &= 0xFFFFFF;
+  T1WriteByte(CartridgeArea->dram, addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL BUP128MBITCs1WriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16 val)
+{
+  addr &= 0xFFFFFF;
+  T1WriteWord(CartridgeArea->dram, addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL BUP128MBITCs1WriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
+{
+  addr &= 0xFFFFFF;
+  T1WriteLong(CartridgeArea->dram, addr, val);
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
 // 16 Mbit Rom
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1340,6 +1391,22 @@ int CartInit(const char * filename, int type)
          CartridgeArea->Cs1WriteByte = &BUP32MBITCs1WriteByte;
          CartridgeArea->Cs1WriteWord = &BUP32MBITCs1WriteWord;
          CartridgeArea->Cs1WriteLong = &BUP32MBITCs1WriteLong;
+         break;
+      }
+      case CART_DRAM128MBIT: // 128 Mbit Ram for development
+      //Required by Heart of darkness
+      {
+        if ((CartridgeArea->dram = T1MemoryInit(CART_DRAM128MBIT_SIZE)) == NULL)
+           return -1;
+
+        CartridgeArea->cartid = 0xFF; // I have no idea what the real id is
+        // Setup Functions
+        CartridgeArea->Cs1ReadByte = &BUP128MBITCs1ReadByte;
+        CartridgeArea->Cs1ReadWord = &BUP128MBITCs1ReadWord;
+        CartridgeArea->Cs1ReadLong = &BUP128MBITCs1ReadLong;
+        CartridgeArea->Cs1WriteByte = &BUP128MBITCs1WriteByte;
+        CartridgeArea->Cs1WriteWord = &BUP128MBITCs1WriteWord;
+        CartridgeArea->Cs1WriteLong = &BUP128MBITCs1WriteLong;
          break;
       }
       case CART_DRAM8MBIT: // 8 Mbit Dram Cart

@@ -77,7 +77,8 @@ const Items mCartridgeTypes = Items()
 	<< Item( "8", "Netlink", false, false, true )
 	<< Item( "9", "16 Mbit ROM", true, false )
 	<< Item( "10", "Japanese Modem", false, false, true )
-	<< Item( "12", "STV Rom game", true, false, false, true );
+	<< Item( "12", "STV Rom game", true, false, false, true )
+	<< Item( "13", "128 Mbit Dram", false, false );
 
 const Items mVideoFilterMode = Items()
 	<< Item("0", "None")
