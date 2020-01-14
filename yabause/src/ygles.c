@@ -2502,8 +2502,8 @@ void YglEraseWriteVDP1(void) {
   u32 alpha = 0;
   int status = 0;
   GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
-  _Ygl->vdp1On[_Ygl->readframe] = 0;
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
+  _Ygl->vdp1On[_Ygl->readframe] = 0;
 
   releaseVDP1FB();
   // _Ygl->vdp1IsNotEmpty = 0;
@@ -2521,6 +2521,8 @@ void YglEraseWriteVDP1(void) {
   _Ygl->vdp1levels[_Ygl->readframe].blendmode = 0;
 
   color = Vdp1Regs->EWDR;
+
+  _Ygl->vdp1On[_Ygl->readframe] = 0;
 
   col[0] = (color & 0xFF) / 255.0f;
   col[1] = ((color >> 8) & 0xFF) / 255.0f;
