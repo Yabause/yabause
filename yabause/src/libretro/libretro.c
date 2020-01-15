@@ -999,6 +999,8 @@ void check_variables(void)
          addon_cart_type = CART_DRAM8MBIT;
       else if (strcmp(var.value, "4M_extended_ram") == 0 )
          addon_cart_type = CART_DRAM32MBIT;
+      else if (strcmp(var.value, "16M_extended_ram") == 0 )
+         addon_cart_type = CART_DRAM128MBIT;
       else if (strcmp(var.value, "512K_backup_ram") == 0)
          addon_cart_type = CART_BACKUPRAM4MBIT;
       else if (strcmp(var.value, "1M_backup_ram") == 0)

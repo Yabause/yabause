@@ -120,6 +120,7 @@ struct retro_core_option_definition option_defs_us[] = {
          { "none", NULL },
          { "1M_extended_ram", NULL },
          { "4M_extended_ram", NULL },
+         { "16M_extended_ram", NULL },
          { "512K_backup_ram", NULL },
          { "1M_backup_ram", NULL },
          { "2M_backup_ram", NULL },
