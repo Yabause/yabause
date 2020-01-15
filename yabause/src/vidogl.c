@@ -578,7 +578,13 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
         endTag = 0x0;
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        if ((dot == 0xFF) && !END) endTag = 0xFF;
+        if (!END && endcnt >= 2)
+        {
+          endTag = 0xFF;
+        } else if ((dot == 0xFF) && !END) {
+          endTag = 0xFF;
+          endcnt++;
+        }
         if ((dot == 0) && !SPD) *texture->textdata++ = VDP1COLOR(endTag, 0x00);
         else *texture->textdata++ = VDP1COLOR(endTag, ((dot & 0x3F) | colorBank));
       }
@@ -599,7 +605,13 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
         endTag = 0x0;
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        if ((dot == 0xFF) && !END) endTag = 0xFF;
+        if (!END && endcnt >= 2)
+        {
+          endTag = 0xFF;
+        } else if ((dot == 0xFF) && !END) {
+          endTag = 0xFF;
+          endcnt++;
+        }
         if ((dot == 0) && !SPD) *texture->textdata++ = VDP1COLOR(endTag, 0x00);
         else *texture->textdata++ = VDP1COLOR(endTag, ((dot & 0x7F) | colorBank));
       }
@@ -618,7 +630,13 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
         endTag = 0x0;
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        if ((dot == 0xFF) && !END) endTag = 0xFF;
+        if (!END && endcnt >= 2)
+        {
+          endTag = 0xFF;
+        } else if ((dot == 0xFF) && !END) {
+          endTag = 0xFF;
+          endcnt++;
+        }
         if ((dot == 0) && !SPD) *texture->textdata++ = VDP1COLOR(endTag,0x00);
         else *texture->textdata++ = VDP1COLOR(endTag, (dot | colorBank));
       }
