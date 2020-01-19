@@ -31,6 +31,7 @@ import com.activeandroid.query.Select;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.uoyabause.uranus.BuildConfig;
 import org.uoyabause.uranus.R;
 
 import java.io.BufferedInputStream;
@@ -49,12 +50,22 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import okhttp3.Credentials;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.Route;
 
 /**
  * Created by shinya on 2015/12/30.
@@ -312,6 +323,9 @@ public class GameInfo extends Model {
 
     static public  GameInfo genGameInfoFromCHD(String file_path) {
         String header = YabauseRunnable.getGameinfoFromChd(file_path);
+        if( header == null ){
+            return null;
+        }
         return getGimeInfoFromBuf(file_path,header);
     }
 
@@ -391,11 +405,17 @@ public class GameInfo extends Model {
         if( product_number.equals("")) return -1;
 
         HttpURLConnection con = null;
-        String urlstr = "http://www.uoyabause.org/api/games/" + this.product_number +"/getstatus";
-        Context ctx = YabauseApplication.getAppContext();
-        String user = ctx.getString(R.string.basic_user);
-        String password = ctx.getString(R.string.basic_password);
+
         try {
+            String encoded_product_id = this.product_number;
+            encoded_product_id = encoded_product_id.replace(".","%2E");
+            encoded_product_id = encoded_product_id.replace("-","%2D");
+            encoded_product_id = encoded_product_id.replace(" ","%20");
+            String urlstr = "http://www.uoyabause.org/api/games/" + encoded_product_id +"/getstatus";
+            Context ctx = YabauseApplication.getAppContext();
+            String user = ctx.getString(R.string.basic_user);
+            String password = ctx.getString(R.string.basic_password);
+
             URL url = new URL(urlstr);
             con = (HttpURLConnection) url.openConnection();
             Authenticator authenticator = new BasicAuthenticator(user, password);
@@ -404,7 +424,59 @@ public class GameInfo extends Model {
             con.setInstanceFollowRedirects(false);
             con.connect();
 
-            if(con.getResponseCode() != 200) {
+            int responseCode = con.getResponseCode();
+            if(responseCode != 200) {
+
+                Log.i("GameInfo",product_number + "( " + this.game_title+ " ) is not found " + responseCode );
+
+                // automatic update
+                if(BuildConfig.DEBUG && responseCode == 500 ){
+                    //String.format( "{game:{maker_id:\"%s\",product_number:\"%s\",version:\"%s\","release_date:\"%s\",\"device_infomation\":\"%s\","
+                    //        "area:\"%s\",game_title:\"%s\",input_device:\"%s\"}}",
+                    //        cdip->company,cdip->itemnum,cdip->version,cdip->date,cdip->cdinfo,cdip->region, cdip->gamename, cdip->peripheral);
+                    JSONObject job = new JSONObject();
+                    job.put( "game", new JSONObject()
+                            .put("maker_id",this.maker_id)
+                            .put("product_number",this.product_number)
+                            .put("version",this.version)
+                            .put("release_date",this.release_date)
+                            .put("device_infomation",this.device_infomation)
+                            .put("area",this.area)
+                            .put("game_title",this.game_title)
+                            .put("input_device",this.input_device)
+                    );
+                    urlstr = "http://www.uoyabause.org/api/games/";
+                    MediaType MIMEType = MediaType.parse("application/json; charset=utf-8");
+                    RequestBody requestBody = RequestBody.create(MIMEType, job.toString());
+                    Request request = new Request.Builder().url(urlstr).post(requestBody).build();
+                    OkHttpClient client = null;
+                    client = new OkHttpClient.Builder()
+                            .connectTimeout(10, TimeUnit.SECONDS)
+                            .writeTimeout(10, TimeUnit.SECONDS)
+                            .readTimeout(30, TimeUnit.SECONDS)
+                            .authenticator(new okhttp3.Authenticator() {
+                                @Override
+                                public Request authenticate(Route route, Response response) {
+                                    Context ctx = YabauseApplication.getAppContext();
+                                    //if (responseCount(response) >= 3) {
+                                    //    return null; // If we've failed 3 times, give up. - in real life, never give up!!
+                                    //}
+                                    String credential = Credentials.basic(ctx.getString(R.string.basic_user), ctx.getString(R.string.basic_password));
+                                    return response.request().newBuilder().header("Authorization", credential).build();
+                                }
+                            })
+                            .build();
+                    Response response = client.newCall(request).execute();
+                    if( response.isSuccessful() ) {
+                        JSONObject rootObject = new JSONObject(response.body().string());
+                        if( rootObject.getBoolean("result") != true ){
+                            Log.i("GameInfo",product_number + "( " + this.game_title+ " ) can not be added");
+                        }
+                    }else{
+                        Log.i("GameInfo",product_number + "( " + this.game_title+ " ) can not be added by " + response.message() );
+                    }
+
+                }
                 return -1;
             }
 
@@ -422,26 +494,29 @@ public class GameInfo extends Model {
             // JSONをパース
             StringBuilder viewStrBuilder = new StringBuilder();
             JSONObject jsonObj = new JSONObject(new String(responseArray.toByteArray()));
-
-            image_url = jsonObj.getString("image_url");
+            rating = jsonObj.getInt("rating");
 
             String dateStr = jsonObj.getString("updated_at");
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
             update_at = sdf.parse(dateStr);
 
-            rating = jsonObj.getInt("rating");
+            image_url = jsonObj.getString("image_url");
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+            Log.e("GameInfo",product_number + "( " + this.game_title+ " ) " + e.getLocalizedMessage() );
         } catch (JSONException e) {
             e.printStackTrace();
+            Log.e("GameInfo",product_number + "( " + this.game_title+ " ) " + e.getLocalizedMessage() );
         } catch (Exception e) {
             e.printStackTrace();
+            Log.e("GameInfo",product_number + "( " + this.game_title+ " ) " + e.getLocalizedMessage() );
         }finally{
         }
 
         return 0;
+
     }
 }

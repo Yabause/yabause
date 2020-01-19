@@ -4003,7 +4003,9 @@ u8 Cs2GetIP(int autoregion) {
          cdip->system[16]='\0';
          memcpy(cdip->company, buf+0x10, 16);
          cdip->company[16]='\0';
-         sscanf(buf+0x20, "%s", cdip->itemnum);
+         memcpy(cdip->itemnum, buf+0x20, 0x0A);
+         cdip->itemnum[10]='\0';
+         //sscanf(buf+0x20, "%s", cdip->itemnum);
 		 
 		 // make gameid as u64
 		 cdip->gameid = 0;
