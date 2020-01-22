@@ -1065,6 +1065,15 @@ SHADER_VERSION
 #endif
 "int PosY = int(gl_FragCoord.y)+1;\n"
 "int PosX = int(gl_FragCoord.x);\n"
+"uniform mat3 MatRot;\n"
+"uniform vec3 C;\n"
+"uniform int fbRotated;\n"
+
+"vec2 getFBCoord(vec2 pos) {\n"
+" if (fbRotated == 0) return pos;\n"
+" vec3 ret = MatRot * (vec3(pos,0.0) - C) + C;\n"
+" return ret.xy;\n"
+"}\n";
 ;
 
 const GLchar Yglprg_vdp2_drawfb_gl_cram_f[] =
@@ -1590,34 +1599,6 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
 
     YglLoadIdentity(&vdp1Mat);
 
-    if (Vdp1Regs->TVMR & 0x02) {
-      YglMatrix translate, rotation, scale, fuse;
-      //Translate to center of rotation
-      YglLoadIdentity(&translate);
-      translate.m[0][3] = (-Vdp1ParaA.Cx - (float)_Ygl->rwidth/2.0f )* (float)_Ygl->vdp1width/512.0f;
-      translate.m[1][3] = (-Vdp1ParaA.Cy - (float)_Ygl->rheight/2.0f)* (float)_Ygl->vdp1height/256.0f;
-
-      //Il faut calculer ou partent les points...
-
-      //Rotate and translate back to the (Xst,Yst) from (0,0)
-      YglLoadIdentity(&rotation);
-      rotation.m[0][0] = Vdp1ParaA.deltaX;
-      rotation.m[0][1] = Vdp1ParaA.deltaY;
-      rotation.m[0][3] = (Vdp1ParaA.Xst + Vdp1ParaA.Cx + (float)_Ygl->rwidth/2.0f)* (float)_Ygl->vdp1width/512.0f;
-      rotation.m[1][0] = Vdp1ParaA.deltaXst;
-      rotation.m[1][1] = Vdp1ParaA.deltaYst;
-      rotation.m[1][3] = (Vdp1ParaA.Yst + Vdp1ParaA.Cy + (float)_Ygl->rheight/2.0f)* (float)_Ygl->vdp1height/256.0f;
-
-      YglLoadIdentity(&scale);
-      float scaleX = rotation.m[0][0]*rotation.m[0][0]+rotation.m[0][1]*rotation.m[0][1];
-      float scaleY = rotation.m[1][0]*rotation.m[1][0]+rotation.m[1][1]*rotation.m[1][1];
-      scale.m[0][0] = (scaleX!=0)?1/(scaleX):1.0;
-      scale.m[1][1] = (scaleY!=0)?1/(scaleY):1.0;
-      //merge transformations
-      YglMatrixMultiply(&fuse, &rotation, &translate);
-      YglMatrixMultiply(&vdp1Mat, &scale, &fuse);
-    }
-
     glBindVertexArray(_Ygl->vao);
 
     vdp2blit_prg = Ygl_uniformVDP2DrawFramebuffer(offsetcol, varVdp2Regs );
@@ -1664,7 +1645,15 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
   glUniform2i(glGetUniformLocation(vdp2blit_prg, "tvSize"), _Ygl->rwidth, _Ygl->rheight);
-  glUniformMatrix4fv(glGetUniformLocation(vdp2blit_prg, "fbMat"), 1, GL_FALSE, vdp1Mat.m);
+  float rotMat[3][3] = {
+    {Vdp1ParaA.deltaX, Vdp1ParaA.deltaXst, 0.0},
+    {Vdp1ParaA.deltaY, Vdp1ParaA.deltaYst, 0.0},
+    {0.0, 0.0, 1.0},
+  };
+  glUniformMatrix3fv(glGetUniformLocation(vdp2blit_prg, "MatRot"), 1, GL_FALSE, rotMat);
+  glUniform3f(glGetUniformLocation(vdp2blit_prg, "C"), Vdp1ParaA.Cx, Vdp1ParaA.Cy, Vdp1ParaA.Cz);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbRotated"),(Vdp1Regs->TVMR & 0x02)?1:0);
+
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), enBGMAX+1, Win_s);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), enBGMAX+1, Win_s_mode);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0"), enBGMAX+1, Win0);
