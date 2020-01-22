@@ -1049,7 +1049,6 @@ SHADER_VERSION
 "uniform int use_sp_win; \n"
 "uniform int use_trans_shadow; \n"
 "uniform ivec2 tvSize;\n"
-"uniform mat4 fbMat;\n"
 "uniform int win_s[8]; \n"
 "uniform int win_s_mode[8]; \n"
 "uniform int win0[8]; \n"
