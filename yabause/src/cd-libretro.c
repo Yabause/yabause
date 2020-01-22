@@ -1435,11 +1435,13 @@ static int LoadCCD(const char *ccd_filename, RFILE *iso_file)
 			track->ctl_addr = (control << 4) | adr;
 			track->fad_start = MSF_TO_FAD(pmin, psec, pframe);
 			if (point >= 2)
-			   disc.session[ses-1].track[point-2].fad_end = track->fad_start-1;
+			{
+				disc.session[ses-1].track[point-2].fad_end = track->fad_start-1;
+				disc.session[ses-1].track[point-2].file_size = (disc.session[ses-1].track[point-2].fad_end+1-disc.session[ses-1].track[point-2].fad_start)*2352;
+			}
 			track->file_offset = plba*2352;
 			track->sector_size = 2352;
 			track->fp = fp;
-			track->file_size = (track->fad_end+1-track->fad_start)*2352;
 			track->file_id = 0;
 			track->interleaved_sub = 0;
 		}
