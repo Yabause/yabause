@@ -352,6 +352,13 @@ void updateFBMode() {
   Vdp1External.manualerase |= Vdp1External.manualchange;
 }
 
+static void Vdp1TryDraw(void) {
+  if ((needVdp1draw == 1)&&(vdp1blockedLine < yabsys.LineCount)) {
+    Vdp1Draw();
+    needVdp1draw = 0;
+  }
+}
+
 void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
   addr &= 0xFF;
   switch(addr) {
@@ -375,6 +382,7 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
         FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
         Vdp1External.plot_trigger_line = yabsys.LineCount;
         needVdp1draw = 1;
+        Vdp1TryDraw();
         Vdp1External.plot_trigger_done = 1;
       }
       break;
@@ -409,7 +417,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
-   float line = 0.0;
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       // First, process the command
@@ -417,30 +424,24 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          switch (command & 0x000F) {
          case 0: // normal sprite draw
             VIDCore->Vdp1NormalSpriteDraw(ram, regs, back_framebuffer);
-            line += 0.3;
             break;
          case 1: // scaled sprite draw
             VIDCore->Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer);
-            line += 0.4;
             break;
          case 2: // distorted sprite draw
          case 3: /* this one should be invalid, but some games
                  (Hardcore 4x4 for instance) use it instead of 2 */
             VIDCore->Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer);
-            line += 0.5;
             break;
          case 4: // polygon draw
             VIDCore->Vdp1PolygonDraw(ram, regs, back_framebuffer);
-            line += 0.1;
             break;
          case 5: // polyline draw
          case 7: // undocumented mirror
             VIDCore->Vdp1PolylineDraw(ram, regs, back_framebuffer);
-            line += 0.1;
             break;
          case 6: // line draw
             VIDCore->Vdp1LineDraw(ram, regs, back_framebuffer);
-            line += 0.1;
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
@@ -456,7 +457,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
-            vdp1blockedLine = yabsys.LineCount + (int)ceilf(line);
             return;
          }
       }
@@ -465,7 +465,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	  if (regs->EDSR & 0x02){
 
 		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
-      vdp1blockedLine = yabsys.LineCount + (int)ceilf(line);
 		  return;
 	  }
 
@@ -500,7 +499,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
-   vdp1blockedLine = yabsys.LineCount + (int)ceilf(line);
 }
 
 //ensure that registers are set correctly
@@ -1694,10 +1692,7 @@ void Vdp1HBlankIN(void)
 void Vdp1HBlankOUT(void)
 {
   if (vdp1blockedLine < yabsys.LineCount) vdp1blockedLine = 0;
-  if ((needVdp1draw == 1)&&(vdp1blockedLine < yabsys.LineCount)) {
-    Vdp1Draw();
-    needVdp1draw = 0;
-  }
+  Vdp1TryDraw();
 }
 
 //////////////////////////////////////////////////////////////////////////////
