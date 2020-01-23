@@ -42,6 +42,7 @@ protected:
 	void requestFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestNewFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestFolder( const QString& caption, QLineEdit* edit );
+	void requestSTVFolder( const QString& caption, QLineEdit* edit );
 	void setupCdDrives();
 	void loadCores();
 	void loadTranslations();
