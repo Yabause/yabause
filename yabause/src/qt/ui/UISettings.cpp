@@ -28,6 +28,7 @@
 #include <QDir>
 #include <QList>
 #include <QDesktopWidget>
+#include <QStorageInfo>
 
 extern "C" {
 extern M68K_struct* M68KCoreList[];
@@ -210,11 +211,11 @@ QStringList getCdDriveList()
 	QStringList list;
 
 #if defined Q_OS_WIN
-	foreach( QFileInfo drive, QDir::drives () )
-	{
+	foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
+		QFileInfo drive(storage.rootPath());
 		LPCWSTR driveString = (LPCWSTR)drive.filePath().utf16();
 		if (GetDriveTypeW(driveString) == DRIVE_CDROM)
-			list.append(drive.filePath());
+			list.append(storage.rootPath());
 	}
 #elif defined Q_OS_LINUX
 	FILE * f = fopen("/proc/sys/dev/cdrom/info", "r");
