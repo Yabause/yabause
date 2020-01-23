@@ -47,6 +47,9 @@ extern YabEventQueue * rcv_evqueue;
 Vdp1 * Vdp1Regs;
 Vdp1External_struct Vdp1External;
 
+static int needVdp1draw = 0;
+static int vdp1blockedLine = 0;
+
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Vdp1RamReadByte(SH2_struct *context, u8* mem, u32 addr) {
@@ -364,12 +367,14 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
       break;
     case 0x4:
       FRAMELOG("Write PTMR %X line = %d\n", val, yabsys.LineCount);
+      u16 oldVal = Vdp1Regs->PTMR;
       Vdp1Regs->PTMR = val;
-      Vdp1External.plot_trigger_line = 0;
-      if ((val == 1) && (yabsys.LineCount != 0) ){
+      Vdp1External.plot_trigger_line = -1;
+      Vdp1External.plot_trigger_done = 0;
+      if ((val == 1)){
         FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
         Vdp1External.plot_trigger_line = yabsys.LineCount;
-        Vdp1Draw();
+        needVdp1draw = 1;
         Vdp1External.plot_trigger_done = 1;
       }
       break;
@@ -404,6 +409,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
+   float line = 0.0;
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       // First, process the command
@@ -411,24 +417,30 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          switch (command & 0x000F) {
          case 0: // normal sprite draw
             VIDCore->Vdp1NormalSpriteDraw(ram, regs, back_framebuffer);
+            line += 0.3;
             break;
          case 1: // scaled sprite draw
             VIDCore->Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer);
+            line += 0.4;
             break;
          case 2: // distorted sprite draw
          case 3: /* this one should be invalid, but some games
                  (Hardcore 4x4 for instance) use it instead of 2 */
             VIDCore->Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer);
+            line += 0.5;
             break;
          case 4: // polygon draw
             VIDCore->Vdp1PolygonDraw(ram, regs, back_framebuffer);
+            line += 0.1;
             break;
          case 5: // polyline draw
          case 7: // undocumented mirror
             VIDCore->Vdp1PolylineDraw(ram, regs, back_framebuffer);
+            line += 0.1;
             break;
          case 6: // line draw
             VIDCore->Vdp1LineDraw(ram, regs, back_framebuffer);
+            line += 0.1;
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
@@ -444,6 +456,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
+            vdp1blockedLine = yabsys.LineCount + (int)ceilf(line);
             return;
          }
       }
@@ -452,6 +465,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	  if (regs->EDSR & 0x02){
 
 		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
+      vdp1blockedLine = yabsys.LineCount + (int)ceilf(line);
 		  return;
 	  }
 
@@ -486,6 +500,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
+   vdp1blockedLine = yabsys.LineCount + (int)ceilf(line);
 }
 
 //ensure that registers are set correctly
@@ -558,7 +573,7 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
 
 void Vdp1Draw(void)
 {
-  FRAMELOG("Vdp1Draw");
+  FRAMELOG("Vdp1Draw\n");
   Vdp1Regs->EDSR >>= 1;
    if (!Vdp1External.disptoggle)
    {
@@ -1609,14 +1624,6 @@ void VIDDummyVdp2DispOff(void)
 {
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
-void Vdp1HBlankIN(void)
-{
-#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
-  YglTMCheck();
-#endif
-}
 
 //////////////////////////////////////////////////////////////////////////////
 static void startField(void) {
@@ -1633,9 +1640,11 @@ static void startField(void) {
   // Frame Change
   if (Vdp1External.swap_frame_buffer == 1)
   {
+    FRAMELOG("Swap \n");
     if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))
     {
       VIDCore->Vdp1EraseWrite();
+      vdp1blockedLine = yabsys.LineCount + 50;
       Vdp1External.manualerase = 0;
     }
 
@@ -1652,10 +1661,10 @@ static void startField(void) {
 
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1Regs->PTMR == 0x2){
-      FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly");
-      yabsys.wait_line_count = 1;
+      FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly\n");
+      needVdp1draw = 1;
     }
-
+    if (Vdp1Regs->PTMR == 0x1) Vdp1External.plot_trigger_done = 0;
   }
 
   Vdp1External.manualchange = 0;
@@ -1663,27 +1672,31 @@ static void startField(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void Vdp1HBlankIN(void)
+{
+  if(yabsys.LineCount == 0) {
+    startField();
+  }
+  if (Vdp1Regs->PTMR == 0x1){
+    if (Vdp1External.plot_trigger_line == yabsys.LineCount){
+      if(Vdp1External.plot_trigger_done == 0) {
+        needVdp1draw = 1;
+        Vdp1External.plot_trigger_done = 1;
+      }
+    }
+  }
+  #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
+  YglTMCheck();
+  #endif
+}
+//////////////////////////////////////////////////////////////////////////////
+
 void Vdp1HBlankOUT(void)
 {
-  if ((Vdp1Regs->PTMR == 1) && ((Vdp1External.plot_trigger_line + 1) == yabsys.LineCount)) {
-    if (Vdp1External.plot_trigger_done == 0) {
-      FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-      Vdp1Draw();
-    } else {
-      Vdp1External.plot_trigger_done = 0;
-    }
-    if (yabsys.LineCount == 0){
-      startField();
-    }
-  } else {
-    if (yabsys.LineCount == 0){
-      startField();
-    }
-    else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
-
-      Vdp1Draw();
-      FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
-    }
+  if (vdp1blockedLine < yabsys.LineCount) vdp1blockedLine = 0;
+  if ((needVdp1draw == 1)&&(vdp1blockedLine < yabsys.LineCount)) {
+    Vdp1Draw();
+    needVdp1draw = 0;
   }
 }
 
@@ -1692,14 +1705,16 @@ void Vdp1HBlankOUT(void)
 void Vdp1VBlankIN(void)
 {
   Vdp1Regs->COPR = Vdp1Regs->lCOPR;
+  if (needVBlankErase()) {
+    VIDCore->Vdp1EraseWrite();
+    vdp1blockedLine = yabsys.LineCount + 50;
+  }
+  Vdp1External.vblank_erase = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp1VBlankOUT(void)
 {
-  if (needVBlankErase()) {
-       VIDCore->Vdp1EraseWrite();
-  }
-  Vdp1External.vblank_erase = 0;
+
 }
