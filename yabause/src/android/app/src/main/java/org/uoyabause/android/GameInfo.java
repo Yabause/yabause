@@ -491,16 +491,35 @@ public class GameInfo extends Model {
                 }
             }
 
-            // JSONをパース
+            if ( this.game_title.equals("FINALIST") ){
+                Log.d("debugg","FINALIST");
+            }
+
             StringBuilder viewStrBuilder = new StringBuilder();
             JSONObject jsonObj = new JSONObject(new String(responseArray.toByteArray()));
-            rating = jsonObj.getInt("rating");
 
-            String dateStr = jsonObj.getString("updated_at");
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-            update_at = sdf.parse(dateStr);
+            // JSONをパース
+            try {
+                image_url = jsonObj.getString("image_url");
+            }catch(JSONException e) {
+                image_url = null;
+            }
 
-            image_url = jsonObj.getString("image_url");
+            try {
+                rating = jsonObj.getInt("rating");
+            }catch(JSONException e) {
+                rating = 1;
+            }
+
+            try {
+                String dateStr = jsonObj.getString("updated_at");
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                update_at = sdf.parse(dateStr);
+            }catch(Exception e) {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                update_at = sdf.parse("2001-01-01 00:00:00");
+            }
+
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
