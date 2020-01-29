@@ -175,7 +175,7 @@ static int generateComputeBuffer(int w, int h) {
   }
   glGenBuffers(1, &ssbo_cmd_);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, struct_size*2000*NB_COARSE_RAST, NULL, GL_DYNAMIC_DRAW);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, struct_size*QUEUE_SIZE*NB_COARSE_RAST, NULL, GL_DYNAMIC_DRAW);
 
   if (ssbo_nbcmd_ != 0) {
     glDeleteBuffers(1, &ssbo_nbcmd_);
@@ -407,9 +407,9 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
         || (blky + (tex_height/NB_COARSE_RAST_Y)) < miny*_Ygl->vdp1hratio
         || blky > maxy*_Ygl->vdp1hratio)
 			  || (clipcmd!=0)) {
-					memcpy(&cmdVdp1[(i+j*NB_COARSE_RAST_X)*2000 + nbCmd[i+j*NB_COARSE_RAST_X]], cmd, sizeof(vdp1cmd_struct));
+					memcpy(&cmdVdp1[(i+j*NB_COARSE_RAST_X)*QUEUE_SIZE + nbCmd[i+j*NB_COARSE_RAST_X]], cmd, sizeof(vdp1cmd_struct));
           nbCmd[i+j*NB_COARSE_RAST_X]++;
-					if (nbCmd[i+j*NB_COARSE_RAST_X] == 2000) {
+					if (nbCmd[i+j*NB_COARSE_RAST_X] == QUEUE_SIZE) {
 						requireCompute = 1;
 					}
       }
@@ -417,7 +417,6 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
   }
 	if (requireCompute != 0){
 		YuiMsg("This game is processing a lot of graphic commands on the same frame. It might introduce graphical artifacts\n");
-		YuiMsg("CMD %d\n", cmd->type);
 		vdp1_compute();
   }
   return 0;
@@ -505,9 +504,9 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
 	if (nbCmd == NULL)
   	nbCmd = (int*)malloc(NB_COARSE_RAST *sizeof(int));
   if (cmdVdp1 == NULL)
-		cmdVdp1 = (vdp1cmd_struct*)malloc(NB_COARSE_RAST*2000*sizeof(vdp1cmd_struct));
+		cmdVdp1 = (vdp1cmd_struct*)malloc(NB_COARSE_RAST*QUEUE_SIZE*sizeof(vdp1cmd_struct));
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
-	memset(cmdVdp1, 0, NB_COARSE_RAST*2000*sizeof(vdp1cmd_struct*));
+	memset(cmdVdp1, 0, NB_COARSE_RAST*QUEUE_SIZE*sizeof(vdp1cmd_struct*));
 	cmdBuffer = (u8*)malloc(0x80000);
 	return;
 }
@@ -550,7 +549,8 @@ void vdp1_compute() {
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
   for (int i = 0; i < NB_COARSE_RAST; i++) {
     if (nbCmd[i] != 0) {
-    	glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i*2000, nbCmd[i]*sizeof(vdp1cmd_struct), (void*)&cmdVdp1[2000*i]);
+			// printf("%d\n", nbCmd[i]);
+    	glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i*QUEUE_SIZE, nbCmd[i]*sizeof(vdp1cmd_struct), (void*)&cmdVdp1[QUEUE_SIZE*i]);
 			needRender = 1;
 		}
   }

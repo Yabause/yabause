@@ -21,6 +21,8 @@
 #define LOCAL_SIZE_X 4
 #define LOCAL_SIZE_Y 4
 
+#define QUEUE_SIZE 512
+
 //#define SHOW_QUAD
 
 static const char vdp1_write_f[] =
@@ -521,7 +523,7 @@ SHADER_VERSION_COMPUTE
 "  ivec2 syslimit = sysClip;\n"
 "  ivec4 userlimit = usrClip;\n"
 "  uint lindex = index.y*"Stringify(NB_COARSE_RAST_X)"+ index.x;\n"
-"  uint cmdIndex = lindex * 2000u;\n"
+"  uint cmdIndex = lindex * "Stringify(QUEUE_SIZE)"u;\n"
 
 "  if (nbCmd[lindex] == 0u) return;\n"
 "  uint idCmd = 0;\n"
