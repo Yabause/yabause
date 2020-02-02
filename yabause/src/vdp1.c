@@ -1700,16 +1700,15 @@ void Vdp1HBlankOUT(void)
 void Vdp1VBlankIN(void)
 {
   Vdp1Regs->COPR = Vdp1Regs->lCOPR;
-  if (needVBlankErase()) {
-    VIDCore->Vdp1EraseWrite();
-    vdp1blockedLine = yabsys.LineCount + 50;
-  }
-  Vdp1External.vblank_erase = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp1VBlankOUT(void)
 {
-
+  //Out of VBlankOut : Break Batman
+  if (needVBlankErase()) {
+    VIDCore->Vdp1EraseWrite();
+  }
+  Vdp1External.vblank_erase = 0;
 }
