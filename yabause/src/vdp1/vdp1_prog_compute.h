@@ -544,6 +544,7 @@ SHADER_VERSION_COMPUTE
 "    pixcmd = cmd[cmdindex];\n"
 "    if (pixcmd.type == "Stringify(SYSTEM_CLIPPING)") {\n"
 "      syslimit = ivec2(pixcmd.CMDXC+1,pixcmd.CMDYC+1);\n"
+"      waitSysClip = false;\n"
 "      continue;\n"
 "    }\n"
 "    if (pixcmd.type == "Stringify(USER_CLIPPING)") {\n"
@@ -554,7 +555,6 @@ SHADER_VERSION_COMPUTE
 "      waitSysClip = true;\n"
 "      continue;\n"
 "    }"
-"    waitSysClip = false;"
 "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 2u) {\n"
 //Draw inside
 "      if (any(lessThan(pos,userlimit.xy*upscale)) || any(greaterThan(texel,userlimit.zw*upscale))) continue;\n"
