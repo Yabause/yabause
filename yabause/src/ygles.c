@@ -2628,7 +2628,7 @@ void YglRenderVDP1(void) {
   GLuint cprg=0;
   int i,j;
   int status;
-  Vdp2 *varVdp2Regs = &Vdp2Lines[Vdp1External.plot_trigger_line];
+  Vdp2 *varVdp2Regs = &Vdp2Lines[yabsys.LineCount];
   GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3};
   //YabThreadLock(_Ygl->mutex);
   YglMatrix m, *mat;
