@@ -1027,7 +1027,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
       if (v >= varVdp2Regs->WPSY0 && v <= varVdp2Regs->WPEY0) {
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2)) & 0xFFFF;
         short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2) & 0xFFFF;
-        if (HEnd < HStart) val = 0x000000FF; //END < START
+        if ((HEnd < HStart) || (HEnd < 0)) val = 0x000000FF; //END < START
         else {
           val = (HStart>>HShift) | ((HEnd>>HShift) << 16);
         }
@@ -1044,7 +1044,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   else {
     for (v = 0; v < _Ygl->rheight; v++) {
       if (v >= varVdp2Regs->WPSY0 && v <= varVdp2Regs->WPEY0) {
-        if ((short)varVdp2Regs->WPEY0 < (short)varVdp2Regs->WPSY0) val = 0x000000FF; //END < START
+        if (((short)varVdp2Regs->WPEY0 < (short)varVdp2Regs->WPSY0)  || ((short)varVdp2Regs->WPEY0 < 0)) val = 0x000000FF; //END < START
         else {
           val = (varVdp2Regs->WPSX0 >>HShift) | ((varVdp2Regs->WPEX0>>HShift) << 16);
         }
@@ -1066,7 +1066,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
       if (v >= varVdp2Regs->WPSY1 && v <= varVdp2Regs->WPEY1) {
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2)) & 0xFFFF;
         short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2) & 0xFFFF;
-        if (HEnd < HStart) val = 0x000000FF; //END < START
+        if ((HEnd < HStart) || (HEnd < 0)) val = 0x000000FF; //END < START
         else {
           val = (HStart>>HShift) | ((HEnd>>HShift) << 16);
         }
@@ -1083,7 +1083,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   else {
     for (v = 0; v < _Ygl->rheight; v++) {
       if (v >= varVdp2Regs->WPSY1 && v <= varVdp2Regs->WPEY1) {
-        if ((short)varVdp2Regs->WPEY1 < (short)varVdp2Regs->WPSY1) val = 0x000000FF; //END < START
+        if (((short)varVdp2Regs->WPEY1 < (short)varVdp2Regs->WPSY1) || ((short)varVdp2Regs->WPEY1 < 0)) val = 0x000000FF; //END < START
         else {
           val = (varVdp2Regs->WPSX1 >>HShift) | ((varVdp2Regs->WPEX1>>HShift) << 16);
         }
