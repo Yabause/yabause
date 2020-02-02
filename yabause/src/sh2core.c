@@ -886,7 +886,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
       case 0x134: { // 64-bit / 32-bit divide operation
          s32 divisor = (s32) context->onchip.DVSR;
          s64 dividend = context->onchip.DVDNTH;
-         dividend <<= 32;
+         dividend = (s64)(((u64)dividend) << 32);
          dividend |= val;
 
          if (divisor == 0)

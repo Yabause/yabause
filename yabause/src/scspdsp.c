@@ -82,9 +82,9 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
   if (inst.part.ira & 0x20) {
     if (inst.part.ira & 0x10) {
       if (!(inst.part.ira & 0xE))
-        dsp->inputs = dsp->exts[inst.part.ira & 0x1] << 8;
+        dsp->inputs = dsp->exts[inst.part.ira & 0x1] * 256;
     }else{
-      dsp->inputs = dsp->mixs[inst.part.ira & 0xF] << 4;
+      dsp->inputs = dsp->mixs[inst.part.ira & 0xF] * 16;
     }
   }else{
     dsp->inputs = dsp->mems[inst.part.ira & 0x1F];
@@ -93,10 +93,10 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
   const int INPUTS = sign_x_to_s32(24, dsp->inputs);
   const int TEMP = sign_x_to_s32(24, dsp->temp[TEMPReadAddr]);
   const int X_SEL_Inputs[2] = { TEMP, INPUTS };
-  const u16 Y_SEL_Inputs[4] = { 
+  const u16 Y_SEL_Inputs[4] = {
     dsp->frc_reg, dsp->coef[inst.part.coef],
-    (u16)((dsp->y_reg >> 11) & 0x1FFF), 
-    (u16)((dsp->y_reg >> 4) & 0x0FFF) 
+    (u16)((dsp->y_reg >> 11) & 0x1FFF),
+    (u16)((dsp->y_reg >> 4) & 0x0FFF)
   };
   const u32 SGA_Inputs[2] = { (u32)TEMP, dsp->shift_reg }; // ToDO:?
 

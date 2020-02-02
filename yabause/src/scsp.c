@@ -238,7 +238,7 @@ const u16 envelope_table[][8] =
    MAKE_TABLE(5)
    MAKE_TABLE(6)
    MAKE_TABLE(7)
-   MAKE_TABLE(8) 
+   MAKE_TABLE(8)
    MAKE_TABLE(9)
    MAKE_TABLE(10)
    MAKE_TABLE(11)
@@ -287,7 +287,7 @@ struct SlotRegs
    u8 isel;
    u8 imxl;
    u8 disdl;
-   u8 dipan; 
+   u8 dipan;
    u8 efsdl;
    u8 efpan;
 };
@@ -340,8 +340,8 @@ const int lfo_step_table[0x20] = {
    0x17c,//6
    0x13c,//7
    0x0fc,//8
-   0x0bc,//9 
-   0x0dc,//0xa 
+   0x0bc,//9
+   0x0dc,//0xa
    0x08c,//0xb
    0x07c,//0xc
    0x06c,//0xd
@@ -500,7 +500,7 @@ void op1(struct Slot * slot)
    else if (slot->regs.plfows == 3)
       plfo_val = plfo.noise_table[slot->state.lfo_pos];
 
-   plfo_shifted = (plfo_val << slot->regs.plfos) >> 2;
+   plfo_shifted = (plfo_val << slot->regs.plfos) / 4;
 
    slot->state.waveform_phase_value &= (1 << 18) - 1;//18 fractional bits
    slot->state.waveform_phase_value += (phase_increment + plfo_shifted);
@@ -516,7 +516,7 @@ int get_slot(struct Slot * slot, int mdsl)
 void op2(struct Slot * slot, struct Scsp * s)
 {
    s32 md_out = 0;
-   s32 sample_delta = slot->state.waveform_phase_value >> 18;
+   s32 sample_delta = slot->state.waveform_phase_value / ((u32)1<<18);
 
    if (slot->state.attenuation >= 0x3bf)
       return;
@@ -745,7 +745,7 @@ void op4(struct Slot * slot)
    {
       do_decay(slot,slot->regs.d1r);
 
-      if ((slot->state.attenuation >> 5) >= slot->regs.dl) 
+      if ((slot->state.attenuation >> 5) >= slot->regs.dl)
          change_envelope_state(slot, DECAY2);
    }
    else if (slot->state.envelope == DECAY2)
@@ -801,7 +801,7 @@ void op5(struct Slot * slot)
 //level 2
 void op6(struct Slot * slot)
 {
-   
+
 }
 
 //sound stack write
@@ -910,7 +910,7 @@ void scsp_debug_get_envelope(int chan, int * env, int * state)
 
 
 
-void keyon(struct Slot * slot) 
+void keyon(struct Slot * slot)
 {
    if (slot->state.envelope == RELEASE )
    {
@@ -1020,7 +1020,7 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
         //SCSPLOG("KEY ON %d:1", slot_num);
         keyonex(s);
       }
- 
+
       slot->regs.sbctl = (data >> 1) & 3;
       slot->regs.ssctl = (slot->regs.ssctl & 1) | ((data & 1) << 1);
       break;
@@ -1473,7 +1473,7 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
          outl32 = outl32 + ((disdl_applied >> pan_val_l));
          outr32 = outr32 + ((disdl_applied >> pan_val_r));
-         scsp_dsp.mixs[s->slots[last_step].regs.isel] += mixs_input << 4;
+         scsp_dsp.mixs[s->slots[last_step].regs.isel] += (mixs_input * 16);
       }
    }
 
@@ -1493,7 +1493,7 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 	   scsp_dsp.last_step = i + 1;
 	   scsp_dsp.updated = 0;
    }
-     
+
    for (i = 0; i < scsp_dsp.last_step; i++)
       ScspDspExec(&scsp_dsp, i, SoundRam);
 
@@ -1508,7 +1508,7 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
    for (i = 0; i < 18; i++)//16,17 are exts0/1
    {
       int efsdl = get_sdl_shift(s->slots[i].regs.efsdl);
-      s16 efsdl_applied = 0; 
+      s16 efsdl_applied = 0;
 
       int pan_val_l = 0, pan_val_r = 0;
       s16 panned_l = 0, panned_r = 0;
@@ -1669,7 +1669,7 @@ typedef struct slot_t
   u8 fsft;      // frequency shift (used for freq lfo)
 
   u8 mdl;       // modulation level
-  u8 mdx;       // modulation source X 
+  u8 mdx;       // modulation source X
   u8 mdy;       // modulation source Y
 
   u8 imxl;      // input sound level
@@ -1847,7 +1847,7 @@ void scsp_check_interrupt() {
       scsp.scilv0, scsp.scilv1, scsp.scilv2, scsp.scipd, scsp.scieb);
     scsp.sintf(level);
   }
-  
+
 }
 
 static INLINE void
@@ -3037,7 +3037,7 @@ scsp_get_w (u32 a)
     case 0x04: // Midi flags/MIBUF
     {
       u16 d = (scsp.midflag << 8); // this needs to be done to keep midfi status before midi in read
-      d |= scsp_midi_in_read(); 
+      d |= scsp_midi_in_read();
       return d;
     }
 
@@ -3046,7 +3046,7 @@ scsp_get_w (u32 a)
 
     case 0x08: // CA/SGC/EG
       return (scsp.ca & 0x780) | (scsp.sgc << 5) | scsp.eg;
-     
+
     case 0x18: // TACTL
       return (scsp.timasd << 8);
 
@@ -4416,10 +4416,10 @@ scsp_r_w (SH2_struct *context, UNUSED u8* m, u32 a)
     }
   }else if (a >= 0xEC0 && a <= 0xEDF){
     return scsp_dsp.efreg[a & 0x1F];
-  }else if (a == 0xee0) { 
-    return scsp_dsp.exts[0]; 
-  }else if (a == 0xee2) { 
-    return scsp_dsp.exts[1]; 
+  }else if (a == 0xee0) {
+    return scsp_dsp.exts[0];
+  }else if (a == 0xee2) {
+    return scsp_dsp.exts[1];
   }
 
   SCSPLOG ("WARNING: scsp r_w to %08lx\n", a);
@@ -4837,7 +4837,7 @@ void SyncSh2And68k(SH2_struct *context){
 #else
       sh2_read_req++;
       YabThreadYield();
-#endif  
+#endif
       mem_access_counter = 0;
     }
   }
@@ -5047,7 +5047,7 @@ void
 ScspDeInit (void)
 {
   scsp_mute_flags = 0;
-  thread_running = 0; 
+  thread_running = 0;
 #if defined(ASYNC_SCSP)
   if (q_scsp_frame_start)YabAddEventQueue(q_scsp_frame_start, 0);
   YabThreadWait(YAB_THREAD_SCSP);
@@ -5311,7 +5311,7 @@ ScspConvert32uto16s (s32 *srcL, s32 *srcR, s16 *dst, u32 len)
 
 void
 ScspReceiveCDDA (const u8 *sector)
-{	
+{
    // If buffer is half empty or less, boost timing for a bit until we've buffered a few sectors
    if (cdda_out_left < (sizeof(cddabuf.data) / 2))
    {
@@ -5402,7 +5402,7 @@ void ScspAsynMainCpu( void * p ){
   u32 wait_clock = 0;
   u64 pre_m68k_cycle = 0;
   u64 m68k_inc = 0;
-  
+
   framecnt = (11289600/((yabsys.IsPal)?50:60)); // 11289600/60
 
   //YabWaitEventQueue(q_scsp_frame_start);
@@ -5468,7 +5468,7 @@ void ScspAsynMainRT( void * p ){
   int i;
 
   const u32 base_clock = (u32)((644.8412698 / ((double)samplecnt / (double)step)) * (1 << CLOCK_SYNC_SHIFT));
-  
+
 
   YabThreadSetCurrentThreadAffinityMask( 0x03 );
   before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
@@ -5484,7 +5484,7 @@ void ScspAsynMainRT( void * p ){
       MM68KExec(step);
       m68kcycle += base_clock;
     }
-    
+
     wait_clock = 0;
 
     new_scsp_exec((samplecnt << 1));
@@ -6105,7 +6105,7 @@ SoundLoadState (FILE *fp, int version, int size)
   u32 temp;
   u8 nextphase;
   IOCheck_struct check = { 0, 0 };
-  
+
 
   // Read 68k registers first
   yread(&check, (void *)&IsM68KRunning, 1, 1, fp);
@@ -6781,7 +6781,7 @@ typedef struct
 
 //////////////////////////////////////////////////////////////////////////////
 
-void 
+void
 ScspSlotResetDebug(u8 slotnum)
 {
   memcpy (&debugslot, &scsp.slot[slotnum], sizeof(slot_t));

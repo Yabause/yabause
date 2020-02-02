@@ -96,15 +96,15 @@ extern "C" {
 
   static INLINE u16 T2ReadWord(u8 * mem, u32 addr)
   {
-    return *((u16 *)(mem + addr));
+    return *((u16 *)(mem + (addr&~0x1)));
   }
 
   static INLINE u32 T2ReadLong(u8 * mem, u32 addr)
   {
 #ifdef WORDS_BIGENDIAN
-    return *((u32 *) (mem + addr));
+    return *((u32 *) (mem + (addr&~0x3)));
 #else
-    return WSWAP32(*((u32 *)(mem + addr)));
+    return WSWAP32(*((u32 *)(mem + (addr&~0x3))));
 #endif
   }
 
