@@ -520,7 +520,7 @@ static int update_inputs(void)
 
 static int PERLIBRETROHandleEvents(void)
 {
-   update_inputs();
+   return update_inputs();
 }
 
 void PERLIBRETRODeInit(void) {}

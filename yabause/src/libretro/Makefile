@@ -263,19 +263,19 @@ endif
 ifeq ($(DEBUG_ASAN), 1)
 	DEBUG = 1
 	DEBUG_UBSAN = 0
-	FLAGS += -lasan -fsanitize=address
+	FLAGS += -fsanitize=address
 	LDFLAGS += -lasan -fsanitize=address
 endif
 
 ifeq ($(DEBUG_UBSAN), 1)
 	DEBUG = 1
-	FLAGS += -lubsan -fsanitize=undefined
+	FLAGS += -fsanitize=undefined
 	LDFLAGS += -lubsan -fsanitize=undefined
 endif
 
 ifeq ($(DEBUG_TSAN), 1)
 	DEBUG = 1
-	FLAGS += -ltsan -fsanitize=thread
+	FLAGS += -fsanitize=thread
 	LDFLAGS += -ltsan -fsanitize=thread
 endif
 
@@ -287,12 +287,12 @@ endif
 
 OBJECTS += $(OBJECTS_C) $(OBJECTS_CXX) $(OBJECTS_S)
 
-LDFLAGS += $(fpic) $(SHARED)
+LDFLAGS += $(fpic) $(SHARED) -latomic
 FLAGS += $(fpic)
 
 INCFLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
 
-WARNINGS :=
+WARNINGS := -Wno-unused-value
 FLAGS += $(INCFLAGS) $(ENDIANNESS_DEFINES) $(WARNINGS)
 
 CXXFLAGS += $(FLAGS) -std=gnu++11
