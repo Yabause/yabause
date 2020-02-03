@@ -30,6 +30,7 @@
 #include "scanline_shader.h"
 #include "common_glshader.h"
 
+#undef YGLLOG
 #define YGLLOG //YuiMsg
 
 #define ALIGN(A,B) (((A)%(B))? A + (B - ((A)%(B))) : A)
@@ -1192,7 +1193,7 @@ void initDrawShaderCode() {
 
   prg_input_v[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = vdp1drawversion[0];
   prg_input_v[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = Yglprg_userclip_v;
-  prg_input_v[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][7] = NULL;
+  prg_input_v[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][2] = NULL;
 
   prg_input_c[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = NULL;
   prg_input_c[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = NULL;

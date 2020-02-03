@@ -772,7 +772,7 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
     full = T1ReadLong((u8*)_Ygl->vdp1fb_buf, (addr&(~0x1))*2);
     if (addr & 0x1) full = (full & 0xFF00) | (val& 0xFF);
     else full = (full & 0xFF) | ((val& 0xFF) << 8);
-    T1WriteLong(_Ygl->vdp1fb_buf, (addr&(~0x1))*2, VDP1COLORFB(full&0xFFFF));
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf, (addr&(~0x1))*2, VDP1COLORFB(full&0xFFFF));
     break;
   case 1:
     T1WriteLong((u8*)_Ygl->vdp1fb_buf, addr*2, VDP1COLORFB(val&0xFFFF));
@@ -3523,7 +3523,7 @@ static void YglOnUpdateColorRamWordLine(u32 addr, int line) {
     case 1:
     {
       u16 tmp;
-      u8 alpha = 0;
+      u32 alpha = 0;
       tmp = T2ReadWord(Vdp2ColorRam, addr);
       if (tmp & 0x8000) alpha = 0xF8;
       buf[(addr >> 1) & 0x7FF] = SAT2YAB1(alpha, tmp);
@@ -3533,7 +3533,7 @@ static void YglOnUpdateColorRamWordLine(u32 addr, int line) {
     {
       u32 tmp1 = T2ReadWord(Vdp2ColorRam, (addr&0xFFC));
       u32 tmp2 = T2ReadWord(Vdp2ColorRam, (addr&0xFFC)+2);
-      u8 alpha = 0;
+      u32 alpha = 0;
       if (tmp1 & 0x8000) alpha = 0xF8;
       buf[(addr >> 2) & 0x7FF] = SAT2YAB2(alpha, tmp1, tmp2);
       break;

@@ -130,7 +130,7 @@ unsigned int  m68k_read_memory_32(unsigned int address)
 {
    u16 val1 = rw_funcs.r_16(address);
 
-   return ((u32)(val1 << 16) | rw_funcs.r_16(address + 2));
+   return (((u32)val1 << 16) | rw_funcs.r_16(address + 2));
 }
 
 void m68k_write_memory_8(unsigned int address, unsigned int value)

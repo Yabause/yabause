@@ -500,7 +500,7 @@ void op1(struct Slot * slot)
    else if (slot->regs.plfows == 3)
       plfo_val = plfo.noise_table[slot->state.lfo_pos];
 
-   plfo_shifted = (plfo_val << slot->regs.plfos) / 4;
+   plfo_shifted = (plfo_val * (1<<slot->regs.plfos)) >> 2;
 
    slot->state.waveform_phase_value &= (1 << 18) - 1;//18 fractional bits
    slot->state.waveform_phase_value += (phase_increment + plfo_shifted);
@@ -516,7 +516,7 @@ int get_slot(struct Slot * slot, int mdsl)
 void op2(struct Slot * slot, struct Scsp * s)
 {
    s32 md_out = 0;
-   s32 sample_delta = slot->state.waveform_phase_value / ((u32)1<<18);
+   s32 sample_delta = slot->state.waveform_phase_value >> 18;
 
    if (slot->state.attenuation >= 0x3bf)
       return;
