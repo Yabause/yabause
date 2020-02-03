@@ -384,6 +384,7 @@ u32 SH2KronosInterpreterGetPC(SH2_struct *context)
 void SH2KronosInterpreterSetRegisters(SH2_struct *context, const sh2regs_struct *regs)
 {
    memcpy(&context->regs, regs, sizeof(sh2regs_struct));
+   SH2HandleInterrupts(context);
 }
 
 //////////////////////////////////////////////////////////////////////////////

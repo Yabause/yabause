@@ -234,7 +234,7 @@ static void FASTCALL SH2undecoded(SH2_struct * sh)
    }
 
    YabSetError(YAB_ERR_SH2INVALIDOPCODE, sh);
-//while(1);      
+//while(1);
 
    // Save regs.SR on stack
    sh->regs.R[15]-=4;
@@ -308,12 +308,12 @@ static void FASTCALL SH2addv(SH2_struct * sh)
       dest = 0;
    else
       dest = 1;
-  
+
    if ((s32) sh->regs.R[m] >= 0)
       src = 0;
    else
       src = 1;
-  
+
    src += dest;
    sh->regs.R[n] += sh->regs.R[m];
 
@@ -323,7 +323,7 @@ static void FASTCALL SH2addv(SH2_struct * sh)
       ans = 1;
 
    ans += dest;
-  
+
    if (src == 0 || src == 2)
       if (ans == 1)
          sh->regs.SR.part.T = 1;
@@ -432,7 +432,7 @@ static void FASTCALL SH2braf(SH2_struct * sh)
    s32 m = INSTRUCTION_B(sh->instruction);
 
    temp = sh->regs.PC;
-   sh->regs.PC += sh->regs.R[m] + 4; 
+   sh->regs.PC += sh->regs.R[m] + 4;
 
    sh->cycles += 2;
    SH2delay(sh, temp + 2);
@@ -684,7 +684,7 @@ static void FASTCALL SH2div1(SH2_struct * sh)
    u8 old_q, tmp1;
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
-  
+
    old_q = sh->regs.SR.part.Q;
    sh->regs.SR.part.Q = (u8)((0x80000000 & sh->regs.R[n])!=0);
    sh->regs.R[n] <<= 1;
@@ -778,7 +778,7 @@ static void FASTCALL SH2dmuls(SH2_struct * sh)
 
    sh->regs.MACL = result >> 0;
    sh->regs.MACH = result >> 32;
-#if 0  
+#if 0
    tempn = (s32)sh->regs.R[n];
    tempm = (s32)sh->regs.R[m];
    if (tempn < 0)
@@ -789,7 +789,7 @@ static void FASTCALL SH2dmuls(SH2_struct * sh)
       fnLmL = -1;
    else
       fnLmL = 0;
-  
+
    temp1 = (u32) tempn;
    temp2 = (u32) tempm;
 
@@ -797,7 +797,7 @@ static void FASTCALL SH2dmuls(SH2_struct * sh)
    RnH = (temp1 >> 16) & 0x0000FFFF;
    RmL = temp2 & 0x0000FFFF;
    RmH = (temp2 >> 16) & 0x0000FFFF;
-  
+
    temp0 = RmL * RnL;
    temp1 = RmH * RnL;
    temp2 = RmL * RnH;
@@ -812,7 +812,7 @@ static void FASTCALL SH2dmuls(SH2_struct * sh)
    Res0 = temp0 + temp1;
    if (Res0 < temp0)
       Res2++;
-  
+
    Res2 = Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
 
    if (fnLmL < 0)
@@ -848,19 +848,19 @@ static void FASTCALL SH2dmulu(SH2_struct * sh)
    temp1 = RmH * RnL;
    temp2 = RmL * RnH;
    temp3 = RmH * RnH;
-  
+
    Res2 = 0;
    Res1 = temp1 + temp2;
    if (Res1 < temp1)
       Res2 += 0x00010000;
-  
+
    temp1 = (Res1 << 16) & 0xFFFF0000;
    Res0 = temp0 + temp1;
    if (Res0 < temp0)
       Res2++;
-  
+
    Res2 = Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
- 
+
    sh->regs.MACH = Res2;
    sh->regs.MACL = Res0;
    sh->regs.PC += 2;
@@ -1110,7 +1110,7 @@ static void FASTCALL SH2macl(SH2_struct * sh)
          sum = 0x00007FFFFFFFFFFFULL;
      }
    }
-   sh->regs.MACL = sum; 
+   sh->regs.MACL = sum;
    sh->regs.MACH = sum >> 32;
 #else
    if ((s32) (tempn^tempm) < 0)
@@ -1353,7 +1353,7 @@ static void FASTCALL SH2movbl4(SH2_struct * sh)
 static void FASTCALL SH2movblg(SH2_struct * sh)
 {
    s32 disp = INSTRUCTION_CD(sh->instruction);
-  
+
    sh->regs.R[0] = (s32)(s8)SH2MappedMemoryReadByte(sh, sh->regs.GBR + disp);
    sh->regs.PC+=2;
    sh->cycles++;
@@ -1761,7 +1761,7 @@ static void FASTCALL SH2negc(SH2_struct * sh)
    u32 temp;
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
-  
+
    temp=0-sh->regs.R[m];
    sh->regs.R[n] = temp - sh->regs.SR.part.T;
    if (0 < temp)
@@ -2011,7 +2011,7 @@ static void FASTCALL SH2shll(SH2_struct * sh)
       sh->regs.SR.part.T=0;
    else
       sh->regs.SR.part.T=1;
- 
+
    sh->regs.R[n]<<=1;
    sh->regs.PC+=2;
    sh->cycles++;
@@ -2179,7 +2179,7 @@ static void FASTCALL SH2stsmmach(SH2_struct * sh)
 {
    s32 n = INSTRUCTION_B(sh->instruction);
    sh->regs.R[n] -= 4;
-   SH2MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.MACH); 
+   SH2MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.MACH);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -2234,7 +2234,7 @@ static void FASTCALL SH2subc(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
    u32 tmp0,tmp1;
-  
+
    tmp1 = sh->regs.R[n] - sh->regs.R[m];
    tmp0 = sh->regs.R[n];
    sh->regs.R[n] = tmp1 - sh->regs.SR.part.T;
@@ -2485,7 +2485,7 @@ static opcodefunc decode(u16 instruction)
                   case 2: return &SH2stcvbr;
                   default: return &SH2undecoded;
                }
-     
+
             case 3:
                switch (INSTRUCTION_C(instruction))
                {
@@ -2493,7 +2493,7 @@ static opcodefunc decode(u16 instruction)
                   case 2: return &SH2braf;
                   default: return &SH2undecoded;
                }
-     
+
             case 4: return &SH2movbs0;
             case 5: return &SH2movws0;
             case 6: return &SH2movls0;
@@ -2505,7 +2505,7 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2sett;
                   case 2: return &SH2clrmac;
                   default: return &SH2undecoded;
-               }     
+               }
             case 9:
                switch (INSTRUCTION_C(instruction))
                {
@@ -2513,7 +2513,7 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2div0u;
                   case 2: return &SH2movt;
                   default: return &SH2undecoded;
-               }     
+               }
             case 10:
                switch (INSTRUCTION_C(instruction))
                {
@@ -2521,7 +2521,7 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2stsmacl;
                   case 2: return &SH2stspr;
                   default: return &SH2undecoded;
-               }     
+               }
             case 11:
                switch (INSTRUCTION_C(instruction))
                {
@@ -2529,14 +2529,14 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2sleep;
                   case 2: return &SH2rte;
                   default: return &SH2undecoded;
-               }     
+               }
             case 12: return &SH2movbl0;
             case 13: return &SH2movwl0;
             case 14: return &SH2movll0;
             case 15: return &SH2macl;
             default: return &SH2undecoded;
          }
-   
+
       case 1: return &SH2movls4;
       case 2:
          switch (INSTRUCTION_D(instruction))
@@ -2558,7 +2558,7 @@ static opcodefunc decode(u16 instruction)
             case 15: return &SH2muls;
             default: return &SH2undecoded;
          }
-   
+
       case 3:
          switch(INSTRUCTION_D(instruction))
          {
@@ -2578,7 +2578,7 @@ static opcodefunc decode(u16 instruction)
             case 15: return &SH2addv;
             default: return &SH2undecoded;
          }
-   
+
       case 4:
          switch(INSTRUCTION_D(instruction))
          {
@@ -2597,7 +2597,7 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2cmppz;
                   case 2: return &SH2shar;
                   default: return &SH2undecoded;
-               }     
+               }
             case 2:
                switch(INSTRUCTION_C(instruction))
                {
@@ -2620,7 +2620,7 @@ static opcodefunc decode(u16 instruction)
                   case 0: return &SH2rotl;
                   case 2: return &SH2rotcl;
                   default: return &SH2undecoded;
-               }     
+               }
             case 5:
                switch(INSTRUCTION_C(instruction))
                {
@@ -2628,7 +2628,7 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2cmppl;
                   case 2: return &SH2rotcr;
                   default: return &SH2undecoded;
-               }                 
+               }
             case 6:
                switch(INSTRUCTION_C(instruction))
                {
@@ -2636,7 +2636,7 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2ldsmmacl;
                   case 2: return &SH2ldsmpr;
                   default: return &SH2undecoded;
-               }     
+               }
             case 7:
                switch(INSTRUCTION_C(instruction))
                {
@@ -2644,7 +2644,7 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2ldcmgbr;
                   case 2: return &SH2ldcmvbr;
                   default: return &SH2undecoded;
-               }     
+               }
             case 8:
                switch(INSTRUCTION_C(instruction))
                {
@@ -2652,7 +2652,7 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2shll8;
                   case 2: return &SH2shll16;
                   default: return &SH2undecoded;
-               }     
+               }
             case 9:
                switch(INSTRUCTION_C(instruction))
                {
@@ -2660,7 +2660,7 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2shlr8;
                   case 2: return &SH2shlr16;
                   default: return &SH2undecoded;
-               }     
+               }
             case 10:
                switch(INSTRUCTION_C(instruction))
                {
@@ -2668,7 +2668,7 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2ldsmacl;
                   case 2: return &SH2ldspr;
                   default: return &SH2undecoded;
-               }     
+               }
             case 11:
                switch(INSTRUCTION_C(instruction))
                {
@@ -2676,7 +2676,7 @@ static opcodefunc decode(u16 instruction)
                   case 1: return &SH2tas;
                   case 2: return &SH2jmp;
                   default: return &SH2undecoded;
-               }     
+               }
             case 14:
                switch(INSTRUCTION_C(instruction))
                {
@@ -2709,7 +2709,7 @@ static opcodefunc decode(u16 instruction)
             case 14: return &SH2extsb;
             case 15: return &SH2extsw;
          }
-   
+
       case 7: return &SH2addi;
       case 8:
          switch (INSTRUCTION_B(instruction))
@@ -2724,7 +2724,7 @@ static opcodefunc decode(u16 instruction)
             case 13: return &SH2bts;
             case 15: return &SH2bfs;
             default: return &SH2undecoded;
-         }   
+         }
       case 9: return &SH2movwi;
       case 10: return &SH2bra;
       case 11: return &SH2bsr;
@@ -2748,7 +2748,7 @@ static opcodefunc decode(u16 instruction)
             case 14: return &SH2xorm;
             case 15: return &SH2orm;
          }
-   
+
       case 13: return &SH2movli;
       case 14: return &SH2movi;
       default: return &SH2undecoded;
@@ -2771,7 +2771,7 @@ int SH2InterpreterInit()
       if (((i>>8) == 0x0) || ((i>>8) == 0x2)) {
         switch (i & 0xFF)
         {
-          case 0x000: // Bios              
+          case 0x000: // Bios
             fetchlist[i] = FetchBios;
             break;
           case 0x002: // Low Work Ram
@@ -2784,20 +2784,20 @@ int SH2InterpreterInit()
             fetchlist[i] = SH2MappedMemoryReadWord;
             break;
           case 0x060: // High Work Ram
-          case 0x061: 
-          case 0x062: 
-          case 0x063: 
-          case 0x064: 
-          case 0x065: 
-          case 0x066: 
-          case 0x067: 
-          case 0x068: 
-          case 0x069: 
-          case 0x06A: 
-          case 0x06B: 
-          case 0x06C: 
-          case 0x06D: 
-          case 0x06E: 
+          case 0x061:
+          case 0x062:
+          case 0x063:
+          case 0x064:
+          case 0x065:
+          case 0x066:
+          case 0x067:
+          case 0x068:
+          case 0x069:
+          case 0x06A:
+          case 0x06B:
+          case 0x06C:
+          case 0x06D:
+          case 0x06E:
           case 0x06F:
             fetchlist[i] = SH2MappedMemoryReadWord;
             break;
@@ -2810,7 +2810,7 @@ int SH2InterpreterInit()
         fetchlist[i] = SH2MappedMemoryReadWord;
       }
    }
-   
+
    return 0;
 }
 
@@ -2855,12 +2855,12 @@ static INLINE void SH2UBCInterrupt(SH2_struct *context, u32 flag)
 FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
-   
+
    SH2HandleInterrupts(context);
 
    while (context->cycles < target_cycle)
    {
-#ifdef SH2_UBC   	   
+#ifdef SH2_UBC
       int ubcinterrupt=0, ubcflag=0;
 #endif
 
@@ -3018,6 +3018,7 @@ u32 SH2InterpreterGetPC(SH2_struct *context)
 void SH2InterpreterSetRegisters(SH2_struct *context, const sh2regs_struct *regs)
 {
    memcpy(&context->regs, regs, sizeof(sh2regs_struct));
+   SH2HandleInterrupts(context);
 }
 
 //////////////////////////////////////////////////////////////////////////////

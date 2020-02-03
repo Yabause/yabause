@@ -1062,7 +1062,6 @@ void YabauseStartSlave(void) {
 
       SSH2->regs.SR.part.I = 0;
       SH2SetRegisters(SSH2, &SSH2->regs);
-SH2HandleInterrupts(SSH2);
    }
    else {
      SH2PowerOn(SSH2);
