@@ -24,9 +24,10 @@ typedef int8_t INT8;
 #define core_ftell ftell
 static size_t core_fsize(core_file *f)
 {
+    long rv;
     long p = ftell(f);
     fseek(f, 0, SEEK_END);
-    long rv = ftell(f);
+    rv = ftell(f);
     fseek(f, p, SEEK_SET);
     return rv;
 }

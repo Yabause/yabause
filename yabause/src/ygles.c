@@ -1374,7 +1374,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
   vdp1_compute_init(512.0f, 256.0f, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
 
-  _Ygl->vdp2buf = (u32*)malloc(512 * sizeof(int)* NB_VDP2_REG);
+  _Ygl->vdp2buf = (u8*)malloc(512 * sizeof(int)* NB_VDP2_REG);
 
   _Ygl->smallfbo = 0;
   _Ygl->smallfbotex = 0;
@@ -2898,12 +2898,12 @@ if (_Ygl->vdp2_use_compute_shader == 0) {
   _Ygl->vdp2reg_buf = (u8 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * NB_VDP2_REG, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 } else {
-  if (_Ygl->vdp2reg_buf == NULL) _Ygl->vdp2reg_buf = (u32*)malloc(512 * NB_VDP2_REG * sizeof(int));
+  if (_Ygl->vdp2reg_buf == NULL) _Ygl->vdp2reg_buf = (u8*)malloc(512 * NB_VDP2_REG * sizeof(int));
 }
   return (u8*)_Ygl->vdp2reg_buf;
 }
 
-void YglSetVDP2Reg(u32 * pbuf, int start, int size){
+void YglSetVDP2Reg(u8 * pbuf, int start, int size){
   if (_Ygl->vdp2_use_compute_shader == 0) {
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp2reg_tex);
     //if (_Ygl->lincolor_buf == pbuf) {

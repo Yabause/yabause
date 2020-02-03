@@ -766,7 +766,7 @@ CACHE_LOG("rb %x %x\n", addr, addr >> 29);
          return CacheReadByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x2:
-         return 0xFFFFFFFF;
+         return 0xFF;
       //case 0x4:
       case 0x6:
          // Data Array
@@ -862,7 +862,7 @@ u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct *context, u32 addr)
            return CacheReadWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       case 0x2:
       case 0x5:
-         return 0xFFFFFFFF;
+         return 0xFFFF;
       //case 0x4:
       case 0x6:
          // Data Array
@@ -1552,9 +1552,9 @@ int CheckBackupFile(FILE *fp) {
 }
 
 int ExtendBackupFile(FILE *fp, u32 size ) {
-
+  u32 acsize;
   fseek(fp, 0, SEEK_END);
-  u32 acsize = ftell(fp);
+  acsize = ftell(fp);
   if (acsize < size) {
     // Clear the rest
     for ( u32 i = (acsize&0xFFFFFFFE) ; i < size; i++)

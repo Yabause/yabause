@@ -671,8 +671,9 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 int infoFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void *user_data) {
     long offset;
     char name[1024];
+    ZipEntry *entry;
     offset = zip->tell(zip); // store current position
-    ZipEntry *entry = (ZipEntry*)user_data;
+    entry = (ZipEntry*)user_data;
 
    if (entry == NULL) exit(-1);
 
@@ -697,9 +698,9 @@ int infoFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void *u
        }
     } else {
       char *last = strrchr(filename, '/');
+      char* fileToSearch = entry->filename;
       if (last == NULL) last = filename;
       else last = last+1;
-      char* fileToSearch = entry->filename;
       if (strcmp(last, fileToSearch) == 0) {
         //File found
         entry->zipBuffer = NULL;
@@ -749,9 +750,9 @@ int deflateFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void
        }
     } else {
       char *last = strrchr(filename, '/');
+      char* fileToSearch = entry->filename;
       if (last == NULL) last = filename;
       else last = last+1;
-      char* fileToSearch = entry->filename;
       if (strcmp(last, fileToSearch) == 0) {
         if(jzReadLocalFileHeader(zip, header, name, sizeof(name))) {
           printf("Couldn't read local file header!\n");
@@ -820,6 +821,7 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
    JZFile *zip;
    FILE *iso_file;
    ZipEntry *cue;
+   int index = 0;
 
   zip = jzfile_from_stdio_file(fp);
 
@@ -855,7 +857,6 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
    if ((temp_buffer = (char *)calloc(size, 1)) == NULL)
       return -1;
    // Time to generate TOC
-   int index = 0;
    for (;;)
    {
       // Retrieve a line in cue
