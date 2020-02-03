@@ -171,6 +171,7 @@ int IOPortAdd(int key, ioPort port, u8 index) {
   IOalloc[port][index].port = &IOPORT[port];
   IOalloc[port][index].mask = (0x1 << index); 
   IOkeys[key] = &(IOalloc[port][index]);
+  return 0;
 }
 
 static void IOPortPressed(int key) {
