@@ -57,6 +57,7 @@ set(kronos_SOURCES
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidshared.c vidsoft.c
 	yabause.c
+	Counter.cpp
         eeprom.c
         decrypt.c
         stv.c

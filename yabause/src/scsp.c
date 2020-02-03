@@ -158,6 +158,9 @@ u32 m68kcycle = 0;
 
 extern YabEventQueue * q_scsp_frame_start;
 extern YabEventQueue * q_scsp_finish;
+void setM68kCounter(u64 counter);
+u64 getM68KCounter();
+
 
 #define CLOCK_SYNC_SHIFT (4)
 
@@ -4944,9 +4947,6 @@ ScspInit (int coreid)
   if (M68K->Init () != 0)
     return -1;
 
-  m68counterCond = YabThreadCreateSem(0);
-  setM68kCounter(0);
-
   M68K->SetReadB ((C68K_READ *)c68k_byte_read);
   M68K->SetReadW ((C68K_READ *)c68k_word_read);
   M68K->SetWriteB ((C68K_WRITE *)c68k_byte_write);
@@ -5129,20 +5129,6 @@ ScspChangeVideoFormat (int type)
 
   return 0;
 }
-
-
-  void setM68kDoneCounter(u64 counter) {
-    m68k_counter_done = counter;
-  }
-
-  u64 getM68KCounter() {
-    return m68k_counter;
-  }
-
-  void setM68kCounter(u64 counter) {
-    m68k_counter = counter;
-    YabSemPost(m68counterCond);
-  }
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -5414,10 +5400,10 @@ void ScspAsynMainCpu( void * p ){
     u64 m68k_integer_part = 0;
     u64 m68k_cycle = 0;
     do {
-      m68k_integer_part = getM68KCounter();
+      m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
       m68k_cycle = m68k_integer_part - pre_m68k_cycle;
       if (thread_running == 0) break;
-      if (m68k_cycle == 0) YabSemWait(m68counterCond);
+  //    if (m68k_cycle == 0) YabSemWait(m68counterCond);
     } while (m68k_cycle == 0);
     m68k_inc += m68k_cycle;
     pre_m68k_cycle = m68k_integer_part;
