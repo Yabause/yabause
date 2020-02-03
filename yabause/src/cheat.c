@@ -22,6 +22,7 @@
 */
 
 #include <stdlib.h>
+#include <string.h>
 #include "cheat.h"
 #include "memory.h"
 #include "sh2core.h"
@@ -39,7 +40,7 @@ int cheatsize;
 //////////////////////////////////////////////////////////////////////////////
 
 int CheatInit(void)
-{  
+{
    cheatsize = 10;
    if ((cheatlist = (cheatlist_struct *)calloc(cheatsize, sizeof(cheatlist_struct))) == NULL)
       return -1;
@@ -51,7 +52,7 @@ int CheatInit(void)
 //////////////////////////////////////////////////////////////////////////////
 
 void CheatDeInit(void)
-{  
+{
    if (cheatlist)
       free(cheatlist);
    cheatlist = NULL;
@@ -266,7 +267,7 @@ void CheatDoPatches(SH2_struct *sh)
             LOG("CheatDoPatches %08X", cheatlist[i].addr);
             MappedMemoryWriteLong(sh, cheatlist[i].addr, cheatlist[i].val);
             SH2WriteNotify(sh, cheatlist[i].addr, 4);
-            break;            
+            break;
       }
    }
 }
@@ -392,4 +393,3 @@ int CheatLoad(const char *filename)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-

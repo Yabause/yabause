@@ -1,4 +1,7 @@
 #include "common_glshader.h"
+#include "yui.h"
+
+extern int YglInitDrawFrameBufferShaders(int id, int CS);
 
 GLuint _prgid[PG_MAX] = { 0 };
 

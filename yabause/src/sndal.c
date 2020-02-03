@@ -19,7 +19,7 @@
 */
 
 #ifdef HAVE_LIBAL
-  
+
 #ifdef __APPLE__
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
@@ -83,16 +83,14 @@ static int soundlen;
 //#define AL_DEBUG
 #ifdef AL_DEBUG
 #define LOG printf
-#else
-#define LOG
 #endif
 
 static void sound_update_thd(void *ptr __attribute__((unused)))    {
     ALint proc;
     ALuint buf;
-	
+
     u8 data[2048];
-	
+
     u8 *soundbuf = (u8 *)buffer;
     int i;
     u32 alerror;
@@ -121,7 +119,7 @@ static void sound_update_thd(void *ptr __attribute__((unused)))    {
             *dst = wavedata;
             dst++;
         }
-    }    
+    }
 #endif
     while(!thd_done)    {
         /* See if the stream needs updating yet. */
@@ -133,14 +131,14 @@ static void sound_update_thd(void *ptr __attribute__((unused)))    {
             LOG("AL_BUFFERS_PROCESSED alGetError %d\n", alerror);
             continue;
         }
-		
+
         /* Go through each buffer that needs more data. */
         while(proc--)   {
             /* Unqueue the old buffer, so that it can be filled again. */
             LOG("alSourceUnqueueBuffers in\n");
             alSourceUnqueueBuffers(source, 1, &buf);
             LOG("alSourceUnqueueBuffers out\n");
-            
+
             if( (alerror=alGetError()) != AL_NO_ERROR) {
                 LOG("alGetError %d\n", alerror);
                 continue;
@@ -154,11 +152,11 @@ static void sound_update_thd(void *ptr __attribute__((unused)))    {
                 //if( data[i]!= 0 ){ printf("wav %d\n",data[i]); };
                 ++soundpos;
             }
-#endif            
+#endif
             LOG("sound_update_thd soundpos = %d\n",soundpos);
 
             alBufferData(buf, AL_FORMAT_STEREO16, data, 2048, SOUND_FREQ);
-            
+
             LOG("alSourceQueueBuffers in\n");
             alSourceQueueBuffers(source, 1, &buf);
             LOG("alSourceQueueBuffers out\n");
@@ -188,7 +186,7 @@ static void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len)    {
         dst++;
         *dst = wavedata;
         dst++;
-#else        
+#else
         // Left Channel
         *srcL = ( *srcL *soundvolume ) / 100;
         if (*srcL > 0x7FFF) *dst = 0x7FFF;
@@ -203,8 +201,8 @@ static void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len)    {
         else *dst = *srcR;
         srcR++;
         dst++;
-#endif        
-    } 
+#endif
+    }
 }
 
 void SNDALUpdateAudio(u32 *left, u32 *right, u32 num_samples)   {
@@ -228,7 +226,7 @@ void SNDALUpdateAudio(u32 *left, u32 *right, u32 num_samples)   {
                            (s32 *)right + (copy1size / sizeof(s16) / 2),
                            (s16 *)buffer, copy2size / sizeof(s16) / 2);
 
-    soundoffset += copy1size + copy2size;   
+    soundoffset += copy1size + copy2size;
     soundoffset %= soundbufsize;
 
 }
@@ -253,7 +251,7 @@ int SNDALInit() {
 
     if( alcMakeContextCurrent(context) != ALC_TRUE ){
         rv = -2;
-        goto err2;       
+        goto err2;
     }
 
     /* Clear any error states. */
@@ -333,7 +331,7 @@ int SNDALInit() {
     alSourcePlay(source);
     if( (alerror=alGetError()) != AL_NO_ERROR) {
          LOG("alSourcePlay alGetError %d\n", alerror);
-    
+
     }
 
     alcMakeContextCurrent(NULL);
@@ -411,14 +409,14 @@ u32 SNDALGetAudioSpace()    {
         freespace = soundpos - soundoffset;
 
     LOG("%d,%d,%d,%d\n",freespace,soundbufsize,soundoffset,soundpos);
-    
+
     return (freespace / sizeof(s16) / 2);
 }
 
 static int sound_pause = 0;
 
 void SNDALMuteAudio()   {
-    
+
     if( sound_pause == 0){
         alSourcePause(source);
         alSourcef(source, AL_GAIN, 0.0f);

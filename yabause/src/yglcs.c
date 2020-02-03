@@ -78,7 +78,7 @@ void YglEraseWriteCSVDP1(void) {
   _Ygl->vdp1levels[_Ygl->readframe].blendmode = 0;
 
   color = Vdp1Regs->EWDR;
-	
+
   if (color != 0x0) _Ygl->vdp1On[_Ygl->readframe] = 1;
 
   col[0] = (color & 0xFF) / 255.0f;
@@ -384,7 +384,7 @@ void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val )
     full = T1ReadLong((u8*)_Ygl->vdp1fb_buf, (addr&(~0x1))*2);
     if (addr & 0x1) full = (full & 0xFF00) | (val& 0xFF);
     else full = (full & 0xFF) | ((val& 0xFF) << 8);
-    T1WriteLong(_Ygl->vdp1fb_buf, (addr&(~0x1))*2, VDP1COLORFB(full&0xFFFF));
+    T1WriteLong((u8 *)_Ygl->vdp1fb_buf, (addr&(~0x1))*2, VDP1COLORFB(full&0xFFFF));
     break;
   case 1:
     T1WriteLong((u8*)_Ygl->vdp1fb_buf, addr*2, VDP1COLORFB(val&0xFFFF));

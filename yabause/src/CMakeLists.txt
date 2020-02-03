@@ -17,7 +17,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 set(kronos_HEADERS
 	bios.h
 	cdbase.h cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
-	debug.h
 	error.h
 	gameinfo.h
 	japmodem.h
@@ -46,7 +45,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fomit-frame-pointer")
 set(kronos_SOURCES
 	bios.c
 	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
-	debug.c
 	error.c
 	gameinfo.c
 	japmodem.c
@@ -773,7 +771,7 @@ else ()
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUCC)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -mfpmath=sse -m64 -march=native -funroll-loops")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -D_DEFAULT_SOURCE -Wno-format -mfpmath=sse -m64 -march=native -funroll-loops")
         set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -mfpmath=sse -m64 -march=native -funroll-loops")
 endif()
 

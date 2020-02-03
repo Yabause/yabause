@@ -132,19 +132,19 @@ void DebugLog( const char * format, ... ) {
   va_start(l, format);
   i += vsprintf(strtmp + i, format, l);
   OSDAddLogString(strtmp);
-  va_end(l);        
+  va_end(l);
 }
 
 void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ...) {
   va_list l;
   static char strtmp[512];
   static int strhash;
-  
+
   if (d == NULL)
     return;
-  
+
   va_start(l, format);
-  
+
   switch(d->output_type) {
   case DEBUG_STDOUT:
   case DEBUG_STDERR:
@@ -159,7 +159,7 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
       int i;
       if (d->output.string == NULL)
 	break;
-      
+
       i = sprintf(d->output.string, "%s (%s:%ld): ", d->name, file, (long)line);
       vsprintf(d->output.string + i, format, l);
     }
@@ -187,7 +187,7 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
         //OutputDebugString(strtmp);
         //d->output.callback(strtmp);
         OSDAddLogString(strtmp);
-#if defined(ANDROID) 
+#if defined(ANDROID)
         fprintf(dfp, "%s",strtmp);
         fflush(dfp);
 #endif
@@ -200,7 +200,7 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
     }
     break;
   }
-  
+
   va_end(l);
 }
 

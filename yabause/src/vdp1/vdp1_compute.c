@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "vdp1.h"
+#include "yui.h"
 
 //#define VDP1CDEBUG
 #ifdef VDP1CDEBUG

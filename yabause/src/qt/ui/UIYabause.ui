@@ -178,7 +178,6 @@
     <addaction name="aFileOpenISO"/>
     <addaction name="aFileOpenCDRom"/>
     <addaction name="aFileOpenSSF"/>
-    <addaction name="actionOpen_Tray"/>
     <addaction name="separator"/>
     <addaction name="mFileSaveState"/>
     <addaction name="mFileLoadState"/>
