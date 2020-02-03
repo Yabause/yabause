@@ -184,7 +184,6 @@ void UISettings::requestNewFile( const QString& c, QLineEdit* e, const QString& 
 
 void UISettings::requestFolder( const QString& c, QLineEdit* e )
 {
-  int i;
 	const QString s = CommonDialogs::getExistingDirectory( e->text(), c );
 	if ( !s.isNull() ) {
 		e->setText( s );
