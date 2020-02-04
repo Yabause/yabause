@@ -1430,7 +1430,7 @@ void VIDDummyDeInit(void);
 void VIDDummyResize(int, int, unsigned int, unsigned int, int);
 int VIDDummyIsFullscreen(void);
 int VIDDummyVdp1Reset(void);
-void VIDDummyVdp1Draw(void);
+void VIDDummyVdp1Draw();
 void VIDDummyVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDDummyVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDDummyVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -1516,7 +1516,7 @@ int VIDDummyVdp1Reset(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1Draw(void)
+void VIDDummyVdp1Draw()
 {
 }
 

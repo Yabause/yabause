@@ -4912,7 +4912,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   polygon.h = 1;
   polygon.flip = 0;
 
-  polygon.blendmode = getCCProgramId(cmd.CMDPMOD);
+  polygon.blendmode = getCCProgramId(CMDPMOD);
 
   if (polygon.blendmode == -1) return; //Invalid color mode
 
