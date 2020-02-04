@@ -133,7 +133,7 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
 
   dsp->product = ((s64)sign_x_to_s32(13, Y_SEL_Inputs[inst.part.ysel]) * X_SEL_Inputs[inst.part.xsel]) >> 12;
 
-  u32 SGAOutput;
+  s32 SGAOutput;
 
   SGAOutput = SGA_Inputs[inst.part.bsel];
 
