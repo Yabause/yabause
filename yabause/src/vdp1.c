@@ -1671,8 +1671,7 @@ static void startField(void) {
 
 void Vdp1HBlankIN(void)
 {
-  int lineStart = (Vdp1Regs->PTMR == 0x1)?0:(yabsys.MaxLineCount-1); //ca ressemble a workaround. sans ca, il y a des problemes avec Blazing tornado ou avec Alone in the dark
-  if(yabsys.LineCount == lineStart) {
+  if(yabsys.LineCount == 0) {
     startField();
   }
   if (Vdp1Regs->PTMR == 0x1){
