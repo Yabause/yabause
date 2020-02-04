@@ -48,7 +48,6 @@ Vdp1 * Vdp1Regs;
 Vdp1External_struct Vdp1External;
 
 static int needVdp1draw = 0;
-static int vdp1blockedLine = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -353,7 +352,7 @@ void updateFBMode() {
 }
 
 static void Vdp1TryDraw(void) {
-  if ((needVdp1draw == 1)&&(vdp1blockedLine < yabsys.LineCount)) {
+  if ((needVdp1draw == 1)) {
     Vdp1Draw();
     needVdp1draw = 0;
   }
@@ -373,7 +372,7 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
       updateFBMode();
       break;
     case 0x4:
-      FRAMELOG("Write PTMR %X line = %d\n", val, yabsys.LineCount);
+      FRAMELOG("Write PTMR %X line = %d %d\n", val, yabsys.LineCount, yabsys.VBlankLineCount);
       Vdp1Regs->PTMR = val;
       Vdp1External.plot_trigger_line = -1;
       Vdp1External.plot_trigger_done = 0;
@@ -589,7 +588,7 @@ void Vdp1Draw(void)
      VIDCore->Vdp1Draw();
    }
 
-   FRAMELOG("Vdp1Draw end at %d line", yabsys.LineCount);
+   FRAMELOG("Vdp1Draw end at %d line\n", yabsys.LineCount);
    Vdp1Regs->EDSR |= 2;
    ScuSendDrawEnd();
 
@@ -1628,7 +1627,7 @@ static void startField(void) {
 
   yabsys.wait_line_count = -1;
 
-  FRAMELOG("***** VOUT(T) %d FCM=%d FCT=%d VBE=%d PTMR=%d (%d, %d, %d, %d)*****\n", Vdp1External.swap_frame_buffer, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, Vdp1Regs->PTMR, Vdp1External.onecyclemode, Vdp1External.manualchange, Vdp1External.manualerase, Vdp1External.vblank_erase);
+  FRAMELOG("StartField ***** VOUT(T) %d FCM=%d FCT=%d VBE=%d PTMR=%d (%d, %d, %d, %d)*****\n", Vdp1External.swap_frame_buffer, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, Vdp1Regs->PTMR, Vdp1External.onecyclemode, Vdp1External.manualchange, Vdp1External.manualerase, Vdp1External.vblank_erase);
 
   // Manual Change
   Vdp1External.swap_frame_buffer |= (Vdp1External.manualchange == 1);
@@ -1637,11 +1636,10 @@ static void startField(void) {
   // Frame Change
   if (Vdp1External.swap_frame_buffer == 1)
   {
-    FRAMELOG("Swap \n");
+    FRAMELOG("Swap Line %d\n", yabsys.LineCount);
     if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))
     {
       VIDCore->Vdp1EraseWrite();
-      vdp1blockedLine = yabsys.LineCount + 50;
       Vdp1External.manualerase = 0;
     }
 
@@ -1664,6 +1662,8 @@ static void startField(void) {
     if (Vdp1Regs->PTMR == 0x1) Vdp1External.plot_trigger_done = 0;
   }
 
+  FRAMELOG("End StartField\n");
+
   Vdp1External.manualchange = 0;
 }
 
@@ -1671,7 +1671,8 @@ static void startField(void) {
 
 void Vdp1HBlankIN(void)
 {
-  if(yabsys.LineCount == 0) {
+  int lineStart = (Vdp1Regs->PTMR == 0x1)?0:(yabsys.MaxLineCount-1); //ca ressemble a workaround. sans ca, il y a des problemes avec Blazing tornado ou avec Alone in the dark
+  if(yabsys.LineCount == lineStart) {
     startField();
   }
   if (Vdp1Regs->PTMR == 0x1){
@@ -1690,8 +1691,8 @@ void Vdp1HBlankIN(void)
 
 void Vdp1HBlankOUT(void)
 {
-  if (vdp1blockedLine < yabsys.LineCount) vdp1blockedLine = 0;
   Vdp1TryDraw();
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
