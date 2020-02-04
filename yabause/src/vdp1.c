@@ -374,7 +374,6 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
       break;
     case 0x4:
       FRAMELOG("Write PTMR %X line = %d\n", val, yabsys.LineCount);
-      u16 oldVal = Vdp1Regs->PTMR;
       Vdp1Regs->PTMR = val;
       Vdp1External.plot_trigger_line = -1;
       Vdp1External.plot_trigger_done = 0;
