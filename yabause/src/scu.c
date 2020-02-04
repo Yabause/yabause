@@ -196,6 +196,9 @@ static void DoDMAFill(u32 ReadAddress,
            int off=0;
            while (counter < TransferSize ) {
              u32 tmp;
+             if (off == 0) {
+               tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
+             }
              DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, (u16)(tmp >> ((4-off)*8)));
              off = (off+1)%4;
              counter++;
