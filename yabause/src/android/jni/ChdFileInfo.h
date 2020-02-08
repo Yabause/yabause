@@ -35,9 +35,9 @@ class ChdFileInfo {
 public:  
   ChdFileInfo();
   ~ChdFileInfo();
-  int getHeader( std::string filepath, std::string & header );
+  int getHeader( std::string filepath, char * buf, int len  );
 };
 
 extern "C"{
-JNIEXPORT jstring JNICALL Java_org_uoyabause_android_YabauseRunnable_getGameinfoFromChd( JNIEnv* env, jobject obj, jstring  jpath );
+JNIEXPORT jbyteArray JNICALL Java_org_uoyabause_android_YabauseRunnable_getGameinfoFromChd( JNIEnv* env, jobject obj, jstring  jpath );
 }

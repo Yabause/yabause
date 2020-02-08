@@ -51,6 +51,7 @@ import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -289,40 +290,59 @@ public class GameInfo extends Model {
         return tmp;
     }
 
-    static GameInfo getGimeInfoFromBuf( String file_path, String header ){
+    static GameInfo getGimeInfoFromBuf( String file_path, byte[] header ){
         GameInfo tmp = null;
-        int startindex = header.indexOf("SEGA SEGASATURN");
+
+        int startindex = -1;
+        byte[] check_str ={'S','E','G','A',' ' };
+        for( int i=0; i<header.length - check_str.length; i++ ){
+            if( header[i+0] == check_str[0] &&
+                header[i+1] == check_str[1] &&
+                header[i+2] == check_str[2] &&
+                header[i+3] == check_str[3] &&
+                header[i+4] == check_str[4] ){
+                startindex = i;
+                break;
+            }
+        }
+
         if( startindex == -1) return null;
 
-        if( startindex != 0 )
-            header = header.substring(startindex);
 
-        tmp = new GameInfo();
-        tmp.file_path = file_path;
-        tmp.iso_file_path = file_path.toUpperCase();
-        tmp.maker_id = header.substring(0x10, 0x20);
-        tmp.maker_id = tmp.maker_id.trim();
-        tmp.product_number = header.substring(0x20, 0x2A);
-        tmp.product_number = tmp.product_number.trim();
-        tmp.version = header.substring(0x2A, 0x30);
-        tmp.version = tmp.version.trim();
-        tmp.release_date = header.substring(0x30, 0x38);
-        tmp.release_date = tmp.release_date.trim();
-        tmp.area = header.substring(0x40, 0x4A);
-        tmp.area = tmp.area.trim();
-        tmp.input_device = header.substring(0x50, 0x60);
-        tmp.input_device = tmp.input_device.trim();
-        tmp.device_infomation = header.substring(0x38, 0x40);
-        tmp.device_infomation = tmp.device_infomation.trim();
-        tmp.game_title = header.substring(0x60, 0xD0);
-        tmp.game_title = tmp.game_title.trim();
+        try {
+
+            tmp = new GameInfo();
+            tmp.file_path = file_path;
+            tmp.iso_file_path = file_path.toUpperCase();
+            tmp.maker_id = new String(header, startindex+0x10, 0x10, "MS932");
+            tmp.maker_id = tmp.maker_id.trim();
+            tmp.product_number = new String(header, startindex+0x20, 0xA, "MS932");
+            tmp.product_number = tmp.product_number.trim();
+            tmp.version =  new String(header, startindex+0x2A, 0x10, "MS932");
+            tmp.version = tmp.version.trim();
+            tmp.release_date = new String(header, startindex+0x30, 0x8, "MS932");
+            tmp.release_date = tmp.release_date.trim();
+            tmp.area = new String(header, startindex+0x40, 0xA, "MS932");
+            tmp.area = tmp.area.trim();
+            tmp.input_device = new String(header, startindex+0x50, 0x10, "MS932");
+            tmp.input_device = tmp.input_device.trim();
+            tmp.device_infomation = new String(header, startindex+0x38, 0x8, "MS932");
+            tmp.device_infomation = tmp.device_infomation.trim();
+            tmp.game_title = new String(header, startindex+0x60, 0x70, "MS932");
+            tmp.game_title = tmp.game_title.trim();
+
+        }catch(Exception e){
+            Log.e("GameInfo",e.getLocalizedMessage());
+            return null;
+        }
 
         return tmp;
 
     }
 
     static public  GameInfo genGameInfoFromCHD(String file_path) {
-        String header = YabauseRunnable.getGameinfoFromChd(file_path);
+        Log.d("yabause",file_path);
+        byte[] header = YabauseRunnable.getGameinfoFromChd(file_path);
         if( header == null ){
             return null;
         }
@@ -338,8 +358,7 @@ public class GameInfo extends Model {
             dataInStream.read(buff, 0x0, 0xFF);
             dataInStream.close();
 
-            String header = new String(buff);
-            return getGimeInfoFromBuf(file_path,header);
+            return getGimeInfoFromBuf(file_path,buff);
 
         } catch (FileNotFoundException e) {
             System.out.println(e);
@@ -425,60 +444,6 @@ public class GameInfo extends Model {
             con.connect();
 
             int responseCode = con.getResponseCode();
-            if(responseCode != 200) {
-
-                Log.i("GameInfo",product_number + "( " + this.game_title+ " ) is not found " + responseCode );
-
-                // automatic update
-                if(BuildConfig.DEBUG && responseCode == 500 ){
-                    //String.format( "{game:{maker_id:\"%s\",product_number:\"%s\",version:\"%s\","release_date:\"%s\",\"device_infomation\":\"%s\","
-                    //        "area:\"%s\",game_title:\"%s\",input_device:\"%s\"}}",
-                    //        cdip->company,cdip->itemnum,cdip->version,cdip->date,cdip->cdinfo,cdip->region, cdip->gamename, cdip->peripheral);
-                    JSONObject job = new JSONObject();
-                    job.put( "game", new JSONObject()
-                            .put("maker_id",this.maker_id)
-                            .put("product_number",this.product_number)
-                            .put("version",this.version)
-                            .put("release_date",this.release_date)
-                            .put("device_infomation",this.device_infomation)
-                            .put("area",this.area)
-                            .put("game_title",this.game_title)
-                            .put("input_device",this.input_device)
-                    );
-                    urlstr = "http://www.uoyabause.org/api/games/";
-                    MediaType MIMEType = MediaType.parse("application/json; charset=utf-8");
-                    RequestBody requestBody = RequestBody.create(MIMEType, job.toString());
-                    Request request = new Request.Builder().url(urlstr).post(requestBody).build();
-                    OkHttpClient client = null;
-                    client = new OkHttpClient.Builder()
-                            .connectTimeout(10, TimeUnit.SECONDS)
-                            .writeTimeout(10, TimeUnit.SECONDS)
-                            .readTimeout(30, TimeUnit.SECONDS)
-                            .authenticator(new okhttp3.Authenticator() {
-                                @Override
-                                public Request authenticate(Route route, Response response) {
-                                    Context ctx = YabauseApplication.getAppContext();
-                                    //if (responseCount(response) >= 3) {
-                                    //    return null; // If we've failed 3 times, give up. - in real life, never give up!!
-                                    //}
-                                    String credential = Credentials.basic(ctx.getString(R.string.basic_user), ctx.getString(R.string.basic_password));
-                                    return response.request().newBuilder().header("Authorization", credential).build();
-                                }
-                            })
-                            .build();
-                    Response response = client.newCall(request).execute();
-                    if( response.isSuccessful() ) {
-                        JSONObject rootObject = new JSONObject(response.body().string());
-                        if( rootObject.getBoolean("result") != true ){
-                            Log.i("GameInfo",product_number + "( " + this.game_title+ " ) can not be added");
-                        }
-                    }else{
-                        Log.i("GameInfo",product_number + "( " + this.game_title+ " ) can not be added by " + response.message() );
-                    }
-
-                }
-                return -1;
-            }
 
             BufferedInputStream inputStream = new BufferedInputStream(con.getInputStream());
             ByteArrayOutputStream responseArray = new ByteArrayOutputStream();
@@ -491,12 +456,74 @@ public class GameInfo extends Model {
                 }
             }
 
+            StringBuilder viewStrBuilder = new StringBuilder();
+            JSONObject jsonObj = new JSONObject(new String(responseArray.toByteArray()));
+
+            try {
+
+                if (jsonObj.getBoolean("result") == false) {
+
+                    Log.i("GameInfo", product_number + "( " + this.game_title + " ) is not found " + responseCode);
+
+                    // automatic update
+                    if (BuildConfig.DEBUG /*&& responseCode == 500*/) {
+                        //String.format( "{game:{maker_id:\"%s\",product_number:\"%s\",version:\"%s\","release_date:\"%s\",\"device_infomation\":\"%s\","
+                        //        "area:\"%s\",game_title:\"%s\",input_device:\"%s\"}}",
+                        //        cdip->company,cdip->itemnum,cdip->version,cdip->date,cdip->cdinfo,cdip->region, cdip->gamename, cdip->peripheral);
+                        JSONObject job = new JSONObject();
+                        job.put("game", new JSONObject()
+                                .put("maker_id", this.maker_id)
+                                .put("product_number", this.product_number)
+                                .put("version", this.version)
+                                .put("release_date", this.release_date)
+                                .put("device_infomation", this.device_infomation)
+                                .put("area", this.area)
+                                .put("game_title", this.game_title)
+                                .put("input_device", this.input_device)
+                        );
+                        urlstr = "http://www.uoyabause.org/api/games/";
+                        MediaType MIMEType = MediaType.parse("application/json; charset=utf-8");
+                        RequestBody requestBody = RequestBody.create(MIMEType, job.toString());
+                        Request request = new Request.Builder().url(urlstr).post(requestBody).build();
+                        OkHttpClient client = null;
+                        client = new OkHttpClient.Builder()
+                                .connectTimeout(10, TimeUnit.SECONDS)
+                                .writeTimeout(10, TimeUnit.SECONDS)
+                                .readTimeout(30, TimeUnit.SECONDS)
+                                .authenticator(new okhttp3.Authenticator() {
+                                    @Override
+                                    public Request authenticate(Route route, Response response) {
+                                        Context ctx = YabauseApplication.getAppContext();
+                                        //if (responseCount(response) >= 3) {
+                                        //    return null; // If we've failed 3 times, give up. - in real life, never give up!!
+                                        //}
+                                        String credential = Credentials.basic(ctx.getString(R.string.basic_user), ctx.getString(R.string.basic_password));
+                                        return response.request().newBuilder().header("Authorization", credential).build();
+                                    }
+                                })
+                                .build();
+                        Response response = client.newCall(request).execute();
+                        if (response.isSuccessful()) {
+                            JSONObject rootObject = new JSONObject(response.body().string());
+                            if (rootObject.getBoolean("result") != true) {
+                                Log.i("GameInfo", product_number + "( " + this.game_title + " ) can not be added");
+                            }
+                        } else {
+                            Log.i("GameInfo", product_number + "( " + this.game_title + " ) can not be added by " + response.message());
+                        }
+
+                    }
+                    return -1;
+                }
+            }catch(JSONException e){
+
+            }
+
+
+
             if ( this.game_title.equals("FINALIST") ){
                 Log.d("debugg","FINALIST");
             }
-
-            StringBuilder viewStrBuilder = new StringBuilder();
-            JSONObject jsonObj = new JSONObject(new String(responseArray.toByteArray()));
 
             // JSONをパース
             try {
