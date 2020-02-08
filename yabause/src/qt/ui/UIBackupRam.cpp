@@ -19,6 +19,7 @@
 #include "UIBackupRam.h"
 #include "../CommonDialogs.h"
 #include "../QtYabause.h"
+#include "BackupManager.h"
 
 u32 currentbupdevice = 0;
 deviceinfo_struct* devices = NULL;
@@ -29,6 +30,7 @@ int numsaves = 0;
 UIBackupRam::UIBackupRam( QWidget* p )
 	: QDialog( p )
 {
+  backupman_ = BackupManager::getInstance();
 	//setup dialog
 	setupUi( this );
 	if ( p && !p->isFullScreen() )
@@ -150,4 +152,53 @@ void UIBackupRam::on_pbFormat_clicked()
 		BupFormat( id );
 		refreshSaveList();
 	}
+}
+
+void UIBackupRam::on_pbExport_clicked() {
+  int index= -1;
+  if( (index = lwSaveList->currentRow()) >= 0 )
+  {
+    u32 id = cbDeviceList->itemData(cbDeviceList->currentIndex()).toInt();
+    string filejson;
+    string json;
+    backupman_->getFilelist(id, filejson);
+    backupman_->getFile(index, json);
+
+    QString fileName  = QFileDialog::getSaveFileName(this, tr("Export filen name"), "export.json", tr("JSON(*.json)"));
+    FILE * fp = fopen(fileName.toStdString().c_str(),"w");
+    if (fp != NULL) {
+      fwrite(json.c_str(), 1, json.length(), fp);
+      fclose(fp);
+    }
+  }
+
+}
+
+#include <fstream>
+
+void UIBackupRam::on_pbImport_clicked() {
+  QString fileName = QFileDialog::getOpenFileName(this, tr("Import backup file"), "export.json", tr("JSON(*.json)"));
+  if (fileName != "") {
+
+    try {
+      std::ifstream t(fileName.toStdString());
+      std::string str((std::istreambuf_iterator<char>(t)),
+        std::istreambuf_iterator<char>());
+
+      u32 id = cbDeviceList->itemData(cbDeviceList->currentIndex()).toInt();
+      string filejson;
+      backupman_->getFilelist(id, filejson);
+      
+      if (backupman_->putFile(str) != 0) {
+        CommonDialogs::information(QtYabause::translate("Fail to import backup data"));
+        return;
+      }
+
+      refreshSaveList();
+    }
+    catch (std::exception e) {
+
+    }
+
+  }
 }

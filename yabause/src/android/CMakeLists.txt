@@ -51,7 +51,8 @@ set( SOURCES
  jni/yui.c
  jni/sndaudiotrack.c
  jni/sndopensl.c
- jni/BackupManager.cpp
+ jni/jniBackupManager.cpp
+ jni/jniBackupManager.h
  jni/jsoncpp.cpp
  jni/ChdFileInfo.cpp
  jni/ChdFileInfo.h

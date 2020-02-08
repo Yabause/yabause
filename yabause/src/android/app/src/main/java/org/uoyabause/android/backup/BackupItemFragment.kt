@@ -297,8 +297,8 @@ class BackupItemFragment : AuthFragment(),
                 tmp.datasize = data.getInt("datasize")
                 tmp.blocksize = data.getInt("blocksize")
                 var datestr = ""
-                datestr += String.format("%04d", data.getInt("year") + 1980)
-                datestr += String.format("%02d", data.getInt("month"))
+                datestr += String.format("%04d", data.getInt("year") + 1980) + "/"
+                datestr += String.format("%02d", data.getInt("month"))+ "/"
                 datestr += String.format("%02d", data.getInt("day"))
                 datestr += " "
                 datestr += String.format("%02d", data.getInt("hour")) + ":"
@@ -554,7 +554,7 @@ class BackupItemFragment : AuthFragment(),
             .setCustomMetadata("uid", auth.currentUser!!.uid)
             .setCustomMetadata("filename", backupitemi.filename)
             .setCustomMetadata("comment", backupitemi.comment)
-            .setCustomMetadata("size", String.format("%,dByte", backupitemi.datasize))
+            .setCustomMetadata("size", String.format("%dByte", backupitemi.datasize))
             .setCustomMetadata("date", backupitemi.savedate)
             .build()
         val uploadTask = fileref.putBytes(data, metadata)

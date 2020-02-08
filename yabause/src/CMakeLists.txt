@@ -28,7 +28,9 @@ set(yabause_HEADERS
 	shaders/FXAA_DefaultES.h
 	frameprofile.h
 	sh2cache.h
-)
+	BackupManager.h
+	base64.h
+	json/json.h	)
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
@@ -54,6 +56,8 @@ set(yabause_SOURCES
 	yabause.c
 	Counter.cpp
 	ygl_texture.cpp
+	BackupManager.cpp
+	jsoncpp.cpp
 	sh2cache.c )
 	add_definitions(-DIMPROVED_SAVESTATES)
 if (ANDROID)
