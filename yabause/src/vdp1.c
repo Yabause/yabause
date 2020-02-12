@@ -814,6 +814,13 @@ void Vdp1DebugCommand(u32 number, char *outstring)
 
    Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
 
+   int w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
+   int h = cmd.CMDSIZE & 0xFF;
+   if (w == 0 || h == 0) {
+     AddString(outstring, "CMD size is null, skipped\r\n");
+     return;
+   }
+
    if ((cmd.CMDYA & 0x400)) cmd.CMDYA |= 0xFC00; else cmd.CMDYA &= ~(0xFC00);
    if ((cmd.CMDYC & 0x400)) cmd.CMDYC |= 0xFC00; else cmd.CMDYC &= ~(0xFC00);
    if ((cmd.CMDYB & 0x400)) cmd.CMDYB |= 0xFC00; else cmd.CMDYB &= ~(0xFC00);
