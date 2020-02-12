@@ -35,6 +35,8 @@
 #include "sh2core.h"
 #include "ygl.h"
 
+#define LOG_VDP1_CYCLES
+
 u8 * Vdp1Ram;
 int vdp1Ram_update_start;
 int vdp1Ram_update_end;
@@ -412,11 +414,59 @@ void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 v
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
+   int clock = 26842600;
+   int fps = 60;
+   //Using p37, Table 4.2 of vdp1 official doc
+   if (yabsys.IsPal) {
+     fps = 50;
+     // Horizontal Resolution
+     switch (Vdp2Lines[0].TVMD & 0x7)
+     {
+     case 0:
+     case 2:
+     case 4:
+     case 6:
+       //W is 320 or 640
+       clock = 26656400;
+       break;
+     case 1:
+     case 3:
+     case 5:
+     case 7:
+       //W is 352 or 704
+       clock = 28437500;
+       break;
+     }
+   } else {
+     // Horizontal Resolution
+     switch (Vdp2Lines[0].TVMD & 0x7)
+     {
+     case 0:
+     case 2:
+     case 4:
+     case 6:
+       //W is 320 or 640
+       clock = 26842600;
+       break;
+     case 1:
+     case 3:
+     case 5:
+     case 7:
+       //W is 352 or 704
+       clock = 28636400;
+       break;
+     }
+   }
+
+   int cylesPerLine  = clock/(fps*yabsys.MaxLineCount);
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
-   u32 returnAddr = 0xffffffff;
-   while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+   LOG_VDP1_CYCLES("Start %d %x %x\n", yabsys.vdp1drawing, regs->addr, yabsys.returnAddr);
+   yabsys.vdp1cycles = 0;
+   while (!(command & 0x8000) && (yabsys.vdp1cycles < cylesPerLine)) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
+      int cycles = yabsys.vdp1cycles;
+      yabsys.vdp1cycles += 16;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
@@ -455,14 +505,19 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
+            yabsys.vdp1drawing = 0;
+            ScuSendDrawEnd();
             return;
          }
+      } else {
+        yabsys.vdp1cycles += 16;
       }
 
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
 	  if (regs->EDSR & 0x02){
-
+      yabsys.vdp1drawing = 0;
 		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
+      ScuSendDrawEnd();
 		  return;
 	  }
 
@@ -475,15 +530,15 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
          break;
       case 2: // CALL, call a subroutine
-         if (returnAddr == 0xFFFFFFFF)
-            returnAddr = regs->addr + 0x20;
+         if (yabsys.returnAddr == 0xFFFFFFFF)
+            yabsys.returnAddr = regs->addr + 0x20;
 
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
          break;
       case 3: // RETURN, return from subroutine
-         if (returnAddr != 0xFFFFFFFF) {
-            regs->addr = returnAddr;
-            returnAddr = 0xFFFFFFFF;
+         if (yabsys.returnAddr != 0xFFFFFFFF) {
+            regs->addr = yabsys.returnAddr;
+            yabsys.returnAddr = 0xFFFFFFFF;
          }
          else
             regs->addr += 0x20;
@@ -497,6 +552,13 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
+   if (!(command & 0x8000)) yabsys.vdp1drawing = (int)(0.5 + (yabsys.vdp1cycles / cylesPerLine));
+   else {
+     yabsys.vdp1drawing = 0;
+     Vdp1Regs->EDSR |= 2;
+     ScuSendDrawEnd();
+   }
+   LOG_VDP1_CYCLES("End %d %x %x\n", yabsys.vdp1drawing, regs->addr, yabsys.returnAddr);
 }
 
 //ensure that registers are set correctly
@@ -576,6 +638,7 @@ void Vdp1Draw(void)
       Vdp1NoDraw();
    } else {
      Vdp1Regs->addr = 0;
+     yabsys.returnAddr = 0xffffffff;
 
      // beginning of a frame
      // BEF <- CEF
@@ -589,8 +652,6 @@ void Vdp1Draw(void)
    }
 
    FRAMELOG("Vdp1Draw end at %d line\n", yabsys.LineCount);
-   Vdp1Regs->EDSR |= 2;
-   ScuSendDrawEnd();
 
 }
 
@@ -606,6 +667,9 @@ void Vdp1NoDraw(void) {
    Vdp1Regs->lCOPR = 0;
 
    Vdp1FakeDrawCommands(Vdp1Ram, Vdp1Regs);
+   yabsys.vdp1drawing = 0;
+   Vdp1Regs->EDSR |= 2;
+   ScuSendDrawEnd();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1680,6 +1744,14 @@ static void startField(void) {
 
 void Vdp1HBlankIN(void)
 {
+  if (yabsys.vdp1drawing != 0) {
+    LOG_VDP1_CYCLES("Need to draw in %d lines\n", yabsys.vdp1drawing);
+    yabsys.vdp1drawing--;
+    if (yabsys.vdp1drawing == 0) {
+      LOG_VDP1_CYCLES("Drawing now %d\n", yabsys.LineCount);
+      Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
+    }
+  }
   if(yabsys.LineCount == 0) {
     startField();
   }
@@ -1707,6 +1779,7 @@ void Vdp1HBlankOUT(void)
 
 void Vdp1VBlankIN(void)
 {
+  if (yabsys.vdp1drawing != 0)printf("Pas tout fini\n");
   Vdp1Regs->COPR = Vdp1Regs->lCOPR;
 }
 
