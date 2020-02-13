@@ -348,7 +348,7 @@ void updateFBMode() {
     Vdp1External.manualerase |= ((Vdp1Regs->FBCR & 3) == 2);
     Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
   }
-  // Vdp1External.manualerase |= Vdp1External.manualchange;
+  Vdp1External.manualerase |= Vdp1External.manualchange;
 }
 
 static void Vdp1TryDraw(void) {
