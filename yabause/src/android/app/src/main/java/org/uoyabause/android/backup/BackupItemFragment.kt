@@ -21,6 +21,9 @@ package org.uoyabause.android.backup
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Base64
@@ -36,25 +39,17 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.Exclude
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.IgnoreExtraProperties
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import org.json.JSONException
 import org.json.JSONObject
 import org.uoyabause.android.AuthFragment
 import org.uoyabause.android.YabauseRunnable
-import org.uoyabause.android.backup.BackupDevice
-import org.uoyabause.android.backup.BackupItemFragment
 import org.uoyabause.android.backup.BackupItemFragment.OnListFragmentInteractionListener
+import org.uoyabause.uranus.BuildConfig
 import org.uoyabause.uranus.R
 import java.util.*
-import kotlin.collections.MutableList
 
 internal class BackupDevice {
     @JvmField
@@ -140,7 +135,7 @@ class BackupItemFragment : AuthFragment(),
     internal var backup_devices_: MutableList<BackupDevice>? = null
     private var mListener: OnListFragmentInteractionListener? =
         null
-    private var _items: ArrayList<BackupItem>? = null
+    private var _items: ArrayList<BackupItem> = ArrayList()
     var currentpage_ = 0
     var root_view_: View? = null
     var view_: RecyclerView? = null
@@ -149,6 +144,8 @@ class BackupItemFragment : AuthFragment(),
     var database_: DatabaseReference? = null
     private var totalsize_ = 0
     private var freesize_ = 0
+    private var backup_list_count_ : Long = 0;
+    private var backup_max_list_count_ : Long = 0;
     override fun setUserVisibleHint(isVisibleToUser: Boolean) {
         super.setUserVisibleHint(isVisibleToUser)
         if (isVisibleToUser) {
@@ -221,8 +218,20 @@ class BackupItemFragment : AuthFragment(),
         if (auth.currentUser == null) {
             return
         }
-        _items = ArrayList()
+
         val baseref = FirebaseDatabase.getInstance().reference
+        val user_ref = "/user-posts/" + auth.currentUser!!.uid;
+        val prefs: SharedPreferences? = getActivity()?.getSharedPreferences("private", Context.MODE_PRIVATE)
+        var hasDonated = false
+        if (prefs != null) {
+            hasDonated = prefs.getBoolean("donated", false)
+        }
+        if ( BuildConfig.BUILD_TYPE == "pro" || hasDonated ) {
+            baseref.child(user_ref).child("max_backup_count").setValue(256);
+        }else{
+            baseref.child(user_ref).child("max_backup_count").setValue(3);
+        }
+
         val baseurl = "/user-posts/" + auth.currentUser!!.uid + "/backup/"
         database_ = baseref.child(baseurl)
         if (database_ == null) {
@@ -231,6 +240,7 @@ class BackupItemFragment : AuthFragment(),
         val DataListener: ValueEventListener = object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.hasChildren()) {
+                    backup_list_count_ = dataSnapshot.childrenCount;
                     _items!!.clear()
                     var index = 0
                     for (child in dataSnapshot.children) {
@@ -248,7 +258,7 @@ class BackupItemFragment : AuthFragment(),
                         view_!!.adapter = adapter_
                     }
                     if (sum_ != null) {
-                        sum_!!.text = ""
+                        sum_!!.text = backup_list_count_.toString() + "/" + backup_max_list_count_.toString()
                     }
                 } else {
                     Log.e("CheatEditDialog", "Bad Data " + dataSnapshot.key)
@@ -259,6 +269,22 @@ class BackupItemFragment : AuthFragment(),
         }
         //database_.addListenerForSingleValueEvent(DataListener);
         database_!!.addValueEventListener(DataListener)
+
+        val count_url = "/user-posts/" + auth.currentUser!!.uid + "/max_backup_count"
+        val count_baseref = baseref.child(count_url)
+        val dataCountListner = object : ValueEventListener {
+            override fun onCancelled(p0: DatabaseError) {
+            }
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                backup_max_list_count_ = dataSnapshot.getValue() as Long
+                if (sum_ != null) {
+                    sum_!!.text = backup_list_count_.toString() + "/" + backup_max_list_count_.toString()
+                }
+
+            }
+        }
+        count_baseref.addValueEventListener(dataCountListner)
+
     }
 
     fun updateSaveList(device: Int) {
@@ -270,7 +296,7 @@ class BackupItemFragment : AuthFragment(),
             return
         }
         val jsonstr = YabauseRunnable.getFilelist(device)
-        _items = ArrayList()
+        _items.clear()
         try {
             val json = JSONObject(jsonstr)
             totalsize_ = json.getJSONObject("status").getInt("totalsize")
@@ -282,15 +308,15 @@ class BackupItemFragment : AuthFragment(),
                 val tmp = BackupItem()
                 tmp.index_ = data.getInt("index")
                 var bfilename =
-                    Base64.decode(data.getString("filename"), 0)
+                    Base64.decode(data.getString("filename"), 0) as ByteArray
                 try {
-                    tmp.filename = bfilename.toString(charset) //String(bfilename!!, "MS932")
+                    tmp.filename = String(bfilename,0,bfilename.size, charset("MS932")) //String(bfilename!!, "MS932")
                 } catch (e: Exception) {
                     tmp.filename = data.getString("filename")
                 }
-                bfilename = Base64.decode(data.getString("comment"), 0)
+                bfilename = Base64.decode(data.getString("comment"), 0)as ByteArray
                 try {
-                    tmp.comment = String(bfilename, charset)
+                    tmp.comment = String(bfilename,0,bfilename.size, charset("MS932")) //String(bfilename!!, "MS932")
                 } catch (e: Exception) {
                     tmp.comment = data.getString("comment")
                 }
@@ -520,6 +546,7 @@ class BackupItemFragment : AuthFragment(),
         if (auth.currentUser == null) {
             return
         }
+
         // Managmaent part
         val baseurl = "/user-posts/" + auth.currentUser!!.uid + "/backup/"
         if (database_ == null) {
@@ -534,86 +561,120 @@ class BackupItemFragment : AuthFragment(),
             val postValues = backupitemi.toMap()
             dbref = baseurl + backupitemi.key
             database_!!.child(backupitemi.key!!).setValue(postValues)
+            uploadData( backupitemi, jsonstr, auth.currentUser!!.uid, dbref)
         } else {
-            val newPostRef = database_!!.push()
-            dbref = baseurl + newPostRef.key
-            backupitemi.key = newPostRef.key
-            val postValues = backupitemi.toMap()
-            newPostRef.setValue(postValues)
+            val DataListener: ValueEventListener = object : ValueEventListener {
+                override fun onCancelled(p0: DatabaseError) {
+
+                }
+
+                // Get current record count to check not exceed maxcount
+                override fun onDataChange( dataSnapshot : DataSnapshot) {
+                    val count = dataSnapshot.getChildrenCount()
+                    val count_url = "/user-posts/" + auth.currentUser!!.uid + "/max_backup_count"
+                    val baseref = FirebaseDatabase.getInstance().reference
+                    val dataCountListner = object : ValueEventListener {
+                        override fun onDataChange(dataSnapshot: DataSnapshot) {
+                            val max_count = dataSnapshot.getValue() as Long
+                            if( count < max_count ){
+
+                                val baseurl = "/user-posts/" + auth.currentUser!!.uid + "/backup/"
+                                val baseref = FirebaseDatabase.getInstance().reference
+                                var db = baseref.child(baseurl)
+                                val newPostRef = db.push()
+                                val dbref = baseurl + newPostRef.key
+                                backupitemi.key = newPostRef.key
+                                val postValues = backupitemi.toMap()
+                                newPostRef.setValue(postValues)
+                                uploadData( backupitemi, jsonstr, auth.currentUser!!.uid, dbref)
+
+                            }else{
+
+                                val v = this@BackupItemFragment.view
+                                if( v != null ) {
+                                    val snackbar = Snackbar.make(v,"You have reached the max slot count. to expand slot count, get pro version.", Snackbar.LENGTH_LONG)
+                                    snackbar.setAction("OK!", object : View.OnClickListener {
+                                        override fun onClick(v: View?) {
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=org.uoyabause.uranus.pro"));
+                                            startActivity(intent);
+                                        }
+                                    })
+                                    snackbar.show()
+                                }
+
+
+                            }
+                        }
+                        override fun onCancelled(databaseError: DatabaseError) {
+                        }
+                    }
+                    baseref.child(count_url).addListenerForSingleValueEvent(dataCountListner)
+
+                }
+            }
+            val baseref = FirebaseDatabase.getInstance().reference
+            baseref.child(baseurl).addListenerForSingleValueEvent( DataListener )
         }
+    }
+
+    fun uploadData( backupitemi: BackupItem, jsonstr:String, uid:String, dbref: String){
         // data part
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
-        val base = storageRef.child(auth.currentUser!!.uid)
+        val base = storageRef.child(uid)
         val backup = base.child("backup")
         val fileref = backup.child(backupitemi.key!!)
         val data = jsonstr.toByteArray()
         val metadata = StorageMetadata.Builder()
-            .setContentType("text/json")
-            .setCustomMetadata("dbref", dbref)
-            .setCustomMetadata("uid", auth.currentUser!!.uid)
-            .setCustomMetadata("filename", backupitemi.filename)
-            .setCustomMetadata("comment", backupitemi.comment)
-            .setCustomMetadata("size", String.format("%dByte", backupitemi.datasize))
-            .setCustomMetadata("date", backupitemi.savedate)
-            .build()
+                .setContentType("text/json")
+                .setCustomMetadata("dbref", dbref)
+                .setCustomMetadata("uid", uid)
+                .setCustomMetadata("filename", backupitemi.filename)
+                .setCustomMetadata("comment", backupitemi.comment)
+                .setCustomMetadata("size", String.format("%dByte", backupitemi.datasize))
+                .setCustomMetadata("date", backupitemi.savedate)
+                .build()
         val uploadTask = fileref.putBytes(data, metadata)
         // Listen for state changes, errors, and completion of the upload.
         val message =
-            uploadTask.addOnProgressListener { taskSnapshot ->
-                val progress =
-                    100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount
-                println("Upload is $progress% done")
-            }
-                .addOnPausedListener { println("Upload is paused") }
-                .addOnFailureListener { exception ->
-                    Snackbar
-                        .make(
-                            root_view_!!,
-                            "Failed to upload " + exception.localizedMessage,
-                            Snackbar.LENGTH_SHORT
-                        ) /*
-                        .setAction("UNDO", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Log.d("Snackbar.onClick", "UNDO Clicked");
-                            }
-                        })
-*/
-                        .show()
+                uploadTask.addOnProgressListener { taskSnapshot ->
+                    val progress =
+                            100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount
+                    println("Upload is $progress% done")
                 }
-                .addOnSuccessListener { taskSnapshot ->
-                    // Handle successful uploads on complete
-//Uri downloadUrl = taskSnapshot.getMetadata().getDownloadUrl();
-                    Snackbar
-                        .make(root_view_!!, "Success to upload ", Snackbar.LENGTH_SHORT)
-                        .show()
-                    val dbref = taskSnapshot.metadata!!.getCustomMetadata("dbref")
-                    //DatabaseReference database;
-//database = FirebaseDatabase.getInstance().getReference();
-//DatabaseReference baseref  = FirebaseDatabase.getInstance().getReference();
-//DatabaseReference ref = baseref.child(dbref + "/url");
-//Uri url = taskSnapshot.getMetadata().getDownloadUrl();
-//ref.setValue(url.toString());
-                }
+                        .addOnPausedListener { println("Upload is paused") }
+                        .addOnFailureListener { exception ->
+                            Snackbar
+                                    .make(
+                                            root_view_!!,
+                                            "Failed to upload " + exception.localizedMessage,
+                                            Snackbar.LENGTH_SHORT
+                                    )
+                                    .show()
+                        }
+                        .addOnSuccessListener { taskSnapshot ->
+                            Snackbar
+                                    .make(root_view_!!, "Success to upload ", Snackbar.LENGTH_SHORT)
+                                    .show()
+                            val dbref = taskSnapshot.metadata!!.getCustomMetadata("dbref")
+                        }
         val urlTask =
-            uploadTask.continueWithTask { task ->
-                if (!task.isSuccessful) {
-                    throw task.exception!!
+                uploadTask.continueWithTask { task ->
+                    if (!task.isSuccessful) {
+                        throw task.exception!!
+                    }
+                    fileref.downloadUrl
+                }.addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val downloadUri = task.result
+                        val baseref =
+                                FirebaseDatabase.getInstance().reference
+                        val ref = baseref.child("$dbref/url")
+                        ref.setValue(downloadUri.toString())
+                    } else {
+                    }
                 }
-                // Continue with the task to get the download URL
-                fileref.downloadUrl
-            }.addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val downloadUri = task.result
-                    val baseref =
-                        FirebaseDatabase.getInstance().reference
-                    val ref = baseref.child("$dbref/url")
-                    ref.setValue(downloadUri.toString())
-                } else { // Handle failures
-// ...
-                }
-            }
+
     }
 
     companion object {
