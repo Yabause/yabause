@@ -289,6 +289,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
   // hard/vdp2/hon/p08_12.htm#SPWINEN_
   if ((cmd->CMDCOLR & 0x8000) && // Sprite Window Color
       (fixVdp2Regs->SPCTL & 0x10) && // Sprite Window is enabled
+      ((fixVdp2Regs->SPCTL & 0x20) == 0) && // Sprite color mode is zero
       ((fixVdp2Regs->SPCTL & 0xF)  >=2 && (fixVdp2Regs->SPCTL & 0xF) < 8)) // inside sprite type
   {
     return 0;
