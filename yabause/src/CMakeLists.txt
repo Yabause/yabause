@@ -36,7 +36,7 @@ option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
 set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fomit-frame-pointer")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fomit-frame-pointer -DJSONCPP_NO_LOCALE_SUPPORT")
 		
 set(yabause_SOURCES
 	bios.c
@@ -875,7 +875,7 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -march=armv7ve -mcpu=cortex-a15 -mfpu=neon -fno-math-errno -ffast-math")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7ve -std=c++11 -mcpu=cortex-a15 -mfpu=neon -ffast-math -fno-math-errno -fno-exceptions -fno-rtti")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7ve -std=c++11 -mcpu=cortex-a15 -mfpu=neon -ffast-math -fno-math-errno -fno-rtti")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
 		add_definitions(-DAARCH64)
