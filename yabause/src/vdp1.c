@@ -317,9 +317,8 @@ void Vdp1Reset(void) {
    Vdp1Regs->systemclipX2 = 1024;
    Vdp1Regs->systemclipY2 = 1024;
 
-   for (int i = 0; i < 0x80000; i += 2) {
-     T1WriteWord(Vdp1Ram, i, 0x8000);
-   }
+   // Safe tarminator for Radient silvergun with no bios
+   T1WriteWord(Vdp1Ram, 0x40000, 0x8000);
 
 }
 
@@ -469,7 +468,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   LOG("VDP1: DrawCommands - %08X\n", regs->addr);
   regs->COPR = regs->addr >> 3;
-
   if (regs->addr > 0x7FFFF) {
     Vdp1External.status = VDP1_STATUS_IDLE;
     LOG("VDP1: Address error - %08X\n", regs->addr);
