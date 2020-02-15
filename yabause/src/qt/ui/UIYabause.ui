@@ -244,6 +244,7 @@
     <property name="title">
      <string>&amp;Tools</string>
     </property>
+    <addaction name="actionOpen_web_interface"/>
     <addaction name="aToolsBackupManager"/>
     <addaction name="aToolsCheatsList"/>
     <addaction name="aToolsCheatSearch"/>
@@ -996,6 +997,14 @@
    </property>
    <property name="toolTip">
     <string>Donate</string>
+   </property>
+  </action>
+  <action name="actionOpen_web_interface">
+   <property name="text">
+    <string>Open web interface</string>
+   </property>
+   <property name="statusTip">
+    <string>https://uoyabause.firebaseapp.com/</string>
    </property>
   </action>
  </widget>
