@@ -285,7 +285,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
   u32 color = 0x00;
   int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
 
-      ((fixVdp2Regs->SPCTL & 0x20) == 0) && // Sprite color mode is zero
   Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow);
 
   switch ((cmd->CMDPMOD >> 3) & 0x7)
