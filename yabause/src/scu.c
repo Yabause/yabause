@@ -2799,9 +2799,8 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
     //LOG("%s(%x) at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
     SH2SendInterrupt(MSH2, vector, level);
     if (yabsys.IsSSH2Running) {
-      if (vector == 0x41 || vector == 0x42 || vector == 0x43) {
-          SH2SendInterrupt(SSH2, vector, level);
-      }
+      if( vector == 0x42 ) SH2SendInterrupt(SSH2, 0x41, level);
+      if( vector == 0x40 ) SH2SendInterrupt(SSH2, 0x43, level);
     }
   }
   else
