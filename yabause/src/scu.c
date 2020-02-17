@@ -212,7 +212,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
                   u32 WriteAddress, unsigned int WriteAdd,
                   u32 TransferSize)
 {
-  LOG("DoDMA src=%08X,dst=%08X,size=%d, flame=%d:%d\n", ReadAddress, WriteAddress, TransferSize, yabsys.frame_count,yabsys.LineCount );
+  LOG("DoDMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n", ReadAddress, WriteAddress, TransferSize, ReadAdd, WriteAdd, yabsys.frame_count,yabsys.LineCount );
    if (ReadAdd == 0) {
       // DMA fill
 
@@ -2798,10 +2798,6 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
     //if (vector != 0x41) LOG("INT %d", vector);
     //LOG("%s(%x) at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
     SH2SendInterrupt(MSH2, vector, level);
-    if (yabsys.IsSSH2Running) {
-      if( vector == 0x42 ) SH2SendInterrupt(SSH2, 0x41, level);
-      if( vector == 0x40 ) SH2SendInterrupt(SSH2, 0x43, level);
-    }
   }
   else
    {
@@ -2809,6 +2805,10 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
       ScuQueueInterrupt(vector, level, mask, statusbit);
       ScuRegs->IST |= statusbit;
    }
+   if (yabsys.IsSSH2Running) {
+     if( vector == 0x42 ) SH2SendInterrupt(SSH2, 0x41, level);
+     if( vector == 0x40 ) SH2SendInterrupt(SSH2, 0x43, level);
+  }
 }
 
 // 3.2 DMA control register
