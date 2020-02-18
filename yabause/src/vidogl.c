@@ -3639,7 +3639,8 @@ static int expandVertices(float* in, float* out, int distorted)
     float dx[4];
     float dy[4];
 
-    int c1, c2 = -1;
+    int c1 = 0;
+    int c2 = 0;
 
     for (int i = 0; i < 4; i++) {
       for (int j = i+1; j < 4; j++) {

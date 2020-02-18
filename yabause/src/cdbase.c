@@ -1557,7 +1557,7 @@ void BuildTOC()
 static int ISOCDInit(const char * iso) {
    char header[6];
    char *ext;
-   int ret;
+   int ret = -1;
    FILE *iso_file;
    size_t num_read = 0;
    memset(isoTOC, 0xFF, 0xCC * 2);
@@ -1599,9 +1599,9 @@ static int ISOCDInit(const char * iso) {
    }
    else if (stricmp(ext, ".CCD") == 0)
    {
-	// It's a CCD
-	imgtype = IMG_CCD;
-	ret = LoadCCD(iso, iso_file);
+  	// It's a CCD
+  	imgtype = IMG_CCD;
+  	ret = LoadCCD(iso, iso_file);
    }
   else if (stricmp(ext, ".CHD") == 0)
   {
@@ -1902,6 +1902,7 @@ static int LoadCHD(const char *chd_filename, FILE *iso_file)
 
   chd_error error = chd_open(chd_filename, CHD_OPEN_READ, NULL, &pChdInfo->chd);
   if (error != CHDERR_NONE) {
+    free(buf);
     return -1;
   }
 

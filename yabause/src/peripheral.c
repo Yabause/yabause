@@ -1378,7 +1378,15 @@ void PerUpdateConfig(PerBaseConfig_struct * baseconfig, int nelems, void * contr
    u32 i, j;
 
    perkeyconfigsize += nelems;
-   perkeyconfig = realloc(perkeyconfig, perkeyconfigsize * sizeof(PerConfig_struct));
+
+	 PerConfig_struct *new_data = realloc(perkeyconfig, perkeyconfigsize * sizeof(PerConfig_struct));
+ 	if (new_data == NULL)
+ 	{
+		YuiMsg("Peripheral realloc Error\n");
+ 	} else {
+     perkeyconfig = new_data;
+ 	}
+
    j = 0;
    for(i = oldsize;i < perkeyconfigsize;i++)
    {

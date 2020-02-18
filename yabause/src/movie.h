@@ -1,4 +1,4 @@
-/*  
+/*
     This file is part of Yabause.
 
     Yabause is free software; you can redistribute it and/or modify
@@ -50,12 +50,12 @@ struct MovieBufferStruct
 	char* data;
 };
 
-struct MovieBufferStruct ReadMovieIntoABuffer(FILE* fp);
+struct MovieBufferStruct* ReadMovieIntoABuffer(FILE* fp);
 
 void MovieLoadState(void);
 
 void SaveMovieInState(FILE* fp, IOCheck_struct check);
-void ReadMovieInState(FILE* fp); 
+void ReadMovieInState(FILE* fp);
 
 void TestWrite(struct MovieBufferStruct tempbuffer);
 

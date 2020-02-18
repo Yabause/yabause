@@ -172,7 +172,7 @@ static void DoDMAFill(u32 ReadAddress,
             }
             int off=0;
             while (counter < TransferSize ) {
-               u32 tmp;
+               u32 tmp = 0;
                if (off == 0) {
                  tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
 
@@ -195,7 +195,7 @@ static void DoDMAFill(u32 ReadAddress,
             }
            int off=0;
            while (counter < TransferSize ) {
-             u32 tmp;
+             u32 tmp = 0;
              if (off == 0) {
                tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
              }
@@ -212,7 +212,7 @@ static void DoDMAFill(u32 ReadAddress,
            }
            int off=0;
            while (counter < TransferSize ) {
-             u32 tmp;
+             u32 tmp = 0;
              if (off == 0) {
                tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
              }
