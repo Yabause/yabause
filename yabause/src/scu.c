@@ -2560,9 +2560,19 @@ static INLINE void ScuChekIntrruptDMA(int id){
 void ScuRemoveTimer0();
 void ScuRemoveTimer1();
 
+void ScuRemoveVBlankOut() {
+  ScuRemoveInterrupt(0x41, 0x0E);
+  SH2RemoveInterrupt(MSH2, 0x41, 0x0E);
+}
+
+void ScuRemoveVBlankIN() {
+  ScuRemoveInterrupt(0x40, 0x0F);
+  SH2RemoveInterrupt(MSH2, 0x40, 0x0F);
+}
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankIN(void) {
+   // ScuRemoveVBlankOut();
    SendInterrupt(0x40, 0xF, 0x0001, 0x0001);
    ScuChekIntrruptDMA(0);
 }
@@ -2570,6 +2580,7 @@ void ScuSendVBlankIN(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankOUT(void) {
+   // ScuRemoveVBlankIN();
    SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
    ScuRegs->timer0 = 0;
    if (ScuRegs->T1MD & 0x1)
