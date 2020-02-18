@@ -52,11 +52,13 @@ void SH2KronosIOnFrame(SH2_struct *context) {
 
 void SH2HandleInterrupts(SH2_struct *context)
 {
+  if (context->lockIt != 0) return;
   LOCK(context);
   if (context->NumberOfInterrupts != 0)
   {
     if (context->interrupts[context->NumberOfInterrupts - 1].level > context->regs.SR.part.I)
     {
+      context->lockIt = 1;
       u32 oldpc = context->regs.PC;
       u32 persr = context->regs.SR.part.I;
       context->regs.R[15] -= 4;
