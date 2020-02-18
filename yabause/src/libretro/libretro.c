@@ -618,7 +618,7 @@ static void check_variables(void)
          hle_bios_force = true;
    }
 
-   var.key = "yabause_addon_cart";
+   var.key = "yabause_addon_cartridge";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
