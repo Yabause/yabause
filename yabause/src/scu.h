@@ -109,14 +109,6 @@ typedef struct
 
 extern Scu * ScuRegs;
 
-typedef struct
-{
-   scucodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
-   int numcodebreakpoints;
-   void (*BreakpointCallBack)(u32);
-   u8 inbreakpoint;
-} scubp_struct;
-
 typedef struct {
   u32 ProgramRam[256];
   u32 MD[4][64];

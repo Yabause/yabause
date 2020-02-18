@@ -383,8 +383,8 @@ void SaveMovieInState(FILE* fp, IOCheck_struct check) {
 	if(Movie.Status == Recording || Movie.Status == Playback) {
 		tempbuffer=ReadMovieIntoABuffer(Movie.fp);
 
-		fwrite(tempbuffer->size, 4, 1, fp);
-		fwrite(tempbuffer->data, tempbuffer->size, 1, fp);
+		fwrite(&(tempbuffer->size), 4, 1, fp);
+		fwrite(&(tempbuffer->data), tempbuffer->size, 1, fp);
     free(tempbuffer->data);
     free(tempbuffer);
 	}
@@ -425,7 +425,7 @@ void ReadMovieInState(FILE* fp) {
 		fseek(fp, fpos, SEEK_SET);//reset savestate position
 
 		rewind(Movie.fp);
-		fwrite(tempbuffer.data, 1, tempbuffer.size, Movie.fp);
+		fwrite(&(tempbuffer.data), 1, tempbuffer.size, Movie.fp);
 		rewind(Movie.fp);
 	}
 }
@@ -489,7 +489,7 @@ void TestWrite(struct MovieBufferStruct tempbuffer) {
    if (!tempbuffertest)
       return;
 
-	fwrite (tempbuffer.data, 1, tempbuffer.size, tempbuffertest);
+	fwrite (&(tempbuffer.data), 1, tempbuffer.size, tempbuffertest);
 	fclose(tempbuffertest);
 }
 
