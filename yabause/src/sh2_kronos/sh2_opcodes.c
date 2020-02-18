@@ -35,11 +35,6 @@
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void SH2UnlockIt(SH2_struct * sh)
-{
-  sh->lockIt = 0; 
-}
-
 static void SH2delay(SH2_struct * sh, u32 addr)
 {
    sh->instruction = krfetchlist[(addr >> 20) & 0xFFF](sh, addr);
@@ -1643,7 +1638,6 @@ static void SH2rte(SH2_struct * sh)
    sh->regs.R[15] += 4;
    sh->cycles += 4;
    SH2delay(sh, temp + 2);
-   SH2UnlockIt(sh);
 }
 
 

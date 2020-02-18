@@ -1935,7 +1935,6 @@ static void FASTCALL SH2rte(SH2_struct * sh)
    sh->regs.R[15] += 4;
    sh->cycles += 4;
    SH2delay(sh, temp + 2);
-   sh->lockIt = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

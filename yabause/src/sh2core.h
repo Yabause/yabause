@@ -336,7 +336,6 @@ typedef struct SH2_struct_s
    u8 isSleeping;
    u16 instruction;
    int depth;
-   u8  lockIt; 
 
 #ifdef DMPHISTORY
    u32 pchistory[MAX_DMPHISTORY];
