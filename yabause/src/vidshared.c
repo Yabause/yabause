@@ -772,7 +772,7 @@ void FASTCALL Vdp2ParameterBPlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs)
 
 float Vdp2ReadCoefficientMode0_2(vdp2rotationparameter_struct *parameter, u32 addr, u8 * ram)
 {
-   s32 i;
+   u32 i;
 
    if (parameter->coefdatasize == 2)
    {
@@ -794,7 +794,7 @@ float Vdp2ReadCoefficientMode0_2(vdp2rotationparameter_struct *parameter, u32 ad
 
 fixed32 Vdp2ReadCoefficientMode0_2FP(vdp2rotationparameterfp_struct *parameter, u32 addr, u8* ram)
 {
-   s32 i;
+   u32 i;
 
    if (parameter->coefdatasize == 2)
    {
