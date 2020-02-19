@@ -1874,7 +1874,7 @@ saveinfo_struct *BupGetSaveList(SH2_struct *sh, u32 device, int *numsaves)
         else
         {
            yearoffset = 0;
-           ConvertMonthAndDayMem(0, &save[savecount].month, &save[savecount].day, 1);
+           ConvertMonthAndDayMem((yearremainder - 1), &save[savecount].month, &save[savecount].day, 1);
         }
         save[savecount].year = (u8)(((div / 0x5B5) * 4) + yearoffset);
 
