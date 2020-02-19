@@ -10,7 +10,7 @@
 
 typedef struct sbox_s {
   u8 table[64];
-  u8 inputs[6];      // positions of the inputs bits, -1 means no input except from key
+  s8 inputs[6];      // positions of the inputs bits, -1 means no input except from key
   u8 outputs[2];     // positions of the output bits
 } sbox;
 

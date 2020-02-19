@@ -729,7 +729,7 @@ static INLINE void Vdp2ReadCoefficient(vdp2rotationparameter_struct *parameter, 
          break;
       case 3: // coefficient for Xp
       {
-         s32 i;
+         u32 i;
 
          if (parameter->coefdatasize == 2)
          {
@@ -765,7 +765,7 @@ static INLINE void Vdp2ReadCoefficientFP(vdp2rotationparameterfp_struct *paramet
          break;
       case 3: // coefficient for Xp
       {
-         s32 i;
+         u32 i;
 
          if (parameter->coefdatasize == 2)
          {

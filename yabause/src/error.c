@@ -33,11 +33,15 @@
 static void AllocAmendPrintString(const char *string1, const char *string2)
 {
    char *string;
-
-   if ((string = (char *)malloc(strlen(string1) + strlen(string2) + 2)) == NULL)
+   int length = 0;
+   if (string1 != NULL) length += strlen(string1);
+   if (string2 != NULL) length += strlen(string2);
+   if ((string = (char *)malloc(length + 2)) == NULL)
       return;
 
-   sprintf(string, "%s%s", string1, string2);
+   if ((string1 != NULL)&&(string2 != NULL)) sprintf(string, "%s%s", string1, string2);
+   if ((string1 != NULL)&&(string2 == NULL)) sprintf(string, "%s", string1);
+   if ((string1 == NULL)&&(string2 != NULL)) sprintf(string, "%s", string2);
    YuiErrorMsg(string);
 
    free(string);

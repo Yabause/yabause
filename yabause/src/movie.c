@@ -1,4 +1,4 @@
-/*  
+/*
     This file is part of Yabause.
 
     Yabause is free software; you can redistribute it and/or modify
@@ -107,7 +107,7 @@ static void SetInputDisplayCharacters(void) {
          size_t spaces_len = strlen(Spaces[x]);
          if (spaces_len >= 40)
             return;
-			strcat(str, Spaces[x]);	
+			strcat(str, Spaces[x]);
 		}
       else
       {
@@ -125,7 +125,7 @@ static void SetInputDisplayCharacters(void) {
          size_t spaces2_len = strlen(Spaces2[x]);
          if (spaces2_len >= 40)
             return;
-			strcat(str, Spaces2[x]);	
+			strcat(str, Spaces2[x]);
 		}
       else
       {
@@ -192,17 +192,14 @@ void DoMovie(void) {
 			ClearInput();
 			strcpy(MovieStatus, "Playback Stopped");
 		}
-	}
-
+	} else
 	//Stop Recording/Playback
 	if(Movie.Status != Recording && RecordingFileOpened) {
 		fclose(Movie.fp);
 		RecordingFileOpened=0;
 		Movie.Status = Stopped;
 		strcpy(MovieStatus, "Recording Stopped");
-	}
-
-	if(Movie.Status != Playback && PlaybackFileOpened && Movie.ReadOnly != 0) {
+	} else if(Movie.Status != Playback && PlaybackFileOpened && Movie.ReadOnly != 0) {
 		fclose(Movie.fp);
 		PlaybackFileOpened=0;
 		Movie.Status = Stopped;
@@ -239,7 +236,7 @@ void MovieLoadState(void) {
 
 void TruncateMovie(struct MovieStruct Movie) {
 
-	//when we resume recording, shorten the movie so that there isn't 
+	//when we resume recording, shorten the movie so that there isn't
 	//potential garbage data at the end
 
 /*//TODO
@@ -286,12 +283,12 @@ void MovieToggleReadOnly(void) {
 
 	if(Movie.Status == Playback) {
 
-		if(Movie.ReadOnly == 1) 
+		if(Movie.ReadOnly == 1)
 		{
 			Movie.ReadOnly=0;
 			DisplayMessage("Movie is now read+write.");
 		}
-		else 
+		else
 		{
 			Movie.ReadOnly=1;
 			DisplayMessage("Movie is now read only.");
@@ -310,9 +307,7 @@ void StopMovie(void) {
 		Movie.Status = Stopped;
 		ClearInput();
 		strcpy(MovieStatus, "Recording Stopped");
-	}
-
-	if(Movie.Status == Playback && PlaybackFileOpened && Movie.ReadOnly != 0) {
+	} else if(Movie.Status == Playback && PlaybackFileOpened && Movie.ReadOnly != 0) {
 		fclose(Movie.fp);
 		PlaybackFileOpened=0;
 		Movie.Status = Stopped;
@@ -381,15 +376,17 @@ int PlayMovie(const char *filename) {
 
 void SaveMovieInState(FILE* fp, IOCheck_struct check) {
 
-	struct MovieBufferStruct tempbuffer;
+	struct MovieBufferStruct* tempbuffer;
 
 	fseek(fp, 0, SEEK_END);
 
 	if(Movie.Status == Recording || Movie.Status == Playback) {
 		tempbuffer=ReadMovieIntoABuffer(Movie.fp);
 
-		fwrite(&tempbuffer.size, 4, 1, fp);
-		fwrite(tempbuffer.data, tempbuffer.size, 1, fp);
+		fwrite(&(tempbuffer->size), 4, 1, fp);
+		fwrite(&(tempbuffer->data), tempbuffer->size, 1, fp);
+    free(tempbuffer->data);
+    free(tempbuffer);
 	}
 }
 
@@ -428,17 +425,17 @@ void ReadMovieInState(FILE* fp) {
 		fseek(fp, fpos, SEEK_SET);//reset savestate position
 
 		rewind(Movie.fp);
-		fwrite(tempbuffer.data, 1, tempbuffer.size, Movie.fp);
+		fwrite(&(tempbuffer.data), 1, tempbuffer.size, Movie.fp);
 		rewind(Movie.fp);
 	}
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-struct MovieBufferStruct ReadMovieIntoABuffer(FILE* fp) {
+struct MovieBufferStruct* ReadMovieIntoABuffer(FILE* fp) {
 
 	int fpos;
-   struct MovieBufferStruct tempbuffer = { 0 };
+   struct MovieBufferStruct* tempbuffer = malloc(sizeof(struct MovieBufferStruct));
    size_t num_read = 0;
 
 	fpos = ftell(fp);//save current pos
@@ -450,11 +447,11 @@ struct MovieBufferStruct ReadMovieIntoABuffer(FILE* fp) {
    }
 
 	fseek (fp,0,SEEK_END);
-	tempbuffer.size=ftell(fp);  //get size
+	tempbuffer->size=ftell(fp);  //get size
 	rewind(fp);
 
-	tempbuffer.data = (char*) malloc (sizeof(char)*tempbuffer.size);
-   num_read = fread(tempbuffer.data, 1, tempbuffer.size, fp);
+	tempbuffer->data = (char*) malloc (sizeof(char)*tempbuffer->size);
+  num_read = fread(tempbuffer->data, 1, tempbuffer->size, fp);
 
 	fseek(fp, fpos, SEEK_SET); //reset back to correct pos
 	return(tempbuffer);
@@ -492,7 +489,7 @@ void TestWrite(struct MovieBufferStruct tempbuffer) {
    if (!tempbuffertest)
       return;
 
-	fwrite (tempbuffer.data, 1, tempbuffer.size, tempbuffertest);
+	fwrite (&(tempbuffer.data), 1, tempbuffer.size, tempbuffertest);
 	fclose(tempbuffertest);
 }
 
@@ -505,7 +502,7 @@ void PauseOrUnpause(void) {
 		ScspMuteAudio(SCSP_MUTE_SYSTEM);
 	}
 	else {
-		FrameAdvanceVariable=RunNormal;	
+		FrameAdvanceVariable=RunNormal;
 		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 	}
 }

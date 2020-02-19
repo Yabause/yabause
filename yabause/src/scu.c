@@ -33,7 +33,6 @@
 
 Scu * ScuRegs;
 scudspregs_struct * ScuDsp;
-scubp_struct * ScuBP;
 static int incFlg[4] = { 0 };
 static void ScuTestInterruptMask(void);
 
@@ -54,15 +53,6 @@ int ScuInit(void) {
    if ((ScuDsp = (scudspregs_struct *) calloc(1, sizeof(scudspregs_struct))) == NULL)
       return -1;
 
-   if ((ScuBP = (scubp_struct *) calloc(1, sizeof(scubp_struct))) == NULL)
-      return -1;
-
-   for (i = 0; i < MAX_BREAKPOINTS; i++)
-      ScuBP->codebreakpoint[i].addr = 0xFFFFFFFF;
-   ScuBP->numcodebreakpoints = 0;
-   ScuBP->BreakpointCallBack=NULL;
-   ScuBP->inbreakpoint=0;
-
    return 0;
 }
 
@@ -76,10 +66,6 @@ void ScuDeInit(void) {
    if (ScuDsp)
       free(ScuDsp);
    ScuDsp = NULL;
-
-   if (ScuBP)
-      free(ScuBP);
-   ScuBP = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -172,7 +158,7 @@ static void DoDMAFill(u32 ReadAddress,
             }
             int off=0;
             while (counter < TransferSize ) {
-               u32 tmp;
+               u32 tmp = 0;
                if (off == 0) {
                  tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
 
@@ -195,7 +181,10 @@ static void DoDMAFill(u32 ReadAddress,
             }
            int off=0;
            while (counter < TransferSize ) {
-             u32 tmp;
+             u32 tmp = 0;
+             if (off == 0) {
+               tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
+             }
              DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, (u16)(tmp >> ((4-off)*8)));
              off = (off+1)%4;
              counter++;
@@ -209,7 +198,7 @@ static void DoDMAFill(u32 ReadAddress,
            }
            int off=0;
            while (counter < TransferSize ) {
-             u32 tmp;
+             u32 tmp = 0;
              if (off == 0) {
                tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
              }
@@ -938,15 +927,6 @@ void ScuExec(u32 timing) {
 #endif
       while (timing > 0) {
          u32 instruction;
-
-         // Make sure it isn't one of our breakpoints
-         for (i=0; i < ScuBP->numcodebreakpoints; i++) {
-            if ((ScuDsp->PC == ScuBP->codebreakpoint[i].addr) && ScuBP->inbreakpoint == 0) {
-               ScuBP->inbreakpoint = 1;
-               if (ScuBP->BreakpointCallBack) ScuBP->BreakpointCallBack(ScuBP->codebreakpoint[i].addr);
-                 ScuBP->inbreakpoint = 0;
-            }
-         }
 
          instruction = ScuDsp->ProgramRam[ScuDsp->PC];
          //LOG("scu: dsp %08X @ %08X", instruction, ScuDsp->PC);
@@ -2124,91 +2104,6 @@ void ScuDspSetRegisters(scudspregs_struct *regs) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ScuDspSetBreakpointCallBack(void (*func)(u32)) {
-   ScuBP->BreakpointCallBack = func;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-int ScuDspAddCodeBreakpoint(u32 addr) {
-   int i;
-
-   if (ScuBP->numcodebreakpoints < MAX_BREAKPOINTS) {
-      // Make sure it isn't already on the list
-      for (i = 0; i < ScuBP->numcodebreakpoints; i++)
-      {
-         if (addr == ScuBP->codebreakpoint[i].addr)
-            return -1;
-      }
-
-      ScuBP->codebreakpoint[ScuBP->numcodebreakpoints].addr = addr;
-      ScuBP->numcodebreakpoints++;
-
-      return 0;
-   }
-
-   return -1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void ScuDspSortCodeBreakpoints(void) {
-   int i, i2;
-   u32 tmp;
-
-   for (i = 0; i < (MAX_BREAKPOINTS-1); i++)
-   {
-      for (i2 = i+1; i2 < MAX_BREAKPOINTS; i2++)
-      {
-         if (ScuBP->codebreakpoint[i].addr == 0xFFFFFFFF &&
-            ScuBP->codebreakpoint[i2].addr != 0xFFFFFFFF)
-         {
-            tmp = ScuBP->codebreakpoint[i].addr;
-            ScuBP->codebreakpoint[i].addr = ScuBP->codebreakpoint[i2].addr;
-            ScuBP->codebreakpoint[i2].addr = tmp;
-         }
-      }
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-int ScuDspDelCodeBreakpoint(u32 addr) {
-   int i;
-
-   if (ScuBP->numcodebreakpoints > 0) {
-      for (i = 0; i < ScuBP->numcodebreakpoints; i++) {
-         if (ScuBP->codebreakpoint[i].addr == addr)
-         {
-            ScuBP->codebreakpoint[i].addr = 0xFFFFFFFF;
-            ScuDspSortCodeBreakpoints();
-            ScuBP->numcodebreakpoints--;
-            return 0;
-         }
-      }
-   }
-
-   return -1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-scucodebreakpoint_struct *ScuDspGetBreakpointList(void) {
-   return ScuBP->codebreakpoint;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ScuDspClearCodeBreakpoints(void) {
-   int i;
-   for (i = 0; i < MAX_BREAKPOINTS; i++)
-      ScuBP->codebreakpoint[i].addr = 0xFFFFFFFF;
-
-   ScuBP->numcodebreakpoints = 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 u8 FASTCALL ScuReadByte(SH2_struct *sh, u8* mem, u32 addr) {
    addr &= 0xFF;
 
@@ -2503,9 +2398,20 @@ void ScuTestInterruptMask()
        if (ScuRegs->AIACK){
          ScuRegs->AIACK = 0;
          if (!(ScuRegs->IMS & 0x8000)) {
-           SH2SendInterrupt(MSH2, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].level);
+           int vector = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].vector;
+           int level = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].level;
+           SH2SendInterrupt(MSH2, vector, level);
            ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].statusbit;
-
+           if (yabsys.IsSSH2Running) {
+             if (vector == 0x40)
+             {
+                 SH2SendInterrupt(SSH2, 0x41, level);
+             }
+             if (vector == 0x42)
+             {
+                 SH2SendInterrupt(SSH2, 0x43, level);
+             }
+           }
            // Shorten list
            for (i2 = ScuRegs->NumberOfInterrupts - 1 - i; i2 < (ScuRegs->NumberOfInterrupts - 1); i2++)
              memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i2 + 1], sizeof(scuinterrupt_struct));
@@ -2605,6 +2511,16 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
   }else if (!(ScuRegs->IMS & mask)){
     //if (vector != 0x41) LOG("INT %d", vector);
     SH2SendInterrupt(MSH2, vector, level);
+    if (yabsys.IsSSH2Running) {
+      if (vector == 0x40)
+      {
+          SH2SendInterrupt(SSH2, 0x41, level);
+      }
+      if (vector == 0x42)
+      {
+          SH2SendInterrupt(SSH2, 0x43, level);
+      }
+    }
   }
   else
    {
@@ -2651,29 +2567,30 @@ static INLINE void ScuChekIntrruptDMA(int id){
   }
 }
 
-void ScuRemoveVBlankOut();
-void ScuRemoveHBlankIN();
-void ScuRemoveVBlankIN();
 void ScuRemoveTimer0();
 void ScuRemoveTimer1();
 
-//////////////////////////////////////////////////////////////////////////////
-
-void ScuSendVBlankIN(void) {
-   ScuRemoveVBlankOut();
-   SendInterrupt(0x40, 0xF, 0x0001, 0x0001);
-   ScuChekIntrruptDMA(0);
+void ScuRemoveVBlankOut() {
+  ScuRemoveInterrupt(0x41, 0x0E);
+  SH2RemoveInterrupt(MSH2, 0x41, 0x0E);
 }
 
 void ScuRemoveVBlankIN() {
   ScuRemoveInterrupt(0x40, 0x0F);
   SH2RemoveInterrupt(MSH2, 0x40, 0x0F);
 }
+//////////////////////////////////////////////////////////////////////////////
+
+void ScuSendVBlankIN(void) {
+   // ScuRemoveVBlankOut();
+   SendInterrupt(0x40, 0xF, 0x0001, 0x0001);
+   ScuChekIntrruptDMA(0);
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankOUT(void) {
-   ScuRemoveVBlankIN();
+   // ScuRemoveVBlankIN();
    SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
    ScuRegs->timer0 = 0;
    if (ScuRegs->T1MD & 0x1)
@@ -2690,17 +2607,7 @@ void ScuSendVBlankOUT(void) {
    ScuChekIntrruptDMA(1);
 }
 
-void ScuRemoveVBlankOut() {
-  ScuRemoveInterrupt(0x41, 0x0E);
-  SH2RemoveInterrupt(MSH2, 0x41, 0x0E);
-}
-
 //////////////////////////////////////////////////////////////////////////////
-
-void ScuRemoveHBlankIN() {
-  ScuRemoveInterrupt(0x42, 0x0D);
-  SH2RemoveInterrupt(MSH2, 0x42, 0x0D);
-}
 
 
 void ScuSendHBlankIN(void) {

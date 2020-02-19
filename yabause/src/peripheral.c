@@ -171,6 +171,7 @@ int IOPortAdd(int key, ioPort port, u8 index) {
   IOalloc[port][index].port = &IOPORT[port];
   IOalloc[port][index].mask = (0x1 << index); 
   IOkeys[key] = &(IOalloc[port][index]);
+  return 0;
 }
 
 static void IOPortPressed(int key) {
@@ -1377,7 +1378,15 @@ void PerUpdateConfig(PerBaseConfig_struct * baseconfig, int nelems, void * contr
    u32 i, j;
 
    perkeyconfigsize += nelems;
-   perkeyconfig = realloc(perkeyconfig, perkeyconfigsize * sizeof(PerConfig_struct));
+
+	 PerConfig_struct *new_data = realloc(perkeyconfig, perkeyconfigsize * sizeof(PerConfig_struct));
+ 	if (new_data == NULL)
+ 	{
+		YuiMsg("Peripheral realloc Error\n");
+ 	} else {
+     perkeyconfig = new_data;
+ 	}
+
    j = 0;
    for(i = oldsize;i < perkeyconfigsize;i++)
    {
