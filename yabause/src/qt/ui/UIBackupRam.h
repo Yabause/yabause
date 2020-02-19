@@ -21,6 +21,8 @@
 
 #include "ui_UIBackupRam.h"
 
+class BackupManager;
+
 class UIBackupRam : public QDialog, public Ui::UIBackupRam
 {
 	Q_OBJECT
@@ -30,12 +32,14 @@ public:
 
 protected:
 	void refreshSaveList();
-
+  BackupManager * backupman_;
 protected slots:
 	void on_cbDeviceList_currentIndexChanged( int id );
 	void on_lwSaveList_itemSelectionChanged();
 	void on_pbDelete_clicked();
 	void on_pbFormat_clicked();
+  void on_pbExport_clicked();
+  void on_pbImport_clicked();
 };
 
 #endif // UIBACKUPRAM_H

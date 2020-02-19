@@ -3242,6 +3242,17 @@ void YglUpdateVdp2Reg() {
     _Ygl->fbu_.u_viewport_offset = 0.0f;
   }
 
+  // Check if transparent sprite window
+  // hard/vdp2/hon/p08_12.htm#SPWINEN_
+  if ( (fixVdp2Regs->SPCTL & 0x10) && // Sprite Window is enabled
+       ((fixVdp2Regs->SPCTL & 0xF)  >=2 && (fixVdp2Regs->SPCTL & 0xF) < 8)) // inside sprite type
+  {
+    _Ygl->fbu_.u_sprite_window = 1;  
+  }else{
+    _Ygl->fbu_.u_sprite_window = 0;  
+  }
+  
+
   if (_Ygl->framebuffer_uniform_id_ == 0) {
     glGenBuffers(1, &_Ygl->framebuffer_uniform_id_);
   }

@@ -22,6 +22,7 @@ package org.uoyabause.android;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -52,6 +53,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.uoyabause.uranus.BuildConfig;
 import org.uoyabause.uranus.R;
 
 import java.io.File;
@@ -186,6 +188,18 @@ public class GameSelectPresenter {
             Crashlytics.setUserIdentifier( username_ + "_" + auth.getCurrentUser().getEmail());
             mFirebaseAnalytics.setUserId(username_ + "_" + auth.getCurrentUser().getEmail());
             mFirebaseAnalytics.setUserProperty ("name", username_ + "_" + auth.getCurrentUser().getEmail());
+
+            Activity activity = target_.getActivity();
+            SharedPreferences prefs = activity.getSharedPreferences("private", Context.MODE_PRIVATE);
+            boolean hasDonated = false;
+            if (prefs != null) {
+                hasDonated = prefs.getBoolean("donated", false);
+            }
+            if ( BuildConfig.BUILD_TYPE.equals("pro") || hasDonated ) {
+                baseref.child(baseurl).child("max_backup_count").setValue(256);
+            }else{
+                baseref.child(baseurl).child("max_backup_count").setValue(3);
+            }
 
             //startActivity(SignedInActivity.createIntent(this, response));
             YabauseApplication application = (YabauseApplication)target_.getActivity().getApplication();

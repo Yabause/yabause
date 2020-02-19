@@ -1,3 +1,4 @@
+
 /*
         Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
@@ -20,24 +21,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include <string>
 #include <cstdint>
+#include "bios.h"
 #include <jni.h>
 
 using std::string;
 
-extern "C" {
-#include "chd.h"
-}
-
-class ChdFileInfo {
-  chd_file *chd;
-  char * hunk_buffer;
-  int current_hunk_id;
-public:  
-  ChdFileInfo();
-  ~ChdFileInfo();
-  int getHeader( std::string filepath, char * buf, int len  );
-};
-
 extern "C"{
-JNIEXPORT jbyteArray JNICALL Java_org_uoyabause_android_YabauseRunnable_getGameinfoFromChd( JNIEnv* env, jobject obj, jstring  jpath );
+
+JNIEXPORT jstring JNICALL Java_org_uoyabause_android_YabauseRunnable_getDevicelist(JNIEnv* env);
+JNIEXPORT jstring JNICALL Java_org_uoyabause_android_YabauseRunnable_getFilelist(JNIEnv* env, jobject obj, jint deviceid ) ;
+JNIEXPORT jint JNICALL Java_org_uoyabause_android_YabauseRunnable_deletefile(JNIEnv* env, jobject obj, jint index ) ;
+JNIEXPORT jstring JNICALL Java_org_uoyabause_android_YabauseRunnable_getFile(JNIEnv* env, jobject obj, jint index  ) ;
+JNIEXPORT jint JNICALL Java_org_uoyabause_android_YabauseRunnable_putFile(JNIEnv* env, jobject obj, jstring jsonstr  );
+JNIEXPORT jint JNICALL Java_org_uoyabause_android_YabauseRunnable_copy(JNIEnv* env, jobject obj, jint target, jint file  ) ;
+
+
 }

@@ -1358,6 +1358,10 @@ void UIYabause::on_aTraceLogging_triggered( bool toggled )
 	return;
 }
 
+void UIYabause::on_actionOpen_web_interface_triggered() {
+  QDesktopServices::openUrl(QUrl(actionOpen_web_interface->statusTip()));
+}
+
 void UIYabause::on_aHelpReport_triggered()
 {
 	QDesktopServices::openUrl(QUrl(aHelpReport->statusTip()));

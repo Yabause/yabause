@@ -1,3 +1,4 @@
+
 /*
         Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
@@ -20,24 +21,37 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include <string>
 #include <cstdint>
-#include <jni.h>
+#include "bios.h"
 
 using std::string;
 
-extern "C" {
-#include "chd.h"
-}
 
-class ChdFileInfo {
-  chd_file *chd;
-  char * hunk_buffer;
-  int current_hunk_id;
+class BackupManager {
+
+protected:
+  BackupManager();
 public:  
-  ChdFileInfo();
-  ~ChdFileInfo();
-  int getHeader( std::string filepath, char * buf, int len  );
+  static BackupManager * instance_;
+  static BackupManager * getInstance(){
+    if( instance_==NULL ) instance_ = new BackupManager();
+    return instance_; 
+  }
+
+  virtual ~BackupManager();
+  int getDevicelist( string & jsonstr );
+  int getFilelist( int deviceid, string & jsonstr );
+  int deletefile( int index );
+  int getFile( int index, string & jsonstr );
+  int putFile( const string & jsonstr );
+  int copy( int target_device, int file_index );
+
+protected:  
+  uint32_t currentbupdevice_ = 0;
+  deviceinfo_struct* devices_ = NULL;
+  int32_t numbupdevices_ = 0;
+  int32_t current_device_ = -1;
+  saveinfo_struct* saves_ = NULL;
+  int32_t numsaves_ = 0;
+
 };
 
-extern "C"{
-JNIEXPORT jbyteArray JNICALL Java_org_uoyabause_android_YabauseRunnable_getGameinfoFromChd( JNIEnv* env, jobject obj, jstring  jpath );
-}

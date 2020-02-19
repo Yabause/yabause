@@ -285,15 +285,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
   u32 color = 0x00;
   int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
 
-  // Check if transparent sprite window
-  // hard/vdp2/hon/p08_12.htm#SPWINEN_
-  if ((cmd->CMDCOLR & 0x8000) && // Sprite Window Color
-      (fixVdp2Regs->SPCTL & 0x10) && // Sprite Window is enabled
-      ((fixVdp2Regs->SPCTL & 0xF)  >=2 && (fixVdp2Regs->SPCTL & 0xF) < 8)) // inside sprite type
-  {
-    return 0;
-  }
-
   Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow);
 
   switch ((cmd->CMDPMOD >> 3) & 0x7)
@@ -561,6 +552,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
   int normalshadow = 0;
   int priority = 0;
   int colorcl = 0;
+  int sprite_window = 0;
 
   int endcnt = 0;
   int nromal_shadow = 0;
@@ -580,6 +572,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
   if (/*fixVdp2Regs->SDCTL != 0 &&*/ MSB != 0) {
     MSB_SHADOW = 1;
     _Ygl->msb_shadow_count_[_Ygl->drawframe]++;
+  }
+
+  if((fixVdp2Regs->SPCTL & 0x10) && // Sprite Window is enabled
+      ((fixVdp2Regs->SPCTL & 0xF)  >=2 && (fixVdp2Regs->SPCTL & 0xF) < 8)) // inside sprite type
+  {
+    sprite_window = 1;
   }
 
 
@@ -892,13 +890,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         else if ((dot == 0x7FFF) && !END) {
           *texture->textdata++ = 0x0;
           endcnt++;
-        }
-        else if (MSB_SHADOW || (nromal_shadow!=0 && dot == nromal_shadow) ) {
+        }else if (MSB_SHADOW || (nromal_shadow!=0 && dot == nromal_shadow) ) {
           *texture->textdata++ = VDP1COLOR(0, 1, priority, 1, 0);
         }
         else {
           if (dot & 0x8000 && (fixVdp2Regs->SPCTL & 0x20) ) {
-            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
+             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
           }
           else {
             Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &colorcl);

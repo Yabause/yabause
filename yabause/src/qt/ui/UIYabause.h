@@ -168,6 +168,7 @@ protected slots:
 	void on_aEmulationReset_triggered();
 	void on_aEmulationFrameSkipLimiter_toggled( bool toggled );
 	// tools
+  void on_actionOpen_web_interface_triggered();
 	void on_aToolsBackupManager_triggered();
 	void on_aToolsCheatsList_triggered();
 	void on_aToolsCheatSearch_triggered();
