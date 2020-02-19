@@ -2402,16 +2402,6 @@ void ScuTestInterruptMask()
            int level = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].level;
            SH2SendInterrupt(MSH2, vector, level);
            ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].statusbit;
-           if (yabsys.IsSSH2Running) {
-             if (vector == 0x40)
-             {
-                 SH2SendInterrupt(SSH2, 0x41, level);
-             }
-             if (vector == 0x42)
-             {
-                 SH2SendInterrupt(SSH2, 0x43, level);
-             }
-           }
            // Shorten list
            for (i2 = ScuRegs->NumberOfInterrupts - 1 - i; i2 < (ScuRegs->NumberOfInterrupts - 1); i2++)
              memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i2 + 1], sizeof(scuinterrupt_struct));
@@ -2511,21 +2501,21 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
   }else if (!(ScuRegs->IMS & mask)){
     //if (vector != 0x41) LOG("INT %d", vector);
     SH2SendInterrupt(MSH2, vector, level);
-    if (yabsys.IsSSH2Running) {
-      if (vector == 0x40)
-      {
-          SH2SendInterrupt(SSH2, 0x41, level);
-      }
-      if (vector == 0x42)
-      {
-          SH2SendInterrupt(SSH2, 0x43, level);
-      }
-    }
   }
   else
    {
       ScuQueueInterrupt(vector, level, mask, statusbit);
       ScuRegs->IST |= statusbit;
+   }
+   if (yabsys.IsSSH2Running) {
+     if (vector == 0x40)
+     {
+         SH2SendInterrupt(SSH2, 0x41, level);
+     }
+     if (vector == 0x42)
+     {
+         SH2SendInterrupt(SSH2, 0x43, level);
+     }
    }
 }
 
