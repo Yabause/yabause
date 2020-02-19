@@ -2510,11 +2510,11 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
    if (yabsys.IsSSH2Running) {
      if (vector == 0x40)
      {
-         SH2SendInterrupt(SSH2, 0x41, level);
+         SH2SendInterrupt(SSH2, 0x43, level);
      }
      if (vector == 0x42)
      {
-         SH2SendInterrupt(SSH2, 0x43, level);
+         SH2SendInterrupt(SSH2, 0x41, level);
      }
    }
 }
