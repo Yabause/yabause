@@ -288,7 +288,7 @@ public:
     uniform.vdp1Ratio[1] = _Ygl->vdp1expandH;
 		uniform.fbon = (_Ygl->vdp1On[_Ygl->readframe] != 0);
 		uniform.ram_mode = Vdp2Internal.ColorMode;
-		uniform.extended_cc = ((varVdp2Regs->CCCTL & 0x400) != 0);
+		uniform.extended_cc = ((varVdp2Regs->CCCTL & 0x8400) == 0x400);
     memcpy(uniform.u_lncl,lncl, 7*sizeof(int));
     memcpy(uniform.mode, modescreens, 7*sizeof(int));
     memcpy(uniform.isRGB, isRGB, 6*sizeof(int));
