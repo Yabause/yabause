@@ -2907,13 +2907,11 @@ if (_Ygl->vdp2_use_compute_shader == 0) {
 void YglSetVDP2Reg(u8 * pbuf, int start, int size){
   if (_Ygl->vdp2_use_compute_shader == 0) {
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp2reg_tex);
-    //if (_Ygl->lincolor_buf == pbuf) {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp2reg_pbo);
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     glTexSubImage2D(GL_TEXTURE_2D, 0, NB_VDP2_REG * start, 0, NB_VDP2_REG * size, 1, GL_RED, GL_UNSIGNED_BYTE, 0);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     _Ygl->vdp2reg_buf = NULL;
-  //}
     glBindTexture(GL_TEXTURE_2D, 0 );
   }
   return;
@@ -3679,13 +3677,11 @@ u32 * YglGetLineColorScreenPointer(){
 void YglSetLineColorScreen(u32 * pbuf, int size){
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorscreen_tex);
-  //if (_Ygl->lincolor_buf == pbuf) {
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolorscreen_pbo);
-    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-    _Ygl->linecolorscreen_buf = NULL;
-  //}
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolorscreen_pbo);
+  glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+  _Ygl->linecolorscreen_buf = NULL;
   glBindTexture(GL_TEXTURE_2D, 0 );
   return;
 }
@@ -3886,20 +3882,20 @@ void VIDOGLSync(){
 // Per line operation
 u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount, int depth ){
   int error;
-  if ((perline->lincolor_tex == 0) || (perline->depth != depth)){
-    if (perline->lincolor_tex != 0){
-       glDeleteTextures(1, &perline->lincolor_tex);
-       glDeleteBuffers(1,&perline->linecolor_pbo);
+  if ((perline->coloroffset_tex == 0) || (perline->depth != depth)){
+    if (perline->coloroffset_tex != 0){
+       glDeleteTextures(1, &perline->coloroffset_tex);
+       glDeleteBuffers(1,&perline->coloroffset_pbo);
     }
     perline->depth = depth;
-    glGenTextures(1, &perline->lincolor_tex);
+    glGenTextures(1, &perline->coloroffset_tex);
 
-    glGenBuffers(1, &perline->linecolor_pbo);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->linecolor_pbo);
+    glGenBuffers(1, &perline->coloroffset_pbo);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->coloroffset_pbo);
     glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4 * depth, NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-    glBindTexture(GL_TEXTURE_2D, perline->lincolor_tex);
+    glBindTexture(GL_TEXTURE_2D, perline->coloroffset_tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -3908,25 +3904,23 @@ u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount, int depth ){
 
   }
 
-  glBindTexture(GL_TEXTURE_2D, perline->lincolor_tex);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->linecolor_pbo);
-  perline->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, linecount * 4 * depth, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  glBindTexture(GL_TEXTURE_2D, perline->coloroffset_tex);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->coloroffset_pbo);
+  perline->coloroffset_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, linecount * 4 * depth, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-  return perline->lincolor_buf;
+  return perline->coloroffset_buf;
 }
 
 void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int depth){
 
   if (perline->depth != depth) return;
-  glBindTexture(GL_TEXTURE_2D, perline->lincolor_tex);
-  //if (_Ygl->lincolor_buf == pbuf) {
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->linecolor_pbo);
+  glBindTexture(GL_TEXTURE_2D, perline->coloroffset_tex);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->coloroffset_pbo);
   glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, linecount, depth, GL_RGBA, GL_UNSIGNED_BYTE, 0);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  perline->lincolor_buf = NULL;
-  //}
+  perline->coloroffset_buf = NULL;
   glBindTexture(GL_TEXTURE_2D, 0);
   return;
 }

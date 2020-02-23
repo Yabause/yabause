@@ -3457,7 +3457,7 @@ void VIDOGLVdp1Draw()
       }
     }
     YglSetPerlineBuf(&_Ygl->bg[SPRITE], linebuf, _Ygl->rheight, 1+8+8);
-    _Ygl->vdp1_lineTexture = _Ygl->bg[SPRITE].lincolor_tex;
+    _Ygl->vdp1_lineTexture = _Ygl->bg[SPRITE].coloroffset_tex;
   }
   else {
     _Ygl->vdp1_lineTexture = 0;
@@ -5199,7 +5199,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
       }
     }
     YglSetPerlineBuf(&_Ygl->bg[id], linebuf, _Ygl->rheight, 1);
-    info->lineTexture = _Ygl->bg[id].lincolor_tex;
+    info->lineTexture = _Ygl->bg[id].coloroffset_tex;
   }
   else {
     info->lineTexture = 0;
