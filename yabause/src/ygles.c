@@ -3650,17 +3650,17 @@ void YglUpdateColorRam() {
 
 
 
-u32 * YglGetLineColorPointer(){
+u32 * YglGetLineColorScreenPointer(){
   int error;
-  if (_Ygl->lincolor_tex == 0){
-    glGenTextures(1, &_Ygl->lincolor_tex);
+  if (_Ygl->linecolorscreen_tex == 0){
+    glGenTextures(1, &_Ygl->linecolorscreen_tex);
 
-    glGenBuffers(1, &_Ygl->linecolor_pbo);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolor_pbo);
+    glGenBuffers(1, &_Ygl->linecolorscreen_pbo);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolorscreen_pbo);
     glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4, NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-    glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorscreen_tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -3668,23 +3668,23 @@ u32 * YglGetLineColorPointer(){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   }
 
-  glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolor_pbo);
-  _Ygl->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorscreen_tex);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolorscreen_pbo);
+  _Ygl->linecolorscreen_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-  return _Ygl->lincolor_buf;
+  return _Ygl->linecolorscreen_buf;
 }
 
-void YglSetLineColor(u32 * pbuf, int size){
+void YglSetLineColorScreen(u32 * pbuf, int size){
 
-  glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorscreen_tex);
   //if (_Ygl->lincolor_buf == pbuf) {
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolor_pbo);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolorscreen_pbo);
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-    _Ygl->lincolor_buf = NULL;
+    _Ygl->linecolorscreen_buf = NULL;
   //}
   glBindTexture(GL_TEXTURE_2D, 0 );
   return;
@@ -3769,7 +3769,6 @@ u32* YglGetBackColorPointer() {
 }
 
 void YglSetBackColor(int size) {
-
   glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
 #if 0
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, _Ygl->backcolor_buf);

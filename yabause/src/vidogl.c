@@ -5101,7 +5101,7 @@ static void Vdp2DrawLineColorScreen(Vdp2 *varVdp2Regs)
 
   if (varVdp2Regs->LNCLEN == 0) return;
 
-  line_pixel_data = YglGetLineColorPointer();
+  line_pixel_data = YglGetLineColorScreenPointer();
   if (line_pixel_data == NULL) {
     return;
   }
@@ -5123,7 +5123,7 @@ static void Vdp2DrawLineColorScreen(Vdp2 *varVdp2Regs)
     addr += inc;
   }
 
-  YglSetLineColor(line_pixel_data, line_cnt);
+  YglSetLineColorScreen(line_pixel_data, line_cnt);
 
 }
 

@@ -1695,7 +1695,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glBindTexture(GL_TEXTURE_2D, _Ygl->back_fbotex[0]);
 
   glActiveTexture(gltext[8]);
-  glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorscreen_tex);
 
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

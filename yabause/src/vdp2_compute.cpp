@@ -315,7 +315,7 @@ public:
 	  glBindTexture(GL_TEXTURE_2D, _Ygl->back_fbotex[0]);
 
 	  glActiveTexture(GL_TEXTURE8);
-	  glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
+	  glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorscreen_tex);
 
 		glActiveTexture(GL_TEXTURE9);
 		glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);

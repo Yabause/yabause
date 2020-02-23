@@ -629,9 +629,9 @@ typedef struct {
    // Thread
    YabMutex * mutex;
 
-   u32 lincolor_tex;
-   u32 linecolor_pbo;
-   u32 * lincolor_buf;
+   u32 linecolorscreen_tex;
+   u32 linecolorscreen_pbo;
+   u32* linecolorscreen_buf;
    int perLine[enBGMAX];
 
    u32 vdp2reg_tex;
@@ -797,8 +797,8 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
 int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float texw, float texh);
 
 void YglRenderVDP1(void);
-u32 * YglGetLineColorPointer();
-void YglSetLineColor(u32 * pbuf, int size);
+u32 * YglGetLineColorScreenPointer();
+void YglSetLineColorScreen(u32 * pbuf, int size);
 
 u32* YglGetBackColorPointer();
 void YglSetBackColor(int size);
