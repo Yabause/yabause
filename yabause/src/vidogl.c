@@ -1412,6 +1412,11 @@ static void Vdp2GenerateWindowInfo(void)
               _Ygl->win0_vertexcnt++;
             }
           }
+
+          if( _Ygl->win0_vertexcnt >= 1024){
+            _Ygl->win0_vertexcnt = 1023;
+          }
+
           preHStart = HStart;
           preHEnd = HEnd;
         }
@@ -1631,8 +1636,12 @@ static void Vdp2GenerateWindowInfo(void)
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
               _Ygl->win1_vertexcnt++;
             }
-
           }
+
+          if( _Ygl->win1_vertexcnt >= 1024){
+            _Ygl->win1_vertexcnt = 1023;
+          }
+
           preHStart = HStart;
           preHEnd = HEnd;
         }
