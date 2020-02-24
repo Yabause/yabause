@@ -545,7 +545,6 @@ typedef struct {
    // VDP1 Info
    int vdp1_maxpri;
    int vdp1_minpri;
-   u32 vdp1_lineTexture;
 
    // VDP1 Framebuffer
    int rwidth;

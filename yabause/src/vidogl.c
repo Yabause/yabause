@@ -3457,10 +3457,8 @@ void VIDOGLVdp1Draw()
       }
     }
     YglSetPerlineBuf(&_Ygl->bg[SPRITE], linebuf, _Ygl->rheight, 1+8+8);
-    _Ygl->vdp1_lineTexture = _Ygl->bg[SPRITE].coloroffset_tex;
   }
   else {
-    _Ygl->vdp1_lineTexture = 0;
     if (varVdp2Regs->CLOFEN & 0x40)
     {
       // color offset enable
