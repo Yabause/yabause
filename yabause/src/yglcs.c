@@ -284,7 +284,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
       modescreens[id] =  setupBlend(varVdp2Regs, vdp2screens[j]);
       isRGB[id] = setupColorMode(varVdp2Regs, vdp2screens[j]);
       isBlur[id] = setupBlur(varVdp2Regs, vdp2screens[j]);
-      isPerline[id] = (_Ygl->perLine[j] != 0);
+      isPerline[id] = (_Ygl->perLine[vdp2screens[j]] != 0);
       isShadow[id] = setupShadow(varVdp2Regs, vdp2screens[j]);
       lncl_draw[id] = lncl[vdp2screens[j]];
       winS_draw[id] = WinS[vdp2screens[j]];

@@ -1166,10 +1166,10 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "    if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n"
 "    if (modetop == 4) topImage = vec4(colortop.rgb*alphasecond, alphasecond); \n"
 "    finalColor = vec4( topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0); \n"
-"    finalColor.rgb = clamp(finalColor.rgb+offset_color, vec3(0.0), vec3(1.0));\n"
 "  } else {\n"
 "    finalColor = vec4(colortop.rgb, 1.0);\n"
 "  }\n"
+"  finalColor.rgb = clamp(finalColor.rgb+offset_color, vec3(0.0), vec3(1.0));\n"
 "  if (mesh == 1) finalColor.rgb = finalColor.rgb * 0.5 + meshCol.rgb * 0.5;\n"
 "  if (processShadow) finalColor.rgb = finalColor.rgb * 0.5;\n";
 
