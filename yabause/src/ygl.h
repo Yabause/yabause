@@ -381,7 +381,6 @@ typedef struct {
    GLuint color_offset;
    GLuint tex0;
    GLuint tex1;
-   float color_offset_val[4];
    int var1, var2, var3, var4, var5;
    int (*setupUniform)(void *, YglTextureManager *tm, Vdp2* regs, int id);
    int (*cleanupUniform)(void *, YglTextureManager *tm);
@@ -524,13 +523,6 @@ typedef enum {
 } SpriteMode;
 
 typedef struct {
-	u32 coloroffset_tex;
-	u32 coloroffset_pbo;
-	u32 * coloroffset_buf;
-  u32 depth;
-} YglPerLineInfo;
-
-typedef struct {
    //GLuint texture;
    //GLuint pixelBufferID;
    int st;
@@ -538,7 +530,6 @@ typedef struct {
    int originy;
    unsigned int width;
    unsigned int height;
-   unsigned int depth;
 
    float clear[4];
 
@@ -633,6 +624,10 @@ typedef struct {
    u32* linecolorscreen_buf;
    int perLine[enBGMAX];
 
+   u32 coloroffset_tex;
+   u32 coloroffset_pbo;
+   u32* coloroffset_buf;
+
    u32 vdp2reg_tex;
    u32 vdp2reg_pbo;
    u8* vdp2reg_buf;
@@ -653,7 +648,6 @@ typedef struct {
    GLsync sync;
    GLsync syncVdp1[2];
    GLuint default_fbo;
-   YglPerLineInfo bg[enBGMAX];
    int vpd1_running;
    int needVdp1Render;
    GLint m_viewport[4];
@@ -758,14 +752,14 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm);
 void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm);
 
-u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount,int depth );
-void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int depth);
+u32 * YglGetPerlineBuf(int linecount,int depth );
+void YglSetPerlineBuf(u32 * pbuf, int col, int depth);
 
 // 0.. no belnd, 1.. Alpha, 2.. Add
 int YglSetLevelBlendmode( int pri, int mode );
 
 extern int YglBlitSimple(int texture, int blend);
-extern int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op,  Vdp2 *varVdp2Regs);
+extern int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int * isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op,  Vdp2 *varVdp2Regs);
 extern SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs);
 extern void executeTMVDP1(int in, int out);
 
@@ -829,7 +823,7 @@ extern GLuint RBGGenerator_getTexture( int id );
 extern void RBGGenerator_onFinish();
 
 extern void VDP2Generator_init(int width, int height);
-extern void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs);
+extern void VDP2Generator_update(int tex, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs);
 extern void VDP2Generator_resize(int width, int height);
 
 

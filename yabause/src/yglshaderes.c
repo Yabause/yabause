@@ -167,39 +167,29 @@ SHADER_VERSION
 "precision highp int;\n"
 "#endif\n"
 "in vec4 v_texcoord;\n"
-"uniform vec4 u_color_offset;\n"
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
 "uniform highp sampler2D s_texture;\n"
-"uniform sampler2D s_perline;  \n"
-"uniform int is_perline; \n"
 "out vec4 fragColor;\n"
 "void main()   \n"
 "{  \n"
 "  ivec2 addr; \n"
 "  ivec2 linepos; \n "
-"  vec4 color_offset = u_color_offset; \n"
 "  linepos.y = 0; \n "
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  addr.x = int(v_texcoord.x);  \n"
 "  addr.y = int(v_texcoord.y);  \n"
-"  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
-"  int msb = int(txcol.b * 255.0)&0x1; \n"
-"  if (is_perline == 1) {\n"
-"    vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
-"    if (perline == vec4(0.0)) discard;\n"
-"    color_offset.rgb = (perline.rgb - vec3(0.5))*2.0;\n"
-"    if (perline.a > 0.0) txcol.a = perline.a;\n"
-"  } \n"
-"  fragColor.rgb = clamp(txcol.rgb+color_offset.rgb,vec3(0.0),vec3(1.0));\n"
-"  int blue = int(fragColor.b * 255.0) & 0xFE;\n"
-"  fragColor.b = float(blue|msb)/255.0;\n" //Blue LSB bit is used for special color calculation
-"  fragColor.a = txcol.a;\n"
+"  fragColor = texelFetch( s_texture, addr,0 );         \n"
+// "  if (is_perline == 1) {\n"
+// "    vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
+// "    if (perline == vec4(0.0)) discard;\n"
+// "    color_offset.rgb = (perline.rgb - vec3(0.5))*2.0;\n"
+// "    if (perline.a > 0.0) txcol.a = perline.a;\n"
+// "  } \n"
 "}  \n";
 
 const GLchar * pYglprg_vdp2_normal_f[] = {Yglprg_normal_f, NULL};
 static int id_normal_s_texture = -1;
-static int id_normal_color_offset = -1;
 static int id_normal_matrix = -1;
 static int id_normal_vheight = -1;
 static int id_normal_emu_height = -1;
@@ -213,7 +203,6 @@ int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_s_texture, 0);
-  glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
   glUniform1f(id_normal_vheight, (float)_Ygl->rheight);
   glUniform1f(id_normal_emu_height,  (float)_Ygl->rheight / (float)_Ygl->rheight);
   return 0;
@@ -238,20 +227,16 @@ SHADER_VERSION
 "precision highp int;\n"
 "#endif\n"
 "in vec4 v_texcoord;\n"
-"uniform vec4 u_color_offset;\n"
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
 "uniform float u_vwidth; \n"
 "uniform float u_hratio; \n"
 "uniform highp sampler2D s_texture;\n"
-"uniform sampler2D s_perline;  \n"
-"uniform int is_perline; \n"
 "uniform sampler2D s_color;\n"
 "out vec4 fragColor;\n"
 "void main()\n"
 "{\n"
 "  ivec2 linepos; \n "
-"  vec4 color_offset = u_color_offset; \n"
 "  linepos.y = 0; \n "
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  ivec2 addr = ivec2(int(v_texcoord.x),int(v_texcoord.y));\n"
@@ -259,32 +244,19 @@ SHADER_VERSION
 "  if(txindex.a == 0.0) { discard; }\n"
 "  int tx = int(txindex.g*255.0)<<8 | int(txindex.r*255.0);\n"
 "  int ty = int(float(linepos.x)/u_hratio);\n"
-"  vec4 txcol = texelFetch( s_color,  ivec2( tx , ty )  , 0 );\n"
-"  int msb = int(txindex.b * 255.0)&0x1; \n"
-"  if (is_perline == 1) {\n"
-"    vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
-"    if (perline == vec4(0.0)) discard;\n"
-"    color_offset.rgb = (perline.rgb - vec3(0.5))*2.0;\n"
-"    if (perline.a > 0.0) txindex.a = float(int(perline.a * 255.0) | (int(txindex.a * 255.0) & 0x7))/255.0;\n"
-"  } \n"
-"  fragColor = clamp(txcol+color_offset,vec4(0.0),vec4(1.0));\n"
-"  int blue = int(fragColor.b * 255.0) & 0xFE;\n"
-"  fragColor.b = float(blue|msb)/255.0;\n" //Blue LSB bit is used for special color calculation
+"  fragColor = texelFetch( s_color,  ivec2( tx , ty )  , 0 );\n"
 "  fragColor.a = txindex.a; \n"
 "}\n";
 
 
 const GLchar * pYglprg_normal_cram_f[] = { Yglprg_normal_cram_f, NULL };
 static int id_normal_cram_s_texture = -1;
-static int id_normal_cram_s_perline = -1;
-static int id_normal_cram_isperline = -1;
 static int id_normal_cram_emu_height = -1;
 static int id_normal_cram_vdp2_hratio = -1;
 static int id_normal_cram_emu_width = -1;
 static int id_normal_cram_vheight = -1;
 static int id_normal_cram_vwidth = -1;
 static int id_normal_cram_s_color = -1;
-static int id_normal_cram_color_offset = -1;
 static int id_normal_cram_matrix = -1;
 
 
@@ -297,8 +269,6 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_cram_s_texture, 0);
   glUniform1i(id_normal_cram_s_color, 1);
-  glUniform1i(id_normal_cram_s_perline, 2);
-  glUniform1i(id_normal_cram_isperline, (_Ygl->perLine[id] != 0));
   glUniform1f(id_normal_cram_vdp2_hratio, (float)_Ygl->vdp2hdensity);
   if ((id == RBG0) && (_Ygl->rbg_use_compute_shader)){
     glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
@@ -311,11 +281,8 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
     glUniform1f(id_normal_cram_vheight, (float)_Ygl->rheight);
     glUniform1f(id_normal_cram_vwidth, (float)_Ygl->rwidth);
   }
-  glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
-  glActiveTexture(GL_TEXTURE2);
-  glBindTexture(GL_TEXTURE_2D, _Ygl->perLine[id]);
   return 0;
 }
 
@@ -337,7 +304,6 @@ SHADER_VERSION
 "precision highp int;\n"
 "#endif\n"
 "in vec4 v_texcoord;\n"
-"uniform vec4 u_color_offset;\n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_color;\n"
 "out vec4 fragColor;\n"
@@ -345,15 +311,13 @@ SHADER_VERSION
 "{\n"
 "  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
-"  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*255.0)<<8 | int(txindex.r*255.0)) ,0 )  , 0 );\n"
-"  fragColor = txcol+u_color_offset;\n"
+"  vec4 fragColor = texelFetch( s_color,  ivec2( ( int(txindex.g*255.0)<<8 | int(txindex.r*255.0)) ,0 )  , 0 );\n"
 "  fragColor.a = txindex.a;\n"
 "}\n";
 
 const GLchar * pYglprg_normal_cram_addcol_f[] = { Yglprg_normal_cram_addcol_f, NULL };
 static int id_normal_cram_s_texture_addcol = -1;
 static int id_normal_cram_s_color_addcol = -1;
-static int id_normal_cram_color_offset_addcol = -1;
 static int id_normal_cram_matrix_addcol = -1;
 
 
@@ -366,7 +330,6 @@ int Ygl_uniformAddColCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_cram_s_texture_addcol, 0);
   glUniform1i(id_normal_cram_s_color_addcol, 1);
-  glUniform4fv(id_normal_cram_color_offset_addcol, 1, prg->color_offset_val);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
   return 0;
@@ -463,7 +426,6 @@ int Ygl_uniformMosaic(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
     glEnableVertexAttribArray(prg->texcoordp);
     glUniform1i(id_normal_cram_s_texture, 0);
     glUniform1i(id_normal_cram_s_color, 1);
-    glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
@@ -476,7 +438,6 @@ int Ygl_uniformMosaic(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
     glEnableVertexAttribArray(prg->vertexp);
     glEnableVertexAttribArray(prg->texcoordp);
     glUniform1i(id_normal_s_texture, 0);
-    glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
     glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
   }
 
@@ -1033,6 +994,7 @@ SHADER_VERSION
 "uniform sampler2D s_win1;  \n"
 "uniform sampler2D s_color; \n"
 "uniform sampler2D s_vdp2reg; \n"
+"uniform sampler2D s_perline; \n"
 "uniform float u_emu_height;\n"
 "uniform float u_emu_vdp1_width;\n"
 "uniform float u_emu_vdp2_width;\n"
@@ -1047,6 +1009,7 @@ SHADER_VERSION
 "uniform int isRGB[6]; \n"
 "uniform int isBlur[7]; \n"
 "uniform int isShadow[6]; \n"
+"uniform int is_perline[7];\n"
 "uniform int use_sp_win; \n"
 "uniform int use_trans_shadow; \n"
 "uniform ivec2 tvSize;\n"
@@ -1281,7 +1244,6 @@ int YglProgramInit()
 //vdp2 normal looks not to be setup as it should
   id_normal_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"s_texture");
   //id_normal_s_texture_size = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_texsize");
-  id_normal_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_color_offset");
   id_normal_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_mvpMatrix");
   id_normal_vheight = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_vheight");
   id_normal_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_emu_height");
@@ -1293,9 +1255,6 @@ int YglProgramInit()
 
   id_normal_cram_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_texture");
   id_normal_cram_s_color = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_color");
-  id_normal_cram_s_perline = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_perline");
-  id_normal_cram_isperline = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"is_perline");
-  id_normal_cram_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
   id_normal_cram_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_emu_height");
   id_normal_cram_vdp2_hratio = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_hratio");
@@ -1309,7 +1268,6 @@ int YglProgramInit()
     return -1;
   id_mosaic_s_texture = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"s_texture");
   id_mosaic = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"u_mosaic");
-  id_mosaic_color_offset = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"u_color_offset");
 #endif
 
    _prgid[PG_VDP2_MOSAIC] = _prgid[PG_VDP2_NORMAL];
@@ -1427,7 +1385,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = id_normal_matrix;
-     current->color_offset = id_normal_color_offset;
    }
    else if (prgid == PG_VDP2_NORMAL_CRAM)
    {
@@ -1436,7 +1393,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = id_normal_cram_matrix;
-     current->color_offset = id_normal_cram_color_offset;
 
    }
    else if (prgid == PG_VDP2_MOSAIC)
@@ -1577,7 +1533,7 @@ int YglDrawBackScreen() {
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isShadow, int* lncl, GLuint* vdp1fb, int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs) {
   int perLine = 0;
   int nbScreen = 6;
   int vdp2blit_prg;
@@ -1608,7 +1564,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
       glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
     } else _Ygl->vdp1On[_Ygl->readframe] = 0;
 
-  int gltext[16] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15};
+  int gltext[17] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15, GL_TEXTURE16};
 
 #ifdef _OGL3_
 #ifdef DEBUG_BLIT
@@ -1629,6 +1585,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_lncl"), 8);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_perline"), 16);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp1_width"),_Ygl->vdp1width/512.0f);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp2_width"),(float)(_Ygl->width) / (float)(_Ygl->rwidth));
@@ -1641,10 +1598,12 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "is_perline"), 7, isPerline);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isShadow"), 6, isShadow);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
   glUniform2i(glGetUniformLocation(vdp2blit_prg, "tvSize"), _Ygl->rwidth, _Ygl->rheight);
+
   const float rotMat[9] = {
     Vdp1ParaA.deltaX, Vdp1ParaA.deltaXst, 0.0,
     Vdp1ParaA.deltaY, Vdp1ParaA.deltaYst, 0.0,
@@ -1680,6 +1639,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
   glActiveTexture(GL_TEXTURE15);
   glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
+  glActiveTexture(GL_TEXTURE16);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->coloroffset_tex);
 
   int id = 0;
   for (int i=0; i<nbScreen; i++) {
@@ -1701,7 +1662,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
-  for (int i = 0; i<16; i++) {
+  for (int i = 0; i<17; i++) {
     glActiveTexture(gltext[i]);
     glBindTexture(GL_TEXTURE_2D, 0);
   }

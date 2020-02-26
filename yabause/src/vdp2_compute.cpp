@@ -233,7 +233,7 @@ public:
 	#endif
   }
 
-	void update( int outputTex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs) {
+	void update( int outputTex, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs) {
 
     GLuint error;
     int local_size_x = 16;
@@ -384,10 +384,10 @@ extern "C" {
 	  VDP2Generator * instance = VDP2Generator::getInstance();
 	  instance->resize(width, height);
   }
-  void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs ) {
+  void VDP2Generator_update(int tex, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs ) {
     if (_Ygl->vdp2_use_compute_shader == 0) return;
     VDP2Generator * instance = VDP2Generator::getInstance();
-    instance->update(tex, bg, prioscreens, modescreens, isRGB, isShadow, isBlur, lncl, vdp1fb, Win_s, Win_s_mode, Win0, Win0_mode, Win1, Win1_mode, Win_op, varVdp2Regs);
+    instance->update(tex, prioscreens, modescreens, isRGB, isShadow, isBlur, lncl, vdp1fb, Win_s, Win_s_mode, Win0, Win0_mode, Win1, Win1_mode, Win_op, varVdp2Regs);
   }
   void VDP2Generator_onFinish() {
 
