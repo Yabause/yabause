@@ -236,9 +236,12 @@ SHADER_VERSION
 "  ivec2 addr = ivec2(int(v_texcoord.x),int(v_texcoord.y));\n"
 "  vec4 txindex = texelFetch( s_texture, addr ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
+"  int msb = int(txindex.b * 255.0)&0x1; \n"
 "  int tx = int(txindex.g*255.0)<<8 | int(txindex.r*255.0);\n"
 "  int ty = int(float(linepos.x)/u_hratio);\n"
 "  fragColor = texelFetch( s_color,  ivec2( tx , ty )  , 0 );\n"
+"  int blue = int(fragColor.b * 255.0) & 0xFE;\n"
+"  fragColor.b = float(blue|msb)/255.0;\n" //Blue LSB bit is used for special color calculation
 "  fragColor.a = txindex.a; \n"
 "}\n";
 
