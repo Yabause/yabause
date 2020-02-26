@@ -443,7 +443,7 @@ static const GLchar Yglprg_vdp2_common_start[] =
 "vec4 vdp2col3 = vec4(0.0);\n"
 "vec4 vdp2col4 = vec4(0.0);\n"
 "vec4 vdp2col5 = vec4(0.0);\n"
-"vec4 offcolFB = vec4(0.0);\n"
+"vec3 offcolFB = vec3(0.0);\n"
 "vec4 offcol0 = vec4(0.0);\n"
 "vec4 offcol1 = vec4(0.0);\n"
 "vec4 offcol2 = vec4(0.0);\n"
@@ -478,6 +478,7 @@ static const GLchar Yglprg_vdp2_common_start[] =
 "struct FBCol \n"
 "{ \n"
 "  vec4 color; \n"
+"  vec3 offset_color;\n"
 "  int prio; \n"
 "  int mesh;\n"
 "  vec4 meshColor; \n"
@@ -489,12 +490,12 @@ static const GLchar Yglprg_vdp2_common_start[] =
 "  bool MSBshadow;\n"
 "  bool spwin;\n"
 "  bool normalShadow;\n"
-"  vec4 offcolor;\n"
 "}; \n"
 
 "FBCol zeroFBCol(){ \n"
 "  FBCol ret;\n"
 "  ret.color = vec4(0.0); \n"
+"  ret.offset_color = vec3(0.0);\n"
 "  ret.meshColor = vec4(0.0); \n"
 "  ret.mesh = 0;\n"
 "  ret.prio = 0; \n"
@@ -506,7 +507,6 @@ static const GLchar Yglprg_vdp2_common_start[] =
 "  ret.MSBshadow = false;\n"
 "  ret.normalShadow = false;\n"
 "  ret.spwin = false;\n"
-"  ret.offcolor = vec4(0.0);\n" // A revoir
 "  return ret;\n"
 "}\n"
 
@@ -554,7 +554,6 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "    }else{ // direct color \n"
 "      meshcol = mesh.color;\n"
 "    } \n"
-"    meshcol.rgb = clamp(meshcol.rgb + u_coloroffset, vec3(0.0), vec3(1.0));  \n"
 "    ret.meshColor = meshcol;\n"
 "    ret.meshPrio = meshdepth;\n"
 "    ret.mesh = 1;\n"
@@ -583,7 +582,7 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "    tmpColor = ret.color;\n"
 "    msb = 1;\n"
 "  } \n"
-"  tmpColor.rgb = clamp(tmpColor.rgb + u_coloroffset, vec3(0.0), vec3(1.0));  \n"
+"  ret.offset_color = u_coloroffset;  \n"
 "  if (fbmode != 0) {\n";
 
 static const GLchar Yglprg_vdp2_common_end[] =
@@ -680,7 +679,7 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "    ret.mode = int(FBColor.a*255.0)&0x7; \n"
 "    ret.lncl = u_lncl[6];\n"
 "    ret.Color = FBColor; \n"
-"    ret.offset_color = offcolFB.rgb;\n"
+"    ret.offset_color = offcolFB;\n"
 "    remPrio = remPrio - 1;\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
@@ -867,11 +866,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "  alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n"
 "  FBCol tmp = getFB(0, addr); \n"
 "  FBColor = tmp.color;\n"
-"  offcolFB = tmp.offcolor;\n"
-// A revoir
-// "  if (offcolFB == vec4(0.0)) FBColor = vec4(0.0);\n"
-// "  offcolFB.rgb = (offcolFB.rgb - vec3(0.5))*2.0;\n"
-// "  if (offcolFB.a > 0.0) FBColor.a = offcolFB.a;\n"
+"  offcolFB = tmp.offset_color;\n"
 "  FBPrio = tmp.prio;\n"
 "  FBSPwin = tmp.spwin;\n"
 "  FBRgb = tmp.isRGB;\n"

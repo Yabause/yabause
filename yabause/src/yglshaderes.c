@@ -179,13 +179,7 @@ SHADER_VERSION
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  addr.x = int(v_texcoord.x);  \n"
 "  addr.y = int(v_texcoord.y);  \n"
-"  fragColor = texelFetch( s_texture, addr,0 );         \n"
-// "  if (is_perline == 1) {\n"
-// "    vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
-// "    if (perline == vec4(0.0)) discard;\n"
-// "    color_offset.rgb = (perline.rgb - vec3(0.5))*2.0;\n"
-// "    if (perline.a > 0.0) txcol.a = perline.a;\n"
-// "  } \n"
+"  fragColor = texelFetch( s_texture, addr,0 );\n"
 "}  \n";
 
 const GLchar * pYglprg_vdp2_normal_f[] = {Yglprg_normal_f, NULL};
