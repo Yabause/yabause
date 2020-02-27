@@ -5083,10 +5083,21 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
   int bit = 1 << id;
   int line = 0;
   int i;
+  int displayedbyLine = 0;
 
   u8 first = info->display[info->startLine];
   int firstalpha = (Vdp2External.perline_alpha[info->startLine] & bit);
-
+  for(i = info->startLine; i<info->endLine; i++) {
+    if (first != info->display[i]) {
+      displayedbyLine = 1;
+      break;
+    }
+    if ((Vdp2External.perline_alpha[i] & bit) != firstalpha) {
+      displayedbyLine = 1;
+      break;
+    }
+  }
+  if (displayedbyLine) {
     u32 * linebuf;
     int line_shift = 0;
     if (_Ygl->rheight > 256) {
@@ -5142,6 +5153,10 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
     }
     YglSetPerlineBuf(linebuf, id, 1);
     info->lineTexture = _Ygl->coloroffset_tex;
+  }
+  else {
+    info->lineTexture = 0;
+  }
 }
 
 
@@ -5269,7 +5284,7 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
 
   Vdp2GeneratePerLineColorCalcuration(info, NBG0, varVdp2Regs);
-  _Ygl->perLine[RBG1] = RBG1;
+  if (info->lineTexture != 0) _Ygl->perLine[RBG1] = RBG1;
 
   info->coloroffset = (varVdp2Regs->CRAOFA & 0x7) << 8;
   ReadVdp2ColorOffset(varVdp2Regs, info, 0x1);
@@ -5527,7 +5542,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
   info.alpha = (~varVdp2Regs->CCRNA & 0x1F) << 3;
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG0, varVdp2Regs);
-  _Ygl->perLine[NBG0] = NBG0;
+  if (info.lineTexture != 0) _Ygl->perLine[NBG0] = NBG0;
 
   info.coloroffset = (varVdp2Regs->CRAOFA & 0x7) << 8;
   ReadVdp2ColorOffset(varVdp2Regs, &info, 0x1);
@@ -5753,7 +5768,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG1, varVdp2Regs);
-  _Ygl->perLine[NBG1] = NBG1;
+  if (info.lineTexture != 0) _Ygl->perLine[NBG1] = NBG1;
 
   info.coloroffset = (varVdp2Regs->CRAOFA & 0x70) << 4;
   ReadVdp2ColorOffset(varVdp2Regs, &info, 0x2);
@@ -5986,7 +6001,7 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
   info.alpha = (~varVdp2Regs->CCRNB & 0x1F) << 3;
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG2, varVdp2Regs);
-  _Ygl->perLine[NBG2] = NBG2;
+  if (info.lineTexture != 0) _Ygl->perLine[NBG2] = NBG2;
 
   info.coloroffset = varVdp2Regs->CRAOFA & 0x700;
   ReadVdp2ColorOffset(varVdp2Regs, &info, 0x4);
@@ -6066,7 +6081,7 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
   info.alpha = (~varVdp2Regs->CCRNB & 0x1F00) >> 5;
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG3, varVdp2Regs);
-  _Ygl->perLine[NBG3] = NBG3;
+  if (info.lineTexture != 0) _Ygl->perLine[NBG3] = NBG3;
 
   info.coloroffset = (varVdp2Regs->CRAOFA & 0x7000) >> 4;
   ReadVdp2ColorOffset(varVdp2Regs, &info, 0x8);
@@ -6132,7 +6147,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->blendmode = 0;
 
   Vdp2GeneratePerLineColorCalcuration(info, RBG0, varVdp2Regs);
-  _Ygl->perLine[RBG0] = RBG0;
+  if (info->lineTexture != 0) _Ygl->perLine[RBG0] = RBG0;
   //info->lineTexture = 0;
 
   info->transparencyenable = !(varVdp2Regs->BGON & 0x1000);
