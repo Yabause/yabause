@@ -185,6 +185,8 @@ public class GameSelectPresenter {
 //                photo_url_ = auth.getCurrentUser().getPhotoUrl();
             }
 
+            baseref.child(baseurl).child("android_token").setValue(token);
+
             Crashlytics.setUserIdentifier( username_ + "_" + auth.getCurrentUser().getEmail());
             mFirebaseAnalytics.setUserId(username_ + "_" + auth.getCurrentUser().getEmail());
             mFirebaseAnalytics.setUserProperty ("name", username_ + "_" + auth.getCurrentUser().getEmail());

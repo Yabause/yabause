@@ -36,6 +36,7 @@
 #include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
 #include "UIAbout.h"
+#include "WebLoginWindow.h"
 #include "../YabauseGL.h"
 #include "../QtYabause.h"
 #include "../CommonDialogs.h"
@@ -51,11 +52,15 @@
 #include <QMetaObject>
 #include <QDebug>
 
+#include <firebase/app.h>
+
 extern "C" {
 extern VideoInterface_struct *VIDCoreList[];
 }
 
 //#define USE_UNIFIED_TITLE_TOOLBAR
+
+firebase::App* UIYabause::app = NULL;
 
 void qAppendLog( const char* s )
 {
@@ -173,6 +178,16 @@ UIYabause::UIYabause( QWidget* parent )
 	VIDSoftSetBilinear(QtYabause::settings()->value( "Video/Bilinear", false ).toBool());
 
 	mIsCdIn = true;
+
+	// Initialize cloud service
+    firebase::AppOptions options;
+    options.set_app_id("1:749919523054:android:3a92de2bc803c4bf");
+    options.set_api_key("AIzaSyAAqH_-n3Q42YAyVJvF-0nCvjLBaUa79-A");
+    options.set_database_url("https://uoyabause.firebaseio.com");
+    //options.set_ga_tracking_id("749919523054");
+    options.set_storage_bucket("uoyabause.appspot.com");
+    options.set_project_id("uoyabause");
+    app = firebase::App::Create(options);	
 
 }
 
@@ -1359,7 +1374,10 @@ void UIYabause::on_aTraceLogging_triggered( bool toggled )
 }
 
 void UIYabause::on_actionOpen_web_interface_triggered() {
-  QDesktopServices::openUrl(QUrl(actionOpen_web_interface->statusTip()));
+  //QDesktopServices::openUrl(QUrl(actionOpen_web_interface->statusTip()));
+  YabauseLocker locker( mYabauseThread );
+  WebLoginWindow( window() ).exec();
+	mYabauseGL->makeCurrent();
 }
 
 void UIYabause::on_aHelpReport_triggered()

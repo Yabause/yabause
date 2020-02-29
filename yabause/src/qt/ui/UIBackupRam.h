@@ -23,23 +23,95 @@
 
 class BackupManager;
 
-class UIBackupRam : public QDialog, public Ui::UIBackupRam
+#include <firebase/database.h>
+#include <firebase/auth.h>
+
+#include <string>
+using std::string;
+
+#include <vector>
+using std::vector;
+
+#include <firebase/database.h>
+using firebase::database::DatabaseReference;
+
+#include <firebase/storage.h>
+using firebase::storage::StorageReference;
+
+#include <firebase/storage/metadata.h>
+using firebase::storage::Metadata;
+
+#include <firebase/variant.h>
+using firebase::Variant;
+
+
+
+class BackupItem {
+public:	
+	string filename;
+	string comment;
+	int64_t language;
+	string savedate;
+	int64_t datasize;
+	int64_t blocksize;
+
+	int year;
+	int month;
+	int day;
+	int hour;
+	int minute;
+
+	string url;
+	string key;
+};
+
+class UIBackupRam : public QDialog, 
+ public Ui::UIBackupRam,  
+ public firebase::database::ValueListener,
+ public firebase::auth::AuthStateListener 
 {
 	Q_OBJECT
 
 public:
 	UIBackupRam( QWidget* parent = 0 );
+	virtual ~UIBackupRam();
+
+	void OnValueChanged( const firebase::database::DataSnapshot& snapshot) override;
+    void OnCancelled(const firebase::database::Error& error_code, const char* error_message) override;
+ 	void OnAuthStateChanged(firebase::auth::Auth* auth) override ;
+
+	char *tmpbuf;
 
 protected:
 	void refreshSaveList();
   BackupManager * backupman_;
+  vector<BackupItem> cloud_items;
+
+  // upload data
+  DatabaseReference new_post;
+  StorageReference fileref;
+  std::map<string, Variant> new_data;
+  std::string new_key;
+	std::string del_key;
+  Metadata *  new_metadata = nullptr;
+  std::string new_backup_data;
+
+
+  void finishedGetBackupData();
+
 protected slots:
 	void on_cbDeviceList_currentIndexChanged( int id );
 	void on_lwSaveList_itemSelectionChanged();
+	void on_lwCloudSaveList_itemSelectionChanged();
 	void on_pbDelete_clicked();
 	void on_pbFormat_clicked();
   void on_pbExport_clicked();
   void on_pbImport_clicked();
+
+  void on_pbCopyFromCloud_clicked();
+  void on_pbCopyFromLocal_clicked();
+	void on_pbDeleteCloudItem_clicked();
+
 };
 
 #endif // UIBACKUPRAM_H

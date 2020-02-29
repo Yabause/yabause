@@ -42,6 +42,10 @@ enum BARDISPLAY
 	BD_SHOWONFSHOVER=3
 };
 
+namespace firebase{
+	class App;
+}
+
 class YabauseLocker
 {
 public:
@@ -88,7 +92,12 @@ public:
 	void swapBuffers();
 	virtual bool eventFilter( QObject* o, QEvent* e );
 
+	static firebase::App* getFirebaseApp(){
+		return app;
+	}
+
 protected:
+	static firebase::App* app;
 	YabauseGL* mYabauseGL;
 	YabauseThread* mYabauseThread;
 	QDockWidget* mLogDock;

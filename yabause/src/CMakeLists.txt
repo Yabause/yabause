@@ -484,7 +484,7 @@ if (MSVC)
 		set(DDK_DIR "$ENV{SYSTEMDRIVE}/WINDDK/7600.16385.0/")
         endif (EXISTS "$ENV{SYSTEMDRIVE}/WINDDK/3790.1830/")
 
-	add_definitions(-DHAVE_C99_VARIADIC_MACROS -D_CRT_SECURE_NO_WARNINGS -DC68K_NO_JUMP_TABLE
+	add_definitions(/MP -DHAVE_C99_VARIADIC_MACROS -D_CRT_SECURE_NO_WARNINGS -DC68K_NO_JUMP_TABLE
 			-D_UNICODE -DUNICODE)
 endif (MSVC)
 
@@ -845,8 +845,6 @@ else ()
 	add_definitions(-DUNKNOWN_ARCH=1)
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
 endif ()
-
-set(YAB_OPTIMIZATION "-fsanitize=address  -fsanitize=leak" CACHE STRING "Override optimization level")
 
 set(ENABLE_SANITIZER OFF CACHE STRING "Enable/Disable Sanitizer" )
 if(ENABLE_SANITIZER)
