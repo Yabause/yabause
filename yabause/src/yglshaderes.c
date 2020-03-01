@@ -1042,9 +1042,7 @@ const GLchar Yglprg_vdp2_drawfb_gl_cram_f[] =
 "}\n"
 "FBCol getFB(int x, ivec2 addr){ \n"
 "  vec4 lineCoord = vec4(gl_FragCoord.x, (u_vheight-gl_FragCoord.y), 0.0, 0.0);\n"
-"  int line = int(lineCoord.y * u_emu_height)*24;\n"
-"  vec3 u_coloroffset = vec3(texelFetch(s_vdp2reg, ivec2(17 + line,0), 0).r, texelFetch(s_vdp2reg, ivec2(18+line,0), 0).r, texelFetch(s_vdp2reg, ivec2(19+line,0), 0).r);\n"
-"  vec3 u_coloroffset_sign = vec3(texelFetch(s_vdp2reg, ivec2(20 + line, 0), 0).r, texelFetch(s_vdp2reg, ivec2(21+line,0), 0).r, texelFetch(s_vdp2reg, ivec2(22+line,0), 0).r);\n";
+"  int line = int(lineCoord.y * u_emu_height)*24;\n";
 
 static const GLchar vdp2blit_gl_end_f[] =
 "";

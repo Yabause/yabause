@@ -529,9 +529,6 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  FBCol ret = zeroFBCol();\n"
 "  FBCol mesh = zeroFBCol();\n"
 "  if (fbon != 1) return ret;\n"
-"  if (u_coloroffset_sign.r != 0.0) u_coloroffset.r = float(int(u_coloroffset.r*255.0)-256.0)/255.0;\n"
-"  if (u_coloroffset_sign.g != 0.0) u_coloroffset.g = float(int(u_coloroffset.g*255.0)-256.0)/255.0;\n"
-"  if (u_coloroffset_sign.b != 0.0) u_coloroffset.b = float(int(u_coloroffset.b*255.0)-256.0)/255.0;\n"
 "  int u_color_ram_offset = getVDP2Reg(23+line)<<8;\n"
 "  fbmode = 1;\n"
 "  vdp1mode = 1;\n"
@@ -582,7 +579,7 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "    tmpColor = ret.color;\n"
 "    msb = 1;\n"
 "  } \n"
-"  ret.offset_color = u_coloroffset;  \n"
+"  ret.offset_color = texelFetch( s_perline, ivec2(int( (u_vheight-PosY) * u_emu_height), is_perline[6]),0 ).rgb;\n"
 "  if (fbmode != 0) {\n";
 
 static const GLchar Yglprg_vdp2_common_end[] =
