@@ -3396,16 +3396,7 @@ void VIDOGLVdp1Draw()
 
     linebuf = YglGetPerlineBuf(_Ygl->rheight, SPRITE);
     for (line = 0; line < _Ygl->rheight; line++) {
-      linebuf[line] = 0xFF000000;
       Vdp2 * lVdp2Regs = &Vdp2Lines[line >> line_shift];
-
-      u8 *cclist = (u8 *)&lVdp2Regs->CCRSA;
-      u8 *prilist = (u8 *)&lVdp2Regs->PRISA;
-      for (i = 0; i < 8; i++) {
-        linebuf[line + 512 * (1 + i)] = (u32)(prilist[i] & 0x7) << 24;
-        linebuf[line + 512 * (1 + 8 + i)] = (u32)(0xFF - (((cclist[i] & 0x1F) << 3) & 0xF8)) << 24;
-      }
-
       if (lVdp2Regs->CLOFEN & 0x40) {
 
         // color offset enable
@@ -3449,7 +3440,7 @@ void VIDOGLVdp1Draw()
         linebuf[line] |= 0x00808080;
       }
     }
-    YglSetPerlineBuf(linebuf, SPRITE, 1+8+8);
+    YglSetPerlineBuf(linebuf, SPRITE, 1);
 
   _Ygl->msb_shadow_count_[_Ygl->drawframe] = 0;
 
