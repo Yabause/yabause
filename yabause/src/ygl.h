@@ -533,10 +533,6 @@ typedef struct {
 
    float clear[4];
 
-   // VDP1 Info
-   int vdp1_maxpri;
-   int vdp1_minpri;
-
    // VDP1 Framebuffer
    int rwidth;
    int rheight;

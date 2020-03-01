@@ -3340,12 +3340,9 @@ int VIDOGLVdp1Reset(void)
 void VIDOGLVdp1Draw()
 {
   int i;
-  int maxpri;
-  int minpri;
   int line = 0;
   Vdp2 *varVdp2Regs = &Vdp2Lines[yabsys.LineCount];
   _Ygl->vpd1_running = 1;
-
 
 #ifdef PERFRAME_LOG
   if (ppfp == NULL) {
@@ -3359,28 +3356,10 @@ void VIDOGLVdp1Draw()
 }
   fount++;
 #endif
-
-  //varVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
-  //if (varVdp2Regs == NULL) varVdp2Regs = Vdp2Regs;
-  //memcpy(&baseVdp2Regs, varVdp2Regs, sizeof(Vdp2));
-  //varVdp2Regs = &baseVdp2Regs;
-
-  u8 *sprprilist = (u8 *)&(Vdp2Lines[0].PRISA);
-
   FrameProfileAdd("Vdp1Command start");
 
   YglTmPull(YglTM_vdp1[_Ygl->drawframe], 0);
   vdp1_setup();
-
-  maxpri = 0x00;
-  minpri = 0x07;
-  for (i = 0; i < 8; i++)
-  {
-    if ((sprprilist[i] & 0x07) < minpri) minpri = (sprprilist[i] & 0x07);
-    if ((sprprilist[i] & 0x07) > maxpri) maxpri = (sprprilist[i] & 0x07);
-  }
-  _Ygl->vdp1_maxpri = maxpri;
-  _Ygl->vdp1_minpri = minpri;
 
   int firstalpha = (Vdp2External.perline_alpha_draw[0] & 0x40);
   int prioChanged = 0;
@@ -3398,7 +3377,6 @@ void VIDOGLVdp1Draw()
     for (line = 0; line < _Ygl->rheight; line++) {
       Vdp2 * lVdp2Regs = &Vdp2Lines[line >> line_shift];
       if (lVdp2Regs->CLOFEN & 0x40) {
-
         // color offset enable
         if (lVdp2Regs->CLOFSL & 0x40)
         {
