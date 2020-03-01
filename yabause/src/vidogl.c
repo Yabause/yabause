@@ -3431,13 +3431,12 @@ void VIDOGLVdp1Draw()
             vdp1cob |= 0xFFFFFF00;
         }
 
-
-        linebuf[line] |= ((int)(128.0f + (vdp1cor / 2.0)) & 0xFF) << 16;
-        linebuf[line] |= ((int)(128.0f + (vdp1cog / 2.0)) & 0xFF) << 8;
-        linebuf[line] |= ((int)(128.0f + (vdp1cob / 2.0)) & 0xFF) << 0;
+        linebuf[line] = ((int)(128.0f + (vdp1cor / 2.0)) & 0xFF) << 16;
+        linebuf[line] = ((int)(128.0f + (vdp1cog / 2.0)) & 0xFF) << 8;
+        linebuf[line] = ((int)(128.0f + (vdp1cob / 2.0)) & 0xFF) << 0;
       }
       else {
-        linebuf[line] |= 0x00808080;
+        linebuf[line] = 0x00808080;
       }
     }
     YglSetPerlineBuf(linebuf, SPRITE, 1);
