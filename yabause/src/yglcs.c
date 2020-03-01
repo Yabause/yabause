@@ -258,7 +258,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
   int modescreens[7];
   int isRGB[6];
   int isBlur[7];
-  int isPerline[7] = {0};
+  int isPerline[8] = {0};
   int isShadow[7];
   glDisable(GL_BLEND);
   int id = 0;
@@ -284,7 +284,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
       modescreens[id] =  setupBlend(varVdp2Regs, vdp2screens[j]);
       isRGB[id] = setupColorMode(varVdp2Regs, vdp2screens[j]);
       isBlur[id] = setupBlur(varVdp2Regs, vdp2screens[j]);
-      isPerline[id] = (_Ygl->perLine[vdp2screens[j]] != 0);
+      isPerline[id] = _Ygl->perLine[vdp2screens[j]];
       isShadow[id] = setupShadow(varVdp2Regs, vdp2screens[j]);
       lncl_draw[id] = lncl[vdp2screens[j]];
       winS_draw[id] = WinS[vdp2screens[j]];
@@ -299,6 +299,8 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
   }
   isBlur[6] = setupBlur(varVdp2Regs, SPRITE);
   lncl_draw[6] = lncl[6];
+  isPerline[6] = 6;
+  isPerline[7] = 7;
 
   for (int i = 6; i < 8; i++) {
     //Update dedicated sprite window and Color calculation window

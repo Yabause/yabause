@@ -2655,13 +2655,6 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   }
 
   regs = Vdp2RestoreRegs(info->startLine, Vdp2Lines);
-  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
-
-  if (info->lineTexture != 0) {
-     info->cor = 0;
-     info->cog = 0;
-     info->cob = 0;
-   }
 
     u64 cacheaddr = 0x90000000BAD;
 
@@ -2903,7 +2896,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
       }
     }
 
-    //	  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
     for (l = 0; l < hres; l++)
     {
       switch (varVdp2Regs->RPMD | rgb_type ) {
@@ -3364,60 +3356,60 @@ void VIDOGLVdp1Draw()
   int firstalpha = (Vdp2External.perline_alpha_draw[0] & 0x40);
   int prioChanged = 0;
   int max = (yabsys.VBlankLineCount<270)?yabsys.VBlankLineCount:270;
-    u32 * linebuf;
-    int line_shift = 0;
-    if (_Ygl->rheight > 256) {
-      line_shift = 1;
+  u32 * linebuf;
+  int line_shift = 0;
+  if (_Ygl->rheight > 256) {
+    line_shift = 1;
+  }
+  else {
+    line_shift = 0;
+  }
+
+  linebuf = YglGetPerlineBuf(_Ygl->rheight, SPRITE);
+  for (line = 0; line < _Ygl->rheight; line++) {
+    Vdp2 * lVdp2Regs = &Vdp2Lines[line >> line_shift];
+    if (lVdp2Regs->CLOFEN & 0x40) {
+      // color offset enable
+      if (lVdp2Regs->CLOFSL & 0x40)
+      {
+        // color offset B
+        vdp1cor = lVdp2Regs->COBR & 0xFF;
+        if (lVdp2Regs->COBR & 0x100)
+          vdp1cor |= 0xFFFFFF00;
+
+        vdp1cog = lVdp2Regs->COBG & 0xFF;
+        if (lVdp2Regs->COBG & 0x100)
+          vdp1cog |= 0xFFFFFF00;
+
+        vdp1cob = lVdp2Regs->COBB & 0xFF;
+        if (lVdp2Regs->COBB & 0x100)
+          vdp1cob |= 0xFFFFFF00;
+      }
+      else
+      {
+        // color offset A
+        vdp1cor = lVdp2Regs->COAR & 0xFF;
+        if (lVdp2Regs->COAR & 0x100)
+          vdp1cor |= 0xFFFFFF00;
+
+        vdp1cog = lVdp2Regs->COAG & 0xFF;
+        if (lVdp2Regs->COAG & 0x100)
+          vdp1cog |= 0xFFFFFF00;
+
+        vdp1cob = lVdp2Regs->COAB & 0xFF;
+        if (lVdp2Regs->COAB & 0x100)
+          vdp1cob |= 0xFFFFFF00;
+      }
+
+      linebuf[line] = ((int)(128.0f + (vdp1cor / 2.0)) & 0xFF) << 16;
+      linebuf[line] = ((int)(128.0f + (vdp1cog / 2.0)) & 0xFF) << 8;
+      linebuf[line] = ((int)(128.0f + (vdp1cob / 2.0)) & 0xFF) << 0;
     }
     else {
-      line_shift = 0;
+      linebuf[line] = 0x00808080;
     }
-
-    linebuf = YglGetPerlineBuf(_Ygl->rheight, SPRITE);
-    for (line = 0; line < _Ygl->rheight; line++) {
-      Vdp2 * lVdp2Regs = &Vdp2Lines[line >> line_shift];
-      if (lVdp2Regs->CLOFEN & 0x40) {
-        // color offset enable
-        if (lVdp2Regs->CLOFSL & 0x40)
-        {
-          // color offset B
-          vdp1cor = lVdp2Regs->COBR & 0xFF;
-          if (lVdp2Regs->COBR & 0x100)
-            vdp1cor |= 0xFFFFFF00;
-
-          vdp1cog = lVdp2Regs->COBG & 0xFF;
-          if (lVdp2Regs->COBG & 0x100)
-            vdp1cog |= 0xFFFFFF00;
-
-          vdp1cob = lVdp2Regs->COBB & 0xFF;
-          if (lVdp2Regs->COBB & 0x100)
-            vdp1cob |= 0xFFFFFF00;
-        }
-        else
-        {
-          // color offset A
-          vdp1cor = lVdp2Regs->COAR & 0xFF;
-          if (lVdp2Regs->COAR & 0x100)
-            vdp1cor |= 0xFFFFFF00;
-
-          vdp1cog = lVdp2Regs->COAG & 0xFF;
-          if (lVdp2Regs->COAG & 0x100)
-            vdp1cog |= 0xFFFFFF00;
-
-          vdp1cob = lVdp2Regs->COAB & 0xFF;
-          if (lVdp2Regs->COAB & 0x100)
-            vdp1cob |= 0xFFFFFF00;
-        }
-
-        linebuf[line] = ((int)(128.0f + (vdp1cor / 2.0)) & 0xFF) << 16;
-        linebuf[line] = ((int)(128.0f + (vdp1cog / 2.0)) & 0xFF) << 8;
-        linebuf[line] = ((int)(128.0f + (vdp1cob / 2.0)) & 0xFF) << 0;
-      }
-      else {
-        linebuf[line] = 0x00808080;
-      }
-    }
-    YglSetPerlineBuf(linebuf, SPRITE, 1);
+  }
+  YglSetPerlineBuf(linebuf, SPRITE, 1);
 
   _Ygl->msb_shadow_count_[_Ygl->drawframe] = 0;
 
@@ -4918,7 +4910,8 @@ static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs)
 {
   u32 scrAddr;
   int dot;
-  vdp2draw_struct info;
+  u32 * linebuf;
+  vdp2draw_struct info = {0};
 
   static int line[512 * 4];
 
@@ -4927,7 +4920,27 @@ static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs)
   else
     scrAddr = (((varVdp2Regs->BKTAU & 0x3) << 16) | varVdp2Regs->BKTAL) * 2;
 
-  ReadVdp2ColorOffset(varVdp2Regs, &info, 0x20);
+  int line_shift = 0;
+  if (_Ygl->rheight > 256) {
+    line_shift = 1;
+  }
+  else {
+    line_shift = 0;
+  }
+
+  linebuf = YglGetPerlineBuf(_Ygl->rheight, enBGMAX);
+  for (int line = 0; line < _Ygl->rheight; line++) {
+    if (Vdp2Lines[line >> line_shift].CLOFEN  & 0x20) {
+      ReadVdp2ColorOffset(&Vdp2Lines[line >> line_shift], &info, 0x20);
+      linebuf[line] |= ((int)(128.0f + (info.cor / 2.0)) & 0xFF) << 16;
+      linebuf[line] |= ((int)(128.0f + (info.cog / 2.0)) & 0xFF) << 8;
+      linebuf[line] |= ((int)(128.0f + (info.cob / 2.0)) & 0xFF) << 0;
+    }
+    else {
+      linebuf[line] |= 0x00808080;
+    }
+  }
+  YglSetPerlineBuf(linebuf, enBGMAX, 1);
 
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGLES31_) || defined(_OGL3_)
   if ((varVdp2Regs->BKTAU & 0x8000) != 0 ) {
@@ -4936,6 +4949,7 @@ static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs)
     if (back_pixel_data != NULL) {
       for (int i = 0; i < _Ygl->rheight; i++) {
         u8 r, g, b, a;
+        ReadVdp2ColorOffset(&Vdp2Lines[i >> line_shift], &info, 0x20);
         dot = Vdp2RamReadWord(NULL, Vdp2Ram, (scrAddr + 2 * i));
         r = Y_MAX(((dot & 0x1F) << 3) + info.cor, 0);
         g = Y_MAX((((dot & 0x3E0) >> 5) << 3) + info.cog, 0);
@@ -5116,7 +5130,6 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
         else {
           linebuf[line] |= 0x00808080;
         }
-
       }
     }
     YglSetPerlineBuf(linebuf, id, 1);
@@ -5670,7 +5683,7 @@ static void Vdp2DrawNBG0RBG1(Vdp2* varVdp2Regs)
 
 static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
 {
-  vdp2draw_struct info;
+  vdp2draw_struct info = {0};
   YglTexture texture;
   YglCache tmpc;
   info.dst = 0;
@@ -5924,7 +5937,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
 
 static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
 {
-  vdp2draw_struct info;
+  vdp2draw_struct info = {0};
   YglTexture texture;
   info.dst = 0;
   info.idScreen = NBG2;
@@ -5972,14 +5985,6 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
   if (info.lineTexture != 0) _Ygl->perLine[NBG2] = NBG2;
 
   info.coloroffset = varVdp2Regs->CRAOFA & 0x700;
-  ReadVdp2ColorOffset(varVdp2Regs, &info, 0x4);
-
-  if (info.lineTexture != 0) {
-    info.cor = 0;
-    info.cog = 0;
-    info.cob = 0;
-  }
-
 
   info.linecheck_mask = 0x04;
   info.coordincx = info.coordincy = 1;
@@ -6005,7 +6010,7 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
 
 static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
 {
-  vdp2draw_struct info;
+  vdp2draw_struct info = {0};
   YglTexture texture;
   info.idScreen = NBG3;
   info.idReg = 3;
@@ -6052,12 +6057,6 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
   if (info.lineTexture != 0) _Ygl->perLine[NBG3] = NBG3;
 
   info.coloroffset = (varVdp2Regs->CRAOFA & 0x7000) >> 4;
-  ReadVdp2ColorOffset(varVdp2Regs, &info, 0x8);
-  if (info.lineTexture != 0) {
-    info.cor = 0;
-    info.cog = 0;
-    info.cob = 0;
-  }
 
   info.linecheck_mask = 0x08;
   info.coordincx = info.coordincy = 1;
@@ -6446,6 +6445,8 @@ static void VIDOGLVdp2DrawScreens(void)
   _Ygl->perLine[NBG3] = -1;
   _Ygl->perLine[RBG0] = -1;
   _Ygl->perLine[RBG1] = -1;
+  _Ygl->perLine[SPRITE] = -1;
+  _Ygl->perLine[enBGMAX] = -1;
 
 LOG_ASYN("===================================\n");
   if (Vdp1Regs->TVMR & 0x02) {

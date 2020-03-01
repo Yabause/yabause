@@ -618,7 +618,7 @@ typedef struct {
    u32 linecolorscreen_tex;
    u32 linecolorscreen_pbo;
    u32* linecolorscreen_buf;
-   int perLine[enBGMAX];
+   int perLine[enBGMAX+1];
 
    u32 coloroffset_tex;
    u32 coloroffset_pbo;

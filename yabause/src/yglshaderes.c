@@ -1006,7 +1006,7 @@ SHADER_VERSION
 "uniform int isRGB[6]; \n"
 "uniform int isBlur[7]; \n"
 "uniform int isShadow[6]; \n"
-"uniform int is_perline[7];\n"
+"uniform int is_perline[8];\n"
 "uniform int use_sp_win; \n"
 "uniform int use_trans_shadow; \n"
 "uniform ivec2 tvSize;\n"
@@ -1593,7 +1593,7 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "is_perline"), 7, isPerline);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "is_perline"), 8, isPerline);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isShadow"), 6, isShadow);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
