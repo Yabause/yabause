@@ -748,8 +748,8 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm);
 void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm);
 
-u32 * YglGetPerlineBuf(int linecount,int depth );
-void YglSetPerlineBuf(u32 * pbuf, int col, int depth);
+u32 * YglGetPerlineBuf(void);
+void YglSetPerlineBuf(u32 * pbuf);
 
 // 0.. no belnd, 1.. Alpha, 2.. Add
 int YglSetLevelBlendmode( int pri, int mode );

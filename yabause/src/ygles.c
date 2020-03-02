@@ -3843,43 +3843,37 @@ void VIDOGLSync(){
 
 ///////////////////////////////////////////////////////////////////////////////
 // Per line operation
-u32 * YglGetPerlineBuf(int linecount, int col){
+u32 * YglGetPerlineBuf(void){
   int error;
   if (_Ygl->coloroffset_tex == 0){
-    if (_Ygl->coloroffset_tex != 0){
-       glDeleteTextures(1, &_Ygl->coloroffset_tex);
-       glDeleteBuffers(1,&_Ygl->coloroffset_pbo);
-    }
     glGenTextures(1, &_Ygl->coloroffset_tex);
 
     glGenBuffers(1, &_Ygl->coloroffset_pbo);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->coloroffset_pbo);
-    glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4 * 9, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4 * 8, NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
     glBindTexture(GL_TEXTURE_2D, _Ygl->coloroffset_tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 9, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
   }
-
   glBindTexture(GL_TEXTURE_2D, _Ygl->coloroffset_tex);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->coloroffset_pbo);
-  _Ygl->coloroffset_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4 * 9, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  _Ygl->coloroffset_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4 * 8, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-  return &_Ygl->coloroffset_buf[col*512];
+  return &_Ygl->coloroffset_buf[0];
 }
 
-void YglSetPerlineBuf(u32 * pbuf, int col, int depth){
+void YglSetPerlineBuf(u32 * pbuf){
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->coloroffset_tex);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->coloroffset_pbo);
   glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, col, 512, depth, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 8, GL_RGBA, GL_UNSIGNED_BYTE, 0);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   _Ygl->coloroffset_buf = NULL;
   glBindTexture(GL_TEXTURE_2D, 0);

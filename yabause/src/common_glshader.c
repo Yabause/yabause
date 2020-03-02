@@ -580,6 +580,7 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "    msb = 1;\n"
 "  } \n"
 "  ret.offset_color = texelFetch( s_perline, ivec2(int( (u_vheight-PosY) * u_emu_height), is_perline[6]),0 ).rgb;\n"
+"  ret.offset_color = (ret.offset_color - vec3(0.5))*2.0;\n"
 "  if (fbmode != 0) {\n";
 
 static const GLchar Yglprg_vdp2_common_end[] =
