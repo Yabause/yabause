@@ -3289,11 +3289,11 @@ void YglRender(Vdp2 *varVdp2Regs) {
   const int vdp2screens[] = {RBG0, RBG1, NBG0, NBG1, NBG2, NBG3};
 
   int prioscreens[6] = {0};
-  int modescreens[7];
-  int isRGB[6];
-  int isBlur[7];
-  int isPerline[7];
-  int isShadow[7];
+  int modescreens[7] = {0};
+  int isRGB[6] = {0};
+  int isBlur[7] = {0};
+  int isPerline[8] = {-1};
+  int isShadow[7] = {0};
   glDisable(GL_BLEND);
   int id = 0;
 
