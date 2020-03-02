@@ -3401,9 +3401,9 @@ void VIDOGLVdp1Draw()
           vdp1cob |= 0xFFFFFF00;
       }
 
-      linebuf[line] = ((int)(128.0f + (vdp1cor / 2.0)) & 0xFF) << 16;
-      linebuf[line] = ((int)(128.0f + (vdp1cog / 2.0)) & 0xFF) << 8;
-      linebuf[line] = ((int)(128.0f + (vdp1cob / 2.0)) & 0xFF) << 0;
+      linebuf[line] = (((int)(128.0f + (vdp1cor / 2.0)) & 0xFF) << 16)
+                    | (((int)(128.0f + (vdp1cog / 2.0)) & 0xFF) << 8)
+                    | (((int)(128.0f + (vdp1cob / 2.0)) & 0xFF) << 0);
     }
     else {
       linebuf[line] = 0x00808080;
@@ -4932,12 +4932,12 @@ static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs)
   for (int line = 0; line < _Ygl->rheight; line++) {
     if (Vdp2Lines[line >> line_shift].CLOFEN  & 0x20) {
       ReadVdp2ColorOffset(&Vdp2Lines[line >> line_shift], &info, 0x20);
-      linebuf[line] |= ((int)(128.0f + (info.cor / 2.0)) & 0xFF) << 16;
-      linebuf[line] |= ((int)(128.0f + (info.cog / 2.0)) & 0xFF) << 8;
-      linebuf[line] |= ((int)(128.0f + (info.cob / 2.0)) & 0xFF) << 0;
+      linebuf[line] = (((int)(128.0f + (vdp1cor / 2.0)) & 0xFF) << 16)
+                    | (((int)(128.0f + (vdp1cog / 2.0)) & 0xFF) << 8)
+                    | (((int)(128.0f + (vdp1cob / 2.0)) & 0xFF) << 0);
     }
     else {
-      linebuf[line] |= 0x00808080;
+      linebuf[line] = 0x00808080;
     }
   }
   YglSetPerlineBuf(linebuf, enBGMAX, 1);
@@ -5123,9 +5123,9 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
 
         if (Vdp2Lines[line >> line_shift].CLOFEN  & bit) {
           ReadVdp2ColorOffset(&Vdp2Lines[line >> line_shift], info, bit);
-          linebuf[line] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 16;
-          linebuf[line] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
-          linebuf[line] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 0;
+          linebuf[line] |= (((int)(128.0f + (vdp1cor / 2.0)) & 0xFF) << 16)
+                        | (((int)(128.0f + (vdp1cog / 2.0)) & 0xFF) << 8)
+                        | (((int)(128.0f + (vdp1cob / 2.0)) & 0xFF) << 0);
         }
         else {
           linebuf[line] |= 0x00808080;
