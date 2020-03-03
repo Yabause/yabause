@@ -6,6 +6,11 @@
 #define QuoteIdent(ident) #ident
 #define Stringify(macro) QuoteIdent(macro)
 
+
+// To do: In order to know if a pixel has to be considered for a command,
+// each command has o be expressed a set of lines (dx,dy) on AD segment, (dx2,dy2) on BC Segment
+// if a pixel is on a line, it has to be considered as part of command => it shall simulate the per line rasterizer of the real VDP1
+
 #define POLYGON 0
 #define DISTORTED 1
 #define NORMAL 2
