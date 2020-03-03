@@ -23,7 +23,6 @@
 
 #include "memory.h"
 #include "vdp2.h"
-//#define USE_VDP1_TEX
 
 #define VIDCORE_DEFAULT         -1
 #define VIDCORE_DUMMY           0
@@ -144,9 +143,6 @@ typedef struct
   u32 w;
   u32 h;
   u32 flip;
-  u32 cor;
-  u32 cog;
-  u32 cob;
   u32 type;
   u32 CMDCTRL;
   u32 CMDLINK;
@@ -167,6 +163,7 @@ typedef struct
   u32 COLOR[4];
   u32 CMDGRDA;
   u32 SPCTL;
+  u32 pad[3];
 } vdp1cmd_struct;
 
 int Vdp1Init(void);

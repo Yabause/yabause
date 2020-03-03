@@ -490,6 +490,7 @@ u32* vdp1_read() {
 
 void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
 {
+	printf("Size %d %d\n", sizeof(vdp1cmd_struct), sizeof(vdp1cmd_struct)%16);
   int am = sizeof(vdp1cmd_struct) % 16;
   tex_width = width;
   tex_height = height;
@@ -567,11 +568,6 @@ void vdp1_compute() {
 
 	glBindImageTexture(0, compute_tex[_Ygl->drawframe], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 
-#ifdef USE_VDP1_TEX
-	glUniform1i(2, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, YglTM_vdp1[id]->textureID);
-#endif
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_vdp1ram_);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_nbcmd_);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_cmd_);

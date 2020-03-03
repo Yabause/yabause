@@ -150,16 +150,7 @@ SHADER_VERSION_COMPUTE
 "  uint priority;\n"
 "  uint w;\n"
 "  uint h;\n"
-#ifdef USE_VDP1_TEX
-"  uint texX;\n"
-"  uint texY;\n"
-"  uint texW;\n"
-"  uint texH;\n"
-#endif
 "  uint flip;\n"
-"  uint cor;\n"
-"  uint cob;\n"
-"  uint cog;\n"
 "  uint type;\n"
 "  uint CMDCTRL;\n"
 "  uint CMDLINK;\n"
@@ -180,13 +171,11 @@ SHADER_VERSION_COMPUTE
 "  int COLOR[4];\n"
 "  uint CMDGRDA;\n"
 "  uint SPCTL;\n"
+"  int pad[3];\n"
 "};\n"
 
 "layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
 "layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
-#ifdef USE_VDP1_TEX
-"layout(location = 2) uniform sampler2D texSurface;\n"
-#endif
 "layout(std430, binding = 3) readonly buffer VDP1RAM { uint Vdp1Ram[]; };\n"
 "layout(std430, binding = 4) readonly buffer NB_CMD { uint nbCmd[]; };\n"
 "layout(std430, binding = 5) readonly buffer CMD { \n"
@@ -496,15 +485,6 @@ SHADER_VERSION_COMPUTE
 "  return color;\n"
 "}\n"
 
-#ifdef USE_VDP1_TEX
-"vec4 ReadTexColor(cmdparameter_struct pixcmd, vec2 uv, vec2 texel){\n"
-"  int x = int(uv.x*pixcmd.w - 0.5) + int(pixcmd.texX);\n"
-"  int y = int(uv.y*pixcmd.h - 0.5) + int(pixcmd.texY);\n"
-"  ivec2 size = textureSize(texSurface,0);\n"
-"  return texelFetch(texSurface,ivec2(x, y), 0);\n"
-"}\n"
-#endif
-
 "vec4 extractPolygonColor(cmdparameter_struct pixcmd){\n"
 "  uint color = pixcmd.COLOR[0];\n"
 "  return VDP1COLOR(color);\n"
@@ -603,32 +583,20 @@ SHADER_VERSION_COMPUTE
 "      else {\n"
 "        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
 "        if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-#ifdef USE_VDP1_TEX
-"        newColor = ReadTexColor(pixcmd, texcoord, texel);\n"
-#else
 "        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
-#endif
 "      }\n"
 "    } else if (pixcmd.type == "Stringify(SCALED)") {\n"
 "      texcoord = getTexCoord(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2]+1,pixcmd.P[3])/2.0, vec2(pixcmd.P[4]+1,pixcmd.P[5]+1)/2.0, vec2(pixcmd.P[6],pixcmd.P[7]+1)/2.0);\n"
 "      gouraudcoord = texcoord;\n"
 "      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
 "      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-#ifdef USE_VDP1_TEX
-"      newColor = ReadTexColor(pixcmd, texcoord, texel);\n"
-#else
 "        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
-#endif
 "    } else if (pixcmd.type == "Stringify(NORMAL)") {\n"
 "      texcoord = vec2(float(texel.x/upscale.x-pixcmd.CMDXA)/float(pixcmd.w), float(texel.y/upscale.y-pixcmd.CMDYA)/float(pixcmd.h));\n"
 "      gouraudcoord = texcoord;\n"
 "      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
 "      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-#ifdef USE_VDP1_TEX
-"      newColor = ReadTexColor(pixcmd, texcoord, texel);\n"
-#else
 "        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
-#endif
 "    }\n"
 "    if (discarded) continue;\n"
 "    texel = OriginTexel;\n"

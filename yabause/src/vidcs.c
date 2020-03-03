@@ -182,9 +182,6 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   cmd.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   cmd.h = cmd.CMDSIZE & 0xFF;
-  cmd.cor = 0;
-  cmd.cog = 0;
-  cmd.cob = 0;
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
@@ -247,9 +244,6 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   cmd.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   cmd.h = cmd.CMDSIZE & 0xFF;
-  cmd.cor = 0;
-  cmd.cog = 0;
-  cmd.cob = 0;
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
@@ -393,9 +387,6 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   cmd.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   cmd.h = cmd.CMDSIZE & 0xFF;
-  cmd.cor = 0;
-  cmd.cog = 0;
-  cmd.cob = 0;
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
@@ -481,9 +472,6 @@ void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.w = 1;
   cmd.h = 1;
   cmd.flip = 0;
-  cmd.cor = 0x0;
-  cmd.cog = 0x0;
-  cmd.cob = 0x0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
   cmd.type = POLYGON;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
@@ -533,9 +521,6 @@ if ((cmd.CMDPMOD & 4))
   cmd.w = 1;
   cmd.h = 1;
   cmd.flip = 0;
-  cmd.cor = 0x0;
-  cmd.cog = 0x0;
-  cmd.cob = 0x0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
   cmd.type = POLYLINE;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
@@ -587,9 +572,6 @@ void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.w = 1;
   cmd.h = 1;
   cmd.flip = 0;
-  cmd.cor = 0x0;
-  cmd.cog = 0x0;
-  cmd.cob = 0x0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
   cmd.type = LINE;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
