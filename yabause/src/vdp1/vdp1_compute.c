@@ -490,7 +490,6 @@ u32* vdp1_read() {
 
 void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
 {
-	printf("Size %d %d\n", sizeof(vdp1cmd_struct), sizeof(vdp1cmd_struct)%16);
   int am = sizeof(vdp1cmd_struct) % 16;
   tex_width = width;
   tex_height = height;
