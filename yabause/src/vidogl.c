@@ -1807,7 +1807,6 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   tile.blendmode = info->blendmode;
   tile.mosaicxmask = info->mosaicxmask;
   tile.mosaicymask = info->mosaicymask;
-  tile.lineTexture = info->lineTexture;
   tile.idScreen = info->idScreen;
 
   tile.cellw = tile.cellh = info->patternpixelwh;
@@ -5075,41 +5074,6 @@ static void Vdp2DrawLineColorScreen(Vdp2 *varVdp2Regs)
 
 }
 
-void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *varVdp2Regs) {
-  int bit = 1 << id;
-  int line = 0;
-  int i;
-  int displayedbyLine = 0;
-
-  u8 first = info->display[info->startLine];
-  int firstalpha = (Vdp2External.perline_alpha[info->startLine] & bit);
-  for(i = info->startLine; i<info->endLine; i++) {
-    if (first != info->display[i]) {
-      displayedbyLine = 1;
-      break;
-    }
-    if ((Vdp2External.perline_alpha[i] & bit) != firstalpha) {
-      displayedbyLine = 1;
-      break;
-    }
-  }
-  if (displayedbyLine) {
-    u32 * linebuf;
-    int line_shift = 0;
-    if (_Ygl->rheight > 256) {
-      line_shift = 1;
-    }
-    else {
-      line_shift = 0;
-    }
-    info->lineTexture = _Ygl->coloroffset_tex;
-  }
-  else {
-    info->lineTexture = 0;
-  }
-}
-
-
 //////////////////////////////////////////////////////////////////////////////
 
 static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
@@ -5232,17 +5196,8 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   // Color calculation ratio
   info->alpha = (~varVdp2Regs->CCRNA & 0x1F)<<3;
 
-
-  Vdp2GeneratePerLineColorCalcuration(info, NBG0, varVdp2Regs);
-  if (info->lineTexture != 0) _Ygl->perLine[RBG1] = RBG1;
-
   info->coloroffset = (varVdp2Regs->CRAOFA & 0x7) << 8;
-  ReadVdp2ColorOffset(varVdp2Regs, info, 0x1);
-  if (info->lineTexture != 0) {
-    info->cor = 0;
-    info->cog = 0;
-    info->cob = 0;
-  }
+
   info->linecheck_mask = 0x01;
   info->priority = varVdp2Regs->PRINA & 0x7;
 
@@ -5524,16 +5479,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
 
   info.alpha = (~varVdp2Regs->CCRNA & 0x1F) << 3;
 
-  Vdp2GeneratePerLineColorCalcuration(&info, NBG0, varVdp2Regs);
-  if (info.lineTexture != 0) _Ygl->perLine[NBG0] = NBG0;
-
   info.coloroffset = (varVdp2Regs->CRAOFA & 0x7) << 8;
-  ReadVdp2ColorOffset(varVdp2Regs, &info, 0x1);
-  if (info.lineTexture != 0) {
-    info.cor = 0;
-    info.cog = 0;
-    info.cob = 0;
-  }
   info.linecheck_mask = 0x01;
   info.priority = varVdp2Regs->PRINA & 0x7;
 
@@ -5749,16 +5695,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
 
   info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
 
-  Vdp2GeneratePerLineColorCalcuration(&info, NBG1, varVdp2Regs);
-  if (info.lineTexture != 0) _Ygl->perLine[NBG1] = NBG1;
-
   info.coloroffset = (varVdp2Regs->CRAOFA & 0x70) << 4;
-  ReadVdp2ColorOffset(varVdp2Regs, &info, 0x2);
-  if (info.lineTexture != 0) {
-    info.cor = 0;
-    info.cog = 0;
-    info.cob = 0;
-  }
   info.linecheck_mask = 0x02;
 
   if ((varVdp2Regs->ZMXN1.all & 0x7FF00) == 0)
@@ -5981,9 +5918,6 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
 
   info.alpha = (~varVdp2Regs->CCRNB & 0x1F) << 3;
 
-  Vdp2GeneratePerLineColorCalcuration(&info, NBG2, varVdp2Regs);
-  if (info.lineTexture != 0) _Ygl->perLine[NBG2] = NBG2;
-
   info.coloroffset = varVdp2Regs->CRAOFA & 0x700;
 
   info.linecheck_mask = 0x04;
@@ -6052,9 +5986,6 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
 
   info.alpha = (~varVdp2Regs->CCRNB & 0x1F00) >> 5;
 
-  Vdp2GeneratePerLineColorCalcuration(&info, NBG3, varVdp2Regs);
-  if (info.lineTexture != 0) _Ygl->perLine[NBG3] = NBG3;
-
   info.coloroffset = (varVdp2Regs->CRAOFA & 0x7000) >> 4;
 
   info.linecheck_mask = 0x08;
@@ -6111,10 +6042,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   }
 
   info->blendmode = 0;
-
-  Vdp2GeneratePerLineColorCalcuration(info, RBG0, varVdp2Regs);
-  if (info->lineTexture != 0) _Ygl->perLine[RBG0] = RBG0;
-  //info->lineTexture = 0;
 
   info->transparencyenable = !(varVdp2Regs->BGON & 0x1000);
 
@@ -6385,7 +6312,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   info->coloroffset = (varVdp2Regs->CRAOFB & 0x7) << 8;
 
-  ReadVdp2ColorOffset(varVdp2Regs, info, 0x10);
   info->linecheck_mask = 0x10;
   info->coordincx = info->coordincy = 1;
 
@@ -6437,15 +6363,6 @@ static void VIDOGLVdp2DrawScreens(void)
 #if BG_PROFILE
   before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
 #endif
-
-  _Ygl->perLine[NBG0] = -1;
-  _Ygl->perLine[NBG1] = -1;
-  _Ygl->perLine[NBG2] = -1;
-  _Ygl->perLine[NBG3] = -1;
-  _Ygl->perLine[RBG0] = -1;
-  _Ygl->perLine[RBG1] = -1;
-  _Ygl->perLine[SPRITE] = -1;
-  _Ygl->perLine[enBGMAX] = -1;
 
 LOG_ASYN("===================================\n");
   if (Vdp1Regs->TVMR & 0x02) {

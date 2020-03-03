@@ -162,7 +162,6 @@ typedef struct
    int mosaicymask;
    int islinescroll;
    u32 linescrolltbl;
-   u32 lineTexture;
    u32 lineinc;
    vdp2Lineinfo * lineinfo;
    int wctl;

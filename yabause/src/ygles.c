@@ -2106,7 +2106,6 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
   if (program == NULL) return;
 
   program->colornumber = input->colornumber;
-  program->lineTexture = input->lineTexture;
 
   program->mosaic[0] = input->mosaicxmask;
   program->mosaic[1] = input->mosaicymask;
@@ -2220,7 +2219,6 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
   if (program == NULL) return -1;
 
   program->colornumber = input->colornumber;
-  program->lineTexture = input->lineTexture;
   program->blendmode = input->blendmode;
 
   program->mosaic[0] = input->mosaicxmask;
@@ -2347,7 +2345,6 @@ int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache *
 
   program->colornumber = input->colornumber;
   program->blendmode = input->blendmode;
-  program->lineTexture = input->lineTexture;
 
   program->mosaic[0] = input->mosaicxmask;
   program->mosaic[1] = input->mosaicymask;
@@ -3318,7 +3315,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
       modescreens[id] =  setupBlend(varVdp2Regs, vdp2screens[j]);
       isRGB[id] = setupColorMode(varVdp2Regs, vdp2screens[j]);
       isBlur[id] = setupBlur(varVdp2Regs, vdp2screens[j]);
-      isPerline[id] = _Ygl->perLine[vdp2screens[j]];
+      isPerline[id] = vdp2screens[j];
       isShadow[id] = setupShadow(varVdp2Regs, vdp2screens[j]);
       lncl_draw[id] = lncl[vdp2screens[j]];
       winS_draw[id] = WinS[vdp2screens[j]];

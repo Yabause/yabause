@@ -387,7 +387,6 @@ typedef struct {
    YglVdp1CommonParam * ids;
    GLfloat* matrix;
    int mosaic[2];
-   u32 lineTexture;
    int id;
    int colornumber;
    float emu_height;
@@ -618,7 +617,6 @@ typedef struct {
    u32 linecolorscreen_tex;
    u32 linecolorscreen_pbo;
    u32* linecolorscreen_buf;
-   int perLine[enBGMAX+1];
 
    u32 coloroffset_tex;
    u32 coloroffset_pbo;
@@ -755,7 +753,7 @@ void YglSetPerlineBuf(u32 * pbuf);
 int YglSetLevelBlendmode( int pri, int mode );
 
 extern int YglBlitSimple(int texture, int blend);
-extern int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int * isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op,  Vdp2 *varVdp2Regs);
+extern int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op,  Vdp2 *varVdp2Regs);
 extern SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs);
 extern void executeTMVDP1(int in, int out);
 
