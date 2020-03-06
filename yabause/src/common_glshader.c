@@ -1152,8 +1152,8 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "  } else {\n"
 "    finalColor = vec4(colortop.rgb, 1.0);\n"
 "  }\n"
-"  finalColor.rgb = clamp(finalColor.rgb+offset_color, vec3(0.0), vec3(1.0));\n"
 "  if (mesh == 1) finalColor.rgb = finalColor.rgb * 0.5 + meshCol.rgb * 0.5;\n"
+"  finalColor.rgb = clamp(finalColor.rgb+offset_color, vec3(0.0), vec3(1.0));\n"
 "  if (processShadow) finalColor.rgb = finalColor.rgb * 0.5;\n";
 
 static const GLchar vdp2blit_filter_f[] =
