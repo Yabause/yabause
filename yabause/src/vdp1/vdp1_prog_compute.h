@@ -498,7 +498,7 @@ SHADER_VERSION_COMPUTE
 "  vec2 tag = vec2(0.0);\n"
 "  cmdparameter_struct pixcmd;\n"
 "  bool discarded = false;\n"
-"  bool noFinal = true;\n"
+"  bool drawn = false;\n"
 "  vec2 texcoord = vec2(0);\n"
 "  vec2 gouraudcoord = vec2(0.0);\n"
 "  ivec2 size = imageSize(outSurface);\n"
@@ -599,6 +599,7 @@ SHADER_VERSION_COMPUTE
 "        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
 "    }\n"
 "    if (discarded) continue;\n"
+"    else drawn = true;\n"
 "    texel = OriginTexel;\n"
      COLINDEX(finalColor)
      COLINDEX(newColor)
@@ -680,15 +681,14 @@ static const char vdp1_improved_mesh_f[] =
 "  }\n";
 
 static const char vdp1_continue_f[] =
-"    if (!discarded) {"
+"    if (drawn) {"
 "      finalColor.ba = tag;\n"
 "      finalColor.rg = outColor.rg;\n"
-"      noFinal = false;\n"
 "    }\n";
 
 static const char vdp1_end_f[] =
 "  }\n"
-"  if (discarded && noFinal) return;\n"
+"  if (!drawn) return;\n"
 "  imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
 "}\n";
 #endif //VDP1_PROG_COMPUTE_H
