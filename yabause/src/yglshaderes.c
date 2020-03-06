@@ -332,14 +332,6 @@ int Ygl_uniformAddColCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
   return 0;
 }
 
-int Ygl_cleanupAddColCram(void * p, YglTextureManager *tm)
-{
-  YglProgram * prg;
-  glActiveTexture(GL_TEXTURE0);
-  prg = p;
-  return 0;
-}
-
 static void Ygl_useTmpBuffer(){
   float col[4] = {0.0f,0.0f,0.0f,0.0f};
   // Create Screen size frame buffer

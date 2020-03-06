@@ -3432,7 +3432,6 @@ void YglShowTexture(void) {
 
 u32 * YglGetColorRamPointer(int line) {
   int error;
-  glActiveTexture(GL_TEXTURE0);
   if (_Ygl->cram_tex == 0) {
     glGenTextures(1, &_Ygl->cram_tex);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);

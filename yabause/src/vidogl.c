@@ -4061,7 +4061,6 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
 
   sprite.blendmode = getCCProgramId(CMDPMOD);
-
   if (sprite.blendmode == -1) return; //Invalid color mode
 
   if ((CMDPMOD & 4))
