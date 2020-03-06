@@ -469,7 +469,6 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
     }
   }
 #endif
-
   switch ((cmd->CMDPMOD >> 3) & 0x7)
   {
   case 0:
@@ -574,15 +573,17 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
 
     for (i = 0; i < spriteh; i++)
     {
+      endcnt = 0;
       for (j = 0; j < spritew; j++)
       {
         endTag = 0x0;
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        if (!END && endcnt >= 2)
+        if (!END && (endcnt >= 2))
         {
           endTag = 0xFF;
-        } else if ((dot == 0xFF) && !END) {
+        } else
+        if ((dot == 0xFF) && !END) {
           endTag = 0xFF;
           endcnt++;
         }
@@ -601,12 +602,13 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
 
     for (i = 0; i < spriteh; i++)
     {
+      endcnt = 0;
       for (j = 0; j < spritew; j++)
       {
         endTag = 0x0;
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        if (!END && endcnt >= 2)
+        if (!END && (endcnt >= 2))
         {
           endTag = 0xFF;
         } else if ((dot == 0xFF) && !END) {
@@ -627,11 +629,12 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
     u16 i, j;
 
     for (i = 0; i < spriteh; i++) {
+      endcnt = 0;
       for (j = 0; j < spritew; j++) {
         endTag = 0x0;
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        if (!END && endcnt >= 2)
+        if (!END && (endcnt >= 2))
         {
           endTag = 0xFF;
         } else if ((dot == 0xFF) && !END) {
@@ -664,10 +667,9 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
 
         charAddr += 2;
         endTag = 0x0;
-        if (endcnt == 2) {
+        if (!END && (endcnt >= 2)) {
           endTag = 0xFF;
-        }
-        else if ((temp == 0x7FFF) && !END) {
+        } else if ((temp == 0x7FFF) && !END) {
           endTag = 0xFF;
           endcnt++;
         }
