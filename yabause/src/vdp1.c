@@ -37,6 +37,8 @@
 
 #define LOG_VDP1_CYCLES
 
+//#define BYPASS_VDP1_CYCLES
+
 u8 * Vdp1Ram;
 int vdp1Ram_update_start;
 int vdp1Ram_update_end;
@@ -458,7 +460,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      }
    }
 
-   int cylesPerLine  = clock/(fps*yabsys.MaxLineCount);
+   int cylesPerLine  = 1.5*clock/(fps*yabsys.MaxLineCount);
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
    LOG_VDP1_CYCLES("Start %d %x %x\n", yabsys.vdp1drawing, regs->addr, yabsys.returnAddr);
@@ -1749,6 +1751,9 @@ void Vdp1HBlankIN(void)
   if (yabsys.vdp1drawing != 0) {
     LOG_VDP1_CYCLES("Need to draw in %d lines\n", yabsys.vdp1drawing);
     yabsys.vdp1drawing--;
+#ifdef BYPASS_VDP1_CYCLES
+    yabsys.vdp1drawing = 0;
+#endif
     if (yabsys.vdp1drawing == 0) {
       LOG_VDP1_CYCLES("Drawing now %d\n", yabsys.LineCount);
       Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
@@ -1781,12 +1786,6 @@ void Vdp1HBlankOUT(void)
 
 void Vdp1VBlankIN(void)
 {
-  if (yabsys.vdp1drawing != 0){
-    yabsys.vdp1drawing = 0;
-    Vdp1Regs->EDSR |= 2;
-    ScuSendDrawEnd();
-    LOG_VDP1_CYCLES("Pas tout fini %d\n", yabsys.vdp1drawing);
-  }
   Vdp1Regs->COPR = Vdp1Regs->lCOPR;
 }
 
@@ -1794,6 +1793,12 @@ void Vdp1VBlankIN(void)
 
 void Vdp1VBlankOUT(void)
 {
+  if (yabsys.vdp1drawing != 0){
+    LOG_VDP1_CYCLES("Pas tout fini %d\n", yabsys.vdp1drawing);
+    yabsys.vdp1drawing = 0;
+    Vdp1Regs->EDSR |= 2;
+    ScuSendDrawEnd();
+  }
   //Out of VBlankOut : Break Batman
   if (needVBlankErase()) {
     VIDCore->Vdp1EraseWrite();
