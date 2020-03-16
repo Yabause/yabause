@@ -1779,7 +1779,7 @@ void Vdp1HBlankOUT(void)
 
 void Vdp1VBlankIN(void)
 {
-  if (yabsys.vdp1drawing != 0)printf("Pas tout fini\n");
+  if (yabsys.vdp1drawing != 0)LOG_VDP1_CYCLES("Pas tout fini\n");
   Vdp1Regs->COPR = Vdp1Regs->lCOPR;
 }
 
