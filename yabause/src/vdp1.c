@@ -552,8 +552,10 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
-   if (!(command & 0x8000)) yabsys.vdp1drawing = (int)(0.5 + (yabsys.vdp1cycles / cylesPerLine));
-   else {
+   if (!(command & 0x8000)) {
+     yabsys.vdp1drawing += (int)(0.5 + (yabsys.vdp1cycles / cylesPerLine));
+     LOG_VDP1_CYCLES("Draw %d (%d %d)\n", yabsys.vdp1drawing, yabsys.LineCount, yabsys.MaxLineCount - yabsys.LineCount);
+   } else {
      yabsys.vdp1drawing = 0;
      Vdp1Regs->EDSR |= 2;
      ScuSendDrawEnd();
@@ -1779,7 +1781,12 @@ void Vdp1HBlankOUT(void)
 
 void Vdp1VBlankIN(void)
 {
-  if (yabsys.vdp1drawing != 0)LOG_VDP1_CYCLES("Pas tout fini\n");
+  if (yabsys.vdp1drawing != 0){
+    yabsys.vdp1drawing = 0;
+    Vdp1Regs->EDSR |= 2;
+    ScuSendDrawEnd();
+    LOG_VDP1_CYCLES("Pas tout fini %d\n", yabsys.vdp1drawing);
+  }
   Vdp1Regs->COPR = Vdp1Regs->lCOPR;
 }
 
