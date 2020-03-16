@@ -186,8 +186,7 @@ void addCSCommands(vdp1cmd_struct* cmd, int type)
 void VIDCSVdp1Draw()
 {
   VIDOGLVdp1Draw();
-  vdp1_setup();
-
+  // vdp1_setup();
 }
 
 //////////////////////////////////////////////////////////////////////////////

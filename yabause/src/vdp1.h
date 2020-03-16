@@ -99,6 +99,7 @@ extern VideoInterface_struct *VIDCore;
 extern VideoInterface_struct VIDDummy;
 
 extern u8 * Vdp1Ram;
+extern int vdp1Ram_updated;
 extern int vdp1Ram_update_start;
 extern int vdp1Ram_update_end;
 

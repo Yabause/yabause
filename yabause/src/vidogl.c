@@ -3435,7 +3435,7 @@ void VIDOGLVdp1Draw()
   FrameProfileAdd("Vdp1Command start");
 
   YglTmPull(YglTM_vdp1[_Ygl->drawframe], 0);
-  vdp1_setup();
+  // vdp1_setup();
 
   int firstalpha = (Vdp2External.perline_alpha_draw[0] & 0x40);
   int prioChanged = 0;

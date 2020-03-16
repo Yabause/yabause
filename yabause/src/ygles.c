@@ -815,8 +815,6 @@ static int YglGenFrameBuffer() {
     return 0;
   }
 
-  vdp1_compute_init(512.0f, 256.0f, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
-
   if (_Ygl->upfbo != 0){
     glDeleteFramebuffers(1, &_Ygl->upfbo);
     _Ygl->upfbo = 0;

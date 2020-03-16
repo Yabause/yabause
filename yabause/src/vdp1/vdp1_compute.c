@@ -319,6 +319,10 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	int maxx = 0;
 	int maxy = 0;
 
+	int intersectX = -1;
+	int intersectY = -1;
+	int requireCompute = 0;
+
 	if (clipcmd == 0) {
 		vdp1GenerateBuffer(cmd);
 
@@ -350,11 +354,8 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	  cmd->B[1] = (maxx+1)*tex_ratiow;
 	  cmd->B[2] = miny*tex_ratioh;
 	  cmd->B[3] = (maxy+1)*tex_ratioh;
-
+		requireCompute = vdp1Ram_updated;
 	}
-  int intersectX = -1;
-  int intersectY = -1;
-	int requireCompute = 0;
   for (int i = 0; i<NB_COARSE_RAST_X; i++) {
     int blkx = i * (tex_width/NB_COARSE_RAST_X);
     for (int j = 0; j<NB_COARSE_RAST_Y; j++) {
@@ -373,7 +374,6 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
     }
   }
 	if (requireCompute != 0){
-		YuiMsg("This game is processing a lot of graphic commands on the same frame. It might introduce graphical artifacts\n");
 		vdp1_compute();
   }
   return 0;
@@ -405,6 +405,19 @@ void vdp1_write() {
 	glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 }
 
+static void waitVdp1CSEnd() {
+	int end = 0;
+	if (_Ygl->syncVdp1[_Ygl->drawframe] != 0) {
+		while (end == 0) {
+			int ret;
+			ret = glClientWaitSync(_Ygl->syncVdp1[_Ygl->drawframe], GL_SYNC_FLUSH_COMMANDS_BIT, 20000000);
+			if ((ret == GL_CONDITION_SATISFIED) || (ret == GL_ALREADY_SIGNALED)) end = 1;
+		}
+		glDeleteSync(_Ygl->syncVdp1[_Ygl->drawframe]);
+		_Ygl->syncVdp1[_Ygl->drawframe] = 0;
+	}
+}
+
 u32* vdp1_read() {
 	int progId = READ;
 	if (prg_vdp1[progId] == 0)
@@ -417,19 +430,7 @@ u32* vdp1_read() {
 //	glUniform2f(2, (float)(tex_width*tex_ratiow)/512.0f, (float)(tex_height*tex_ratioh)/256.0f);
   glUniform2f(2, 1.0f, 1.0f);
 
-	//waitVdp1End
-	{
-	  int end = 0;
-	  if (_Ygl->syncVdp1[_Ygl->drawframe] != 0) {
-	    while (end == 0) {
-	      int ret;
-	      ret = glClientWaitSync(_Ygl->syncVdp1[_Ygl->drawframe], GL_SYNC_FLUSH_COMMANDS_BIT, 20000000);
-	      if ((ret == GL_CONDITION_SATISFIED) || (ret == GL_ALREADY_SIGNALED)) end = 1;
-	    }
-	    glDeleteSync(_Ygl->syncVdp1[_Ygl->drawframe]);
-	    _Ygl->syncVdp1[_Ygl->drawframe] = 0;
-	  }
-	}
+	waitVdp1CSEnd();
 
 	glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 
@@ -499,6 +500,7 @@ void vdp1_compute() {
 	int needRender = _Ygl->vdp1IsNotEmpty;
 	if (prg_vdp1[progId] == 0)
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
+
   glUseProgram(prg_vdp1[progId]);
 
 	VDP1CPRINT("Draw VDP1\n");
@@ -517,6 +519,11 @@ void vdp1_compute() {
 	}
 
 	_Ygl->vdp1On[_Ygl->drawframe] = 1;
+	if (vdp1Ram_updated == 1) {
+		vdp1_setup();
+		vdp1Ram_updated = 0;
+	}
+
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_nbcmd_);
   glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int)*NB_COARSE_RAST, (void*)nbCmd);
