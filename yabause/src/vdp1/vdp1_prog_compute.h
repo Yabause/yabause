@@ -212,8 +212,8 @@ SHADER_VERSION_COMPUTE
 "  for (uint i=0; i<=step; i++) {\n"
 "    vec2 d = abs(dist(P, vec2(V0.x+i*sAx, V0.y+i*sAy), vec2(V1.x+i*sBx, V1.y+i*sBy)));\n"
 "    if (all(lessThanEqual(d ,vec2(0.5)))) {\n"
-"      float j = i+0.5;\n"
-"      float ux= distance(vec2(V0.x+j*sAx, V0.y+j*sAy), P)/(distance(vec2(V0.x+j*sAx, V0.y+j*sAy), vec2(V1.x+j*sBx, V1.y+j*sBy))+1);\n"
+"      float j = float(i)+0.5;\n"
+"      float ux= distance(vec2(V0.x+j*sAx, V0.y+j*sAy), P)/(distance(vec2(V0.x+j*sAx, V0.y+j*sAy), vec2(V1.x+j*sBx, V1.y+j*sBy))+1.0);\n"
 "      float uy=(float(j))/float(step+1);\n"
 "      uv = vec2(ux,uy);\n"
 "      return 1u;\n"
@@ -223,7 +223,7 @@ SHADER_VERSION_COMPUTE
 "}\n"
 
 "uint isOnAQuad(vec2 P, vec2 V0, vec2 V1, vec2 V3, out vec2 uv) {\n"
-"  uv = vec2((P.x - V0.x) / (V1.x - V0.x + 1.0), (P.y - V0.y) / (V3.y - V0.y + 1));\n"
+"  uv = vec2((P.x - V0.x) / (V1.x - V0.x + 1.0), (P.y - V0.y) / (V3.y - V0.y + 1.0));\n"
 "  return 1u;\n"
 "\n}"
 
