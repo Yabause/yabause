@@ -12,11 +12,11 @@
 // if a pixel is on a line, it has to be considered as part of command => it shall simulate the per line rasterizer of the real VDP1
 
 #define POLYGON 0
-#define DISTORTED 1
-#define NORMAL 2
-#define SCALED 3
-#define POLYLINE 4
-#define LINE 5
+#define QUAD_POLY 1
+#define POLYLINE 2
+#define LINE 3
+#define DISTORTED 4
+#define QUAD 5
 #define SYSTEM_CLIPPING 6
 #define USER_CLIPPING 7
 
@@ -166,12 +166,16 @@ SHADER_VERSION_COMPUTE
 "  int CMDYC;\n"
 "  int CMDXD;\n"
 "  int CMDYD;\n"
-"  int P[8];\n"
 "  uint B[4];\n"
 "  int COLOR[4];\n"
 "  uint CMDGRDA;\n"
 "  uint SPCTL;\n"
-"  int pad[3];\n"
+"  uint nbStep;\n"
+"  float uAstepx;\n"
+"  float uAstepy;\n"
+"  float uBstepx;\n"
+"  float uBstepy;\n"
+"  int pad[2];\n"
 "};\n"
 
 "layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
@@ -185,42 +189,7 @@ SHADER_VERSION_COMPUTE
 "layout(location = 7) uniform ivec2 sysClip;\n"
 "layout(location = 8) uniform ivec4 usrClip;\n"
 "layout(location = 9) uniform mat4 rot;\n"
-// from here http://geomalgorithms.com/a03-_inclusion.html
-// a Point is defined by its coordinates {int x, y;}
 //===================================================================
-// isLeft(): tests if a point is Left|On|Right of an infinite line.
-//    Input:  three points P0, P1, and P2
-//    Return: >0 for P2 left of the line through P0 and P1
-//            =0 for P2  on the line
-//            <0 for P2  right of the line
-//    See: Algorithm 1 "Area of Triangles and Polygons"
-"float isLeft( vec2 P0, vec2 P1, vec2 P2 ){\n"
-//This can be used to detect an exact edge
-"    return ( (P1.x - P0.x) * (P2.y - P0.y) - (P2.x -  P0.x) * (P1.y - P0.y) );\n"
-"}\n"
-// wn_PnPoly(): winding number test for a point in a polygon
-//      Input:   P = a point,
-//               V[] = vertex points of a polygon V[n+1] with V[n]=V[0]
-//      Return:  wn = the winding number (=0 only when P is outside)
-"uint wn_PnPoly( vec2 P, vec2 V[5]){\n"
-"  uint wn = 0;\n"    // the  winding number counter
-   // loop through all edges of the polygon
-"  for (int i=0; i<4; i++) {\n"   // edge from V[i] to  V[i+1]
-"    if (V[i].y <= P.y) {\n"          // start y <= P.y
-"      if (V[i+1].y > P.y) \n"      // an upward crossing
-"        if (isLeft( V[i], V[i+1], P) > 0)\n"  // P left of  edge
-"          ++wn;\n"            // have  a valid up intersect
-"    }\n"
-"    else {\n"                        // start y > P.y (no test needed)
-"      if (V[i+1].y <= P.y)\n"     // a downward crossing
-"        if (isLeft( V[i], V[i+1], P) < 0)\n"  // P right of  edge
-"          --wn;\n"            // have  a valid down intersect
-"    }\n"
-"  }\n"
-"  return wn;\n"
-"}\n"
-//===================================================================
-
 "vec2 dist( vec2 P,  vec2 P0, vec2 P1 )\n"
 // dist_Point_to_Segment(): get the distance of a point to a segment
 //     Input:  a Point P and a Segment S (P0, P1) (in any dimension)
@@ -229,120 +198,75 @@ SHADER_VERSION_COMPUTE
 "  vec2 v = P1 - P0;\n"
 "  vec2 w = P - P0;\n"
 "  float c1 = dot(w,v);\n"
-"  if ( c1 <= 0 )\n"
-"    return abs(P-P0);\n"
+"  if ( c1 <= 0.0 )\n"
+"    return (P-P0);\n"
 "  float c2 = dot(v,v);\n"
 "  if ( c2 <= c1 )\n"
-"    return abs(P-P1);\n"
+"    return (P-P1);\n"
 "  float b = c1 / c2;\n"
 "  vec2 Pb = P0 + b * v;\n"
-"  return abs(P-Pb);\n"
+"  return (P-Pb);\n"
 "}\n"
 
-"uint pixIsInside (vec2 Pin, uint idx){\n"
-"  vec2 Quad[5];\n"
+"uint isOnALine( vec2 P, vec2 V0, vec2 V1, float sAx, float sAy, float sBx, float sBy, uint step, out vec2 uv){\n"
+"  for (uint i=0; i<=step; i++) {\n"
+"    vec2 d = abs(dist(P, vec2(V0.x+i*sAx, V0.y+i*sAy), vec2(V1.x+i*sBx, V1.y+i*sBy)));\n"
+"    if (all(lessThanEqual(d ,vec2(0.5)))) {\n"
+"      float j = i+0.5;\n"
+"      float ux= distance(vec2(V0.x+j*sAx, V0.y+j*sAy), P)/(distance(vec2(V0.x+j*sAx, V0.y+j*sAy), vec2(V1.x+j*sBx, V1.y+j*sBy))+1);\n"
+"      float uy=(float(j))/float(step+1);\n"
+"      uv = vec2(ux,uy);\n"
+"      return 1u;\n"
+"    }\n"
+"  }\n"
+"  return 0u;\n"
+"}\n"
+
+"uint isOnAQuad(vec2 P, vec2 V0, vec2 V1, vec2 V3, out vec2 uv) {\n"
+"  uv = vec2((P.x - V0.x) / (V1.x - V0.x + 1.0), (P.y - V0.y) / (V3.y - V0.y + 1));\n"
+"  return 1u;\n"
+"\n}"
+
+"uint pixIsInside (vec2 Pin, uint idx, out vec2 uv){\n"
+"  vec2 Quad[4];\n"
 "  vec2 P;\n"
 "  if (cmd[idx].type >= "Stringify(SYSTEM_CLIPPING)") return 6u;\n"
+//Bounding box test
 "  if (any(lessThan(Pin, ivec2(cmd[idx].B[0],cmd[idx].B[2]))) || any(greaterThan(Pin, ivec2(cmd[idx].B[1],cmd[idx].B[3])))) return 0u;\n"
 "  Quad[0] = vec2(cmd[idx].CMDXA,cmd[idx].CMDYA);\n"
 "  Quad[1] = vec2(cmd[idx].CMDXB,cmd[idx].CMDYB);\n"
 "  Quad[2] = vec2(cmd[idx].CMDXC,cmd[idx].CMDYC);\n"
 "  Quad[3] = vec2(cmd[idx].CMDXD,cmd[idx].CMDYD);\n"
-"  Quad[4] = Quad[0];\n"
 "  P = vec2(Pin)/upscale;\n"
 
-"  if (cmd[idx].type < "Stringify(POLYLINE)") {\n"
-"    if (wn_PnPoly(P, Quad) != 0u) return 1u;\n"
-"  }"
-// "  if (cmd[idx].type != "Stringify(NORMAL)") {\n"
-"    if (all(lessThanEqual(dist(P, Quad[0], Quad[1]), vec2(0.5)))) {return 2u;}\n"
-"    if (cmd[idx].type < "Stringify(LINE)") {\n"
-"      if (all(lessThanEqual(dist(P, Quad[1], Quad[2]), vec2(0.5)))) {return 3u;}\n"
-"      if (all(lessThanEqual(dist(P, Quad[2], Quad[3]), vec2(0.5)))) {return 4u;}\n"
-"      if (all(lessThanEqual(dist(P, Quad[3], Quad[0]), vec2(0.5)))) {return 5u;}\n"
+"  if ((cmd[idx].type == "Stringify(DISTORTED)") || (cmd[idx].type == "Stringify(POLYGON)")) {\n"
+"    return isOnALine(P, Quad[0], Quad[1], cmd[idx].uAstepx, cmd[idx].uAstepy, cmd[idx].uBstepx, cmd[idx].uBstepy, cmd[idx].nbStep, uv);\n"
+"  } else {\n"
+"    if ((cmd[idx].type == "Stringify(QUAD)")  || (cmd[idx].type == "Stringify(QUAD_POLY)")) {\n"
+"     return isOnAQuad(P, Quad[0], Quad[1], Quad[3], uv);\n"
+"    } else if (cmd[idx].type == "Stringify(POLYLINE)") {\n"
+"      if (isOnALine(P, Quad[0], Quad[1], 0.0, 0.0, 0.0, 0.0, 0u, uv) != 0u) return 1u;\n"
+"      if (isOnALine(P, Quad[1], Quad[2], 0.0, 0.0, 0.0, 0.0, 0u, uv) != 0u) return 1u;\n"
+"      if (isOnALine(P, Quad[2], Quad[3], 0.0, 0.0, 0.0, 0.0, 0u, uv) != 0u) return 1u;\n"
+"      if (isOnALine(P, Quad[3], Quad[0], 0.0, 0.0, 0.0, 0.0, 0u, uv) != 0u) return 1u;\n"
+"      return 0u;\n"
+"    } else if (cmd[idx].type == "Stringify(LINE)") {\n"
+"      if (isOnALine(P, Quad[0], Quad[1], 0.0, 0.0, 0.0, 0.0, 0u, uv) != 0u) return 1u;\n"
 "    }\n"
-// "  }\n"
+"  }\n"
 "  return 0u;\n"
 "}\n"
 
-"int getCmd(inout vec2 P, uint id, uint start, uint end, out uint zone, bool wait_sysclip)\n"
+"int getCmd(inout vec2 P, uint id, uint start, uint end, out uint zone, bool wait_sysclip, out vec2 uv)\n"
 "{\n"
 "  for(uint i=id+start; i<id+end; i++) {\n"
 "     if (wait_sysclip && (cmd[i].type != "Stringify(SYSTEM_CLIPPING)")) continue;"
-"     zone = pixIsInside(P, i);\n"
+"     zone = pixIsInside(P, i, uv);\n"
 "     if (zone != 0u) {\n"
 "       return int(i);\n"
 "     }\n"
 "  }\n"
 "  return -1;\n"
-"}\n"
-
-"float cross( in vec2 a, in vec2 b ) { return a.x*b.y - a.y*b.x; }\n"
-
-"vec2 bary(ivec2 p, vec2 a, vec2 b, vec2 c, vec2 auv, vec2 buv, vec2 cuv) {\n"
-"  vec2 v0 = b - a;\n"
-"  vec2 v1 = c - a;\n"
-"  vec2 v2 = p - a;\n"
-"  float den = v0.x * v1.y - v1.x * v0.y;\n"
-"  float v = (v2.x * v1.y - v1.x * v2.y) / den;\n"
-"  float w = (v0.x * v2.y - v2.x * v0.y) / den;\n"
-"  float u = 1.0f - v - w;\n"
-"  return (u*auv+v*buv+w*cuv);\n"
-"}\n"
-
-"vec2 getTexCoord(vec2 texel, vec2 a, vec2 b, vec2 c, vec2 d) {\n"
-"  if (all(lessThanEqual(abs(a-b),vec2(1.0)))) return bary(ivec2(texel/upscale),a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(b-c),vec2(1.0)))) return bary(ivec2(texel/upscale),a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(c-d),vec2(1.0)))) return bary(ivec2(texel/upscale),a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(d-a),vec2(1.0)))) return bary(ivec2(texel/upscale),a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
-"  vec2 p = vec2(texel)/upscale;\n"
-"  vec2 e = b-a;\n"
-"  vec2 f = d-a;\n"
-"  vec2 h = p-a;\n"
-"  vec2 g = a-b+c-d;\n"
-"  if (e.x == 0.0) e.x = 1.0;\n"
-"  float u = 0.0;\n"
-"  float v = 0.0;\n"
-"  float k1 = cross( e, f ) + cross( h, g );\n"
-"  float k0 = cross( h, e );\n"
-"  v = clamp(-k0/k1, 0.0, 1.0);\n"
-"  u = clamp((h.x*k1+f.x*k0) / (e.x*k1-g.x*k0), 0.0, 1.0);\n"
-"  return vec2( u, v );\n"
-"}\n"
-
-"vec2 getTexCoordDistorted(vec2 texel, vec2 a, vec2 b, vec2 c, vec2 d) {\n"
-//http://iquilezles.org/www/articles/ibilinear/ibilinear.htm
-"  if (all(lessThanEqual(abs(a-b),vec2(1.0)))) return bary(ivec2(texel/upscale),a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(b-c),vec2(1.0)))) return bary(ivec2(texel/upscale),a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(c-d),vec2(1.0)))) return bary(ivec2(texel/upscale),a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(d-a),vec2(1.0)))) return bary(ivec2(texel/upscale),a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
-"  vec2 p = vec2(texel)/upscale;\n"
-"  vec2 e = b-a;\n"
-"  vec2 f = d-a;\n"
-"  vec2 h = p-a;\n"
-"  vec2 g = a-b+c-d;\n"
-"  if (e.x == 0.0) e.x = 1.0;\n"
-"  float u = 0.0;\n"
-"  float v = 0.0;\n"
-"  float k2 = cross( g, f );\n"
-"  float k1 = cross( e, f ) + cross( h, g );\n"
-"  float k0 = cross( h, e );\n"
-"  if (abs(k2) >= 0.00001) {\n"
-"    float w = k1*k1 - 4.0*k0*k2;\n"
-"    if( w>=0.0 ) {\n"
-"      w = sqrt( w );\n"
-"      float ik2 = 0.5/k2;\n"
-"      v = (-k1 - w)*ik2; \n"
-"      if( v<0.0 || v>1.0 ) v = (-k1 + w)*ik2;\n"
-"      v = clamp(v, 0.0, 1.0);\n"
-"      u = (h.x - f.x*v)/(e.x + g.x*v);\n"
-"      u = clamp(u, 0.0, 1.0);\n"
-"    }\n"
-"  } else { \n"
-"    v = clamp(-k0/k1, 0.0, 1.0);\n"
-"    u = clamp((h.x*k1+f.x*k0) / (e.x*k1-g.x*k0), 0.0, 1.0);\n"
-"  }\n"
-"  return vec2( u, v );\n"
 "}\n"
 
 "uint Vdp1RamReadByte(uint addr) {\n"
@@ -520,10 +444,11 @@ SHADER_VERSION_COMPUTE
 "  vec2 OriginTexel = texel;\n"
 "  while ((cmdindex != -1) && (idCmd<nbCmd[lindex]) ) {\n"
 "    discarded = false;\n"
+"    vec2 uv = vec2(0.0);\n"
 "    newColor = vec4(0.0);\n"
 "    outColor = vec4(0.0);\n"
 "    texel = OriginTexel;\n"
-"    cmdindex = getCmd(texel, cmdIndex, idCmd, nbCmd[lindex], zone, waitSysClip);\n"
+"    cmdindex = getCmd(texel, cmdIndex, idCmd, nbCmd[lindex], zone, waitSysClip, uv);\n"
 "    if (cmdindex == -1) continue;\n"
 "    idCmd = cmdindex + 1 - cmdIndex;\n"
 "    pixcmd = cmd[cmdindex];\n"
@@ -549,54 +474,14 @@ SHADER_VERSION_COMPUTE
 "      if (all(greaterThanEqual(texel,userlimit.xy*upscale)) && all(lessThanEqual(texel,userlimit.zw*upscale))) continue;\n"
 "    }\n"
 "    useGouraud = ((pixcmd.CMDPMOD & 0x4u) == 0x4u);\n"
-"    if (pixcmd.type == "Stringify(POLYGON)") {\n"
-"      texcoord = getTexCoordDistorted(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
-"      else {\n"
-"        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"        if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-"        newColor = extractPolygonColor(pixcmd);\n"
-"      }\n"
-"    } else if (pixcmd.type == "Stringify(POLYLINE)") {\n"
-"      texcoord = getTexCoordDistorted(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
-"      else {\n"
-"        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"        if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-"        newColor = extractPolygonColor(pixcmd);\n"
-"      }\n"
-"    } else if (pixcmd.type == "Stringify(LINE)") {\n"
-"      texcoord = getTexCoordDistorted(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
-"      else {\n"
-"        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"        if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-"        newColor = extractPolygonColor(pixcmd);\n"
-"      }\n"
-"    } else if (pixcmd.type == "Stringify(DISTORTED)") {\n"
-"      texcoord = getTexCoordDistorted(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
-"      else {\n"
-"        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"        if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-"        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
-"      }\n"
-"    } else if (pixcmd.type == "Stringify(SCALED)") {\n"
-"      texcoord = getTexCoord(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2]+1,pixcmd.P[3])/2.0, vec2(pixcmd.P[4]+1,pixcmd.P[5]+1)/2.0, vec2(pixcmd.P[6],pixcmd.P[7]+1)/2.0);\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-"        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
-"    } else if (pixcmd.type == "Stringify(NORMAL)") {\n"
-"      texcoord = vec2(float(texel.x/upscale.x-pixcmd.CMDXA)/float(pixcmd.w), float(texel.y/upscale.y-pixcmd.CMDYA)/float(pixcmd.h));\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-"        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
+"    texcoord = uv;\n"
+"    gouraudcoord = texcoord;\n"
+"    if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
+"    if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
+"    if (pixcmd.type <= "Stringify(LINE)") {\n"
+"      newColor = extractPolygonColor(pixcmd);\n"
+"    } else if (pixcmd.type <= "Stringify(QUAD)") {\n"
+"      newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
 "    }\n"
 "    if (discarded) continue;\n"
 "    else drawn = true;\n"

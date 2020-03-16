@@ -158,12 +158,16 @@ typedef struct
   s32 CMDYC;
   s32 CMDXD;
   s32 CMDYD;
-  s32 P[8];
   s32 B[4];
   u32 COLOR[4];
   u32 CMDGRDA;
   u32 SPCTL;
-  u32 pad[3];
+  u32 nbStep;
+  float uAstepx;
+  float uAstepy;
+  float uBstepx;
+  float uBstepy;
+  u32 pad[2];
 } vdp1cmd_struct;
 
 int Vdp1Init(void);

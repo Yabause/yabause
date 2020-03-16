@@ -321,59 +321,15 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 
 	if (clipcmd == 0) {
 		vdp1GenerateBuffer(cmd);
-    int border = 0;
-		if (cmd->type == NORMAL) border = 0;
-		memcpy(cmd->P,&cmd->CMDXA,8*sizeof(int));
 
-		for (int i = 0; i<8; i++) cmd->P[i] = cmd->P[i] * 2;
-
-		int right = 0;
-		int rightindex = -1;
-		for (int i = 0; i<4; i++) {
-			if (cmd->P[i*2] >= right) {
-				right = cmd->P[i*2];
-				rightindex = i;
-			}
-		}
-		right = 0;
-		int rightindexsec = -1;
-		for (int i = 0; i<4; i++) {
-			if ((cmd->P[i*2] >= right) && (i!=rightindex)) {
-				right = cmd->P[i*2];
-				rightindexsec = i;
-			}
-		}
-		cmd->P[rightindex*2] += 2*border;
-		cmd->P[rightindexsec*2] += 2*border;
-
-		int top = 0;
-		int topindex = -1;
-		for (int i = 0; i<4; i++) {
-			if (cmd->P[i*2+1] >= top) {
-				top = cmd->P[i*2+1];
-				topindex = i;
-			}
-		}
-		top = 0;
-		int topindexsec = -1;
-		for (int i = 0; i<4; i++) {
-			if ((cmd->P[i*2+1] >= top) && (i!=topindex)) {
-				top = cmd->P[i*2+1];
-				topindexsec = i;
-			}
-		}
-
-    cmd->P[topindex*2+1] += 2*border;
-		cmd->P[topindexsec*2+1] += 2*border;
-
-	  float Ax = cmd->P[0]/2.0;
-		float Ay = cmd->P[1]/2.0;
-		float Bx = cmd->P[2]/2.0;
-		float By = cmd->P[3]/2.0;
-		float Cx = cmd->P[4]/2.0;
-		float Cy = cmd->P[5]/2.0;
-		float Dx = cmd->P[6]/2.0;
-		float Dy = cmd->P[7]/2.0;
+	  float Ax = cmd->CMDXA;
+		float Ay = cmd->CMDYA;
+		float Bx = cmd->CMDXB;
+		float By = cmd->CMDYB;
+		float Cx = cmd->CMDXC;
+		float Cy = cmd->CMDYC;
+		float Dx = cmd->CMDXD;
+		float Dy = cmd->CMDYD ;
 
 	  minx = (Ax < Bx)?Ax:Bx;
 	  miny = (Ay < By)?Ay:By;

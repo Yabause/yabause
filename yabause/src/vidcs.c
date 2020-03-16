@@ -156,6 +156,32 @@ VIDOGLVdp2DispOff,
 YglCSRender
 };
 
+void addCSCommands(vdp1cmd_struct* cmd, int type)
+{
+  int Ax = cmd->CMDXD - cmd->CMDXA;
+  int Ay = cmd->CMDYD - cmd->CMDYA;
+  int Bx = cmd->CMDXC - cmd->CMDXB;
+  int By = cmd->CMDYC - cmd->CMDYB;
+  Ax = (Ax == 0)?1:Ax;
+  Ay = (Ay == 0)?1:Ay;
+  Bx = (Bx == 0)?1:Bx;
+  By = (By == 0)?1:By;
+
+  unsigned int lA = ceil(sqrt(Ax*Ax+Ay*Ay));
+  unsigned int lB = ceil(sqrt(Bx*Bx+By*By));
+
+  cmd->nbStep = lA;
+  if (lB >= lA)
+    cmd->nbStep = lB;
+
+  cmd->uAstepx = ((float)lA / (float)cmd->nbStep) * ((float)Ax/(float)lA);
+  cmd->uAstepy = ((float)lA / (float)cmd->nbStep) * ((float)Ay/(float)lA);
+  cmd->uBstepx = ((float)lB / (float)cmd->nbStep) * ((float)Bx/(float)lB);
+  cmd->uBstepy = ((float)lB / (float)cmd->nbStep) * ((float)By/(float)lB);
+  cmd->type = type;
+  vdp1_add(cmd,0);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 void VIDCSVdp1Draw()
 {
@@ -220,7 +246,7 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
   cmd.priority = 0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
-  cmd.type = NORMAL;
+  cmd.type = QUAD;
 
   vdp1_add(&cmd,0);
 
@@ -342,12 +368,11 @@ if ((cmd.CMDPMOD & 4))
 }
   cmd.priority = 0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
-  cmd.type = SCALED;
+  cmd.type = QUAD;
   vdp1_add(&cmd,0);
 
   LOG_CMD("%d\n", __LINE__);
 }
-
 int getBestMode(vdp1cmd_struct* cmd) {
   int ret = DISTORTED;
   if (
@@ -358,7 +383,7 @@ int getBestMode(vdp1cmd_struct* cmd) {
     (cmd->CMDXA == cmd->CMDXD) &&
     (cmd->CMDYA == cmd->CMDYB)
   ) {
-    ret = NORMAL;
+    ret = QUAD;
   } else {
     if (
       (abs(cmd->CMDYB - cmd->CMDYA) <= 1) &&
@@ -366,12 +391,11 @@ int getBestMode(vdp1cmd_struct* cmd) {
       (abs(cmd->CMDXC - cmd->CMDXB) <= 1) &&
       (abs(cmd->CMDXD - cmd->CMDXA) <= 1)
     ) {
-      ret = SCALED;
+      ret = QUAD;
     }
   }
   return ret;
 }
-
 void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   LOG_CMD("%d\n", __LINE__);
@@ -413,22 +437,25 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1Fu;
   }
-
-//gouraud
-memset(cmd.G, 0, sizeof(float)*16);
-if ((cmd.CMDPMOD & 4))
-{
-  for (int i = 0; i < 4; i++){
-    u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
-    cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-    cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-    cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+  //gouraud
+  memset(cmd.G, 0, sizeof(float)*16);
+  if ((cmd.CMDPMOD & 4))
+  {
+    for (int i = 0; i < 4; i++){
+      u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
+      cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+      cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+      cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+    }
   }
-}
   cmd.priority = 0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
-  cmd.type = getBestMode(&cmd);
-  vdp1_add(&cmd,0);
+  if (getBestMode(&cmd) == DISTORTED) {
+    addCSCommands(&cmd,DISTORTED);
+  } else {
+    cmd.type = QUAD;
+    vdp1_add(&cmd,0);
+  }
   return;
 }
 
@@ -473,10 +500,15 @@ void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.h = 1;
   cmd.flip = 0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
-  cmd.type = POLYGON;
+  // cmd.type = POLYGON;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
-
-  vdp1_add(&cmd,0);
+  if (getBestMode(&cmd) == DISTORTED) {
+    addCSCommands(&cmd,POLYGON);
+  } else {
+    cmd.type = QUAD_POLY;
+    vdp1_add(&cmd,0);
+  }
+  return;
 }
 
 void VIDCSVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
