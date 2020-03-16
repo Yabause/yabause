@@ -464,6 +464,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
    LOG_VDP1_CYCLES("Start %d %x %x\n", yabsys.vdp1drawing, regs->addr, yabsys.returnAddr);
+   regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
    yabsys.vdp1cycles = 0;
    while (!(command & 0x8000) && (yabsys.vdp1cycles < cylesPerLine)) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
