@@ -468,10 +468,11 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    int cylesPerLine  = 1.5*clock/(fps*yabsys.MaxLineCount);
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
+   u16 nbSysCmd = 0;
    LOG_VDP1_CYCLES("Start %d %x %x\n", yabsys.vdp1drawing, regs->addr, yabsys.returnAddr);
    regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
    yabsys.vdp1cycles = 0;
-   while (!(command & 0x8000) && (yabsys.vdp1cycles < cylesPerLine)) { // fix me
+   while (!(command & 0x8000) && (yabsys.vdp1cycles < cylesPerLine) && (nbSysCmd++ < 10)) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       int cycles = yabsys.vdp1cycles;
       yabsys.vdp1cycles += 16;
@@ -479,34 +480,43 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
          case 0: // normal sprite draw
+            nbSysCmd = 0;
             VIDCore->Vdp1NormalSpriteDraw(ram, regs, back_framebuffer);
             break;
          case 1: // scaled sprite draw
+            nbSysCmd = 0;
             VIDCore->Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer);
             break;
          case 2: // distorted sprite draw
          case 3: /* this one should be invalid, but some games
                  (Hardcore 4x4 for instance) use it instead of 2 */
+            nbSysCmd = 0;
             VIDCore->Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer);
             break;
          case 4: // polygon draw
+            nbSysCmd = 0;
             VIDCore->Vdp1PolygonDraw(ram, regs, back_framebuffer);
             break;
          case 5: // polyline draw
          case 7: // undocumented mirror
+            nbSysCmd = 0;
             VIDCore->Vdp1PolylineDraw(ram, regs, back_framebuffer);
             break;
          case 6: // line draw
+            nbSysCmd = 0;
             VIDCore->Vdp1LineDraw(ram, regs, back_framebuffer);
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
+            nbSysCmd++;
             VIDCore->Vdp1UserClipping(ram, regs);
             break;
          case 9: // system clipping coordinates
+            nbSysCmd++;
             VIDCore->Vdp1SystemClipping(ram, regs);
             break;
          case 10: // local coordinate
+            nbSysCmd++;
             VIDCore->Vdp1LocalCoordinate(ram, regs);
             break;
          default: // Abort
@@ -560,7 +570,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
-   if (!(command & 0x8000)) {
+   if (!(command & 0x8000) && (nbSysCmd < 10)) {
      yabsys.vdp1drawing += (int)(0.5 + (yabsys.vdp1cycles / cylesPerLine));
      LOG_VDP1_CYCLES("Draw %d (%d %d)\n", yabsys.vdp1drawing, yabsys.LineCount, yabsys.MaxLineCount - yabsys.LineCount);
    } else {
