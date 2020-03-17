@@ -472,7 +472,11 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    LOG_VDP1_CYCLES("Start %d %x %x\n", yabsys.vdp1drawing, regs->addr, yabsys.returnAddr);
    regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
    yabsys.vdp1cycles = 0;
+#ifdef VDP1_TIMING
    while (!(command & 0x8000) && (yabsys.vdp1cycles < cylesPerLine) && (nbSysCmd++ < 10)) { // fix me
+#else
+   while (!(command & 0x8000) && (nbSysCmd++ < 10)) { // fix me
+#endif
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       int cycles = yabsys.vdp1cycles;
       yabsys.vdp1cycles += 16;
@@ -571,7 +575,11 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       commandCounter++;
    }
    if (!(command & 0x8000) && (nbSysCmd < 10)) {
+ #ifdef VDP1_TIMING
      yabsys.vdp1drawing += (int)(0.5 + (yabsys.vdp1cycles / cylesPerLine));
+#else
+     yabsys.vdp1drawing = 0;
+#endif
      LOG_VDP1_CYCLES("Draw %d (%d %d)\n", yabsys.vdp1drawing, yabsys.LineCount, yabsys.MaxLineCount - yabsys.LineCount);
    } else {
      yabsys.vdp1drawing = 0;
