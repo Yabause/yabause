@@ -475,7 +475,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 #ifdef VDP1_TIMING
    while (!(command & 0x8000) && (yabsys.vdp1cycles < cylesPerLine) && (nbSysCmd++ < 10)) { // fix me
 #else
-   while (!(command & 0x8000) && (nbSysCmd++ < 10)) { // fix me
+   while (!(command & 0x8000)&& (nbSysCmd < 10)) { // fix me
 #endif
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       int cycles = yabsys.vdp1cycles;
