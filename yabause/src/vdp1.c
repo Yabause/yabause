@@ -421,7 +421,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    u32 commandCounter = 0;
    u16 nbSysCmd = 0;
    regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
-   while (!(command & 0x8000)&& (nbSysCmd < 10)) { // fix me
+   while (!(command & 0x8000) && (nbSysCmd < 10) && (commandCounter < 2000) ) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
