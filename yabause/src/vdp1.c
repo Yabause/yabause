@@ -39,6 +39,8 @@
 
 //#define BYPASS_VDP1_CYCLES
 
+#define VDP1_TIMING
+
 u8 * Vdp1Ram;
 int vdp1Ram_updated;
 int vdp1Ram_update_start;
@@ -473,13 +475,13 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
    yabsys.vdp1cycles = 0;
 #ifdef VDP1_TIMING
-   while (!(command & 0x8000) && (yabsys.vdp1cycles < cylesPerLine) && (nbSysCmd++ < 10)) { // fix me
+   while (!(command & 0x8000) && (yabsys.vdp1cycles < 20*cylesPerLine) && (nbSysCmd < 10)) { // fix me
 #else
    while (!(command & 0x8000)&& (nbSysCmd < 10)) { // fix me
 #endif
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       int cycles = yabsys.vdp1cycles;
-      yabsys.vdp1cycles += 16;
+      yabsys.vdp1cycles = 0;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
@@ -531,8 +533,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ScuSendDrawEnd();
             return;
          }
-      } else {
-        yabsys.vdp1cycles += 16;
       }
 
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
@@ -576,7 +576,11 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    if (!(command & 0x8000) && (nbSysCmd < 10)) {
  #ifdef VDP1_TIMING
-     yabsys.vdp1drawing += (int)(0.5 + (yabsys.vdp1cycles / cylesPerLine));
+     if (yabsys.vdp1cycles >= 20*cylesPerLine) {
+       yabsys.vdp1drawing += (int)(0.5 + (yabsys.vdp1cycles / cylesPerLine));
+     } else {
+       yabsys.vdp1drawing = 0;
+     }
 #else
      yabsys.vdp1drawing = 0;
 #endif
