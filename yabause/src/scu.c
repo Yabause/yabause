@@ -2618,7 +2618,7 @@ void ScuSendHBlankIN(void) {
      if (ScuRegs->timer1_set == 1) {
         ScuRegs->timer1_set = 0;
         ScuRegs->timer1_counter = ScuRegs->timer1_preset;
-        // ScuRemoveTimer1();
+        ScuRemoveTimer1();
       }
    }
    ScuChekIntrruptDMA(2);
