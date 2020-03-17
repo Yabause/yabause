@@ -217,7 +217,6 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.CMDYA += Vdp1Regs->localY;
 
   if (cmd.w == 0 || cmd.h == 0) {
-    yabsys.vdp1cycles += 70;
     return; //bad command
   }
 
@@ -228,10 +227,6 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.CMDXD = cmd.CMDXA;
   cmd.CMDYD = cmd.CMDYA + cmd.h - 1;
 
-  int w = (sqrt((cmd.CMDXA - cmd.CMDXB)*(cmd.CMDXA - cmd.CMDXB)) + sqrt((cmd.CMDXD - cmd.CMDXC)*(cmd.CMDXD - cmd.CMDXC)))/2;
-  int h = (sqrt((cmd.CMDYA - cmd.CMDYD)*(cmd.CMDYA - cmd.CMDYD)) + sqrt((cmd.CMDYB - cmd.CMDYC)*(cmd.CMDYB - cmd.CMDYC)))/2;
-  yabsys.vdp1cycles+= 70 + (w * h * 3) + (w * 5);
-
   if (((cmd.CMDPMOD >> 3) & 0x7u) == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
@@ -241,7 +236,6 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   memset(cmd.G, 0, sizeof(float)*16);
   if ((cmd.CMDPMOD & 4))
   {
-    yabsys.vdp1cycles+= 232;
     for (int i = 0; i < 4; i++){
       u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
       cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
@@ -270,7 +264,6 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
   if (cmd.CMDSIZE == 0) {
-    yabsys.vdp1cycles += 70;
     return; // BAD Command
   }
 
@@ -355,8 +348,6 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.CMDXD = x + Vdp1Regs->localX;
   cmd.CMDYD = y + rh + Vdp1Regs->localY;
 
-  yabsys.vdp1cycles += 70 + (rw * rh * 3) + (rw * 5);
-
   if (((cmd.CMDPMOD >> 3) & 0x7u) == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
@@ -367,7 +358,6 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 memset(cmd.G, 0, sizeof(float)*16);
 if ((cmd.CMDPMOD & 4))
 {
-  yabsys.vdp1cycles+= 232;
   for (int i = 0; i < 4; i++){
     u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
     cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
@@ -415,7 +405,6 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
   if (cmd.CMDSIZE == 0) {
-    yabsys.vdp1cycles += 70;
     return; // BAD Command
   }
 
@@ -442,10 +431,6 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.CMDXD += Vdp1Regs->localX;
   cmd.CMDYD += Vdp1Regs->localY;
 
-  int w = (sqrt((cmd.CMDXA - cmd.CMDXB)*(cmd.CMDXA - cmd.CMDXB)) + sqrt((cmd.CMDXD - cmd.CMDXC)*(cmd.CMDXD - cmd.CMDXC)))/2;
-  int h = (sqrt((cmd.CMDYA - cmd.CMDYD)*(cmd.CMDYA - cmd.CMDYD)) + sqrt((cmd.CMDYB - cmd.CMDYC)*(cmd.CMDYB - cmd.CMDYC)))/2;
-  yabsys.vdp1cycles+= 70 + (w * h * 3) + (w * 5);
-
   if (((cmd.CMDPMOD >> 3) & 0x7u) == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
@@ -455,7 +440,6 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   memset(cmd.G, 0, sizeof(float)*16);
   if ((cmd.CMDPMOD & 4))
   {
-    yabsys.vdp1cycles+= 232;
     for (int i = 0; i < 4; i++){
       u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
       cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
@@ -499,15 +483,10 @@ void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.CMDXD += Vdp1Regs->localX;
   cmd.CMDYD += Vdp1Regs->localY;
 
-  int w = (sqrt((cmd.CMDXA - cmd.CMDXB)*(cmd.CMDXA - cmd.CMDXB)) + sqrt((cmd.CMDXD - cmd.CMDXC)*(cmd.CMDXD - cmd.CMDXC)))/2;
-  int h = (sqrt((cmd.CMDYA - cmd.CMDYD)*(cmd.CMDYA - cmd.CMDYD)) + sqrt((cmd.CMDYB - cmd.CMDYC)*(cmd.CMDYB - cmd.CMDYC)))/2;
-  yabsys.vdp1cycles += 16 + (w * h) + (w * 2);
-
   //gouraud
   memset(cmd.G, 0, sizeof(float)*16);
   if ((cmd.CMDPMOD & 4))
   {
-    yabsys.vdp1cycles+= 232;
     for (int i = 0; i < 4; i++){
       u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
       cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;

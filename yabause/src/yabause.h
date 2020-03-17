@@ -138,8 +138,6 @@ typedef struct
 #ifdef SPRITE_CACHE
    int useVdp1cache;
 #endif
-   int vdp1cycles;
-   int vdp1drawing;
    int returnAddr;
 } yabsys_struct;
 
