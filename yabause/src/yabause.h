@@ -138,7 +138,6 @@ typedef struct
 #ifdef SPRITE_CACHE
    int useVdp1cache;
 #endif
-   int returnAddr;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

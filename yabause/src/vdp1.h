@@ -82,7 +82,7 @@ typedef struct
    void(*Vdp1LocalCoordinate)(u8 * ram, Vdp1 * regs);
    void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out);
    void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val);
-   void(*Vdp1EraseWrite)(int id);
+   void(*Vdp1EraseWrite)(void);
    void(*Vdp1FrameChange)(void);
    // VDP2 specific
    int (*Vdp2Reset)(void);
@@ -99,7 +99,6 @@ extern VideoInterface_struct *VIDCore;
 extern VideoInterface_struct VIDDummy;
 
 extern u8 * Vdp1Ram;
-extern int vdp1Ram_updated;
 extern int vdp1Ram_update_start;
 extern int vdp1Ram_update_end;
 
@@ -127,6 +126,7 @@ typedef struct {
    int disptoggle;
    int manualerase;
    int manualchange;
+   int vblank_erase;
    int onecyclemode;
    int swap_frame_buffer;
    int plot_trigger_line;

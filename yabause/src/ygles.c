@@ -815,6 +815,8 @@ static int YglGenFrameBuffer() {
     return 0;
   }
 
+  vdp1_compute_init(512.0f, 256.0f, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
+
   if (_Ygl->upfbo != 0){
     glDeleteFramebuffers(1, &_Ygl->upfbo);
     _Ygl->upfbo = 0;
@@ -2449,7 +2451,7 @@ int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache *
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void YglEraseWriteVDP1(int id) {
+void YglEraseWriteVDP1(void) {
 
   float col[4] = {0.0};
   u16 color;
@@ -2458,37 +2460,35 @@ void YglEraseWriteVDP1(int id) {
   int status = 0;
   GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
-  _Ygl->vdp1On[id] = 0;
+  _Ygl->vdp1On[_Ygl->readframe] = 0;
 
   releaseVDP1FB();
   // _Ygl->vdp1IsNotEmpty = 0;
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-  int drawBuf = 0;
-  glGetIntegerv(GL_DRAW_BUFFER0, &drawBuf);
-  glDrawBuffers(1, &DrawBuffers[id]);
+  glDrawBuffers(1, &DrawBuffers[_Ygl->readframe]);
 
   _Ygl->vdp1_stencil_mode = 0;
 
-  _Ygl->vdp1levels[id].ux1 = 0;
-  _Ygl->vdp1levels[id].uy1 = 0;
-  _Ygl->vdp1levels[id].ux2 = 0;
-  _Ygl->vdp1levels[id].uy2 = 0;
-  _Ygl->vdp1levels[id].uclipcurrent = 0;
-  _Ygl->vdp1levels[id].blendmode = 0;
+  _Ygl->vdp1levels[_Ygl->readframe].ux1 = 0;
+  _Ygl->vdp1levels[_Ygl->readframe].uy1 = 0;
+  _Ygl->vdp1levels[_Ygl->readframe].ux2 = 0;
+  _Ygl->vdp1levels[_Ygl->readframe].uy2 = 0;
+  _Ygl->vdp1levels[_Ygl->readframe].uclipcurrent = 0;
+  _Ygl->vdp1levels[_Ygl->readframe].blendmode = 0;
 
   color = Vdp1Regs->EWDR;
 
-  _Ygl->vdp1On[id] = 0;
+  _Ygl->vdp1On[_Ygl->readframe] = 0;
 
   col[0] = (color & 0xFF) / 255.0f;
   col[1] = ((color >> 8) & 0xFF) / 255.0f;
 
   glClearBufferfv(GL_COLOR, 0, col);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", id);
+  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
   //Get back to drawframe
-  glDrawBuffers(1, &drawBuf);
+  glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 

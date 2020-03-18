@@ -3435,7 +3435,7 @@ void VIDOGLVdp1Draw()
   FrameProfileAdd("Vdp1Command start");
 
   YglTmPull(YglTM_vdp1[_Ygl->drawframe], 0);
-  // vdp1_setup();
+  vdp1_setup();
 
   int firstalpha = (Vdp2External.perline_alpha_draw[0] & 0x40);
   int prioChanged = 0;
@@ -4872,10 +4872,10 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 void VIDOGLVdp1UserClipping(u8 * ram, Vdp1 * regs)
 {
-  Vdp1Regs->userclipX1 = Vdp1RamReadWord(NULL, ram, regs->addr + 0xC);
-  Vdp1Regs->userclipY1 = Vdp1RamReadWord(NULL, ram, regs->addr + 0xE);
-  Vdp1Regs->userclipX2 = Vdp1RamReadWord(NULL, ram, regs->addr + 0x14)+1;
-  Vdp1Regs->userclipY2 = Vdp1RamReadWord(NULL, ram, regs->addr + 0x16)+1;
+  Vdp1Regs->userclipX1 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0xC);
+  Vdp1Regs->userclipY1 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0xE);
+  Vdp1Regs->userclipX2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x14)+1;
+  Vdp1Regs->userclipY2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x16)+1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4884,16 +4884,16 @@ void VIDOGLVdp1SystemClipping(u8 * ram, Vdp1 * regs)
 {
   Vdp1Regs->systemclipX1 = 0;
   Vdp1Regs->systemclipY1 = 0;
-  Vdp1Regs->systemclipX2 = Vdp1RamReadWord(NULL, ram, regs->addr + 0x14)+1;
-  Vdp1Regs->systemclipY2 = Vdp1RamReadWord(NULL, ram, regs->addr + 0x16)+1;
+  Vdp1Regs->systemclipX2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x14)+1;
+  Vdp1Regs->systemclipY2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x16)+1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs)
 {
-  Vdp1Regs->localX = Vdp1RamReadWord(NULL, ram, regs->addr + 0xC);
-  Vdp1Regs->localY = Vdp1RamReadWord(NULL, ram, regs->addr + 0xE);
+  Vdp1Regs->localX = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0xC);
+  Vdp1Regs->localY = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0xE);
 }
 
 //////////////////////////////////////////////////////////////////////////////

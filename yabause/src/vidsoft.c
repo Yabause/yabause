@@ -31,7 +31,7 @@
 #include "vdp2.h"
 #include "titan/titan.h"
 
-#if defined(HAVE_LIBGL) && !defined(__LIBRETRO__)
+#if defined(HAVE_LIBGL) && !defined(__LIBRETRO__) 
 #define USE_OPENGL
 #endif
 
@@ -90,7 +90,7 @@ void VIDSoftVdp1SystemClipping(u8 * ram, Vdp1 * regs);
 void VIDSoftVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
 void VIDSoftVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDSoftVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
-void VIDSoftVdp1EraseWrite(int id);
+void VIDSoftVdp1EraseWrite();
 int VIDSoftVdp2Reset(void);
 static void VIDSoftVdp2DrawStart(void);
 void VIDSoftVdp2Draw(void);
@@ -220,7 +220,7 @@ static INLINE u32 FASTCALL Vdp2ColorRamGetColor(u32 addr, u8* vdp2_color_ram)
       }
       case 2:
       {
-         addr <<= 2;
+         addr <<= 2;   
          return T2ReadLong(vdp2_color_ram, addr & 0xFFF);
       }
       default: break;
@@ -237,7 +237,7 @@ static INLINE void Vdp2PatternAddr(vdp2draw_struct *info, Vdp2* regs, u8* ram)
    {
       case 1:
       {
-         u16 tmp = T1ReadWord(ram, info->addr);
+         u16 tmp = T1ReadWord(ram, info->addr);         
 
          info->addr += 2;
          info->specialfunction = (info->supplementdata >> 9) & 0x1;
@@ -406,7 +406,7 @@ static INLINE int Vdp2FetchPixel(vdp2draw_struct *info, int x, int y, u32 *color
             *color = Vdp2ColorRamGetColor(info->coloroffset + *dot, vdp2_color_ram);
             return 1;
          }
-      case 3: // 16 BPP(RGB)
+      case 3: // 16 BPP(RGB)      
          *dot = T1ReadWord(ram, ((charaddr + ((y * info->cellw) + x) * 2) & 0x7FFFF));
          if (!(*dot & 0x8000) && info->transparencyenable) return 0;
          else
@@ -431,7 +431,7 @@ static INLINE int Vdp2FetchPixel(vdp2draw_struct *info, int x, int y, u32 *color
 
 static INLINE int TestWindow(int wctl, int enablemask, int inoutmask, clipping_struct *clip, int x, int y)
 {
-   if (wctl & enablemask)
+   if (wctl & enablemask) 
    {
       if (wctl & inoutmask)
       {
@@ -915,7 +915,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
          // or something like that :)
          u32 scroll_value = 0;
          int y_value = 0;
-
+         
          if (vdp2_interlace)
             y_value = j / 2;
          else
@@ -964,7 +964,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
          //x = info->x+((int)(info->coordincx*(float)((info->mosaicxmask > 1) ? (i / info->mosaicxmask * info->mosaicxmask) : i)));
 		 x = info->x + mosaic_x[i]*info->coordincx;
          x &= sinfo.xmask;
-
+		 
          if (linescrollx) {
             x += linescrollx;
             x &= 0x3FF;
@@ -1027,7 +1027,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
          }
       }
       output_y++;
-   }
+   }    
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1141,7 +1141,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                   // Tile
                   Vdp2MapCalcXY(info, &x, &y, &sinfo, regs, ram,0);
                }
-
+ 
                // Fetch pixel
                if (!Vdp2FetchPixel(info, x, y, &color, &dot, ram, info->charaddr,info->paladdr, color_ram))
                {
@@ -1762,14 +1762,14 @@ static void Vdp2DrawNBG2(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct
    info.transparencyenable = !(regs->BGON & 0x400);
    info.specialprimode = (regs->SFPRMD >> 4) & 0x3;
 
-   info.colornumber = (regs->CHCTLB & 0x2) >> 1;
+   info.colornumber = (regs->CHCTLB & 0x2) >> 1;	
    info.mapwh = 2;
 
    ReadPlaneSize(&info, regs->PLSZ >> 4);
    info.x = regs->SCXN2 & 0x7FF;
    info.y = regs->SCYN2 & 0x7FF;
    ReadPatternData(&info, regs->PNCN2, regs->CHCTLB & 0x1);
-
+    
    if (regs->CCCTL & 0x204)
       info.alpha = ((~regs->CCRNB & 0x1F) << 1) + 1;
    else
@@ -1835,7 +1835,7 @@ static void Vdp2DrawNBG3(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct
    info.specialprimode = (regs->SFPRMD >> 6) & 0x3;
 
    info.colornumber = (regs->CHCTLB & 0x20) >> 5;
-
+	
    info.mapwh = 2;
 
    ReadPlaneSize(&info, regs->PLSZ >> 6);
@@ -2204,9 +2204,9 @@ void VIDSoftSetupGL(void)
       "}                                                   \n";
 
    static float vertices [] = {
-      -1.0f, 1.0f,
+      -1.0f, 1.0f, 
       1.0f, 1.0f,
-      1.0f, -1.0f,
+      1.0f, -1.0f, 
       -1.0f,-1.0f,
       0.0, 0.0,
       1.0, 0.0,
@@ -2241,7 +2241,7 @@ void VIDSoftSetupGL(void)
 
    glGetShaderiv(fshader, GL_COMPILE_STATUS, &status);
    if (status == GL_FALSE) { printf("Failed to compile fragment shader\n"); }
-
+	
    gl_shader_prog = glCreateProgram();
    glAttachShader(gl_shader_prog, vshader);
    glAttachShader(gl_shader_prog, fshader);
@@ -2253,7 +2253,7 @@ void VIDSoftSetupGL(void)
    if (status == GL_FALSE) { printf("Failed to link shader program\n"); }
 
    glUseProgram(gl_shader_prog);
-
+	
    posAttrib = glGetAttribLocation(gl_shader_prog, "position");
    glEnableVertexAttribArray(posAttrib);
    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -2290,8 +2290,8 @@ void VIDSoftDeInit(void)
 
    if (vdp1framebuffer[1])
       free(vdp1framebuffer[1]);
-
-#if !defined(ANDROID)
+  
+#if !defined(ANDROID)  
 #ifdef USE_OPENGL
    if (gl_texture_id) { glDeleteTextures(1, &gl_texture_id); }
    if (gl_shader_prog) { glDeleteProgram(gl_shader_prog); }
@@ -2335,7 +2335,7 @@ int VIDSoftVdp1Reset(void)
    Vdp1Regs->userclipY1 = Vdp1Regs->systemclipY1 = 0;
    Vdp1Regs->userclipX2 = Vdp1Regs->systemclipX2 = 512;
    Vdp1Regs->userclipY2 = Vdp1Regs->systemclipY2 = 256;
-
+   
    return 0;
 }
 
@@ -2442,7 +2442,7 @@ static INLINE u32 alphablend16(u32 d, u32 s, u32 level)
 	int r,g,b,sr,sg,sb,dr,dg,db;
 
 	int invlevel = 256-level;
-	sr = s & 0x001f; dr = d & 0x001f;
+	sr = s & 0x001f; dr = d & 0x001f; 
 	r = (sr*level + dr*invlevel)>>8; r&= 0x1f;
 	sg = s & 0x03e0; dg = d & 0x03e0;
 	g = (sg*level + dg*invlevel)>>8; g&= 0x03e0;
@@ -2515,7 +2515,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
 			currentPixel = Vdp1ReadPattern16( characterAddress + (linenumber*(characterWidth>>1)), currentlineindex , ram);
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				return 1;
-			if (!((currentPixel == 0) && !SPD))
+			if (!((currentPixel == 0) && !SPD)) 
 				currentPixel = (colorbank &0xfff0)| currentPixel;
 			currentPixelIsVisible = 0xf;
 			break;
@@ -2542,7 +2542,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				currentPixel = 0;
 		//		return 1;
-			if (!((currentPixel == 0) && !SPD))
+			if (!((currentPixel == 0) && !SPD)) 
 				currentPixel = (colorbank&0xffc0) | currentPixel;
 			currentPixelIsVisible = 0x3f;
 			break;
@@ -2551,7 +2551,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
          currentPixel = Vdp1ReadPattern128(characterAddress + (linenumber*characterWidth), currentlineindex, ram);
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				return 1;
-			if (!((currentPixel == 0) && !SPD))
+			if (!((currentPixel == 0) && !SPD)) 
 				currentPixel = (colorbank&0xff80) | currentPixel;//dead or alive needs colorbank to be masked
 			currentPixelIsVisible = 0x7f;
 			break;
@@ -2561,7 +2561,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				return 1;
 			currentPixelIsVisible = 0xff;
-			if (!((currentPixel == 0) && !SPD))
+			if (!((currentPixel == 0) && !SPD)) 
 				currentPixel = (colorbank&0xff00) | currentPixel;
 			break;
 		case 0x5://16bpp bank
@@ -2724,7 +2724,7 @@ static void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_f
 		switch( cmd->CMDPMOD & 0x7 )//we want bits 0,1,2
 		{
 		case 0:	// replace
-			if (!((currentPixel == 0) && !SPD))
+			if (!((currentPixel == 0) && !SPD)) 
 				*(iPix) = currentPixel;
 			break;
 		case 1: // shadow
@@ -2735,7 +2735,7 @@ static void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_f
 			*(iPix) = ((currentPixel & ~0x8421) >> 1) | (1 << 15);
 			break;
 		case 3: // half transparent
-			if ( *(iPix) & (1 << 15) )//only if MSB of framebuffer data is set
+			if ( *(iPix) & (1 << 15) )//only if MSB of framebuffer data is set 
 				*(iPix) = alphablend16( *(iPix), currentPixel, (1 << 7) ) | (1 << 15);
 			else
 				*(iPix) = currentPixel;
@@ -2747,9 +2747,9 @@ static void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_f
 			//if we are in a paletted bank mode and the other two colors are unused, adjust the index value instead of rgb
 			if(
 				(((cmd->CMDPMOD >> 3) & 0x7) != 5) &&
-				(((cmd->CMDPMOD >> 3) & 0x7) != 1) &&
-				(int)leftColumnColor.g == 16 &&
-				(int)leftColumnColor.b == 16)
+				(((cmd->CMDPMOD >> 3) & 0x7) != 1) && 
+				(int)leftColumnColor.g == 16 && 
+				(int)leftColumnColor.b == 16) 
 			{
 				int c = (int)(leftColumnColor.r-0x10);
 				if(c < 0) c = 0;
@@ -3026,10 +3026,10 @@ static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y,
 	int *intarrays[2];
 
 	COLOR_PARAMS topLeftToBottomLeftColorStep = {0,0,0}, topRightToBottomRightColorStep = {0,0,0};
-
+		
 	//how quickly we step through the line arrays
 	double leftLineStep = 1;
-	double rightLineStep = 1;
+	double rightLineStep = 1; 
 
 	//a lookup table for the gouraud colors
 	COLOR colors[4];
@@ -3132,7 +3132,7 @@ static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y,
 			xright[(int)(i*rightLineStep)],
 			yright[(int)(i*rightLineStep)],
 			1,
-			ytexturestep*i,
+			ytexturestep*i, 
 			xtexturestep,
 			leftToRightStep.r,
 			leftToRightStep.g,
@@ -3638,7 +3638,7 @@ void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * spr_window_mask, u8* vdp1_front_fr
                   ;
                else if (pixel & 0x8000 && colormode)
                {
-                  // 16 BPP
+                  // 16 BPP               
                   u8 alpha = 0x3F;
                   if ((SPCCCS == 3) && TestBothWindow(vdp2_regs->WCTLD >> 8, colorcalcwindow, i, i2) && (vdp2_regs->CCCTL & 0x40))
                   {
@@ -3835,7 +3835,7 @@ void VIDSoftVdp2Draw(void)
 #if !defined(ANDROID)
 #ifdef USE_OPENGL
    glUseProgram(gl_shader_prog);
-   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+   glBindFramebuffer(GL_FRAMEBUFFER, 0);	
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_2D, gl_texture_id);
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, vdp2width, vdp2height, 0, GL_RGBA, GL_UNSIGNED_BYTE, dispbuffer);
@@ -3846,7 +3846,7 @@ void VIDSoftVdp2Draw(void)
 #endif
    if (! OSDUseBuffer())
       OSDDisplayMessages(NULL, -1, -1);
-
+  
    YuiSwapBuffers();
 }
 
@@ -3896,7 +3896,7 @@ int CanUseSpriteThread()
       //thread cannot be used
       return 0;
    }
-
+   
    return 1;
 }
 
@@ -4058,7 +4058,7 @@ void VIDSoftVdp2SetResolution(u16 TVMD)
          break;
       case 2: // Single-density Interlace
       case 0: // Non-interlace
-      default:
+      default: 
          vdp2_interlace = 0;
          break;
    }
@@ -4082,12 +4082,12 @@ void VIDSoftVdp1SwapFrameBuffer(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void VIDSoftVdp1EraseWrite(int id) {
+void VIDSoftVdp1EraseWrite() {
   VIDSoftVdp1EraseFrameBuffer(Vdp1Regs, vdp1frontframebuffer);
 };
 
 void VIDSoftVdp1EraseFrameBuffer(Vdp1* regs, u8 * back_framebuffer)
-{
+{   
    int i,i2;
    int w,h;
 

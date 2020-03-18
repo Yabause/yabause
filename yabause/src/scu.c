@@ -2591,7 +2591,7 @@ void ScuSendVBlankOUT(void) {
      }
      else {
        ScuRegs->timer0_set = 0;
-       // ScuRemoveTimer0();
+       ScuRemoveTimer0();
      }
    }
    ScuChekIntrruptDMA(1);
@@ -2612,7 +2612,7 @@ void ScuSendHBlankIN(void) {
      }
      else {
        ScuRegs->timer0_set = 0;
-       // ScuRemoveTimer0();
+       ScuRemoveTimer0();
      }
 
      if (ScuRegs->timer1_set == 1) {

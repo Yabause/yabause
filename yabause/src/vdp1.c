@@ -36,7 +36,6 @@
 #include "ygl.h"
 
 u8 * Vdp1Ram;
-int vdp1Ram_updated;
 int vdp1Ram_update_start;
 int vdp1Ram_update_end;
 int VDP1_MASK = 0xFFFF;
@@ -75,7 +74,6 @@ u32 FASTCALL Vdp1RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
 
 void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
    addr &= 0x7FFFF;
-   vdp1Ram_updated = 1;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
    if (vdp1Ram_update_end < addr+1) vdp1Ram_update_end = addr + 1;
    T1WriteByte(mem, addr, val);
@@ -85,7 +83,6 @@ void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 
 void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    addr &= 0x7FFFF;
-   vdp1Ram_updated = 1;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
    if (vdp1Ram_update_end < addr+2) vdp1Ram_update_end = addr + 2;
    T1WriteWord(mem, addr, val);
@@ -95,7 +92,6 @@ void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) 
 
 void FASTCALL Vdp1RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
    addr &= 0x7FFFF;
-   vdp1Ram_updated = 1;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
    if (vdp1Ram_update_end < addr+4) vdp1Ram_update_end = addr + 4;
    T1WriteLong(mem, addr, val);
@@ -192,7 +188,6 @@ int Vdp1Init(void) {
 
    VDP1_MASK = 0xFFFF;
 
-   vdp1Ram_updated = 0;
    vdp1Ram_update_start = 0x0;
    vdp1Ram_update_end = 0x80000;
 
@@ -340,7 +335,9 @@ static int needVBlankErase() {
 void updateFBMode() {
   Vdp1External.manualchange = 0;
   Vdp1External.onecyclemode = 0;
+  Vdp1External.vblank_erase = 0;
   if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){
+    Vdp1External.vblank_erase = ((Vdp1Regs->FBCR & 3) == 3);
     Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
   } else {
     //Manual erase shall not be reseted but need to save its current value
@@ -351,7 +348,7 @@ void updateFBMode() {
     Vdp1External.manualerase |= ((Vdp1Regs->FBCR & 3) == 2);
     Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
   }
-  // Vdp1External.manualerase |= Vdp1External.manualchange;
+  Vdp1External.manualerase |= Vdp1External.manualchange;
 }
 
 static void Vdp1TryDraw(void) {
@@ -413,100 +410,59 @@ void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 v
 
 //////////////////////////////////////////////////////////////////////////////
 
-void checkClipCmd(int* sysClipAddr, int* usrClipAddr, int* localCoordAddr, u8 * ram, Vdp1 * regs) {
-  int oldaddr = regs->addr;
-  if (sysClipAddr != NULL) {
-    if (*sysClipAddr != -1) {
-      regs->addr = *sysClipAddr;
-      VIDCore->Vdp1SystemClipping(ram, regs);
-      *sysClipAddr = -1;
-    }
-  }
-  if (usrClipAddr != NULL) {
-    if (*usrClipAddr != -1) {
-      regs->addr = *usrClipAddr;
-      VIDCore->Vdp1UserClipping(ram, regs);
-      *usrClipAddr = -1;
-    }
-  }
-  if (localCoordAddr != NULL) {
-    if (*localCoordAddr != -1) {
-      regs->addr = *localCoordAddr;
-      VIDCore->Vdp1LocalCoordinate(ram, regs);
-      *localCoordAddr = -1;
-    }
-  }
-  regs->addr = oldaddr;
-}
-
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
-   int usrClipAddr = -1;
-   int sysClipAddr = -1;
-   int localCoordAddr = -1;
-   regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
-   while (!(command & 0x8000) && (commandCounter < 2000) ) { // fix me
+   u32 returnAddr = 0xffffffff;
+   while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
          case 0: // normal sprite draw
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1NormalSpriteDraw(ram, regs, back_framebuffer);
             break;
          case 1: // scaled sprite draw
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer);
             break;
          case 2: // distorted sprite draw
          case 3: /* this one should be invalid, but some games
                  (Hardcore 4x4 for instance) use it instead of 2 */
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer);
             break;
          case 4: // polygon draw
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1PolygonDraw(ram, regs, back_framebuffer);
             break;
          case 5: // polyline draw
          case 7: // undocumented mirror
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1PolylineDraw(ram, regs, back_framebuffer);
             break;
          case 6: // line draw
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1LineDraw(ram, regs, back_framebuffer);
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
-            checkClipCmd(&sysClipAddr, NULL, &localCoordAddr, ram, regs);
-            usrClipAddr = regs->addr;
+            VIDCore->Vdp1UserClipping(ram, regs);
             break;
          case 9: // system clipping coordinates
-            checkClipCmd(NULL, &usrClipAddr, &localCoordAddr, ram, regs);
-            sysClipAddr = regs->addr;
+            VIDCore->Vdp1SystemClipping(ram, regs);
             break;
          case 10: // local coordinate
-            checkClipCmd(&sysClipAddr, &usrClipAddr, NULL, ram, regs);
-            localCoordAddr = regs->addr;
+            VIDCore->Vdp1LocalCoordinate(ram, regs);
             break;
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             regs->EDSR |= 2;
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
-            ScuSendDrawEnd();
             return;
          }
       }
 
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
 	  if (regs->EDSR & 0x02){
-      checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
+
 		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
-      ScuSendDrawEnd();
 		  return;
 	  }
 
@@ -519,15 +475,15 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
          break;
       case 2: // CALL, call a subroutine
-         if (yabsys.returnAddr == 0xFFFFFFFF)
-            yabsys.returnAddr = regs->addr + 0x20;
+         if (returnAddr == 0xFFFFFFFF)
+            returnAddr = regs->addr + 0x20;
 
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
          break;
       case 3: // RETURN, return from subroutine
-         if (yabsys.returnAddr != 0xFFFFFFFF) {
-            regs->addr = yabsys.returnAddr;
-            yabsys.returnAddr = 0xFFFFFFFF;
+         if (returnAddr != 0xFFFFFFFF) {
+            regs->addr = returnAddr;
+            returnAddr = 0xFFFFFFFF;
          }
          else
             regs->addr += 0x20;
@@ -541,13 +497,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
-   if (command & 0x8000) {
-     checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-     Vdp1Regs->EDSR |= 2;
-     ScuSendDrawEnd();
-     return;
-   }
-   checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
 }
 
 //ensure that registers are set correctly
@@ -627,7 +576,6 @@ void Vdp1Draw(void)
       Vdp1NoDraw();
    } else {
      Vdp1Regs->addr = 0;
-     yabsys.returnAddr = 0xffffffff;
 
      // beginning of a frame
      // BEF <- CEF
@@ -641,6 +589,8 @@ void Vdp1Draw(void)
    }
 
    FRAMELOG("Vdp1Draw end at %d line\n", yabsys.LineCount);
+   Vdp1Regs->EDSR |= 2;
+   ScuSendDrawEnd();
 
 }
 
@@ -654,10 +604,8 @@ void Vdp1NoDraw(void) {
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
    Vdp1Regs->lCOPR = 0;
-   _Ygl->vdp1On[_Ygl->drawframe] = 0;
+
    Vdp1FakeDrawCommands(Vdp1Ram, Vdp1Regs);
-   Vdp1Regs->EDSR |= 2;
-   ScuSendDrawEnd();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -723,7 +671,6 @@ int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
 
    // Read VDP1 ram
    yread(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
-   vdp1Ram_updated = 1;
    vdp1Ram_update_start = 0x0;
    vdp1Ram_update_end = 0x80000;
 #ifdef IMPROVED_SAVESTATES
@@ -1689,7 +1636,7 @@ static void startField(void) {
 
   yabsys.wait_line_count = -1;
 
-  FRAMELOG("StartField ***** VOUT(T) %d FCM=%d FCT=%d VBE=%d PTMR=%d (%d, %d, %d, %d)*****\n", Vdp1External.swap_frame_buffer, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, Vdp1Regs->PTMR, Vdp1External.onecyclemode, Vdp1External.manualchange, Vdp1External.manualerase, needVBlankErase());
+  FRAMELOG("StartField ***** VOUT(T) %d FCM=%d FCT=%d VBE=%d PTMR=%d (%d, %d, %d, %d)*****\n", Vdp1External.swap_frame_buffer, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, Vdp1Regs->PTMR, Vdp1External.onecyclemode, Vdp1External.manualchange, Vdp1External.manualerase, Vdp1External.vblank_erase);
 
   // Manual Change
   Vdp1External.swap_frame_buffer |= (Vdp1External.manualchange == 1);
@@ -1701,7 +1648,7 @@ static void startField(void) {
     FRAMELOG("Swap Line %d\n", yabsys.LineCount);
     if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))
     {
-      VIDCore->Vdp1EraseWrite(_Ygl->readframe);
+      VIDCore->Vdp1EraseWrite();
       Vdp1External.manualerase = 0;
     }
 
@@ -1769,8 +1716,7 @@ void Vdp1VBlankOUT(void)
 {
   //Out of VBlankOut : Break Batman
   if (needVBlankErase()) {
-    VIDCore->Vdp1EraseWrite(_Ygl->readframe);
-    //Workaround for Sonic R
-    VIDCore->Vdp1EraseWrite(_Ygl->drawframe);
+    VIDCore->Vdp1EraseWrite();
   }
+  Vdp1External.vblank_erase = 0;
 }
