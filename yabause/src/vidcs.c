@@ -382,15 +382,6 @@ int getBestMode(vdp1cmd_struct* cmd) {
     (cmd->CMDYC == cmd->CMDYB)
   ) {
     ret = QUAD;
-  } else {
-    if (
-      (abs(cmd->CMDYB - cmd->CMDYA) <= 1) &&
-      (abs(cmd->CMDYC - cmd->CMDYD) <= 1) &&
-      (abs(cmd->CMDXC - cmd->CMDXB) <= 1) &&
-      (abs(cmd->CMDXD - cmd->CMDXA) <= 1)
-    ) {
-      ret = QUAD;
-    }
   }
   return ret;
 }
