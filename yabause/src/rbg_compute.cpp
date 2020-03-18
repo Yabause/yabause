@@ -153,7 +153,7 @@ SHADER_VERSION_COMPUTE
 "	     kdata = vram[ addr>>2 ]; \n"
 "      kdata = ((kdata&0xFF000000u) >> 24 | ((kdata) >> 8 & 0xFF00u) | ((kdata) & 0xFF00u) << 8 | (kdata&0x000000FFu) << 24);\n"
 "    }else{\n"
-"      kdata = cram[ 0x800u + ((addr&0x7FFu )>>2) ]; \n"
+"      kdata = cram[ (0x800u + (addr&0xFFFu) )>>2 ]; \n"
 "      kdata = ((kdata&0xFFFF0000u)>>16|(kdata&0x0000FFFFu)<<16);\n"
 "    }\n"
 "	 if( para[paramid].linecoefenab != 0) lineaddr = (kdata >> 24) & 0x7Fu; else lineaddr = 0u;\n"
