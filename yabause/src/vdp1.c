@@ -602,7 +602,7 @@ void Vdp1NoDraw(void) {
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
    Vdp1Regs->lCOPR = 0;
-
+   _Ygl->vdp1On[_Ygl->drawframe] = 0;
    Vdp1FakeDrawCommands(Vdp1Ram, Vdp1Regs);
 }
 
