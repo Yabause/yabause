@@ -127,7 +127,6 @@ typedef struct {
    int disptoggle;
    int manualerase;
    int manualchange;
-   int vblank_erase;
    int onecyclemode;
    int swap_frame_buffer;
    int plot_trigger_line;

@@ -340,9 +340,7 @@ static int needVBlankErase() {
 void updateFBMode() {
   Vdp1External.manualchange = 0;
   Vdp1External.onecyclemode = 0;
-  Vdp1External.vblank_erase = 0;
   if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){
-    Vdp1External.vblank_erase = ((Vdp1Regs->FBCR & 3) == 3);
     Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
   } else {
     //Manual erase shall not be reseted but need to save its current value
@@ -1691,7 +1689,7 @@ static void startField(void) {
 
   yabsys.wait_line_count = -1;
 
-  FRAMELOG("StartField ***** VOUT(T) %d FCM=%d FCT=%d VBE=%d PTMR=%d (%d, %d, %d, %d)*****\n", Vdp1External.swap_frame_buffer, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, Vdp1Regs->PTMR, Vdp1External.onecyclemode, Vdp1External.manualchange, Vdp1External.manualerase, Vdp1External.vblank_erase);
+  FRAMELOG("StartField ***** VOUT(T) %d FCM=%d FCT=%d VBE=%d PTMR=%d (%d, %d, %d, %d)*****\n", Vdp1External.swap_frame_buffer, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, Vdp1Regs->PTMR, Vdp1External.onecyclemode, Vdp1External.manualchange, Vdp1External.manualerase, needVBlankErase());
 
   // Manual Change
   Vdp1External.swap_frame_buffer |= (Vdp1External.manualchange == 1);
@@ -1773,5 +1771,4 @@ void Vdp1VBlankOUT(void)
   if (needVBlankErase()) {
     VIDCore->Vdp1EraseWrite(_Ygl->readframe);
   }
-  Vdp1External.vblank_erase = 0;
 }
