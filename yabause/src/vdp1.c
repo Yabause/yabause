@@ -1770,5 +1770,7 @@ void Vdp1VBlankOUT(void)
   //Out of VBlankOut : Break Batman
   if (needVBlankErase()) {
     VIDCore->Vdp1EraseWrite(_Ygl->readframe);
+    //Workaround for Sonic R
+    VIDCore->Vdp1EraseWrite(_Ygl->drawframe);
   }
 }
