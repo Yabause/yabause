@@ -408,10 +408,39 @@ void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 v
 
 //////////////////////////////////////////////////////////////////////////////
 
+void checkClipCmd(int* sysClipAddr, int* usrClipAddr, int* localCoordAddr, u8 * ram, Vdp1 * regs) {
+  int oldaddr = regs->addr;
+  if (sysClipAddr != NULL) {
+    if (*sysClipAddr != -1) {
+      regs->addr = *sysClipAddr;
+      VIDCore->Vdp1SystemClipping(ram, regs);
+      *sysClipAddr = -1;
+    }
+  }
+  if (usrClipAddr != NULL) {
+    if (*usrClipAddr != -1) {
+      regs->addr = *usrClipAddr;
+      VIDCore->Vdp1UserClipping(ram, regs);
+      *usrClipAddr = -1;
+    }
+  }
+  if (localCoordAddr != NULL) {
+    if (*localCoordAddr != -1) {
+      regs->addr = *localCoordAddr;
+      VIDCore->Vdp1LocalCoordinate(ram, regs);
+      *localCoordAddr = -1;
+    }
+  }
+  regs->addr = oldaddr;
+}
+
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
+   int usrClipAddr = -1;
+   int sysClipAddr = -1;
+   int localCoordAddr = -1;
    u32 returnAddr = 0xffffffff;
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
@@ -419,38 +448,48 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
          case 0: // normal sprite draw
+            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1NormalSpriteDraw(ram, regs, back_framebuffer);
             break;
          case 1: // scaled sprite draw
+            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer);
             break;
          case 2: // distorted sprite draw
          case 3: /* this one should be invalid, but some games
                  (Hardcore 4x4 for instance) use it instead of 2 */
+            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer);
             break;
          case 4: // polygon draw
+            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1PolygonDraw(ram, regs, back_framebuffer);
             break;
          case 5: // polyline draw
          case 7: // undocumented mirror
+            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1PolylineDraw(ram, regs, back_framebuffer);
             break;
          case 6: // line draw
+            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             VIDCore->Vdp1LineDraw(ram, regs, back_framebuffer);
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
-            VIDCore->Vdp1UserClipping(ram, regs);
+            checkClipCmd(&sysClipAddr, NULL, &localCoordAddr, ram, regs);
+            usrClipAddr = regs->addr;
             break;
          case 9: // system clipping coordinates
-            VIDCore->Vdp1SystemClipping(ram, regs);
+            checkClipCmd(NULL, &usrClipAddr, &localCoordAddr, ram, regs);
+            sysClipAddr = regs->addr;
             break;
          case 10: // local coordinate
-            VIDCore->Vdp1LocalCoordinate(ram, regs);
+            checkClipCmd(&sysClipAddr, &usrClipAddr, NULL, ram, regs);
+            localCoordAddr = regs->addr;
             break;
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
+            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             regs->EDSR |= 2;
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
             return;
@@ -459,7 +498,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
 	  if (regs->EDSR & 0x02){
-
+		  checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
 		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
 		  return;
 	  }
@@ -495,6 +534,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
+   checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
 }
 
 //ensure that registers are set correctly
