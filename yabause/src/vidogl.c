@@ -3390,17 +3390,17 @@ void VIDOGLReadColorOffset(void) {
           {
             // color offset B
             linebuf[line+512*id] = (cc << 24)
-                          |(((int)(128.0f + (b_cor / 2.0)) & 0xFF) << 16)
+                          |(((int)(128.0f + (b_cob / 2.0)) & 0xFF) << 16)
                           | (((int)(128.0f + (b_cog / 2.0)) & 0xFF) << 8)
-                          | (((int)(128.0f + (b_cob / 2.0)) & 0xFF) << 0);
+                          | (((int)(128.0f + (b_cor / 2.0)) & 0xFF) << 0);
           }
           else
           {
             // color offset A
             linebuf[line+512*id] = (cc << 24)
-                          | (((int)(128.0f + (a_cor / 2.0)) & 0xFF) << 16)
+                          | (((int)(128.0f + (a_cob / 2.0)) & 0xFF) << 16)
                           | (((int)(128.0f + (a_cog / 2.0)) & 0xFF) << 8)
-                          | (((int)(128.0f + (a_cob / 2.0)) & 0xFF) << 0);
+                          | (((int)(128.0f + (a_cor / 2.0)) & 0xFF) << 0);
           }
         }
         else {
