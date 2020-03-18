@@ -141,7 +141,7 @@ SHADER_VERSION_COMPUTE
 "      if( (addr & 0x02u) != 0u ) { kdata >>= 16; } \n"
 "      kdata = (((kdata) >> 8 & 0xFFu) | ((kdata) & 0xFFu) << 8);\n"
 "    }else{\n"
-"      kdata = cram[ (0x800u + (addr&0xFFFu)>>2)  ]; \n"
+"      kdata = cram[ (0x800u + (addr&0xFFFu))>>2  ]; \n"
 "      if( (addr & 0x02u) != 0u ) { kdata >>= 16; } \n"
 "    }\n"
 "    if ( (kdata & 0x8000u) != 0u) { return -1; }\n"
