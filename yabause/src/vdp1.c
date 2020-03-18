@@ -1646,7 +1646,7 @@ static void startField(void) {
     FRAMELOG("Swap Line %d\n", yabsys.LineCount);
     if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))
     {
-      VIDCore->Vdp1EraseWrite();
+      VIDCore->Vdp1EraseWrite(_Ygl->readframe);
       Vdp1External.manualerase = 0;
     }
 
@@ -1714,6 +1714,6 @@ void Vdp1VBlankOUT(void)
 {
   //Out of VBlankOut : Break Batman
   if (needVBlankErase()) {
-    VIDCore->Vdp1EraseWrite();
+    VIDCore->Vdp1EraseWrite(_Ygl->readframe);
   }
 }
