@@ -2449,7 +2449,7 @@ int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache *
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void YglEraseWriteVDP1(void) {
+void YglEraseWriteVDP1(int id) {
 
   float col[4] = {0.0};
   u16 color;
@@ -2458,35 +2458,37 @@ void YglEraseWriteVDP1(void) {
   int status = 0;
   GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
-  _Ygl->vdp1On[_Ygl->readframe] = 0;
+  _Ygl->vdp1On[id] = 0;
 
   releaseVDP1FB();
   // _Ygl->vdp1IsNotEmpty = 0;
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-  glDrawBuffers(1, &DrawBuffers[_Ygl->readframe]);
+  int drawBuf = 0;
+  glGetIntegerv(GL_DRAW_BUFFER0, &drawBuf);
+  glDrawBuffers(1, &DrawBuffers[id]);
 
   _Ygl->vdp1_stencil_mode = 0;
 
-  _Ygl->vdp1levels[_Ygl->readframe].ux1 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].uy1 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].ux2 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].uy2 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].uclipcurrent = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].blendmode = 0;
+  _Ygl->vdp1levels[id].ux1 = 0;
+  _Ygl->vdp1levels[id].uy1 = 0;
+  _Ygl->vdp1levels[id].ux2 = 0;
+  _Ygl->vdp1levels[id].uy2 = 0;
+  _Ygl->vdp1levels[id].uclipcurrent = 0;
+  _Ygl->vdp1levels[id].blendmode = 0;
 
   color = Vdp1Regs->EWDR;
 
-  _Ygl->vdp1On[_Ygl->readframe] = 0;
+  _Ygl->vdp1On[id] = 0;
 
   col[0] = (color & 0xFF) / 255.0f;
   col[1] = ((color >> 8) & 0xFF) / 255.0f;
 
   glClearBufferfv(GL_COLOR, 0, col);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
+  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", id);
   //Get back to drawframe
-  glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
+  glDrawBuffers(1, &drawBuf);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 

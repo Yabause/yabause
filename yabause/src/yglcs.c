@@ -57,7 +57,7 @@ extern void vdp1_write();
 extern u32* manualfb;
 
 //////////////////////////////////////////////////////////////////////////////
-void YglEraseWriteCSVDP1(void) {
+void YglEraseWriteCSVDP1(int id) {
 
   float col[4] = {0.0};
   u16 color;
@@ -67,29 +67,25 @@ void YglEraseWriteCSVDP1(void) {
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
   manualfb = NULL;
 
-  _Ygl->vdp1On[_Ygl->readframe] = 0;
+  _Ygl->vdp1On[id] = 0;
   _Ygl->vdp1_stencil_mode = 0;
 
-  _Ygl->vdp1levels[_Ygl->readframe].ux1 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].uy1 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].ux2 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].uy2 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].uclipcurrent = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].blendmode = 0;
+  _Ygl->vdp1levels[id].ux1 = 0;
+  _Ygl->vdp1levels[id].uy1 = 0;
+  _Ygl->vdp1levels[id].ux2 = 0;
+  _Ygl->vdp1levels[id].uy2 = 0;
+  _Ygl->vdp1levels[id].uclipcurrent = 0;
+  _Ygl->vdp1levels[id].blendmode = 0;
 
   color = Vdp1Regs->EWDR;
 
-  if (color != 0x0) _Ygl->vdp1On[_Ygl->readframe] = 1;
+  if (color != 0x0) _Ygl->vdp1On[id] = 1;
 
   col[0] = (color & 0xFF) / 255.0f;
   col[1] = ((color >> 8) & 0xFF) / 255.0f;
 
-  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
-  vdp1_clear(_Ygl->readframe, col);
-
-  //Get back to drawframe
-  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-
+  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", id);
+  vdp1_clear(id, col);
 }
 
 //////////////////////////////////////////////////////////////////////////////
