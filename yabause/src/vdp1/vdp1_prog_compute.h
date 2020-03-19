@@ -210,14 +210,14 @@ SHADER_VERSION_COMPUTE
 
 "uint isOnALine( vec2 P, vec2 V0, vec2 V1, float sAx, float sAy, float sBx, float sBy, uint step, out vec2 uv){\n"
 "  for (uint i=0; i<step; i++) {\n"
-"    vec2 A = vec2(V0.x+i*sAx, V0.y+i*sAy)+vec2(0.5);\n"
-"    vec2 B = vec2(V1.x+i*sBx, V1.y+i*sBy)+vec2(0.5);\n"
-"    vec3 d = point(P+vec2(0.5), A, B);\n"
-//"    if (all(equal(floor(d) ,floor(P+vec2(0.5))))) {\n"
-"    if ((floor(d.y) == floor(P.y+0.5)) && (abs(d.x-(P.x+0.5))<0.5)) {\n"
-"      float j = float(i)+0.5;\n"
-"      float ux= d.z;\n"
-"      float uy=(float(j))/float(step);\n"
+//A pixel shall be considered as part of a line if the distance of the pixel center to the line is shorter than (sqrt(0.5), which is the diagonal of the pixel
+//This represent the behavior of antialiasing as displayed in vdp1 spec.
+"    vec2 A = vec2(V0.x+i*sAx, V0.y+i*sAy)+vec2(0.5);\n" //Get the center of the first point
+"    vec2 B = vec2(V1.x+i*sBx, V1.y+i*sBy)+vec2(0.5);\n" //Get the center of the last point
+"    vec3 d = point(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
+"    if (distance(d.xy, P+vec2(0.5)) <= 0.7072) {\n" //Test the distance between the projection on line and the center of the pixel
+"      float ux= d.z;\n" //u is the relative distance from first point to projected position
+"      float uy=(float(i))/float(step);\n" //v is the ratio between the current line and the total number of lines
 "      uv = vec2(ux,uy);\n"
 "      return 1u;\n"
 "    }\n"
