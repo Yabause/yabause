@@ -130,6 +130,8 @@ typedef struct {
    int manualerase;
    int manualchange;
    int onecyclemode;
+   int useVBlankErase;
+   int rmVBlankErase;
    int swap_frame_buffer;
    int plot_trigger_line;
    int plot_trigger_done;
