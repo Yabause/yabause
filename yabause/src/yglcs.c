@@ -95,7 +95,7 @@ void YglEraseWriteCSVDP1(int id) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglCSRenderVDP1(void) {
-  FRAMELOG("YglCSRenderVDP1: drawframe =%d", _Ygl->drawframe);
+  FRAMELOG("YglCSRenderVDP1: drawframe =%d %d\n", _Ygl->drawframe, yabsys.LineCount);
   vdp1_compute();
 
 #ifdef TEST_FB_RW
@@ -103,7 +103,7 @@ void YglCSRenderVDP1(void) {
   vdp1_write();
 #endif
 
-  FrameProfileAdd("YglCSRenderVDP1 end");
+  FrameProfileAdd("YglCSRenderVDP1 end\n");
 }
 
 void YglFrameChangeCSVDP1(){

@@ -214,6 +214,9 @@ static int generateComputeBuffer(int w, int h) {
 
 u8* cmdBuffer;
 
+vdp1cmd_struct cmdBufferToProcess[2000];
+int nbCmdToProcess = 0;
+
 void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 	int endcnt;
 	u32 dot;
@@ -308,6 +311,13 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 	  }
 }
 
+void regenerateVdp1Buffer(void) {
+	for (int i = 0; i < nbCmdToProcess; i++) {
+		vdp1GenerateBuffer(&cmdBufferToProcess[i]);
+	}
+	vdp1_setup();
+}
+
 int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	int minx = 1024;
 	int miny = 1024;
@@ -319,6 +329,7 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	int requireCompute = 0;
 
 	if (clipcmd == 0) {
+		memcpy(&cmdBufferToProcess[nbCmdToProcess++], cmd, sizeof(vdp1cmd_struct));
 		vdp1GenerateBuffer(cmd);
 
 	  float Ax = cmd->CMDXA;
@@ -477,7 +488,6 @@ void vdp1_set_directFB() {
 		_Ygl->vdp1IsNotEmpty = 0;
 	}
 }
-
 void vdp1_setup(void) {
 	if (ssbo_vdp1ram_ == 0) return;
 	if (cmdRam_update_start < cmdRam_update_end) {
@@ -491,11 +501,11 @@ void vdp1_setup(void) {
 int * get_vdp1_tex() {
 	return &compute_tex[_Ygl->readframe];
 }
-
 void vdp1_compute() {
   GLuint error;
 	int progId = getProgramId();
 	int needRender = _Ygl->vdp1IsNotEmpty;
+
 	if (prg_vdp1[progId] == 0)
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
   glUseProgram(prg_vdp1[progId]);
@@ -511,11 +521,17 @@ void vdp1_compute() {
 			needRender = 1;
 		}
   }
-
   if (needRender == 0) {
 		return;
 	}
-
+	if ((Vdp1External.updateVdp1Ram == 1)&&(Vdp1External.checkEDSR == 0)) {
+		//The game source code has modified the content of vdp1Ram since the drawcommands order without checking the EDSR register
+		//Let's assume the game was taking care of vdp1 drawing delay to update the vdp1Ram
+		//So update the texture just to be sure all texture are the latest one
+		regenerateVdp1Buffer();
+	}
+	Vdp1External.updateVdp1Ram = 0;
+	nbCmdToProcess = 0;
 	_Ygl->vdp1On[_Ygl->drawframe] = 1;
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_nbcmd_);
@@ -567,6 +583,5 @@ void vdp1_compute() {
 	memset(hasDrawingCmd, 0, NB_COARSE_RAST*sizeof(int));
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
   return;
 }

@@ -58,6 +58,8 @@ typedef struct {
    u16 userclipY1;
    u16 userclipX2;
    u16 userclipY2;
+
+
 } Vdp1;
 
 typedef struct
@@ -93,6 +95,7 @@ typedef struct
    void (*GetNativeResolution)(int *width, int *height, int * interlace);
    void(*Vdp2DispOff)(void);
    void (*composeFB)(Vdp2 *regs);
+   void (*composeVDP1)(void);
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;
@@ -131,6 +134,8 @@ typedef struct {
    int plot_trigger_line;
    int plot_trigger_done;
    int current_frame;
+   int updateVdp1Ram;
+   int checkEDSR;
 } Vdp1External_struct;
 
 extern Vdp1External_struct Vdp1External;

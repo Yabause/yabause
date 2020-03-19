@@ -74,6 +74,7 @@ u32 FASTCALL Vdp1RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
 
 void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
    addr &= 0x7FFFF;
+   Vdp1External.updateVdp1Ram = 1;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
    if (vdp1Ram_update_end < addr+1) vdp1Ram_update_end = addr + 1;
    T1WriteByte(mem, addr, val);
@@ -83,6 +84,7 @@ void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 
 void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    addr &= 0x7FFFF;
+   Vdp1External.updateVdp1Ram = 1;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
    if (vdp1Ram_update_end < addr+2) vdp1Ram_update_end = addr + 2;
    T1WriteWord(mem, addr, val);
@@ -92,6 +94,7 @@ void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) 
 
 void FASTCALL Vdp1RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
    addr &= 0x7FFFF;
+   Vdp1External.updateVdp1Ram = 1;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
    if (vdp1Ram_update_end < addr+4) vdp1Ram_update_end = addr + 4;
    T1WriteLong(mem, addr, val);
@@ -290,12 +293,12 @@ u8 FASTCALL Vdp1ReadByte(SH2_struct *context, u8* mem, u32 addr) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
 u16 FASTCALL Vdp1ReadWord(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0xFF;
    switch(addr) {
       case 0x10:
         FRAMELOG("Read EDSR %X line = %d\n", Vdp1Regs->EDSR, yabsys.LineCount);
+        Vdp1External.checkEDSR = 1;
         return Vdp1Regs->EDSR;
       case 0x12:
         FRAMELOG("Read LOPR %X line = %d\n", Vdp1Regs->LOPR, yabsys.LineCount);
@@ -442,6 +445,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    int sysClipAddr = -1;
    int localCoordAddr = -1;
    u32 returnAddr = 0xffffffff;
+   Vdp1External.updateVdp1Ram = 0;
+   Vdp1External.checkEDSR = 0;
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       // First, process the command
@@ -1671,9 +1676,7 @@ void VIDDummyVdp2DispOff(void)
 //////////////////////////////////////////////////////////////////////////////
 static void startField(void) {
   int isrender = 0;
-
   yabsys.wait_line_count = -1;
-
   FRAMELOG("StartField ***** VOUT(T) %d FCM=%d FCT=%d VBE=%d PTMR=%d (%d, %d, %d, %d)*****\n", Vdp1External.swap_frame_buffer, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, Vdp1Regs->PTMR, Vdp1External.onecyclemode, Vdp1External.manualchange, Vdp1External.manualerase, needVBlankErase());
 
   // Manual Change
@@ -1742,10 +1745,13 @@ void Vdp1HBlankOUT(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+extern void vdp1_compute();
 void Vdp1VBlankIN(void)
 {
   Vdp1Regs->COPR = Vdp1Regs->lCOPR;
+  if (VIDCore != NULL) {
+    if (VIDCore->composeVDP1 != NULL) VIDCore->composeVDP1();
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////

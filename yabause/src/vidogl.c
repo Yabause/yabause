@@ -174,7 +174,8 @@ VIDOGLSetSettingValueMode,
 VIDOGLSync,
 VIDOGLGetNativeResolution,
 VIDOGLVdp2DispOff,
-YglRender
+YglRender,
+NULL
 };
 
 static int vdp1_interlace = 0;

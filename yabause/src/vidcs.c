@@ -107,7 +107,8 @@ void VIDCSVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1UserClipping(u8 * ram, Vdp1 * regs);
 void VIDCSVdp1SystemClipping(u8 * ram, Vdp1 * regs);
-void YglCSRender(Vdp2 *varVdp2Regs);
+extern void YglCSRender(Vdp2 *varVdp2Regs);
+extern void YglCSRenderVDP1(void);
 
 extern void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
 extern int VIDOGLVdp2Reset(void);
@@ -153,7 +154,8 @@ VIDOGLSetSettingValueMode,
 VIDOGLSync,
 VIDOGLGetNativeResolution,
 VIDOGLVdp2DispOff,
-YglCSRender
+YglCSRender,
+YglCSRenderVDP1
 };
 
 void addCSCommands(vdp1cmd_struct* cmd, int type)
