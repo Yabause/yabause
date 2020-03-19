@@ -5056,10 +5056,10 @@ static void Vdp2DrawLineColorScreen(Vdp2 *varVdp2Regs)
   }
 
   if ((varVdp2Regs->LCTA.part.U & 0x8000)) {
-    inc = 0x02; // single color
+    inc = 0x02; // color per line
   }
   else {
-    inc = 0x00; // color per line
+    inc = 0x00; // single color
   }
 
   u8 alpha = (varVdp2Regs->CCRLB & 0x1F) << 3;
