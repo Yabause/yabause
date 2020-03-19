@@ -162,23 +162,30 @@ void addCSCommands(vdp1cmd_struct* cmd, int type)
   int Ay = cmd->CMDYD - cmd->CMDYA;
   int Bx = cmd->CMDXC - cmd->CMDXB;
   int By = cmd->CMDYC - cmd->CMDYB;
-  Ax = (Ax == 0)?1:Ax;
-  Ay = (Ay == 0)?1:Ay;
-  Bx = (Bx == 0)?1:Bx;
-  By = (By == 0)?1:By;
+  int nbStep = 0;
 
-  unsigned int lA = ceil(sqrt(Ax*Ax+Ay*Ay));
-  unsigned int lB = ceil(sqrt(Bx*Bx+By*By));
+  unsigned int lA = sqrt(Ax*Ax+Ay*Ay);
+  unsigned int lB = sqrt(Bx*Bx+By*By);
 
-  cmd->nbStep = lA;
-  if (lB >= lA)
-    cmd->nbStep = lB;
-
-  cmd->uAstepx = ((float)lA / (float)cmd->nbStep) * ((float)Ax/(float)lA);
-  cmd->uAstepy = ((float)lA / (float)cmd->nbStep) * ((float)Ay/(float)lA);
-  cmd->uBstepx = ((float)lB / (float)cmd->nbStep) * ((float)Bx/(float)lB);
-  cmd->uBstepy = ((float)lB / (float)cmd->nbStep) * ((float)By/(float)lB);
+  cmd->uAstepx = 0.0;
+  cmd->uAstepy = 0.0;
+  cmd->uBstepx = 0.0;
+  cmd->uBstepy = 0.0;
+  cmd->nbStep = 1;
   cmd->type = type;
+
+  nbStep = lA;
+  if (lB >= lA)
+    nbStep = lB;
+
+  if (nbStep != 0) {
+    cmd->nbStep = nbStep;
+    if (lA != 0) cmd->uAstepx = ((float)lA / (float)cmd->nbStep) * ((float)Ax/(float)lA);
+    if (lA != 0) cmd->uAstepy = ((float)lA / (float)cmd->nbStep) * ((float)Ay/(float)lA);
+    if (lB != 0) cmd->uBstepx = ((float)lB / (float)cmd->nbStep) * ((float)Bx/(float)lB);
+    if (lB != 0) cmd->uBstepy = ((float)lB / (float)cmd->nbStep) * ((float)By/(float)lB);
+    cmd->nbStep += 1;
+  }
   vdp1_add(cmd,0);
 }
 
@@ -376,10 +383,10 @@ if ((cmd.CMDPMOD & 4))
 int getBestMode(vdp1cmd_struct* cmd) {
   int ret = DISTORTED;
   if (
-    (cmd->CMDXA == cmd->CMDXD) &&
-    (cmd->CMDYA == cmd->CMDYB) &&
-    (cmd->CMDXB == cmd->CMDXC) &&
-    (cmd->CMDYC == cmd->CMDYD)
+    (abs(cmd->CMDXA - cmd->CMDXD) <= 0) &&
+    (abs(cmd->CMDYA - cmd->CMDYB) <= 0) &&
+    (abs(cmd->CMDXB - cmd->CMDXC) <= 0) &&
+    (abs(cmd->CMDYC - cmd->CMDYD) <= 0)
   ) {
     ret = QUAD;
   }
