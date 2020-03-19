@@ -333,19 +333,23 @@ extern YabEventQueue * vdp1_rcv_evqueue;
 
 //////////////////////////////////////////////////////////////////////////////
 static int needVBlankErase() {
-  return (Vdp1External.useVBlankErase > 0);
+  return (Vdp1External.useVBlankErase != 0);
 }
-void updateFBMode() {
+void updateTVMRMode() {
+  Vdp1External.useVBlankErase = 0;
+  if (((Vdp1Regs->FBCR & 3) == 3) && (((Vdp1Regs->TVMR >> 3) & 0x01) == 1)) {
+    Vdp1External.useVBlankErase = 1;
+  }
+}
+
+void updateFBCRMode() {
   Vdp1External.manualchange = 0;
   Vdp1External.onecyclemode = 0;
+  Vdp1External.useVBlankErase = 0;
   if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){
     Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
-    if (Vdp1External.manualchange) {
-      Vdp1External.useVBlankErase = 1;
-      Vdp1External.rmVBlankErase = 0;
-    }
+    Vdp1External.useVBlankErase = 1;
   } else {
-    Vdp1External.rmVBlankErase = 1;
     //Manual erase shall not be reseted but need to save its current value
     // Only at frame change the order is executed.
     //This allows to have both a manual clear and a manual change at the same frame without continuously clearing the VDP1
@@ -367,14 +371,15 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
   addr &= 0xFF;
   switch(addr) {
     case 0x0:
+      if ((Vdp1Regs->FBCR & 3) != 3) val = (val & (~0x4));
       Vdp1Regs->TVMR = val;
-      updateFBMode();
-      FRAMELOG("Write VBE=%d FCM=%d FCT=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01),  yabsys.LineCount);
+      updateTVMRMode();
+      FRAMELOG("TVMR => Write VBE=%d FCM=%d FCT=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01),  yabsys.LineCount);
     break;
     case 0x2:
-      FRAMELOG("Write FCM=%d FCT=%d VBE=%d line = %d\n", (val & 0x02) >> 1, (val & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
       Vdp1Regs->FBCR = val;
-      updateFBMode();
+      FRAMELOG("FBCR => Write VBE=%d FCM=%d FCT=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01),  yabsys.LineCount);
+      updateFBCRMode();
       break;
     case 0x4:
       FRAMELOG("Write PTMR %X line = %d %d\n", val, yabsys.LineCount, yabsys.VBlankLineCount);
@@ -1698,6 +1703,7 @@ static void startField(void) {
     }
 
     VIDCore->Vdp1FrameChange();
+    FRAMELOG("Change readframe %d to %d (%d)\n", _Ygl->drawframe, _Ygl->readframe, yabsys.LineCount);
     Vdp1External.current_frame = !Vdp1External.current_frame;
     Vdp1Regs->LOPR = Vdp1Regs->COPR;
     Vdp1Regs->COPR = 0;
@@ -1764,7 +1770,6 @@ void Vdp1VBlankOUT(void)
 {
   //Out of VBlankOut : Break Batman
   if (needVBlankErase()) {
-    Vdp1External.useVBlankErase -= Vdp1External.rmVBlankErase;
     VIDCore->Vdp1EraseWrite(_Ygl->readframe);
   }
 }
