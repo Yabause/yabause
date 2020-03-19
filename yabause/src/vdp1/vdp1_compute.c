@@ -212,7 +212,7 @@ static int generateComputeBuffer(int w, int h) {
   return 0;
 }
 
-u8* cmdBuffer;
+u8 cmdBuffer[0x80000];
 
 vdp1cmd_struct cmdBufferToProcess[2000];
 int nbCmdToProcess = 0;
@@ -474,7 +474,6 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
 	memset(hasDrawingCmd, 0, NB_COARSE_RAST*sizeof(int));
 	memset(cmdVdp1, 0, NB_COARSE_RAST*QUEUE_SIZE*sizeof(vdp1cmd_struct*));
-	cmdBuffer = (u8*)malloc(0x80000);
 	return;
 }
 
