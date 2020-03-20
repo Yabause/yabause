@@ -2595,7 +2595,6 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   vdp2draw_struct *info = &rbg->info;
   int rgb_type = rbg->rgb_type;
   YglTexture *texture = &rbg->texture;
-  YglTexture *line_texture = &rbg->line_texture;
 
   int x, y;
   int cellw, cellh;
@@ -2668,26 +2667,6 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
     info->cellw = cellw;
     info->cellh = cellh;
 
-  rbg->line_texture.textdata = NULL;
-  if (info->LineColorBase != 0)
-  {
-    rbg->line_info.blendmode = 0;
-    rbg->LineColorRamAdress = (Vdp2RamReadWord(NULL, Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
-
-    u64 cacheaddr = 0xA0000000DAD;
-    YglTMAllocate(YglTM_vdp2, &rbg->line_texture, rbg->vres, 1,  &x, &y);
-    rbg->cline.x = x;
-    rbg->cline.y = y;
-    YglCacheAdd(YglTM_vdp2, cacheaddr, &rbg->cline);
-
-  }
-  else {
-    rbg->LineColorRamAdress = 0x00;
-    rbg->cline.x = -1;
-    rbg->cline.y = -1;
-    rbg->line_texture.textdata = NULL;
-    rbg->line_texture.w = 0;
-  }
 #ifdef RGB_ASYNC
   if ((rgb_type == 0x0) && (rbg->use_cs == 0)) Vdp2DrawRotation_in(rbg, varVdp2Regs);
   else
@@ -2759,7 +2738,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   vdp2draw_struct *info = &rbg->info;
   int rgb_type = rbg->rgb_type;
   YglTexture *texture = &rbg->texture;
-  YglTexture *line_texture = &rbg->line_texture;
 
   float i, j;
   int k,l;
@@ -2825,32 +2803,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
     vstart /= _Ygl->heightRatio;
     hres /= _Ygl->widthRatio;
 
-	  if (info->LineColorBase != 0) {
-		  const float vstep = 1.0 / _Ygl->heightRatio;
-		  j = 0.0f;
-      int lvres = rbg->vres;
-      int lvstart = vstart;
-      if (vres >= 480) {
-        lvres >>= 1;
-        lvstart >>= 1;
-      }
-		  for (int jj = lvstart; jj < lvstart+lvres; jj++) {
-			  if ((varVdp2Regs->LCTA.part.U & 0x8000) != 0) {
-				  rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc*(int)(j));
-				  *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
-				  line_texture->textdata++;
-          if (vres >= 480) {
-            *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
-            line_texture->textdata++;
-          }
-			  }
-			  else {
-				  *line_texture->textdata = rbg->LineColorRamAdress;
-				  line_texture->textdata++;
-			  }
-			  j += vstep;
-		  }
-	  }
     YglQuadRbg0(rbg, NULL, &rbg->c, &rbg->cline, rbg->rgb_type, YglTM_vdp2, varVdp2Regs);
 	  return;
   }
@@ -2881,20 +2833,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 
       rbg->paraB.KtablV = rbg->paraB.deltaKAst * k;
   }
-
-    if (info->LineColorBase != 0)
-    {
-      if ((varVdp2Regs->LCTA.part.U & 0x8000) != 0) {
-        rbg->LineColorRamAdress = Vdp2RamReadWord(NULL, Vdp2Ram, info->LineColorBase);
-        *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
-        line_texture->textdata++;
-        info->LineColorBase += lineInc;
-      }
-      else {
-        *line_texture->textdata = rbg->LineColorRamAdress;
-        line_texture->textdata++;
-      }
-    }
 
     for (l = 0; l < hres; l++)
     {
@@ -3152,14 +3090,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         color = Vdp2RotationFetchPixel(info, x, y, 8);
       }
 
-      if (info->LineColorBase != 0 && VDP2_CC_NONE != (info->blendmode&0x03)) {
-        if ((color & 0xFF000000) != 0 ) {
-          color |= 0x8000;
-          if (parameter->lineaddr != 0xFFFFFFFF && parameter->lineaddr != 0x000000 ) {
-            color |= ((parameter->lineaddr & 0x7F) | 0x80) << 16;
-          }
-        }
-      }
       *(texture->textdata++) = color; //Already in VDP2 format due to Vdp2RotationFetchPixel
     }
     texture->textdata += texture->w;
@@ -5149,7 +5079,6 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
       rgb->paraB.PlaneAddrv[i] = info->addr;
     }
 
-    info->LineColorBase = 0x00;
     if (rgb->paraB.coefenab)
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01WithK;
     else
@@ -6291,21 +6220,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     info->specialcode = varVdp2Regs->SFCODE & 0xFF;
 
   info->blendmode = VDP2_CC_NONE;
-  if ((varVdp2Regs->LNCLEN & 0x10) == 0x00)
-  {
-    info->LineColorBase = 0x00;
-    rgb->paraA.lineaddr = 0xFFFFFFFF;
-    rgb->paraB.lineaddr = 0xFFFFFFFF;
-  }
-  else {
-    //      info->alpha = 0xFF;
-    info->LineColorBase = ((varVdp2Regs->LCTA.all) & 0x7FFFF) << 1;
-    if (info->LineColorBase >= 0x80000) info->LineColorBase = 0x00;
-    rgb->paraA.lineaddr = 0xFFFFFFFF;
-    rgb->paraB.lineaddr = 0xFFFFFFFF;
-  }
-
-  info->blendmode = 0;
 
   info->alpha = (~varVdp2Regs->CCRR & 0x1F) << 3;
 
