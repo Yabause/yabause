@@ -2602,7 +2602,6 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   int oldcellx = -1, oldcelly = -1;
   int lineInc = varVdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
   int linecl = 0xFF;
-  Vdp2 * regs;
   int screenHeight = _Ygl->rheight;
   int screenWidth  = _Ygl->rwidth;
 
@@ -2656,8 +2655,6 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
     rbg->pagesize = 0;
     rbg->patternshift = 0;
   }
-
-  regs = Vdp2RestoreRegs(info->startLine, Vdp2Lines);
 
     u64 cacheaddr = 0x90000000BAD;
 
