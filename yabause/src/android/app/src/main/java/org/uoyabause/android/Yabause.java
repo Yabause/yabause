@@ -49,24 +49,32 @@ import java.lang.Runnable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.io.File;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.hardware.input.InputManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.*;
+
+import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.auth.IdpResponse;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.core.view.GravityCompat;
@@ -100,13 +108,25 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import org.uoyabause.android.cheat.TabCheatFragment;
 import org.uoyabause.uranus.BuildConfig;
 import org.uoyabause.uranus.R;
+import org.uoyabause.uranus.StartupActivity;
+import io.reactivex.Observable;
 import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.schedulers.Schedulers;
 
 import static org.uoyabause.android.SelInputDeviceFragment.PLAYER1;
 import static org.uoyabause.android.SelInputDeviceFragment.PLAYER2;
@@ -150,6 +170,7 @@ public class Yabause extends AppCompatActivity implements
   private FirebaseAnalytics mFirebaseAnalytics;
   final int PAD_SETTING = 0;
   InputManager mInputManager;
+  final int RC_SIGN_IN = 0x8010;
 
   private ProgressDialog mProgressDialog;
   private Boolean isShowProgress;
@@ -193,9 +214,8 @@ public class Yabause extends AppCompatActivity implements
         break;
 
     }
-    showBottomMenu();
+    toggleMenu();
   }
-
 
   /**
    * Called when the activity is first created.
@@ -361,6 +381,146 @@ public class Yabause extends AppCompatActivity implements
     }
   }
 
+  ObservableEmitter<FirebaseUser> loginEmitter;
+
+  int checkAuth( Observer<FirebaseUser> loginObserver ){
+
+    Observable.create( new ObservableOnSubscribe<FirebaseUser>() {
+      @Override
+      public void subscribe(ObservableEmitter<FirebaseUser> emitter) throws Exception {
+
+        loginEmitter = null;
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        FirebaseUser user = auth.getCurrentUser();
+        if (user != null) {
+          emitter.onNext(user);
+          emitter.onComplete();
+          return;
+        }
+
+        loginEmitter = emitter;
+        startActivityForResult(
+                AuthUI.getInstance()
+                        .createSignInIntentBuilder()
+                        .setAvailableProviders( Arrays.asList(
+                                new AuthUI.IdpConfig.GoogleBuilder().build()))
+                        .build(),
+                RC_SIGN_IN);
+      }
+    })
+            .subscribeOn(AndroidSchedulers.mainThread())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(loginObserver);
+
+    return 0;
+  }
+
+
+  public void setSaveStateObserver( Observer<String> saveStateObserver ){
+
+    Observable.create( new ObservableOnSubscribe<String>() {
+      @Override
+      public void subscribe( final ObservableEmitter<String> emitter) throws Exception {
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        FirebaseUser user = auth.getCurrentUser();
+        if (user == null) {
+          emitter.onError( new Exception("not login") );
+          return;
+        }
+        String save_path = YabauseStorage.getStorage().getStateSavePath();
+        String current_gamecode = YabauseRunnable.getCurrentGameCode();
+        File save_root = new File(YabauseStorage.getStorage().getStateSavePath(), current_gamecode);
+        if (!save_root.exists()) save_root.mkdir();
+        final String save_filename = YabauseRunnable.savestate_compress(save_path + current_gamecode);
+        if (!save_filename.equals("")) {
+          FirebaseStorage storage = FirebaseStorage.getInstance();
+          StorageReference storage_ref = storage.getReference();
+          StorageReference base = storage_ref.child(user.getUid());
+          StorageReference backup = base.child("state");
+          StorageReference fileref = backup.child(current_gamecode);
+          Uri file = Uri.fromFile(new File(save_filename));
+          UploadTask tsk = fileref.putFile(file);
+          tsk.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+              File file = new File(save_filename);
+              if (file.exists()) {
+                file.delete();
+              }
+              emitter.onError( exception );
+            }
+          }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+              File file = new File(save_filename);
+              if (file.exists()) {
+                file.delete();
+              }
+              emitter.onNext("OK");
+              emitter.onComplete();
+            }
+          });
+        }
+      }
+    }).subscribeOn(Schedulers.computation())
+      .observeOn(AndroidSchedulers.mainThread())
+      .subscribe(saveStateObserver);
+  }
+
+  public void setLoadStateObserver( Observer<String> loadStateObserver ){
+
+    Observable.create( new ObservableOnSubscribe<String>() {
+      @Override
+      public void subscribe( final ObservableEmitter<String> emitter) throws Exception {
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        FirebaseUser user = auth.getCurrentUser();
+        if( user == null ) {
+          emitter.onError( new Exception("not login") );
+          return;
+        }
+        String save_path = YabauseStorage.getStorage().getStateSavePath();
+        String current_gamecode = YabauseRunnable.getCurrentGameCode();
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storage_ref = storage.getReference();
+        StorageReference base = storage_ref.child(user.getUid());
+        StorageReference backup = base.child("state");
+        StorageReference fileref = backup.child(current_gamecode);
+        try{
+          final File localFile = File.createTempFile("currentstate", "bin.z");
+          fileref.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+              try{
+                if (localFile.exists()) {
+                  YabauseRunnable.loadstate_compress(localFile.getAbsolutePath());
+                  localFile.delete();
+                }
+                emitter.onNext("OK");
+                emitter.onComplete();
+
+              }catch(Exception e){
+                emitter.onError( e );
+                return;
+              }
+            }
+          }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+              localFile.delete();
+              emitter.onError( exception );
+              return;
+            }
+          });
+        } catch (IOException e) {
+          emitter.onError( e );
+        }
+
+      }
+    }).subscribeOn(Schedulers.computation())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(loadStateObserver);
+  }
+
   @Override
   public boolean onNavigationItemSelected(MenuItem item) {
     // Handle action bar item clicks here. The action bar will
@@ -435,7 +595,6 @@ public class Yabause extends AppCompatActivity implements
         String current_gamecode = YabauseRunnable.getCurrentGameCode();
         File save_root = new File(YabauseStorage.getStorage().getStateSavePath(), current_gamecode);
         if (!save_root.exists()) save_root.mkdir();
-
         String save_filename = YabauseRunnable.savestate(save_path + current_gamecode);
         if ( !save_filename.equals("") ) {
           int point = save_filename.lastIndexOf(".");
@@ -456,6 +615,134 @@ public class Yabause extends AppCompatActivity implements
 
       }
       break;
+
+      case R.id.save_state_cloud: {
+
+        if( YabauseApplication.checkDonated(this) != 0 ){
+          break;
+        }
+        waiting_reault = true;
+        Observer loginobserver = new Observer<FirebaseUser>() {
+
+          @Override
+          public void onSubscribe(Disposable d) {
+
+          }
+
+          @Override
+          public void onNext(FirebaseUser firebaseUser) {
+
+          }
+
+          @Override
+          public void onError(Throwable e) {
+            waiting_reault = false;
+            toggleMenu();
+            Snackbar.make(Yabause.this.mDrawerLayout, "Failed to login \n" + e.getLocalizedMessage(), Snackbar.LENGTH_LONG).show();
+          }
+
+          @Override
+          public void onComplete() {
+            mProgressDialog = new ProgressDialog(Yabause.this);
+            mProgressDialog.setMessage("Sending...");
+            mProgressDialog.show();
+            isShowProgress = true;
+            Observer observer = new Observer<String>() {
+              @Override
+              public void onSubscribe(Disposable d) {
+              }
+
+              @Override
+              public void onNext(String response) {
+              }
+
+              @Override
+              public void onError(Throwable e) {
+                mProgressDialog.dismiss();
+                isShowProgress = false;
+                waiting_reault = false;
+                toggleMenu();
+                Snackbar.make(Yabause.this.mDrawerLayout, "Failed to save the current state to cloud", Snackbar.LENGTH_LONG).show();
+              }
+
+              @Override
+              public void onComplete() {
+                mProgressDialog.dismiss();
+                isShowProgress = false;
+                waiting_reault = false;
+                toggleMenu();
+                Snackbar.make(Yabause.this.mDrawerLayout, "Success to save the current state to cloud", Snackbar.LENGTH_SHORT).show();
+              }
+            };
+            setSaveStateObserver(observer);
+          }
+        };
+        checkAuth(loginobserver);
+      }
+      break;
+
+      case R.id.load_state_cloud: {
+
+        if( YabauseApplication.checkDonated(this) != 0 ){
+          break;
+        }
+        waiting_reault = true;
+        Observer loginobserver = new Observer<FirebaseUser>() {
+
+          @Override
+          public void onSubscribe(Disposable d) {
+
+          }
+
+          @Override
+          public void onNext(FirebaseUser firebaseUser) {
+
+          }
+
+          @Override
+          public void onError(Throwable e) {
+            waiting_reault = false;
+            toggleMenu();
+            Snackbar.make(Yabause.this.mDrawerLayout, "Failed to login \n" + e.getLocalizedMessage(), Snackbar.LENGTH_LONG).show();
+          }
+
+          @Override
+          public void onComplete() {
+            mProgressDialog = new ProgressDialog(Yabause.this);
+            mProgressDialog.setMessage("Loading...");
+            mProgressDialog.show();
+            isShowProgress = true;
+            Observer observer = new Observer<String>() {
+              @Override
+              public void onSubscribe(Disposable d) {
+              }
+              @Override
+              public void onNext(String response) {
+              }
+              @Override
+              public void onError(Throwable e) {
+                mProgressDialog.dismiss();
+                isShowProgress = false;
+                waiting_reault = false;
+                toggleMenu();
+                Snackbar.make(Yabause.this.mDrawerLayout, "Failed to load the state from cloud \n" + e.getLocalizedMessage(), Snackbar.LENGTH_SHORT).show();
+              }
+              @Override
+              public void onComplete() {
+                mProgressDialog.dismiss();
+                isShowProgress = false;
+                waiting_reault = false;
+                toggleMenu();
+                Snackbar.make(Yabause.this.mDrawerLayout, "Success to load the state from cloud", Snackbar.LENGTH_SHORT).show();
+              }
+            };
+            setLoadStateObserver(observer);
+          }
+        };
+        checkAuth(loginobserver);
+      }
+      break;
+
       case R.id.load_state: {
         //String save_path = YabauseStorage.getStorage().getStateSavePath();
         //YabauseRunnable.loadstate(save_path);
@@ -566,7 +853,7 @@ public class Yabause extends AppCompatActivity implements
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putBoolean("pref_analog_pad", mode);
         editor.apply();
-        Yabause.this.showBottomMenu();
+        Yabause.this.toggleMenu();
       }
       break;
       case R.id.pad_mode_p2: {
@@ -587,7 +874,7 @@ public class Yabause extends AppCompatActivity implements
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putBoolean("pref_analog_pad2", mode);
         editor.apply();
-        Yabause.this.showBottomMenu();
+        Yabause.this.toggleMenu();
       }
       break;
       case R.id.menu_item_cheat: {
@@ -816,7 +1103,7 @@ public class Yabause extends AppCompatActivity implements
 
   @Override
   public void show() {
-    this.showBottomMenu();
+    this.toggleMenu();
   }
 
 
@@ -1080,7 +1367,23 @@ public class Yabause extends AppCompatActivity implements
     switch (requestCode) {
       case 0x01:
         waiting_reault = false;
-        showBottomMenu();
+        toggleMenu();
+        break;
+      case RC_SIGN_IN:
+        if (requestCode == RC_SIGN_IN) {
+          IdpResponse response = IdpResponse.fromResultIntent(data);
+          if (resultCode == RESULT_OK) {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if( loginEmitter != null ){
+              loginEmitter.onNext(user);
+              loginEmitter.onComplete();
+            }
+          } else {
+            if( loginEmitter != null ){
+              loginEmitter.onError(new Exception(response.getError().getLocalizedMessage()));
+            }
+          }
+        }
         break;
     }
   }
@@ -1151,7 +1454,7 @@ public class Yabause extends AppCompatActivity implements
           fg2.onBackPressed();
           return true;
         }
-        showBottomMenu();
+        toggleMenu();
       }
       return true;
     }
@@ -1203,7 +1506,7 @@ public class Yabause extends AppCompatActivity implements
 
   private boolean menu_showing = false;
 
-  private void showBottomMenu() {
+  private void toggleMenu() {
     if (menu_showing == true) {
       menu_showing = false;
       View mainview = (View) findViewById(R.id.yabause_view);
@@ -1587,13 +1890,13 @@ public class Yabause extends AppCompatActivity implements
     }
     updateInputDevice();
     waiting_reault = false;
-    showBottomMenu();
+    toggleMenu();
   }
 
   @Override
   public void onCancel(int target) {
     waiting_reault = false;
-    showBottomMenu();
+    toggleMenu();
   }
 
   @Override
@@ -1623,7 +1926,7 @@ public class Yabause extends AppCompatActivity implements
       padv.updateScale();
     }
     waiting_reault = false;
-    showBottomMenu();
+    toggleMenu();
   }
 
   @Override
@@ -1635,14 +1938,14 @@ public class Yabause extends AppCompatActivity implements
       transaction.commit();
     }
     waiting_reault = false;
-    showBottomMenu();
+    toggleMenu();
   }
 
   @Override
   public void onFinishInputSetting() {
     updateInputDevice();
     waiting_reault = false;
-    showBottomMenu();
+    toggleMenu();
   }
 
 }

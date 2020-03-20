@@ -14,7 +14,7 @@
 # ==============================================================================
 include (ExternalProject)
 
-set(zlib_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/zlib_archive)
+set(zlib_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/zlib/install/include)
 set(ZLIB_URL https://github.com/madler/zlib)
 set(ZLIB_BUILD ${CMAKE_CURRENT_BINARY_DIR}/zlib/src/zlib)
 set(ZLIB_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/zlib/install)
@@ -57,12 +57,14 @@ ExternalProject_Add(
     INSTALL_DIR ${ZLIB_INSTALL}
     BUILD_IN_SOURCE 1
     DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
-    CMAKE_CACHE_ARGS
+    CMAKE_ARGS
 		-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
         -DCMAKE_BUILD_TYPE:STRING=Release
         -DCMAKE_INSTALL_PREFIX:STRING=${ZLIB_INSTALL}
         ${ADDITIONAL_CMAKE_ARGS}        
 )
+
+set( LIBZ_LIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/zlib/install/lib/ )
 
 # put zlib includes in the directory where they are expected
 add_custom_target(zlib_create_destination_dir

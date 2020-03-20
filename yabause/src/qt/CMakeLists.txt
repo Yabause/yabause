@@ -65,6 +65,7 @@ else()
 	include( ${QT_USE_FILE} )
 endif() 
 
+
 # qt resources file
 set( yabause_qt_RESOURCES resources/resources.qrc )
 
@@ -270,6 +271,7 @@ else()
 	set(MSVC_RUNTIME_MODE MD)
 	add_subdirectory( firebase_cpp_sdk )
 	set( FIREBASE_TARGETS firebase_app firebase_auth firebase_storage firebase_database)
+	include_directories(${zlib_INCLUDE_DIR})
 endif()
 
 
@@ -297,7 +299,6 @@ else()
 	target_link_libraries( yabause-qt ${QT_LIBRARIES} )
 endif()
 target_link_libraries( yabause-qt ${FIREBASE_TARGETS} )
-
 yab_port_success(yabause-qt)
 
 # copy need files for running
@@ -309,12 +310,16 @@ add_custom_command(
 	POST_BUILD
 	COMMAND ${QT_BINARY_DIR}/windeployqt.exe ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>/${YAB_PORT_NAME}.exe
 )
+
 endif()
 
 configure_file(yabause.desktop.in ${YAB_PORT_NAME}.desktop)
 
 if (WIN32)
 	install(TARGETS yabause-qt DESTINATION ".")
+	set_property(INSTALL $<TARGET_FILE_NAME:yabause-qt>
+		PROPERTY CPACK_START_MENU_SHORTCUTS "Yaba Sanshiro"
+	)
 	if (GLUT_FOUND)
 		install(FILES ${GLUT_INCLUDE_DIR}/../freeglut.dll DESTINATION ".")
 	endif ()
@@ -347,7 +352,8 @@ if (WIN32)
 
 	#install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../AUTHORS    DESTINATION "." RENAME AUTHORS.txt)
 	#install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../ChangeLog  DESTINATION "." RENAME ChangeLog.txt)
-	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../COPYING    DESTINATION "." RENAME COPYING.txt)
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../COPYING.txt    DESTINATION "." RENAME COPYING.txt)
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../EULA.txt    DESTINATION "." RENAME EULA.txt)
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../../win_template/readme.txt     DESTINATION "." RENAME README.txt)
 	#install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../README     DESTINATION "." RENAME README.txt)
 	#install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../README.WIN DESTINATION "." RENAME README.WIN.txt)
@@ -384,3 +390,5 @@ else ()
 	#install(FILES "doc/yabause.1" DESTINATION "${YAB_MAN_DIR}/man1" RENAME "${YAB_PORT_NAME}.1")
 	install(FILES "resources/icons/yabasanshiro.png" DESTINATION "share/pixmaps/")
 endif ()
+
+

@@ -1349,7 +1349,7 @@ int YabSaveStateBuffer(void ** buffer, size_t * size)
 int YabSaveState(const char *filename)
 {
    FILE *fp;
-   int status;
+   int status = 0;
 
    //use a second set of savestates for movies
    filename = MakeMovieStateName(filename);
@@ -1365,6 +1365,7 @@ int YabSaveState(const char *filename)
 
    return status;
 }
+
 
 //////////////////////////////////////////////////////////////////////////////
 

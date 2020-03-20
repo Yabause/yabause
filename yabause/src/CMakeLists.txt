@@ -46,6 +46,7 @@ set(yabause_SOURCES
 	gameinfo.c
 	japmodem.c
 	m68kcore.c m68kd.c memory.c movie.c
+	state_save.cpp
 	netlink.c
 	osdcore.c
 	peripheral.c profile.c
@@ -77,6 +78,7 @@ if (ANDROID)
 		nanovg/nanovg_osdcore.c
 		)
 endif()
+
 
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Switch")
 add_definitions(-DYAB_PORT_OSD)
@@ -493,6 +495,7 @@ if ( ANDROID_NDK_HOST_SYSTEM_NAME2 MATCHES  "windows" )
 endif (  )
 
 if (WIN32)
+
 	# Windows ddk
 	option(YAB_WANT_DDK "Use the real DDK instead of the built-in one")
 	if(YAB_WANT_DDK)
@@ -925,9 +928,15 @@ endif()
 # libCHD
 include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libchdr.cmake )
 include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_zlib.cmake )
+#include_directories(${zlib_INCLUDE_DIR})
 add_dependencies(yabause libchdr)
-add_dependencies(yabause zlib)
+#add_dependencies(yabause zlib)
 
+if(WIN32)
+	# Windows need to build zlib
+	add_dependencies(yabause zlib)
+	include_directories(${zlib_INCLUDE_DIR})
+endif()
 
 if (YAB_WANT_C68K)
 	add_dependencies(yabause c68kinc)

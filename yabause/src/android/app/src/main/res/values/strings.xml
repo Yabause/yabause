@@ -4,6 +4,8 @@
     <string name="menu_reset">Reset</string>
     <string name="menu_save_state">Save State</string>
     <string name="menu_load_state">Load State</string>
+    <string name="menu_save_state_cloud">Save State to Cloud</string>
+    <string name="menu_load_state_cloud">Load State from Cloud</string>
     <string name="load_game">Load Game</string>
     <string name="setting">Settings</string>
     <string name="choose_bios">Choose bios</string>

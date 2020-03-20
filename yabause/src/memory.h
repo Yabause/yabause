@@ -438,6 +438,9 @@ extern "C" {
   int YabSaveStateBuffer(void **buffer, size_t *size);
   int YabLoadStateBuffer(const void *buffer, size_t size);
 
+  int YabLoadCompressedState(const char *filename);
+  int YabSaveCompressedState(const char *filename);
+
 // Mapped mewmory
 void * YabMemMap(char * filename, u32 size );
 void YabFreeMap(void * p);

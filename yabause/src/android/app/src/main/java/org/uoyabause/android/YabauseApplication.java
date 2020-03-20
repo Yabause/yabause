@@ -20,7 +20,12 @@
 
 package org.uoyabause.android;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 
 import androidx.multidex.MultiDex;
 import androidx.multidex.MultiDexApplication;
@@ -34,6 +39,7 @@ import com.google.android.gms.analytics.Tracker;
 import com.google.firebase.FirebaseApp;
 
 import org.uoyabause.android.cheat.Cheat;
+import org.uoyabause.uranus.BuildConfig;
 import org.uoyabause.uranus.R;
 
 import io.fabric.sdk.android.Fabric;
@@ -96,5 +102,41 @@ public class YabauseApplication extends MultiDexApplication {
         }
         return mTracker;
     }
+
+    public static int checkDonated( final Context ctx ){
+        if( !BuildConfig.BUILD_TYPE.equals("pro") ) {
+            SharedPreferences prefs = ctx.getSharedPreferences("private", Context.MODE_PRIVATE);
+            Boolean hasDonated = prefs.getBoolean("donated", false);
+            if (hasDonated == false) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+                builder.setTitle(R.string.not_available);
+                builder.setMessage(R.string.only_pro_version);
+                builder.setPositiveButton(R.string.got_it,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                String url = "https://play.google.com/store/apps/details?id=org.uoyabause.uranus.pro";
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setData(Uri.parse(url));
+                                intent.setPackage("com.android.vending");
+                                ctx.startActivity(intent);
+                            }
+                        }
+                );
+                builder.setNegativeButton(R.string.cancel,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        }
+                );
+                builder.create().show();
+                return -1;
+            }
+        }
+        return 0;
+    }
+
 
 }
