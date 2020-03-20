@@ -3280,50 +3280,33 @@ void VIDOGLReadColorOffset(void) {
       a_cog |= 0xFFFFFF00;
     if (lVdp2Regs->COAB & 0x100)
       a_cob |= 0xFFFFFF00;
+    int colOffB =
+       (((int)(128.0f + (b_cob / 2.0)) & 0xFF) << 16)
+    | (((int)(128.0f + (b_cog / 2.0)) & 0xFF) << 8)
+    | (((int)(128.0f + (b_cor / 2.0)) & 0xFF) << 0);
+    int colOffA =
+      (((int)(128.0f + (a_cob / 2.0)) & 0xFF) << 16)
+    | (((int)(128.0f + (a_cog / 2.0)) & 0xFF) << 8)
+    | (((int)(128.0f + (a_cor / 2.0)) & 0xFF) << 0);
     for(int id = 0; id<enBGMAX+1; id++){
-      u8 cc = 0xF8;
       if (isEnabled(id,lVdp2Regs) == 0) {
         linebuf[line+512*id] = 0x0;
       } else {
-        switch (id) {
-          case NBG0:
-            cc = (u32)((~lVdp2Regs->CCRNA & 0x1F)<<3) << 24;
-            break;
-          case NBG1:
-            cc = (u32)((~lVdp2Regs->CCRNA & 0x1F00) >> 5) << 24;
-            break;
-          case NBG2:
-            cc = (u32)((~lVdp2Regs->CCRNB & 0x1F)<<3) << 24;
-            break;
-          case NBG3:
-            cc = (u32)((~lVdp2Regs->CCRNB & 0x1F00) >> 5) << 24;
-            break;
-          case RBG0:
-            cc = (u32)((~lVdp2Regs->CCRR & 0x1F)<<3) << 24;
-            break;
-            //il manque LNCLN et BKCCRT
-        }
         if (lVdp2Regs->CLOFEN & offset[id]) {
           // color offset enable
           if (lVdp2Regs->CLOFSL & offset[id])
           {
             // color offset B
-            linebuf[line+512*id] = (cc << 24)
-                          |(((int)(128.0f + (b_cob / 2.0)) & 0xFF) << 16)
-                          | (((int)(128.0f + (b_cog / 2.0)) & 0xFF) << 8)
-                          | (((int)(128.0f + (b_cor / 2.0)) & 0xFF) << 0);
+            linebuf[line+512*id] = colOffB;
           }
           else
           {
             // color offset A
-            linebuf[line+512*id] = (cc << 24)
-                          | (((int)(128.0f + (a_cob / 2.0)) & 0xFF) << 16)
-                          | (((int)(128.0f + (a_cog / 2.0)) & 0xFF) << 8)
-                          | (((int)(128.0f + (a_cor / 2.0)) & 0xFF) << 0);
+            linebuf[line+512*id] = colOffA;
           }
         }
         else {
-          linebuf[line+512*id] = (cc<<24) | 0x00808080;
+          linebuf[line+512*id] = 0x00808080;
         }
       }
     }
