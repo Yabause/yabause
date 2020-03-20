@@ -2600,13 +2600,8 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   int cellw, cellh;
   int oldcellx = -1, oldcelly = -1;
   int lineInc = varVdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
-  int linecl = 0xFF;
   int screenHeight = _Ygl->rheight;
   int screenWidth  = _Ygl->rwidth;
-
-  if ((varVdp2Regs->CCCTL >> 5) & 0x01) {
-    linecl = ((~varVdp2Regs->CCRLB & 0x1F) << 3);
-  }
 
     if (_Ygl->rheight >= 448) lineInc <<= 1;
     if (_Ygl->rheight >= 448) rbg->vres = (_Ygl->rheight >> 1); else rbg->vres = _Ygl->rheight;
@@ -2749,12 +2744,8 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   int h;
   int v;
   int lineInc = varVdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
-  int linecl = 0xFF;
   vdp2rotationparameter_struct *parameter;
   Vdp2 * regs;
-  if ((varVdp2Regs->CCCTL >> 5) & 0x01) {
-    linecl = ((~varVdp2Regs->CCRLB & 0x1F) << 3);
-  }
 
   if (_Ygl->rheight >= 448) lineInc <<= 1;
   vres = rbg->vres * (rbg->info.endLine - rbg->info.startLine)/yabsys.VBlankLineCount;
