@@ -1115,6 +1115,8 @@ void Vdp1DebugCommand(u32 number, char *outstring)
             break;
          default: break;
       }
+
+      AddString(outstring, "Line Color Screen insertion = %d\r\n", (Vdp2Regs->LNCLEN & 0x20)!=0);
    }
 }
 
