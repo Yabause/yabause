@@ -655,6 +655,8 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
       // Priority Number
       AddString(outstring, "Priority = %d\r\n", Vdp2Regs->PRIR & 0x7);
 
+      AddString(outstring, "Line Color Screen enabled = %d\r\n", (Vdp2Regs->LNCLEN & 0x10)!=0);
+
       // Color Calculation
       outstring = AddColorCalcInfo(outstring, 0x0010, 0x0001, Vdp2Regs->CCRR & 0x1F, (Vdp2Regs->SFCCMD >> 8) & 0x3);
 
@@ -936,6 +938,8 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
       // Priority Number
       AddString(outstring, "Priority = %d\r\n", Vdp2Regs->PRINA & 0x7);
 
+      AddString(outstring, "Line Color Screen enabled = %d\r\n", (Vdp2Regs->LNCLEN & 0x1)!=0);
+
       // Color Calculation
       outstring = AddColorCalcInfo(outstring, 0x0001, 0x0002, Vdp2Regs->CCRNA & 0x1F, Vdp2Regs->SFCCMD & 0x3);
 
@@ -1151,6 +1155,8 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
       // Priority Number
       AddString(outstring, "Priority = %d\r\n", (Vdp2Regs->PRINA >> 8) & 0x7);
 
+      AddString(outstring, "Line Color Screen enabled = %d\r\n", (Vdp2Regs->LNCLEN & 0x2)!=0);
+
       // Color Calculation
       outstring = AddColorCalcInfo(outstring, 0x0002, 0x0004, (Vdp2Regs->CCRNA >> 8) & 0x1F, (Vdp2Regs->SFCCMD >> 2) & 0x3);
 
@@ -1287,6 +1293,8 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
 
       // Priority Number
       AddString(outstring, "Priority = %d\r\n", Vdp2Regs->PRINB & 0x7);
+
+      AddString(outstring, "Line Color Screen enabled = %d\r\n", (Vdp2Regs->LNCLEN & 0x4)!=0);
 
       // Color Calculation
       outstring = AddColorCalcInfo(outstring, 0x0004, 0x0005, Vdp2Regs->CCRNB & 0x1F, (Vdp2Regs->SFCCMD >> 4) & 0x3);
@@ -1427,6 +1435,8 @@ void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
 
       // Priority Number
       AddString(outstring, "Priority = %d\r\n", (Vdp2Regs->PRINB >> 8) & 0x7);
+
+      AddString(outstring, "Line Color Screen enabled = %d\r\n", (Vdp2Regs->LNCLEN & 0x8)!=0);
 
       // Color Calculation
       outstring = AddColorCalcInfo(outstring, 0x0008, 0x0006, (Vdp2Regs->CCRNB >> 8) & 0x1F, (Vdp2Regs->SFCCMD >> 6) & 0x3);
