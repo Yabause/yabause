@@ -977,14 +977,19 @@ static u16 Vdp2ColorRamGetColorRaw(u32 colorindex) {
   return 0;
 }
 
-static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
+static u32 Vdp2ColorRamGetColorOffset(u32 colorindex, int alpha, int offset)
 {
+  int flag = 0xFFF;
   switch (Vdp2Internal.ColorMode)
   {
   case 0:
+    flag &= 0x380;
   case 1:
   {
     u32 tmp;
+    flag &= 0x780;
+    //Line color offset from rotation table might be applicable here
+    if (offset != 0) colorindex = (colorindex&flag) | (offset&0x7F);
     colorindex <<= 1;
     tmp = T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
     return SAT2YAB1(alpha, tmp);
@@ -993,9 +998,8 @@ static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
   {
     u32 tmp1, tmp2;
     colorindex <<= 2;
-    colorindex &= 0xFFF;
     tmp1 = T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
-    tmp2 = T2ReadWord(Vdp2ColorRam, (colorindex + 2) & 0xFFF);
+    //Line color offset from rotation table are not applicable here
     return SAT2YAB2(alpha, tmp1, tmp2);
   }
   default: break;
@@ -1003,7 +1007,9 @@ static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
   return 0;
 }
 
-
+static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha) {
+  return Vdp2ColorRamGetColorOffset(colorindex, alpha,0);
+}
 //////////////////////////////////////////////////////////////////////////////
 // Window
 
@@ -2746,7 +2752,11 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   int lineInc = varVdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
   vdp2rotationparameter_struct *parameter;
   Vdp2 * regs;
+  u32* colpoint = NULL;
 
+  int inc = 0;
+  u32 addr;
+  u8 alpha = 0x00;
   if (_Ygl->rheight >= 448) lineInc <<= 1;
   vres = rbg->vres * (rbg->info.endLine - rbg->info.startLine)/yabsys.VBlankLineCount;
   vstart = rbg->vres * rbg->info.startLine/yabsys.VBlankLineCount;
@@ -2757,7 +2767,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 
   x = 0;
   y = 0;
-  u32 lineaddr = 0;
   if (rgb_type == 0)
   {
     rbg->paraA.dx = rbg->paraA.A * rbg->paraA.deltaX + rbg->paraA.B * rbg->paraA.deltaY;
@@ -2798,6 +2807,10 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 	  return;
   }
 
+  colpoint = YglGetLineColorOffsetPointer(info->idScreen - RBG0, vstart, vres);
+  alpha = ((varVdp2Regs->CCRLB & 0x1F) << 3) | NONE;
+  addr = (varVdp2Regs->LCTA.all & 0x7FFFF)<<1;
+  u16 LineColorRamAdress = Vdp2RamReadWord(NULL, Vdp2Ram, addr);
   for (k = vstart; k < vstart+vres; k++)
   {
 
@@ -2877,6 +2890,22 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
       {
         *(texture->textdata++) = 0x00000000;
         continue;
+      }
+      if (parameter->linecoefenab) {
+        if ((info->idScreen == RBG0) && ((varVdp2Regs->LNCLEN & 0x10)!=0)) {
+          _Ygl->useLineColorOffset[0] = 1;
+        }
+        if ((info->idScreen == RBG1) && ((varVdp2Regs->LNCLEN & 0x1)!=0)) {
+          _Ygl->useLineColorOffset[1] = 1;
+        }
+        if (_Ygl->useLineColorOffset[info->idScreen - RBG0] != 0) {
+          if ((varVdp2Regs->LCTA.part.U & 0x8000)) {
+            inc = 0x02; // color per line
+          }
+          else {
+            inc = 0x0; // single color
+          }
+        }
       }
 
       h = (parameter->kx * (parameter->Xsp + parameter->dx * l) + parameter->Xp);
@@ -3080,11 +3109,20 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         // Fetch pixel
         color = Vdp2RotationFetchPixel(info, x, y, 8);
       }
-
       *(texture->textdata++) = color; //Already in VDP2 format due to Vdp2RotationFetchPixel
+      if (colpoint != NULL) {
+        u32 val = Vdp2ColorRamGetColorOffset(LineColorRamAdress, alpha, (parameter->lineaddr));
+        *(colpoint++) = val;
+      }
     }
+    addr += inc;
+    if (colpoint != NULL) colpoint+=_Ygl->rwidth-hres;
     texture->textdata += texture->w;
     }
+    if (_Ygl->useLineColorOffset[info->idScreen - RBG0] != 0) {
+      _Ygl->useLineColorOffset[info->idScreen - RBG0] = _Ygl->linecolorcoef_tex[info->idScreen - RBG0];
+    }
+    YglSetLineColorOffset(colpoint, vstart, vres,info->idScreen - RBG0);
 
     rbg->info.flipfunction = 0;
 
@@ -4963,9 +5001,9 @@ static void Vdp2DrawLineColorScreen(Vdp2 *varVdp2Regs)
     inc = 0x00; // single color
   }
 
-  u8 alpha = (varVdp2Regs->CCRLB & 0x1F) << 3;
+  u8 alpha = ((varVdp2Regs->CCRLB & 0x1F) << 3) | NONE;
 
-  addr = (varVdp2Regs->LCTA.all & 0x7FFFF) * 0x2;
+  addr = (varVdp2Regs->LCTA.all & 0x7FFFF);
   for (i = 0; i < line_cnt; i++) {
     u16 LineColorRamAdress = Vdp2RamReadWord(NULL, Vdp2Ram, addr);
     *(line_pixel_data) = Vdp2ColorRamGetColor(LineColorRamAdress, alpha);
@@ -4987,7 +5025,6 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   info->dst = 0;
   info->idScreen = RBG1;
-  info->idReg = 4;
   info->uclipmode = 0;
   info->cor = 0;
   info->cog = 0;
@@ -5283,7 +5320,6 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
   info.dst = 0;
   info.uclipmode = 0;
   info.idScreen = NBG0;
-  info.idReg = 0;
   info.coordincx = 1.0f;
   info.coordincy = 1.0f;
 
@@ -5538,7 +5574,6 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   YglCache tmpc;
   info.dst = 0;
   info.idScreen = NBG1;
-  info.idReg = 1;
   info.uclipmode = 0;
   info.cor = 0;
   info.cog = 0;
@@ -5781,7 +5816,6 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
   YglTexture texture;
   info.dst = 0;
   info.idScreen = NBG2;
-  info.idReg = 2;
   info.uclipmode = 0;
   info.cor = 0;
   info.cog = 0;
@@ -5849,7 +5883,6 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
   vdp2draw_struct info = {0};
   YglTexture texture;
   info.idScreen = NBG3;
-  info.idReg = 3;
   info.dst = 0;
   info.uclipmode = 0;
   info.cor = 0;
@@ -5919,7 +5952,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   info->dst = 0;
   info->idScreen = RBG0;
-  info->idReg = 4;
   info->uclipmode = 0;
   info->cor = 0;
   info->cog = 0;
@@ -6252,6 +6284,10 @@ static void VIDOGLVdp2DrawScreens(void)
 #endif
 
 LOG_ASYN("===================================\n");
+
+  _Ygl->useLineColorOffset[0] = 0;
+  _Ygl->useLineColorOffset[1] = 0;
+
   if (Vdp1Regs->TVMR & 0x02) {
     Vdp2ReadRotationTable(0, &Vdp1ParaA, &Vdp2Lines[VDP2_DRAW_LINE], Vdp2Ram);
   }
@@ -6580,7 +6616,6 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKAWithKB(RBGDrawI
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  printf("vdp2RGetParamMode02WithKB used!\n");
   return &rgb->paraA;
 }
 

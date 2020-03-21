@@ -1031,6 +1031,34 @@ int YglGenerateScreenBuffer(){
     abort();
   }
 
+  //Generate texture for RBG Line Color Screen insertion
+  if (_Ygl->linecolorcoef_tex[0] != 0){
+    glDeleteTextures(2,&_Ygl->linecolorcoef_tex[0]);
+    glDeleteBuffers(2, &_Ygl->linecolorcoef_pbo[0]);
+  }
+
+  glGenBuffers(2, &_Ygl->linecolorcoef_pbo[0]);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolorcoef_pbo[0]);
+  glBufferData(GL_PIXEL_UNPACK_BUFFER, _Ygl->rwidth * _Ygl->rheight * 4, NULL, GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolorcoef_pbo[1]);
+  glBufferData(GL_PIXEL_UNPACK_BUFFER, _Ygl->rwidth * _Ygl->rheight * 4, NULL, GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+  glGenTextures(2, &_Ygl->linecolorcoef_tex[0]);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[0]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[1]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
   //Generate fbo and texture fr rbh compute shader
   if (_Ygl->rbg_compute_fbotex[0] != 0) {
     glDeleteTextures(2, _Ygl->rbg_compute_fbotex);
@@ -3289,6 +3317,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
   int prioscreens[6] = {0};
   int modescreens[7] = {0};
+  int useLineColorOffset[6] = {0};
   int isRGB[6] = {0};
   int isBlur[7] = {0};
   int isPerline[8] = {-1};
@@ -3314,6 +3343,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
       } else {
         prioscreens[id] = _Ygl->screen_fbotex[vdp2screens[j]];
       }
+      if (vdp2screens[j] == RBG0) useLineColorOffset[id] = _Ygl->useLineColorOffset[0];
+      if (vdp2screens[j] == RBG1) useLineColorOffset[id] = _Ygl->useLineColorOffset[1];
       modescreens[id] =  setupBlend(varVdp2Regs, vdp2screens[j]);
       isRGB[id] = setupColorMode(varVdp2Regs, vdp2screens[j]);
       isBlur[id] = setupBlur(varVdp2Regs, vdp2screens[j]);
@@ -3376,7 +3407,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-    YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, varVdp2Regs);
+    YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, useLineColorOffset, varVdp2Regs);
     srcTexture = _Ygl->original_fbotex[0];
   } else {
     VDP2Generator_update(_Ygl->compute_tex, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, varVdp2Regs);
@@ -3607,7 +3638,29 @@ void YglUpdateColorRam() {
   return;
 }
 
+u32 * YglGetLineColorOffsetPointer(int id, int start, int size){
+  int error;
+  YglGenFrameBuffer();
 
+  glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[id]);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolorcoef_pbo[id]);
+  _Ygl->linecolorcoef_buf[id] = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, start*_Ygl->rwidth*4, size*_Ygl->rwidth*4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+  return _Ygl->linecolorcoef_buf[id];
+}
+
+void YglSetLineColorOffset(u32 * pbuf, int start, int size, int id){
+
+  glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[id]);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolorcoef_pbo[id]);
+  glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, start, _Ygl->rwidth, size, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+  _Ygl->linecolorcoef_buf[id] = NULL;
+  glBindTexture(GL_TEXTURE_2D, 0 );
+  return;
+}
 
 u32 * YglGetLineColorScreenPointer(){
   int error;

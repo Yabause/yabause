@@ -978,6 +978,8 @@ SHADER_VERSION
 "uniform sampler2D s_texture5;  \n"
 "uniform sampler2D s_back;  \n"
 "uniform sampler2D s_lncl;  \n"
+"uniform sampler2D s_lncl_off_rgb0;  \n"
+"uniform sampler2D s_lncl_off_rgb1;  \n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform sampler2D s_win0;  \n"
 "uniform sampler2D s_win1;  \n"
@@ -999,6 +1001,7 @@ SHADER_VERSION
 "uniform int isBlur[7]; \n"
 "uniform int isShadow[6]; \n"
 "uniform int is_perline[8];\n"
+"uniform int is_lncl_off[6]; \n"
 "uniform int use_sp_win; \n"
 "uniform int use_trans_shadow; \n"
 "uniform ivec2 tvSize;\n"
@@ -1520,7 +1523,7 @@ int YglDrawBackScreen() {
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs) {
   int perLine = 0;
   int nbScreen = 6;
   int vdp2blit_prg;
@@ -1551,8 +1554,16 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
       glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
     } else _Ygl->vdp1On[_Ygl->readframe] = 0;
 
-  int gltext[17] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15, GL_TEXTURE16};
-
+  int gltext[19] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15, GL_TEXTURE16, GL_TEXTURE17, GL_TEXTURE18};
+  int useLnclRBG0 = 0;
+  int useLnclRBG1 = 0;
+  for (int i = 0; i< 6; i++) {
+    if (use_lncl_off[i] != 0) {
+      if (use_lncl_off[i] == _Ygl->linecolorcoef_tex[0]) useLnclRBG0 |= 1;
+      if (use_lncl_off[i] == _Ygl->linecolorcoef_tex[1]) useLnclRBG1 |= 1;
+      use_lncl_off[i] = (use_lncl_off[i]==_Ygl->linecolorcoef_tex[0])?1:2;
+    }
+  }
 #ifdef _OGL3_
 #ifdef DEBUG_BLIT
     glBindFragDataLocation(vdp2blit_prg, 1, "topColor");
@@ -1573,6 +1584,8 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_perline"), 16);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_lncl_off_rgb0"), 17);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_lncl_off_rgb1"), 18);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp1_width"),_Ygl->vdp1width/512.0f);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp2_width"),(float)(_Ygl->width) / (float)(_Ygl->rwidth));
@@ -1586,6 +1599,7 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "is_perline"), 8, isPerline);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "is_lncl_off"), 6, use_lncl_off);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isShadow"), 6, isShadow);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
@@ -1645,11 +1659,20 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glActiveTexture(gltext[8]);
   glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorscreen_tex);
 
+  if(useLnclRBG0 != 0) {
+    glActiveTexture(gltext[17]);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[0]);
+  }
+
+  if(useLnclRBG1 != 0) {
+    glActiveTexture(gltext[18]);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[1]);
+  }
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
-  for (int i = 0; i<17; i++) {
+  for (int i = 0; i<19; i++) {
     glActiveTexture(gltext[i]);
     glBindTexture(GL_TEXTURE_2D, 0);
   }

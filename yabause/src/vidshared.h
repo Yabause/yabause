@@ -115,7 +115,6 @@ typedef struct
    s32 cob;
    int linescreen;
    int idScreen;
-   int idReg;
 
    /* The above fields MUST NOT BE CHANGED (including inserting new fields)
     * unless YglSprite is also updated in ygl.h */

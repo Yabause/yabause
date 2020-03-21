@@ -255,11 +255,12 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
   const int vdp2screens[] = {RBG0, RBG1, NBG0, NBG1, NBG2, NBG3};
 
   int prioscreens[6] = {0};
-  int modescreens[7];
-  int isRGB[6];
-  int isBlur[7];
-  int isPerline[8] = {0};
-  int isShadow[7];
+  int modescreens[7] = {0};
+  int useLineColorOffset[6] = {0};
+  int isRGB[6] = {0};
+  int isBlur[7] = {0};
+  int isPerline[8] = {-1};
+  int isShadow[7] = {0};
   glDisable(GL_BLEND);
   int id = 0;
 
@@ -281,6 +282,8 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
       } else {
         prioscreens[id] = _Ygl->screen_fbotex[vdp2screens[j]];
       }
+      if (vdp2screens[j] == RBG0) useLineColorOffset[id] = _Ygl->useLineColorOffset[0];
+      if (vdp2screens[j] == RBG1) useLineColorOffset[id] = _Ygl->useLineColorOffset[1];
       modescreens[id] =  setupBlend(varVdp2Regs, vdp2screens[j]);
       isRGB[id] = setupColorMode(varVdp2Regs, vdp2screens[j]);
       isBlur[id] = setupBlur(varVdp2Regs, vdp2screens[j]);
@@ -335,7 +338,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-    YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, varVdp2Regs);
+    YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, useLineColorOffset, varVdp2Regs);
     srcTexture = _Ygl->original_fbotex[0];
   } else {
     VDP2Generator_update(_Ygl->compute_tex, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, varVdp2Regs);

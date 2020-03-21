@@ -230,14 +230,13 @@ typedef struct {
 	int flip;
 	int priority;
 	int dst;
-    int uclipmode;
-    int blendmode;
-    s32 cor;
-    s32 cog;
-    s32 cob;
-    int linescreen;
-    int idScreen;
-    int idReg;
+  int uclipmode;
+  int blendmode;
+  s32 cor;
+  s32 cog;
+  s32 cob;
+  int linescreen;
+  int idScreen;
 } YglSprite;
 
 typedef struct {
@@ -618,6 +617,10 @@ typedef struct {
    u32 linecolorscreen_pbo;
    u32* linecolorscreen_buf;
 
+   u32 linecolorcoef_tex[2];
+   u32 linecolorcoef_pbo[2];
+   u32* linecolorcoef_buf[2];
+
    u32 coloroffset_tex;
    u32 coloroffset_pbo;
    u32* coloroffset_buf;
@@ -677,6 +680,7 @@ typedef struct {
 
    int rbg_use_compute_shader;
    int vdp2_use_compute_shader;
+   int useLineColorOffset[2];
 
    float vdp1wratio;
    float vdp1hratio;
@@ -702,8 +706,6 @@ typedef struct {
   int pagesize;
   int patternshift;
   u32 LineColorRamAdress;
-  vdp2draw_struct line_info;
-  YglTexture line_texture;
   YglCache c;
   YglCache cline;
   int vres;
@@ -753,7 +755,7 @@ void YglSetPerlineBuf(u32 * pbuf);
 int YglSetLevelBlendmode( int pri, int mode );
 
 extern int YglBlitSimple(int texture, int blend);
-extern int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op,  Vdp2 *varVdp2Regs);
+extern int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs);
 extern SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs);
 extern void executeTMVDP1(int in, int out);
 
@@ -786,6 +788,9 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float
 void YglRenderVDP1(void);
 u32 * YglGetLineColorScreenPointer();
 void YglSetLineColorScreen(u32 * pbuf, int size);
+
+u32 * YglGetLineColorOffsetPointer(int id, int start, int size);
+void YglSetLineColorOffset(u32 * pbuf, int start, int size, int id);
 
 u32* YglGetBackColorPointer();
 void YglSetBackColor(int size);
