@@ -998,7 +998,9 @@ static u32 Vdp2ColorRamGetColorOffset(u32 colorindex, int alpha, int offset)
   {
     u32 tmp1, tmp2;
     colorindex <<= 2;
+    colorindex &= 0xFFF;
     tmp1 = T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
+    tmp2 = T2ReadWord(Vdp2ColorRam, (colorindex + 2) & 0xFFF);
     //Line color offset from rotation table are not applicable here
     return SAT2YAB2(alpha, tmp1, tmp2);
   }
@@ -5003,7 +5005,7 @@ static void Vdp2DrawLineColorScreen(Vdp2 *varVdp2Regs)
 
   u8 alpha = ((varVdp2Regs->CCRLB & 0x1F) << 3) | NONE;
 
-  addr = (varVdp2Regs->LCTA.all & 0x7FFFF);
+  addr = (varVdp2Regs->LCTA.all & 0x7FFFF)<<1;
   for (i = 0; i < line_cnt; i++) {
     u16 LineColorRamAdress = Vdp2RamReadWord(NULL, Vdp2Ram, addr);
     *(line_pixel_data) = Vdp2ColorRamGetColor(LineColorRamAdress, alpha);
