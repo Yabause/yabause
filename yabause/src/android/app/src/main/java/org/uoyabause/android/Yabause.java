@@ -223,7 +223,6 @@ public class Yabause extends AppCompatActivity implements
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    FirebaseDatabase.getInstance().setPersistenceEnabled(true);
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Yabause.this);
     boolean lock_landscape = sharedPref.getBoolean("pref_landscape", false);
     if (lock_landscape == true) {
