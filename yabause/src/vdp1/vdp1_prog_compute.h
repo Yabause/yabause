@@ -190,7 +190,7 @@ SHADER_VERSION_COMPUTE
 "layout(location = 8) uniform ivec4 usrClip;\n"
 "layout(location = 9) uniform mat4 rot;\n"
 //===================================================================
-"vec3 point( vec2 P,  vec2 P0, vec2 P1 )\n"
+"vec3 antiAliasedPoint( vec2 P,  vec2 P0, vec2 P1 )\n"
 // dist_Point_to_Segment(): get the distance of a point to a segment
 //     Input:  a Point P and a Segment S (P0, P1) (in any dimension)
 //     Return: the x,y distance from P to S
@@ -214,7 +214,7 @@ SHADER_VERSION_COMPUTE
 //This represent the behavior of antialiasing as displayed in vdp1 spec.
 "    vec2 A = vec2(V0.x+i*sAx, V0.y+i*sAy)+vec2(0.5);\n" //Get the center of the first point
 "    vec2 B = vec2(V1.x+i*sBx, V1.y+i*sBy)+vec2(0.5);\n" //Get the center of the last point
-"    vec3 d = point(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
+"    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
 "    if (distance(d.xy, P+vec2(0.5)) <= 0.7072) {\n" //Test the distance between the projection on line and the center of the pixel
 "      float ux= d.z;\n" //u is the relative distance from first point to projected position
 "      float uy=(float(i))/float(step);\n" //v is the ratio between the current line and the total number of lines
@@ -225,13 +225,32 @@ SHADER_VERSION_COMPUTE
 "  return 0u;\n"
 "}\n"
 
+"vec3 aliasedPoint( vec2 P,  vec2 P0, vec2 P1 )\n"
+// dist_Point_to_Segment(): get the distance of a point to a segment
+//     Input:  a Point P and a Segment S (P0, P1) (in any dimension)
+//     Return: the x,y distance from P to S
+"{\n"
+"  if (all(equal(P0,P1))) return vec3(P0, 0.0);\n"
+"  float r = 0.0;\n"
+"  if (abs(P1.y-P0.y) > abs(P1.x-P0.x)) {\n"
+"    if(P1.y != P0.y) r = (P.y-P0.y)/(P1.y-P0.y);\n"
+"    else r = (P.x-P0.x)/(P1.x-P0.x);\n"
+"  } else {\n"
+"    if(P1.x != P0.x) r = (P.x-P0.x)/(P1.x-P0.x);\n"
+"    else r = (P.y-P0.y)/(P1.y-P0.y);\n"
+"  }"
+"  if (r >= 1.0) return vec3(P1, 1.0);\n"
+"  else if (r <= 0.0) return vec3(P0, 0.0);\n"
+"  else return vec3(P0 + ((P1-P0) * r), r);\n"
+"}\n"
+
 "uint isOnALine( vec2 P, vec2 V0, vec2 V1, float sAx, float sAy, float sBx, float sBy, uint step, out vec2 uv){\n"
 "  for (uint i=0; i<step; i++) {\n"
 //A pixel shall be considered as part of an aliased line if all coordinates of the pixel center to the line is shorter than 0.5, which is the horizontal or vertical half-size of the pixel
 //This represent the behavior of aliasing as displayed in vdp1 spec.
 "    vec2 A = vec2(V0.x+i*sAx, V0.y+i*sAy)+vec2(0.5);\n" //Get the center of the first point
 "    vec2 B = vec2(V1.x+i*sBx, V1.y+i*sBy)+vec2(0.5);\n" //Get the center of the last point
-"    vec3 d = point(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
+"    vec3 d = aliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
 "    if (all(equal(floor(d.xy),floor((P+vec2(0.5)))))) {\n" //If the line is passing through the same pixel as the point P
 "      float ux= d.z;\n" //u is the relative distance from first point to projected position
 "      float uy=(float(i))/float(step);\n" //v is the ratio between the current line and the total number of lines
