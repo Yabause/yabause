@@ -232,7 +232,7 @@ SHADER_VERSION_COMPUTE
 "    vec2 A = vec2(V0.x+i*sAx, V0.y+i*sAy)+vec2(0.5);\n" //Get the center of the first point
 "    vec2 B = vec2(V1.x+i*sBx, V1.y+i*sBy)+vec2(0.5);\n" //Get the center of the last point
 "    vec3 d = point(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
-"    if (all(lessThan(abs(d.xy - (P+vec2(0.5))),vec2(0.5)))) {\n" //Test the distance between the projection on line and the center of the pixel
+"    if (all(equal(floor(d.xy),floor((P+vec2(0.5)))))) {\n" //If the line is passing through the same pixel as the point P
 "      float ux= d.z;\n" //u is the relative distance from first point to projected position
 "      float uy=(float(i))/float(step);\n" //v is the ratio between the current line and the total number of lines
 "      uv = vec2(ux,uy);\n"
