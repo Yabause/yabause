@@ -1600,6 +1600,11 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
          AddString(outstring, "Sprite Gradation Calculation %s\n", (getBlur(Vdp2Regs, SPRITE)==0)?"Disabled":"Enabled");
       }
 
+      if (Vdp2Regs->LNCLEN & 0x20)
+      {
+        AddString(outstring, "Line Color Screen insertion enabled\n");
+      }
+
       outstring = AddWindowInfoString(outstring, Vdp2Regs->WCTLC >> 8, 1);
 
       AddString(outstring, "Color RAM Offset = %X\r\n", (Vdp2Regs->CRAOFB >> 4) & 0x7);
