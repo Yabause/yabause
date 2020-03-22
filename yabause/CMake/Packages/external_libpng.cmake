@@ -16,23 +16,23 @@ include (ExternalProject)
 
 message(STATUS "libpng not found - will build from source")
 
-set(png_URL http://78.108.103.11/MIRROR/ftp/png/src/history/libpng12/libpng-1.2.53.tar.gz)
-set(png_HASH SHA256=e05c9056d7f323088fd7824d8c6acc03a4a758c4b4916715924edc5dd3223a72)
+set(png_URL https://download.sourceforge.net/libpng/libpng-1.6.37.tar.gz)
+set(png_HASH SHA256=daeb2620d829575513e35fecc83f0d3791a620b9b93d800b763542ece9390fb4)
 set(png_BUILD ${CMAKE_CURRENT_BINARY_DIR}/png/src/png)
 set(png_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/png/install)
 set(png_INCLUDE_DIR ${png_INSTALL}/include) 
 
 if(WIN32)
   set(png_STATIC_LIBRARIES 
-    debug ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng12_staticd.lib
-    optimized ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng12_static.lib)
+    debug ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng16_staticd.lib
+    optimized ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng16_static.lib)
 else()
-  set(png_STATIC_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng12.a)
+  set(png_STATIC_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng16.a)
 endif()
 
 set(png_HEADERS
-    "${png_INSTALL}/include/libpng12/png.h"
-    "${png_INSTALL}/include/libpng12/pngconf.h"
+    "${png_INSTALL}/include/libpng16/png.h"
+    "${png_INSTALL}/include/libpng16/pngconf.h"
 )
 
 if(ANDROID)
