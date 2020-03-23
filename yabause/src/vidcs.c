@@ -160,14 +160,15 @@ YglCSRenderVDP1
 
 void addCSCommands(vdp1cmd_struct* cmd, int type)
 {
+  //Test game: Sega rally : The aileron at the start
   int Ax = cmd->CMDXD - cmd->CMDXA;
   int Ay = cmd->CMDYD - cmd->CMDYA;
   int Bx = cmd->CMDXC - cmd->CMDXB;
   int By = cmd->CMDYC - cmd->CMDYB;
   int nbStep = 0;
 
-  unsigned int lA = sqrt(Ax*Ax+Ay*Ay);
-  unsigned int lB = sqrt(Bx*Bx+By*By);
+  unsigned int lA = ceil(sqrt(Ax*Ax+Ay*Ay));
+  unsigned int lB = ceil(sqrt(Bx*Bx+By*By));
 
   cmd->uAstepx = 0.0;
   cmd->uAstepy = 0.0;
@@ -180,14 +181,21 @@ void addCSCommands(vdp1cmd_struct* cmd, int type)
   if (lB >= lA)
     nbStep = lB;
 
-  if (nbStep != 0) {
-    cmd->nbStep = nbStep;
-    if (lA != 0) cmd->uAstepx = ((float)lA / (float)cmd->nbStep) * ((float)Ax/(float)lA);
-    if (lA != 0) cmd->uAstepy = ((float)lA / (float)cmd->nbStep) * ((float)Ay/(float)lA);
-    if (lB != 0) cmd->uBstepx = ((float)lB / (float)cmd->nbStep) * ((float)Bx/(float)lB);
-    if (lB != 0) cmd->uBstepy = ((float)lB / (float)cmd->nbStep) * ((float)By/(float)lB);
-    cmd->nbStep += 1;
+  if(nbStep != 0) {
+    cmd->nbStep = nbStep + 1;
+    cmd->uAstepx = (float)Ax/(float)nbStep;
+    cmd->uAstepy = (float)Ay/(float)nbStep;
+    cmd->uBstepx = (float)Bx/(float)nbStep;
+    cmd->uBstepy = (float)By/(float)nbStep;
   }
+#ifdef DEBUG_VDP1_CMD
+  printf("%d %f [%d %d][%d %d][%d %d][%d %d]\n", cmd->nbStep, (float)cmd->h / (float)cmd->nbStep,
+    cmd->CMDXA, cmd->CMDYA,
+    cmd->CMDXB, cmd->CMDYB,
+    cmd->CMDXC, cmd->CMDYC,
+    cmd->CMDXD, cmd->CMDYD
+  );
+#endif
   vdp1_add(cmd,0);
 }
 
