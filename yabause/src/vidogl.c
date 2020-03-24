@@ -258,26 +258,6 @@ int orderTable[NB_MSG];
 #define CELL_SINGLE 0x1
 #define CELL_QUAD   0x2
 
-#define IS_MESH(a) ((a&0x100) == 0x100)
-#define IS_SPD(a) ((a&0x40) == 0x40)
-#define IS_END(a) ((a&0x80) == 0x80)
-#define IS_MSB_SHADOW(a) ((a&0x8000)!=0)
-
-static int getCCProgramId(int CMDPMOD) {
-  int cctype = CMDPMOD & 0x7;
-  int MSB = IS_MSB_SHADOW(CMDPMOD)?1:0;
-  int Mesh = IS_MESH(CMDPMOD)?((_Ygl->meshmode == ORIGINAL_MESH)?1:2):0;
-  int SPD = IS_SPD(CMDPMOD)?1:0;
-  int END = IS_END(CMDPMOD)?1:0;
-  int TESS = (_Ygl->polygonmode == GPU_TESSERATION)?1:0;
-  if (cctype == 5) return -1;
-  if (cctype > 5) cctype -=1;
-
-  YGLLOG("Setup program %d %d %d %d %d\n", cctype, SPD, Mesh, MSB, TESS);
-
-  return cctype+7*(END+2*(SPD+2*(Mesh+3*(MSB+2*TESS))))+PG_VDP1_START;
-}
-
 void Vdp2DrawCell_in_async(void *p)
 {
    while(drawcell_run != 0){
@@ -344,6 +324,27 @@ static void requestDrawCellOrder(vdp2draw_struct * info, YglTexture *texture, Vd
   }
 }
 #endif
+
+#define IS_MESH(a) ((a&0x100) == 0x100)
+#define IS_SPD(a) ((a&0x40) == 0x40)
+#define IS_END(a) ((a&0x80) == 0x80)
+#define IS_MSB_SHADOW(a) ((a&0x8000)!=0)
+
+static int getCCProgramId(int CMDPMOD) {
+  int cctype = CMDPMOD & 0x7;
+  int MSB = IS_MSB_SHADOW(CMDPMOD)?1:0;
+  int Mesh = IS_MESH(CMDPMOD)?((_Ygl->meshmode == ORIGINAL_MESH)?1:2):0;
+  int SPD = IS_SPD(CMDPMOD)?1:0;
+  int END = IS_END(CMDPMOD)?1:0;
+  int TESS = (_Ygl->polygonmode == GPU_TESSERATION)?1:0;
+  if (cctype == 5) return -1;
+  if (cctype > 5) cctype -=1;
+
+  YGLLOG("Setup program %d %d %d %d %d\n", cctype, SPD, Mesh, MSB, TESS);
+
+  return cctype+7*(END+2*(SPD+2*(Mesh+3*(MSB+2*TESS))))+PG_VDP1_START;
+}
+
 
 static void executeDrawCell() {
 #ifdef CELL_ASYNC
