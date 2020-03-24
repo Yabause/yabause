@@ -1719,8 +1719,8 @@ static void startField(void) {
       FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly\n");
       needVdp1draw = 1;
     }
-    if (Vdp1Regs->PTMR == 0x1) Vdp1External.plot_trigger_done = 0;
   }
+  if (Vdp1Regs->PTMR == 0x1) Vdp1External.plot_trigger_done = 0;
 
   FRAMELOG("End StartField\n");
 
