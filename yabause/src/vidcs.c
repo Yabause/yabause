@@ -393,10 +393,10 @@ if ((cmd.CMDPMOD & 4))
 int getBestMode(vdp1cmd_struct* cmd) {
   int ret = DISTORTED;
   if (
-    (abs(cmd->CMDXA - cmd->CMDXD) <= 0) &&
-    (abs(cmd->CMDYA - cmd->CMDYB) <= 0) &&
-    (abs(cmd->CMDXB - cmd->CMDXC) <= 0) &&
-    (abs(cmd->CMDYC - cmd->CMDYD) <= 0)
+    ((cmd->CMDXA - cmd->CMDXD) == 0) &&
+    ((cmd->CMDYA - cmd->CMDYB) == 0) &&
+    ((cmd->CMDXB - cmd->CMDXC) == 0) &&
+    ((cmd->CMDYC - cmd->CMDYD) == 0)
   ) {
     ret = QUAD;
   }
