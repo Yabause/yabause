@@ -462,6 +462,12 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     cmd.type = QUAD;
     vdp1_add(&cmd,0);
   }
+// #define ADD_WIREFRAME
+#ifdef ADD_WIREFRAME
+  cmd.COLOR[0]=0xF300;
+  cmd.type = POLYLINE;
+  vdp1_add(&cmd,0);
+#endif
   return;
 }
 
