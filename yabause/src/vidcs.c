@@ -161,14 +161,22 @@ YglCSRenderVDP1
 void addCSCommands(vdp1cmd_struct* cmd, int type)
 {
   //Test game: Sega rally : The aileron at the start
-  int Ax = cmd->CMDXD - cmd->CMDXA;
-  int Ay = cmd->CMDYD - cmd->CMDYA;
-  int Bx = cmd->CMDXC - cmd->CMDXB;
-  int By = cmd->CMDYC - cmd->CMDYB;
+  int Ax = (cmd->CMDXD - cmd->CMDXA);
+  int Ay = (cmd->CMDYD - cmd->CMDYA);
+  int Bx = (cmd->CMDXC - cmd->CMDXB);
+  int By = (cmd->CMDYC - cmd->CMDYB);
   int nbStep = 0;
+  unsigned int lA;
+  unsigned int lB;
 
-  unsigned int lA = ceil(sqrt(Ax*Ax+Ay*Ay));
-  unsigned int lB = ceil(sqrt(Bx*Bx+By*By));
+  if (((cmd->CMDPMOD >> 3) & 0x7u) == 5) {
+    Ax *= 2;
+    Bx *= 2;
+  }
+
+  lA = ceil(sqrt(Ax*Ax+Ay*Ay));
+  lB = ceil(sqrt(Bx*Bx+By*By));
+
 
   cmd->uAstepx = 0.0;
   cmd->uAstepy = 0.0;
