@@ -330,7 +330,7 @@ SHADER_VERSION_COMPUTE
 "      if(uv.y==1.0) uv.y = 0.99;\n"
 "  uint x = clamp(uint(uv.x*pixcmd.w), 0u, uint(pixcmd.w));\n"
 "  uint pos = (uint(clamp(ceil(pixcmd.h*uv.y), 0u, uint(pixcmd.h-1)))*pixcmd.w+x);\n"
-"  uint charAddr = pixcmd.CMDSRCA * 8 + pos;\n"
+"  uint charAddr = ((pixcmd.CMDSRCA * 8)& 0x7FFFFu) + pos;\n"
 "  uint dot;\n"
 "  bool SPD = ((pixcmd.CMDPMOD & 0x40u) != 0);\n"
 "  bool END = ((pixcmd.CMDPMOD & 0x80u) != 0);\n"
