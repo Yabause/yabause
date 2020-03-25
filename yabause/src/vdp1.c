@@ -189,6 +189,14 @@ int Vdp1Init(void) {
    Vdp1Regs->FBCR = 0;
    Vdp1Regs->PTMR = 0;
 
+   Vdp1Regs->userclipX1=0;
+   Vdp1Regs->userclipY1=0;
+   Vdp1Regs->userclipX2=1024;
+   Vdp1Regs->userclipY2=512;
+
+   Vdp1Regs->localX=0;
+   Vdp1Regs->localY=0;
+
    VDP1_MASK = 0xFFFF;
 
    vdp1Ram_update_start = 0x0;
