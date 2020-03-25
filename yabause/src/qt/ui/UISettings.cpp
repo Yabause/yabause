@@ -120,6 +120,10 @@ const Items mMeshMode = Items()
 	<< Item("0", "Original")
 	<< Item("1", "Improved");
 
+const Items mWireframe = Items()
+	<< Item("0", "Off")
+	<< Item("1", "On");
+
 UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
 {
@@ -343,6 +347,11 @@ void UISettings::changeScanLine(int id)
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, (mScanLine.at(id).id).toInt());
 }
 
+void UISettings::changeWireframe(int id)
+{
+    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_WIREFRAME, (mWireframe.at(id).id).toInt());
+}
+
 void UISettings::changeMeshMode(int id)
 {
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, (mMeshMode.at(id).id).toInt());
@@ -452,6 +461,11 @@ void UISettings::loadCores()
     cbScanlineFilter->addItem(QtYabause::translate(it.Name), it.id);
 
   connect(cbScanlineFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(changeScanLine(int)));
+
+	foreach(const Item& it, mWireframe)
+    cbWireframeFilter->addItem(QtYabause::translate(it.Name), it.id);
+
+  connect(cbWireframeFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(changeWireframe(int)));
 
 	foreach(const Item& it, mMeshMode)
 		cbMeshModeFilter->addItem(QtYabause::translate(it.Name), it.id);
@@ -588,6 +602,7 @@ void UISettings::loadSettings()
 	cbResolution->setCurrentIndex(cbResolution->findData(s->value("Video/resolution_mode", mResolutionMode.at(0).id).toInt()));
   cbAspectRatio->setCurrentIndex(cbAspectRatio->findData(s->value("Video/AspectRatio", mAspectRatio.at(0).id).toInt()));
   cbScanlineFilter->setCurrentIndex(cbScanlineFilter->findData(s->value("Video/ScanLine", mScanLine.at(0).id).toInt()));
+	cbWireframeFilter->setCurrentIndex(cbWireframeFilter->findData(s->value("Video/Wireframe", mWireframe.at(0).id).toInt()));
 	cbMeshModeFilter->setCurrentIndex(cbMeshModeFilter->findData(s->value("Video/MeshMode", mMeshMode.at(0).id).toInt()));
 
 	// sound
@@ -661,6 +676,7 @@ void UISettings::saveSettings()
 	// Save new version of keys
         s->setValue("Video/AspectRatio", cbAspectRatio->itemData(cbAspectRatio->currentIndex()).toInt());
         s->setValue("Video/ScanLine", cbScanlineFilter->itemData(cbScanlineFilter->currentIndex()).toInt());
+				s->setValue("Video/Wireframe", cbWireframeFilter->itemData(cbWireframeFilter->currentIndex()).toInt());
 				s->setValue("Video/MeshMode", cbMeshModeFilter->itemData(cbMeshModeFilter->currentIndex()).toInt());
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );

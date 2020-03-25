@@ -328,6 +328,18 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	int intersectY = -1;
 	int requireCompute = 0;
 
+	if (_Ygl->wireframe_mode != 0) {
+		switch(cmd->type ) {
+			case POLYGON:
+			case QUAD_POLY:
+			case DISTORTED:
+			case QUAD:
+				cmd->type = POLYLINE;
+				break;
+			default:
+				break;
+		}
+	}
 	if (clipcmd == 0) {
 		memcpy(&cmdBufferToProcess[nbCmdToProcess++], cmd, sizeof(vdp1cmd_struct));
 		vdp1GenerateBuffer(cmd);

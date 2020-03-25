@@ -64,6 +64,7 @@ protected slots:
         void changeUpscaleMode(int id);
         void changeAspectRatio(int id);
         void changeScanLine(int id);
+				void changeWireframe(int id);
 				void changeMeshMode(int id);
 				void changePolygonMode(int id);
 				void changeCSMode(int id);

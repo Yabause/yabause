@@ -70,6 +70,7 @@ typedef struct
    int extend_backup;
    int usecache;
    int skipframe; //This should be used for real frame skip mechanism
+  int wireframe_mode;
 #ifdef SPRITE_CACHE
    int useVdp1cache;
 #endif
@@ -135,6 +136,7 @@ typedef struct
    int usecache;
    int vsyncon;
    int skipframe;
+   int wireframe_mode;
 #ifdef SPRITE_CACHE
    int useVdp1cache;
 #endif

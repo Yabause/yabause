@@ -469,7 +469,8 @@ typedef enum {
     VDP_SETTING_ASPECT_RATIO,
     VDP_SETTING_SCANLINE,
     VDP_SETTING_MESH_MODE,
-    VDP_SETTING_COMPUTE_SHADER
+    VDP_SETTING_COMPUTE_SHADER,
+    VDP_SETTING_WIREFRAME
 } enSettings;
 
 
@@ -639,6 +640,7 @@ typedef struct {
    POLYGONMODE polygonmode;
    MESHMODE meshmode;
    int scanline;
+   int wireframe_mode;
    RATIOMODE stretch;
    RESOLUTION_MODE resolution_mode;
    COMPUTESHADERMODE use_cs;

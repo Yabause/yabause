@@ -6915,6 +6915,9 @@ void VIDOGLSetSettingValueMode(int type, int value) {
   case VDP_SETTING_SCANLINE:
     _Ygl->scanline = value;
   break;
+  case VDP_SETTING_WIREFRAME:
+    _Ygl->wireframe_mode = value;
+  break;
   case VDP_SETTING_MESH_MODE:
     _Ygl->meshmode = value;
   break;
