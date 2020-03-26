@@ -215,7 +215,7 @@ SHADER_VERSION_COMPUTE
 "    vec2 A = vec2(V0.x+i*sAx, V0.y+i*sAy)+vec2(0.5);\n" //Get the center of the first point
 "    vec2 B = vec2(V1.x+i*sBx, V1.y+i*sBy)+vec2(0.5);\n" //Get the center of the last point
 "    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
-"    if (distance(d.xy, P+vec2(0.5)) <= 0.7072) {\n" //Test the distance between the projection on line and the center of the pixel
+"    if (distance(d.xy/upscale, P/upscale+vec2(0.5)) <= 0.7072) {\n" //Test the distance between the projection on line and the center of the pixel
 "      float ux= d.z;\n" //u is the relative distance from first point to projected position
 "      float uy= (float(i)+0.5)/float(step);\n" //v is the ratio between the current line and the total number of lines
 "      uv = vec2(ux,uy);\n"
@@ -278,7 +278,7 @@ SHADER_VERSION_COMPUTE
 "  Quad[3] = vec2(cmd[idx].CMDXD,cmd[idx].CMDYD)*upscale;\n"
 
 "  if ((cmd[idx].type == "Stringify(DISTORTED)") || (cmd[idx].type == "Stringify(POLYGON)")) {\n"
-"    return isOnAQuadLine(Pin, Quad[0], Quad[1], cmd[idx].uAstepx, cmd[idx].uAstepy, cmd[idx].uBstepx, cmd[idx].uBstepy, uint(float(cmd[idx].nbStep)*upscale.y), uv);\n"
+"    return isOnAQuadLine(Pin, Quad[0], Quad[1], cmd[idx].uAstepx*upscale.x, cmd[idx].uAstepy*upscale.y, cmd[idx].uBstepx*upscale.x, cmd[idx].uBstepy*upscale.y, uint(float(cmd[idx].nbStep)), uv);\n"
 "  } else {\n"
 "    if ((cmd[idx].type == "Stringify(QUAD)")  || (cmd[idx].type == "Stringify(QUAD_POLY)")) {\n"
 "     return isOnAQuad(Pin, Quad[0], Quad[1], Quad[3], uv);\n"
