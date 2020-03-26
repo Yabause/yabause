@@ -169,10 +169,8 @@ void addCSCommands(vdp1cmd_struct* cmd, int type)
   unsigned int lA;
   unsigned int lB;
 
-  if (((cmd->CMDPMOD >> 3) & 0x7u) == 5) {
-    Ax *= 2;
-    Bx *= 2;
-  }
+  Ax *= (_Ygl->vdp1wratio *  _Ygl->vdp2hdensity) / _Ygl->vdp2wdensity;
+  Bx *= (_Ygl->vdp1wratio *  _Ygl->vdp2hdensity) / _Ygl->vdp2wdensity;
 
   lA = ceil(sqrt(Ax*Ax+Ay*Ay));
   lB = ceil(sqrt(Bx*Bx+By*By));
