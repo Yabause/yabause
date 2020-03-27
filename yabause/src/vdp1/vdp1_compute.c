@@ -391,9 +391,9 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 
 	//Add a bounding box
 	  cmd->B[0] = minx*tex_ratiow;
-	  cmd->B[1] = (maxx)*tex_ratiow;
+	  cmd->B[1] = (maxx + 1)*tex_ratiow;
 	  cmd->B[2] = miny*tex_ratioh;
-	  cmd->B[3] = (maxy)*tex_ratioh;
+	  cmd->B[3] = (maxy + 1)*tex_ratioh;
 
 	}
   for (int i = 0; i<NB_COARSE_RAST_X; i++) {
