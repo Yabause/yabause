@@ -497,82 +497,35 @@ void UIYabause::sizeRequested( const QSize& s )
 
 void UIYabause::fixAspectRatio( int width , int height )
 {
-	int aspectRatio = QtYabause::volatileSettings()->value( "Video/AspectRatio",0).toInt();
+  if (this->isFullScreen()) {
+    mYabauseGL->viewport_width_ = QtYabause::volatileSettings()->value("Video/FullscreenWidth", "1920").toInt();
+    mYabauseGL->viewport_height_ = QtYabause::volatileSettings()->value("Video/FullscreenHeight", "1080").toInt();
+    mYabauseGL->viewport_origin_x_ = 0;
+    mYabauseGL->viewport_origin_y_ = 0;
+    return;
+  }
 
+  int aspectRatio = QtYabause::volatileSettings()->value("Video/AspectRatio", 0).toInt();
   switch (aspectRatio)
   {
   case 0:
   case 1:
   case 2:
   {
-    if (this->isFullScreen()) {
-
-      if (aspectRatio == 0) {
-        mYabauseGL->viewport_width_ = width;
-        mYabauseGL->viewport_height_ = height;
-        mYabauseGL->viewport_origin_x_ = 0;
-        mYabauseGL->viewport_origin_y_ = 0;
-#if 0
-        float specratio = (float)width / (float)height;
-        int saturnw = 4;
-        int saturnh = 3;
-
-        VolatileSettings* vs = QtYabause::volatileSettings();
-        if (vs->value("Video/RotateScreen").toBool()) {
-          if (aspectRatio == 1) {
-            saturnw = 3;
-            saturnh = 4;
-          }
-          else {
-            saturnw = 9;
-            saturnh = 16;
-          }
-        }
-        else {
-          if (aspectRatio == 1) {
-            saturnw = 4;
-            saturnh = 3;
-          }
-          else {
-            saturnw = 16;
-            saturnh = 9;
-          }
-        }
-        float saturnraito = (float)saturnw / (float)saturnh;
-        float revraito = (float)saturnh / (float)saturnw;
-
-        if (specratio > saturnraito) {
-
-          mYabauseGL->viewport_width_ = height * saturnraito;
-          mYabauseGL->viewport_height_ = height;
-          mYabauseGL->viewport_origin_x_ = (width - mYabauseGL->viewport_width_) / 2.0;
-          mYabauseGL->viewport_origin_y_ = (height - mYabauseGL->viewport_height_) / 2.0;
-        }
-        else {
-          mYabauseGL->viewport_width_ = width;
-          mYabauseGL->viewport_height_ = height * revraito;
-          mYabauseGL->viewport_origin_x_ = (width - mYabauseGL->viewport_width_) / 2.0;
-          mYabauseGL->viewport_origin_y_ = (height - mYabauseGL->viewport_height_) / 2.0;
-      }
-#endif
-    }
-  }
-    else {
       int heightOffset = toolBar->height();
       heightOffset += menubar->height();
-      int height;
 
       VolatileSettings* vs = QtYabause::volatileSettings();
       if (vs->value("Video/RotateScreen").toBool()) {
         if (aspectRatio == 0 || aspectRatio == 1)
           height = 4 * ((float)width / 3);
-        else
+        else if(aspectRatio == 2)
           height = 16 * ((float)width / 9);
       }
       else {
         if (aspectRatio == 0 || aspectRatio == 1)
           height = 3 * ((float)width / 4);
-        else
+        else if (aspectRatio == 2)
           height = 9 * ((float)width / 16);
       }
 
@@ -581,16 +534,13 @@ void UIYabause::fixAspectRatio( int width , int height )
       adjustHeight(height);
       mYabauseGL->viewport_height_ = height - heightOffset;
       setFixedHeight(height);
-
-    }
     break;
   }
-		case 3:
+  case 3:
       setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
       setMinimumSize(0, 0);
       break;
 	}
-
 }
 
 void UIYabause::getSupportedResolutions()
@@ -700,8 +650,8 @@ void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat
     int title_width = GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
     SetWindowLong(hwnd_, GWL_STYLE, saved_window_info_.style);
     SetWindowLong(hwnd_, GWL_EXSTYLE, saved_window_info_.ex_style);
-    saved_window_info_.windowspos.setX(saved_window_info_.windowspos.x() + title_width);
-    saved_window_info_.windowspos.setY(saved_window_info_.windowspos.y() + title_height);
+    saved_window_info_.windowspos.setX(saved_window_info_.windowspos.x()/* + title_width*/);
+    saved_window_info_.windowspos.setY(saved_window_info_.windowspos.y()/* + title_height*/);
     this->move(saved_window_info_.windowspos);
     sizeRequested(saved_window_info_.windowsize);
   }
