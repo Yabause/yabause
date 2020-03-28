@@ -3175,9 +3175,9 @@ void YglUpdateVdp2Reg() {
         }
 
 
-        linebuf[line] |= ((int)(128.0f + (vdp1cor / 2.0)) & 0xFF) << 16;
+        linebuf[line] |= ((int)(128.0f + (vdp1cor / 2.0)) & 0xFF) << 0;
         linebuf[line] |= ((int)(128.0f + (vdp1cog / 2.0)) & 0xFF) << 8;
-        linebuf[line] |= ((int)(128.0f + (vdp1cob / 2.0)) & 0xFF) << 0;
+        linebuf[line] |= ((int)(128.0f + (vdp1cob / 2.0)) & 0xFF) << 16;
       }
       else {
         linebuf[line] |= 0x00808080;
@@ -3961,24 +3961,24 @@ int YglSetupWindow(YglProgram * prg){
   // Transparent Window
   if (prg->bwin0 || prg->bwin1 || prg->bwinsp)
   {
-    prg->bwin1 <<= 1;
-    prg->logwin1 <<= 1;
-    prg->bwinsp <<= 2;
-    prg->logwinsp <<= 2;
+    u8 bwin1 = prg->bwin1 << 1;
+    u8 logwin1 = prg->logwin1 << 1;
+    u8 bwinsp = prg->bwinsp << 2;
+    u8 logwinsp = prg->logwinsp << 2;
 
-    int winmask = (prg->bwin0 | prg->bwin1 | prg->bwinsp);
+    int winmask = (prg->bwin0 | bwin1 | bwinsp);
     int winflag = 0;
     if (prg->winmode == 0) { // and
       if (prg->bwin0)  winflag = prg->logwin0;
-      if (prg->bwin1)  winflag |= prg->logwin1;
-      if (prg->bwinsp) winflag |= prg->logwinsp;
+      if (prg->bwin1)  winflag |= logwin1;
+      if (prg->bwinsp) winflag |= logwinsp;
       glStencilFunc(GL_EQUAL, winflag, winmask);
     }
     else { // or
       winflag = winmask;
       if (prg->bwin0)  winflag &= ~prg->logwin0;
-      if (prg->bwin1)  winflag &= ~prg->logwin1;
-      if (prg->bwinsp) winflag &= ~prg->logwinsp;
+      if (prg->bwin1)  winflag &= ~logwin1;
+      if (prg->bwinsp) winflag &= ~logwinsp;
       glStencilFunc(GL_NOTEQUAL, winflag, winmask);
     }
   }

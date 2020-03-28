@@ -6098,7 +6098,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
         info->enable = 1;
         if (Vdp2Lines[line >> line_shift].CCCTL & bit)
         {
-          if ((fixVdp2Regs->CCCTL>>8) & bit) { // Add Color
+          if (fixVdp2Regs->CCCTL&0x100) { // Add Color
             info->blendmode |= VDP2_CC_ADD;
           }
           else {
@@ -6130,9 +6130,9 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
 
         if ( (Vdp2Lines[line >> line_shift].CLOFEN  & bit) != 0) {
           ReadVdp2ColorOffset(&Vdp2Lines[line >> line_shift], info, bit);
-          linebuf[line] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 16;
+          linebuf[line] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 0;
           linebuf[line] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
-          linebuf[line] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 0;
+          linebuf[line] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 16;
         }
         else {
           linebuf[line] |= 0x00808080;
