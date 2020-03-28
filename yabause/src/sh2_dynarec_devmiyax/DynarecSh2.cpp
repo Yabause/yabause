@@ -1579,12 +1579,9 @@ void DynarecSh2::AddInterrupt( u8 Vector, u8 level )
   YabThreadLock(mtx_);
   m_bIntruptSort = false;
   m_IntruptTbl.push_back(tmp);
-  m_IntruptTbl.unique(); 
-
-  //LOG("AddInterrupt v:%s(%x) l:%d\n", ScuGetVectorString(Vector),Vector, level );
-
   if( m_IntruptTbl.size() > 1 ) {
     m_IntruptTbl.sort();
+    m_IntruptTbl.unique();
   }
   m_bIntruptSort = true;
   m_pDynaSh2->SysReg[5] = m_IntruptTbl.begin()->level<<4;
