@@ -746,7 +746,7 @@ int Ygl_uniformPerLineAlpha(void * p)
   prg->blendmode = 0;
 
 #if !defined(_OGLES3_)
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 256,"Ygl_uniformPerLineAlpha");
+  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(__FUNCTION__), __FUNCTION__);
 #endif
 
   if (prg->prgid == PG_VDP2_PER_LINE_ALPHA_CRAM) {
@@ -801,8 +801,14 @@ int Ygl_cleanupPerLineAlpha(void * p)
   }
 
   if ( (prg->blendmode & 0x03) == VDP2_CC_RATE ) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
+      glEnable(GL_BLEND);
+      glBlendFuncSeparate(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ONE, GL_ZERO);
+    }
+    else {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
   }else if ((prg->blendmode&0x03) == VDP2_CC_ADD) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_SRC_ALPHA);
@@ -841,8 +847,9 @@ int Ygl_uniformNormal_blur(void * p)
   YglProgram * prg;
   prg = p;
 #if !defined(_OGLES3_)
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 256, "Ygl_uniformNormal_blur");
+  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(__FUNCTION__), __FUNCTION__);
 #endif
+
 
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
@@ -984,7 +991,7 @@ int Ygl_uniformWindow(void * p )
    YglProgram * prg;
    prg = p;
 #if !defined(_OGLES3_)
-   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 256, "Ygl_uniformWindow");
+   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(__FUNCTION__), __FUNCTION__);
 #endif
    glUseProgram(prg->prgid );
    glEnableVertexAttribArray(0);
@@ -1051,7 +1058,7 @@ int Ygl_uniformVdp1Normal(void * p )
    YglProgram * prg;
    prg = p;
 #if !defined(_OGLES3_)
-   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 256, "Ygl_uniformVdp1Normal");
+   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(__FUNCTION__), __FUNCTION__);
 #endif
    glEnableVertexAttribArray(prg->vertexp);
    glEnableVertexAttribArray(prg->texcoordp);
@@ -1619,8 +1626,9 @@ int Ygl_uniformStartUserClip(void * p )
    YglProgram * prg;
    prg = p;
 #if !defined(_OGLES3_)
-   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 256, "Ygl_uniformStartUserClip");
+   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(__FUNCTION__), __FUNCTION__);
 #endif
+
   glEnableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
   glDisableVertexAttribArray(2);
