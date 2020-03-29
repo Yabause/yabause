@@ -36,7 +36,7 @@
         android:layout_alignParentBottom="true"
         android:layout_marginTop="16dp"
         android:gravity="center"
-        android:text="Pro version is available!\n * No advertisement \n * No in-app billing \n * No subscription billing \n * Earlier access to the next version"
+        android:text="Pro version is available!\n\n *Save/Load game state between devices\n *Delete games\n *No advertisement\n \n"
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
