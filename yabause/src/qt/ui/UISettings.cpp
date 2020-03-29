@@ -441,10 +441,10 @@ void UISettings::loadCores()
 
 		// Compute shader Mode
 		foreach(const Item& it, mCSMode){
-			cbComputeShader->addItem(QtYabause::translate(it.Name), it.id);
+			cbGPURBG->addItem(QtYabause::translate(it.Name), it.id);
 		}
 
-		connect(cbComputeShader, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCSMode(int)));
+		connect(cbGPURBG, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCSMode(int)));
 
 	// Resolution
   foreach(const Item& it, mResolutionMode)
@@ -598,7 +598,7 @@ void UISettings::loadSettings()
 	cbFilterMode->setCurrentIndex(cbFilterMode->findData(s->value("Video/filter_type", mVideoFilterMode.at(0).id).toInt()));
         cbUpscaleMode->setCurrentIndex(cbUpscaleMode->findData(s->value("Video/upscale_type", mUpscaleFilterMode.at(0).id).toInt()));
 	cbPolygonGeneration->setCurrentIndex(cbPolygonGeneration->findData(s->value("Video/polygon_generation_mode", mPolygonGenerationMode.at(0).id).toInt()));
-  cbComputeShader->setCurrentIndex(cbComputeShader->findData(s->value("Video/compute_shader_mode", mCSMode.at(0).id).toInt()));
+  cbGPURBG->setCurrentIndex(cbGPURBG->findData(s->value("Video/compute_shader_mode", mCSMode.at(0).id).toInt()));
 	cbResolution->setCurrentIndex(cbResolution->findData(s->value("Video/resolution_mode", mResolutionMode.at(0).id).toInt()));
   cbAspectRatio->setCurrentIndex(cbAspectRatio->findData(s->value("Video/AspectRatio", mAspectRatio.at(0).id).toInt()));
   cbScanlineFilter->setCurrentIndex(cbScanlineFilter->findData(s->value("Video/ScanLine", mScanLine.at(0).id).toInt()));
@@ -683,7 +683,7 @@ void UISettings::saveSettings()
 	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());
 	s->setValue( "Video/upscale_type", cbUpscaleMode->itemData(cbUpscaleMode->currentIndex()).toInt());
 	s->setValue( "Video/polygon_generation_mode", cbPolygonGeneration->itemData(cbPolygonGeneration->currentIndex()).toInt());
-	s->setValue( "Video/compute_shader_mode", cbComputeShader->itemData(cbComputeShader->currentIndex()).toInt());
+	s->setValue( "Video/compute_shader_mode", cbGPURBG->itemData(cbGPURBG->currentIndex()).toInt());
 	s->setValue("Video/resolution_mode", cbResolution->itemData(cbResolution->currentIndex()).toInt());
 
 	s->setValue( "General/ClockSync", cbClockSync->isChecked() );

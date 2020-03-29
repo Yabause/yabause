@@ -430,7 +430,7 @@
       <widget class="QComboBox" name="cbMeshModeFilter"/>
     </item>
     <item row="25" column="0">
-			<widget class="QLabel" name="Compute Shader">
+			<widget class="QLabel" name="GPU RBG">
 				<property name="font">
 				<font>
 					<weight>75</weight>
@@ -438,7 +438,7 @@
 				</font>
 				</property>
 				<property name="text">
-					<string>Compute Shader :</string>
+					<string>GPU RBG :</string>
 				</property>
 				<property name="textFormat">
 					<enum>Qt::PlainText</enum>
@@ -449,7 +449,7 @@
 			</widget>
 		</item>
     <item row="25" column="1">
-      <widget class="QComboBox" name="cbComputeShader"/>
+      <widget class="QComboBox" name="cbGPURBG"/>
     </item>
     <item row="26" column="0">
 			<widget class="QLabel" name="Wireframe">
