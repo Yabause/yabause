@@ -2807,6 +2807,10 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
     hres /= _Ygl->widthRatio;
 
     YglQuadRbg0(rbg, NULL, &rbg->c, &rbg->cline, rbg->rgb_type, YglTM_vdp2, varVdp2Regs);
+   //Not optimal. Should be 0 if there is no offset used.
+    _Ygl->useLineColorOffset[0] = ((regs->KTCTL & 0x1010)!=0)?_Ygl->linecolorcoef_tex[0]:0;
+    _Ygl->useLineColorOffset[1] = ((regs->KTCTL & 0x1010)!=0)?_Ygl->linecolorcoef_tex[1]:0;
+
 	  return;
   }
 

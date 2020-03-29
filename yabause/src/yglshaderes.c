@@ -1661,12 +1661,14 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
 
   if(useLnclRBG0 != 0) {
     glActiveTexture(gltext[17]);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[0]);
+    if (_Ygl->rbg_use_compute_shader != 0) glBindTexture(GL_TEXTURE_2D, RBGGenerator_getLnclTexture(0));
+    else glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[0]);
   }
 
   if(useLnclRBG1 != 0) {
     glActiveTexture(gltext[18]);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[1]);
+    if (_Ygl->rbg_use_compute_shader != 0) glBindTexture(GL_TEXTURE_2D, RBGGenerator_getLnclTexture(1));
+    else glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[1]);
   }
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

@@ -821,6 +821,7 @@ extern void RBGGenerator_init(int width, int height);
 extern void RBGGenerator_resize(int width, int height);
 extern void RBGGenerator_update(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs );
 extern GLuint RBGGenerator_getTexture( int id );
+extern GLuint RBGGenerator_getLnclTexture( int id );
 extern void RBGGenerator_onFinish();
 
 extern void VDP2Generator_init(int width, int height);

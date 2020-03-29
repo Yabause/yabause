@@ -127,9 +127,13 @@ SHADER_VERSION_COMPUTE
 "  int endLine;\n"
 "  uint specialprimode;\n"
 "  uint specialfunction;\n"
+"  float alpha_lncl;\n"
+"  uint lncl_table_addr;\n"
+"  uint cram_mode;\n"
 "};\n"
 "layout(std430, binding = 5) readonly buffer VDP2C { uint cram[]; };\n"
 "layout(std430, binding = 6) readonly buffer ROTW { uint  rotWin[]; };\n"
+"layout(rgba8, binding = 7) writeonly uniform image2D lnclSurface;\n"
 " int GetKValue( int paramid, float posx, float posy, out float ky, out uint lineaddr ){ \n"
 "  uint kdata;\n"
 "  int kindex = int( ceil(para[paramid].deltaKAst*posy+(para[paramid].deltaKAx*posx)) ); \n"
@@ -244,6 +248,14 @@ SHADER_VERSION_COMPUTE
 "	   break;\n"
 "    }\n"
 "    return cc_\n;"
+"}\n"
+
+"vec4 Vdp2ColorRamGetColorOffset(uint offset) { \n"
+"  uint flag = 0x380u;\n"
+"  if (cram_mode == 1u) flag = 0x780u;\n"
+"  uint index = ((((lncl_table_addr&flag) | (offset&0x7Fu))<<1u)&0xFFFu);\n"
+"  uint temp = (cram[index>>2])& 0xFFFFu;\n"
+"  return vec4(alpha_lncl, float((temp >> 10) &0x1F)/31.0, float((temp >> 5) & 0x1Fu)/31.0, float(temp & 0x1Fu)/31.0);\n"
 "}\n";
 
 const char prg_continue_rbg[] =
@@ -275,7 +287,10 @@ const char prg_rbg_rpmd0_2w[] =
 "  ky = para[paramid].ky; \n"
 "  lineaddr = para[paramid].lineaddr; \n"
 "  if( para[paramid].coefenab != 0 ){ \n"
-"   if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { imageStore(outSurface,texel,vec4(0.0)); return;} \n"
+"   if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { \n"
+"     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"     else imageStore(lnclSurface,texel,vec4(0.0));\n"
+"   	imageStore(outSurface,texel,vec4(0.0)); return;} \n"
 "  }\n";
 
 const char prg_rbg_rpmd1_2w[] =
@@ -283,7 +298,10 @@ const char prg_rbg_rpmd1_2w[] =
 "  ky = para[paramid].ky; \n"
 "  lineaddr = para[paramid].lineaddr; \n"
 "  if( para[paramid].coefenab != 0 ){ \n"
-"   if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { imageStore(outSurface,texel,vec4(0.0)); return;} \n"
+"   if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { \n"
+"     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"     else imageStore(lnclSurface,texel,vec4(0.0));\n"
+"   	imageStore(outSurface,texel,vec4(0.0)); return;} \n"
 "  }\n";
 
 
@@ -295,7 +313,10 @@ const char prg_rbg_rpmd2_2w[] =
 "    if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { \n"
 "      paramid=1;\n"
 "      if( para[paramid].coefenab != 0 ){ \n"
-"        if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { imageStore(outSurface,texel,vec4(0.0)); return;} \n"
+"        if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { \n"
+"     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"     else imageStore(lnclSurface,texel,vec4(0.0));\n"
+"   	imageStore(outSurface,texel,vec4(0.0)); return;} \n"
 "      }else{ \n"
 "        ky = para[paramid].ky; \n"
 "      }\n"
@@ -310,7 +331,10 @@ const char prg_get_param_mode03[] =
 "      if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { \n"
 "        paramid=1;\n"
 "        if( para[paramid].coefenab != 0 ){ \n"
-"          if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { imageStore(outSurface,texel,vec4(0.0)); return;} \n"
+"          if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { \n"
+"     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"     else imageStore(lnclSurface,texel,vec4(0.0));\n"
+"   	imageStore(outSurface,texel,vec4(0.0)); return;} \n"
 "        }else{ \n"
 "          ky = para[paramid].ky; \n"
 "          lineaddr = para[paramid].lineaddr; \n"
@@ -326,7 +350,10 @@ const char prg_get_param_mode03[] =
 "      if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { \n"
 "        paramid=0;\n"
 "        if( para[paramid].coefenab != 0 ){ \n"
-"          if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { imageStore(outSurface,texel,vec4(0.0)); return;} \n"
+"          if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { \n"
+"     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"     else imageStore(lnclSurface,texel,vec4(0.0));\n"
+"   	imageStore(outSurface,texel,vec4(0.0)); return;} \n"
 "        }else{ \n"
 "          ky = para[paramid].ky; \n"
 "          lineaddr = para[paramid].lineaddr; \n"
@@ -361,16 +388,20 @@ const char prg_rbg_get_bitmap[] =
 "    break;\n"
 "  case 2: // OVERMODE_TRANSE \n"
 "    if ((fh < 0.0) || (fh > float(cellw_)) || (fv < 0.0) || (fv > float(cellh_)) ) {\n"
-"      imageStore(outSurface,texel,vec4(0.0));\n"
-"      return; \n"
+"     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"     else imageStore(lnclSurface,texel,vec4(0.0));\n"
+"   	imageStore(outSurface,texel,vec4(0.0)); \n"
+"     return; \n"
 "    }\n"
 "    x = int(fh);\n"
 "    y = int(fv);\n"
 "    break;\n"
 "  case 3: // OVERMODE_512 \n"
 "    if ((fh < 0.0) || (fh > 512.0) || (fv < 0.0) || (fv > 512.0)) {\n"
-"      imageStore(outSurface,texel,vec4(0.0));\n"
-"      return; \n"
+"     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"     else imageStore(lnclSurface,texel,vec4(0.0));\n"
+"   	imageStore(outSurface,texel,vec4(0.0)); \n"
+"     return; \n"
 "    }\n"
 "    x = int(fh);\n"
 "    y = int(fv);\n"
@@ -392,16 +423,20 @@ const char prg_rbg_overmode_repeat[] =
 "    break;\n"
 "  case 2: // OVERMODE_TRANSE \n"
 "    if ((fh < 0.0) || (fh > float(para[paramid].MaxH) ) || (fv < 0.0) || (fv > float(para[paramid].MaxV)) ) {\n"
-"      imageStore(outSurface,texel,vec4(0.0));\n"
-"      return; \n"
+"     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"     else imageStore(lnclSurface,texel,vec4(0.0));\n"
+"   	imageStore(outSurface,texel,vec4(0.0)); \n"
+"     return; \n"
 "    }\n"
 "    x = int(fh);\n"
 "    y = int(fv);\n"
 "    break;\n"
 "  case 3: // OVERMODE_512 \n"
 "    if ((fh < 0.0) || (fh > 512.0) || (fv < 0.0) || (fv > 512.0)) {\n"
-"      imageStore(outSurface,texel,vec4(0.0));\n"
-"      return; \n"
+"     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"     else imageStore(lnclSurface,texel,vec4(0.0));\n"
+"   	imageStore(outSurface,texel,vec4(0.0)); \n"
+"     return; \n"
 "    }\n"
 "    x = int(fh);\n"
 "    y = int(fv);\n"
@@ -597,6 +632,8 @@ const char prg_rbg_getcolor_32bpp_rbg[] =
 
 
 const char prg_generate_rbg_end[] =
+"  if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"  else imageStore(lnclSurface,texel,vec4(0.0));\n"
 "  if (discarded != 0) imageStore(outSurface,texel,vec4(0.0));\n"
 "  else imageStore(outSurface,texel,vdp2color(alpha, priority_, cc, cramindex));\n"
 "}\n";
@@ -938,6 +975,9 @@ struct RBGUniform {
 	int endLine;
 	unsigned int specialprimode;
 	unsigned int specialfunction;
+	float alpha_lncl;
+	unsigned int lncl_table_addr;
+	unsigned int cram_mode;
 };
 
 class RBGGenerator{
@@ -1011,6 +1051,7 @@ class RBGGenerator{
 
   GLuint tex_surface_ = 0;
   GLuint tex_surface_1 = 0;
+	GLuint tex_lncl_[2] = {0};
   GLuint ssbo_vram_ = 0;
   GLuint ssbo_cram_ = 0;
 	GLuint ssbo_rotwin_ = 0;
@@ -1082,6 +1123,38 @@ public:
 	glGenTextures(1, &tex_surface_1);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, tex_surface_1);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+	ErrorHandle("glBindTexture");
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width_, tex_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, tex_width_, tex_height_);
+	ErrorHandle("glTexStorage2D");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	ErrorHandle("glTexParameteri");
+
+	if (tex_lncl_[0] != 0) {
+		glDeleteTextures(2, &tex_lncl_[0]);
+	}
+
+	glGenTextures(2, &tex_lncl_[0]);
+	ErrorHandle("glGenTextures");
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex_lncl_[0]);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+	ErrorHandle("glBindTexture");
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width_, tex_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, tex_width_, tex_height_);
+	ErrorHandle("glTexStorage2D");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	ErrorHandle("glTexParameteri");
+
+	glBindTexture(GL_TEXTURE_2D, tex_lncl_[1]);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	ErrorHandle("glBindTexture");
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width_, tex_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -2098,7 +2171,7 @@ DEBUGWIP("Init\n");
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vram_);
   ErrorHandle("glBindBufferBase");
 
-       if (rbg->info.specialcolormode == 3 || rbg->paraA.k_mem_type != 0 || rbg->paraB.k_mem_type != 0 ) {
+       if (rbg->info.specialcolormode == 3 || rbg->paraA.k_mem_type != 0 || rbg->paraB.k_mem_type != 0 || (_Ygl->linecolorcoef_tex[0]!=0) || (_Ygl->linecolorcoef_tex[1]!=0)) {
                if (ssbo_cram_ == 0) {
                        glGenBuffers(1, &ssbo_cram_);
                        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cram_);
@@ -2157,6 +2230,9 @@ DEBUGWIP("Init\n");
        uniform.endLine = rbg->info.endLine;
        uniform.specialprimode = rbg->info.specialprimode;
        uniform.specialfunction = rbg->info.specialfunction;
+			 uniform.alpha_lncl = (((varVdp2Regs->CCRLB & 0x1F) << 3) | NONE)/255.0f;
+			 uniform.lncl_table_addr = Vdp2RamReadWord(NULL, Vdp2Ram, (varVdp2Regs->LCTA.all & 0x7FFFF)<<1);
+			 uniform.cram_mode = Vdp2Internal.ColorMode;
 
   glBindBuffer(GL_UNIFORM_BUFFER, scene_uniform);
        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(RBGUniform), (void*)&uniform);
@@ -2166,11 +2242,13 @@ DEBUGWIP("Init\n");
        if (rbg->rgb_type == 0x04  ) {
                DEBUGWIP("Draw RBG1 [%d -> %d]\n", uniform.startLine, uniform.endLine);
                glBindImageTexture(0, tex_surface_1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+							 glBindImageTexture(7, tex_lncl_[1], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
                ErrorHandle("glBindImageTexture 1");
         }
        else {
                DEBUGWIP("Draw RBG0 [%d -> %d]\n", uniform.startLine, uniform.endLine);
                glBindImageTexture(0, tex_surface_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+							 glBindImageTexture(7, tex_lncl_[0], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
                ErrorHandle("glBindImageTexture 0");
        }
 
@@ -2189,6 +2267,14 @@ DEBUGWIP("Init\n");
 		}
 		return tex_surface_1;
   }
+
+	GLuint getLnclTexture( int id ) {
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		if (id == 1) {
+			return tex_lncl_[1];
+		}
+		return tex_lncl_[0];
+	}
 
   //-----------------------------------------------
   void onFinish() {
@@ -2227,6 +2313,14 @@ extern "C" {
     RBGGenerator * instance = RBGGenerator::getInstance();
     return instance->getTexture( id );
   }
+
+	GLuint RBGGenerator_getLnclTexture( int id ) {
+		if (_Ygl->rbg_use_compute_shader == 0) return 0;
+
+		RBGGenerator * instance = RBGGenerator::getInstance();
+		return instance->getLnclTexture( id );
+	}
+
   void RBGGenerator_onFinish() {
 
     if (_Ygl->rbg_use_compute_shader == 0) return;
