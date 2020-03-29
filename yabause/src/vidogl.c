@@ -2754,7 +2754,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   int v;
   int lineInc = varVdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
   vdp2rotationparameter_struct *parameter;
-  Vdp2 * regs;
   u32* colpoint = NULL;
 
   int inc = 0;
@@ -2808,9 +2807,8 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 
     YglQuadRbg0(rbg, NULL, &rbg->c, &rbg->cline, rbg->rgb_type, YglTM_vdp2, varVdp2Regs);
    //Not optimal. Should be 0 if there is no offset used.
-    _Ygl->useLineColorOffset[0] = ((regs->KTCTL & 0x1010)!=0)?_Ygl->linecolorcoef_tex[0]:0;
-    _Ygl->useLineColorOffset[1] = ((regs->KTCTL & 0x1010)!=0)?_Ygl->linecolorcoef_tex[1]:0;
-
+    _Ygl->useLineColorOffset[0] = ((varVdp2Regs->KTCTL & 0x1010)!=0)?_Ygl->linecolorcoef_tex[0]:0;
+    _Ygl->useLineColorOffset[1] = ((varVdp2Regs->KTCTL & 0x1010)!=0)?_Ygl->linecolorcoef_tex[1]:0;
 	  return;
   }
 
