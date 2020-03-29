@@ -244,10 +244,9 @@ SHADER_VERSION_COMPUTE
 "	   break;\n"
 "    }\n"
 "    return cc_\n;"
-"}\n"
+"}\n";
 
-
-
+const char prg_continue_rbg[] =
 //----------------------------------------------------------------------
 // Main
 //----------------------------------------------------------------------
@@ -605,6 +604,7 @@ const char prg_generate_rbg_end[] =
 //Powerslave
 const GLchar * a_prg_rbg_0_2w_bitmap[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd0_2w,
 	prg_rbg_xy,
 	prg_rbg_get_bitmap,
@@ -614,6 +614,7 @@ const GLchar * a_prg_rbg_0_2w_bitmap[] = {
 
 const GLchar * a_prg_rbg_0_2w_p1_4bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd0_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -625,6 +626,7 @@ const GLchar * a_prg_rbg_0_2w_p1_4bpp[] = {
 
 const GLchar * a_prg_rbg_0_2w_p2_4bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd0_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -636,6 +638,7 @@ const GLchar * a_prg_rbg_0_2w_p2_4bpp[] = {
 
 const GLchar * a_prg_rbg_0_2w_p1_8bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd0_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -648,6 +651,7 @@ const GLchar * a_prg_rbg_0_2w_p1_8bpp[] = {
 //ICI
 const GLchar * a_prg_rbg_0_2w_p2_8bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd0_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -661,6 +665,7 @@ const GLchar * a_prg_rbg_0_2w_p2_8bpp[] = {
 // RPMD 1
 const GLchar * a_prg_rbg_1_2w_bitmap[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd1_2w,
 	prg_rbg_xy,
 	prg_rbg_get_bitmap,
@@ -670,6 +675,7 @@ const GLchar * a_prg_rbg_1_2w_bitmap[] = {
 
 const GLchar * a_prg_rbg_1_2w_p1_4bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd1_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -681,6 +687,7 @@ const GLchar * a_prg_rbg_1_2w_p1_4bpp[] = {
 
 const GLchar * a_prg_rbg_1_2w_p2_4bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd1_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -692,6 +699,7 @@ const GLchar * a_prg_rbg_1_2w_p2_4bpp[] = {
 
 const GLchar * a_prg_rbg_1_2w_p1_8bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd1_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -703,6 +711,7 @@ const GLchar * a_prg_rbg_1_2w_p1_8bpp[] = {
 
 const GLchar * a_prg_rbg_1_2w_p2_8bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd1_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -714,6 +723,7 @@ const GLchar * a_prg_rbg_1_2w_p2_8bpp[] = {
 
 const GLchar * a_prg_rbg1_1_2w_p1_4bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd0_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -725,6 +735,7 @@ const GLchar * a_prg_rbg1_1_2w_p1_4bpp[] = {
 
 const GLchar * a_prg_rbg1_1_2w_p2_4bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd0_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -736,6 +747,7 @@ const GLchar * a_prg_rbg1_1_2w_p2_4bpp[] = {
 
 const GLchar * a_prg_rbg1_1_2w_p1_8bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd0_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -747,6 +759,7 @@ const GLchar * a_prg_rbg1_1_2w_p1_8bpp[] = {
 
 const GLchar * a_prg_rbg1_1_2w_p2_8bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd0_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -761,6 +774,7 @@ const GLchar * a_prg_rbg1_1_2w_p2_8bpp[] = {
 // RPMD 2
 const GLchar * a_prg_rbg_2_2w_bitmap[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd2_2w,
 	prg_rbg_xy,
 	prg_rbg_get_bitmap,
@@ -770,6 +784,7 @@ const GLchar * a_prg_rbg_2_2w_bitmap[] = {
 
 const GLchar * a_prg_rbg_2_2w_p1_4bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd2_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -781,6 +796,7 @@ const GLchar * a_prg_rbg_2_2w_p1_4bpp[] = {
 
 const GLchar * a_prg_rbg_2_2w_p2_4bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd2_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -792,6 +808,7 @@ const GLchar * a_prg_rbg_2_2w_p2_4bpp[] = {
 
 const GLchar * a_prg_rbg_2_2w_p1_8bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd2_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -803,6 +820,7 @@ const GLchar * a_prg_rbg_2_2w_p1_8bpp[] = {
 
 const GLchar * a_prg_rbg_2_2w_p2_8bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_rbg_rpmd2_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -816,6 +834,7 @@ const GLchar * a_prg_rbg_2_2w_p2_8bpp[] = {
 // RPMD 3
 const GLchar * a_prg_rbg_3_2w_bitmap[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_get_param_mode03,
 	prg_rbg_xy,
 	prg_rbg_get_bitmap,
@@ -825,6 +844,7 @@ const GLchar * a_prg_rbg_3_2w_bitmap[] = {
 
 const GLchar * a_prg_rbg_3_2w_p1_4bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_get_param_mode03,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -836,6 +856,7 @@ const GLchar * a_prg_rbg_3_2w_p1_4bpp[] = {
 
 const GLchar * a_prg_rbg_3_2w_p2_4bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_get_param_mode03,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -847,6 +868,7 @@ const GLchar * a_prg_rbg_3_2w_p2_4bpp[] = {
 
 const GLchar * a_prg_rbg_3_2w_p1_8bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_get_param_mode03,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
@@ -858,6 +880,7 @@ const GLchar * a_prg_rbg_3_2w_p1_8bpp[] = {
 
 const GLchar * a_prg_rbg_3_2w_p2_8bpp[] = {
 	prg_generate_rbg,
+	prg_continue_rbg,
 	prg_get_param_mode03,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
