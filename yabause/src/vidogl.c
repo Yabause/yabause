@@ -2705,7 +2705,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
     if (parameter->k_mem_type == 0) { // vram
       kdata = Vdp2RamReadWord(NULL, Vdp2Ram, (parameter->coeftbladdr + (h << 1)));
     } else { // cram
-      kdata = Vdp2ColorRamReadWord(NULL, Vdp2ColorRam,(parameter->coeftbladdr + (int)(h << 1)) + 0x800);
+      kdata = Vdp2ColorRamReadWord(NULL, Vdp2ColorRam,(parameter->coeftbladdr + (int)(h << 1)));
     }
     if (kdata & 0x8000) { return 0; }
     kval = (float)(signed)((kdata & 0x7FFF) | (kdata & 0x4000 ? 0x8000 : 0x0000)) / 1024.0f;
@@ -2720,7 +2720,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
     if (parameter->k_mem_type == 0) { // vram
       kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (parameter->coeftbladdr + (h << 2)) & 0x7FFFF);
     } else { // cram
-      kdata = Vdp2ColorRamReadLong(NULL, Vdp2ColorRam, (parameter->coeftbladdr + (int)(h << 2)) + 0x800 );
+      kdata = Vdp2ColorRamReadLong(NULL, Vdp2ColorRam, (parameter->coeftbladdr + (int)(h << 2)));
     }
     parameter->lineaddr = (kdata >> 24) & 0x7F;
     if (kdata & 0x80000000) { return 0; }
@@ -2842,13 +2842,13 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 
       rbg->paraB.KtablV = rbg->paraB.deltaKAst * k;
   }
-
     for (l = 0; l < hres; l++)
     {
       switch (varVdp2Regs->RPMD | rgb_type ) {
       case 0:
         parameter = &rbg->paraA;
         if (parameter->coefenab) {
+
           if (vdp2rGetKValue(parameter, l) == 0) {
             *(texture->textdata++) = 0x00000000;
             continue;
@@ -2917,7 +2917,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
       v = (parameter->ky * (parameter->Ysp + parameter->dy * l) + parameter->Yp);
       if (info->isbitmap)
       {
-
         switch (parameter->screenover) {
         case OVERMODE_REPEAT:
           h &= cellw - 1;
@@ -6504,7 +6503,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_s
     kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (param->coeftbladdr + (index << 2)));
   }
   else { // cram
-    kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)) + 0x800);
+    kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)));
   }
   param->lineaddr = (kdata >> 24) & 0x7F;
 
@@ -6537,7 +6536,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W(vdp2rotationparameter_s
     kdata = Vdp2RamReadWord(NULL, Vdp2Ram, (param->coeftbladdr + (index << 1)));
   }
   else { // cram
-    kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1)) + 0x800);
+    kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1)));
   }
 
   if (kdata & 0x8000) return NULL;
