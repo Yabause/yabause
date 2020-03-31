@@ -266,8 +266,10 @@ SHADER_VERSION_COMPUTE
 "}\n"
 
 "uint isOnAQuad(vec2 P, vec2 V0, vec2 V1, out vec2 uv) {\n"
-"  vec2 duv = max(vec2(1.0),abs(V1 - V0));\n"
-"  uv = clamp(abs(vec2(P - V0) / duv), vec2(0.0), vec2(1.0));\n"
+"  vec2 duv = V1 - V0 + vec2(upscale);\n"
+"  uv = (P - V0) / duv;\n"
+"  if (any(lessThan(uv, vec2(0.0)))) return 0u;\n"
+"  if (any(greaterThan(uv, vec2(1.0)))) return 0u;\n"
 "  return 1u;\n"
 "\n}"
 
