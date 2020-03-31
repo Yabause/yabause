@@ -212,19 +212,21 @@ SHADER_VERSION_COMPUTE
 "  return vec3(Pb,b);\n"
 "}\n"
 
-"uint isOnAQuadLine( vec2 P, vec2 V0, vec2 V1, float sAx, float sAy, float sBx, float sBy, uint step, out vec2 uv){\n"
+"uint isOnAQuadLine( vec2 P, vec2 V0, vec2 V1, vec2 sA, vec2 sB, uint step, out vec2 uv){\n"
+"  vec2 A = V0 + vec2(0.5);\n"
+"  vec2 B = V1 + vec2(0.5);\n"
 "  for (uint i=0; i<step; i++) {\n"
 //A pixel shall be considered as part of an anti-aliased line if the distance of the pixel center to the line is shorter than (sqrt(0.5), which is the diagonal of the pixel
 //This represent the behavior of antialiasing as displayed in vdp1 spec.
-"    vec2 A = vec2(V0.x+i*sAx, V0.y+i*sAy)+vec2(0.5);\n" //Get the center of the first point
-"    vec2 B = vec2(V1.x+i*sBx, V1.y+i*sBy)+vec2(0.5);\n" //Get the center of the last point
 "    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
 "    if (distance(d.xy/upscale, P/upscale+vec2(0.5)) <= 0.7072) {\n" //Test the distance between the projection on line and the center of the pixel
 "      float ux= d.z;\n" //u is the relative distance from first point to projected position
-"      float uy= (float(i)+0.5)/float(step);\n" //v is the ratio between the current line and the total number of lines
+"      float uy= (float(i)+0.5)/float(step+1);\n" //v is the ratio between the current line and the total number of lines
 "      uv = vec2(ux,uy);\n"
 "      return 1u;\n"
 "    }\n"
+"    A += sA;\n"
+"    B += sB;\n"
 "  }\n"
 "  return 0u;\n"
 "}\n"
@@ -272,7 +274,7 @@ SHADER_VERSION_COMPUTE
 "    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n"
 "    if (distance(d.xy/upscale, P/upscale+vec2(0.5)) <= 0.7072) {\n"
 "      float ux= d.z;\n"
-"      float uy= (float(i))/float(step+1);\n"
+"      float uy= float(i)/float(step+1);\n"
 "      uv = vec2(ux,uy);\n"
 "      return 1u;\n"
 "    }\n"
@@ -293,7 +295,7 @@ SHADER_VERSION_COMPUTE
 "  Quad[3] = vec2(cmd[idx].CMDXD,cmd[idx].CMDYD)*upscale;\n"
 
 "  if ((cmd[idx].type == "Stringify(DISTORTED)") || (cmd[idx].type == "Stringify(POLYGON)")) {\n"
-"    return isOnAQuadLine(Pin, Quad[0], Quad[1], cmd[idx].uAstepx*upscale.x, cmd[idx].uAstepy*upscale.y, cmd[idx].uBstepx*upscale.x, cmd[idx].uBstepy*upscale.y, uint(float(cmd[idx].nbStep)), uv);\n"
+"    return isOnAQuadLine(Pin, Quad[0], Quad[1], vec2(cmd[idx].uAstepx, cmd[idx].uAstepy)*upscale, vec2(cmd[idx].uBstepx, cmd[idx].uBstepy)*upscale, uint(float(cmd[idx].nbStep)), uv);\n"
 "  } else {\n"
 "    if ((cmd[idx].type == "Stringify(QUAD)")  || (cmd[idx].type == "Stringify(QUAD_POLY)")) {\n"
 "     return isOnAQuad(Pin, Quad[0], Quad[2], uv);\n"
