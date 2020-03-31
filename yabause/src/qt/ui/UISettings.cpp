@@ -110,7 +110,8 @@ const Items mResolutionMode = Items()
 
 const Items mAspectRatio = Items()
 	<< Item("0", "Original aspect ratio")
-	<< Item("1", "Stretch to window");
+	<< Item("1", "Stretch to window")
+	<< Item("2", "Integer scaling");
 
 const Items mScanLine = Items()
 	<< Item("0", "Scanline off")

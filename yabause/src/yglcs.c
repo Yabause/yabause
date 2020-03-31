@@ -158,7 +158,16 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    int drawScreen[enBGMAX];
    SpriteMode mode;
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
-
+   double dar = (double)GlWidth/(double)GlHeight;
+   double par = 4.0/3.0;
+   int Intw = (int)(floor((float)GlWidth/(float)_Ygl->width) * _Ygl->width);
+   int Inth = (int)(floor((float)GlHeight/(float)_Ygl->height) * _Ygl->height);
+   #ifndef __LIBRETRO__
+   if (yabsys.isRotated) par = 1.0/par;
+   #endif
+   if (Intw == 0) Intw = GlWidth;
+   if (Inth == 0) Inth = GlHeight;
+   
    YglUpdateVDP1FB();
 
    glDepthMask(GL_FALSE);
@@ -170,24 +179,29 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 
    glBindVertexArray(_Ygl->vao);
 
-   if (_Ygl->stretch == 0) {
-     double dar = (double)GlWidth/(double)GlHeight;
-     double par = 4.0/3.0;
+   switch(_Ygl->stretch) {
+     case 0:
+       w = (dar>par)?(double)GlHeight*par:GlWidth;
+       h = (dar>par)?(double)GlHeight:(double)GlWidth/par;
+       x = (GlWidth-w)/2;
+       y = (GlHeight-h)/2;
+       break;
+     case 1:
+       w = GlWidth;
+       h = GlHeight;
+       x = 0;
+       y = 0;
+       break;
+     case 2:
+       w = (dar>par)?(double)Inth*par:Intw;
+       h = (dar>par)?(double)Inth:(double)Intw/par;
+       x = (GlWidth-w)/2;
+       y = (GlHeight-h)/2;
+       break;
+     default:
+        break;
+    }
 
-#ifndef __LIBRETRO__
-     if (yabsys.isRotated) par = 1.0/par;
-#endif
-
-     w = (dar>par)?(double)GlHeight*par:GlWidth;
-     h = (dar>par)?(double)GlHeight:(double)GlWidth/par;
-     x = (GlWidth-w)/2;
-     y = (GlHeight-h)/2;
-   } else {
-     w = GlWidth;
-     h = GlHeight;
-     x = 0;
-     y = 0;
-   }
 
    glViewport(0, 0, GlWidth, GlHeight);
 
