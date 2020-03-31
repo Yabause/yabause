@@ -248,30 +248,39 @@ SHADER_VERSION_COMPUTE
 "  else return vec3(P0 + ((P1-P0) * r), r);\n"
 "}\n"
 
-"uint isOnALine( vec2 P, vec2 V0, vec2 V1, float sAx, float sAy, float sBx, float sBy, uint step, out vec2 uv){\n"
-"  for (uint i=0; i<step; i++) {\n"
+"uint isOnALine( vec2 P, vec2 V0, vec2 V1, out vec2 uv){\n"
 //A pixel shall be considered as part of an aliased line if all coordinates of the pixel center to the line is shorter than 0.5, which is the horizontal or vertical half-size of the pixel
 //This represent the behavior of aliasing as displayed in vdp1 spec.
-"    vec2 A = vec2(V0.x+i*sAx, V0.y+i*sAy)+vec2(0.5);\n" //Get the center of the first point
-"    vec2 B = vec2(V1.x+i*sBx, V1.y+i*sBy)+vec2(0.5);\n" //Get the center of the last point
-"    vec3 d = aliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
-"    if (all(lessThanEqual(abs(floor(d.xy)-floor(P+vec2(0.5))), vec2(0.5*upscale)))) {\n" //If the line is passing through the same pixel as the point P
-"      float ux= d.z;\n" //u is the relative distance from first point to projected position
-"      float uy=(float(i))/float(step);\n" //v is the ratio between the current line and the total number of lines
-"      uv = vec2(ux,uy);\n"
-"      return 1u;\n"
-"    }\n"
+"  vec2 A = V0+vec2(0.5);\n" //Get the center of the first point
+"  vec2 B = V1+vec2(0.5);\n" //Get the center of the last point
+"  vec3 d = aliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
+"  if (all(lessThanEqual(abs(floor(d.xy)-floor(P+vec2(0.5))), vec2(0.5*upscale)))) {\n" //If the line is passing through the same pixel as the point P
+"    float ux= d.z;\n" //u is the relative distance from first point to projected position
+"    float uy= 0.5;\n" //v is the ratio between the current line and the total number of lines
+"    uv = vec2(ux,uy);\n"
+"    return 1u;\n"
 "  }\n"
 "  return 0u;\n"
 "}\n"
 
 "uint isOnAQuad(vec2 P, vec2 V0, vec2 V1, out vec2 uv) {\n"
-"  vec2 duv = V1 - V0 + vec2(upscale);\n"
-"  uv = (P - V0) / duv;\n"
-"  if (any(lessThan(uv, vec2(0.0)))) return 0u;\n"
-"  if (any(greaterThan(uv, vec2(1.0)))) return 0u;\n"
-"  return 1u;\n"
-"\n}"
+"  uint step = uint(abs(V1.y-V0.y)+1);\n"
+"  float way = sign(V1.y - V0.y);\n"
+"  vec2 A = V0+vec2(0.5);\n"
+"  vec2 B = vec2(V1.x, V0.y)+vec2(0.5);\n"
+"  for (uint i=0; i<step; i++) {\n"
+"    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n"
+"    if (distance(d.xy/upscale, P/upscale+vec2(0.5)) <= 0.7072) {\n"
+"      float ux= d.z;\n"
+"      float uy= (float(i))/float(step+1);\n"
+"      uv = vec2(ux,uy);\n"
+"      return 1u;\n"
+"    }\n"
+"    A.y += way;\n"
+"    B.y += way;\n"
+"  }\n"
+"  return 0u;\n"
+"}\n"
 
 "uint pixIsInside (vec2 Pin, uint idx, out vec2 uv){\n"
 "  vec2 Quad[4];\n"
@@ -289,13 +298,13 @@ SHADER_VERSION_COMPUTE
 "    if ((cmd[idx].type == "Stringify(QUAD)")  || (cmd[idx].type == "Stringify(QUAD_POLY)")) {\n"
 "     return isOnAQuad(Pin, Quad[0], Quad[2], uv);\n"
 "    } else if (cmd[idx].type == "Stringify(POLYLINE)") {\n"
-"      if (isOnALine(Pin, Quad[0], Quad[1], 0.0, 0.0, 0.0, 0.0, uint(upscale.y), uv) != 0u) return 1u;\n"
-"      if (isOnALine(Pin, Quad[1], Quad[2], 0.0, 0.0, 0.0, 0.0, uint(upscale.y), uv) != 0u) return 1u;\n"
-"      if (isOnALine(Pin, Quad[2], Quad[3], 0.0, 0.0, 0.0, 0.0, uint(upscale.y), uv) != 0u) return 1u;\n"
-"      if (isOnALine(Pin, Quad[3], Quad[0], 0.0, 0.0, 0.0, 0.0, uint(upscale.y), uv) != 0u) return 1u;\n"
+"      if (isOnALine(Pin, Quad[0], Quad[1], uv) != 0u) return 1u;\n"
+"      if (isOnALine(Pin, Quad[1], Quad[2], uv) != 0u) return 1u;\n"
+"      if (isOnALine(Pin, Quad[2], Quad[3], uv) != 0u) return 1u;\n"
+"      if (isOnALine(Pin, Quad[3], Quad[0], uv) != 0u) return 1u;\n"
 "      return 0u;\n"
 "    } else if (cmd[idx].type == "Stringify(LINE)") {\n"
-"      if (isOnALine(Pin, Quad[0], Quad[1], 0.0, 0.0, 0.0, 0.0, uint(upscale.y), uv) != 0u) return 1u;\n"
+"      if (isOnALine(Pin, Quad[0], Quad[1], uv) != 0u) return 1u;\n"
 "    }\n"
 "  }\n"
 "  return 0u;\n"
