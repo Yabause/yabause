@@ -872,7 +872,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "  linepos.y = is_perline[7]; \n "
 "  offset_color = texelFetch( s_perline, linepos,0 ).rgb;\n"
 "  offset_color.rgb = (offset_color.rgb - vec3(0.5))*2.0;\n"
-"  addr = ivec2(tvSize*vdp1Ratio * v_texcoord.st); \n"
+"  addr = ivec2(tvSize * vdp1Ratio * v_texcoord.st); \n"
 "  addr.y += textureSize(s_vdp1FrameBuffer, 0).y - int(tvSize.y*vdp1Ratio.y);\n"
 "  initLineWindow();\n"
 "  colortop = colorback; \n"

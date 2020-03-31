@@ -949,7 +949,6 @@ static void Vdp1SetTextureRatio(int vdp2widthratio, int vdp2heightratio)
   else {
     vdp1_interlace = 0;
   }
-
   _Ygl->vdp1wdensity = vdp1w;
   _Ygl->vdp1hdensity = vdp1h;
 

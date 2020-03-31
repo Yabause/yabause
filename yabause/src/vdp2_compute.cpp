@@ -284,8 +284,8 @@ public:
     uniform.u_emu_vdp1_width = (float)(_Ygl->vdp1width) / (float)(_Ygl->rwidth);
     uniform.u_emu_vdp2_width = (float)(_Ygl->width) / (float)(_Ygl->rwidth);
     uniform.u_vheight = (float)_Ygl->height;
-    uniform.vdp1Ratio[0] = _Ygl->vdp1expandW;
-    uniform.vdp1Ratio[1] = _Ygl->vdp1expandH;
+    uniform.vdp1Ratio[0] = _Ygl->vdp1wratio;
+    uniform.vdp1Ratio[1] = _Ygl->vdp1hratio;
 		uniform.fbon = (_Ygl->vdp1On[_Ygl->readframe] != 0);
 		uniform.ram_mode = Vdp2Internal.ColorMode;
 		uniform.extended_cc = ((varVdp2Regs->CCCTL & 0x8400) == 0x400);

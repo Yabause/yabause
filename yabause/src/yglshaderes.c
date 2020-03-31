@@ -1590,7 +1590,7 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp1_width"),_Ygl->vdp1width/512.0f);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp2_width"),(float)(_Ygl->width) / (float)(_Ygl->rwidth));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
-  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), _Ygl->vdp1expandW, _Ygl->vdp1expandH);//((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));
+  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), _Ygl->vdp1wratio, _Ygl->vdp1hratio);//((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbon"), (_Ygl->vdp1On[_Ygl->readframe] != 0));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x8400) == 0x400) );
@@ -1603,7 +1603,8 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isShadow"), 6, isShadow);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
-  glUniform2i(glGetUniformLocation(vdp2blit_prg, "tvSize"), _Ygl->rwidth, _Ygl->rheight);
+  glUniform2i(glGetUniformLocation(vdp2blit_prg, "tvSize"), (int)(_Ygl->rwidth*_Ygl->vdp1wdensity/_Ygl->vdp2wdensity), (int)(_Ygl->rheight*_Ygl->vdp1hdensity/_Ygl->vdp2hdensity));
+
 
   const float rotMat[9] = {
     Vdp1ParaA.deltaX, Vdp1ParaA.deltaXst, 0.0,

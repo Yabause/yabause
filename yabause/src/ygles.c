@@ -1310,8 +1310,6 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->rheight = 240;
   _Ygl->vdp1width = 512;
   _Ygl->vdp1height = 256;
-  _Ygl->vdp1expandW = 1.0f;
-  _Ygl->vdp1expandH = 1.0f;
   _Ygl->widthRatio = 1.0f;
   _Ygl->heightRatio = 1.0f;
   _Ygl->density = 1;
@@ -3838,40 +3836,38 @@ void YglChangeResolution(int w, int h) {
        glDeleteTextures(1, &_Ygl->upfbotex);
        _Ygl->upfbotex = 0;
      }
-
+     int scale = 1;
      switch (_Ygl->resolution_mode) {
        case RES_480p: //480p
-       _Ygl->height = 512;
+        scale = ceil(480.0/(float)h);
        break;
        case RES_720p: //720p
-       _Ygl->height = 768;
+        scale = ceil(720.0/(float)h);
        break;
        case RES_1080p: //1080p
-       _Ygl->height = 1024;
+        scale = ceil(1080.0/(float)h);
        break;
        case RES_NATIVE: //Native
-       _Ygl->height = (GlHeight < GlWidth)?GlHeight:GlWidth/ratio;
+        scale = ceil(1080.0/(float)((GlHeight < GlWidth)?GlHeight:GlWidth)/ratio);
        break;
        case RES_ORIGINAL: //Original
        default:
-        _Ygl->height = h;
+        scale = 1;
      }
-     _Ygl->width = _Ygl->height * ratio;
 
-  //Game original resolution (VDP2 texture size)
-  _Ygl->rwidth = w;
-  _Ygl->rheight = h;
+     _Ygl->rwidth = w;
+     _Ygl->rheight = h;
+     _Ygl->height = h * scale ;
+     _Ygl->width = w * scale;
+
 
   // Texture size for vdp1
-  _Ygl->vdp1width = ceil((float)_Ygl->width/512.0) * 512;
-  _Ygl->vdp1height = (float)_Ygl->vdp1width/2.0;
-
-  _Ygl->vdp1expandW = _Ygl->vdp1width/(ceil((float)_Ygl->rwidth/512.0) * 512);
-  _Ygl->vdp1expandH = _Ygl->vdp1height/(ceil((float)_Ygl->rheight/256.0) * 256);
+  _Ygl->vdp1width = 512*scale*_Ygl->vdp1wdensity;
+  _Ygl->vdp1height = 256*scale*_Ygl->vdp1hdensity;
 
   //upscale Ratio of effective original vdp1FB
-  _Ygl->vdp1wratio = (float)_Ygl->vdp1width / (512.0f * _Ygl->vdp1wdensity);
-  _Ygl->vdp1hratio = (float)_Ygl->vdp1height / (256.0f * _Ygl->vdp1hdensity);
+  _Ygl->vdp1wratio = (float)scale;
+  _Ygl->vdp1hratio = (float)scale;
 
   YglOrtho(&_Ygl->mtxModelView, 0.0f, _Ygl->vdp1width, _Ygl->vdp1height, 0.0f, 10.0f, 0.0f);
   rebuild_frame_buffer = 1;

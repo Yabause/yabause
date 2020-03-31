@@ -333,6 +333,7 @@ typedef struct {
     GLint  texsize;
     GLuint mtxModelView;
     GLuint sysclip;
+    GLuint expand;
     GLuint tex0;
     GLint vaid;
     GLint vertexp;
@@ -537,8 +538,6 @@ typedef struct {
    int rheight;
    int vdp1width;
    int vdp1height;
-   float vdp1expandW;
-   float vdp1expandH;
    float widthRatio;
    float heightRatio;
    int density;
