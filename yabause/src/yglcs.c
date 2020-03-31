@@ -64,7 +64,7 @@ void YglEraseWriteCSVDP1(int id) {
   int priority;
   u32 alpha = 0;
   int status = 0;
-  if (_Ygl->vdp1FrameBuff[0] == 0) return;
+  if (_Ygl->vdp1_pbo == 0) return;
   manualfb = NULL;
 
   _Ygl->vdp1On[id] = 0;
@@ -167,7 +167,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    #endif
    if (Intw == 0) Intw = GlWidth;
    if (Inth == 0) Inth = GlHeight;
-   
+
    YglUpdateVDP1FB();
 
    glDepthMask(GL_FALSE);
@@ -461,33 +461,6 @@ static int YglGenFrameBuffer() {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-  if (_Ygl->vdp1FrameBuff[0] != 0) {
-    glDeleteTextures(3,_Ygl->vdp1FrameBuff);
-    _Ygl->vdp1FrameBuff[0] = 0;
-  }
-  glGenTextures(3, _Ygl->vdp1FrameBuff);
-
-  glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-  glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[1]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-  glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[2]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
   _Ygl->pFrameBuffer = NULL;
 
   if (_Ygl->vdp1_pbo == 0) {
@@ -508,25 +481,6 @@ static int YglGenFrameBuffer() {
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
    glGenFramebuffers(1, &_Ygl->vdp1AccessFB);
-  }
-
-  if (_Ygl->rboid_depth_win != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth_win);
-  glGenRenderbuffers(1, &_Ygl->rboid_depth_win);
-  glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth_win);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->vdp1width, _Ygl->vdp1height);
-
-  if (_Ygl->vdp1fbowin != 0)
-    glDeleteFramebuffers(1, &_Ygl->vdp1fbowin);
-
-  glGenFramebuffers(1, &_Ygl->vdp1fbowin);
-  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbowin);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0], 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[1], 0);
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth_win);
-  status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-  if (status != GL_FRAMEBUFFER_COMPLETE) {
-    YuiMsg("YglGenFrameBuffer:Framebuffer line %d status = %08X\n", __LINE__, status);
-    abort();
   }
 
   if (_Ygl->vdp2_use_compute_shader == 1) {
