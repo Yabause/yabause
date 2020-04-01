@@ -3807,6 +3807,7 @@ void YglChangeResolution(int w, int h) {
   YglLoadIdentity(&_Ygl->mtxModelView);
   YglLoadIdentity(&_Ygl->rbgModelView);
   float ratio = (float)w/(float)h;
+  int par = w/h;
   releaseVDP1FB();
        YGLDEBUG("YglChangeResolution %d,%d\n",w,h);
        if (_Ygl->smallfbo != 0) {
@@ -3854,10 +3855,10 @@ void YglChangeResolution(int w, int h) {
        default:
         scale = 1;
      }
-
+     if (scale == 0) scale = 1;
      _Ygl->rwidth = w;
      _Ygl->rheight = h;
-     _Ygl->height = h * scale ;
+     _Ygl->height = h * scale *_Ygl->vdp2wdensity/_Ygl->vdp2hdensity;
      _Ygl->width = w * scale;
 
 
