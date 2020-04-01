@@ -2411,15 +2411,15 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, Vdp2 *va
 
   int lineindex = 0;
 
-  int sx; //, sy;
-  int mapx, mapy;
-  int planex, planey;
-  int pagex, pagey;
-  int charx, chary;
-  int dot_on_planey;
-  int dot_on_pagey;
-  int dot_on_planex;
-  int dot_on_pagex;
+  int sx = 0; //, sy;
+  int mapx = 0, mapy = 0;
+  int planex = 0, planey = 0;
+  int pagex = 0, pagey = 0;
+  int charx = 0, chary = 0;
+  int dot_on_planey = 0;
+  int dot_on_pagey = 0;
+  int dot_on_planex = 0;
+  int dot_on_pagex = 0;
   int h, v;
   int cell_count = 0;
 
