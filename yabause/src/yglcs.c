@@ -40,7 +40,7 @@ extern int rebuild_windows;
 
 extern int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id);
 
-static int YglGenFrameBuffer();
+extern int YglGenFrameBuffer();
 extern int YglGenerateBackBuffer();
 extern int YglGenerateWindowBuffer();
 extern int YglGenerateScreenBuffer();
@@ -452,68 +452,4 @@ void YglCSVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   default:
     break;
   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-static int YglGenFrameBuffer() {
-  int status;
-  GLuint error;
-  float col[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-
-  if (rebuild_frame_buffer == 0){
-    return 0;
-  }
-
-  warning = 0;
-
-  vdp1_compute_init(_Ygl->vdp1width, _Ygl->vdp1height, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
-
-  if (_Ygl->upfbo != 0){
-    glDeleteFramebuffers(1, &_Ygl->upfbo);
-    _Ygl->upfbo = 0;
-    glDeleteTextures(1, &_Ygl->upfbotex);
-    _Ygl->upfbotex = 0;
-  }
-
-  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
-  _Ygl->pFrameBuffer = NULL;
-
-  if (_Ygl->vdp1_pbo == 0) {
-    GLuint error;
-    glGenTextures(1, &_Ygl->vdp1AccessTex);
-    glGenBuffers(1, &_Ygl->vdp1_pbo);
-    YGLDEBUG("glGenBuffers %d\n",_Ygl->vdp1_pbo);
-
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex);
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, 512, 256);
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1_pbo);
-    glBufferData(GL_PIXEL_PACK_BUFFER, 0x40000*2, NULL, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-   glGenFramebuffers(1, &_Ygl->vdp1AccessFB);
-  }
-
-  if (_Ygl->vdp2_use_compute_shader == 1) {
-    YglGenerateComputeBuffer();
-  } else {
-    YglGenerateOriginalBuffer();
-  }
-
-  YglGenerateBackBuffer();
-  YglGenerateWindowBuffer();
-  YglGenerateScreenBuffer();
-
-  YGLDEBUG("YglGenFrameBuffer OK\n");
-  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-  glBindTexture(GL_TEXTURE_2D, 0);
-  rebuild_frame_buffer = 0;
-  rebuild_windows = 1;
-  return 0;
 }

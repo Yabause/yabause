@@ -58,7 +58,7 @@ int YglGenerateBackBuffer();
 int YglGenerateWindowBuffer();
 int YglGenerateScreenBuffer();
 
-static int YglGenFrameBuffer();
+int YglGenFrameBuffer();
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
@@ -806,7 +806,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 }
 static int warning = 0;
 //////////////////////////////////////////////////////////////////////////////
-static int YglGenFrameBuffer() {
+int YglGenFrameBuffer() {
   int status;
   GLuint error;
   float col[4] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -815,7 +815,7 @@ static int YglGenFrameBuffer() {
     return 0;
   }
   warning = 0;
-  vdp1_compute_init(512.0f, 256.0f, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
+  vdp1_compute_init( _Ygl->vdp1width, _Ygl->vdp1height, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
 
   if (_Ygl->upfbo != 0){
     glDeleteFramebuffers(1, &_Ygl->upfbo);
