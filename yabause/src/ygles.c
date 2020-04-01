@@ -3319,7 +3319,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   int useLineColorOffset[6] = {0};
   int isRGB[6] = {0};
   int isBlur[7] = {0};
-  int isPerline[8] = {-1};
+  int isPerline[8] = {0};
   int isShadow[7] = {0};
   glDisable(GL_BLEND);
   int id = 0;
