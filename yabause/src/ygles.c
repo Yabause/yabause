@@ -3837,16 +3837,16 @@ void YglChangeResolution(int w, int h) {
      int scale = 1;
      switch (_Ygl->resolution_mode) {
        case RES_480p: //480p
-        scale = ceil(480.0/(float)h);
+        scale = floor(480.0/(float)h);
        break;
        case RES_720p: //720p
-        scale = ceil(720.0/(float)h);
+        scale = floor(720.0/(float)h);
        break;
        case RES_1080p: //1080p
-        scale = ceil(1080.0/(float)h);
+        scale = floor(1080.0/(float)h);
        break;
        case RES_NATIVE: //Native
-        scale = ceil(1080.0/(float)((GlHeight < GlWidth)?GlHeight:GlWidth)/ratio);
+        scale = floor(GlHeight/(float)h);
        break;
        case RES_ORIGINAL: //Original
        default:
