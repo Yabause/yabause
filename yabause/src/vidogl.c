@@ -4339,36 +4339,6 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv) {
 
 }
 
-
-//////////////////////////////////////////////////////////////////////////////
-
-static int isLine(s16 *v) {
-  s16 dx[4];
-  s16 dy[4];
-
-  dx[0] = v[0] - v[2];
-  dy[0] = v[1] - v[3];
-
-  dx[1] = v[0] - v[4];
-  dy[1] = v[1] - v[5];
-
-  dx[2] = v[2] - v[4];
-  dy[2] = v[3] - v[5];
-
-  dx[3] = v[2] - v[6];
-  dy[3] = v[3] - v[7];
-
-  if (dx[1]*dy[0] == dx[0]*dy[1] == dx[1]*dy[2] == dx[2]*dy[1] == dx[2]*dy[3] == dx[3]*dy[2]) {
-    if ((dx[0]== 0)&&(dy[0]== 0)&&(dy[1]== 0)&&(dy[1]== 0) && (dx[2] == 0) && (dy[2]== 0) && (dx[3]==0) && (dy[3]==0)) {
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-
 void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
 

@@ -64,8 +64,6 @@ Vdp2 Vdp2Lines[270];
 
 int vdp2_is_odd_frame = 0;
 
-static void startField(void);// VBLANK-OUT handler
-
 int g_frame_count = 0;
 
 //#define LOG yprintf
