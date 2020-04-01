@@ -45,7 +45,6 @@ static FILE * slogp = NULL;
 //////////////////////////////////////////////////////////////////////////////
 
 int ScuInit(void) {
-   int i;
 
    if ((ScuRegs = (Scu *) calloc(1, sizeof(Scu))) == NULL)
       return -1;
@@ -209,7 +208,7 @@ static void DoDMAFill(u32 ReadAddress,
          }
       }
       // Inform the SH-2 core in case it was a write to main RAM.
-      SH2WriteNotify(NULL, start, WriteAddress&0x1FFFFFFF - start);
+      SH2WriteNotify(NULL, start, (WriteAddress&0x1FFFFFFF) - start);
   if(counter != TransferSize) printf("DMAFill failed %x %x %x %x\n", counter, TransferSize, ReadAddress, WriteAddress);
 }
 
@@ -263,7 +262,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             counter += 4;
          }
       }
-      SH2WriteNotify(NULL, start, WriteAddress&0x1FFFFFFF - start);
+      SH2WriteNotify(NULL, start, (WriteAddress&0x1FFFFFFF) - start);
      if (counter != TransferSize) printf("DMACopy failed %x %x %x %x\n", counter, TransferSize, ReadAddress&0x1FFFFFFF, WriteAddress&0x1FFFFFFF);
    }  // Fill / copy
 }
@@ -406,8 +405,6 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
 
 static u32 readgensrc(u8 num)
 {
-   u32 val;
-
    if( num <= 7  ){
      incFlg[(num & 0x3)] |= ((num >> 2) & 0x01);
      return ScuDsp->MD[(num & 0x3)][ScuDsp->CT[(num & 0x3)]&0x3F];
@@ -566,7 +563,6 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
 {
     u32 imm = ((inst & 0xFF));
     u8  sel = ((inst >> 8) & 0x03);
-    u8  addr = sc->CT[sel];
     u32 i;
 
     const u32 mode = (inst >> 15) & 0x7;
@@ -676,9 +672,7 @@ void dsp_dma02(scudspregs_struct *sc, u32 inst)
 {
     u32 imm = ((inst & 0xFF));
     u8  sel = ((inst >> 8) & 0x03);
-    u8  addr = sc->CT[sel];
     u8  add;
-    u32 i;
 
     switch (((inst >> 15) & 0x07))
     {
@@ -795,7 +789,6 @@ void dsp_dma04(scudspregs_struct *sc, u32 inst)
     u32 Counter = 0;
     u32 add = 0;
     u32 sel = ((inst >> 8) & 0x03);
-    u32 i;
 
     switch ((inst & 0x7))
     {
@@ -872,8 +865,6 @@ INLINE void ScuTimer1Exec( u32 timing ) {
 
 //////////////////////////////////////////////////////////////////////////////
 void ScuExec(u32 timing) {
-   int i;
-
    if ( ScuRegs->T1MD & 0x1 ){
      if ((ScuRegs->T1MD & 0x80) == 0) {
        ScuTimer1Exec(timing);
@@ -2428,7 +2419,6 @@ void ScuTestInterruptMask()
 
 void ScuRemoveInterrupt(u8 vector, u8 level) {
   u32 i, i2;
-  interrupt_struct tmp;
   int hit = -1;
 
   for (i = 0; i < ScuRegs->NumberOfInterrupts; i++) {
