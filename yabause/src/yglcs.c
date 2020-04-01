@@ -132,6 +132,8 @@ static void YglUpdateVDP1FB(void) {
   YglSetVDP1FB(_Ygl->readframe);
 }
 
+static int warning = 0;
+
 void YglCSRender(Vdp2 *varVdp2Regs) {
 
    GLuint cprg=0;
@@ -168,12 +170,14 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    if (yabsys.isRotated) par = 1.0/par;
    #endif
    if (Intw == 0) {
-     YuiMsg("Window width is too small - Do not use integer scaling or reduce scaling\n");
+     if (warning == 0) YuiMsg("Window width is too small - Do not use integer scaling or reduce scaling\n");
+     warning = 1;
      modeScreen = 0;
      Intw = 1;
    }
    if (Inth == 0) {
-     YuiMsg("Window height is too small - Do not use integer scaling or reduce scaling\n");
+     if (warning == 0) YuiMsg("Window height is too small - Do not use integer scaling or reduce scaling\n");
+     warning = 1;
      modeScreen = 0;
      Inth = 1;
    }
@@ -459,6 +463,8 @@ static int YglGenFrameBuffer() {
   if (rebuild_frame_buffer == 0){
     return 0;
   }
+
+  warning = 0;
 
   vdp1_compute_init(_Ygl->vdp1width, _Ygl->vdp1height, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
 

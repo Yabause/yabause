@@ -804,7 +804,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       break;
     }
 }
-
+static int warning = 0;
 //////////////////////////////////////////////////////////////////////////////
 static int YglGenFrameBuffer() {
   int status;
@@ -814,7 +814,7 @@ static int YglGenFrameBuffer() {
   if (rebuild_frame_buffer == 0){
     return 0;
   }
-
+  warning = 0;
   vdp1_compute_init(512.0f, 256.0f, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
 
   if (_Ygl->upfbo != 0){
@@ -3203,12 +3203,14 @@ void YglRender(Vdp2 *varVdp2Regs) {
    if (yabsys.isRotated) par = 1.0/par;
    #endif
    if (Intw == 0) {
-     YuiMsg("Window width is too small - Do not use integer scaling or reduce scaling\n");
+     if (warning == 0) YuiMsg("Window width is too small - Do not use integer scaling or reduce scaling\n");
+     warning = 1;
      modeScreen = 0;
      Intw = 1;
    }
    if (Inth == 0) {
-     YuiMsg("Window height is too small - Do not use integer scaling or reduce scaling\n");
+     if (warning == 0) YuiMsg("Window height is too small - Do not use integer scaling or reduce scaling\n");
+     warning = 1;
      modeScreen = 0;
      Inth = 1;
    }
@@ -3245,7 +3247,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
      default:
         break;
     }
-    
+
    glViewport(0, 0, GlWidth, GlHeight);
 
    FrameProfileAdd("YglRender start");
