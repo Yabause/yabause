@@ -509,7 +509,7 @@ SHADER_VERSION_COMPUTE
 "    idCmd = cmdindex + 1 - cmdIndex;\n"
 "    pixcmd = cmd[cmdindex];\n"
 "    if (pixcmd.type == "Stringify(SYSTEM_CLIPPING)") {\n"
-"      syslimit = ivec2(pixcmd.CMDXC+1+int(ceil(rot[0].w)),pixcmd.CMDYC+1+int(ceil(rot[1].w)));\n"
+"      syslimit = ivec2(pixcmd.CMDXC+1+2*int(ceil(rot[0].w)),pixcmd.CMDYC+1+2*int(ceil(rot[1].w)));\n"
 "      waitSysClip = false;\n"
 "      continue;\n"
 "    }\n"

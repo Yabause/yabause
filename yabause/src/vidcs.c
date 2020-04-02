@@ -664,8 +664,8 @@ void VIDCSVdp1SystemClipping(u8 * ram, Vdp1 * regs)
   int deltaX = 0;
   int deltaY = 0;
   if (Vdp1Regs->TVMR & 0x02) {
-    deltaX = ceil(Vdp1ParaA.Xst);
-    deltaY = ceil(Vdp1ParaA.Yst);
+    deltaX = 2*ceil(Vdp1ParaA.Xst);
+    deltaY = 2*ceil(Vdp1ParaA.Yst);
   }
 
   if (((cmd.CMDXC+1+deltaX) == regs->systemclipX2) && (regs->systemclipY2 == (cmd.CMDYC+1+deltaY))) return;
