@@ -2374,7 +2374,18 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u8* mem, u32 addr, u32 val) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+void sendSlave(vector, level) {
+  if (yabsys.IsSSH2Running) {
+    if (vector == 0x40)
+    {
+        SH2SendInterrupt(SSH2, 0x43, level);
+    }
+    if (vector == 0x42)
+    {
+        SH2SendInterrupt(SSH2, 0x41, level);
+    }
+  }
+}
 void ScuTestInterruptMask()
 {
    unsigned int i, i2;
@@ -2392,6 +2403,7 @@ void ScuTestInterruptMask()
            int vector = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].vector;
            int level = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].level;
            SH2SendInterrupt(MSH2, vector, level);
+           sendSlave(vector, level);
            ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].statusbit;
            // Shorten list
            for (i2 = ScuRegs->NumberOfInterrupts - 1 - i; i2 < (ScuRegs->NumberOfInterrupts - 1); i2++)
@@ -2403,6 +2415,7 @@ void ScuTestInterruptMask()
        }
      }else if (!(ScuRegs->IMS & mask)) {
          SH2SendInterrupt(MSH2, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].level);
+         sendSlave(ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].level);
          ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].statusbit;
 
          // Shorten list
@@ -2410,7 +2423,7 @@ void ScuTestInterruptMask()
             memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i2+1], sizeof(scuinterrupt_struct));
 
          ScuRegs->NumberOfInterrupts--;
-         break;
+         // break;
       }
    }
 }
@@ -2497,16 +2510,6 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
       ScuQueueInterrupt(vector, level, mask, statusbit);
       ScuRegs->IST |= statusbit;
    }
-   if (yabsys.IsSSH2Running) {
-     if (vector == 0x40)
-     {
-         SH2SendInterrupt(SSH2, 0x43, level);
-     }
-     if (vector == 0x42)
-     {
-         SH2SendInterrupt(SSH2, 0x41, level);
-     }
-   }
 }
 
 // 3.2 DMA control register
@@ -2558,6 +2561,7 @@ void ScuRemoveVBlankOut() {
 void ScuRemoveVBlankIN() {
   ScuRemoveInterrupt(0x40, 0x0F);
   SH2RemoveInterrupt(MSH2, 0x40, 0x0F);
+  if (yabsys.IsSSH2Running) SH2RemoveInterrupt(SSH2, 0x43, 0x0F);
 }
 //////////////////////////////////////////////////////////////////////////////
 
