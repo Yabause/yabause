@@ -98,6 +98,8 @@ extern int VIDOGLIsFullscreen(void);
 extern int VIDOGLVdp1Reset(void);
 extern void VIDOGLVdp1Draw();
 
+extern vdp2rotationparameter_struct  Vdp1ParaA;
+
 void VIDCSVdp1Draw();
 void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -627,12 +629,23 @@ void VIDCSVdp1UserClipping(u8 * ram, Vdp1 * regs)
 {
   vdp1cmd_struct cmd;
   Vdp1ReadCommand(&cmd, regs->addr, ram);
+  int deltaX = 0;
+  int deltaY = 0;
+  if (Vdp1Regs->TVMR & 0x02) {
+    deltaX = ceil(Vdp1ParaA.Xst);
+    deltaY = ceil(Vdp1ParaA.Yst);
+  }
   if (
-    (regs->userclipX1 == cmd.CMDXA) &&
-    (regs->userclipY1 == cmd.CMDYA) &&
-    (regs->userclipX2 == cmd.CMDXC) &&
-    (regs->userclipY2 == cmd.CMDYC)
+    (regs->userclipX1 == cmd.CMDXA + deltaX) &&
+    (regs->userclipY1 == cmd.CMDYA + deltaY) &&
+    (regs->userclipX2 == cmd.CMDXC + deltaX) &&
+    (regs->userclipY2 == cmd.CMDYC + deltaY)
   ) return;
+
+  cmd.CMDXA += deltaX;
+  cmd.CMDYA += deltaY;
+  cmd.CMDXC += deltaX;
+  cmd.CMDYC += deltaY;
 
   cmd.type = USER_CLIPPING;
   vdp1_add(&cmd,1);
@@ -648,7 +661,16 @@ void VIDCSVdp1SystemClipping(u8 * ram, Vdp1 * regs)
 {
   vdp1cmd_struct cmd;
   Vdp1ReadCommand(&cmd, regs->addr, ram);
-  if (((cmd.CMDXC+1) == regs->systemclipX2) && (regs->systemclipY2 == (cmd.CMDYC+1))) return;
+  int deltaX = 0;
+  int deltaY = 0;
+  if (Vdp1Regs->TVMR & 0x02) {
+    deltaX = ceil(Vdp1ParaA.Xst);
+    deltaY = ceil(Vdp1ParaA.Yst);
+  }
+
+  if (((cmd.CMDXC+1+deltaX) == regs->systemclipX2) && (regs->systemclipY2 == (cmd.CMDYC+1+deltaY))) return;
+  cmd.CMDXC += deltaX;
+  cmd.CMDYC += deltaY;
   cmd.type = SYSTEM_CLIPPING;
   vdp1_add(&cmd,1);
   regs->systemclipX2 = cmd.CMDXC+1;

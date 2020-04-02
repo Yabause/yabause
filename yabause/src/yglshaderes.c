@@ -1020,14 +1020,9 @@ SHADER_VERSION
 #endif
 "int PosY = int(gl_FragCoord.y)+1;\n"
 "int PosX = int(gl_FragCoord.x);\n"
-"uniform mat3 MatRot;\n"
-"uniform vec3 C;\n"
-"uniform int fbRotated;\n"
 
 "vec2 getFBCoord(vec2 pos) {\n"
-" if (fbRotated == 0) return pos;\n"
-" vec3 ret = MatRot * (vec3(pos,0.0) - C) + C;\n"
-" return ret.xy;\n"
+" return pos;\n"
 "}\n";
 ;
 
@@ -1605,16 +1600,13 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
   glUniform2i(glGetUniformLocation(vdp2blit_prg, "tvSize"), (int)(_Ygl->rwidth*_Ygl->vdp1wdensity/_Ygl->vdp2wdensity), (int)(_Ygl->rheight*_Ygl->vdp1hdensity/_Ygl->vdp2hdensity));
 
-
-  const float rotMat[9] = {
-    Vdp1ParaA.deltaX, Vdp1ParaA.deltaXst, 0.0,
-    Vdp1ParaA.deltaY, Vdp1ParaA.deltaYst, 0.0,
-    0.0, 0.0, 1.0,
-  };
-  glUniformMatrix3fv(glGetUniformLocation(vdp2blit_prg, "MatRot"), 1, GL_FALSE, rotMat);
-  glUniform3f(glGetUniformLocation(vdp2blit_prg, "C"), Vdp1ParaA.Cx, Vdp1ParaA.Cy, Vdp1ParaA.Cz);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbRotated"),(Vdp1Regs->TVMR & 0x02)?1:0);
-
+  // const float rotMat[9] = {
+  //   Vdp1ParaA.deltaX, Vdp1ParaA.deltaXst, 0.0,
+  //   Vdp1ParaA.deltaY, Vdp1ParaA.deltaYst, 0.0,
+  //   0.0, 0.0, 1.0,
+  // };
+  // glUniformMatrix3fv(glGetUniformLocation(vdp2blit_prg, "MatRot"), 1, GL_FALSE, rotMat);
+  // glUniform3f(glGetUniformLocation(vdp2blit_prg, "C"), Vdp1ParaA.Cx, Vdp1ParaA.Cy, Vdp1ParaA.Cz);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), enBGMAX+1, Win_s);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), enBGMAX+1, Win_s_mode);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0"), enBGMAX+1, Win0);

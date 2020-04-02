@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include "vdp1.h"
 #include "yui.h"
@@ -531,6 +532,7 @@ void vdp1_setup(void) {
 int * get_vdp1_tex() {
 	return &compute_tex[_Ygl->readframe];
 }
+
 void vdp1_compute() {
   GLuint error;
 	int progId = getProgramId();
@@ -577,25 +579,26 @@ void vdp1_compute() {
 	glUniform4i(8, Vdp1Regs->userclipX1, Vdp1Regs->userclipY1, Vdp1Regs->userclipX2, Vdp1Regs->userclipY2);
 	YglMatrix m, mat;
 	YglLoadIdentity(&m);
-	if (Vdp1Regs->TVMR & 0x02) {
+  if (Vdp1Regs->TVMR & 0x02) {
     YglMatrix rotate, scale;
-    int x = (_Ygl->rwidth - Vdp1Regs->systemclipX2)/2 * (_Ygl->width/_Ygl->rwidth);
-    int y = ( Vdp1Regs->systemclipY2 - _Ygl->rheight)/2 * (_Ygl->height/_Ygl->rheight);
     YglLoadIdentity(&rotate);
-		VDP1CPRINT("%f %f %f %f %f %f\n", Vdp1ParaA.deltaX,Vdp1ParaA.deltaY,Vdp1ParaA.deltaXst,Vdp1ParaA.deltaYst,Vdp1ParaA.Xst,Vdp1ParaA.Yst);
     rotate.m[0][0] = Vdp1ParaA.deltaX;
     rotate.m[0][1] = Vdp1ParaA.deltaY;
     rotate.m[1][0] = Vdp1ParaA.deltaXst;
     rotate.m[1][1] = Vdp1ParaA.deltaYst;
-    YglTranslatef(&rotate, -Vdp1ParaA.Xst, -Vdp1ParaA.Yst, 0.0f);
+		rotate.m[0][3] = Vdp1ParaA.Xst;
+		rotate.m[1][3] = -Vdp1ParaA.Yst;
+
     YglMatrixMultiply(&mat, &m, &rotate);
     YglLoadIdentity(&scale);
-    scale.m[0][0] = 1.0;
-    scale.m[1][1] = 1.0 / (1.0 + Vdp1ParaA.deltaY);
-    scale.m[0][3] = 0.0;
-    scale.m[1][3] = 1.0 - scale.m[1][1];
+    // scale.m[0][0] = 1.0;
+    // scale.m[1][1] = 1.0 / (1.0 + Vdp1ParaA.deltaY);
+    // scale.m[0][3] = 0.0;
+    // scale.m[1][3] = 1.0 - scale.m[1][1];
+
     YglMatrixMultiply(&m, &scale, &mat);
-	}
+
+  }
   glUniformMatrix4fv(9, 1, 0, (GLfloat*)m.m);
 
 	vdp1_set_directFB();
