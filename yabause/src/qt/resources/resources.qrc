@@ -32,6 +32,9 @@
         <file>icons/actions/transfert.png</file>
         <file>icons/actions/video.png</file>
         <file>icons/actions/donate.png</file>
+        <file alias="verified_user.png" >icons/actions/verified_user.png</file>
+        <file alias="cloud_download.png">icons/actions/cloud_download.png</file>
+        <file alias="cloud_upload.png">icons/actions/cloud_upload.png</file>
         <file alias="3dcontroller.png">icons/3dcontroller.png</file>
         <file alias="wheel.png">icons/wheel.png</file>
       <file alias="missionstick.png">icons/missionstick.png</file>

@@ -139,6 +139,8 @@
       <iconset resource="../resources/resources.qrc">
        <normaloff>:/actions/icons/actions/save_state.png</normaloff>:/actions/icons/actions/save_state.png</iconset>
      </property>
+     <addaction name="actionTo_Cloud"/>
+     <addaction name="separator"/>
      <addaction name="aFileSaveStateAs"/>
      <addaction name="separator"/>
      <addaction name="aFileSaveState0"/>
@@ -160,6 +162,8 @@
       <iconset resource="../resources/resources.qrc">
        <normaloff>:/actions/icons/actions/load_state.png</normaloff>:/actions/icons/actions/load_state.png</iconset>
      </property>
+     <addaction name="actionFrom_Cloud"/>
+     <addaction name="separator"/>
      <addaction name="aFileLoadStateAs"/>
      <addaction name="separator"/>
      <addaction name="aFileLoadState0"/>
@@ -1000,11 +1004,39 @@
    </property>
   </action>
   <action name="actionOpen_web_interface">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/verified_user.png</normaloff>:/actions/verified_user.png</iconset>
+   </property>
    <property name="text">
-    <string>Open web interface</string>
+    <string>Sign In/Out</string>
    </property>
    <property name="statusTip">
     <string>https://uoyabause.firebaseapp.com/</string>
+   </property>
+  </action>
+  <action name="actionTo_Cloud">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/cloud_upload.png</normaloff>:/actions/cloud_upload.png</iconset>
+   </property>
+   <property name="text">
+    <string>To Cloud</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+F9</string>
+   </property>
+  </action>
+  <action name="actionFrom_Cloud">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/cloud_download.png</normaloff>:/actions/cloud_download.png</iconset>
+   </property>
+   <property name="text">
+    <string>From Cloud</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+F5</string>
    </property>
   </action>
  </widget>

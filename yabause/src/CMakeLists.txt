@@ -46,6 +46,7 @@ set(yabause_SOURCES
 	gameinfo.c
 	japmodem.c
 	m68kcore.c m68kd.c memory.c movie.c
+	state_save.cpp
 	netlink.c
 	osdcore.c
 	peripheral.c profile.c
@@ -77,6 +78,7 @@ if (ANDROID)
 		nanovg/nanovg_osdcore.c
 		)
 endif()
+
 
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Switch")
 add_definitions(-DYAB_PORT_OSD)
@@ -484,7 +486,7 @@ if (MSVC)
 		set(DDK_DIR "$ENV{SYSTEMDRIVE}/WINDDK/7600.16385.0/")
         endif (EXISTS "$ENV{SYSTEMDRIVE}/WINDDK/3790.1830/")
 
-	add_definitions(-DHAVE_C99_VARIADIC_MACROS -D_CRT_SECURE_NO_WARNINGS -DC68K_NO_JUMP_TABLE
+	add_definitions(/MP -DHAVE_C99_VARIADIC_MACROS -D_CRT_SECURE_NO_WARNINGS -DC68K_NO_JUMP_TABLE
 			-D_UNICODE -DUNICODE)
 endif (MSVC)
 
@@ -493,6 +495,7 @@ if ( ANDROID_NDK_HOST_SYSTEM_NAME2 MATCHES  "windows" )
 endif (  )
 
 if (WIN32)
+
 	# Windows ddk
 	option(YAB_WANT_DDK "Use the real DDK instead of the built-in one")
 	if(YAB_WANT_DDK)
@@ -846,7 +849,11 @@ else ()
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
 endif ()
 
-set(YAB_OPTIMIZATION "" CACHE STRING "Override optimization level")
+set(ENABLE_SANITIZER OFF CACHE STRING "Enable/Disable Sanitizer" )
+if(ENABLE_SANITIZER)
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address  -fsanitize=leak" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address  -fsanitize=leak" )
+endif()
 
 if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
 	set(CMAKE_TOOLCHAIN_PREFIX "llvm-")
@@ -859,8 +866,8 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=gnu99 ${YAB_OPTIMIZATION}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fPIC -std=gnu99 ${YAB_OPTIMIZATION}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -std=c++11 ${YAB_OPTIMIZATION}")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
@@ -921,9 +928,15 @@ endif()
 # libCHD
 include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libchdr.cmake )
 include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_zlib.cmake )
+#include_directories(${zlib_INCLUDE_DIR})
 add_dependencies(yabause libchdr)
-add_dependencies(yabause zlib)
+#add_dependencies(yabause zlib)
 
+if(WIN32)
+	# Windows need to build zlib
+	add_dependencies(yabause zlib)
+	include_directories(${zlib_INCLUDE_DIR})
+endif()
 
 if (YAB_WANT_C68K)
 	add_dependencies(yabause c68kinc)

@@ -745,6 +745,10 @@ int Ygl_uniformPerLineAlpha(void * p)
   prg->preblendmode = prg->blendmode;
   prg->blendmode = 0;
 
+#if !defined(_OGLES3_)
+  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(__FUNCTION__), __FUNCTION__);
+#endif
+
   if (prg->prgid == PG_VDP2_PER_LINE_ALPHA_CRAM) {
     glEnableVertexAttribArray(prg->vertexp);
     glEnableVertexAttribArray(prg->texcoordp);
@@ -797,21 +801,40 @@ int Ygl_cleanupPerLineAlpha(void * p)
   }
 
   if ( (prg->blendmode & 0x03) == VDP2_CC_RATE ) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
+      glEnable(GL_BLEND);
+      glBlendFuncSeparate(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ONE, GL_ZERO);
+    }
+    else {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
   }else if ((prg->blendmode&0x03) == VDP2_CC_ADD) {
     glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
+    glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+  }
+  else {
+    glDisable(GL_BLEND);
+  }
+
+  if ((prg->bwin0 != 0 || prg->bwin1 != 0) /*|| (prg->blendmode != VDP2_CC_NONE && ccwindow)*/ ) {
+    YglSetupWindow(prg);
   }
 
   // call blit method
   YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture, prg->specialcolormode);
+
+  if ((prg->bwin0 != 0 || prg->bwin1 != 0) /*|| (prg->blendmode != VDP2_CC_NONE && ccwindow)*/) {
+    YglCleanUpWindow(prg);
+  }
 
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
   glActiveTexture(GL_TEXTURE0);
   if (prg->interuput_texture != 0) {
     glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
   }
+
+ 
   return 0;
 }
 
@@ -823,6 +846,10 @@ int Ygl_uniformNormal_blur(void * p)
 {
   YglProgram * prg;
   prg = p;
+#if !defined(_OGLES3_)
+  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(__FUNCTION__), __FUNCTION__);
+#endif
+
 
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
@@ -963,6 +990,9 @@ int Ygl_uniformWindow(void * p )
 {
    YglProgram * prg;
    prg = p;
+#if !defined(_OGLES3_)
+   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(__FUNCTION__), __FUNCTION__);
+#endif
    glUseProgram(prg->prgid );
    glEnableVertexAttribArray(0);
    glDisableVertexAttribArray(1);
@@ -1027,6 +1057,9 @@ int Ygl_uniformVdp1Normal(void * p )
 {
    YglProgram * prg;
    prg = p;
+#if !defined(_OGLES3_)
+   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(__FUNCTION__), __FUNCTION__);
+#endif
    glEnableVertexAttribArray(prg->vertexp);
    glEnableVertexAttribArray(prg->texcoordp);
    glDisableVertexAttribArray(2);
@@ -1592,6 +1625,9 @@ int Ygl_uniformStartUserClip(void * p )
 {
    YglProgram * prg;
    prg = p;
+#if !defined(_OGLES3_)
+   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(__FUNCTION__), __FUNCTION__);
+#endif
 
   glEnableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
@@ -4485,22 +4521,22 @@ const GLchar perlinealpha_blit_f[] =
 "  if(txcol.a > 0.0){\n                                 "
 "    addr.x = int(u_th * v_texcoord.y);\n"
 "    addr.y = 0; \n"
-"    if(u_specialColorFunc == 0 ) { "
-"        txcol.a = texelFetch( u_Line, addr,0 ).a;      \n"
+"    if(u_specialColorFunc == 0 ) { \n"
+"        txcol.a = texelFetch( u_Line, addr,0 ).a;\n"
 "    }else{ \n"
 "       if( txcol.a != 1.0 ) txcol.a = texelFetch( u_Line, addr,0 ).a; \n"
-"    }"
+"    }\n"
 "    txcol.r += (texelFetch( u_Line, addr,0 ).r-0.5)*2.0;\n"
 "    txcol.g += (texelFetch( u_Line, addr,0 ).g-0.5)*2.0;\n"
 "    txcol.b += (texelFetch( u_Line, addr,0 ).b-0.5)*2.0;\n"
 "    if( txcol.a > 0.0 ) \n"
-"       fragColor = txcol; \n                        "
+"       fragColor = txcol; \n"
 "    else \n"
-"       discard; \n                        "
+"       discard; \n"
 "  }else{ \n"
 "    discard; \n"
-"  }\n                                            "
-"}                                                   \n";
+"  }\n"
+"}\n";
 
 static int perlinealpha_prg = -1;
 static int u_perlinealpha_mtxModelView = -1;
@@ -4619,6 +4655,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
   glBindTexture(GL_TEXTURE_2D, srcTexture);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, lineTexture);
+
   glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
   // Clean up

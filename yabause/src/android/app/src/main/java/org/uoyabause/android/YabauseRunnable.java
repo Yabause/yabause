@@ -50,6 +50,8 @@ public class YabauseRunnable implements Runnable
     public static native String getGameinfo();
     public static native String savestate( String path );
     public static native void loadstate( String path );
+    public static native String savestate_compress( String path );
+    public static native void loadstate_compress( String path );
     public static native void pause();
     public static native void resume();
     public static native void setPolygonGenerationMode( int pg );

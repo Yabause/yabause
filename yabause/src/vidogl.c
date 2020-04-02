@@ -1378,40 +1378,46 @@ static void Vdp2GenerateWindowInfo(void)
             }
           }
           else {
+            if (m_vWindinfo0[v].WinShowLine) {
+              if (HStart != preHStart || HEnd != preHEnd) {
+                // close line 
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHStart;
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+                _Ygl->win0_vertexcnt++;
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd + 1;
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+                _Ygl->win0_vertexcnt++;
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd + 1; // add terminator
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+                _Ygl->win0_vertexcnt++;
 
-            if (m_vWindinfo0[v].WinShowLine && (HStart != preHStart || HEnd != preHEnd) ) {
-
-              // close line 
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHStart;
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-              _Ygl->win0_vertexcnt++;
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd + 1;
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-              _Ygl->win0_vertexcnt++;
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd + 1; // add terminator
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-              _Ygl->win0_vertexcnt++;
-
-              // start new line
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart; // add terminator
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-              _Ygl->win0_vertexcnt++;
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-              _Ygl->win0_vertexcnt++;
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd + 1;
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-              _Ygl->win0_vertexcnt++;
-            }
-            else if (v == (fixVdp2Regs->WPEY0 - 1)) {
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-              _Ygl->win0_vertexcnt++;
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd + 1;
-              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-              _Ygl->win0_vertexcnt++;
+                // start new line
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart; // add terminator
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+                _Ygl->win0_vertexcnt++;
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+                _Ygl->win0_vertexcnt++;
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd + 1;
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+                _Ygl->win0_vertexcnt++;
+              }
+              // Close polygon, since reach the final line while WinShowLine is true
+              else if (v == (fixVdp2Regs->WPEY0) - 1) {
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+                _Ygl->win0_vertexcnt++;
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd + 1;
+                _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+                _Ygl->win0_vertexcnt++;
+              }
             }
           }
+
+          if( _Ygl->win0_vertexcnt >= 1024){
+            _Ygl->win0_vertexcnt = 1023;
+          }
+
           preHStart = HStart;
           preHEnd = HEnd;
         }
@@ -1599,8 +1605,8 @@ static void Vdp2GenerateWindowInfo(void)
           }
           else {
 
-            if (m_vWindinfo1[v].WinShowLine && (HStart != preHStart || HEnd != preHEnd)) {
-
+            if (m_vWindinfo1[v].WinShowLine) {
+              if (HStart != preHStart || HEnd != preHEnd) {
               // close line 
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = preHStart;
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
@@ -1622,17 +1628,23 @@ static void Vdp2GenerateWindowInfo(void)
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HEnd + 1;
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
               _Ygl->win1_vertexcnt++;
+              }
+              // Close polygon, since reach the final line while WinShowLine is true
+              else if (v == (fixVdp2Regs->WPEY1 - 1)) {
+                _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HStart;
+                _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+                _Ygl->win1_vertexcnt++;
+                _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HEnd + 1;
+                _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+                _Ygl->win1_vertexcnt++;
+              }
             }
-            else if (v == (fixVdp2Regs->WPEY1 - 1)) {
-              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HStart;
-              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
-              _Ygl->win1_vertexcnt++;
-              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HEnd + 1;
-              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
-              _Ygl->win1_vertexcnt++;
-            }
-
           }
+
+          if( _Ygl->win1_vertexcnt >= 1024){
+            _Ygl->win1_vertexcnt = 1023;
+          }
+
           preHStart = HStart;
           preHEnd = HEnd;
         }
@@ -6086,7 +6098,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
         info->enable = 1;
         if (Vdp2Lines[line >> line_shift].CCCTL & bit)
         {
-          if ((fixVdp2Regs->CCCTL>>8) & bit) { // Add Color
+          if (fixVdp2Regs->CCCTL&0x100) { // Add Color
             info->blendmode |= VDP2_CC_ADD;
           }
           else {
@@ -6118,9 +6130,9 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
 
         if ( (Vdp2Lines[line >> line_shift].CLOFEN  & bit) != 0) {
           ReadVdp2ColorOffset(&Vdp2Lines[line >> line_shift], info, bit);
-          linebuf[line] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 16;
+          linebuf[line] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 0;
           linebuf[line] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
-          linebuf[line] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 0;
+          linebuf[line] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 16;
         }
         else {
           linebuf[line] |= 0x00808080;

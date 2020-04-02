@@ -16,24 +16,41 @@ include (ExternalProject)
 
 message(STATUS "libpng not found - will build from source")
 
-set(png_URL http://78.108.103.11/MIRROR/ftp/png/src/history/libpng12/libpng-1.2.53.tar.gz)
-set(png_HASH SHA256=e05c9056d7f323088fd7824d8c6acc03a4a758c4b4916715924edc5dd3223a72)
+set(png_URL https://download.sourceforge.net/libpng/libpng-1.6.37.tar.gz)
+set(png_HASH SHA256=daeb2620d829575513e35fecc83f0d3791a620b9b93d800b763542ece9390fb4)
 set(png_BUILD ${CMAKE_CURRENT_BINARY_DIR}/png/src/png)
 set(png_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/png/install)
 set(png_INCLUDE_DIR ${png_INSTALL}/include) 
 
 if(WIN32)
   set(png_STATIC_LIBRARIES 
-    debug ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng12_staticd.lib
-    optimized ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng12_static.lib)
+    debug ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng16_staticd.lib
+    optimized ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng16_static.lib)
 else()
-  set(png_STATIC_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng12.a)
+  set(png_STATIC_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/libpng16.a)
 endif()
 
 set(png_HEADERS
-    "${png_INSTALL}/include/libpng12/png.h"
-    "${png_INSTALL}/include/libpng12/pngconf.h"
+    "${png_INSTALL}/include/libpng16/png.h"
+    "${png_INSTALL}/include/libpng16/pngconf.h"
 )
+
+if(ANDROID)
+get_filename_component(TOOL_CHAIN_ABSOLUTE_PATH "${CMAKE_TOOLCHAIN_FILE}"
+                       REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
+
+set( ADDITIONAL_CMAKE_ARGS 
+ -DANDROID_ABI=${ANDROID_ABI}
+ -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM} 
+ -DANDROID_NATIVE_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}
+ -DCMAKE_TOOLCHAIN_FILE=${TOOL_CHAIN_ABSOLUTE_PATH}
+)
+
+else()
+  set(ADDITIONAL_CMAKE_ARGS "")
+endif()
+
+
 ExternalProject_Add(
     png
     PREFIX png
@@ -42,7 +59,7 @@ ExternalProject_Add(
     URL_HASH ${png_HASH}
     INSTALL_DIR ${png_INSTALL}
     DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
-    CMAKE_CACHE_ARGS
+    CMAKE_ARGS
     	-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
         -DCMAKE_BUILD_TYPE:STRING=Release
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF
@@ -50,7 +67,9 @@ ExternalProject_Add(
         -DZLIB_ROOT:STRING=${ZLIB_INSTALL}
         -DPNG_NO_STDIO:BOOL=OFF
         -DPNG_SHARED:BOOL=OFF
+        #-DCMAKE_C_FLAGS=-DPNG_SETJMP_SUPPORTED
+        ${ADDITIONAL_CMAKE_ARGS} 
 )
-
+set( LIBPNG_LIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/png/install/lib/ )
 
 
