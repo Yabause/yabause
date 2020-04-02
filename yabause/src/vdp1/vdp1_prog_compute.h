@@ -514,7 +514,7 @@ SHADER_VERSION_COMPUTE
 "      continue;\n"
 "    }\n"
 "    if (pixcmd.type == "Stringify(USER_CLIPPING)") {\n"
-"      userlimit = ivec4(pixcmd.CMDXA+int(ceil(rot[0].w)),pixcmd.CMDYA+int(ceil(rot[1].w)),pixcmd.CMDXC+1+int(ceil(rot[0].w)),pixcmd.CMDYC+1+int(ceil(rot[1].w)));\n"
+"      userlimit = ivec4(pixcmd.CMDXA,pixcmd.CMDYA,pixcmd.CMDXC+1+int(ceil(rot[0].w)),pixcmd.CMDYC+1+int(ceil(rot[1].w)));\n"
 "      continue;\n"
 "    }\n"
 "    if (any(greaterThan(pos,syslimit*upscale))) { \n"

@@ -642,8 +642,6 @@ void VIDCSVdp1UserClipping(u8 * ram, Vdp1 * regs)
     (regs->userclipY2 == cmd.CMDYC + deltaY)
   ) return;
 
-  cmd.CMDXA += deltaX;
-  cmd.CMDYA += deltaY;
   cmd.CMDXC += deltaX;
   cmd.CMDYC += deltaY;
 
