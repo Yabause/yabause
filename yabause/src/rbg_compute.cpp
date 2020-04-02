@@ -254,8 +254,9 @@ SHADER_VERSION_COMPUTE
 "  uint flag = 0x380u;\n"
 "  if (cram_mode == 1u) flag = 0x780u;\n"
 "  uint index = ((((lncl_table_addr&flag) | (offset&0x7Fu))<<1u)&0xFFFu);\n"
-"  uint temp = (cram[index>>2])& 0xFFFFu;\n"
-"  return vec4(alpha_lncl, float((temp >> 10) &0x1F)/31.0, float((temp >> 5) & 0x1Fu)/31.0, float(temp & 0x1Fu)/31.0);\n"
+"  uint temp = (cram[index>>2]);\n"
+"  if( (index & 0x02u) != 0u ) { temp >>= 16; } \n"
+"  return vec4(float((temp >> 0) &0x1F)/31.0, float((temp >> 5) & 0x1Fu)/31.0, float((temp >> 10) &0x1F)/31.0,alpha_lncl);\n"
 "}\n";
 
 const char prg_continue_rbg[] =
