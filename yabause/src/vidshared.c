@@ -268,55 +268,55 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
       parameter->screenover = (regs->PLSZ >> 14) & 0x3;
    }
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->Xst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->Yst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->Zst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->deltaXst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->deltaYst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->deltaX = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->deltaY = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->A = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->B = (float) (signed) ((i & 0x000FFFC0) | ((i & 0x00080000) ? 0xFFF80000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->C = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->D = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->E = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->F = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
    addr += 4;
 
@@ -344,19 +344,19 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
    parameter->Cz = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFFFC000 : 0x00000000));
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->Mx = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->My = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->kx = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
    addr += 4;
 
-   i = T1ReadLong(ram, addr);
+   i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->ky = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
    addr += 4;
 
@@ -368,19 +368,19 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
 
 
       // Read in coefficient values
-      i = T1ReadLong(ram, addr);
+      i = Vdp2RamReadLong(NULL, ram, addr);
       ftmp = (float)(unsigned)(i & 0xFFFFFFC0) / 65536;
       parameter->KAst = ftmp;
       addr += 4;
 
-      i = T1ReadLong(ram, addr);
+      i = Vdp2RamReadLong(NULL, ram, addr);
       ftmp = (float)(signed)((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
       parameter->deltaKAst = ftmp;
-      addr += 4;     
+      addr += 4;
 
       if (regs->RAMCTL & 0x8000){
         parameter->k_mem_type = 1; // use cram
-        i = T1ReadLong(ram, addr);
+        i = Vdp2RamReadLong(NULL, ram, addr);
         ftmp = (float)(signed)((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
         parameter->deltaKAx = ftmp;
       }
@@ -402,15 +402,15 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
           perdot = ((regs->RAMCTL >> 6) & 0x03);
           break;
         }
-        
+
         if (perdot != 1){
           parameter->deltaKAx = 0.0f;
         }
         else{
-          i = T1ReadLong(ram, addr);
+          i = Vdp2RamReadLong(NULL, ram, addr);
           ftmp = (float)(signed)((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
           parameter->deltaKAx = ftmp;
-         
+
         }
       }
 
