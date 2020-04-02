@@ -52,6 +52,7 @@ void SH2KronosIOnFrame(SH2_struct *context) {
 
 void SH2HandleInterrupts(SH2_struct *context)
 {
+  if (context->isInIt != 0) return;
   LOCK(context);
   if (context->NumberOfInterrupts != 0)
   {
@@ -59,6 +60,7 @@ void SH2HandleInterrupts(SH2_struct *context)
     {
       u32 oldpc = context->regs.PC;
       u32 persr = context->regs.SR.part.I;
+      context->isInIt = 1;
       context->regs.R[15] -= 4;
       SH2MappedMemoryWriteLong(context, context->regs.R[15], context->regs.SR.all);
       context->regs.R[15] -= 4;
@@ -261,17 +263,27 @@ static void showCPUState(SH2_struct *context)
 
 u8 execInterrupt = 0;
 
-FASTCALL void SH2KronosInterpreterExec(SH2_struct *context, u32 cycles)
+FASTCALL void SH2KronosInterpreterExecLoop(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
-  SH2HandleInterrupts(context);
  char res[512];
+ int inIt = context->isInIt;
   execInterrupt = 0;
    while (execInterrupt == 0)
    {
      cacheCode[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
      execInterrupt |= (context->cycles >= target_cycle);
+     execInterrupt |= (inIt != context->isInIt);
    }
+}
+
+FASTCALL void SH2KronosInterpreterExec(SH2_struct *context, u32 cycles)
+{
+  u32 target_cycle = context->cycles + cycles;
+  while (context->cycles < target_cycle){
+    SH2HandleInterrupts(context);
+    SH2KronosInterpreterExecLoop(context, target_cycle-context->cycles);
+  }
 }
 
 static int enableTrace = 0;
