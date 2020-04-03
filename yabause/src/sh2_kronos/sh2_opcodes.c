@@ -64,7 +64,7 @@ void SH2undecoded(SH2_struct * sh)
          return;
    }
 
-   YabSetError(YAB_ERR_SH2INVALIDOPCODE, sh);      
+   YabSetError(YAB_ERR_SH2INVALIDOPCODE, sh);
 
    // Save regs.SR on stack
    sh->regs.R[15]-=4;
@@ -80,6 +80,7 @@ void SH2undecoded(SH2_struct * sh)
 
    // Jump to Exception service routine
    sh->regs.PC = SH2MappedMemoryReadLong(sh, sh->regs.VBR+(vectnum<<2));
+   sh->isInIt = 0;
    sh->cycles++;
 }
 
