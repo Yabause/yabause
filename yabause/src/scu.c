@@ -2412,6 +2412,7 @@ int ScuTestInterruptMaskLoop()
 
            ScuRegs->NumberOfInterrupts--;
            ScuRegs->AIACK = 0;
+           return 1;
          }
        }
      }else if (!(ScuRegs->IMS & mask)) {
