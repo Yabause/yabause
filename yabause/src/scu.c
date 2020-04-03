@@ -865,6 +865,7 @@ INLINE void ScuTimer1Exec( u32 timing ) {
 
 //////////////////////////////////////////////////////////////////////////////
 void ScuExec(u32 timing) {
+  ScuTestInterruptMask();
    if ( ScuRegs->T1MD & 0x1 ){
      if ((ScuRegs->T1MD & 0x80) == 0) {
        ScuTimer1Exec(timing);
@@ -2386,7 +2387,7 @@ void sendSlave(vector, level) {
     }
   }
 }
-void ScuTestInterruptMask()
+int ScuTestInterruptMaskLoop()
 {
    unsigned int i, i2;
 
@@ -2423,9 +2424,15 @@ void ScuTestInterruptMask()
             memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i2+1], sizeof(scuinterrupt_struct));
 
          ScuRegs->NumberOfInterrupts--;
-         // break;
+         return 1;
+         break;
       }
    }
+   return 0;
+}
+
+void ScuTestInterruptMask() {
+  while (ScuTestInterruptMaskLoop() != 0);
 }
 
 //////////////////////////////////////////////////////////////////////////////
