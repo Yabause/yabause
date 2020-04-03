@@ -2507,11 +2507,13 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
       ScuRegs->AIACK = 0;
       if (!(ScuRegs->IMS & 0x8000)){
         SH2SendInterrupt(MSH2, vector, level);
+        sendSlave(vector, level);
       }
     }
   }else if (!(ScuRegs->IMS & mask)){
     //if (vector != 0x41) LOG("INT %d", vector);
     SH2SendInterrupt(MSH2, vector, level);
+    sendSlave(vector, level);
   }
   else
    {
