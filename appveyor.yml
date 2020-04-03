@@ -1,6 +1,4 @@
 environment:
-  MINGW: C:\Qt\Tools\mingw492_32
-  DXSDK_DIR: "C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)"
   CMAKE_BUILD_TYPE: Release
   keypass:
     secure: ZLcvhuGQOxB1TWnSlnuRYg==
@@ -12,31 +10,10 @@ environment:
   matrix:
     # Visual Studio build
     - generator: "Visual Studio 14 2015"
-      QT_PATH: "C:/Qt/5.9.9/msvc2015"
-      CMAKE_PREFIX_PATH: "%QT_PATH%"
-      compiler_type: "vs14-x32"
+      CMAKE_PREFIX_PATH: C:\Qt\5.9.9\msvc2015
       sdl_filename: SDL2-devel-2.0.3-VC.zip
       sdl_arch: x86
       cmake_args: "-DCMAKE_BUILD_TYPE=Release -DYAB_PORTS=qt -DYAB_WANT_DIRECTSOUND=ON -DYAB_WANT_DYNAREC_DEVMIYAX=TRUE -DYAB_WANT_DIRECTINPUT=ON -DSH2_DYNAREC=FALSE"
-        -DYAB_WANT_DYNAREC_DEVMIYAX=TRUE 
-        -DYAB_WANT_DIRECTINPUT=TRUE 
-        -DYAB_WANT_DIRECTSOUND=TRUE 
-        -DYAB_WANT_SDL=TRUE
-        -DGIT_EXECUTABLE="C:\Program Files\Git\cmd\git.exe"
-        -DDirectX_ERR_LIBRARY="%DXSDK_DIR%/Lib/x86/DxErr.lib"
-        -DDirectX_GUID_LIBRARY="%DXSDK_DIR%/Lib/x86/dxguid.lib"
-        -DDirectX_INPUT8_LIBRARY="%DXSDK_DIR%/Lib/x86/dinput8.lib"
-        -DDirectX_SOUND_LIBRARY="%DXSDK_DIR%/Lib/x86/dsound.lib"
-        -DDirectX_XINPUT_LIBRARY="%DXSDK_DIR%/Lib/x86/XInput.lib"
-        -DSH2_DYNAREC=FALSE
-        -DYAB_PORTS=qt
-        -DYAB_WANT_C68K=FALSE
-        -DSH2_DYNAREC=FALSE
-        -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib 
-        -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ 
-        -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib
-        -DMINI18N_INCLUDE_DIR=%APPVEYOR_BUILD_FOLDER%/mini18n/src
-        -DMINI18N_LIBRARY=%APPVEYOR_BUILD_FOLDER%/mini18n/build/src/Release/mini18n-static.lib
 
 shallow_clone: true
 
@@ -49,8 +26,6 @@ init:
   #- set Path=%MINGW%\bin;%Path%
 
 before_build:
-  - dir "%DXSDK_DIR%/Lib/x86/"
-  - dir "%QT_PATH%"
   # fetch appropriate sdl lib for visual studio or mingw
   - cd c:\
   - appveyor DownloadFile https://www.libsdl.org/release/%sdl_filename%
@@ -58,7 +33,8 @@ before_build:
   # decompress it, shorten 7z output with FIND
   - 7z x %sdl_filename%  | FIND /V "ing  "
 
-  - git --version
+  - appveyor DownloadFile https://dl.google.com/firebase/sdk/cpp/firebase_cpp_sdk_6.11.0.zip
+  - tar -v -xf firebase_cpp_sdk_6.11.0.zip -C %APPVEYOR_BUILD_FOLDER%\yabause\src\qt\
 
   - ps: $cmake_args_dx += '-DDirectX_ERR_LIBRARY="C:\Program Files (x86)\Microsoft DirectX SDK\Lib\x86\DxErr.lib" '
   - ps: $cmake_args_dx += '-DDirectX_GUID_LIBRARY="C:\Program Files (x86)\Microsoft DirectX SDK\Lib\x86\dxguid.lib" '
@@ -69,79 +45,36 @@ before_build:
   - ps: ${env:PATH} += ';"C:/Program Files (x86)/Windows Kits/10/bin/10.0.18362.0/x64/"'
 
 build_script:
+  # generate project files or makefiles
   - cd %APPVEYOR_BUILD_FOLDER%\mini18n
   - mkdir build
   - cd build
   - echo %cmake_args% 
   - cmake -G "%generator%" %cmake_args% ..
   - msbuild mini18n.sln /p:configuration=Release /m /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - cd %APPVEYOR_BUILD_FOLDER%\yabause
+  - mkdir build
+  - cd build
   - echo %cmake_args% 
-  - cd C:\projects\yabause\mini18n
-  - mkdir build
-  - cd build
-  - cmake -G "%generator%" ..
-  - cd C:\projects\yabause\mini18n\build
-  - msbuild mini18n.sln /p:configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
-  - cd C:\projects\yabause\yabause
-  - mkdir build
-  - cd build
-  - cmake -G "%generator%" %cmake_args% ..
-  - cd C:\projects\yabause\yabause\build
-  - msbuild YabaSanshiro.sln /p:configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - cmake -G "%generator%" %cmake_args% -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib ..
+  - msbuild YabaSanshiro.sln /p:configuration=Release /m /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 # make a distributable package of the build output
 after_build:
-  #- ps: $git_hash_date = ${env:APPVEYOR_REPO_COMMIT}.substring(0, 7)
+  - cd %APPVEYOR_BUILD_FOLDER%\yabause\build
   - echo %key% | base64.exe -di > key.pfx
   - signtool.exe sign /tr http://timestamp.digicert.com /f key.pfx /p %keypass% ".\src\qt\Release\yabasanshiro.exe"
-  #- ps: ${env:yab_name} = "yabasanhiro-${git_hash_date}-${env:compiler_type}"
-  - ps: Get-ChildItem -Path ${env:QT_PATH}\bin\
+
+  # zip all output files and push the artifact, name it with the commit, date and compiler type
   - cmd: cpack -G ZIP 
   - cmd: cpack -G WIX -C Release 
 
 artifacts:
   - path: yabause\build\*.zip
   - path: yabause\build\*.msi
-  - ps: Copy-Item ${env:QT_PATH}\plugins\platforms\*.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\platforms\
-  - ps: Copy-Item ${env:APPVEYOR_BUILD_FOLDER}\mini18n\build\src\Release\mini18n.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
-  - ps: Copy-Item ${env:APPVEYOR_BUILD_FOLDER}\yabause\l10n\* ${env:APPVEYOR_BUILD_FOLDER}\win_template\trans\
-  - ps: Copy-Item ${env:APPVEYOR_BUILD_FOLDER}\yabause\build\src\qt\Release\yabasanshiro.exe ${env:APPVEYOR_BUILD_FOLDER}\win_template\
   
-  # zip all output files and push the artifact, name it with the commit, date and compiler type
-  #- ps: $git_hash_date = ${env:APPVEYOR_REPO_COMMIT}.substring(0, 7)
-  #- ps: $git_hash_date += "-"
-  #- ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
-  #- ps: ${env:yab_name} = "yabause-${git_hash_date}-${env:compiler_type}"
-  #- cmd: cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=%yab_name%
-  #- appveyor PushArtifact %yab_name%.zip
-
-#artifacts:
-#  - path: 'C:\projects\yabause\win_template\*'
-#    name: yabasanshiro_win32
-
-deploy:
-  release: YabaSanshiro-v$(appveyor_build_version)
-  description: 'Release description'
-  provider: GitHub
-  auth_token:
-    secure: ASYSKE9O9Mi8z1lO0iI6WNZozPPcNwIwIFN8cnY8uo8DD3U9aJamNo9+A/+QD+N7 # your encrypted token from GitHub
-  artifact: /.*\.zip/            # upload all NuGet packages to release assets
-  draft: false
-  prerelease: false
-  on:
-    branch: master                 # release from master branch only
-    appveyor_repo_tag: true        # deploy on tag push only
-
-  #- appveyor PushArtifact "C:/projects/yabause/yabause/build/src/qt/Debug/yabause.exe"
-
   # Upload build to yabause.org
   #- ps: ${env:yab_name_alt} = "yabause-latest-win64"
   #- ps: ${env:yab_name_alt2} = "yabause-${git_hash_date}-win64"
   #- if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] if not defined APPVEYOR_PULL_REQUEST_NUMBER curl --ftp-create-dirs -T %yab_name%.zip -u %YABUSR%:%YABPAS% ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/%yab_name_alt%.zip
   #- if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] curl --ftp-create-dirs -T %yab_name%.zip -u %YABUSR%:%YABPAS% ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/%yab_name_alt2%.zip
-on_success:
-  - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
-  - ps: ./send.ps1 success $env:WEB_HOOK
-on_failure:
-  - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
-  - ps: ./send.ps1 failure $env:WEB_HOOK
