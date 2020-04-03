@@ -288,6 +288,9 @@ void FASTCALL Cs2WriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16
                   return;
     case 0x0C:
     case 0x0E: Cs2Area->reg.HIRQMASK = val;
+    if (Cs2Area->reg.HIRQ & Cs2Area->reg.HIRQMASK){
+      ScuSendExternalInterrupt00();
+    }
                   return;
     case 0x18:
     case 0x1A: Cs2Area->status &= ~CDB_STAT_PERI;
