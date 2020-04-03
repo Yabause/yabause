@@ -1603,7 +1603,7 @@ int FASTCALL BiosHandleFunc(SH2_struct * sh)
 {
    int addr = (sh->regs.PC & 0xFFFFF);
    SH2GetRegisters(sh, &sh->regs);
-
+   sh->isInIt = 0;
    // Let's see if it's a bios function
    switch((addr - 0x200) >> 2)
    {
