@@ -1516,6 +1516,29 @@ int YglDrawBackScreen() {
   return 0;
 }
 
+u32 lineColOffBuf[2][704*256] = {{0},{0}};
+static int lineColOffBufdirty[2] = {0};
+
+u32 * YglGetLineColorOffsetPointer(int id, int start, int size){
+  return &lineColOffBuf[id][start*_Ygl->rwidth*4];
+}
+
+void YglSetLineColorOffset(u32 * pbuf, int start, int size, int id){
+  lineColOffBufdirty[id] = 1;
+  return;
+}
+
+void YglUpdateLineColorOffset(int id){
+  if (lineColOffBufdirty[id] !=0) {
+    u32* buf;
+    lineColOffBufdirty[id] = 0;
+    glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[id]);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_UNSIGNED_BYTE, &lineColOffBuf[id][0]);
+    glBindTexture(GL_TEXTURE_2D, 0 );
+  }
+  return;
+}
+
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
 int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs) {
@@ -1539,15 +1562,13 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
     YglMatrix vdp1Mat;
 
     YglLoadIdentity(&vdp1Mat);
+    YglUpdateLineColorOffset(0);
+    YglUpdateLineColorOffset(1);
 
     glBindVertexArray(_Ygl->vao);
 
     vdp2blit_prg = Ygl_uniformVDP2DrawFramebuffer(offsetcol, varVdp2Regs );
 
-    if (vdp1fb != NULL) {
-      glActiveTexture(GL_TEXTURE9);
-      glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
-    } else _Ygl->vdp1On[_Ygl->readframe] = 0;
 
   int gltext[19] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15, GL_TEXTURE16, GL_TEXTURE17, GL_TEXTURE18};
   int useLnclRBG0 = 0;
@@ -1559,6 +1580,12 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
       use_lncl_off[i] = (use_lncl_off[i]==_Ygl->linecolorcoef_tex[0])?1:2;
     }
   }
+
+  if (vdp1fb != NULL) {
+    glActiveTexture(GL_TEXTURE9);
+    glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
+  } else _Ygl->vdp1On[_Ygl->readframe] = 0;
+
 #ifdef _OGL3_
 #ifdef DEBUG_BLIT
     glBindFragDataLocation(vdp2blit_prg, 1, "topColor");

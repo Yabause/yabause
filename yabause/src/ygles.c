@@ -3637,30 +3637,6 @@ void YglUpdateColorRam() {
   return;
 }
 
-u32 * YglGetLineColorOffsetPointer(int id, int start, int size){
-  int error;
-  YglGenFrameBuffer();
-
-  glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[id]);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolorcoef_pbo[id]);
-  _Ygl->linecolorcoef_buf[id] = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, start*_Ygl->rwidth*4, size*_Ygl->rwidth*4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
-  return _Ygl->linecolorcoef_buf[id];
-}
-
-void YglSetLineColorOffset(u32 * pbuf, int start, int size, int id){
-
-  glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[id]);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolorcoef_pbo[id]);
-  glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, start, _Ygl->rwidth, size, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  _Ygl->linecolorcoef_buf[id] = NULL;
-  glBindTexture(GL_TEXTURE_2D, 0 );
-  return;
-}
-
 u32 * YglGetLineColorScreenPointer(){
   int error;
   if (_Ygl->linecolorscreen_tex == 0){
