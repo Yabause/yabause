@@ -70,7 +70,7 @@ static int opengl_version = 330;
 static int g_vidcoretype = VIDCORE_OGL;
 static int g_sh2coretype = 8;
 static int g_skipframe = 0;
-static int g_videoformattype = VIDEOFORMATTYPE_NTSC;
+static int g_videoformattype = -1;
 static int resolution_mode = 1;
 static int polygon_mode = PERSPECTIVE_CORRECTION;
 static int initial_resolution_mode = 0;
@@ -78,14 +78,15 @@ static int numthreads = 4;
 static int use_beetle_saves = 0;
 static int auto_select_cart = 0;
 static int use_cs = COMPUTE_RBG_OFF;
+static int wireframe_mode = 0;
 static bool service_enabled = false;
 static bool stv_mode = false;
 static bool all_devices_ready = false;
 static bool libretro_supports_bitmasks = false;
 static bool rendering_started = false;
 static bool one_frame_rendered = false;
-static int16_t libretro_input_bitmask[12] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
-static int pad_type[12] = {1,1,1,1,1,1,1,1,1,1,1,1};
+static int16_t libretro_input_bitmask[12] = {-1,};
+static int pad_type[12] = {RETRO_DEVICE_NONE,};
 static int multitap[2] = {0,0};
 static unsigned players = 7;
 
@@ -737,20 +738,11 @@ void retro_set_resolution()
    switch(resolution_mode)
    {
       case RES_ORIGINAL:
-         current_width = game_width;
-         current_height = game_height;
-         break;
       case RES_480p:
-         current_width = 640;
-         current_height = 480;
-         break;
       case RES_720p:
-         current_width = 1280;
-         current_height = 720;
-         break;
       case RES_1080p:
-         current_width = 1920;
-         current_height = 1080;
+         current_width = _Ygl->width;
+         current_height = _Ygl->height;
          break;
       case RES_NATIVE:
          current_width = 3840;
@@ -784,7 +776,8 @@ static void context_reset(void)
    {
       first_ctx_reset = 0;
       YabauseInit(&yinit);
-      YabauseSetVideoFormat(g_videoformattype);
+      if (g_videoformattype != -1)
+         YabauseSetVideoFormat(g_videoformattype);
       retro_set_resolution();
       OSDChangeCore(OSDCORE_DUMMY);
    }
@@ -921,6 +914,8 @@ void check_variables(void)
          g_videoformattype = VIDEOFORMATTYPE_NTSC;
       else if (strcmp(var.value, "PAL") == 0)
          g_videoformattype = VIDEOFORMATTYPE_PAL;
+      else
+         g_videoformattype = -1;
    }
 
    var.key = "kronos_skipframe";
@@ -1103,6 +1098,16 @@ void check_variables(void)
          use_cs = COMPUTE_RBG_OFF;
       else if (strcmp(var.value, "enabled") == 0)
          use_cs = COMPUTE_RBG_ON;
+   }
+
+   var.key = "kronos_wireframe_mode";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         wireframe_mode = 0;
+      else if (strcmp(var.value, "enabled") == 0)
+         wireframe_mode = 1;
    }
 
    var.key = "kronos_scanlines";
@@ -1429,6 +1434,7 @@ bool retro_load_game_common()
    yinit.buppath                 = bup_path;
    yinit.meshmode                = mesh_mode;
    yinit.use_cs                  = use_cs;
+   yinit.wireframe_mode          = wireframe_mode;
    yinit.skipframe               = g_skipframe;
 
    return true;
@@ -1606,7 +1612,10 @@ void retro_run(void)
       VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, scanlines);
       VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, mesh_mode);
       VIDCore->SetSettingValue(VDP_SETTING_COMPUTE_SHADER, use_cs);
-      YabauseSetVideoFormat(g_videoformattype);
+      VIDCore->SetSettingValue(VDP_SETTING_WIREFRAME, wireframe_mode);
+      // changing video format on the fly is causing issues
+      //if (g_videoformattype != -1)
+      //   YabauseSetVideoFormat(g_videoformattype);
       YabauseSetSkipframe(g_skipframe);
    }
 

@@ -597,8 +597,9 @@ static int LoadBinCue(const char *cuefilename, RFILE *iso_file)
 int infoFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void *user_data) {
     long offset;
     char name[1024];
+    ZipEntry *entry;
     offset = zip->tell(zip); // store current position
-    ZipEntry *entry = (ZipEntry*)user_data;
+    entry = (ZipEntry*)user_data;
 
    if (entry == NULL) exit(-1);
 
@@ -623,9 +624,9 @@ int infoFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void *u
        }
     } else {
       char *last = strrchr(filename, '/');
+      char* fileToSearch = entry->filename;
       if (last == NULL) last = filename;
       else last = last+1;
-      char* fileToSearch = entry->filename;
       if (strcmp(last, fileToSearch) == 0) {
         //File found
         entry->zipBuffer = NULL;
@@ -675,9 +676,9 @@ int deflateFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void
        }
     } else {
       char *last = strrchr(filename, '/');
+      char* fileToSearch = entry->filename;
       if (last == NULL) last = filename;
       else last = last+1;
-      char* fileToSearch = entry->filename;
       if (strcmp(last, fileToSearch) == 0) {
         if(jzReadLocalFileHeader(zip, header, name, sizeof(name))) {
           printf("Couldn't read local file header!\n");
@@ -745,6 +746,7 @@ static int LoadBinCueInZip(const char *filename, RFILE *fp)
    ZipEntry* tracktr;
    JZFile *zip;
    ZipEntry *cue;
+   int index = 0;
 
   const libretro_vfs_implementation_file *stream = filestream_get_vfs_handle(fp);
   zip = jzfile_from_stdio_file(stream->fp);
@@ -781,7 +783,6 @@ static int LoadBinCueInZip(const char *filename, RFILE *fp)
    if ((temp_buffer = (char *)calloc(size, 1)) == NULL)
       return -1;
    // Time to generate TOC
-   int index = 0;
    for (;;)
    {
       // Retrieve a line in cue
@@ -1480,7 +1481,7 @@ void BuildTOC()
 static int ISOCDInit(const char * iso) {
    char header[6];
    char *ext;
-   int ret;
+   int ret = -1;
    RFILE *iso_file;
    size_t num_read = 0;
    memset(isoTOC, 0xFF, 0xCC * 2);
@@ -1518,18 +1519,18 @@ static int ISOCDInit(const char * iso) {
       imgtype = IMG_MDS;
       ret = LoadMDS(iso, iso_file);
    }
-	else if (strcasecmp(ext, ".CCD") == 0)
-	{
-		// It's a CCD
-		imgtype = IMG_CCD;
-		ret = LoadCCD(iso, iso_file);
-	}
-  else if (strcasecmp(ext, ".CHD") == 0)
-  {
-    // It's a CCD
-    imgtype = IMG_CHD;
-    ret = LoadCHD(iso, iso_file);
-  }
+   else if (strcasecmp(ext, ".CCD") == 0)
+   {
+      // It's a CCD
+      imgtype = IMG_CCD;
+      ret = LoadCCD(iso, iso_file);
+   }
+   else if (strcasecmp(ext, ".CHD") == 0)
+   {
+      // It's a CCD
+      imgtype = IMG_CHD;
+      ret = LoadCHD(iso, iso_file);
+   }
    else
    {
       // Assume it's an ISO file
@@ -1819,6 +1820,7 @@ static int LoadCHD(const char *chd_filename, RFILE *iso_file)
 
   chd_error error = chd_open(chd_filename, CHD_OPEN_READ, NULL, &pChdInfo->chd);
   if (error != CHDERR_NONE) {
+    free(buf);
     return -1;
   }
 
