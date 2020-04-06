@@ -34,14 +34,14 @@ static vdp1cmd_struct* cmdVdp1;
 static int* nbCmd;
 static int* hasDrawingCmd;
 
-static int cmdRam_update_start = 0x0;
-static int cmdRam_update_end = 0x80000;
+static int cmdRam_update_start[2] = {0x0};
+static int cmdRam_update_end[2] = {0x80000};
 
 static int generateComputeBuffer(int w, int h);
 
 static GLuint compute_tex[2] = {0};
 static GLuint ssbo_cmd_ = 0;
-static GLuint ssbo_vdp1ram_ = 0;
+static GLuint ssbo_vdp1ram_[2] = {0};
 static GLuint ssbo_nbcmd_ = 0;
 static GLuint ssbo_vdp1access_ = 0;
 static GLuint prg_vdp1[NB_PRG] = {0};
@@ -163,12 +163,14 @@ static int generateComputeBuffer(int w, int h) {
   if (compute_tex[0] != 0) {
     glDeleteTextures(2,&compute_tex[0]);
   }
-	if (ssbo_vdp1ram_ != 0) {
-    glDeleteBuffers(1, &ssbo_vdp1ram_);
+	if (ssbo_vdp1ram_[0] != 0) {
+    glDeleteBuffers(2, &ssbo_vdp1ram_[0]);
 	}
 
-	glGenBuffers(1, &ssbo_vdp1ram_);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_);
+	glGenBuffers(2, &ssbo_vdp1ram_[0]);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_[0]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, 0x80000, NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_[1]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, 0x80000, NULL, GL_DYNAMIC_DRAW);
 
   if (ssbo_cmd_ != 0) {
@@ -213,7 +215,7 @@ static int generateComputeBuffer(int w, int h) {
   return 0;
 }
 
-u8 cmdBuffer[0x80000];
+u8 cmdBuffer[2][0x80000];
 
 vdp1cmd_struct cmdBufferToProcess[2000];
 int nbCmdToProcess = 0;
@@ -223,7 +225,7 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 	u32 dot;
 	int pos = (cmd->CMDSRCA * 8) & 0x7FFFF;
   u8 END = ((cmd->CMDPMOD & 0x80) != 0);
-	u8* buf = &cmdBuffer[0];
+	u8* buf = &cmdBuffer[_Ygl->drawframe][0];
 	switch ((cmd->CMDPMOD >> 3) & 0x7) {
     case 0:
     case 1:
@@ -242,8 +244,8 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 							//ColorLut
 							u32 addr = ((dot>>4) * 2 + cmd->CMDCOLR * 8);
 							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr);
-							if (cmdRam_update_start > addr) cmdRam_update_start = addr;
-							if (cmdRam_update_end < (addr + 2)) cmdRam_update_end = addr + 2;
+							if (cmdRam_update_start[_Ygl->drawframe] > addr) cmdRam_update_start[_Ygl->drawframe] = addr;
+							if (cmdRam_update_end[_Ygl->drawframe] < (addr + 2)) cmdRam_update_end[_Ygl->drawframe] = addr + 2;
 							T1WriteWord(buf, addr, val);
 						}
 					}
@@ -257,13 +259,13 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 							//ColorLut
 							u32 addr = ((dot&0xF) * 2 + cmd->CMDCOLR * 8);
 							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr);
-							if (cmdRam_update_start > addr) cmdRam_update_start = addr;
-							if (cmdRam_update_end < (addr + 2)) cmdRam_update_end = addr + 2;
+							if (cmdRam_update_start[_Ygl->drawframe] > addr) cmdRam_update_start[_Ygl->drawframe] = addr;
+							if (cmdRam_update_end[_Ygl->drawframe] < (addr + 2)) cmdRam_update_end[_Ygl->drawframe] = addr + 2;
 							T1WriteWord(buf, addr, val);
 						}
         	}
-					if (cmdRam_update_start > pos) cmdRam_update_start = pos;
-					if (cmdRam_update_end < (pos + 1)) cmdRam_update_end = pos + 1;
+					if (cmdRam_update_start[_Ygl->drawframe] > pos) cmdRam_update_start[_Ygl->drawframe] = pos;
+					if (cmdRam_update_end[_Ygl->drawframe] < (pos + 1)) cmdRam_update_end[_Ygl->drawframe] = pos + 1;
 					T1WriteByte(buf, pos, dot);
 					pos += 1;
 	    	}
@@ -283,8 +285,8 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 						else if ((dot == 0xFF) && !END) {
 							endcnt++;
 						}
-						if (cmdRam_update_start > pos) cmdRam_update_start = pos;
-						if (cmdRam_update_end < (pos + 1)) cmdRam_update_end = pos + 1;
+						if (cmdRam_update_start[_Ygl->drawframe] > pos) cmdRam_update_start[_Ygl->drawframe] = pos;
+						if (cmdRam_update_end[_Ygl->drawframe] < (pos + 1)) cmdRam_update_end[_Ygl->drawframe] = pos + 1;
 						T1WriteByte(buf, pos, dot);
 						pos += 1;
 		    	}
@@ -302,8 +304,8 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 					else if ((dot == 0x7FFF) && !END) {
 						endcnt++;
 					}
-					if (cmdRam_update_start > pos) cmdRam_update_start = pos;
-					if (cmdRam_update_end < (pos + 2)) cmdRam_update_end = pos + 2;
+					if (cmdRam_update_start[_Ygl->drawframe] > pos) cmdRam_update_start[_Ygl->drawframe] = pos;
+					if (cmdRam_update_end[_Ygl->drawframe] < (pos + 2)) cmdRam_update_end[_Ygl->drawframe] = pos + 2;
 					T1WriteWord(buf, pos, dot);
 					pos += 2;
 	    	}
@@ -348,7 +350,7 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 					pos += (cmd->h/2) * cmd->w*2 + cmd->w;
 					break;
 			}
-			cmd->COLOR[0] = cmdBuffer[pos];
+			cmd->COLOR[0] = cmdBuffer[_Ygl->drawframe][pos];
 			cmd->type = POLYLINE;
 			break;
 			case POLYGON:
@@ -520,12 +522,12 @@ void vdp1_set_directFB() {
 	}
 }
 void vdp1_setup(void) {
-	if (ssbo_vdp1ram_ == 0) return;
-	if (cmdRam_update_start < cmdRam_update_end) {
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, cmdRam_update_start, (cmdRam_update_end - cmdRam_update_start), (void*)(&cmdBuffer[cmdRam_update_start]));
-		cmdRam_update_start = 0x80000;
-		cmdRam_update_end = 0x0;
+	if (ssbo_vdp1ram_[_Ygl->drawframe] == 0) return;
+	if (cmdRam_update_start[_Ygl->drawframe] < cmdRam_update_end[_Ygl->drawframe]) {
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_[_Ygl->drawframe]);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, cmdRam_update_start[_Ygl->drawframe], (cmdRam_update_end[_Ygl->drawframe] - cmdRam_update_start[_Ygl->drawframe]), (void*)(&(cmdBuffer[_Ygl->drawframe])[cmdRam_update_start[_Ygl->drawframe]]));
+		cmdRam_update_start[_Ygl->drawframe] = 0x80000;
+		cmdRam_update_end[_Ygl->drawframe] = 0x0;
 	}
 }
 
@@ -571,7 +573,7 @@ void vdp1_compute() {
 
 	glBindImageTexture(0, compute_tex[_Ygl->drawframe], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_vdp1ram_);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_vdp1ram_[_Ygl->drawframe]);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_nbcmd_);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_cmd_);
 	glUniform2f(6, tex_ratiow, tex_ratioh);
