@@ -70,6 +70,8 @@ void ScuDeInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuReset(void) {
+   if (ScuRegs == NULL) return;
+
    ScuRegs->D0AD = ScuRegs->D1AD = ScuRegs->D2AD = 0x101;
    ScuRegs->D0EN = ScuRegs->D1EN = ScuRegs->D2EN = 0x0;
    ScuRegs->D0MD = ScuRegs->D1MD = ScuRegs->D2MD = 0x7;
@@ -83,6 +85,7 @@ void ScuReset(void) {
 
    ScuRegs->IMS = 0xBFFF;
    ScuRegs->IST = 0x0;
+   ScuRegs->ITEdge = 0x0;
 
    ScuRegs->AIACK = 0x0;
    ScuRegs->ASR0 = ScuRegs->ASR1 = 0x0;
@@ -853,10 +856,8 @@ INLINE void ScuTimer1Exec( u32 timing ) {
   if (ScuRegs->timer1_counter > 0) {
     ScuRegs->timer1_counter = (ScuRegs->timer1_counter - (timing >> 1));
     if (ScuRegs->timer1_counter <= 0) {
-      ScuRegs->timer1_set = 1;
-      if ((ScuRegs->T1MD & 0x100) == 0) {
-        ScuSendTimer1();
-      }else if (ScuRegs->timer0_set == 1) {
+      // ScuRegs->timer1_set = 1;
+      if (((ScuRegs->T1MD & 0x100) == 0) ||  (ScuRegs->timer0_set == 1)){
         ScuSendTimer1();
       }
     }
@@ -865,7 +866,7 @@ INLINE void ScuTimer1Exec( u32 timing ) {
 
 //////////////////////////////////////////////////////////////////////////////
 void ScuExec(u32 timing) {
-  ScuTestInterruptMask();
+  // ScuTestInterruptMask();
    if ( ScuRegs->T1MD & 0x1 ){
      if ((ScuRegs->T1MD & 0x80) == 0) {
        ScuTimer1Exec(timing);
@@ -2167,12 +2168,89 @@ u32 FASTCALL ScuReadLong(SH2_struct *sh, u8* mem, u32 addr) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+struct intCtrl {
+  int vector;
+  int mask;
+  int status;
+  int level;
+  int clear;
+};
+
+enum {
+  VBLANK_IN = 0,
+  VBLANK_OUT,
+  HBLANK_IN,
+  TIMER_0,
+  TIMER_1,
+  DSP_END,
+  SOUND_REQ,
+  SYS_MANAGER,
+  PAD_INT,
+  EXT_00,
+  EXT_01,
+  EXT_02,
+  EXT_03,
+  LVL2_DMA,
+  LVL1_DMA,
+  LVL0_DMA,
+  EXT_04,
+  EXT_05,
+  EXT_06,
+  EXT_07,
+  DMA_ILL,
+  SPRITE_END,
+  EXT_08,
+  EXT_09,
+  EXT_10,
+  EXT_11,
+  EXT_12,
+  EXT_13,
+  EXT_14,
+  EXT_15
+};
+
+//SCU ST-97-R5-072694 p27
+struct intCtrl ScuInterrupt[30] = {
+  {0x40, 0x0001, 0x00000001, 0xF, 0x0}, //VBlankIn
+  {0x41, 0x0002, 0x00000002, 0xE, 0x0}, //VBlankOut
+  {0x42, 0x0004, 0x00000004, 0xD, 0x0}, //HBlankin
+  {0x43, 0x0008, 0x00000008, 0xC, 0x0}, //Timer0
+  {0x44, 0x0010, 0x00000010, 0xB, 0x0}, //Timer1
+  {0x45, 0x0020, 0x00000020, 0xA, 0x0}, //DSP end
+  {0x46, 0x0040, 0x00000040, 0x9, 0x0}, //SoundRequest
+  {0x47, 0x0080, 0x00000080, 0x8, 0x0}, //System Manager
+  {0x48, 0x0100, 0x00000100, 0x8, 0x0}, //PAD Interrupt
+  {0x50, 0x8000, 0x00010000, 0x7, 0x0}, //External 00
+  {0x51, 0x8000, 0x00020000, 0x7, 0x0}, //External 01
+  {0x52, 0x8000, 0x00040000, 0x7, 0x0}, //External 02
+  {0x53, 0x8000, 0x00080000, 0x7, 0x0}, //External 03
+  {0x49, 0x0200, 0x00000200, 0x6, 0x0}, //Level-2 DMA End
+  {0x4A, 0x0400, 0x00000400, 0x6, 0x0}, //Level-1 DMA End
+  {0x4B, 0x0800, 0x00000800, 0x5, 0x0}, //Level-0 DMA End
+  {0x54, 0x8000, 0x00100000, 0x4, 0x0}, //External 04
+  {0x55, 0x8000, 0x00200000, 0x4, 0x0}, //External 05
+  {0x56, 0x8000, 0x00400000, 0x4, 0x0}, //External 06
+  {0x57, 0x8000, 0x00800000, 0x4, 0x0}, //External 07
+  {0x4C, 0x1000, 0x00001000, 0x3, 0x0}, //DMA-illegal
+  {0x4D, 0x2000, 0x00002000, 0x2, 0x0}, //Sprite Draw End
+  {0x58, 0x8000, 0x01000000, 0x1, 0x0}, //External 08
+  {0x59, 0x8000, 0x02000000, 0x1, 0x0}, //External 09
+  {0x5A, 0x8000, 0x04000000, 0x1, 0x0}, //External 10
+  {0x5B, 0x8000, 0x08000000, 0x1, 0x0}, //External 11
+  {0x5C, 0x8000, 0x10000000, 0x1, 0x0}, //External 12
+  {0x5D, 0x8000, 0x20000000, 0x1, 0x0}, //External 13
+  {0x5E, 0x8000, 0x40000000, 0x1, 0x0}, //External 14
+  {0x5F, 0x8000, 0x80000000, 0x1, 0x0}, //External 15
+
+};
 
 void FASTCALL ScuWriteByte(SH2_struct *sh, u8* mem, u32 addr, u8 val) {
    addr &= 0xFF;
    switch(addr) {
       case 0xA7:
-         ScuRegs->IST &= (0xFFFFFF00 | val); // double check this
+         ScuRegs->IST &= ~(val); // double check this
+         ScuRegs->ITEdge &= ~(val);
+         ScuTestInterruptMask();
          return;
       default:
          LOG("Unhandled SCU Register byte write %08X\n", addr);
@@ -2191,8 +2269,7 @@ void FASTCALL ScuWriteWord(SH2_struct *sh, u8* mem, u32 addr, UNUSED u16 val) {
 
 void FASTCALL ScuWriteLong(SH2_struct *sh, u8* mem, u32 addr, u32 val) {
    addr &= 0xFF;
-  //if (addr!= 0xA0)
-  //LOG("scu: write %08X:%08X @ %08X", addr, val, CurrentSH2->regs.PC);
+  LOG("scu: write %08X:%08X\n", addr, val);
    switch(addr) {
       case 0:
          ScuRegs->D0R = val;
@@ -2337,7 +2414,7 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u8* mem, u32 addr, u32 val) {
          break;
       case 0x94:
          ScuRegs->T1S = val;
-         ScuRegs->timer1_set = 1;
+         // ScuRegs->timer1_set = 1;
          ScuRegs->timer1_preset = val;
          break;
       case 0x98:
@@ -2345,11 +2422,11 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u8* mem, u32 addr, u32 val) {
          break;
       case 0xA0:
          ScuRegs->IMS = val;
-         //LOG("scu\t: IMS = %X", val);
          ScuTestInterruptMask();
          break;
       case 0xA4:
-         ScuRegs->IST &= val;
+         ScuRegs->IST &= ~val;
+         ScuRegs->ITEdge &= ~val;
          ScuTestInterruptMask();
          break;
       case 0xA8:
@@ -2375,7 +2452,7 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u8* mem, u32 addr, u32 val) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void sendSlave(vector, level) {
+void sendSlave(int vector, int level) {
   if (yabsys.IsSSH2Running) {
     if (vector == 0x40)
     {
@@ -2387,139 +2464,52 @@ void sendSlave(vector, level) {
     }
   }
 }
-int ScuTestInterruptMaskLoop()
+void ScuTestInterruptMask()
 {
-   unsigned int i, i2;
-
+   int mask = 0;
+   int IRLSet = 0;
    // Handle SCU interrupts
-   for (i = 0; i < ScuRegs->NumberOfInterrupts; i++)
+   for (int i = 0; i <= EXT_15; i++)
    {
-     u32 mask = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].mask;
+     if ((ScuRegs->ITEdge & ScuInterrupt[i].status) != 0) {
+       mask = ScuInterrupt[i].mask;
+       // A-BUS?
+       if (mask == 0x8000){
+         if (ScuRegs->AIACK){
+           if (!(ScuRegs->IMS & 0x8000)) {
+             //Looks like the External Interrupt might be using D0-7 input pins of the Sh2
+             //In that case, only half external interrupt can be sent...
+             //To be checked on real HW.
 
-     // A-BUS?
-     if (mask & 0xFFFF0000){
-       if (ScuRegs->AIACK){
-         ScuRegs->AIACK = 0;
-         if (!(ScuRegs->IMS & 0x8000)) {
-           int vector = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].vector;
-           int level = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].level;
-           SH2SendInterrupt(MSH2, vector, level);
-           sendSlave(vector, level);
-           ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].statusbit;
-           // Shorten list
-           for (i2 = ScuRegs->NumberOfInterrupts - 1 - i; i2 < (ScuRegs->NumberOfInterrupts - 1); i2++)
-             memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i2 + 1], sizeof(scuinterrupt_struct));
-
-           ScuRegs->NumberOfInterrupts--;
-           ScuRegs->AIACK = 0;
-           return 1;
+             //A-Bus interrupt are only sent to master SH2
+             SH2SendInterrupt(MSH2, ScuInterrupt[i].vector, ScuInterrupt[i].level);
+             ScuRegs->ITEdge &= ~ScuInterrupt[i].status;
+           }
          }
-       }
-     }else if (!(ScuRegs->IMS & mask)) {
-         SH2SendInterrupt(MSH2, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].level);
-         sendSlave(ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].level);
-         ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].statusbit;
-
-         // Shorten list
-         for (i2 = ScuRegs->NumberOfInterrupts-1-i; i2 < (ScuRegs->NumberOfInterrupts-1); i2++)
-            memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i2+1], sizeof(scuinterrupt_struct));
-
-         ScuRegs->NumberOfInterrupts--;
-         return 1;
-         break;
-      }
-   }
-   return 0;
-}
-
-void ScuTestInterruptMask() {
-  while (ScuTestInterruptMaskLoop() != 0);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ScuRemoveInterrupt(u8 vector, u8 level) {
-  u32 i, i2;
-  int hit = -1;
-
-  for (i = 0; i < ScuRegs->NumberOfInterrupts; i++) {
-    if (ScuRegs->interrupts[i].vector == vector) {
-      ScuRegs->interrupts[i].level = 0;
-      ScuRegs->interrupts[i].vector = 0;
-      hit = i;
-      break;
-    }
-  }
-
-  if (hit != -1) {
-    i2 = 0;
-    for (i = 0; i < ScuRegs->NumberOfInterrupts; i++) {
-      if (i != hit) {
-        ScuRegs->interrupts[i2].level = ScuRegs->interrupts[i].level;
-        ScuRegs->interrupts[i2].vector = ScuRegs->interrupts[i].vector;
-        i2++;
-      }
-    }
-    ScuRegs->NumberOfInterrupts--;
-  }
-}
-
-static void ScuQueueInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit)
-{
-   u32 i, i2;
-   scuinterrupt_struct tmp;
-
-   // Make sure interrupt doesn't already exist
-   for (i = 0; i < ScuRegs->NumberOfInterrupts; i++)
-   {
-      if (ScuRegs->interrupts[i].vector == vector)
-         return;
-   }
-
-   ScuRegs->interrupts[ScuRegs->NumberOfInterrupts].vector = vector;
-   ScuRegs->interrupts[ScuRegs->NumberOfInterrupts].level = level;
-   ScuRegs->interrupts[ScuRegs->NumberOfInterrupts].mask = mask;
-   ScuRegs->interrupts[ScuRegs->NumberOfInterrupts].statusbit = statusbit;
-   ScuRegs->NumberOfInterrupts++;
-
-   // Sort interrupts
-   for (i = 0; i < (ScuRegs->NumberOfInterrupts-1); i++)
-   {
-      for (i2 = i+1; i2 < ScuRegs->NumberOfInterrupts; i2++)
-      {
-         if (ScuRegs->interrupts[i].level > ScuRegs->interrupts[i2].level)
-         {
-            memcpy(&tmp, &ScuRegs->interrupts[i], sizeof(scuinterrupt_struct));
-            memcpy(&ScuRegs->interrupts[i], &ScuRegs->interrupts[i2], sizeof(scuinterrupt_struct));
-            memcpy(&ScuRegs->interrupts[i2], &tmp, sizeof(scuinterrupt_struct));
-         }
+       }else if ((!(ScuRegs->IMS & mask)) && (IRLSet == 0)) {
+           IRLSet = 1;
+           ScuRegs->ITEdge &= ~ScuInterrupt[i].status;
+           SH2SendInterrupt(MSH2, ScuInterrupt[i].vector, ScuInterrupt[i].level);
+           sendSlave(ScuInterrupt[i].vector, ScuInterrupt[i].level);
+        }
       }
    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
+static INLINE void SetInterrupt(u8 id) {
+  int statusbit = ScuInterrupt[id].status;
+  int mask = ScuInterrupt[id].mask;
+  int vector = ScuInterrupt[id].vector;
+  int level = ScuInterrupt[id].level;
+  int clearbit = ScuInterrupt[id].clear;
 
-  // A-BUS?
-  if ((mask & 0xFFFF0000) ){
-    if (ScuRegs->AIACK){
-      ScuRegs->AIACK = 0;
-      if (!(ScuRegs->IMS & 0x8000)){
-        SH2SendInterrupt(MSH2, vector, level);
-        sendSlave(vector, level);
-      }
-    }
-  }else if (!(ScuRegs->IMS & mask)){
-    //if (vector != 0x41) LOG("INT %d", vector);
-    SH2SendInterrupt(MSH2, vector, level);
-    sendSlave(vector, level);
-  }
-  else
-   {
-      ScuQueueInterrupt(vector, level, mask, statusbit);
-      ScuRegs->IST |= statusbit;
-   }
+   ScuRegs->IST |= statusbit;
+   ScuRegs->ITEdge |= statusbit;
+   ScuRegs->ITEdge &= ~clearbit;
+
+   ScuTestInterruptMask();
 }
 
 // 3.2 DMA control register
@@ -2560,32 +2550,21 @@ static INLINE void ScuChekIntrruptDMA(int id){
   }
 }
 
-void ScuRemoveTimer0();
-void ScuRemoveTimer1();
-
-void ScuRemoveVBlankOut() {
-  ScuRemoveInterrupt(0x41, 0x0E);
-  SH2RemoveInterrupt(MSH2, 0x41, 0x0E);
-}
-
-void ScuRemoveVBlankIN() {
-  ScuRemoveInterrupt(0x40, 0x0F);
-  SH2RemoveInterrupt(MSH2, 0x40, 0x0F);
-  if (yabsys.IsSSH2Running) SH2RemoveInterrupt(SSH2, 0x43, 0x0F);
-}
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankIN(void) {
-   ScuRemoveVBlankOut();
-   SendInterrupt(0x40, 0xF, 0x0001, 0x0001);
+   SetInterrupt(VBLANK_IN);
+   // if (ScuRegs->IST & ScuInterrupt[VBLANK_OUT].status) ScuInterrupt[VBLANK_IN].clear |= ScuInterrupt[VBLANK_OUT].status;
+   // else ScuInterrupt[VBLANK_IN].clear &= ~ScuInterrupt[VBLANK_OUT].status;
    ScuChekIntrruptDMA(0);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankOUT(void) {
-   ScuRemoveVBlankIN();
-   SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
+   SetInterrupt(VBLANK_OUT);
+   // if (ScuRegs->IST & ScuInterrupt[VBLANK_IN].status) ScuInterrupt[VBLANK_OUT].clear |= ScuInterrupt[VBLANK_IN].status;
+   // else ScuInterrupt[VBLANK_OUT].clear &= ~ScuInterrupt[VBLANK_IN].status;
    ScuRegs->timer0 = 0;
    if (ScuRegs->T1MD & 0x1)
    {
@@ -2595,7 +2574,6 @@ void ScuSendVBlankOUT(void) {
      }
      else {
        ScuRegs->timer0_set = 0;
-       // ScuRemoveTimer0();
      }
    }
    ScuChekIntrruptDMA(1);
@@ -2605,7 +2583,7 @@ void ScuSendVBlankOUT(void) {
 
 
 void ScuSendHBlankIN(void) {
-   SendInterrupt(0x42, 0xD, 0x0004, 0x0004);
+  SetInterrupt(HBLANK_IN);
    ScuRegs->timer0++;
    if (ScuRegs->T1MD & 0x1)
    {
@@ -2616,14 +2594,12 @@ void ScuSendHBlankIN(void) {
      }
      else {
        ScuRegs->timer0_set = 0;
-       // ScuRemoveTimer0();
      }
 
-     if (ScuRegs->timer1_set == 1) {
-        ScuRegs->timer1_set = 0;
+     // if (ScuRegs->timer1_set == 1) {
+        // ScuRegs->timer1_set = 0;
         ScuRegs->timer1_counter = ScuRegs->timer1_preset;
-        ScuRemoveTimer1();
-      }
+      // }
    }
    ScuChekIntrruptDMA(2);
 }
@@ -2631,178 +2607,167 @@ void ScuSendHBlankIN(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendTimer0(void) {
-   SendInterrupt(0x43, 0xC, 0x0008, 0x00000008);
+   SetInterrupt(TIMER_0);
    ScuChekIntrruptDMA(3);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendTimer1(void) {
-   SendInterrupt(0x44, 0xB, 0x0010, 0x00000010);
+   SetInterrupt(TIMER_1);
    ScuChekIntrruptDMA(4);
-}
-
-void ScuRemoveTimer0(void) {
-  ScuRemoveInterrupt(0x43, 0x0C);
-  SH2RemoveInterrupt(MSH2, 0x43, 0x0C);
-}
-
-
-void ScuRemoveTimer1(void) {
-  ScuRemoveInterrupt(0x44, 0x0B);
-  SH2RemoveInterrupt(MSH2, 0x44, 0xB);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendDSPEnd(void) {
-   SendInterrupt(0x45, 0xA, 0x0020, 0x00000020);
+   SetInterrupt(DSP_END);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendSoundRequest(void) {
-   SendInterrupt(0x46, 0x9, 0x0040, 0x00000040);
+   SetInterrupt(SOUND_REQ);
    ScuChekIntrruptDMA(5);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendSystemManager(void) {
-   SendInterrupt(0x47, 0x8, 0x0080, 0x00000080);
+   SetInterrupt(SYS_MANAGER);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendPadInterrupt(void) {
-   SendInterrupt(0x48, 0x8, 0x0100, 0x00000100);
+   SetInterrupt(PAD_INT);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendLevel2DMAEnd(void) {
-   SendInterrupt(0x49, 0x6, 0x0200, 0x00000200);
+   SetInterrupt(LVL2_DMA);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendLevel1DMAEnd(void) {
-   SendInterrupt(0x4A, 0x6, 0x0400, 0x00000400);
+   SetInterrupt(LVL1_DMA);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendLevel0DMAEnd(void) {
-   SendInterrupt(0x4B, 0x5, 0x0800, 0x00000800);
+   SetInterrupt(LVL0_DMA);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendDMAIllegal(void) {
-   SendInterrupt(0x4C, 0x3, 0x1000, 0x00001000);
+   SetInterrupt(DMA_ILL);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendDrawEnd(void) {
-   SendInterrupt(0x4D, 0x2, 0x2000, 0x00002000);
+   SetInterrupt(SPRITE_END);
    ScuChekIntrruptDMA(6);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt00(void) {
-   SendInterrupt(0x50, 0x7, 0x8000, 0x00010000);
+   SetInterrupt(EXT_00);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt01(void) {
-   SendInterrupt(0x51, 0x7, 0x8000, 0x00020000);
+   SetInterrupt(EXT_01);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt02(void) {
-   SendInterrupt(0x52, 0x7, 0x8000, 0x00040000);
+   SetInterrupt(EXT_02);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt03(void) {
-   SendInterrupt(0x53, 0x7, 0x8000, 0x00080000);
+   SetInterrupt(EXT_03);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt04(void) {
-   SendInterrupt(0x54, 0x4, 0x8000, 0x00100000);
+   SetInterrupt(EXT_04);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt05(void) {
-   SendInterrupt(0x55, 0x4, 0x8000, 0x00200000);
+   SetInterrupt(EXT_05);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt06(void) {
-   SendInterrupt(0x56, 0x4, 0x8000, 0x00400000);
+   SetInterrupt(EXT_06);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt07(void) {
-   SendInterrupt(0x57, 0x4, 0x8000, 0x00800000);
+   SetInterrupt(EXT_07);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt08(void) {
-   SendInterrupt(0x58, 0x1, 0x8000, 0x01000000);
+   SetInterrupt(EXT_08);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt09(void) {
-   SendInterrupt(0x59, 0x1, 0x8000, 0x02000000);
+   SetInterrupt(EXT_09);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt10(void) {
-   SendInterrupt(0x5A, 0x1, 0x8000, 0x04000000);
+   SetInterrupt(EXT_10);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt11(void) {
-   SendInterrupt(0x5B, 0x1, 0x8000, 0x08000000);
+   SetInterrupt(EXT_11);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt12(void) {
-   SendInterrupt(0x5C, 0x1, 0x8000, 0x10000000);
+   SetInterrupt(EXT_12);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt13(void) {
-   SendInterrupt(0x5D, 0x1, 0x8000, 0x20000000);
+   SetInterrupt(EXT_13);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt14(void) {
-   SendInterrupt(0x5E, 0x1, 0x8000, 0x40000000);
+   SetInterrupt(EXT_14);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendExternalInterrupt15(void) {
-   SendInterrupt(0x5F, 0x1, 0x8000, 0x80000000);
+   SetInterrupt(EXT_15);
 }
 
 //////////////////////////////////////////////////////////////////////////////

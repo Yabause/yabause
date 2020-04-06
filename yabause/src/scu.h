@@ -105,6 +105,8 @@ typedef struct
    s32 dma1_time;
    s32 dma2_time;
 
+   s32 ITEdge;
+
 } Scu;
 
 extern Scu * ScuRegs;

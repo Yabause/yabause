@@ -1230,6 +1230,7 @@ void YabauseSpeedySetup(void)
    ScuRegs->D1AD = ScuRegs->D2AD = 0;
    ScuRegs->D0EN = 0x101;
    ScuRegs->IST = 0x2006;
+   ScuRegs->ITEdge = 0x2006;
    ScuRegs->AIACK = 0x1;
    ScuRegs->ASR0 = ScuRegs->ASR1 = 0x1FF01FF0;
    ScuRegs->AREF = 0x1F;
