@@ -524,7 +524,7 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
   if (am != 0) {
     struct_size += 16 - am;
   }
-	if (vdp1_generate_run == NULL) {
+	if (vdp1_generate_run == 0) {
 		vdp1_generate_run = 1;
 		cmdq[0] = YabThreadCreateQueue(512);
 		cmdq[1] = YabThreadCreateQueue(512);
