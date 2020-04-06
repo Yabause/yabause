@@ -2425,8 +2425,8 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u8* mem, u32 addr, u32 val) {
          ScuTestInterruptMask();
          break;
       case 0xA4:
-         ScuRegs->IST &= ~val;
-         ScuRegs->ITEdge &= ~val;
+         ScuRegs->IST &= val;
+         ScuRegs->ITEdge &= val;
          ScuTestInterruptMask();
          break;
       case 0xA8:
