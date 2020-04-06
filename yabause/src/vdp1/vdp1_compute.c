@@ -46,6 +46,9 @@ static GLuint ssbo_nbcmd_ = 0;
 static GLuint ssbo_vdp1access_ = 0;
 static GLuint prg_vdp1[NB_PRG] = {0};
 
+static YabEventQueue *cmdq[2] = {NULL};
+static int vdp1_generate_run = 0;
+
 static u32 write_fb[512*256];
 
 static const GLchar * a_prg_vdp1[NB_PRG][4] = {
@@ -220,12 +223,12 @@ u8 cmdBuffer[2][0x80000];
 vdp1cmd_struct cmdBufferToProcess[2000];
 int nbCmdToProcess = 0;
 
-void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
+void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 	int endcnt;
 	u32 dot;
 	int pos = (cmd->CMDSRCA * 8) & 0x7FFFF;
   u8 END = ((cmd->CMDPMOD & 0x80) != 0);
-	u8* buf = &cmdBuffer[_Ygl->drawframe][0];
+	u8* buf = &cmdBuffer[id][0];
 	switch ((cmd->CMDPMOD >> 3) & 0x7) {
     case 0:
     case 1:
@@ -244,8 +247,8 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 							//ColorLut
 							u32 addr = ((dot>>4) * 2 + cmd->CMDCOLR * 8);
 							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr);
-							if (cmdRam_update_start[_Ygl->drawframe] > addr) cmdRam_update_start[_Ygl->drawframe] = addr;
-							if (cmdRam_update_end[_Ygl->drawframe] < (addr + 2)) cmdRam_update_end[_Ygl->drawframe] = addr + 2;
+							if (cmdRam_update_start[id] > addr) cmdRam_update_start[id] = addr;
+							if (cmdRam_update_end[id] < (addr + 2)) cmdRam_update_end[id] = addr + 2;
 							T1WriteWord(buf, addr, val);
 						}
 					}
@@ -259,13 +262,13 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 							//ColorLut
 							u32 addr = ((dot&0xF) * 2 + cmd->CMDCOLR * 8);
 							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr);
-							if (cmdRam_update_start[_Ygl->drawframe] > addr) cmdRam_update_start[_Ygl->drawframe] = addr;
-							if (cmdRam_update_end[_Ygl->drawframe] < (addr + 2)) cmdRam_update_end[_Ygl->drawframe] = addr + 2;
+							if (cmdRam_update_start[id] > addr) cmdRam_update_start[id] = addr;
+							if (cmdRam_update_end[id] < (addr + 2)) cmdRam_update_end[id] = addr + 2;
 							T1WriteWord(buf, addr, val);
 						}
         	}
-					if (cmdRam_update_start[_Ygl->drawframe] > pos) cmdRam_update_start[_Ygl->drawframe] = pos;
-					if (cmdRam_update_end[_Ygl->drawframe] < (pos + 1)) cmdRam_update_end[_Ygl->drawframe] = pos + 1;
+					if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+					if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
 					T1WriteByte(buf, pos, dot);
 					pos += 1;
 	    	}
@@ -285,8 +288,8 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 						else if ((dot == 0xFF) && !END) {
 							endcnt++;
 						}
-						if (cmdRam_update_start[_Ygl->drawframe] > pos) cmdRam_update_start[_Ygl->drawframe] = pos;
-						if (cmdRam_update_end[_Ygl->drawframe] < (pos + 1)) cmdRam_update_end[_Ygl->drawframe] = pos + 1;
+						if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+						if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
 						T1WriteByte(buf, pos, dot);
 						pos += 1;
 		    	}
@@ -304,14 +307,39 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 					else if ((dot == 0x7FFF) && !END) {
 						endcnt++;
 					}
-					if (cmdRam_update_start[_Ygl->drawframe] > pos) cmdRam_update_start[_Ygl->drawframe] = pos;
-					if (cmdRam_update_end[_Ygl->drawframe] < (pos + 2)) cmdRam_update_end[_Ygl->drawframe] = pos + 2;
+					if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+					if (cmdRam_update_end[id] < (pos + 2)) cmdRam_update_end[id] = pos + 2;
 					T1WriteWord(buf, pos, dot);
 					pos += 2;
 	    	}
 			}
 	    break;
 	  }
+}
+
+void vdp1GenerateBuffer_async_0(void *p){
+	while(vdp1_generate_run != 0){
+		vdp1cmd_struct* cmd = (vdp1cmd_struct*)YabWaitEventQueue(cmdq[0]);
+		if (cmd != NULL){
+			vdp1GenerateBuffer_sync(cmd, 0);
+			free(cmd);
+		}
+	}
+}
+void vdp1GenerateBuffer_async_1(void *p){
+	while(vdp1_generate_run != 0){
+		vdp1cmd_struct* cmd = (vdp1cmd_struct*)YabWaitEventQueue(cmdq[1]);
+		if (cmd != NULL){
+			vdp1GenerateBuffer_sync(cmd, 1);
+			free(cmd);
+		}
+	}
+}
+
+void vdp1GenerateBuffer(vdp1cmd_struct* cmd){
+	vdp1cmd_struct* cmdToSent = malloc(sizeof(vdp1cmd_struct));
+	memcpy(cmdToSent, cmd, sizeof(vdp1cmd_struct));
+	YabAddEventQueue(cmdq[_Ygl->drawframe], cmdToSent);
 }
 
 void regenerateVdp1Buffer(void) {
@@ -496,6 +524,14 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
   if (am != 0) {
     struct_size += 16 - am;
   }
+	if (vdp1_generate_run == NULL) {
+		vdp1_generate_run = 1;
+		cmdq[0] = YabThreadCreateQueue(512);
+		cmdq[1] = YabThreadCreateQueue(512);
+		YabThreadStart(YAB_THREAD_CS_CMD_0, vdp1GenerateBuffer_async_0, 0);
+		YabThreadStart(YAB_THREAD_CS_CMD_1, vdp1GenerateBuffer_async_1, 0);
+	}
+
   work_groups_x = _Ygl->vdp1width / local_size_x;
   work_groups_y = _Ygl->vdp1height / local_size_y;
   generateComputeBuffer(_Ygl->vdp1width, _Ygl->vdp1height);

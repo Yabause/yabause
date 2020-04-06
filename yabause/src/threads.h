@@ -70,6 +70,8 @@ enum {
    YAB_THREAD_VDP2_NBG0,
    YAB_THREAD_VDP2_RBG0,
    YAB_THREAD_VDP2_RBG1,
+   YAB_THREAD_CS_CMD_0,
+   YAB_THREAD_CS_CMD_1,
    YAB_NUM_THREADS      // Total number of subthreads
 };
 
@@ -119,7 +121,7 @@ void YabAddEventQueue( YabEventQueue * queue_t, void* evcode );
 
 // YabWaitEventQueue: recive event
 void* YabWaitEventQueue( YabEventQueue * queue_t );
- 
+
 int YaGetQueueSize(YabEventQueue * queue_t);
 
 void YabWaitEmptyQueue( YabEventQueue * queue_t );
