@@ -60,7 +60,7 @@ void SH2HandleInterrupts(SH2_struct *context)
     {
       u32 oldpc = context->regs.PC;
       u32 persr = context->regs.SR.part.I;
-      if (context->interrupts[context->NumberOfInterrupts - 1].vector != 0xB) context->isInIt = context->regs.PC; //NMI has a special handling
+      // if (context->interrupts[context->NumberOfInterrupts - 1].vector != 0xB) context->isInIt = context->regs.PC; //NMI has a special handling
       context->regs.R[15] -= 4;
       SH2MappedMemoryWriteLong(context, context->regs.R[15], context->regs.SR.all);
       context->regs.R[15] -= 4;
