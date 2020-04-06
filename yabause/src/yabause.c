@@ -356,6 +356,9 @@ int YabauseInit(yabauseinit_struct *init)
    else {
      yabsys.emulatebios = 1;
      T2WriteLong(BiosRom, 0x04, 0x06002000); // set base stack pointer
+     T2WriteByte(BiosRom,0x00000013, 0x22);  // patch for SAKURA TAISEN
+     T2WriteLong(BiosRom,0x00000018, 0x20000222); // patch for SAKURA TAISEN
+     T2WriteLong(BiosRom,0x00000220, 0x277AAFFE); // patch for SAKURA TAISEN
    }
 
    yabsys.usequickload = 0;
