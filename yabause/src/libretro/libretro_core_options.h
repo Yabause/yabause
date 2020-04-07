@@ -223,42 +223,6 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "disabled"
    },
-   {
-      "kronos_filter_mode",
-      "Filter Mode",
-      "It is recommended to use libretro settings instead.",
-      {
-         { "none", NULL },
-         { "bilinear", NULL },
-         { "bicubic", NULL },
-         { NULL, NULL},
-      },
-      "none"
-   },
-   {
-      "kronos_upscale_mode",
-      "Upscale Mode",
-      "It is recommended to use libretro shaders instead.",
-      {
-         { "none", NULL },
-         { "hq4x", NULL },
-         { "4xbrz", NULL },
-         { "2xbrz", NULL },
-         { NULL, NULL},
-      },
-      "none"
-   },
-   {
-      "kronos_scanlines",
-      "Scanlines",
-      "It is recommended to use libretro shaders instead.",
-      {
-         { "disabled", NULL },
-         { "enabled", NULL },
-         { NULL, NULL},
-      },
-      "disabled"
-   },
    { NULL, NULL, NULL, {{0}}, NULL },
 };
 
