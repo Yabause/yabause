@@ -738,11 +738,20 @@ void retro_set_resolution()
    switch(resolution_mode)
    {
       case RES_ORIGINAL:
+         current_width = game_width;
+         current_height = game_height;
+         break;
       case RES_480p:
+         current_width = 640;
+         current_height = 480;
+         break;
       case RES_720p:
+         current_width = 1280;
+         current_height = 720;
+         break;
       case RES_1080p:
-         current_width = _Ygl->width;
-         current_height = _Ygl->height;
+         current_width = 1920;
+         current_height = 1080;
          break;
       case RES_NATIVE:
          current_width = 3840;
@@ -762,7 +771,7 @@ void YuiSwapBuffers(void)
    if ((prev_game_width != game_width) || (prev_game_height != game_height))
       retro_set_resolution();
    audio_size = soundlen;
-   video_cb(RETRO_HW_FRAME_BUFFER_VALID, current_width, current_height, 0);
+   video_cb(RETRO_HW_FRAME_BUFFER_VALID, _Ygl->width, _Ygl->height, 0);
    one_frame_rendered = true;
 }
 
