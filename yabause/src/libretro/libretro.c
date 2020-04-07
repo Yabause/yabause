@@ -1627,7 +1627,7 @@ void retro_run(void)
 
    // If no frame rendered, dupe
    if(!one_frame_rendered)
-      video_cb(NULL, current_width, current_height, 0);
+      video_cb(NULL, _Ygl->width, _Ygl->height, 0);
 }
 
 #ifdef ANDROID
