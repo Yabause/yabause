@@ -3403,7 +3403,11 @@ void YglRender(Vdp2 *varVdp2Regs) {
   VDP1fb = &_Ygl->vdp1FrameBuff[_Ygl->readframe];
 
   if (_Ygl->vdp2_use_compute_shader == 0) {
+#ifdef __LIBRETRO__
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+#else
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
+#endif
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
     YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, useLineColorOffset, varVdp2Regs);
@@ -3412,10 +3416,12 @@ void YglRender(Vdp2 *varVdp2Regs) {
     VDP2Generator_update(_Ygl->compute_tex, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, varVdp2Regs);
     srcTexture = _Ygl->compute_tex;
   }
+#ifndef __LIBRETRO__
    glViewport(x, y, w, h);
    glScissor(x, y, w, h);
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
    YglBlitFramebuffer(srcTexture, _Ygl->width, _Ygl->height, w, h);
+#endif
 
 render_finish:
 

@@ -1429,7 +1429,7 @@ bool retro_load_game_common()
    yinit.video_upscale_type      = upscale_mode;
    yinit.polygon_generation_mode = polygon_mode;
    yinit.scanline                = scanlines;
-   yinit.stretch                 = 1;
+   yinit.stretch                 = 2; //Always ask Kronos core to return a integer scaling
    yinit.extend_backup           = 0;
    yinit.buppath                 = bup_path;
    yinit.meshmode                = mesh_mode;
