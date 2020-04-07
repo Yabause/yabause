@@ -738,12 +738,9 @@ void retro_set_resolution()
    switch(resolution_mode)
    {
       case RES_ORIGINAL:
-         current_width = game_width;
-         current_height = game_height;
-         break;
       case RES_480p:
-         current_width = 640;
-         current_height = 480;
+         current_width = 704;
+         current_height = 512;
          break;
       case RES_720p:
          current_width = 1280;
@@ -758,9 +755,9 @@ void retro_set_resolution()
          current_height = 2160;
          break;
    }
+   VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
    VIDCore->Resize(0, 0, current_width, current_height, 0);
    retro_reinit_av_info();
-   VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
 }
 
 void YuiSwapBuffers(void)
@@ -1211,12 +1208,9 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
       switch(resolution_mode)
       {
          case RES_ORIGINAL:
+         case RES_480p:
             max_width = 704;
             max_height = 512;
-            break;
-         case RES_480p:
-            max_width = 640;
-            max_height = 480;
             break;
          case RES_720p:
             max_width = 1280;
@@ -1235,9 +1229,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
    info->timing.fps            = (retro_get_region() == RETRO_REGION_NTSC) ? 60.0f : 50.0f;
    info->timing.sample_rate    = SAMPLERATE;
-   info->geometry.base_width   = game_width;
-   info->geometry.base_height  = game_height;
-   // No need to go above 8x what is needed by Hi-Res games, we disallow 16x for Hi-Res games
+   info->geometry.base_width   = _Ygl != NULL ? _Ygl->width : game_width;
+   info->geometry.base_height  = _Ygl != NULL ? _Ygl->height : game_height;
    info->geometry.max_width    = max_width;
    info->geometry.max_height   = max_height;
    info->geometry.aspect_ratio = (retro_get_region() == RETRO_REGION_NTSC) ? 4.0 / 3.0 : 5.0 / 4.0;
