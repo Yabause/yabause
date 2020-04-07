@@ -766,8 +766,8 @@ static void context_reset(void)
    }
    else
    {
-      VIDCore->Init();
-      retro_set_resolution();
+      VIDCore->DeInit();
+      // retro_set_resolution();
    }
 }
 
@@ -1553,7 +1553,7 @@ void retro_run(void)
       //   YabauseSetVideoFormat(g_videoformattype);
       YabauseSetSkipframe(g_skipframe);
    }
-
+   VIDCore->Init();
    // It appears polling can happen outside of HandleEvents
    update_inputs();
    YabauseExec();

@@ -265,8 +265,8 @@ typedef struct {
 	unsigned int width;
 	unsigned int height;
         YabMutex *mtx;
-	YglCacheHash *HashTable[HASHSIZE];
-	YglCacheHash CashLink[HASHSIZE * 2];
+	YglCacheHash *HashTable[HASHSIZE+1];
+	YglCacheHash CashLink[HASHSIZE * 2+1];
 	u32 CashLink_index;
 	GLuint textureID;
 	GLuint pixelBufferID;
@@ -801,9 +801,6 @@ int Ygl_uniformWindow(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
 int YglProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 int Ygl_cleanupNormal(void * p, YglTextureManager *tm);
-
-int YglGenerateOriginalBuffer();
-int YglGenerateComputeBuffer();
 
 int YglSetupWindow(YglProgram * prg);
 int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs);

@@ -40,10 +40,7 @@ extern int rebuild_windows;
 
 extern int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id);
 
-extern int YglGenFrameBuffer();
-extern int YglGenerateBackBuffer();
-extern int YglGenerateWindowBuffer();
-extern int YglGenerateScreenBuffer();
+extern int YglGenFrameBuffer(int force);
 extern void YglUpdateVdp2Reg();
 extern void YglSetVdp2Window(Vdp2 *varVdp2Regs);
 extern SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer);
@@ -224,7 +221,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
    glClearBufferfv(GL_COLOR, 0, col);
 
-   YglGenFrameBuffer();
+   YglGenFrameBuffer(0);
 
   if (_Ygl->vdp2_use_compute_shader == 0) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
@@ -409,7 +406,7 @@ render_finish:
 
 static u32* getVdp1DrawingFBMem() {
 	if (manualfb == NULL) {
-    YglGenFrameBuffer();
+    YglGenFrameBuffer(0);
 		vdp1_compute();
 	  manualfb = vdp1_read();
 	}

@@ -61,6 +61,8 @@
 
 #define LOG_AREA
 
+extern void YglGenReset();
+
 static int vidogl_renderer_started = 0;
 static Vdp2 baseVdp2Regs;
 //#define PERFRAME_LOG
@@ -144,6 +146,8 @@ void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 void VIDOGLVdp2DispOff(void);
 void waitVdp2DrawScreensEnd(int sync, int abort);
 static int isEnabled(int id, Vdp2* varVdp2Regs);
+extern int YglGenFrameBuffer(int force);
+
 
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
@@ -175,7 +179,8 @@ VIDOGLSync,
 VIDOGLGetNativeResolution,
 VIDOGLVdp2DispOff,
 YglRender,
-NULL
+NULL,
+YglGenFrameBuffer
 };
 
 static int vdp1_interlace = 0;
@@ -3193,7 +3198,6 @@ int VIDOGLInit(void)
   if (YglInit(2048, 1024, 8) != 0)
     return -1;
 
-  SetSaturnResolution(320, 224);
   YglReset(_Ygl->vdp1levels[0]);
   YglReset(_Ygl->vdp1levels[1]);
   for (int i=0; i<SPRITE; i++)
@@ -3207,9 +3211,9 @@ int VIDOGLInit(void)
 
   _Ygl->vdp2wdensity = 1.0;
   _Ygl->vdp2hdensity = 1.0;
+  SetSaturnResolution(320, 224);
 
   vidogl_renderer_started = 1;
-
   return 0;
 }
 
@@ -3219,7 +3223,6 @@ void VIDOGLDeInit(void)
 {
   if(!vidogl_renderer_started)
     return;
-
 #ifdef CELL_ASYNC
   if (drawcell_run == 1) {
     drawcell_run = 0;
@@ -3249,6 +3252,7 @@ void VIDOGLDeInit(void)
   }
 #endif
   vidogl_renderer_started = 0;
+  YglGenReset();
 }
 
 //////////////////////////////////////////////////////////////////////////////

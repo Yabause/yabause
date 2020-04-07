@@ -862,7 +862,7 @@ int YabauseEmulate(void) {
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");
-
+      VIDCore->setupFrame(0);
 #ifdef YAB_STATICS
 		 u64 current_cpu_clock = YabauseGetTicks();
 #endif

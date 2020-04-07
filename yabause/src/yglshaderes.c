@@ -48,6 +48,8 @@ extern int GlHeight;
 extern int GlWidth;
 
 static YglVdp1CommonParam _ids[PG_MAX] = { 0 };
+extern void vdp1_compute_reset(void);
+
 
 static void Ygl_printShaderError( GLuint shader )
 {
@@ -1449,6 +1451,7 @@ int YglDrawBackScreen() {
 
     clear_prg = glCreateProgram();
     if (clear_prg == 0){
+      clear_prg = -1;
       return -1;
     }
 
@@ -1759,6 +1762,7 @@ int YglBlitSimple(int texture, int blend) {
     if (winprio_prg != -1) glDeleteProgram(winprio_prg);
     winprio_prg = glCreateProgram();
     if (winprio_prg == 0){
+      winprio_prg = -1;
       return -1;
     }
 
@@ -1924,9 +1928,9 @@ int YglBlitVDP1(u32 srcTexture, float w, float h, int write) {
     GLuint vshader;
     GLuint fshader;
     GLint compiled, linked;
-    if (vdp1_write_prg != -1) glDeleteProgram(vdp1_write_prg);
     vdp1_write_prg = glCreateProgram();
     if (vdp1_write_prg == 0){
+      vdp1_write_prg = -1;
       return -1;
     }
 
@@ -1972,9 +1976,9 @@ int YglBlitVDP1(u32 srcTexture, float w, float h, int write) {
     GLuint vshader;
     GLuint fshader;
     GLint compiled, linked;
-    if (vdp1_read_prg != -1) glDeleteProgram(vdp1_read_prg);
     vdp1_read_prg = glCreateProgram();
     if (vdp1_read_prg == 0){
+      vdp1_read_prg = -1;
       return -1;
     }
 
@@ -2202,6 +2206,7 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
     if (blit_prg != -1) glDeleteProgram(blit_prg);
     blit_prg = glCreateProgram();
     if (blit_prg == 0){
+      blit_prg = -1;
       return -1;
     }
 
@@ -2363,6 +2368,7 @@ int YglClear() {
 
     clear_prg = glCreateProgram();
     if (clear_prg == 0){
+      clear_prg = -1;
       return -1;
     }
 
@@ -2496,7 +2502,10 @@ int YglBlitMosaic(u32 srcTexture, float w, float h, GLfloat* matrix, int * mosai
     const GLchar * fblit_img_v[] = { mosaic_blit_f, NULL };
 
     mosaic_prg = glCreateProgram();
-    if (mosaic_prg == 0) return -1;
+    if (mosaic_prg == 0) {
+      mosaic_prg = -1;
+      return -1;
+    }
 
     YGLLOG("BLIT_MOSAIC\n");
 
@@ -2570,4 +2579,22 @@ int YglBlitMosaic(u32 srcTexture, float w, float h, GLfloat* matrix, int * mosai
   glDisableVertexAttribArray(1);
 
   return 0;
+}
+
+void Ygl_prog_Destroy(void) {
+  if (clear_prg != -1)      glDeleteProgram(clear_prg);       clear_prg = -1;
+  if (winprio_prg != -1)    glDeleteProgram(winprio_prg);     winprio_prg = -1;
+  if (vdp1_write_prg != -1) glDeleteProgram(vdp1_write_prg);  vdp1_write_prg = -1;
+  if (vdp1_read_prg != -1)  glDeleteProgram(vdp1_read_prg);   vdp1_read_prg = -1;
+  if (blit_prg != -1)       glDeleteProgram(blit_prg);        blit_prg = -1;
+  if (mosaic_prg != -1)     glDeleteProgram(mosaic_prg);      mosaic_prg = -1;
+  for(int i = 0; i<PG_MAX; i++) {
+    if(_prgid[i] != 0) {
+      glDeleteProgram(_prgid[i]);
+      for(int j = i+1; j<PG_MAX; j++)
+        if (_prgid[i] == _prgid[j]) _prgid[j] = 0;
+      _prgid[i] = 0;
+    }
+  }
+  vdp1_compute_reset();
 }

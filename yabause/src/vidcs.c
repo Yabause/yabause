@@ -67,7 +67,7 @@ static Vdp2 baseVdp2Regs;
 //#define PERFRAME_LOG
 #ifdef PERFRAME_LOG
 int fount = 0;
-FILE *ppfp = NULL;
+FILE *ppfp = NULL;YglGenFrameBuffer
 #endif
 
 #define YGL_THREAD_DEBUG
@@ -124,6 +124,7 @@ extern void VIDOGLSetSettingValueMode(int type, int value);
 extern void VIDOGLSync();
 extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 extern void VIDOGLVdp2DispOff(void);
+extern int YglGenFrameBuffer(int force);
 
 extern u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs);
 
@@ -157,7 +158,8 @@ VIDOGLSync,
 VIDOGLGetNativeResolution,
 VIDOGLVdp2DispOff,
 YglCSRender,
-YglCSRenderVDP1
+YglCSRenderVDP1,
+YglGenFrameBuffer
 };
 
 void addCSCommands(vdp1cmd_struct* cmd, int type)

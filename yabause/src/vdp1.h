@@ -96,6 +96,7 @@ typedef struct
    void(*Vdp2DispOff)(void);
    void (*composeFB)(Vdp2 *regs);
    void (*composeVDP1)(void);
+   int (*setupFrame)(int);
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;
