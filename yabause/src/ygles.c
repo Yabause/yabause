@@ -562,14 +562,14 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YglTMDeInit(YglTextureManager * tm) {
-  glDeleteTextures(1, &tm->textureID);
-  glDeleteBuffers(1, &tm->pixelBufferID);
-  tm->textureID = 0;
-  tm->pixelBufferID = 0;
+void YglTMDeInit(YglTextureManager ** tm) {
+  glDeleteTextures(1, &(*tm)->textureID);
+  glDeleteBuffers(1, &(*tm)->pixelBufferID);
+  (*tm)->textureID = 0;
+  (*tm)->pixelBufferID = 0;
   //Free is crashing => stack overflow issue
-  // free(tm);
-  // tm = NULL;
+  free(*tm);
+  (*tm) = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -930,9 +930,9 @@ void YglGenReset() {
   _Ygl->sync = 0;
   _Ygl->syncVdp1[0] = 0;
   _Ygl->syncVdp1[1] = 0;
-  if (YglTM_vdp2!= NULL) YglTMDeInit(YglTM_vdp2);
-  if (YglTM_vdp1[0] != NULL) YglTMDeInit(YglTM_vdp1[0]);
-  if (YglTM_vdp1[1] != NULL) YglTMDeInit(YglTM_vdp1[1]);
+  if (YglTM_vdp2!= NULL) YglTMDeInit(&YglTM_vdp2);
+  if (YglTM_vdp1[0] != NULL) YglTMDeInit(&YglTM_vdp1[0]);
+  if (YglTM_vdp1[1] != NULL) YglTMDeInit(&YglTM_vdp1[1]);
   rebuild_frame_buffer = 1;
   _Ygl->default_fbo = -1;
   Ygl_prog_Destroy();
@@ -943,19 +943,9 @@ int YglGenFrameBuffer(int force) {
     return 0;
   }
   if (_Ygl->default_fbo == -1) _Ygl->default_fbo = YuiGetFB();
-  if (YglTM_vdp1[0]->textureID == 0) {
-    //Shall be YglTMInit once stack overflow would be fixed
-    glGenBuffers(1, &YglTM_vdp1[0]->pixelBufferID);
-    glGenTextures(1, &YglTM_vdp1[0]->textureID);
-  };
-  if (YglTM_vdp1[1]->textureID == 0) {
-    glGenBuffers(1, &YglTM_vdp1[1]->pixelBufferID);
-    glGenTextures(1, &YglTM_vdp1[1]->textureID);
-  };
-  if (YglTM_vdp2->textureID == 0) {
-    glGenBuffers(1, &YglTM_vdp2->pixelBufferID);
-    glGenTextures(1, &YglTM_vdp2->textureID);
-  };
+  if (YglTM_vdp1[0] == NULL) YglTM_vdp1[0]= YglTMInit(1024, 1024);
+  if (YglTM_vdp1[1] == NULL) YglTM_vdp1[1]= YglTMInit(1024, 1024);
+  if (YglTM_vdp2 == NULL) YglTM_vdp2= YglTMInit(1024, 1024);
   YglDestroy();
   YglGenerate();
 }
@@ -1456,9 +1446,9 @@ int YglInit(int width, int height, unsigned int depth) {
 void YglDeInit(void) {
    unsigned int i,j;
 
-   if (YglTM_vdp1[0] != NULL) YglTMDeInit(YglTM_vdp1[0]);
-   if (YglTM_vdp1[1] != NULL) YglTMDeInit(YglTM_vdp1[1]);
-   if (YglTM_vdp2 != NULL)    YglTMDeInit(YglTM_vdp2);
+   if (YglTM_vdp1[0] != NULL) YglTMDeInit(&YglTM_vdp1[0]);
+   if (YglTM_vdp1[1] != NULL) YglTMDeInit(&YglTM_vdp1[1]);
+   if (YglTM_vdp2 != NULL)    YglTMDeInit(&YglTM_vdp2);
 
 
 

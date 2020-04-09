@@ -4831,7 +4831,7 @@ void VIDOGLVdp2Draw(void)
   if (_Ygl->rwidth > YglTM_vdp2->width) {
     int new_width = _Ygl->rwidth;
     int new_height = YglTM_vdp2->height;
-    YglTMDeInit(YglTM_vdp2);
+    YglTMDeInit(&YglTM_vdp2);
     YglTM_vdp2 = YglTMInit(new_width, new_height);
   }
   YglTmPull(YglTM_vdp2, 0);

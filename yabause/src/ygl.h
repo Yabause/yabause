@@ -276,7 +276,7 @@ extern YglTextureManager * YglTM_vdp1[2];
 extern YglTextureManager * YglTM_vdp2;
 
 YglTextureManager * YglTMInit(unsigned int, unsigned int);
-void YglTMDeInit(YglTextureManager * tm );
+void YglTMDeInit(YglTextureManager ** tm );
 void YglTMReset( YglTextureManager * tm );
 void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h);
 void YglTMAllocate(YglTextureManager * tm, YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
