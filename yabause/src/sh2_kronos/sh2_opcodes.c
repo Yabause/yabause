@@ -33,6 +33,8 @@
 #include "sh2int_kronos.h"
 #include "opcode_functions_define.h"
 
+extern void SH2HandleInterrupts(SH2_struct *context);
+
 //////////////////////////////////////////////////////////////////////////////
 
 static void SH2delay(SH2_struct * sh, u32 addr)
@@ -796,6 +798,7 @@ static void SH2ldcsr(SH2_struct * sh, u32 m)
    sh->regs.PC += 2;
    sh->cycles++;
    SH2next(sh);
+   SH2HandleInterrupts(sh);
 }
 
 
