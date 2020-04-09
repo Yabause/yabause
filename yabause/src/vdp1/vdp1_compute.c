@@ -46,8 +46,10 @@ static GLuint ssbo_nbcmd_ = 0;
 static GLuint ssbo_vdp1access_ = 0;
 static GLuint prg_vdp1[NB_PRG] = {0};
 
+#ifdef VDP1RAM_CS_ASYNC
 static YabEventQueue *cmdq[2] = {NULL};
 static int vdp1_generate_run = 0;
+#endif
 
 static u32 write_fb[512*256];
 
@@ -316,7 +318,7 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 	    break;
 	  }
 }
-
+#ifdef VDP1RAM_CS_ASYNC
 void vdp1GenerateBuffer_async_0(void *p){
 	while(vdp1_generate_run != 0){
 		vdp1cmd_struct* cmd = (vdp1cmd_struct*)YabWaitEventQueue(cmdq[0]);
@@ -341,6 +343,11 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd){
 	memcpy(cmdToSent, cmd, sizeof(vdp1cmd_struct));
 	YabAddEventQueue(cmdq[_Ygl->drawframe], cmdToSent);
 }
+#else
+void vdp1GenerateBuffer(vdp1cmd_struct* cmd){
+	vdp1GenerateBuffer_sync(cmd, _Ygl->drawframe);
+}
+#endif
 
 void regenerateVdp1Buffer(void) {
 	for (int i = 0; i < nbCmdToProcess; i++) {
@@ -524,6 +531,7 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
   if (am != 0) {
     struct_size += 16 - am;
   }
+#ifdef VDP1RAM_CS_ASYNC
 	if (vdp1_generate_run == 0) {
 		vdp1_generate_run = 1;
 		cmdq[0] = YabThreadCreateQueue(512);
@@ -531,7 +539,7 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
 		YabThreadStart(YAB_THREAD_CS_CMD_0, vdp1GenerateBuffer_async_0, 0);
 		YabThreadStart(YAB_THREAD_CS_CMD_1, vdp1GenerateBuffer_async_1, 0);
 	}
-
+#endif
   work_groups_x = _Ygl->vdp1width / local_size_x;
   work_groups_y = _Ygl->vdp1height / local_size_y;
   generateComputeBuffer(_Ygl->vdp1width, _Ygl->vdp1height);
