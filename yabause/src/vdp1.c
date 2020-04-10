@@ -1736,6 +1736,9 @@ static void startField(void) {
 
 void Vdp1HBlankIN(void)
 {
+  if (VIDCore != NULL)
+    if (VIDCore->HBLank != NULL)
+      VIDCore->HBLank();
   if(yabsys.LineCount == 0) {
     startField();
   }

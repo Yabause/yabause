@@ -238,40 +238,45 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 				endcnt = 0;
 				for(int w=0; w < cmd->w/2; w++)
 				{
-					dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
-					if (!END && (endcnt >= 2)) {
-          	dot |= 0xF0;
-					}
-					else if (((dot & 0xF0) == 0xF0) && !END) {
-          	endcnt++;
-        	} else {
-						if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
-							//ColorLut
-							u32 addr = ((dot>>4) * 2 + cmd->CMDCOLR * 8);
-							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr);
-							if (cmdRam_update_start[id] > addr) cmdRam_update_start[id] = addr;
-							if (cmdRam_update_end[id] < (addr + 2)) cmdRam_update_end[id] = addr + 2;
-							T1WriteWord(buf, addr, val);
+					u32 addr1 = ((dot>>4) * 2 + cmd->CMDCOLR * 8);
+					u32 addr2 = ((dot&0xF) * 2 + cmd->CMDCOLR * 8);
+					int needUpdate = ((pos >= vdp1Ram_update_start) || (pos <= vdp1Ram_update_end));
+					needUpdate |= ((addr1 >= vdp1Ram_update_start) || (addr1 <= vdp1Ram_update_end));
+					needUpdate |= ((addr2 >= vdp1Ram_update_start) || (addr2 <= vdp1Ram_update_end));
+					if (needUpdate != 0) {
+						dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
+						if (!END && (endcnt >= 2)) {
+	          	dot |= 0xF0;
 						}
-					}
-					if (!END && (endcnt >= 2)) {
-          	dot |= 0xF;
-					}
-					else if (((dot & 0xF) == 0xF) && !END) {
-          	endcnt++;
-					} else {
-						if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
-							//ColorLut
-							u32 addr = ((dot&0xF) * 2 + cmd->CMDCOLR * 8);
-							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr);
-							if (cmdRam_update_start[id] > addr) cmdRam_update_start[id] = addr;
-							if (cmdRam_update_end[id] < (addr + 2)) cmdRam_update_end[id] = addr + 2;
-							T1WriteWord(buf, addr, val);
+						else if (((dot & 0xF0) == 0xF0) && !END) {
+	          	endcnt++;
+	        	} else {
+							if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
+								//ColorLut
+								u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr1);
+								if (cmdRam_update_start[id] > addr1) cmdRam_update_start[id] = addr1;
+								if (cmdRam_update_end[id] < (addr1 + 2)) cmdRam_update_end[id] = addr1 + 2;
+								T1WriteWord(buf, addr1, val);
+							}
 						}
-        	}
-					if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
-					if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
-					T1WriteByte(buf, pos, dot);
+						if (!END && (endcnt >= 2)) {
+	          	dot |= 0xF;
+						}
+						else if (((dot & 0xF) == 0xF) && !END) {
+	          	endcnt++;
+						} else {
+							if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
+								//ColorLut
+								u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr2);
+								if (cmdRam_update_start[id] > addr2) cmdRam_update_start[id] = addr2;
+								if (cmdRam_update_end[id] < (addr2 + 2)) cmdRam_update_end[id] = addr2 + 2;
+								T1WriteWord(buf, addr2, val);
+							}
+	        	}
+						if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+						if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
+						T1WriteByte(buf, pos, dot);
+					}
 					pos += 1;
 	    	}
 			}
@@ -283,16 +288,19 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 					endcnt = 0;
 					for(int w = 0; w < cmd->w; w++)
 					{
-						dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
-						if (!END && (endcnt >= 2)) {
-							dot = 0xFF;
+						int needUpdate = ((pos >= vdp1Ram_update_start) || (pos <= vdp1Ram_update_end));
+						if (needUpdate != 0) {
+							dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
+							if (!END && (endcnt >= 2)) {
+								dot = 0xFF;
+							}
+							else if ((dot == 0xFF) && !END) {
+								endcnt++;
+							}
+							if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+							if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
+							T1WriteByte(buf, pos, dot);
 						}
-						else if ((dot == 0xFF) && !END) {
-							endcnt++;
-						}
-						if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
-						if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
-						T1WriteByte(buf, pos, dot);
 						pos += 1;
 		    	}
 				}
@@ -302,16 +310,19 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 				endcnt = 0;
 				for(int w = 0; w < cmd->w; w++)
 	    	{
-					u16 dot = Vdp1RamReadWord(NULL, Vdp1Ram, pos);
-					if (!END && (endcnt >= 2)) {
-						dot = 0x7FFF;
+					int needUpdate = ((pos >= vdp1Ram_update_start) || (pos <= vdp1Ram_update_end));
+					if (needUpdate != 0) {
+						u16 dot = Vdp1RamReadWord(NULL, Vdp1Ram, pos);
+						if (!END && (endcnt >= 2)) {
+							dot = 0x7FFF;
+						}
+						else if ((dot == 0x7FFF) && !END) {
+							endcnt++;
+						}
+						if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+						if (cmdRam_update_end[id] < (pos + 2)) cmdRam_update_end[id] = pos + 2;
+						T1WriteWord(buf, pos, dot);
 					}
-					else if ((dot == 0x7FFF) && !END) {
-						endcnt++;
-					}
-					if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
-					if (cmdRam_update_end[id] < (pos + 2)) cmdRam_update_end[id] = pos + 2;
-					T1WriteWord(buf, pos, dot);
 					pos += 2;
 	    	}
 			}
@@ -353,7 +364,6 @@ void regenerateVdp1Buffer(void) {
 	for (int i = 0; i < nbCmdToProcess; i++) {
 		vdp1GenerateBuffer(&cmdBufferToProcess[i]);
 	}
-	vdp1_setup();
 }
 
 int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
@@ -579,6 +589,15 @@ int * get_vdp1_tex() {
 	return &compute_tex[_Ygl->readframe];
 }
 
+void vdp1_wait_regenerate(void) {
+#ifdef VDP1RAM_CS_ASYNC
+	while (YaGetQueueSize(cmdq[_Ygl->drawframe])!=0)
+	{
+		YabThreadYield();
+	}
+#endif
+}
+
 void vdp1_compute() {
   GLuint error;
 	int progId = getProgramId();
@@ -648,6 +667,9 @@ void vdp1_compute() {
   glUniformMatrix4fv(9, 1, 0, (GLfloat*)m.m);
 
 	vdp1_set_directFB();
+	vdp1_wait_regenerate();
+	vdp1_setup();
+
   glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 	if (_Ygl->syncVdp1[_Ygl->drawframe] != 0) {
 		glDeleteSync(_Ygl->syncVdp1[_Ygl->drawframe]);

@@ -139,6 +139,7 @@ VIDSoftSync,
 VIDSoftGetNativeResolution,
 VIDSoftVdp2DispOff,
 NULL,
+NULL,
 NULL
 };
 
