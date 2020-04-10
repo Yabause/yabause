@@ -305,6 +305,11 @@ u16 FASTCALL Vdp1ReadWord(SH2_struct *context, u8* mem, u32 addr) {
    switch(addr) {
       case 0x10:
         FRAMELOG("Read EDSR %X line = %d\n", Vdp1Regs->EDSR, yabsys.LineCount);
+        if (Vdp1External.checkEDSR == 0) {
+          if (VIDCore != NULL)
+            if (VIDCore->FinsihDraw != NULL)
+              VIDCore->FinsihDraw();
+        }
         Vdp1External.checkEDSR = 1;
         return Vdp1Regs->EDSR;
       case 0x12:
@@ -1736,9 +1741,6 @@ static void startField(void) {
 
 void Vdp1HBlankIN(void)
 {
-  if (VIDCore != NULL)
-    if (VIDCore->HBLank != NULL)
-      VIDCore->HBLank();
   if(yabsys.LineCount == 0) {
     startField();
   }
