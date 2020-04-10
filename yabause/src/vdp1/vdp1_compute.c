@@ -564,6 +564,15 @@ void vdp1_set_directFB() {
 		_Ygl->vdp1IsNotEmpty = 0;
 	}
 }
+void vdp1_wait_regenerate(void) {
+	#ifdef VDP1RAM_CS_ASYNC
+	while (YaGetQueueSize(cmdq[_Ygl->drawframe])!=0)
+	{
+		YabThreadYield();
+	}
+	#endif
+}
+
 void vdp1_setup(void) {
 	if (ssbo_vdp1ram_[_Ygl->drawframe] == 0) return;
 	vdp1_wait_regenerate();
@@ -577,15 +586,6 @@ void vdp1_setup(void) {
 
 int * get_vdp1_tex() {
 	return &compute_tex[_Ygl->readframe];
-}
-
-void vdp1_wait_regenerate(void) {
-#ifdef VDP1RAM_CS_ASYNC
-	while (YaGetQueueSize(cmdq[_Ygl->drawframe])!=0)
-	{
-		YabThreadYield();
-	}
-#endif
 }
 
 void vdp1_compute() {
