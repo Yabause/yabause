@@ -70,7 +70,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "sndopensl.h"
 #endif
 
-#include "libpng/png.h"
+#include "libpng16/png.h"
 
 JavaVM * yvm;
 static jobject yabause = NULL;
@@ -150,6 +150,8 @@ enum RenderThreadMessage {
         MSG_RENDER_LOOP_EXIT,
         MSG_SAVE_STATE,
         MSG_LOAD_STATE,
+        MSG_SAVE_STATE_COMPRESSED,
+        MSG_LOAD_STATE_COMPRESSED,
         MSG_PAUSE,
         MSG_RESUME,
         MSG_SCREENSHOT,
@@ -741,6 +743,46 @@ int initEGLFunc()
    return 0;
 }
 #endif
+
+jstring Java_org_uoyabause_android_YabauseRunnable_savestate_1compress( JNIEnv* env, jobject thiz, jstring  path ){
+
+    jboolean dummy;
+    if( cdip == NULL ) return NULL;
+    const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
+
+    pthread_mutex_lock(&g_mtxGlLock);
+    strcpy(s_savepath,cpath);
+    g_msg =MSG_SAVE_STATE_COMPRESSED;
+    pthread_mutex_unlock(&g_mtxGlLock);
+
+    (*env)->ReleaseStringUTFChars(env,path, cpath);
+
+    pthread_mutex_lock(&g_mtxFuncSync); 
+    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_unlock(&g_mtxFuncSync);
+
+    return (*env)->NewStringUTF(env,(const char*)last_state_filename);
+}
+
+jint Java_org_uoyabause_android_YabauseRunnable_loadstate_1compress( JNIEnv* env, jobject thiz, jstring  path ){
+
+    jboolean dummy;
+    const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
+
+    pthread_mutex_lock(&g_mtxGlLock);
+    strcpy(s_savepath,cpath);
+    g_msg =MSG_LOAD_STATE_COMPRESSED;
+    pthread_mutex_unlock(&g_mtxGlLock);
+
+    (*env)->ReleaseStringUTFChars(env,path, cpath);
+
+    pthread_mutex_lock(&g_mtxFuncSync); 
+    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_unlock(&g_mtxFuncSync);
+
+    return 0;
+}
+
 
 jstring Java_org_uoyabause_android_YabauseRunnable_savestate( JNIEnv* env, jobject thiz, jstring  path ){
 
@@ -1681,6 +1723,50 @@ void renderLoop()
                 pthread_mutex_unlock(&g_mtxFuncSync);
             }
             break;
+
+            case MSG_SAVE_STATE_COMPRESSED:
+            {
+                int ret;
+                time_t t = time(NULL);
+                YUI_LOG("MSG_SAVE_STATE_COMPRESSED");
+
+                sprintf(last_state_filename, "%s/%s_%ld.yss", s_savepath, cdip->itemnum, t);
+                ret = YabSaveCompressedState(last_state_filename);
+
+                pthread_mutex_lock(&g_mtxFuncSync);
+                pthread_cond_signal(&g_cndFuncSync);
+                pthread_mutex_unlock(&g_mtxFuncSync);                
+            }
+            break;
+
+            case MSG_LOAD_STATE_COMPRESSED:
+            {
+                int rtn;
+                YUI_LOG("MSG_LOAD_STATE_COMPRESSED");
+                rtn = YabLoadCompressedState(s_savepath);
+                switch(rtn){
+                case 0:
+                    YUI_LOG("Load State: OK");
+                    break;
+                case -1:
+                    YUI_LOG("Load State: File Not Found");
+                    break;
+                case -2:
+                    YUI_LOG("Load State: Bad format");
+                    break;
+                case -3:
+                    YUI_LOG("Load State: Bad format deep inside");
+                    break;                    
+                default:
+                    YUI_LOG("Load State: Fail unkown");
+                    break;                    
+                }
+                pthread_mutex_lock(&g_mtxFuncSync);
+                pthread_cond_signal(&g_cndFuncSync);
+                pthread_mutex_unlock(&g_mtxFuncSync);
+            }
+            break;
+
             case MSG_PAUSE:
                 YUI_LOG("MSG_PAUSE");
                 YabFlushBackups();

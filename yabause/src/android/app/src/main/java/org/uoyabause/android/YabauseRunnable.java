@@ -50,6 +50,8 @@ public class YabauseRunnable implements Runnable
     public static native String getGameinfo();
     public static native String savestate( String path );
     public static native void loadstate( String path );
+    public static native String savestate_compress( String path );
+    public static native void loadstate_compress( String path );
     public static native void pause();
     public static native void resume();
     public static native void setPolygonGenerationMode( int pg );
@@ -73,7 +75,7 @@ public class YabauseRunnable implements Runnable
     public static native String getFile( int index  );
     public static native String putFile( String path);
     public static native int copy( int target_device, int file_index );
-    public static native String getGameinfoFromChd( String path );
+    public static native byte[] getGameinfoFromChd( String path );
 
     private boolean inited;
     private boolean paused;

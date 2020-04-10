@@ -422,6 +422,7 @@ typedef struct  {
  float u_vheight;
  int u_color_ram_offset;
  float u_viewport_offset;
+ int u_sprite_window;
 } UniformFrameBuffer;
 
 /*

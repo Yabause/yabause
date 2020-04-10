@@ -22,6 +22,7 @@ package org.uoyabause.android;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -34,6 +35,7 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.ContextThemeWrapper;
@@ -51,6 +53,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.uoyabause.uranus.BuildConfig;
 import org.uoyabause.uranus.R;
 
 import java.io.File;
@@ -91,7 +94,7 @@ public class GameSelectPresenter {
 
 
     int refresh_level_ = 0;
-    android.app.Fragment target_ = null ;
+    Fragment target_ = null ;
     GameSelectPresenterListener listener_ = null ;
 
     public static final int RC_SIGN_IN = 123;
@@ -99,7 +102,7 @@ public class GameSelectPresenter {
     private String username_;
     private Uri photo_url_;
 
-    public GameSelectPresenter( android.app.Fragment target,  GameSelectPresenterListener listener ){
+    public GameSelectPresenter(Fragment target, GameSelectPresenterListener listener ){
         target_ = target;
         listener_ = listener;
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(target_.getActivity());
@@ -182,9 +185,23 @@ public class GameSelectPresenter {
 //                photo_url_ = auth.getCurrentUser().getPhotoUrl();
             }
 
+            baseref.child(baseurl).child("android_token").setValue(token);
+
             Crashlytics.setUserIdentifier( username_ + "_" + auth.getCurrentUser().getEmail());
             mFirebaseAnalytics.setUserId(username_ + "_" + auth.getCurrentUser().getEmail());
             mFirebaseAnalytics.setUserProperty ("name", username_ + "_" + auth.getCurrentUser().getEmail());
+
+            Activity activity = target_.getActivity();
+            SharedPreferences prefs = activity.getSharedPreferences("private", Context.MODE_PRIVATE);
+            boolean hasDonated = false;
+            if (prefs != null) {
+                hasDonated = prefs.getBoolean("donated", false);
+            }
+            if ( BuildConfig.BUILD_TYPE.equals("pro") || hasDonated ) {
+                baseref.child(baseurl).child("max_backup_count").setValue(256);
+            }else{
+                baseref.child(baseurl).child("max_backup_count").setValue(3);
+            }
 
             //startActivity(SignedInActivity.createIntent(this, response));
             YabauseApplication application = (YabauseApplication)target_.getActivity().getApplication();

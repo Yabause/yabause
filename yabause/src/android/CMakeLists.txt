@@ -27,31 +27,15 @@ yab_port_start()
 
 set( LIBRARY_NAME yabause_native )
 
-set( ImageLibrarySOURCES 
-	jni/libpng/png.c
-	jni/libpng/pngerror.c
-	jni/libpng/pngget.c
-	jni/libpng/pngmem.c
-	jni/libpng/pngpread.c
-	jni/libpng/pngread.c 
-	jni/libpng/pngrio.c 
-	jni/libpng/pngrtran.c 
-	jni/libpng/pngrutil.c 
-	jni/libpng/pngset.c 
-	jni/libpng/pngtest.c 
-	jni/libpng/pngtrans.c 
-	jni/libpng/pngwio.c
-	jni/libpng/pngwrite.c 
-	jni/libpng/pngwtran.c 
-	jni/libpng/pngwutil.c
-)
+include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libpng.cmake )
+#include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_zlib.cmake )
 
 set( SOURCES 
- ${ImageLibrarySOURCES}
  jni/yui.c
  jni/sndaudiotrack.c
  jni/sndopensl.c
- jni/BackupManager.cpp
+ jni/jniBackupManager.cpp
+ jni/jniBackupManager.h
  jni/jsoncpp.cpp
  jni/ChdFileInfo.cpp
  jni/ChdFileInfo.h
@@ -65,7 +49,6 @@ set (PORT_LIBRARIES
  android
  GLESv3
  EGL
- z
 )
 
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJSONCPP_NO_LOCALE_SUPPORT -fexceptions " )
@@ -76,17 +59,25 @@ set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/app/src/main/jniLibs/${ANDROID_N
 #include(AndroidNdkGdb)
 #android_ndk_gdb_enable()
 
-link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} )
+link_directories( ${LIBCHDR_LIB_DIR} ${LIBPNG_LIB_DIR} ${LIBZ_LIB_DIR} ${link_directories} )
 
 add_library(${LIBRARY_NAME} SHARED ${SOURCES}  )
 #android_ndk_gdb_debuggable(${LIBRARY_NAME})
 add_dependencies(${LIBRARY_NAME} libchdr)
+add_dependencies(${LIBRARY_NAME} png)
 
 
-include_directories( ${YABAUSE_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/../ ${PROJECT_SOURCE_DIR}/../ )
+include_directories( 
+	${YABAUSE_INCLUDE_DIR} 
+	${PROJECT_BINARY_DIR}/../ 
+	${PROJECT_SOURCE_DIR}/../ 
+	${png_INCLUDE_DIR}
+)
 target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES} 
 	${PORT_LIBRARIES}
-  ${LIBCHDR_LIBRARIES}	
+	${LIBCHDR_LIBRARIES}	
+	png16
+	z
 	#${zlib_STATIC_LIBRARIES}
 	#    ${PROJECT_SOURCE_DIR}/debuglib/libNvidia_gfx_debugger_stub.a
 )

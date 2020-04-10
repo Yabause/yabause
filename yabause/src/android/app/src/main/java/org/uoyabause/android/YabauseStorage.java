@@ -46,6 +46,7 @@ import java.util.Set;
 
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -62,6 +63,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.*;
 import org.apache.commons.io.IOCase;
+import org.uoyabause.uranus.BuildConfig;
 import org.uoyabause.uranus.R;
 
 import io.reactivex.ObservableEmitter;
@@ -120,6 +122,7 @@ public class YabauseStorage {
 
     private YabauseStorage() {
         File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
+
         if (! yabroot.exists()) yabroot.mkdir();
 
         bios = new File(yabroot, "bios");

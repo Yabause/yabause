@@ -36,6 +36,7 @@
 #include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
 #include "UIAbout.h"
+#include "WebLoginWindow.h"
 #include "../YabauseGL.h"
 #include "../QtYabause.h"
 #include "../CommonDialogs.h"
@@ -51,11 +52,15 @@
 #include <QMetaObject>
 #include <QDebug>
 
+#include <firebase/app.h>
+
 extern "C" {
 extern VideoInterface_struct *VIDCoreList[];
 }
 
 //#define USE_UNIFIED_TITLE_TOOLBAR
+
+firebase::App* UIYabause::app = NULL;
 
 void qAppendLog( const char* s )
 {
@@ -139,6 +144,8 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( mouseCursorTimer, SIGNAL( timeout() ), this, SLOT( cursorRestore() ));
 	connect( mYabauseThread, SIGNAL( toggleEmulateMouse( bool ) ), this, SLOT( toggleEmulateMouse( bool ) ) );
 
+  //connect(this, SIGNAL(setStateFileLoaded(std::string)), this, SLOT(onStateFileLoaded(std::string)));
+
 	// Load shortcuts
 	VolatileSettings* vs = QtYabause::volatileSettings();
 	QList<QAction *> actions = findChildren<QAction *>();
@@ -173,6 +180,16 @@ UIYabause::UIYabause( QWidget* parent )
 	VIDSoftSetBilinear(QtYabause::settings()->value( "Video/Bilinear", false ).toBool());
 
 	mIsCdIn = true;
+
+	// Initialize cloud service
+    firebase::AppOptions options;
+    options.set_app_id("1:749919523054:android:3a92de2bc803c4bf");
+    options.set_api_key("AIzaSyAAqH_-n3Q42YAyVJvF-0nCvjLBaUa79-A");
+    options.set_database_url("https://uoyabause.firebaseio.com");
+    //options.set_ga_tracking_id("749919523054");
+    options.set_storage_bucket("uoyabause.appspot.com");
+    options.set_project_id("uoyabause");
+    app = firebase::App::Create(options);	
 
 }
 
@@ -480,82 +497,35 @@ void UIYabause::sizeRequested( const QSize& s )
 
 void UIYabause::fixAspectRatio( int width , int height )
 {
-	int aspectRatio = QtYabause::volatileSettings()->value( "Video/AspectRatio",0).toInt();
+  if (this->isFullScreen()) {
+    mYabauseGL->viewport_width_ = QtYabause::volatileSettings()->value("Video/FullscreenWidth", "1920").toInt();
+    mYabauseGL->viewport_height_ = QtYabause::volatileSettings()->value("Video/FullscreenHeight", "1080").toInt();
+    mYabauseGL->viewport_origin_x_ = 0;
+    mYabauseGL->viewport_origin_y_ = 0;
+    return;
+  }
 
+  int aspectRatio = QtYabause::volatileSettings()->value("Video/AspectRatio", 0).toInt();
   switch (aspectRatio)
   {
   case 0:
   case 1:
   case 2:
   {
-    if (this->isFullScreen()) {
-
-      if (aspectRatio == 0) {
-        mYabauseGL->viewport_width_ = width;
-        mYabauseGL->viewport_height_ = height;
-        mYabauseGL->viewport_origin_x_ = 0;
-        mYabauseGL->viewport_origin_y_ = 0;
-#if 0
-        float specratio = (float)width / (float)height;
-        int saturnw = 4;
-        int saturnh = 3;
-
-        VolatileSettings* vs = QtYabause::volatileSettings();
-        if (vs->value("Video/RotateScreen").toBool()) {
-          if (aspectRatio == 1) {
-            saturnw = 3;
-            saturnh = 4;
-          }
-          else {
-            saturnw = 9;
-            saturnh = 16;
-          }
-        }
-        else {
-          if (aspectRatio == 1) {
-            saturnw = 4;
-            saturnh = 3;
-          }
-          else {
-            saturnw = 16;
-            saturnh = 9;
-          }
-        }
-        float saturnraito = (float)saturnw / (float)saturnh;
-        float revraito = (float)saturnh / (float)saturnw;
-
-        if (specratio > saturnraito) {
-
-          mYabauseGL->viewport_width_ = height * saturnraito;
-          mYabauseGL->viewport_height_ = height;
-          mYabauseGL->viewport_origin_x_ = (width - mYabauseGL->viewport_width_) / 2.0;
-          mYabauseGL->viewport_origin_y_ = (height - mYabauseGL->viewport_height_) / 2.0;
-        }
-        else {
-          mYabauseGL->viewport_width_ = width;
-          mYabauseGL->viewport_height_ = height * revraito;
-          mYabauseGL->viewport_origin_x_ = (width - mYabauseGL->viewport_width_) / 2.0;
-          mYabauseGL->viewport_origin_y_ = (height - mYabauseGL->viewport_height_) / 2.0;
-      }
-#endif
-    }
-  }
-    else {
       int heightOffset = toolBar->height();
       heightOffset += menubar->height();
-      int height;
 
       VolatileSettings* vs = QtYabause::volatileSettings();
       if (vs->value("Video/RotateScreen").toBool()) {
         if (aspectRatio == 0 || aspectRatio == 1)
           height = 4 * ((float)width / 3);
-        else
+        else if(aspectRatio == 2)
           height = 16 * ((float)width / 9);
       }
       else {
         if (aspectRatio == 0 || aspectRatio == 1)
           height = 3 * ((float)width / 4);
-        else
+        else if (aspectRatio == 2)
           height = 9 * ((float)width / 16);
       }
 
@@ -564,16 +534,13 @@ void UIYabause::fixAspectRatio( int width , int height )
       adjustHeight(height);
       mYabauseGL->viewport_height_ = height - heightOffset;
       setFixedHeight(height);
-
-    }
     break;
   }
-		case 3:
+  case 3:
       setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
       setMinimumSize(0, 0);
       break;
 	}
-
 }
 
 void UIYabause::getSupportedResolutions()
@@ -683,8 +650,8 @@ void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat
     int title_width = GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
     SetWindowLong(hwnd_, GWL_STYLE, saved_window_info_.style);
     SetWindowLong(hwnd_, GWL_EXSTYLE, saved_window_info_.ex_style);
-    saved_window_info_.windowspos.setX(saved_window_info_.windowspos.x() + title_width);
-    saved_window_info_.windowspos.setY(saved_window_info_.windowspos.y() + title_height);
+    saved_window_info_.windowspos.setX(saved_window_info_.windowspos.x()/* + title_width*/);
+    saved_window_info_.windowspos.setY(saved_window_info_.windowspos.y()/* + title_height*/);
     this->move(saved_window_info_.windowspos);
     sizeRequested(saved_window_info_.windowsize);
   }
@@ -1073,7 +1040,7 @@ void UIYabause::on_aFileOpenCDRom_triggered()
 
 void UIYabause::on_mFileSaveState_triggered( QAction* a )
 {
-	if ( a == aFileSaveStateAs )
+	if ( a == aFileSaveStateAs || a == actionTo_Cloud )
 		return;
 	YabauseLocker locker( mYabauseThread );
 	if ( YabSaveStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString().toLatin1().constData(), a->data().toInt() ) != 0 )
@@ -1084,7 +1051,7 @@ void UIYabause::on_mFileSaveState_triggered( QAction* a )
 
 void UIYabause::on_mFileLoadState_triggered( QAction* a )
 {
-	if ( a == aFileLoadStateAs )
+	if ( a == aFileLoadStateAs || a == actionFrom_Cloud )
 		return;
 	YabauseLocker locker( mYabauseThread );
 	if ( YabLoadStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString().toLatin1().constData(), a->data().toInt() ) != 0 )
@@ -1358,6 +1325,13 @@ void UIYabause::on_aTraceLogging_triggered( bool toggled )
 	return;
 }
 
+void UIYabause::on_actionOpen_web_interface_triggered() {
+  //QDesktopServices::openUrl(QUrl(actionOpen_web_interface->statusTip()));
+  YabauseLocker locker( mYabauseThread );
+  WebLoginWindow( window() ).exec();
+	mYabauseGL->makeCurrent();
+}
+
 void UIYabause::on_aHelpReport_triggered()
 {
 	QDesktopServices::openUrl(QUrl(aHelpReport->statusTip()));
@@ -1453,4 +1427,127 @@ void UIYabause::reset()
 void UIYabause::toggleEmulateMouse( bool enable )
 {
 	emulateMouse = enable;
+}
+
+#include <firebase/app.h>
+#include <firebase/auth.h>
+#include <firebase/database.h>
+#include <firebase/storage/metadata.h>
+
+using firebase::Future;
+using firebase::database::DataSnapshot;
+using firebase::storage::Metadata;
+using firebase::storage::Storage;
+
+#include <zlib.h>
+const int CHUNK = 16384;
+
+#include <iostream>
+#include <fstream>
+#include <cstdio>
+
+void UIYabause::on_actionTo_Cloud_triggered()
+{
+  YabauseLocker locker(mYabauseThread);
+  firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
+  firebase::auth::User *user = auth->current_user();
+  if (user == nullptr) {
+    return;
+  }
+
+  QString datapath = getDataDirPath();
+  std::string sdatapath = datapath.toStdString();
+  sdatapath += "/current_state_save.bin";
+
+  const char* gamecode = Cs2GetCurrentGmaecode();
+
+  if (YabSaveCompressedState(sdatapath.c_str()) == -1) {
+    return;
+  }
+  
+  Storage *storage = Storage::GetInstance(UIYabause::getFirebaseApp(), "gs://uoyabause.appspot.com");
+  StorageReference storage_ref = storage->GetReference();
+  StorageReference base = storage_ref.Child(user->uid());
+  StorageReference backup = base.Child("state");
+  StorageReference fileref;
+  fileref = backup.Child(gamecode);
+
+  Future<Metadata> future = fileref.PutFile(sdatapath.c_str());
+  future.OnCompletion(
+    [](const firebase::Future<Metadata> &result, void *user_data) {
+      
+      UIYabause *self = (UIYabause *)user_data;
+
+      if (result.status() == firebase::kFutureStatusComplete)
+      {
+        if (result.error() == firebase::storage::kErrorNone)
+        {
+
+        }
+        else {
+          std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
+        }
+      }
+      QString datapath = getDataDirPath();
+      std::string sdatapath = datapath.toStdString();
+      sdatapath += "/current_state_save.bin";
+      std::remove(sdatapath.c_str());
+    },
+    this);
+}
+
+void UIYabause::on_actionFrom_Cloud_triggered()
+{
+  firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
+  firebase::auth::User *user = auth->current_user();
+  if (user == nullptr) {
+    return;
+  }
+
+  QString datapath = getDataDirPath();
+  std::string sdatapath = datapath.toStdString();
+  sdatapath += "/current_state_load.bin";
+
+  const char* gamecode = Cs2GetCurrentGmaecode();
+
+  Storage *storage = Storage::GetInstance(UIYabause::getFirebaseApp(), "gs://uoyabause.appspot.com");
+  StorageReference storage_ref = storage->GetReference();
+  StorageReference base = storage_ref.Child(user->uid());
+  StorageReference backup = base.Child("state");
+  StorageReference fileref;
+  fileref = backup.Child(gamecode);
+
+  Future<size_t> future = fileref.GetFile(sdatapath.c_str());
+  future.OnCompletion(
+    [](const firebase::Future<size_t > &result, void *user_data) {
+      UIYabause *self = (UIYabause *)user_data;
+      if (result.status() == firebase::kFutureStatusComplete)
+      {
+        if (result.error() == firebase::storage::kErrorNone)
+        {
+           //emit self->onStateFileLoaded("cloudstate.bin");
+           QMetaObject::invokeMethod(self, "onStateFileLoaded", Qt::QueuedConnection);
+        }
+        else {
+          std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
+        }
+      }
+  },
+  this);
+}
+
+void UIYabause::onStateFileLoaded() {
+
+  QString datapath = getDataDirPath();
+  std::string sdatapath = datapath.toStdString();
+  sdatapath += "/current_state_load.bin";
+
+  YabauseLocker locker(mYabauseThread);
+  if (YabLoadCompressedState(sdatapath.c_str()) != 0)
+    CommonDialogs::information(QtYabause::translate("Couldn't load state file"));
+  else
+    aEmulationRun->trigger();
+
+  std::remove(sdatapath.c_str());
+
 }

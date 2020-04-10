@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 
 #include "json/json.h"
-#include <android/log.h>
 #include <memory>
 #include <iostream>
 #include <sstream>
@@ -34,48 +33,6 @@ using namespace Json;
 using std::unique_ptr;
 using std::ostringstream;
 
-jstring NewStringMS932(JNIEnv *env, const char *sjis)
-{
-	if (sjis==NULL) return NULL;
-
-	jthrowable ej = env->ExceptionOccurred();
-	if (ej!=NULL) env->ExceptionClear();
-
-	int len = 0;
-	jbyteArray arrj = NULL;
-	jstring encj    = NULL;
-	jclass clsj     = NULL;
-	jmethodID mj    = NULL;
-	jstring strj    = NULL;
-
-	len = strlen(sjis);
-	arrj = env->NewByteArray(len);
-	if (arrj==NULL) goto END;
-	env->SetByteArrayRegion(arrj, 0, len, (jbyte*)sjis);
-
-	encj = env->NewStringUTF("MS932");
-	if (encj==NULL) goto END;
-
-	clsj = env->FindClass("java/lang/String");
-  if (clsj==NULL) goto END;
-  
-  //getBiosPath = (*env)->GetMethodID(env, yclass, "getBiosPath", "()Ljava/lang/String;");
-
-	mj = env->GetMethodID(clsj, "<init>", "([BLjava/lang/String;)V");
-	if (mj==NULL) goto END;
-
-	strj = (jstring)env->NewObject(clsj, mj, arrj, encj);
-	if (strj==NULL) goto END;
-
-	if (ej!=NULL) env->Throw(ej); 
-END:
-	env->DeleteLocalRef(ej);
-	env->DeleteLocalRef(encj);
-	env->DeleteLocalRef(clsj);
-	env->DeleteLocalRef(arrj);
-
-	return strj;
-}
 
 //BackupManager::instance_ = NULL;
 BackupManager * BackupManager::instance_ = NULL;
@@ -117,7 +74,7 @@ int BackupManager::getDevicelist( string & jsonstr ) {
   }
 
   convJsontoString(root,jsonstr);
-  __android_log_print(ANDROID_LOG_INFO,LOGTAG,jsonstr.c_str());
+  //__android_log_print(ANDROID_LOG_INFO,LOGTAG,jsonstr.c_str());
 
   return 0;
 }
@@ -129,7 +86,7 @@ int BackupManager::getFilelist( int deviceid, string & jsonstr ) {
   Json::Value status;
   devicestatus_struct devstatus;
 
-   __android_log_print(ANDROID_LOG_INFO,LOGTAG,"getFilelist deviceid = %d",deviceid );
+   //__android_log_print(ANDROID_LOG_INFO,LOGTAG,"getFilelist deviceid = %d",deviceid );
 
   if(saves_!=NULL){
     free(saves_);
@@ -143,7 +100,7 @@ int BackupManager::getFilelist( int deviceid, string & jsonstr ) {
   root["status"] = status;  
   
   saves_ = BupGetSaveList( deviceid, &numsaves_);
-  __android_log_print(ANDROID_LOG_INFO,LOGTAG,"BupGetSaveList numsaves_ = %d",numsaves_ );
+//  __android_log_print(ANDROID_LOG_INFO,LOGTAG,"BupGetSaveList numsaves_ = %d",numsaves_ );
   root["saves"] = Json::Value(Json::arrayValue);
   for ( int i = 0; i < numsaves_ ; i++ ){
     item["index"] = i;
@@ -169,7 +126,7 @@ int BackupManager::getFilelist( int deviceid, string & jsonstr ) {
 
   current_device_ = deviceid;
   convJsontoString(root,jsonstr);
-  __android_log_print(ANDROID_LOG_INFO,LOGTAG,jsonstr.c_str());
+//  __android_log_print(ANDROID_LOG_INFO,LOGTAG,jsonstr.c_str());
 
   return 0;
 }
@@ -227,7 +184,7 @@ int BackupManager::getFile( int index, string & jsonstr ) {
   root["data"] = data;
 
   convJsontoString(root,jsonstr);
-  __android_log_print(ANDROID_LOG_INFO,LOGTAG,jsonstr.c_str());
+//  __android_log_print(ANDROID_LOG_INFO,LOGTAG,jsonstr.c_str());
 
   return 0;
 }
@@ -248,34 +205,71 @@ int BackupManager::putFile( const string & rootstr ) {
       return -1;
   }
 
-  header = root["header"];
-
   string base64;
   string bin;
 
-  base64 = header["filename"].asString();
-  bin = base64_decode(base64);
-  strncpy(save.filename,bin.c_str(),12);
+  try {
+    header = root["header"];
+    if (header.isNull()) {
+      return -1;
+    }
 
-  base64 = header["comment"].asString();
-  bin = base64_decode(base64);
-  strncpy(save.comment,bin.c_str(),11);
+    if (!header["filename"].isString()) return -1;
+    base64 = header["filename"].asString();
+    bin = base64_decode(base64);
+    strncpy(save.filename, bin.c_str(), 12);
 
-  save.language = header["language"].asInt();
-  save.date = header["date"].asInt();
-  save.year = header["year"].asInt();
-  save.month = header["month"].asInt();
-  save.day = header["day"].asInt();
-  save.hour = header["hour"].asInt();
-  save.minute = header["minute"].asInt();
-  save.week = header["week"].asInt();
-  save.datasize = header["datasize"].asInt();
-  save.blocksize = header["blocksize"].asInt();
-  
-  data = root["data"];
-  size = data["size"].asInt();
-  base64 = data["content"].asString();
-  bin = base64_decode(base64);
+    if (!header["comment"].isString()) return -1;
+    base64 = header["comment"].asString();
+    bin = base64_decode(base64);
+    strncpy(save.comment, bin.c_str(), 11);
+
+    if (!header["language"].isInt()) return -1;
+    save.language = header["language"].asInt();
+
+    if (!header["date"].isInt()) return -1;
+    save.date = header["date"].asInt();
+
+    if (!header["year"].isInt()) return -1;
+    save.year = header["year"].asInt();
+
+    if (!header["month"].isInt()) return -1;
+    save.month = header["month"].asInt();
+
+    if (!header["day"].isInt()) return -1;
+    save.day = header["day"].asInt();
+
+    if (!header["hour"].isInt()) return -1;
+    save.hour = header["hour"].asInt();
+
+    if (!header["minute"].isInt()) return -1;
+    save.minute = header["minute"].asInt();
+
+    if (!header["week"].isInt()) return -1;
+    save.week = header["week"].asInt();
+
+    if (!header["datasize"].isInt()) return -1;
+    save.datasize = header["datasize"].asInt();
+
+    if (!header["blocksize"].isInt()) return -1;
+    save.blocksize = header["blocksize"].asInt();
+
+    data = root["data"];
+    if (data.isNull()) {
+      return -1;
+    }
+
+    if (!data["size"].isInt()) return -1;
+    size = data["size"].asInt();
+
+    if (!data["content"].isString()) return -1;
+    base64 = data["content"].asString();
+    bin = base64_decode(base64);
+
+  }
+  catch (Exception e) {
+    return -1;
+  }
   
   int rtn = BiosBUPImport( current_device_, &save, bin.c_str(), bin.size() );
   if( rtn != 0 ) {

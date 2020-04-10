@@ -1,38 +1,19 @@
 environment:
-  MINGW: C:\Qt\Tools\mingw492_32
-  DXSDK_DIR: "C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)"
   CMAKE_BUILD_TYPE: Release
+  keypass:
+    secure: ZLcvhuGQOxB1TWnSlnuRYg==
+  key:
+    secure: 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
   # set to d if debug build
   qt_dll_suffix: ""
 
   matrix:
     # Visual Studio build
     - generator: "Visual Studio 14 2015"
-      QT_PATH: "C:/Qt/5.9.7/msvc2015"
-      CMAKE_PREFIX_PATH: "%QT_PATH%"
-      compiler_type: "vs14-x32"
+      CMAKE_PREFIX_PATH: C:\Qt\5.9.9\msvc2015
       sdl_filename: SDL2-devel-2.0.3-VC.zip
       sdl_arch: x86
-      cmake_args: >
-        -DYAB_WANT_DYNAREC_DEVMIYAX=TRUE 
-        -DYAB_WANT_DIRECTINPUT=TRUE 
-        -DYAB_WANT_DIRECTSOUND=TRUE 
-        -DYAB_WANT_SDL=TRUE
-        -DGIT_EXECUTABLE="C:\Program Files\Git\cmd\git.exe"
-        -DDirectX_ERR_LIBRARY="%DXSDK_DIR%/Lib/x86/DxErr.lib"
-        -DDirectX_GUID_LIBRARY="%DXSDK_DIR%/Lib/x86/dxguid.lib"
-        -DDirectX_INPUT8_LIBRARY="%DXSDK_DIR%/Lib/x86/dinput8.lib"
-        -DDirectX_SOUND_LIBRARY="%DXSDK_DIR%/Lib/x86/dsound.lib"
-        -DDirectX_XINPUT_LIBRARY="%DXSDK_DIR%/Lib/x86/XInput.lib"
-        -DSH2_DYNAREC=FALSE
-        -DYAB_PORTS=qt
-        -DYAB_WANT_C68K=FALSE
-        -DSH2_DYNAREC=FALSE
-        -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib 
-        -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ 
-        -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib
-        -DMINI18N_INCLUDE_DIR=%APPVEYOR_BUILD_FOLDER%/mini18n/src
-        -DMINI18N_LIBRARY=%APPVEYOR_BUILD_FOLDER%/mini18n/build/src/Release/mini18n-static.lib
+      cmake_args: "-DCMAKE_BUILD_TYPE=Release -DYAB_PORTS=qt -DYAB_WANT_DIRECTSOUND=ON -DYAB_WANT_DYNAREC_DEVMIYAX=TRUE -DYAB_WANT_DIRECTINPUT=ON -DSH2_DYNAREC=FALSE"
 
 shallow_clone: true
 
@@ -42,10 +23,9 @@ init:
   #- rm "C:\Program Files\Git\usr\bin\sh.exe"
   # cpack won't work because of chocolatey sharing the same name
   - rm "C:\ProgramData\chocolatey\bin\cpack.exe"
-  - set Path=%MINGW%\bin;%Path%
+  #- set Path=%MINGW%\bin;%Path%
 
 before_build:
-  - dir "%DXSDK_DIR%/Lib/x86/"
   # fetch appropriate sdl lib for visual studio or mingw
   - cd c:\
   - appveyor DownloadFile https://www.libsdl.org/release/%sdl_filename%
@@ -53,81 +33,48 @@ before_build:
   # decompress it, shorten 7z output with FIND
   - 7z x %sdl_filename%  | FIND /V "ing  "
 
-  - git --version
+  - appveyor DownloadFile https://dl.google.com/firebase/sdk/cpp/firebase_cpp_sdk_6.11.0.zip
+  - tar -v -xf firebase_cpp_sdk_6.11.0.zip -C %APPVEYOR_BUILD_FOLDER%\yabause\src\qt\
 
+  - ps: $cmake_args_dx += '-DDirectX_ERR_LIBRARY="C:\Program Files (x86)\Microsoft DirectX SDK\Lib\x86\DxErr.lib" '
+  - ps: $cmake_args_dx += '-DDirectX_GUID_LIBRARY="C:\Program Files (x86)\Microsoft DirectX SDK\Lib\x86\dxguid.lib" '
+  - ps: $cmake_args_dx += '-DDirectX_INPUT8_LIBRARY="C:\Program Files (x86)\Microsoft DirectX SDK\Lib\x86\dinput8.lib" '
+  - ps: $cmake_args_dx += '-DDirectX_SOUND_LIBRARY="C:\Program Files (x86)\Microsoft DirectX SDK\Lib\x86\dsound.lib" '
+  - ps: $cmake_args_dx += '-DDirectX_XINPUT_LIBRARY="C:\Program Files (x86)\Microsoft DirectX SDK\Lib\x86\XInput.lib" '
+  - ps: ${env:cmake_args} = "${env:cmake_args} ${cmake_args_dx} -DMINI18N_INCLUDE_DIR=%APPVEYOR_BUILD_FOLDER%\mini18n\src -DMINI18N_LIBRARY=%APPVEYOR_BUILD_FOLDER%\mini18n\build\src\Release\mini18n-static.lib"
+  - ps: ${env:PATH} += ';"C:/Program Files (x86)/Windows Kits/10/bin/10.0.18362.0/x64/"'
 
 build_script:
-  - cd C:\projects\yabause\mini18n
+  # generate project files or makefiles
+  - cd %APPVEYOR_BUILD_FOLDER%\mini18n
   - mkdir build
   - cd build
-  - cmake -G "%generator%" ..
-  - cd C:\projects\yabause\mini18n\build
-  - msbuild mini18n.sln /p:configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
-  - cd C:\projects\yabause\yabause
-  - mkdir build
-  - cd build
+  - echo %cmake_args% 
   - cmake -G "%generator%" %cmake_args% ..
-  - cd C:\projects\yabause\yabause\build
-  - msbuild YabaSanshiro.sln /p:configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild mini18n.sln /p:configuration=Release /m /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - cd %APPVEYOR_BUILD_FOLDER%\yabause
+  - mkdir build
+  - cd build
+  - echo %cmake_args% 
+  - cmake -G "%generator%" %cmake_args% -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib ..
+  - msbuild YabaSanshiro.sln /p:configuration=Release /m /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 # make a distributable package of the build output
 after_build:
-  #- ps: $git_hash_date = ${env:APPVEYOR_REPO_COMMIT}.substring(0, 7)
-  #- ps: $git_hash_date += "-"
-  #- ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
-  #- ps: ${env:yab_name} = "yabasanhiro-${git_hash_date}-${env:compiler_type}"
-  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Core.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
-  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Gui.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
-  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Multimedia.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
-  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Network.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
-  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5OpenGL.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
-  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Widgets.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
-  - ps: Copy-Item ${env:QT_PATH}\plugins\platforms\*.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\platforms\
-  - ps: Copy-Item ${env:APPVEYOR_BUILD_FOLDER}\mini18n\build\src\Release\mini18n.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
-  - ps: Copy-Item ${env:APPVEYOR_BUILD_FOLDER}\yabause\l10n\* ${env:APPVEYOR_BUILD_FOLDER}\win_template\trans\
-  - ps: Copy-Item ${env:APPVEYOR_BUILD_FOLDER}\yabause\build\src\qt\Release\yabasanshiro.exe ${env:APPVEYOR_BUILD_FOLDER}\win_template\
-  - ps: $git_hash_date = ${env:APPVEYOR_REPO_COMMIT}.substring(0, 7)
-  - ps: $git_hash_date += "-"
-  - ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
-  - ps: ${env:yab_name} = "yabasanshiro-${git_hash_date}-${env:compiler_type}"
-  - ps: Compress-Archive ${env:APPVEYOR_BUILD_FOLDER}\win_template\* ./${env:yab_name}.zip -Force
-  - appveyor PushArtifact %yab_name%.zip
+  - cd %APPVEYOR_BUILD_FOLDER%\yabause\build
+  - echo %key% | base64.exe -di > key.pfx
+  - signtool.exe sign /tr http://timestamp.digicert.com /f key.pfx /p %keypass% ".\src\qt\Release\yabasanshiro.exe"
 
   # zip all output files and push the artifact, name it with the commit, date and compiler type
-  #- ps: $git_hash_date = ${env:APPVEYOR_REPO_COMMIT}.substring(0, 7)
-  #- ps: $git_hash_date += "-"
-  #- ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
-  #- ps: ${env:yab_name} = "yabause-${git_hash_date}-${env:compiler_type}"
-  #- cmd: cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=%yab_name%
-  #- appveyor PushArtifact %yab_name%.zip
+  - cmd: cpack -G ZIP 
+  - cmd: cpack -G WIX -C Release 
 
-#artifacts:
-#  - path: 'C:\projects\yabause\win_template\*'
-#    name: yabasanshiro_win32
-
-deploy:
-  release: YabaSanshiro-v$(appveyor_build_version)
-  description: 'Release description'
-  provider: GitHub
-  auth_token:
-    secure: ASYSKE9O9Mi8z1lO0iI6WNZozPPcNwIwIFN8cnY8uo8DD3U9aJamNo9+A/+QD+N7 # your encrypted token from GitHub
-  artifact: /.*\.zip/            # upload all NuGet packages to release assets
-  draft: false
-  prerelease: false
-  on:
-    branch: master                 # release from master branch only
-    appveyor_repo_tag: true        # deploy on tag push only
-
-  #- appveyor PushArtifact "C:/projects/yabause/yabause/build/src/qt/Debug/yabause.exe"
-
+artifacts:
+  - path: yabause\build\*.zip
+  - path: yabause\build\*.msi
+  
   # Upload build to yabause.org
   #- ps: ${env:yab_name_alt} = "yabause-latest-win64"
   #- ps: ${env:yab_name_alt2} = "yabause-${git_hash_date}-win64"
   #- if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] if not defined APPVEYOR_PULL_REQUEST_NUMBER curl --ftp-create-dirs -T %yab_name%.zip -u %YABUSR%:%YABPAS% ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/%yab_name_alt%.zip
   #- if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] curl --ftp-create-dirs -T %yab_name%.zip -u %YABUSR%:%YABPAS% ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/%yab_name_alt2%.zip
-on_success:
-  - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
-  - ps: ./send.ps1 success $env:WEB_HOOK
-on_failure:
-  - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
-  - ps: ./send.ps1 failure $env:WEB_HOOK

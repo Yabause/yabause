@@ -42,6 +42,10 @@ enum BARDISPLAY
 	BD_SHOWONFSHOVER=3
 };
 
+namespace firebase{
+	class App;
+}
+
 class YabauseLocker
 {
 public:
@@ -88,7 +92,15 @@ public:
 	void swapBuffers();
 	virtual bool eventFilter( QObject* o, QEvent* e );
 
+	static firebase::App* getFirebaseApp(){
+		return app;
+	}
+
+signals: // [1]
+  void setStateFileLoaded(std::string filename );
+
 protected:
+	static firebase::App* app;
 	YabauseGL* mYabauseGL;
 	YabauseThread* mYabauseThread;
 	QDockWidget* mLogDock;
@@ -120,6 +132,10 @@ protected:
 
 	bool mIsCdIn;
 
+  void *state_buffer = nullptr;
+  size_t state_size = 0;
+  
+
 #if defined Q_OS_WIN
   HWND hwnd_;
   SavedWinInfo saved_window_info_;
@@ -138,6 +154,9 @@ public slots:
 	void breakpointHandlerM68K();
 	void breakpointHandlerSCUDSP();
 	void breakpointHandlerSCSPDSP();
+
+  void onStateFileLoaded();
+
 protected slots:
 	void errorReceived( const QString& error, bool internal = true );
 	void sizeRequested( const QSize& size );
@@ -154,10 +173,12 @@ protected slots:
 	void on_aFileSettings_triggered();
 	void on_aFileOpenISO_triggered();
 	void on_aFileOpenCDRom_triggered();
-   void on_aFileOpenSSF_triggered();
-   void on_actionOpen_Tray_triggered();
+  void on_aFileOpenSSF_triggered();
+  void on_actionOpen_Tray_triggered();
 	void on_mFileSaveState_triggered( QAction* );
 	void on_mFileLoadState_triggered( QAction* );
+  void on_actionTo_Cloud_triggered();
+  void on_actionFrom_Cloud_triggered();
 	void on_aFileSaveStateAs_triggered();
 	void on_aFileLoadStateAs_triggered();
 	void on_aFileScreenshot_triggered();
@@ -168,6 +189,7 @@ protected slots:
 	void on_aEmulationReset_triggered();
 	void on_aEmulationFrameSkipLimiter_toggled( bool toggled );
 	// tools
+  void on_actionOpen_web_interface_triggered();
 	void on_aToolsBackupManager_triggered();
 	void on_aToolsCheatsList_triggered();
 	void on_aToolsCheatSearch_triggered();

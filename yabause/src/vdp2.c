@@ -511,6 +511,7 @@ void vdp2VBlankIN(void) {
    //if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
    VIDCore->Vdp2DrawEnd();
+   VIDCore->Sync();
    Vdp2Regs->TVSTAT |= 0x0008;
 
    ScuSendVBlankIN();
@@ -520,7 +521,7 @@ void vdp2VBlankIN(void) {
    FrameProfileAdd("VIN flag");
    FRAMELOG("**** VIN(T) *****\n");
    YabAddEventQueue(rcv_evqueue, 0);
-   VIDCore->Sync();
+   
 
 }
 
@@ -707,13 +708,12 @@ void Vdp2HBlankOUT(void) {
       YabClearEventQueue(vdp1_rcv_evqueue);
       FRAMELOG("**WAIT END**");
       FrameProfileAdd("DirectDraw sync");
-      yabsys.wait_line_count = -1;
       if (Vdp1External.status == VDP1_STATUS_IDLE) {
-        Vdp1Regs->EDSR |= 2;
-        Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
         ScuSendDrawEnd();
+        FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
+        yabsys.wait_line_count = -1;
+        Vdp1Regs->EDSR |= 2;
       }
-    FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
   }
 #else
     vdp2VBlankOUT();
@@ -721,10 +721,9 @@ void Vdp2HBlankOUT(void) {
   else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
     //Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
     //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
-
     if ( Vdp1External.status == VDP1_STATUS_IDLE) {
       ScuSendDrawEnd();
-    FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
+      FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
       yabsys.wait_line_count = -1;
       Vdp1Regs->EDSR |= 2;
     }
@@ -877,7 +876,7 @@ void vdp2VBlankOUT(void) {
   u64 starttime = YabauseGetTicks();
 #endif
   VdpLockVram();
-  FRAMELOG("***** VOUT(T) swap=%d,plot=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
+  FRAMELOG("***** VOUT(T) swap=%d,plot=%d,vdp1status=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot, Vdp1External.status );
 
   if (g_vdp_debug_dmp == 1) {
     g_vdp_debug_dmp = 0;
@@ -978,7 +977,7 @@ void vdp2VBlankOUT(void) {
       LOG("[VDP1] Start Drawing continue");
       Vdp1Draw();
       isrender = 1;
-  }
+    }
   }
 
 #if defined(YAB_ASYNC_RENDERING)

@@ -4,6 +4,8 @@
     <string name="menu_reset">Reset</string>
     <string name="menu_save_state">Save State</string>
     <string name="menu_load_state">Load State</string>
+    <string name="menu_save_state_cloud">Save State to Cloud</string>
+    <string name="menu_load_state_cloud">Load State from Cloud</string>
     <string name="load_game">Load Game</string>
     <string name="setting">Settings</string>
     <string name="choose_bios">Choose bios</string>
@@ -282,5 +284,24 @@
     <string name="show_fps">Show FPS</string>
     <string name="enable_frame_skip">Enable Frame skip</string>
     <string name="game_setting">Game Setting</string>
+    <string name="welcome">
+        <![CDATA[
+        # Welcome! \n\n
+
+        To play SEGA Saturn games, follow this instructions.\n\n
+
+        1. Generate a image file from your game CD-ROM using DiscImageChef or something. Useful tools are listed [here](http://wiki.redump.org/index.php?title=Useful_Links).\n
+        2. Copy the image files to the directory **\"%1$s\"**  in the smart phone internal storage.\n
+        3. Show drawer menu and tap \"Refresh Game List\". Then game list is shown.\n
+        4. Tap the game title you want to play.\n
+        5. Enjoy!\n
+        \n
+        For more detail checkout our [website](http://www.uoyabause.org/static_pages/guide).\n
+        ]]>
+    </string>
+    <string name="delete_confirm_title">DELETE CONFIRM</string>
+    <string name="not_available">NOT AVAILABLE!</string>
+    <string name="only_pro_version">This function is only available for pro version</string>
+    <string name="got_it">Got it!</string>
 </resources>
 	

@@ -389,6 +389,8 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
 
    if (Vdp2Regs->BGON & 0x10)
    {
+     vdp2rotationparameter_struct  parameter = { 0 };
+
       // enabled
       int rotatenum=0;
       int coeftbl=0, coefmode=0;
@@ -630,6 +632,46 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
       outstring = AddColorOffsetInfo(outstring, 0x0010);
       
       AddString(outstring, "Special Color Calculation %d\r\n",(Vdp2Regs->SFCCMD>>8)&0x03);
+
+      Vdp2ReadRotationTable(0, &parameter, Vdp2Regs, Vdp2Ram);
+      AddString(outstring, "A:\n");
+      AddString(outstring, "Xst: %f, Yst: %f, Zst: %f, deltaXst: %f deltaYst: %f deltaX: %f\n",
+        parameter.Xst, 
+        parameter.Yst,
+        parameter.Zst, 
+        parameter.deltaXst,
+        parameter.deltaYst,
+        parameter.deltaX);
+      AddString(outstring, "deltaY: %f A: %f B: %f C: %f D: %f E: %f F: %f Px: %f Py: %f Pz: %f\n",
+        parameter.deltaY,
+        parameter.A, parameter.B, parameter.C, parameter.D, parameter.E,
+        parameter.F, parameter.Px, parameter.Py, parameter.Pz);
+      AddString(outstring, "Cx: %f Cy: %f Cz: %f Mx: %f My: %f kx: %f ky: %f KAst: %f\n",
+        parameter.Cx, parameter.Cy, parameter.Cz, parameter.Mx,
+        parameter.My, parameter.kx, parameter.ky, parameter.KAst);
+      AddString(outstring, "deltaKAst: %f deltaKAx: %f kadr %08X\n",
+        parameter.deltaKAst, parameter.deltaKAx, parameter.coeftbladdr);
+
+      Vdp2ReadRotationTable(1, &parameter, Vdp2Regs, Vdp2Ram);
+      AddString(outstring, "B:\n");
+      AddString(outstring, "Xst: %f, Yst: %f, Zst: %f, deltaXst: %f deltaYst: %f deltaX: %f\n",
+        parameter.Xst,
+        parameter.Yst,
+        parameter.Zst,
+        parameter.deltaXst,
+        parameter.deltaYst,
+        parameter.deltaX);
+      AddString(outstring, "deltaY: %f A: %f B: %f C: %f D: %f E: %f F: %f Px: %f Py: %f Pz: %f\n",
+        parameter.deltaY,
+        parameter.A, parameter.B, parameter.C, parameter.D, parameter.E,
+        parameter.F, parameter.Px, parameter.Py, parameter.Pz);
+      AddString(outstring, "Cx: %f Cy: %f Cz: %f Mx: %f My: %f kx: %f ky: %f KAst: %f\n",
+        parameter.Cx, parameter.Cy, parameter.Cz, parameter.Mx,
+        parameter.My, parameter.kx, parameter.ky, parameter.KAst);
+      AddString(outstring, "deltaKAst: %f deltaKAx: %f kadr %08X\n",
+        parameter.deltaKAst, parameter.deltaKAx, parameter.coeftbladdr);
+
+
    }
    else
    {

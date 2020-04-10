@@ -54,7 +54,20 @@
             android:id="@+id/menu_item_backup"
             android:icon="@drawable/ic_save_black_24dp"
             android:title="@string/memory_manager" />
--
+
+        <item
+            android:id="@+id/save_state_cloud"
+            android:icon="@drawable/ic_cloud_upload_black_24dp"
+            android:title="@string/menu_save_state_cloud"
+            android:visible="true" />
+
+        <item
+            android:id="@+id/load_state_cloud"
+            android:icon="@drawable/ic_cloud_download_black_24dp"
+            android:title="@string/menu_load_state_cloud"
+            android:visible="true" />
+
+        -
         <item
             android:id="@+id/save_state"
             android:title="@string/menu_save_state"

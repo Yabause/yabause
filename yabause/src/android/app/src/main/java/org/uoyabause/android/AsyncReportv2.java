@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -94,9 +95,14 @@ public class AsyncReportv2  extends AsyncTask<String, Integer, Integer> {
     //----------------------------------------------------------------------------------------------
     long getgameid( String baseurl, String product_id ){
 
+
         long id = -1;
-        String url = baseurl +"/games/" + product_id;
         try {
+            String encoded_product_id = product_id;
+            encoded_product_id = encoded_product_id.replace(" ","%20");
+            encoded_product_id = encoded_product_id.replace(".","%2E");
+            encoded_product_id = encoded_product_id.replace("-","%2D");
+            String url = baseurl +"/games/" + encoded_product_id;
             Request request = new Request.Builder().url(url).build();
             Response response = client.newCall(request).execute();
             if( response.isSuccessful() ) {
