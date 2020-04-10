@@ -948,6 +948,7 @@ int YglGenFrameBuffer(int force) {
   if (YglTM_vdp2 == NULL) YglTM_vdp2= YglTMInit(1024, 1024);
   YglDestroy();
   YglGenerate();
+  return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1116,7 +1117,7 @@ static int YglDestroyBackBuffer() {
     glDeleteFramebuffers(1, &_Ygl->back_fbo);
     _Ygl->back_fbo = 0;
   }
-
+  return 0;
 }
 static int YglGenerateBackBuffer(){
   int status;

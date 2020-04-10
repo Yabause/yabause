@@ -817,7 +817,7 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
    JZEndRecord* endRecord = (JZEndRecord*)malloc(sizeof(JZEndRecord));
    JZFileHeader header;
    u8* data;
-   ZipEntry* tracktr;
+   ZipEntry* tracktr = NULL;
    JZFile *zip;
    FILE *iso_file;
    ZipEntry *cue;
