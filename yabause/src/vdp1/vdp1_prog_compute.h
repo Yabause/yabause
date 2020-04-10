@@ -272,7 +272,7 @@ SHADER_VERSION_COMPUTE
 "  vec2 B = vec2(V1.x, V0.y)+vec2(0.5);\n"
 "  for (uint i=0; i<step; i++) {\n"
 "    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n"
-"    if (distance(d.xy/upscale, P/upscale+vec2(0.5)) <= 0.7072) {\n"
+"    if (distance(d.xy, P+(vec2(0.5)*upscale)) <= (0.7072*length(upscale))) {\n"
 "      float ux= d.z;\n"
 "      float uy= float(i)/float(step+1);\n"
 "      uv = vec2(ux,uy);\n"
