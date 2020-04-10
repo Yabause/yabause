@@ -3003,7 +3003,11 @@ void YglRenderVDP1(void) {
       }
 
       if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING_TESS ) {
+#if defined(__XU4__)
+        glPatchParameteriOES(GL_PATCH_VERTICES, 4);
+#else        
         if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
+#endif        
         glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
       }else{
         glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
