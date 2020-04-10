@@ -240,43 +240,38 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 				{
 					u32 addr1 = ((dot>>4) * 2 + cmd->CMDCOLR * 8);
 					u32 addr2 = ((dot&0xF) * 2 + cmd->CMDCOLR * 8);
-					int needUpdate = ((pos >= vdp1Ram_update_start) || (pos <= vdp1Ram_update_end));
-					needUpdate |= ((addr1 >= vdp1Ram_update_start) || (addr1 <= vdp1Ram_update_end));
-					needUpdate |= ((addr2 >= vdp1Ram_update_start) || (addr2 <= vdp1Ram_update_end));
-					if (needUpdate != 0) {
-						dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
-						if (!END && (endcnt >= 2)) {
-	          	dot |= 0xF0;
-						}
-						else if (((dot & 0xF0) == 0xF0) && !END) {
-	          	endcnt++;
-	        	} else {
-							if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
-								//ColorLut
-								u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr1);
-								if (cmdRam_update_start[id] > addr1) cmdRam_update_start[id] = addr1;
-								if (cmdRam_update_end[id] < (addr1 + 2)) cmdRam_update_end[id] = addr1 + 2;
-								T1WriteWord(buf, addr1, val);
-							}
-						}
-						if (!END && (endcnt >= 2)) {
-	          	dot |= 0xF;
-						}
-						else if (((dot & 0xF) == 0xF) && !END) {
-	          	endcnt++;
-						} else {
-							if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
-								//ColorLut
-								u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr2);
-								if (cmdRam_update_start[id] > addr2) cmdRam_update_start[id] = addr2;
-								if (cmdRam_update_end[id] < (addr2 + 2)) cmdRam_update_end[id] = addr2 + 2;
-								T1WriteWord(buf, addr2, val);
-							}
-	        	}
-						if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
-						if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
-						T1WriteByte(buf, pos, dot);
+					dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
+					if (!END && (endcnt >= 2)) {
+          	dot |= 0xF0;
 					}
+					else if (((dot & 0xF0) == 0xF0) && !END) {
+          	endcnt++;
+        	} else {
+						if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
+							//ColorLut
+							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr1);
+							if (cmdRam_update_start[id] > addr1) cmdRam_update_start[id] = addr1;
+							if (cmdRam_update_end[id] < (addr1 + 2)) cmdRam_update_end[id] = addr1 + 2;
+							T1WriteWord(buf, addr1, val);
+						}
+					}
+					if (!END && (endcnt >= 2)) {
+          	dot |= 0xF;
+					}
+					else if (((dot & 0xF) == 0xF) && !END) {
+          	endcnt++;
+					} else {
+						if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
+							//ColorLut
+							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr2);
+							if (cmdRam_update_start[id] > addr2) cmdRam_update_start[id] = addr2;
+							if (cmdRam_update_end[id] < (addr2 + 2)) cmdRam_update_end[id] = addr2 + 2;
+							T1WriteWord(buf, addr2, val);
+						}
+        	}
+					if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+					if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
+					T1WriteByte(buf, pos, dot);
 					pos += 1;
 	    	}
 			}
@@ -288,19 +283,16 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 					endcnt = 0;
 					for(int w = 0; w < cmd->w; w++)
 					{
-						int needUpdate = ((pos >= vdp1Ram_update_start) || (pos <= vdp1Ram_update_end));
-						if (needUpdate != 0) {
-							dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
-							if (!END && (endcnt >= 2)) {
-								dot = 0xFF;
-							}
-							else if ((dot == 0xFF) && !END) {
-								endcnt++;
-							}
-							if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
-							if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
-							T1WriteByte(buf, pos, dot);
+						dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
+						if (!END && (endcnt >= 2)) {
+							dot = 0xFF;
 						}
+						else if ((dot == 0xFF) && !END) {
+							endcnt++;
+						}
+						if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+						if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
+						T1WriteByte(buf, pos, dot);
 						pos += 1;
 		    	}
 				}
@@ -310,19 +302,16 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 				endcnt = 0;
 				for(int w = 0; w < cmd->w; w++)
 	    	{
-					int needUpdate = ((pos >= vdp1Ram_update_start) || (pos <= vdp1Ram_update_end));
-					if (needUpdate != 0) {
-						u16 dot = Vdp1RamReadWord(NULL, Vdp1Ram, pos);
-						if (!END && (endcnt >= 2)) {
-							dot = 0x7FFF;
-						}
-						else if ((dot == 0x7FFF) && !END) {
-							endcnt++;
-						}
-						if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
-						if (cmdRam_update_end[id] < (pos + 2)) cmdRam_update_end[id] = pos + 2;
-						T1WriteWord(buf, pos, dot);
+					u16 dot = Vdp1RamReadWord(NULL, Vdp1Ram, pos);
+					if (!END && (endcnt >= 2)) {
+						dot = 0x7FFF;
 					}
+					else if ((dot == 0x7FFF) && !END) {
+						endcnt++;
+					}
+					if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+					if (cmdRam_update_end[id] < (pos + 2)) cmdRam_update_end[id] = pos + 2;
+					T1WriteWord(buf, pos, dot);
 					pos += 2;
 	    	}
 			}
@@ -577,6 +566,7 @@ void vdp1_set_directFB() {
 }
 void vdp1_setup(void) {
 	if (ssbo_vdp1ram_[_Ygl->drawframe] == 0) return;
+	vdp1_wait_regenerate();
 	if (cmdRam_update_start[_Ygl->drawframe] < cmdRam_update_end[_Ygl->drawframe]) {
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_[_Ygl->drawframe]);
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, cmdRam_update_start[_Ygl->drawframe], (cmdRam_update_end[_Ygl->drawframe] - cmdRam_update_start[_Ygl->drawframe]), (void*)(&(cmdBuffer[_Ygl->drawframe])[cmdRam_update_start[_Ygl->drawframe]]));
@@ -609,12 +599,9 @@ void vdp1_compute() {
 
 	VDP1CPRINT("Draw VDP1\n");
 
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
   for (int i = 0; i < NB_COARSE_RAST; i++) {
     if (hasDrawingCmd[i] == 0) nbCmd[i] = 0;
     if (nbCmd[i] != 0) {
-			// printf("%d\n", nbCmd[i]);
-    	glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i*QUEUE_SIZE, nbCmd[i]*sizeof(vdp1cmd_struct), (void*)&cmdVdp1[QUEUE_SIZE*i]);
 			needRender = 1;
 		}
   }
@@ -626,8 +613,15 @@ void vdp1_compute() {
 		//Let's assume the game was taking care of vdp1 drawing delay to update the vdp1Ram
 		//So update the texture just to be sure all texture are the latest one
 		regenerateVdp1Buffer();
+		Vdp1External.updateVdp1Ram = 0;
 	}
-	Vdp1External.updateVdp1Ram = 0;
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
+	for (int i = 0; i < NB_COARSE_RAST; i++) {
+		if (nbCmd[i] != 0) {
+			// printf("%d\n", nbCmd[i]);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i*QUEUE_SIZE, nbCmd[i]*sizeof(vdp1cmd_struct), (void*)&cmdVdp1[QUEUE_SIZE*i]);
+		}
+	}
 	nbCmdToProcess = 0;
 	_Ygl->vdp1On[_Ygl->drawframe] = 1;
 
@@ -667,7 +661,6 @@ void vdp1_compute() {
   glUniformMatrix4fv(9, 1, 0, (GLfloat*)m.m);
 
 	vdp1_set_directFB();
-	vdp1_wait_regenerate();
 	vdp1_setup();
 
   glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
