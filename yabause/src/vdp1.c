@@ -42,7 +42,6 @@ int VDP1_MASK = 0xFFFF;
 
 VideoInterface_struct *VIDCore=NULL;
 extern VideoInterface_struct *VIDCoreList[];
-extern YabEventQueue * rcv_evqueue;
 
 Vdp1 * Vdp1Regs;
 Vdp1External_struct Vdp1External;
@@ -336,8 +335,6 @@ void FASTCALL Vdp1WriteByte(SH2_struct *context, u8* mem, u32 addr, UNUSED u8 va
    addr &= 0xFF;
    LOG("trying to byte-write a Vdp1 register - %08X\n", addr);
 }
-
-extern YabEventQueue * vdp1_rcv_evqueue;
 
 //////////////////////////////////////////////////////////////////////////////
 static int needVBlankErase() {
