@@ -93,7 +93,7 @@ Byte Write : %1 %2|Escritura de byte : %1 %2
 Cancel|Cancelar
 Cannot initialize Windows SPTI Driver|No se pudo inicializar el Driver SPTI de Windows
 Can't plug in the new controller, cancelling.|No se puede conectar el nuevo mando, cancelando.
-Can't initialize Kronos|No se pudo iniciar Kronos
+Can't initialize Kronos.|No se pudo iniciar Kronos
 Cart/Memory|Cartucho/Memoria
 Cartridge|Cartucho
 CD Images (*.iso *.cue *.bin)|Imágenes de CD (*.iso *.cue *.bin)

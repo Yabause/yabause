@@ -93,7 +93,7 @@ Byte Write : %1 %2|Byte schreiben : %1 %2
 Cancel|Abbrechen
 Cannot initialize Windows SPTI Driver|Windows SPTI Treiber kann nicht initialisiert werden
 Can't plug in the new controller, cancelling.|Der neue Controller kann nicht angeschlossen werden. Der Vorgang wird abgebrochen
-Can't initialize Kronos|Kronos Kann nicht initialisiert werden
+Can't initialize Kronos.|Kronos Kann nicht initialisiert werden
 Cart/Memory|Wagen / Speicher			
 Cartridge|Cartridge
 CD Images (*.iso *.cue *.bin)|CD Image (*.iso *.cue *.bin)

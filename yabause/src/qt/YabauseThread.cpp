@@ -79,7 +79,7 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 
 	if ( mInit < 0 )
 	{
-		emit error( QtYabause::translate( "Can't initialize Yabause" ), false );
+		emit error( QtYabause::translate( "Can't initialize Kronos." ), false );
 		return false;
 	}
 
