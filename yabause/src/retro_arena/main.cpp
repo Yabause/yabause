@@ -276,7 +276,7 @@ int main(int argc, char** argv)
 {
   inputmng = InputManager::getInstance();
   
-  printf("\033[2J");
+  //printf("\033[2J");
 
   // Inisialize home directory
   std::string home_dir = getenv("HOME");
@@ -350,6 +350,9 @@ int main(int argc, char** argv)
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 
 #if defined(__PC__)
   int width = 1280;
