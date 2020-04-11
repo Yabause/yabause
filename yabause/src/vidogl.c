@@ -2710,7 +2710,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
     if (parameter->k_mem_type == 0) { // vram
       kdata = Vdp2RamReadWord(NULL, Vdp2Ram, (parameter->coeftbladdr + (h << 1)));
     } else { // cram
-      if (Vdp2Internal.ColorMode == 0)
+      if (Vdp2Internal.ColorMode != 2)
         kdata = Vdp2ColorRamReadWord(NULL, Vdp2ColorRam,(parameter->coeftbladdr + (int)(h << 1)) | 0x800);
       else
         kdata = Vdp2ColorRamReadWord(NULL, Vdp2ColorRam,(parameter->coeftbladdr + (int)(h << 1)));
@@ -2728,7 +2728,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
     if (parameter->k_mem_type == 0) { // vram
       kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (parameter->coeftbladdr + (h << 2)) & 0x7FFFF);
     } else { // cram
-      if (Vdp2Internal.ColorMode == 0)
+      if (Vdp2Internal.ColorMode != 2)
         kdata = Vdp2ColorRamReadLong(NULL, Vdp2ColorRam, (parameter->coeftbladdr + (int)(h << 2)) | 0x800);
       else
         kdata = Vdp2ColorRamReadLong(NULL, Vdp2ColorRam, (parameter->coeftbladdr + (int)(h << 2)));
@@ -6473,7 +6473,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_s
     kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (param->coeftbladdr + (index << 2)));
   }
   else { // cram
-    if (Vdp2Internal.ColorMode == 0)
+    if (Vdp2Internal.ColorMode != 2)
       kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)) | 0x800);
     else
       kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)));
@@ -6509,7 +6509,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W(vdp2rotationparameter_s
     kdata = Vdp2RamReadWord(NULL, Vdp2Ram, (param->coeftbladdr + (index << 1)));
   }
   else { // cram
-    if (Vdp2Internal.ColorMode == 0)
+    if (Vdp2Internal.ColorMode != 2)
       kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1))|0x800);
     else
       kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1)));
