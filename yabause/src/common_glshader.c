@@ -409,10 +409,10 @@ static const GLchar Yglprg_vdp2_sprite_type_F[] =
 */
 static const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " fbmode = 0; \n";
 
-static const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ fbmode = 0;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ fbmode = 0;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ fbmode = 0;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ fbmode = 0;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ fbmode = 2;} \n ";
 
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
 "//No Color calculation\n";
@@ -424,6 +424,7 @@ static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
 " if (fbmode == 1) vdp1mode = 4; \n";
 
 static const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
+"   if (fbmode == 2) vdp1mode = 5; \n"
 " }\n"
 " tmpColor.a = float(alpha|vdp1mode)/255.0; \n"
 " ret.color = tmpColor;\n"
@@ -1162,6 +1163,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "    if (modetop == 2) topImage = vec4(colortop.rgb, 0.0); \n"
 "    if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n"
 "    if (modetop == 4) topImage = vec4(colortop.rgb*alphasecond, alphasecond); \n"
+"    if (modetop == 5) topImage = vec4(colortop.rgb, 1.0); \n"
 "    finalColor = clamp(vec4( topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0), vec4(0.0), vec4(1.0)); \n"
 "  } else {\n"
 "    finalColor = vec4(colortop.rgb, 1.0);\n"
