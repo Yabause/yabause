@@ -6510,7 +6510,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W(vdp2rotationparameter_s
   }
   else { // cram
     if (Vdp2Internal.ColorMode == 0)
-      kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1))+0x800);
+      kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1))|0x800);
     else
       kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1)));
   }
