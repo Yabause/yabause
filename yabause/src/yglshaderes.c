@@ -1523,7 +1523,7 @@ u32 lineColOffBuf[2][704*256] = {{0},{0}};
 static int lineColOffBufdirty[2] = {0};
 
 u32 * YglGetLineColorOffsetPointer(int id, int start, int size){
-  return &lineColOffBuf[id][start*_Ygl->rwidth*4];
+  return &lineColOffBuf[id][start*_Ygl->rwidth];
 }
 
 void YglSetLineColorOffset(u32 * pbuf, int start, int size, int id){
