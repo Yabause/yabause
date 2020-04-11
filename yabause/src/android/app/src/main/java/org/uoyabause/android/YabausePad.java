@@ -236,7 +236,8 @@ public class YabausePad extends View implements OnTouchListener {
     private Paint apaint = new Paint();
     private Paint tpaint = new Paint();
     
-    private float base_scale = 1.0f; 
+    private float base_scale = 1.0f;
+    private float ypos = 0.0f;
     final float basewidth = 1920.0f;
     final float baseheight = 1080.0f;
     private float wscale; 
@@ -284,6 +285,12 @@ public class YabausePad extends View implements OnTouchListener {
     public void setScale( float scale ){
     	this.base_scale = scale;
     }
+
+    public void setYpos( float ypos ){
+        this.ypos = ypos;
+    }
+
+    public float getYpos() { return this.ypos; }
     
     public float getScale(){
     	return base_scale;
@@ -308,7 +315,8 @@ public class YabausePad extends View implements OnTouchListener {
 
     public void updateScale(){
       SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
-      base_scale= sharedPref.getFloat("pref_pad_scale", 0.75f);
+      base_scale = sharedPref.getFloat("pref_pad_scale", 0.75f);
+      ypos = sharedPref.getFloat("pref_pad_pos", 0.0f);
       _transparent = sharedPref.getFloat("pref_pad_trans",1.0f);
       //setPadScale( width_, height_ );
       this.requestLayout();
@@ -321,6 +329,7 @@ public class YabausePad extends View implements OnTouchListener {
 
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         base_scale= sharedPref.getFloat("pref_pad_scale", 0.75f);
+        ypos = sharedPref.getFloat("pref_pad_pos", 0.0f);
         _transparent = sharedPref.getFloat("pref_pad_trans",1.0f);
 
         buttons = new PadButton[PadEvent.BUTTON_LAST];
@@ -676,6 +685,8 @@ public class YabausePad extends View implements OnTouchListener {
         float dens = getResources().getDisplayMetrics().density;
         dens /= 2.0;
 
+        float pos = 0.0f;
+        int bitmap_height = bitmap_pad_right.getHeight();
 
         if (width > height) {
             wscale = (float) width / basewidth;
@@ -685,22 +696,26 @@ public class YabausePad extends View implements OnTouchListener {
             hscale = wscale; //(float) height / basewidth;
         }
 
-        int bitmap_height = bitmap_pad_right.getHeight();
-    	
+        float maxpos = height - (bitmap_height * base_scale * hscale);
+        if (maxpos < 0.0f){
+            maxpos = 0.0f;
+        }
+        pos = this.ypos * maxpos;
+
         matrix_right.reset();
-        matrix_right.postTranslate(-780, -baseheight);
+        matrix_right.postTranslate(-780,-baseheight);
         matrix_right.postScale(base_scale*wscale, base_scale*hscale);
-        matrix_right.postTranslate(width, height);
+        matrix_right.postTranslate(width, height- pos);
         
         matrix_left.reset();
         matrix_left.postTranslate(0, -baseheight);
         matrix_left.postScale(base_scale*wscale, base_scale*hscale);
-        matrix_left.postTranslate(0, height);
+        matrix_left.postTranslate(0, height- pos);
 
         matrix_center.reset();
         matrix_center.postTranslate(-bitmap_pad_middle.getWidth(), -bitmap_pad_middle.getHeight());
         matrix_center.postScale(base_scale*wscale, base_scale*hscale);
-        matrix_center.postTranslate(width/2, height);
+        matrix_center.postTranslate(width/2, height- pos);
 
         // Left Part
         _analog_pad.updateRect(matrix_left, 130, 512, 420+144,533+378);
@@ -736,19 +751,19 @@ public class YabausePad extends View implements OnTouchListener {
         buttons[PadEvent.BUTTON_RIGHT_TRIGGER].updateRect(matrix_right,350,59,350+379,59+91);
         
         matrix_right.reset();
-        matrix_right.postTranslate(- bitmap_pad_right.getWidth(), - bitmap_pad_right.getHeight());
+        matrix_right.postTranslate(- bitmap_pad_right.getWidth(), - bitmap_pad_right.getHeight() );
         matrix_right.postScale(base_scale*wscale/dens, base_scale*hscale/dens);
-        matrix_right.postTranslate(width, height);
+        matrix_right.postTranslate(width, height - pos);
         
         matrix_left.reset();
-        matrix_left.postTranslate(0, - bitmap_pad_right.getHeight());
+        matrix_left.postTranslate(0, - bitmap_pad_right.getHeight() );
         matrix_left.postScale(base_scale*wscale/dens, base_scale*hscale/dens);
-        matrix_left.postTranslate(0, height);
+        matrix_left.postTranslate(0, height - pos );
 
         matrix_center.reset();
-        matrix_center.postTranslate(-bitmap_pad_middle.getWidth(), -bitmap_pad_middle.getHeight());
+        matrix_center.postTranslate(-bitmap_pad_middle.getWidth(), -bitmap_pad_middle.getHeight() );
         matrix_center.postScale(base_scale*wscale/dens, base_scale*hscale/dens);
-        matrix_center.postTranslate(width/2, height);
+        matrix_center.postTranslate(width/2, height - pos);
       setMeasuredDimension(width, height);
     }
 }
