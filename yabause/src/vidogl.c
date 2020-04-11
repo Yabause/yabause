@@ -392,7 +392,7 @@ static void requestDrawCellQuad(vdp2draw_struct * info, YglTexture *texture, Vdp
 
 static void Vdp2DrawRBG0(Vdp2* varVdp2Regs);
 
-static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
+static u32 Vdp2ColorRamGetLineColor(u32 colorindex, int alpha);
 static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y, Vdp2 *varVdp2Regs);
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy,  int lines, Vdp2 *varVdp2Regs);
 static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask);
@@ -983,7 +983,7 @@ static u16 Vdp2ColorRamGetColorRaw(u32 colorindex) {
   return 0;
 }
 
-static u32 Vdp2ColorRamGetColorOffset(u32 colorindex, int alpha, int offset)
+static u32 Vdp2ColorRamGetLineColorOffset(u32 colorindex, int alpha, int offset)
 {
   int flag = 0xFFF;
   switch (Vdp2Internal.ColorMode)
@@ -1015,8 +1015,8 @@ static u32 Vdp2ColorRamGetColorOffset(u32 colorindex, int alpha, int offset)
   return 0;
 }
 
-static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha) {
-  return Vdp2ColorRamGetColorOffset(colorindex, alpha,0);
+static u32 Vdp2ColorRamGetLineColor(u32 colorindex, int alpha) {
+  return Vdp2ColorRamGetLineColorOffset(colorindex, alpha,0);
 }
 //////////////////////////////////////////////////////////////////////////////
 // Window
@@ -2710,7 +2710,10 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
     if (parameter->k_mem_type == 0) { // vram
       kdata = Vdp2RamReadWord(NULL, Vdp2Ram, (parameter->coeftbladdr + (h << 1)));
     } else { // cram
-      kdata = Vdp2ColorRamReadWord(NULL, Vdp2ColorRam,(parameter->coeftbladdr + (int)(h << 1)));
+      if (Vdp2Internal.ColorMode == 0)
+        kdata = Vdp2ColorRamReadWord(NULL, Vdp2ColorRam,(parameter->coeftbladdr + (int)(h << 1)) + 0x800);
+      else
+        kdata = Vdp2ColorRamReadWord(NULL, Vdp2ColorRam,(parameter->coeftbladdr + (int)(h << 1)));
     }
     if (kdata & 0x8000) { return 0; }
     kval = (float)(signed)((kdata & 0x7FFF) | (kdata & 0x4000 ? 0x8000 : 0x0000)) / 1024.0f;
@@ -2725,7 +2728,10 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
     if (parameter->k_mem_type == 0) { // vram
       kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (parameter->coeftbladdr + (h << 2)) & 0x7FFFF);
     } else { // cram
-      kdata = Vdp2ColorRamReadLong(NULL, Vdp2ColorRam, (parameter->coeftbladdr + (int)(h << 2)));
+      if (Vdp2Internal.ColorMode == 0)
+        kdata = Vdp2ColorRamReadLong(NULL, Vdp2ColorRam, (parameter->coeftbladdr + (int)(h << 2)) + 0x800);
+      else
+        kdata = Vdp2ColorRamReadLong(NULL, Vdp2ColorRam, (parameter->coeftbladdr + (int)(h << 2)));
     }
     parameter->lineaddr = (kdata >> 24) & 0x7F;
     if (kdata & 0x80000000) { return 0; }
@@ -3120,7 +3126,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
       }
       *(texture->textdata++) = color; //Already in VDP2 format due to Vdp2RotationFetchPixel
       if (colpoint != NULL) {
-        u32 val = Vdp2ColorRamGetColorOffset(LineColorRamAdress, alpha, (parameter->lineaddr));
+        u32 val = Vdp2ColorRamGetLineColorOffset(LineColorRamAdress, alpha, (parameter->lineaddr));
         *(colpoint++) = val;
       }
     }
@@ -4983,7 +4989,7 @@ static void Vdp2DrawLineColorScreen(Vdp2 *varVdp2Regs)
   addr = (varVdp2Regs->LCTA.all & 0x7FFFF)<<1;
   for (i = 0; i < line_cnt; i++) {
     u16 LineColorRamAdress = Vdp2RamReadWord(NULL, Vdp2Ram, addr);
-    *(line_pixel_data) = Vdp2ColorRamGetColor(LineColorRamAdress, alpha);
+    *(line_pixel_data) = Vdp2ColorRamGetLineColor(LineColorRamAdress, alpha);
     line_pixel_data++;
     addr += inc;
   }
@@ -6476,7 +6482,10 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_s
     kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (param->coeftbladdr + (index << 2)));
   }
   else { // cram
-    kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)));
+    if (Vdp2Internal.ColorMode == 0)
+      kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)) + 0x800);
+    else
+      kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)));
   }
   param->lineaddr = (kdata >> 24) & 0x7F;
 
@@ -6509,7 +6518,10 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W(vdp2rotationparameter_s
     kdata = Vdp2RamReadWord(NULL, Vdp2Ram, (param->coeftbladdr + (index << 1)));
   }
   else { // cram
-    kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1)));
+    if (Vdp2Internal.ColorMode == 0)
+      kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1))+0x800);
+    else
+      kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1)));
   }
 
   if (kdata & 0x8000) return NULL;
