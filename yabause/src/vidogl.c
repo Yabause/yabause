@@ -2711,7 +2711,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
       kdata = Vdp2RamReadWord(NULL, Vdp2Ram, (parameter->coeftbladdr + (h << 1)));
     } else { // cram
       if (Vdp2Internal.ColorMode == 0)
-        kdata = Vdp2ColorRamReadWord(NULL, Vdp2ColorRam,(parameter->coeftbladdr + (int)(h << 1)) + 0x800);
+        kdata = Vdp2ColorRamReadWord(NULL, Vdp2ColorRam,(parameter->coeftbladdr + (int)(h << 1)) | 0x800);
       else
         kdata = Vdp2ColorRamReadWord(NULL, Vdp2ColorRam,(parameter->coeftbladdr + (int)(h << 1)));
     }
@@ -2729,7 +2729,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
       kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (parameter->coeftbladdr + (h << 2)) & 0x7FFFF);
     } else { // cram
       if (Vdp2Internal.ColorMode == 0)
-        kdata = Vdp2ColorRamReadLong(NULL, Vdp2ColorRam, (parameter->coeftbladdr + (int)(h << 2)) + 0x800);
+        kdata = Vdp2ColorRamReadLong(NULL, Vdp2ColorRam, (parameter->coeftbladdr + (int)(h << 2)) | 0x800);
       else
         kdata = Vdp2ColorRamReadLong(NULL, Vdp2ColorRam, (parameter->coeftbladdr + (int)(h << 2)));
     }
@@ -2767,7 +2767,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   vdp2rotationparameter_struct *parameter;
   u32* colpoint = NULL;
 
-  int inc = 0;
   u32 addr;
   u8 alpha = 0x00;
   if (_Ygl->rheight >= 448) lineInc <<= 1;
@@ -2913,14 +2912,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         }
         if ((info->idScreen == RBG1) && ((varVdp2Regs->LNCLEN & 0x1)!=0)) {
           _Ygl->useLineColorOffset[1] = 1;
-        }
-        if (_Ygl->useLineColorOffset[info->idScreen - RBG0] != 0) {
-          if ((varVdp2Regs->LCTA.part.U & 0x8000)) {
-            inc = 0x02; // color per line
-          }
-          else {
-            inc = 0x0; // single color
-          }
         }
       }
 
@@ -3130,7 +3121,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         *(colpoint++) = val;
       }
     }
-    addr += inc;
+    addr += lineInc;
     if (colpoint != NULL) colpoint+=_Ygl->rwidth-hres;
     texture->textdata += texture->w;
     }
@@ -6483,7 +6474,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_s
   }
   else { // cram
     if (Vdp2Internal.ColorMode == 0)
-      kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)) + 0x800);
+      kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)) | 0x800);
     else
       kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)));
   }
