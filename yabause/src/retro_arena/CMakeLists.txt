@@ -22,7 +22,7 @@ add_subdirectory(pugixml)
 add_subdirectory(nanogui-sdl)
 
 #include( ../glfw/external_zlib.cmake )
-include( ../glfw/external_libpng.cmake )
+include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libpng.cmake )
 
 #------------------------------------------------------------------------------
 # nlohmann/json
