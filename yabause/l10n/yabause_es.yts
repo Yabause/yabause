@@ -32,6 +32,7 @@
 &Slave SH2|SH2 E&sclavo
 &Tools|Herramien&tas
 &Transfer|&Transferir
+&Vertical synchronization|
 &View|&Ver
 16-bit|16-bit
 16-bit Relative value(s)|Valor(es) relativo(s) a 16-bit
@@ -80,6 +81,7 @@ Axis Y|Eje Y
 Axis L Trigger|Eje gatillo izq
 Axis R Trigger|Eje gatillo der
 Backup Ram Manager|Gestor de RAM de backup
+BiCubic|
 Bilinear|Bilinear
 Bilinear Filtering (Restart required)|Filtro bilinear (Requiere reinicio)
 Binary Files (*.bin)|Archivos binarios (*.bin)
@@ -93,7 +95,7 @@ Byte Write : %1 %2|Escritura de byte : %1 %2
 Cancel|Cancelar
 Cannot initialize Windows SPTI Driver|No se pudo inicializar el Driver SPTI de Windows
 Can't plug in the new controller, cancelling.|No se puede conectar el nuevo mando, cancelando.
-Can't initialize Kronos.|No se pudo iniciar Kronos
+Can't initialize Kronos|No se pudo iniciar Kronos
 Cart/Memory|Cartucho/Memoria
 Cartridge|Cartucho
 CD Images (*.iso *.cue *.bin)|Imágenes de CD (*.iso *.cue *.bin)
@@ -195,6 +197,7 @@ General|General
 General Info|Información general
 German|Alemán
 Goto Address|Ir a dirección
+GPU RBG :|
 GPU Tesselation|Teselado GPU
 Greater then|Mayor a
 Gun|Pistola
@@ -223,6 +226,7 @@ Kronos Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://
 Kronos Save State (*.yss)|Guardado de estado de Kronos (*.yss)
 Kronos is not initialized, can't manage backup ram.|Kronos no está inicializado. No se puede gestionar el editor de la memoria de backup.			  
 Language :|Idioma :	
+Load0|Cargar0
 Load1|Cargar1
 Load2|Cargar2
 Load3|Cargar3
@@ -314,6 +318,7 @@ Right Stick Axis Y|Eje Y Stick der
 Right Stick Axis Throttle|Acelerar Eje Stick der
 Right trigger|Gatillo derecho
 R&un|E&jecutar
+Save1|Guardado0
 Save1|Guardado1
 Save2|Guardado2
 Save3|Guardado3
@@ -433,7 +438,6 @@ VDP1 Command Info|Información de comandos del VDP1
 VDP1 Command List|Listado de comandos del VDP1
 VDP2|Vdp2
 VDP2Viewer Viewer|Visor VDP2
-Vertical synchronization|Sincronización vertical
 Video|Vídeo
 Video Core|Núcleo de Vídeo
 Video Driver|Driver de Vídeo
@@ -445,6 +449,7 @@ Wheel|Volante
 Wheel Configuration|Configuración Volante
 Window Resolution|Resolución de ventana
 Windows SPTI Driver|Driver SPTI para Windows
+Wireframe :|
 Word|Palabra(word)
 Word Write|Escribir WORD
 Word Write : %1 %2|Escribir WORD : %1 %2 

@@ -95,7 +95,7 @@ Byte Write : %1 %2|Ecrire un Byte : %1 %2
 Cancel|Annuler
 Cannot initialize Windows SPTI Driver|Ne peut pas initialiser le pilote SPTI
 Can't plug in the new controller, cancelling.|Ne peut pas brancher dans le nouveau contrôleur, annuler.
-Can't initialize Kronos.|Ne peut pas intialiser Kronos.
+Can't initialize Kronos|Ne peut pas intialiser Kronos.
 Cart/Memory|Cartouche/Mémoire
 Cartridge|Cartouche :
 CD Images (*.iso *.cue *.bin *.mds *.ccd *.zip)|Images CD (*.iso *.cue *.bin *.mds *.ccd *.zip)
@@ -197,6 +197,7 @@ General|Général
 General Info|Info Général
 German|Allemand
 Goto Address|Va sur l'Adresse
+GPU RBG :|GPU RBG (OpenGl 4.3)
 GPU Tesselation|Tesselation GPU
 Greater then|Plus grand que
 Gun|Pistolet
@@ -225,6 +226,16 @@ Kronos Qt GUI|Interface Graphique Qt pour Kronos
 Kronos Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Interface Graphique QT Kronos<br />Basé sur Yabause %1 :<br /><a href="http://yabause.org">http://yabause.org</a><br />L'équipe de Yabause :<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
 Kronos Save State (*.yss)|Sauvegarde d'État Kronos (*.yss)
 Language :|Langue :
+Load0|Chargement0
+Load1|Chargement1
+Load2|Chargement2
+Load3|Chargement3
+Load4|Chargement4
+Load5|Chargement5
+Load6|Chargement6
+Load7|Chargement7
+Load8|Chargement8
+Load9|Chargement9	
 L&oad State|&Charger un Etat
 Left|Gauche
 Left stick:\nTrigger:      X\nLeft button:  Y\nRight button: Z|Stick Gauche :\ Gâchette : X\nBouton Gauche : Y\nBouton Droite : Z
@@ -307,6 +318,16 @@ Right Stick Axis Y|Axe Y du Stick Droit
 Right Stick Axis Throttle|Accélèrer l'Axe X du Stick Droit
 Right trigger|Gâchette Droite
 R&un|L&ancer
+Save0|Sauvegarde0
+Save1|Sauvegarde1
+Save2|Sauvegarde2
+Save3|Sauvegarde3
+Save4|Sauvegarde4
+Save5|Sauvegarde5
+Save6|Sauvegarde6
+Save7|Sauvegarde7
+Save8|Sauvegarde8
+Save9|Sauvegarde9
 Save As Bitmap|Sauvegarder en Bitmap
 Save As WAV|Sauvegarder en  WAV
 Save Bitmap|Sauvegarder en Bitmap
@@ -357,6 +378,7 @@ Signed 32-bit value|Valeur Signé 32-bit
 Slot Info|Info Emplacement
 Slot Number:|Numéro d'Emplacement :
 Software OSD Interface|Interface OSD Logiciel
+Software Video Interface|Interface Vidéo Logiciel
 Sound...|Son...
 Sound|Son
 Sound Core|Noyau Son :
@@ -427,6 +449,7 @@ Wheel|Volant
 Wheel Configuration|Configuration du Volant
 Window Resolution|Résolution Fenêtrée :
 Windows SPTI Driver|Pilote Windows SPTI
+Wireframe :|Mode Fil de Fer (Wireframe) :
 Word|Word
 Word Write|Ecrire un Word
 Word Write : %1 %2|Ecrire un Word : %1 %2
