@@ -95,7 +95,7 @@ Byte Write : %1 %2|Ecrire un Byte : %1 %2
 Cancel|Annuler
 Cannot initialize Windows SPTI Driver|Ne peut pas initialiser le pilote SPTI
 Can't plug in the new controller, cancelling.|Ne peut pas brancher dans le nouveau contrôleur, annuler.
-Can't initialize Kronos.|Ne peut pas intialiser Kronos.
+Can't initialize Kronos|Ne peut pas intialiser Kronos.
 Cart/Memory|Cartouche/Mémoire
 Cartridge|Cartouche :
 CD Images (*.iso *.cue *.bin *.mds *.ccd *.zip)|Images CD (*.iso *.cue *.bin *.mds *.ccd *.zip)
@@ -197,6 +197,7 @@ General|Général
 General Info|Info Général
 German|Allemand
 Goto Address|Va sur l'Adresse
+GPU RBG :|GPU RBG (OpenGl 4.3)
 GPU Tesselation|Tesselation GPU
 Greater then|Plus grand que
 Gun|Pistolet
