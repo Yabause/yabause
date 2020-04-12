@@ -393,17 +393,19 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
       break;
     case 0x4:
       FRAMELOG("Write PTMR %X line = %d %d\n", val, yabsys.LineCount, yabsys.VBlankLineCount);
-      if ((val & 0x3)!=0x3) {
-        Vdp1Regs->PTMR = val;
-        Vdp1External.plot_trigger_line = -1;
-        Vdp1External.plot_trigger_done = 0;
-        if (val == 1){
-          FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-          Vdp1External.plot_trigger_line = yabsys.LineCount;
-          needVdp1draw = 1;
-          Vdp1TryDraw();
-          Vdp1External.plot_trigger_done = 1;
-        }
+      if ((val & 0x3)==0x3) {
+        //Skeleton warriors is writing 0xFFF to PTMR. It looks like the behavior is 0x2
+          val = 0x2;
+      }
+      Vdp1Regs->PTMR = val;
+      Vdp1External.plot_trigger_line = -1;
+      Vdp1External.plot_trigger_done = 0;
+      if (val == 1){
+        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
+        Vdp1External.plot_trigger_line = yabsys.LineCount;
+        needVdp1draw = 1;
+        Vdp1TryDraw();
+        Vdp1External.plot_trigger_done = 1;
       }
       break;
       case 0x6:
