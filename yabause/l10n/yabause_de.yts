@@ -32,6 +32,7 @@
 &Slave SH2|&Slave SH2
 &Tools|&Werkzeuge
 &Transfer|&Transferieren
+&Vertical synchronization|
 &View|&Ansicht
 16-bit|16-bit
 16-bit Relative value(s)|16-bit Relative value(s)
@@ -79,7 +80,8 @@ Axis X|Achse X
 Axis Y|Achse Y
 Axis L Trigger|Achse L Abzug
 Axis R Trigger|Achse R Abzug  
-Backup Ram Manager|Backup Ram Manager			  
+Backup Ram Manager|Backup Ram Manager
+BiCubic|		  
 Bilinear|Bilinear
 Bilinear Filtering (Restart required)|Bilineare Filterung (Neustart erforderlich)	   
 Binary Files (*.bin)|Binary Files (*.bin)	   
@@ -93,7 +95,7 @@ Byte Write : %1 %2|Byte schreiben : %1 %2
 Cancel|Abbrechen
 Cannot initialize Windows SPTI Driver|Windows SPTI Treiber kann nicht initialisiert werden
 Can't plug in the new controller, cancelling.|Der neue Controller kann nicht angeschlossen werden. Der Vorgang wird abgebrochen
-Can't initialize Kronos.|Kronos Kann nicht initialisiert werden
+Can't initialize Kronos|Kronos Kann nicht initialisiert werden
 Cart/Memory|Wagen / Speicher			
 Cartridge|Cartridge
 CD Images (*.iso *.cue *.bin)|CD Image (*.iso *.cue *.bin)
@@ -195,6 +197,7 @@ General|Allgemein
 General Info|General Info
 German|Deutsch
 Goto Address|Goto Address
+GPU RBG :|
 GPU Tesselation|			 
 Greater then|Größer als
 Gun|Pistole
@@ -223,6 +226,7 @@ Kronos Qt Gui<br />Based on Kronos %1<br /><a href="http://yabause.org">http://y
 Kronos Save State (*.yss)|Kronos Speicherstände (*.yss)
 Kronos is not initialized, can't manage backup ram.|Kronos ist nicht initialisiert, Backup Ram kann nicht verwaltet werden.						  
 Language :|Sprache :
+Load0|
 Load1|
 Load2|
 Load3|
@@ -315,6 +319,7 @@ Right Stick Axis Y|Rechte Stielachse Y
 Right Stick Axis Throttle|Steuerknüppel der rechten Achse
 Right trigger|Rechte Schultertaste
 R&un|
+Save0|Speichern0
 Save1|Speichern1
 Save2|Speichern2
 Save3|Speichern3
@@ -433,7 +438,6 @@ VDP1 Command Info|VDP1 Command Info
 VDP1 Command List|VDP1 Command List
 VDP2|VDP2
 VDP2Viewer Viewer|
-Vertical synchronization|Vertikale synchronisation
 Video|Video
 Video Core|Video Kern
 Video Driver|Video Treiber
@@ -442,9 +446,10 @@ View|Ansicht
 Viewer|Viewer
 WAV Files (*.wav)|WAV-Dateien (* .wav)
 Wheel|Rad
-Wheel Configuration|		  
+Wheel Configuration|
 Window Resolution|Bildschirmauflösung
 Windows SPTI Driver|Windows SPTI Treiber
+Wireframe :|	  
 Word|Word
 Word Write|Word Schreiben
 Word Write : %1 %2|Wortschreiben:% 1% 2 
