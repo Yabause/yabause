@@ -316,7 +316,7 @@ public class YabausePad extends View implements OnTouchListener {
     public void updateScale(){
       SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
       base_scale = sharedPref.getFloat("pref_pad_scale", 0.75f);
-      ypos = sharedPref.getFloat("pref_pad_pos", 0.0f);
+      ypos = sharedPref.getFloat("pref_pad_pos", 0.1f);
       _transparent = sharedPref.getFloat("pref_pad_trans",1.0f);
       //setPadScale( width_, height_ );
       this.requestLayout();
@@ -329,7 +329,7 @@ public class YabausePad extends View implements OnTouchListener {
 
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         base_scale= sharedPref.getFloat("pref_pad_scale", 0.75f);
-        ypos = sharedPref.getFloat("pref_pad_pos", 0.0f);
+        ypos = sharedPref.getFloat("pref_pad_pos", 0.1f);
         _transparent = sharedPref.getFloat("pref_pad_trans",1.0f);
 
         buttons = new PadButton[PadEvent.BUTTON_LAST];

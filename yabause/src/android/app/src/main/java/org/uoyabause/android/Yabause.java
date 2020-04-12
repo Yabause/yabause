@@ -248,15 +248,15 @@ public class Yabause extends AppCompatActivity implements
     } catch (Exception e) {
       // Do Nothing
     }
-    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+    }
+
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-    mDrawerLayout.setSystemUiVisibility(
-        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            | View.SYSTEM_UI_FLAG_FULLSCREEN
-            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+    updateViewLayout(getResources().getConfiguration().orientation);
+
     mNavigationView = (NavigationView) findViewById(R.id.nav_view);
     mNavigationView.setNavigationItemSelectedListener(this);
     Menu menu = mNavigationView.getMenu();
@@ -378,6 +378,30 @@ public class Yabause extends AppCompatActivity implements
     } else {
       adView = null;
     }
+  }
+
+  void updateViewLayout( int orientation ){
+    View decorView = findViewById(R.id.drawer_layout);
+    if( decorView != null ) {
+      if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        decorView.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        //| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+      }
+
+      if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+        decorView.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+      }
+    }
+  }
+
+  public void onConfigurationChanged(Configuration _newConfig) {
+    updateViewLayout(_newConfig.orientation);
+    super.onConfigurationChanged(_newConfig);
   }
 
   ObservableEmitter<FirebaseUser> loginEmitter;
@@ -1832,15 +1856,9 @@ public class Yabause extends AppCompatActivity implements
   public void onWindowFocusChanged(boolean hasFocus) {
     super.onWindowFocusChanged(hasFocus);
     if (hasFocus && getSupportFragmentManager().findFragmentById(R.id.ext_fragment) == null) {
-      View decorView = findViewById(R.id.drawer_layout);
-      decorView.setSystemUiVisibility(
-          View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-              | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-              | View.SYSTEM_UI_FLAG_FULLSCREEN
-              | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-              | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+      updateViewLayout(getResources().getConfiguration().orientation);
     }
-  }
+ }
 
   @Override
   public void onDeviceUpdated(int target) {
