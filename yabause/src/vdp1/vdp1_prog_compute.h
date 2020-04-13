@@ -213,13 +213,13 @@ SHADER_VERSION_COMPUTE
 "}\n"
 
 "uint isOnAQuadLine( vec2 P, vec2 V0, vec2 V1, vec2 sA, vec2 sB, uint step, out vec2 uv){\n"
-"  vec2 A = V0 + vec2(0.5);\n"
-"  vec2 B = V1 + vec2(0.5);\n"
+"  vec2 A = V0 + vec2(0.5)*upscale;\n"
+"  vec2 B = V1 + vec2(0.5)*upscale;\n"
 "  for (uint i=0; i<step; i++) {\n"
 //A pixel shall be considered as part of an anti-aliased line if the distance of the pixel center to the line is shorter than (sqrt(0.5), which is the diagonal of the pixel
 //This represent the behavior of antialiasing as displayed in vdp1 spec.
-"    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
-"    if (distance(d.xy, P+(vec2(0.5)*upscale)) <= (0.7072*length(upscale))) {\n" //Test the distance between the projection on line and the center of the pixel
+"    vec3 d = antiAliasedPoint(P+vec2(0.5)*upscale, A, B);\n" //Get the projection of the point P to the line segment
+"    if (distance(d.xy, P+(vec2(0.5)*upscale)) <= (length(upscale)/2.0)) {\n" //Test the distance between the projection on line and the center of the pixel
 "      float ux= d.z;\n" //u is the relative distance from first point to projected position
 "      float uy= (float(i)+0.5)/float(step+1);\n" //v is the ratio between the current line and the total number of lines
 "      uv = vec2(ux,uy);\n"
