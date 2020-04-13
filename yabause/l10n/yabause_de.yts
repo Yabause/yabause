@@ -226,16 +226,16 @@ Kronos Qt Gui<br />Based on Kronos %1<br /><a href="http://yabause.org">http://y
 Kronos Save State (*.yss)|Kronos Speicherstände (*.yss)
 Kronos is not initialized, can't manage backup ram.|Kronos ist nicht initialisiert, Backup Ram kann nicht verwaltet werden.						  
 Language :|Sprache :
-Load0|
-Load1|
-Load2|
-Load3|
-Load4|
-Load5|
-Load6|
-Load7|
-Load8|
-Load9|
+Load0|Beladen0
+Load1|Beladen1
+Load2|Beladen2
+Load3|Beladen3
+Load4|Beladen4
+Load5|Beladen5
+Load6|Beladen6
+Load7|Beladen7
+Load8|Beladen8
+Load9|Beladen9
 L&oad State|L&ade Spielstand
 Left|Links
 Left trigger|Linke Schultertaste
@@ -449,9 +449,14 @@ Wheel|Rad
 Wheel Configuration|
 Window Resolution|Bildschirmauflösung
 Windows SPTI Driver|Windows SPTI Treiber
-Wireframe :|	  
+Wireframe :|Drahtmodell	  
 Word|Word
 Word Write|Word Schreiben
 Word Write : %1 %2|Wortschreiben:% 1% 2 
 Write|Schreiben
 Yes|Ja
+&Vertical synchronization|&Vertikale Synchronisation
+BiCubic|Bikubisch
+GPU RBG :| GPU RGB
+add GPU RBG (OpenGl 4.3):| GPU RGB hinzufügen (OpenGL 4.3)
+Wireframe|Drahtmodell
