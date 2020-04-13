@@ -449,9 +449,14 @@ Wheel|Volante
 Wheel Configuration|Configuración Volante
 Window Resolution|Resolución de ventana
 Windows SPTI Driver|Driver SPTI para Windows
-Wireframe :|
+Wireframe :| Estructura de diseño
 Word|Palabra(word)
 Word Write|Escribir WORD
 Word Write : %1 %2|Escribir WORD : %1 %2 
 Write|Escribir
 Yes|Si
+&Vertical synchronization|&Sincronización vertical
+BiCubic|Bicúbico
+GPU RBG :| GPU RGB
+add GPU RBG (OpenGl 4.3):| Añadir GPU RGB (OpenGL 4.3)
+Wireframe|Estructura de diseño
