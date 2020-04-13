@@ -381,6 +381,9 @@ public class Yabause extends AppCompatActivity implements
   }
 
   void updateViewLayout( int orientation ){
+
+    getWindow().setStatusBarColor(getResources().getColor(R.color.black));
+
     View decorView = findViewById(R.id.drawer_layout);
     if( decorView != null ) {
       if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
