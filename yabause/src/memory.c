@@ -465,24 +465,24 @@ static u8 FASTCALL BupRamMemoryReadByte(SH2_struct *context, UNUSED u8* memory, 
   addr = addr & ((backup_file_size<<1) - 1);
   if (addr & 0x1) {
     return T1ReadByte(memory, addr>>1);
-  } else
-    return 0xFF;
+  }
+  return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL BupRamMemoryReadWord(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
-   LOG("bup\t: BackupRam read word - %08X\n", addr);
-   return 0;
+   // LOG("bup\t: BackupRam read word - %08X\n", addr);
+   return (BupRamMemoryReadByte(context, memory, addr | 0x1) << 8);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL BupRamMemoryReadLong(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
-   LOG("bup\t: BackupRam read long - %08X\n", addr);
-   return 0;
+   // LOG("bup\t: BackupRam read long - %08X\n", addr);
+   return ((BupRamMemoryReadByte(context, memory, addr | 0x1) << 8) || (BupRamMemoryReadByte(context, memory, addr | 0x3) << 16));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -515,14 +515,17 @@ static void FASTCALL BupRamMemoryWriteByte(SH2_struct *context, UNUSED u8* memor
 
 static void FASTCALL BupRamMemoryWriteWord(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u16 val)
 {
-   LOG("bup\t: BackupRam write word - %08X\n", addr);
+   // LOG("bup\t: BackupRam write word - %08X %x\n", addr, val);
+   BupRamMemoryWriteByte(context, memory, addr | 0x1, (val>>8) & 0xFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BupRamMemoryWriteLong(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u32 val)
 {
-   LOG("bup\t: BackupRam write long - %08X\n", addr);
+   // LOG("bup\t: BackupRam write long - %08X %x\n", addr, val);
+   BupRamMemoryWriteByte(context, memory, addr | 0x1, (val>>8) & 0xFF);
+   BupRamMemoryWriteByte(context, memory, addr | 0x3, (val>>24) & 0xFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
