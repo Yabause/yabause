@@ -4785,12 +4785,8 @@ SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x1FFFF;
-  else
-    // if (addr > 0x7FFFF)
-    //   val = 0xFF;
-    // else
-      val = T2ReadByte(mem, addr);
-  //SCSPLOG("SoundRamReadByte %08X:%02X",addr,val);
+
+  val = T2ReadByte(mem, addr);
   return val;
 }
 
@@ -4804,10 +4800,7 @@ SoundRamWriteByte (SH2_struct *context, u8* mem, u32 addr, u8 val)
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x1FFFF;
-  // else if (addr > 0x7FFFF)
-  //   return;
 
-  //SCSPLOG("SoundRamWriteByte %08X:%02X", addr, val);
   T2WriteByte (mem, addr, val);
   M68K->WriteNotify (addr, 1);
 }
