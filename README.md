@@ -5,3 +5,6 @@
 
 
 [![Join the chat at https://gitter.im/uoyabause/Lobby](https://badges.gitter.im/uoyabause/Lobby.svg)](https://gitter.im/uoyabause/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+To generate a changelog, add in your commits the [ChangeLog] tag. Changelog will be extracted like this 
+  git shortlog --grep=Changelog --since "01 Jan 2020"
