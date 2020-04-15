@@ -1294,9 +1294,12 @@ int YglInit(int width, int height, unsigned int depth) {
 
 #ifndef __LIBRETRO__
 #ifdef _OGL3_
-  if (maj*10+min < 42) {
+  if (maj*10+min < 43) {
+   YuiMsg("Your graphic card is supporting only OpenGL %d.%d, you might suffer some graphical glitches depending your options\n", maj, min);
+  }
+  if (maj*10+min < 33) {
    YabSetError(YAB_ERR_CANNOTINIT, _("OpenGL context"));
-   YuiMsg("Getting only OpenGL %d.%d requesting 4.2 at least\n", maj, min);
+   YuiMsg("Your graphic card is supporting only OpenGL %d.%d, 3.3 minimum is requested\n", maj, min);
    return -1;
   }
 #endif
