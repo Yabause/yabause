@@ -22,6 +22,7 @@ extern "C"{
 #include "ygl.h"
 #include "yui.h"
 #include "vidshared.h"
+#include <math.h>
 }
 
 #define YGLDEBUG
@@ -2155,8 +2156,8 @@ DEBUGWIP("Init\n");
     int local_size_x = 4;
     int local_size_y = 4;
 
-    int work_groups_x = (tex_width_) / local_size_x;
-    int work_groups_y = (tex_height_) / local_size_y;
+    int work_groups_x = ceil(float(tex_width_) / float(local_size_x));
+    int work_groups_y = ceil(float(tex_height_) / float(local_size_y));
 
     error = glGetError();
 
