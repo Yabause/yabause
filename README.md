@@ -1,4 +1,4 @@
-[![Travis CI Build Status](https://travis-ci.org/Yabause/yabause.svg?branch=master)](https://travis-ci.org/github/FCare/Kronos)
+[![Travis CI Build Status](https://travis-ci.org/FCare/Kronos.svg?branch=extui-align)](https://travis-ci.org/github/FCare/Kronos)
 
 
 Latest windows build can be found here:
