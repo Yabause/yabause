@@ -36,6 +36,7 @@ SHADER_VERSION_COMPUTE
 "precision highp int;\n"
 "precision highp image2D;\n"
 "#endif\n"
+"#pragma optionNV(inline all)\n"
 "layout(local_size_x = 4, local_size_y = 4) in;\n"
 "layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
 "layout(std430, binding = 1) readonly buffer VDP2 { uint vram[]; };\n"
@@ -137,7 +138,7 @@ SHADER_VERSION_COMPUTE
 "layout(rgba8, binding = 7) writeonly uniform image2D lnclSurface;\n"
 " int GetKValue( int paramid, float posx, float posy, out float ky, out uint lineaddr ){ \n"
 "  uint kdata;\n"
-"  int kindex = int( ceil(para[paramid].deltaKAst*posy+(para[paramid].deltaKAx*posx)) ); \n"
+"  int kindex = int(para[paramid].deltaKAst*posy)+int(para[paramid].deltaKAx*posx); \n"
 "  if (para[paramid].coefdatasize == 2) { \n"
 //Revoir la gestion de la vram
 "    uint addr = ( uint( int(para[paramid].coeftbladdr) + (kindex<<1)) &0x7FFFFu); \n"
@@ -282,9 +283,9 @@ const char prg_continue_rbg[] =
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.xy);\n"
 "  ivec2 size = imageSize(outSurface);\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
-"  float posx = float(texel.x) * hres_scale;\n"
-"  float posy = float(texel.y) * vres_scale;\n"
-"  if (posy < startLine || posy >= endLine ) return;\n";
+"  if (texel.y < (startLine * vres_scale) || texel.y >= (endLine * vres_scale) ) return;\n"
+"  float posx = float(texel.x) / hres_scale;\n"
+"  float posy = float(texel.y) / vres_scale;\n";
 
 const char prg_rbg_rpmd0_2w[] =
 "  paramid = 0; \n"
@@ -677,6 +678,7 @@ const GLchar * a_prg_rbg_0_2w_p2_4bpp[] = {
 	prg_rbg_getcolor_4bpp,
 	prg_generate_rbg_end };
 
+//Final fight revenge
 const GLchar * a_prg_rbg_0_2w_p1_8bpp[] = {
 	prg_generate_rbg,
 	prg_continue_rbg,
@@ -2208,8 +2210,8 @@ DEBUGWIP("Init\n");
        ErrorHandle("glBufferSubData");
        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_paraA_);
 
-       uniform.vres_scale = 1.0f/(float)_Ygl->heightRatio;
-       uniform.hres_scale = 1.0f/(float)_Ygl->widthRatio;
+       uniform.vres_scale = (float)_Ygl->heightRatio;
+       uniform.hres_scale = (float)_Ygl->widthRatio;
        uniform.cellw = rbg->info.cellw;
        uniform.cellh = rbg->info.cellh;
        uniform.paladdr_ = rbg->info.paladdr;

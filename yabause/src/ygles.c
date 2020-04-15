@@ -2425,18 +2425,18 @@ int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache *
     tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
     program->currentQuad += 12;
 
-    tmp[0].s = 0;
-    tmp[0].t = (rbg->vres * rbg->info.startLine)/yabsys.VBlankLineCount;
-    tmp[1].s = rbg->hres;
-    tmp[1].t = (rbg->vres * rbg->info.startLine)/yabsys.VBlankLineCount;
-    tmp[2].s = rbg->hres;
-    tmp[2].t = (rbg->vres * rbg->info.endLine)/yabsys.VBlankLineCount;
-    tmp[3].s = 0;
-    tmp[3].t = (rbg->vres * rbg->info.startLine)/yabsys.VBlankLineCount;
-    tmp[4].s = rbg->hres;
-    tmp[4].t = (rbg->vres * rbg->info.endLine)/yabsys.VBlankLineCount;
-    tmp[5].s = 0;
-    tmp[5].t = (rbg->vres * rbg->info.endLine)/yabsys.VBlankLineCount;
+    tmp[0].s = 0 + ATLAS_BIAS;
+    tmp[0].t = (rbg->vres * rbg->info.startLine)/yabsys.VBlankLineCount + ATLAS_BIAS;
+    tmp[1].s = rbg->hres - ATLAS_BIAS;
+    tmp[1].t = (rbg->vres * rbg->info.startLine)/yabsys.VBlankLineCount + ATLAS_BIAS;
+    tmp[2].s = rbg->hres - ATLAS_BIAS;
+    tmp[2].t = (rbg->vres * rbg->info.endLine)/yabsys.VBlankLineCount - ATLAS_BIAS;
+    tmp[3].s = 0 + ATLAS_BIAS;
+    tmp[3].t = (rbg->vres * rbg->info.startLine)/yabsys.VBlankLineCount + ATLAS_BIAS;
+    tmp[4].s = rbg->hres - ATLAS_BIAS;
+    tmp[4].t = (rbg->vres * rbg->info.endLine)/yabsys.VBlankLineCount - ATLAS_BIAS;
+    tmp[5].s = 0 + ATLAS_BIAS;
+    tmp[5].t = (rbg->vres * rbg->info.endLine)/yabsys.VBlankLineCount - ATLAS_BIAS;
 
     // glActiveTexture(GL_TEXTURE0);
     // glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture(program->interuput_texture));
