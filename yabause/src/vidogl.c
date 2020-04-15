@@ -2910,9 +2910,8 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
           _Ygl->useLineColorOffset[1] = 1;
         }
       }
-
-      h = (parameter->kx * (parameter->Xsp + parameter->dx * l) + parameter->Xp);
-      v = (parameter->ky * (parameter->Ysp + parameter->dy * l) + parameter->Yp);
+      h = floor(parameter->kx * (parameter->Xsp + parameter->dx * l) + parameter->Xp);
+      v = floor(parameter->ky * (parameter->Ysp + parameter->dy * l) + parameter->Yp);
       if (info->isbitmap)
       {
         switch (parameter->screenover) {
