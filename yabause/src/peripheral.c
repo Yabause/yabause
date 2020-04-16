@@ -570,37 +570,51 @@ void PerCabCReleased(PerCab_struct * pad) {
 //////////////////////////////////////////////////////////////////////////////
 
 void PerCabXPressed(PerCab_struct * pad) {
-   pad[PORT_A] &= ~(0x1 << 0x3);
+   switch (yabsys.stvInputType)
+   {
+      case STV6B:
+         pad[PORT_F] &= ~(0x1 << 0x0); break;
+      case STV:
+      default:
+         pad[PORT_A] &= ~(0x1 << 0x3); break;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void PerCabXReleased(PerCab_struct * pad) {
-   pad[PORT_A] |= (0x1 << 0x3);
+   switch (yabsys.stvInputType)
+   {
+      case STV6B:
+         pad[PORT_F] |= (0x1 << 0x0); break;
+      case STV:
+      default:
+         pad[PORT_A] |= (0x1 << 0x3); break;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void PerCabYPressed(PerCab_struct * pad) {
-   pad[PORT_F] &= ~(0x1 << 0x0);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void PerCabYReleased(PerCab_struct * pad) {
-   pad[PORT_F] |= (0x1 << 0x0);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void PerCabZPressed(PerCab_struct * pad) {
    pad[PORT_F] &= ~(0x1 << 0x1);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerCabZReleased(PerCab_struct * pad) {
+void PerCabYReleased(PerCab_struct * pad) {
    pad[PORT_F] |= (0x1 << 0x1);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabZPressed(PerCab_struct * pad) {
+   pad[PORT_F] &= ~(0x1 << 0x2);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabZReleased(PerCab_struct * pad) {
+   pad[PORT_F] |= (0x1 << 0x2);
 }
 
 /* P2 Inputs */
@@ -688,37 +702,51 @@ void PerCabP2Button3Released(PerCab_struct * pad) {
 //////////////////////////////////////////////////////////////////////////////
 
 void PerCabP2Button4Pressed(PerCab_struct * pad) {
-   pad[PORT_B] &= ~(0x1 << 0x3);
+   switch (yabsys.stvInputType)
+   {
+      case STV6B:
+         pad[PORT_F] &= ~(0x1 << 0x4); break;
+      case STV:
+      default:
+         pad[PORT_B] &= ~(0x1 << 0x3); break;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void PerCabP2Button4Released(PerCab_struct * pad) {
-   pad[PORT_B] |= (0x1 << 0x3);
+   switch (yabsys.stvInputType)
+   {
+      case STV6B:
+         pad[PORT_F] |= (0x1 << 0x4); break;
+      case STV:
+      default:
+         pad[PORT_B] |= (0x1 << 0x3); break;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void PerCabP2Button5Pressed(PerCab_struct * pad) {
-   pad[PORT_F] &= ~(0x1 << 0x4);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void PerCabP2Button5Released(PerCab_struct * pad) {
-   pad[PORT_F] |= (0x1 << 0x4);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void PerCabP2Button6Pressed(PerCab_struct * pad) {
    pad[PORT_F] &= ~(0x1 << 0x5);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerCabP2Button6Released(PerCab_struct * pad) {
+void PerCabP2Button5Released(PerCab_struct * pad) {
    pad[PORT_F] |= (0x1 << 0x5);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button6Pressed(PerCab_struct * pad) {
+   pad[PORT_F] &= ~(0x1 << 0x6);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button6Released(PerCab_struct * pad) {
+   pad[PORT_F] |= (0x1 << 0x6);
 }
 
 /* System Inputs*/

@@ -23,6 +23,7 @@
 
 #include "core.h"
 #include "yui.h"
+#include "stv.h"
 #include "smpc.h"
 #include "yabause.h"
 

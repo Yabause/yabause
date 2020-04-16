@@ -137,6 +137,7 @@ typedef struct
    int vsyncon;
    int skipframe;
    int wireframe_mode;
+   int stvInputType;
 #ifdef SPRITE_CACHE
    int useVdp1cache;
 #endif
