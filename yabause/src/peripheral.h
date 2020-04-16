@@ -22,6 +22,7 @@
 #define PERIPHERAL_H
 
 #include "core.h"
+#include "yui.h"
 #include "smpc.h"
 #include "yabause.h"
 
@@ -365,6 +366,8 @@ void PerGunMove(PerGun_struct * gun, s32 dispx, s32 dispy);
 #define PERJAMMA_P2_BUTTON2 42
 #define PERJAMMA_P2_BUTTON3 43
 #define PERJAMMA_P2_BUTTON4 44
+#define PERJAMMA_P2_BUTTON5 45
+#define PERJAMMA_P2_BUTTON6 46
 
 typedef u8 PerCab_struct;
 
@@ -447,6 +450,12 @@ void PerCabP2Button3Released(PerCab_struct * pad);
 
 void PerCabP2Button4Pressed(PerCab_struct * pad);
 void PerCabP2Button4Released(PerCab_struct * pad);
+
+void PerCabP2Button5Pressed(PerCab_struct * pad);
+void PerCabP2Button5Released(PerCab_struct * pad);
+
+void PerCabP2Button6Pressed(PerCab_struct * pad);
+void PerCabP2Button6Released(PerCab_struct * pad);
 
 /** @} */
 

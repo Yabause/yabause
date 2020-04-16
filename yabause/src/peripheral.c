@@ -130,6 +130,8 @@ PerBaseConfig_struct percabinetbaseconfig[] = {
 	{ PERJAMMA_P2_BUTTON2, PERCB(PerCabP2Button2Pressed), PERCB(PerCabP2Button2Released), NULL, NULL },
 	{ PERJAMMA_P2_BUTTON3, PERCB(PerCabP2Button3Pressed), PERCB(PerCabP2Button3Released), NULL, NULL },
 	{ PERJAMMA_P2_BUTTON4, PERCB(PerCabP2Button4Pressed), PERCB(PerCabP2Button4Released), NULL, NULL },
+	{ PERJAMMA_P2_BUTTON5, PERCB(PerCabP2Button5Pressed), PERCB(PerCabP2Button5Released), NULL, NULL },
+	{ PERJAMMA_P2_BUTTON6, PERCB(PerCabP2Button6Pressed), PERCB(PerCabP2Button6Released), NULL, NULL },
 };
 
 PerBaseConfig_struct permousebaseconfig[] = {
@@ -580,25 +582,25 @@ void PerCabXReleased(PerCab_struct * pad) {
 //////////////////////////////////////////////////////////////////////////////
 
 void PerCabYPressed(PerCab_struct * pad) {
-//To be done
+   pad[PORT_F] &= ~(0x1 << 0x0);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void PerCabYReleased(PerCab_struct * pad) {
-//To be done
+   pad[PORT_F] |= (0x1 << 0x0);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void PerCabZPressed(PerCab_struct * pad) {
-//To be done
+   pad[PORT_F] &= ~(0x1 << 0x1);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void PerCabZReleased(PerCab_struct * pad) {
-//To be done
+   pad[PORT_F] |= (0x1 << 0x1);
 }
 
 /* P2 Inputs */
@@ -693,6 +695,30 @@ void PerCabP2Button4Pressed(PerCab_struct * pad) {
 
 void PerCabP2Button4Released(PerCab_struct * pad) {
    pad[PORT_B] |= (0x1 << 0x3);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button5Pressed(PerCab_struct * pad) {
+   pad[PORT_F] &= ~(0x1 << 0x4);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button5Released(PerCab_struct * pad) {
+   pad[PORT_F] |= (0x1 << 0x4);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button6Pressed(PerCab_struct * pad) {
+   pad[PORT_F] &= ~(0x1 << 0x5);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button6Released(PerCab_struct * pad) {
+   pad[PORT_F] |= (0x1 << 0x5);
 }
 
 /* System Inputs*/

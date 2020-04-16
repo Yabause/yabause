@@ -176,6 +176,8 @@ int PERLIBRETROInit(void)
       PerSetKey(PERJAMMA_P2_BUTTON2, PERJAMMA_P2_BUTTON2, controller );
       PerSetKey(PERJAMMA_P2_BUTTON3, PERJAMMA_P2_BUTTON3, controller );
       PerSetKey(PERJAMMA_P2_BUTTON4, PERJAMMA_P2_BUTTON4, controller );
+      PerSetKey(PERJAMMA_P2_BUTTON5, PERJAMMA_P2_BUTTON5, controller );
+      PerSetKey(PERJAMMA_P2_BUTTON6, PERJAMMA_P2_BUTTON6, controller );
       players = 2;
       return 0;
    }
@@ -406,6 +408,36 @@ static int update_inputs(void)
                PerKeyUp(PERPAD_X);
             else
                PerKeyUp(PERJAMMA_P2_BUTTON4);
+         }
+
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
+         {
+            if(i == 0)
+               PerKeyDown(PERPAD_Y);
+            else
+               PerKeyDown(PERJAMMA_P2_BUTTON5);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERPAD_Y);
+            else
+               PerKeyUp(PERJAMMA_P2_BUTTON5);
+         }
+
+         if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+         {
+            if(i == 0)
+               PerKeyDown(PERPAD_Z);
+            else
+               PerKeyDown(PERJAMMA_P2_BUTTON6);
+         }
+         else
+         {
+            if(i == 0)
+               PerKeyUp(PERPAD_Z);
+            else
+               PerKeyUp(PERJAMMA_P2_BUTTON6);
          }
       }
       else
@@ -1080,7 +1112,7 @@ void check_variables(void)
 
 static void set_descriptors(void)
 {
-   struct retro_input_descriptor *input_descriptors = (struct retro_input_descriptor*)calloc(((stv_mode?((2*10)+2):(17*players))+1), sizeof(struct retro_input_descriptor));
+   struct retro_input_descriptor *input_descriptors = (struct retro_input_descriptor*)calloc(((stv_mode?((2*12)+2):(17*players))+1), sizeof(struct retro_input_descriptor));
 
    if(stv_mode)
    {
@@ -1095,6 +1127,8 @@ static void set_descriptors(void)
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "Button 2" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Button 3" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Button 4" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "Button 5" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Button 6" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" };
          if (i == 0)
