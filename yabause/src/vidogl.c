@@ -1020,6 +1020,9 @@ static u32 Vdp2ColorRamGetLineColor(u32 colorindex, int alpha) {
 }
 //////////////////////////////////////////////////////////////////////////////
 // Window
+static int useRotWin = 0;
+int WinS[enBGMAX+1];
+int WinS_mode[enBGMAX+1];
 
 int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
 {
@@ -1027,11 +1030,115 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   int v = 0;
   u32 LineWinAddr;
   int upWindow = 0;
-  int update = 0;
   u32 val = 0;
 
-  YglGetWindowPointer(0);
-  YglGetWindowPointer(1);
+  int Win0[enBGMAX+1];
+  int Win0_mode[enBGMAX+1];
+  int Win1[enBGMAX+1];
+  int Win1_mode[enBGMAX+1];
+  int Win_op[enBGMAX+1];
+
+  if (((varVdp2Regs->WCTLD & 0xA)!=0x0) != useRotWin) {
+    useRotWin = ((varVdp2Regs->WCTLD & 0xA)!=0x0);
+    _Ygl->needWinUpdate |= 1;
+  }
+
+  Win0[NBG0] = (varVdp2Regs->WCTLA >> 1) & 0x01;
+  Win1[NBG0] = (varVdp2Regs->WCTLA >> 3) & 0x01;
+  WinS[NBG0] = (varVdp2Regs->WCTLA >> 5) & 0x01;
+  Win0[NBG1] = (varVdp2Regs->WCTLA >> 9) & 0x01;
+  Win1[NBG1] = (varVdp2Regs->WCTLA >> 11) & 0x01;
+  WinS[NBG1] = (varVdp2Regs->WCTLA >> 13) & 0x01;
+
+  Win0[NBG2] = (varVdp2Regs->WCTLB >> 1) & 0x01;
+  Win1[NBG2] = (varVdp2Regs->WCTLB >> 3) & 0x01;
+  WinS[NBG2] = (varVdp2Regs->WCTLB >> 5) & 0x01;
+  Win0[NBG3] = (varVdp2Regs->WCTLB >> 9) & 0x01;
+  Win1[NBG3] = (varVdp2Regs->WCTLB >> 11) & 0x01;
+  WinS[NBG3] = (varVdp2Regs->WCTLB >> 13) & 0x01;
+
+  Win0[RBG0] = (varVdp2Regs->WCTLC >> 1) & 0x01;
+  Win1[RBG0] = (varVdp2Regs->WCTLC >> 3) & 0x01;
+  WinS[RBG0] = (varVdp2Regs->WCTLC >> 5) & 0x01;
+  Win0[SPRITE] = (varVdp2Regs->WCTLC >> 9) & 0x01;
+  Win1[SPRITE] = (varVdp2Regs->WCTLC >> 11) & 0x01;
+  WinS[SPRITE] = (varVdp2Regs->WCTLC >> 13) & 0x01;
+
+  Win0_mode[NBG0] = (varVdp2Regs->WCTLA) & 0x01;
+  Win1_mode[NBG0] = (varVdp2Regs->WCTLA >> 2) & 0x01;
+  WinS_mode[NBG0] = (varVdp2Regs->WCTLA >> 4) & 0x01;
+  Win0_mode[NBG1] = (varVdp2Regs->WCTLA >> 8) & 0x01;
+  Win1_mode[NBG1] = (varVdp2Regs->WCTLA >> 10) & 0x01;
+  WinS_mode[NBG1] = (varVdp2Regs->WCTLA >> 12) & 0x01;
+
+  Win0_mode[NBG2] = (varVdp2Regs->WCTLB) & 0x01;
+  Win1_mode[NBG2] = (varVdp2Regs->WCTLB >> 2) & 0x01;
+  WinS_mode[NBG2] = (varVdp2Regs->WCTLB >> 4) & 0x01;
+  Win0_mode[NBG3] = (varVdp2Regs->WCTLB >> 8) & 0x01;
+  Win1_mode[NBG3] = (varVdp2Regs->WCTLB >> 10) & 0x01;
+  WinS_mode[NBG3] = (varVdp2Regs->WCTLB >> 12) & 0x01;
+
+  Win0_mode[RBG0] = (varVdp2Regs->WCTLC) & 0x01;
+  Win1_mode[RBG0] = (varVdp2Regs->WCTLC >> 2) & 0x01;
+  WinS_mode[RBG0] = (varVdp2Regs->WCTLC >> 4) & 0x01;
+  Win0_mode[SPRITE] = (varVdp2Regs->WCTLC >> 8) & 0x01;
+  Win1_mode[SPRITE] = (varVdp2Regs->WCTLC >> 10) & 0x01;
+  WinS_mode[SPRITE] = (varVdp2Regs->WCTLC >> 12) & 0x01;
+
+  Win_op[NBG0] = (varVdp2Regs->WCTLA >> 7) & 0x01;
+  Win_op[NBG1] = (varVdp2Regs->WCTLA >> 15) & 0x01;
+  Win_op[NBG2] = (varVdp2Regs->WCTLB >> 7) & 0x01;
+  Win_op[NBG3] = (varVdp2Regs->WCTLB >> 15) & 0x01;
+  Win_op[RBG0] = (varVdp2Regs->WCTLC >> 7) & 0x01;
+  Win_op[SPRITE] = (varVdp2Regs->WCTLC >> 15) & 0x01;
+
+  Win0_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 8) & 0x01) == 0);
+  Win0[SPRITE+1] = (varVdp2Regs->WCTLD >> 9) & 0x01;
+  Win1_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 10) & 0x01) == 0);
+  Win1[SPRITE+1] = (varVdp2Regs->WCTLD >> 11) & 0x01;
+  WinS_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 12) & 0x01) == 0);
+  WinS[SPRITE+1] = (varVdp2Regs->WCTLD >> 13) & 0x01;
+  Win_op[SPRITE+1] = (varVdp2Regs->WCTLD >> 15) & 0x01;
+
+  Win0[RBG1] = Win0[NBG0];
+  Win0_mode[RBG1] = Win0_mode[NBG0];
+  Win1[RBG1] = Win1[NBG0];
+  Win1_mode[RBG1] = Win1_mode[NBG0];
+  WinS[RBG1] = WinS[NBG0];
+  WinS_mode[RBG1] = WinS_mode[NBG0];
+  Win_op[RBG1] = Win_op[NBG0];
+
+
+  for (int i=0; i<enBGMAX+1; i++) {
+    if (Win0[i] != _Ygl->Win0[i]) _Ygl->needWinUpdate |= 1;
+    if (Win1[i] != _Ygl->Win1[i]) _Ygl->needWinUpdate |= 1;
+    if (WinS[i] != _Ygl->WinS[i]) _Ygl->needWinUpdate |= 1;
+    if (Win0_mode[i] != _Ygl->Win0_mode[i]) _Ygl->needWinUpdate |= 1;
+    if (Win1_mode[i] != _Ygl->Win1_mode[i]) _Ygl->needWinUpdate |= 1;
+    if (WinS_mode[i] != _Ygl->WinS_mode[i]) _Ygl->needWinUpdate |= 1;
+    if (Win_op[i] != _Ygl->Win_op[i]) _Ygl->needWinUpdate |= 1;
+  #ifdef WINDOW_DEBUG
+    //DEBUG
+    if ((Win0[i] == 1) || (Win1[i] == 1) || (WinS[i] == 1))
+      YuiMsg("Windows are used on layer %d (WO:%d, W1:%d, WS:%d, WS mode %s, WS op %s)\n", i, Win0[i], Win1[i], WinS[i], (WinS_mode[i]==0)?"INSIDE":"OUTSIDE", (Win_op[i]==0)?"OR":"AND");
+    else
+      YuiMsg("Windows are not used on layer %d\n", i);
+  #endif
+  }
+  memcpy(&_Ygl->Win0[0], &Win0[0], (enBGMAX+1)*sizeof(int));
+  memcpy(&_Ygl->Win1[0], &Win1[0], (enBGMAX+1)*sizeof(int));
+  memcpy(&_Ygl->WinS[0], &WinS[0], (enBGMAX+1)*sizeof(int));
+  memcpy(&_Ygl->Win0_mode[0], &Win0_mode[0], (enBGMAX+1)*sizeof(int));
+  memcpy(&_Ygl->Win1_mode[0], &Win1_mode[0], (enBGMAX+1)*sizeof(int));
+  memcpy(&_Ygl->WinS_mode[0], &WinS_mode[0], (enBGMAX+1)*sizeof(int));
+  memcpy(&_Ygl->Win_op[0], &Win_op[0], (enBGMAX+1)*sizeof(int));
+
+  if( _Ygl->win[0] == NULL ){
+    _Ygl->win[0] = malloc(512 * 4);
+  }
+  if( _Ygl->win[1] == NULL ){
+    _Ygl->win[1] = malloc(512 * 4);
+  }
 
   HShift = 0;
   if (_Ygl->rwidth >= 640) HShift = 0; else HShift = 1;
@@ -1054,7 +1161,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
       }
       if (val != _Ygl->win[0][v]) {
         _Ygl->win[0][v] = val;
-        update = 1;
+        _Ygl->needWinUpdate = 1;
       }
     }
     // Parameter Mode
@@ -1071,7 +1178,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
       }
       if (val != _Ygl->win[0][v]) {
         _Ygl->win[0][v] = val;
-        update = 1;
+        _Ygl->needWinUpdate = 1;
       }
     }
   }
@@ -1093,7 +1200,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
       }
       if (val != _Ygl->win[1][v]) {
         _Ygl->win[1][v] = val;
-        update = 1;
+        _Ygl->needWinUpdate = 1;
       }
     }
     // Parameter Mode
@@ -1110,13 +1217,10 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
       }
       if (val != _Ygl->win[1][v]) {
         _Ygl->win[1][v] = val;
-        update = 1;
+        _Ygl->needWinUpdate = 1;
       }
     }
   }
-  YglSetWindow(0);
-  YglSetWindow(1);
-  return update;
 }
 
 // 0 .. outside,1 .. inside
@@ -6256,6 +6360,8 @@ LOG_ASYN("===================================\n");
 
   _Ygl->useLineColorOffset[0] = 0;
   _Ygl->useLineColorOffset[1] = 0;
+
+  Vdp2GenerateWindowInfo(&Vdp2Lines[VDP2_DRAW_LINE]);
 
   if (Vdp1Regs->TVMR & 0x02) {
     Vdp2ReadRotationTable(0, &Vdp1ParaA, &Vdp2Lines[VDP2_DRAW_LINE], Vdp2Ram);

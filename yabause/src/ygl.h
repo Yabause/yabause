@@ -652,6 +652,8 @@ typedef struct {
    int min_fb_y;
    int max_fb_y;
 
+   int needWinUpdate;
+
    GLuint cram_tex;
    GLuint cram_tex_pbo;
    u32 * cram_tex_buf;

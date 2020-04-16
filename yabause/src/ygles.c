@@ -42,7 +42,6 @@
 
 extern u8 * Vdp1FrameBuffer[];
 int rebuild_frame_buffer = 0;
-int rebuild_windows = 0;
 int opengl_mode = 1;
 
 extern int WaitVdp2Async(int sync);
@@ -71,6 +70,9 @@ static int YglDestroyOriginalBuffer();
 
 int YglGenFrameBuffer(int force);
 
+extern int WinS[enBGMAX+1];
+extern int WinS_mode[enBGMAX+1];
+
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
 u32 * YglGetColorRamPointer(int line);
@@ -81,7 +83,6 @@ extern void Ygl_prog_Destroy(void);
 #ifdef VDP1_TEXTURE_ASYNC
 extern int waitVdp1Textures( int sync);
 #endif
-
 
 #define ATLAS_BIAS (0.025f)
 
@@ -922,7 +923,7 @@ void YglGenerate() {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glBindTexture(GL_TEXTURE_2D, 0);
   rebuild_frame_buffer = 0;
-  rebuild_windows = 1;
+  _Ygl->needWinUpdate = 1;
 }
 
 void YglGenReset() {
@@ -2719,129 +2720,6 @@ void YglDmyRenderVDP1(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-static int useRotWin = 0;
-int WinS[enBGMAX+1];
-int WinS_mode[enBGMAX+1];
-void YglSetVdp2Window(Vdp2 *varVdp2Regs)
-{
-  float col[4] = {0.0f,0.0f,0.0f,0.0f};
-  GLenum DrawBuffers[enBGMAX]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6};
-  float const vertexPosition[] = {
-    -_Ygl->rwidth, -_Ygl->rheight,
-    _Ygl->rwidth, -_Ygl->rheight,
-    -_Ygl->rwidth, _Ygl->rheight,
-    _Ygl->rwidth, _Ygl->rheight };
-
-  int Win0[enBGMAX+1];
-  int Win0_mode[enBGMAX+1];
-  int Win1[enBGMAX+1];
-  int Win1_mode[enBGMAX+1];
-  int Win_op[enBGMAX+1];
-  int needUpdate = rebuild_windows;
-
-  rebuild_windows = 0;
-
-  if (((varVdp2Regs->WCTLD & 0xA)!=0x0) != useRotWin) {
-    useRotWin = ((varVdp2Regs->WCTLD & 0xA)!=0x0);
-    needUpdate |= 1;
-  }
-
-  Win0[NBG0] = (varVdp2Regs->WCTLA >> 1) & 0x01;
-  Win1[NBG0] = (varVdp2Regs->WCTLA >> 3) & 0x01;
-  WinS[NBG0] = (varVdp2Regs->WCTLA >> 5) & 0x01;
-  Win0[NBG1] = (varVdp2Regs->WCTLA >> 9) & 0x01;
-  Win1[NBG1] = (varVdp2Regs->WCTLA >> 11) & 0x01;
-  WinS[NBG1] = (varVdp2Regs->WCTLA >> 13) & 0x01;
-
-  Win0[NBG2] = (varVdp2Regs->WCTLB >> 1) & 0x01;
-  Win1[NBG2] = (varVdp2Regs->WCTLB >> 3) & 0x01;
-  WinS[NBG2] = (varVdp2Regs->WCTLB >> 5) & 0x01;
-  Win0[NBG3] = (varVdp2Regs->WCTLB >> 9) & 0x01;
-  Win1[NBG3] = (varVdp2Regs->WCTLB >> 11) & 0x01;
-  WinS[NBG3] = (varVdp2Regs->WCTLB >> 13) & 0x01;
-
-  Win0[RBG0] = (varVdp2Regs->WCTLC >> 1) & 0x01;
-  Win1[RBG0] = (varVdp2Regs->WCTLC >> 3) & 0x01;
-  WinS[RBG0] = (varVdp2Regs->WCTLC >> 5) & 0x01;
-  Win0[SPRITE] = (varVdp2Regs->WCTLC >> 9) & 0x01;
-  Win1[SPRITE] = (varVdp2Regs->WCTLC >> 11) & 0x01;
-  WinS[SPRITE] = (varVdp2Regs->WCTLC >> 13) & 0x01;
-
-  Win0_mode[NBG0] = (varVdp2Regs->WCTLA) & 0x01;
-  Win1_mode[NBG0] = (varVdp2Regs->WCTLA >> 2) & 0x01;
-  WinS_mode[NBG0] = (varVdp2Regs->WCTLA >> 4) & 0x01;
-  Win0_mode[NBG1] = (varVdp2Regs->WCTLA >> 8) & 0x01;
-  Win1_mode[NBG1] = (varVdp2Regs->WCTLA >> 10) & 0x01;
-  WinS_mode[NBG1] = (varVdp2Regs->WCTLA >> 12) & 0x01;
-
-  Win0_mode[NBG2] = (varVdp2Regs->WCTLB) & 0x01;
-  Win1_mode[NBG2] = (varVdp2Regs->WCTLB >> 2) & 0x01;
-  WinS_mode[NBG2] = (varVdp2Regs->WCTLB >> 4) & 0x01;
-  Win0_mode[NBG3] = (varVdp2Regs->WCTLB >> 8) & 0x01;
-  Win1_mode[NBG3] = (varVdp2Regs->WCTLB >> 10) & 0x01;
-  WinS_mode[NBG3] = (varVdp2Regs->WCTLB >> 12) & 0x01;
-
-  Win0_mode[RBG0] = (varVdp2Regs->WCTLC) & 0x01;
-  Win1_mode[RBG0] = (varVdp2Regs->WCTLC >> 2) & 0x01;
-  WinS_mode[RBG0] = (varVdp2Regs->WCTLC >> 4) & 0x01;
-  Win0_mode[SPRITE] = (varVdp2Regs->WCTLC >> 8) & 0x01;
-  Win1_mode[SPRITE] = (varVdp2Regs->WCTLC >> 10) & 0x01;
-  WinS_mode[SPRITE] = (varVdp2Regs->WCTLC >> 12) & 0x01;
-
-  Win_op[NBG0] = (varVdp2Regs->WCTLA >> 7) & 0x01;
-  Win_op[NBG1] = (varVdp2Regs->WCTLA >> 15) & 0x01;
-  Win_op[NBG2] = (varVdp2Regs->WCTLB >> 7) & 0x01;
-  Win_op[NBG3] = (varVdp2Regs->WCTLB >> 15) & 0x01;
-  Win_op[RBG0] = (varVdp2Regs->WCTLC >> 7) & 0x01;
-  Win_op[SPRITE] = (varVdp2Regs->WCTLC >> 15) & 0x01;
-
-  Win0_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 8) & 0x01) == 0);
-  Win0[SPRITE+1] = (varVdp2Regs->WCTLD >> 9) & 0x01;
-  Win1_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 10) & 0x01) == 0);
-  Win1[SPRITE+1] = (varVdp2Regs->WCTLD >> 11) & 0x01;
-  WinS_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 12) & 0x01) == 0);
-  WinS[SPRITE+1] = (varVdp2Regs->WCTLD >> 13) & 0x01;
-  Win_op[SPRITE+1] = (varVdp2Regs->WCTLD >> 15) & 0x01;
-
-  Win0[RBG1] = Win0[NBG0];
-  Win0_mode[RBG1] = Win0_mode[NBG0];
-  Win1[RBG1] = Win1[NBG0];
-  Win1_mode[RBG1] = Win1_mode[NBG0];
-  WinS[RBG1] = WinS[NBG0];
-  WinS_mode[RBG1] = WinS_mode[NBG0];
-  Win_op[RBG1] = Win_op[NBG0];
-
-
-  for (int i=0; i<enBGMAX+1; i++) {
-    if (Win0[i] != _Ygl->Win0[i]) needUpdate |= 1;
-    if (Win1[i] != _Ygl->Win1[i]) needUpdate |= 1;
-    if (WinS[i] != _Ygl->WinS[i]) needUpdate |= 1;
-    if (Win0_mode[i] != _Ygl->Win0_mode[i]) needUpdate |= 1;
-    if (Win1_mode[i] != _Ygl->Win1_mode[i]) needUpdate |= 1;
-    if (WinS_mode[i] != _Ygl->WinS_mode[i]) needUpdate |= 1;
-    if (Win_op[i] != _Ygl->Win_op[i]) needUpdate |= 1;
-  #ifdef WINDOW_DEBUG
-    //DEBUG
-    if ((Win0[i] == 1) || (Win1[i] == 1) || (WinS[i] == 1))
-      YuiMsg("Windows are used on layer %d (WO:%d, W1:%d, WS:%d, WS mode %s, WS op %s)\n", i, Win0[i], Win1[i], WinS[i], (WinS_mode[i]==0)?"INSIDE":"OUTSIDE", (Win_op[i]==0)?"OR":"AND");
-    else
-      YuiMsg("Windows are not used on layer %d\n", i);
-  #endif
-  }
-  memcpy(&_Ygl->Win0[0], &Win0[0], (enBGMAX+1)*sizeof(int));
-  memcpy(&_Ygl->Win1[0], &Win1[0], (enBGMAX+1)*sizeof(int));
-  memcpy(&_Ygl->WinS[0], &WinS[0], (enBGMAX+1)*sizeof(int));
-  memcpy(&_Ygl->Win0_mode[0], &Win0_mode[0], (enBGMAX+1)*sizeof(int));
-  memcpy(&_Ygl->Win1_mode[0], &Win1_mode[0], (enBGMAX+1)*sizeof(int));
-  memcpy(&_Ygl->WinS_mode[0], &WinS_mode[0], (enBGMAX+1)*sizeof(int));
-  memcpy(&_Ygl->Win_op[0], &Win_op[0], (enBGMAX+1)*sizeof(int));
-  needUpdate |= Vdp2GenerateWindowInfo(varVdp2Regs);
-  if (needUpdate) {
-    YglSetWindow(0);
-    YglSetWindow(1);
-  }
-  return;
-}
 
 static void updateColorOffset(Vdp2 *varVdp2Regs) {
   if (varVdp2Regs->CLOFEN & 0x40)
@@ -3328,7 +3206,11 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
    YglUpdateVdp2Reg();
-   YglSetVdp2Window(varVdp2Regs);
+   if (_Ygl->needWinUpdate) {
+     YglSetWindow(0);
+     YglSetWindow(1);
+     _Ygl->needWinUpdate = 0;
+   }
    cprg = -1;
 
    glActiveTexture(GL_TEXTURE0);
@@ -3729,13 +3611,8 @@ void YglSetLineColorScreen(u32 * pbuf, int size){
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void YglGetWindowPointer(int id) {
-  int status;
-  GLuint error;
 
-  YGLDEBUG("YglGetWindowPointer: %d,%d", _Ygl->width, _Ygl->height);
-
-
+void YglSetWindow(int id) {
   if (_Ygl->window_tex[0] == 0) {
     glGenTextures(2, &_Ygl->window_tex[0]);
 
@@ -3753,13 +3630,7 @@ void YglGetWindowPointer(int id) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   }
-  if( _Ygl->win[id] == NULL ){
-    glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[id]);
-    _Ygl->win[id] = malloc(512 * 4);
-  }
-}
 
-void YglSetWindow(int id) {
   glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[id]);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 1, GL_RGBA, GL_UNSIGNED_BYTE, _Ygl->win[id] );
   glBindTexture(GL_TEXTURE_2D, 0);
