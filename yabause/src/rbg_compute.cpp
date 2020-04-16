@@ -378,8 +378,8 @@ const char prg_rbg_xy[] =
 "  float Ysp = para[paramid].D * ((para[paramid].Xst + para[paramid].deltaXst *original_pos.y) - para[paramid].Px) +\n"
 "  para[paramid].E * ((para[paramid].Yst + para[paramid].deltaYst * original_pos.y) - para[paramid].Py) +\n"
 "  para[paramid].F * (para[paramid].Zst - para[paramid].Pz);\n"
-"  float fh = floor(ky * (Xsp + para[paramid].dx * pos.x) + para[paramid].Xp);\n"
-"  float fv = floor(ky * (Ysp + para[paramid].dy * pos.x) + para[paramid].Yp);\n";
+"  float fh = floor(ky * (Xsp + para[paramid].dx * original_pos.x) + para[paramid].Xp);\n"
+"  float fv = floor(ky * (Ysp + para[paramid].dy * original_pos.x) + para[paramid].Yp);\n";
 
 const char prg_rbg_get_bitmap[] =
 "  cellw = cellw_;\n"
