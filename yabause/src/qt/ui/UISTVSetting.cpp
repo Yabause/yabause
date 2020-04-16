@@ -43,6 +43,8 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
 	mButtons[ tbB ] = PERPAD_B;
 	mButtons[ tbC ] = PERPAD_C;
 	mButtons[ tbX ] = PERPAD_X;
+	mButtons[ tbY ] = PERPAD_Y;
+	mButtons[ tbZ ] = PERPAD_Z;
 	mButtons[ tbCoin1 ] = PERJAMMA_COIN1;
 	mButtons[ tbCoin2 ] = PERJAMMA_COIN2;
 	mButtons[ tbService ] = PERJAMMA_SERVICE;
@@ -55,6 +57,8 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
 	mButtons[ tbB_P2 ] = PERJAMMA_P2_BUTTON2;
 	mButtons[ tbC_P2 ] = PERJAMMA_P2_BUTTON3;
 	mButtons[ tbX_P2 ] = PERJAMMA_P2_BUTTON4;
+	mButtons[ tbY_P2 ] = PERJAMMA_P2_BUTTON5;
+	mButtons[ tbZ_P2 ] = PERJAMMA_P2_BUTTON6;
 	mButtons[ tbUP_P2 ] = PERJAMMA_P2_UP;
 	mButtons[ tbRIGHT_P2 ] = PERJAMMA_P2_RIGHT;
 	mButtons[ tbDOWN_P2 ] = PERJAMMA_P2_DOWN;
@@ -68,6 +72,8 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
 	mNames[ PERPAD_B ] = "2";
 	mNames[ PERPAD_C ] = "3";
 	mNames[ PERPAD_X ] = "4";
+	mNames[ PERPAD_Y ] = "5";
+	mNames[ PERPAD_Z ] = "6";
 	mNames[ PERJAMMA_COIN1 ] = "Coin1";
 	mNames[ PERJAMMA_COIN2 ] = "Coin2";
 	mNames[ PERJAMMA_SERVICE ] = "Service";
@@ -75,11 +81,13 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
 	mNames[ PERJAMMA_START1 ] = "Start1";
 	mNames[ PERJAMMA_START2 ] = "Start2";
 	mNames[ PERJAMMA_MULTICART ] = "Multicart";
-	mNames[ PERJAMMA_PAUSE ] = "Pause"; 
+	mNames[ PERJAMMA_PAUSE ] = "Pause";
 	mNames[ PERJAMMA_P2_BUTTON1 ] = "1";
 	mNames[ PERJAMMA_P2_BUTTON2 ] = "2";
 	mNames[ PERJAMMA_P2_BUTTON3 ] = "3";
 	mNames[ PERJAMMA_P2_BUTTON4 ] = "4";
+	mNames[ PERJAMMA_P2_BUTTON5 ] = "5";
+	mNames[ PERJAMMA_P2_BUTTON6 ] = "6";
 	mNames[ PERJAMMA_P2_UP ] = "Up";
 	mNames[ PERJAMMA_P2_RIGHT ] = "Right";
 	mNames[ PERJAMMA_P2_DOWN ] = "Down";
@@ -93,8 +101,10 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
 	mScanMasks[ PERPAD_B ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 	mScanMasks[ PERPAD_C ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 	mScanMasks[ PERPAD_X ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+	mScanMasks[ PERPAD_Y ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+	mScanMasks[ PERPAD_Z ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 	mScanMasks[ PERJAMMA_COIN1 ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERJAMMA_COIN2 ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;   
+	mScanMasks[ PERJAMMA_COIN2 ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 	mScanMasks[ PERJAMMA_SERVICE ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 	mScanMasks[ PERJAMMA_TEST ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 	mScanMasks[ PERJAMMA_START1] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
@@ -105,10 +115,12 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
 	mScanMasks[ PERJAMMA_P2_BUTTON2 ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 	mScanMasks[ PERJAMMA_P2_BUTTON3 ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 	mScanMasks[ PERJAMMA_P2_BUTTON4 ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+	mScanMasks[ PERJAMMA_P2_BUTTON5 ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+	mScanMasks[ PERJAMMA_P2_BUTTON6 ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 	mScanMasks[ PERJAMMA_P2_UP ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 	mScanMasks[ PERJAMMA_P2_RIGHT ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERJAMMA_P2_DOWN ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT; 
-	mScanMasks[ PERJAMMA_P2_LEFT ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;  
+	mScanMasks[ PERJAMMA_P2_DOWN ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+	mScanMasks[ PERJAMMA_P2_LEFT ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 
 	loadPadSettings();
 
