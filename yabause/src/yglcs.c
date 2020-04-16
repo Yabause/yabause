@@ -117,8 +117,8 @@ void YglFrameChangeCSVDP1(){
   FRAMELOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
 }
 
-extern int* WinS;
-extern int* WinS_mode;
+extern int WinS[enBGMAX+1];
+extern int WinS_mode[enBGMAX+1];
 
 static void YglSetVDP1FB(int i){
   if (_Ygl->vdp1IsNotEmpty != 0) {
