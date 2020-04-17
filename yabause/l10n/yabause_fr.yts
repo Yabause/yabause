@@ -154,6 +154,7 @@ Disabled|Désactivé
 Disassembled Code|Code Désassemblé
 Display Enabled|Affichage Activé
 Display on Hover|Afficher en Passant le Curseur
+donate|Faire un Don
 Down|Bas
 Download|Télécharger
 Draw End|Fin Dessin
@@ -198,6 +199,7 @@ Format|Formater
 Frame Skip/Limiter|Saut d'Image/Limitateur
 French|Français
 From|A Partir De
+From Cloud|Depuis le Cloud
 From File|A Partir d'un Fichier
 From File...|A Partir d'un Fichier...
 Fullscreen|Plein Ecran
@@ -237,6 +239,16 @@ Left trigger|Gâchette Gauche
 Less than|Moins que
 Linux CD Drive|Lecteur CD Linux
 Load|Charger
+Load0|Chargement0
+Load1|Chargement1
+Load2|Chargement2
+Load3|Chargement3
+Load4|Chargement4
+Load5|Chargement5
+Load6|Chargement6
+Load7|Chargement7
+Load8|Chargement8
+Load9|Chargement9
 Load State|Charger l'Etat
 Load State As|Charger l'Etat sous
 Load as executable|Charger en tant qu'Executable
@@ -292,6 +304,7 @@ Open SSF|Ouvrir lecteur SSF
 Open&Tray|Ouvrir le Plateau
 OpenTray|Ouvrir le Plateau
 OpenGL Video Interface|Interface Vidéo OpenGL
+Original aspect ratio|Proportions d'Origine
 Options|Options
 Other Debug|Autre Débug
 Pad|Manette
@@ -334,6 +347,16 @@ SH2 Interpreter|Interpréteur SH2
 SH2 Registers|Registres SH2
 SSH2|SSH2
 Save|Sauvegarder
+Save0|Sauvegarde0
+Save1|Sauvegarde1
+Save2|Sauvegarde2
+Save3|Sauvegarde3
+Save4|Sauvegarde4
+Save5|Sauvegarde5
+Save6|Sauvegarde6
+Save7|Sauvegarde7
+Save8|Sauvegarde8
+Save9|Sauvegarde9
 Save As Bitmap|Sauvegarder en Bitmap
 Save As WAV|Sauvegarder en  WAV
 Save Bitmap|Sauvegarder en Bitmap
@@ -368,6 +391,7 @@ Shortcut|Raccourcis
 Shortcuts|Raccourcis
 Show FPS|Afficher les FPS
 Show Log Window|Afficher la Fenêtre Journal
+Sign In/Out|Connecter/Déconnecter
 Signed|Signé
 Signed 16-bit value|Valeur Signé 16-bit
 Signed 32-bit value|Valeur Signé 32-bit
@@ -399,6 +423,7 @@ Text|Texte
 Texture|Texture
 Time Synchronization Mode|Mode de Synchronisation du Temps
 To|Vers
+To Cloud|Vers le Cloud
 To File...|Vers un Fichier...
 Tools|Outils
 Track Inf Loop Results|Résultats In Piste en Boucle
