@@ -258,7 +258,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
       YabSetError(YAB_ERR_CANNOTINIT, _("Cartridge"));
       return -1;
    }
-   if (STVSingleInit(init->stvgamepath, init->stvbiospath) != 0) {
+   if (STVSingleInit(init->stvgamepath, init->stvbiospath, init->eepromdir) != 0) {
      if (STVInit(init->stvgame, init->cartpath) != 0)
      {
        YabSetError(YAB_ERR_CANNOTINIT, _("STV emulation"));
@@ -439,7 +439,7 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   if (STVSingleInit(init->stvgamepath, init->stvbiospath) != 0) {
+   if (STVSingleInit(init->stvgamepath, init->stvbiospath, init->eepromdir) != 0) {
      if (STVInit(init->stvgame, init->cartpath) != 0)
      {
        YabSetError(YAB_ERR_CANNOTINIT, _("STV emulation"));
@@ -655,6 +655,7 @@ void YabFlushBackups(void)
 
 void YabauseDeInit(void) {
 
+   STVDeInit();
    Vdp2DeInit();
    Vdp1DeInit();
 

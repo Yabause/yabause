@@ -6,11 +6,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int STVGetRomList(const char* dir, int force);
+int STVGetRomList(const char *dir, int force);
 char* getSTVGameName(int id);
-int STVGetSingle(const char* pathfile, const char* biospath, int* id);
-int STVSingleInit(const char *gamepath, const char *biospath);
-int STVInit(int id, const char* path);
+int STVGetSingle(const char *pathfile, const char *biospath, int* id);
+int STVSingleInit(const char *gamepath, const char *biospath, const char *eepromdir);
+int STVInit(int id, const char *path);
+int STVDeInit();
 #ifdef __cplusplus
 }
 #endif
@@ -47,6 +48,8 @@ typedef struct FileEntry_s{
 } FileEntry;
 
 typedef struct Game_s{
+  char* romset;
+  char* parent;
   char* name;
   u32 key;
   u8 rotated;

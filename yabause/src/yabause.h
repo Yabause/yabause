@@ -48,6 +48,7 @@ typedef struct
    const char *stvbiospath;
    const char *stvgamepath;
    const char *supportdir;
+   const char *eepromdir;
    const char *modemip;
    const char *modemport;
    int vsyncon; //This shall be renamed as out of sync

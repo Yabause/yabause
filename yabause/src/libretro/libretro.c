@@ -46,6 +46,7 @@ static char full_path[PATH_MAX];
 static char bios_path[PATH_MAX];
 static char stv_bios_path[PATH_MAX];
 static char bup_path[PATH_MAX];
+static char eeprom_dir[PATH_MAX];
 static char addon_cart_path[PATH_MAX];
 
 static char game_basename[128];
@@ -1473,12 +1474,14 @@ bool retro_load_game(const struct retro_game_info *info)
       }
 
       snprintf(bup_path, sizeof(bup_path), "%s%ckronos%cstv%c%s.ram", g_save_dir, slash, slash, slash, game_basename);
+      snprintf(eeprom_dir, sizeof(eeprom_dir), "%s%ckronos%cstv%c", g_save_dir, slash, slash, slash);
 
       yinit.stvgamepath     = full_path;
       yinit.stvgame         = stvgame;
       yinit.cartpath        = NULL;
       yinit.carttype        = CART_ROMSTV;
       yinit.stvbiospath     = stv_bios_path;
+      yinit.eepromdir       = eeprom_dir;
    }
    else
    {
