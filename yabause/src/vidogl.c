@@ -2435,21 +2435,20 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
     else
       sv = v + info->sv;
 
-    sh &= (info->cellw - 1);
+    //sh &= (info->cellw - 1);
     sv &= (info->cellh - 1);
 
     switch (info->colornumber) {
     case 0:
-      baseaddr = baseaddr + (sh >> 1) + (sv * (info->cellw >> 1));
       for (j = 0; j < vdp2width; j++)
       {
         u32 h = ((j*inch) >> 8);
-        u32 addr = (baseaddr + (h >> 1));
+        u32 addr = ((sh + h)&(info->cellw-1) + (sv*info->cellw))>>1; // Not confrimed!
         if (addr >= 0x80000) {
           *texture->textdata++ = 0x0000;
         }
         else {
-          u8 dot = T1ReadByte(Vdp2Ram, addr);
+          u8 dot = T1ReadByte(Vdp2Ram, baseaddr + addr);
           u32 alpha = info->alpha;
           if (!(h & 0x01)) dot >> 4;
           if (!(dot & 0xF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
@@ -2471,16 +2470,18 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
         }
       }
       break;
-    case 1:
-      baseaddr += sh + sv * info->cellw;
-      
+    case 1: {
+
+      // Shining force 3 battle sciene
+      u32 maxaddr = (info->cellw * info->cellh) + info->cellw;
       for (j = 0; j < vdp2width; j++)
       {
         int h = ((j*inch) >> 8);
         u32 alpha = info->alpha;
-        u8 dot = T1ReadByte(Vdp2Ram, baseaddr + h);
-        if (!dot && info->transparencyenable) { 
-          *texture->textdata++ = 0; continue; 
+        u32 addr = ((sh + h)&(info->cellw-1))  + sv * info->cellw;
+        u8 dot = T1ReadByte(Vdp2Ram, baseaddr + addr);
+        if (!dot && info->transparencyenable) {
+          *texture->textdata++ = 0; continue;
         }
         else {
           color = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
@@ -2496,33 +2497,36 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
             break;
           }
         }
-        *texture->textdata++ = color | (alpha<<24);
+        *texture->textdata++ = color | (alpha << 24);
       }
-
       break;
+    }
     case 2:
-      baseaddr += ((sh + sv * info->cellw) << 1);
+      //baseaddr += ((sh + sv * info->cellw) << 1);
       for (j = 0; j < vdp2width; j++)
       {
-        int h = ((j*inch) >> 8) << 1;
-        *texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr + h);
+        int h = ((j*inch) >> 8);
+        u32 addr = (((sh + h)&(info->cellw - 1)) + sv * info->cellw) << 1;  // Not confrimed
+        *texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr + addr);
 
       }
       break;
     case 3:
-      baseaddr += ((sh + sv * info->cellw) << 1);
+      //baseaddr += ((sh + sv * info->cellw) << 1);
       for (j = 0; j < vdp2width; j++)
       {
-        int h = ((j*inch) >> 8) << 1;
-        *texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr + h);
+        int h = ((j*inch) >> 8);
+        u32 addr = (((sh + h)&(info->cellw - 1)) + sv * info->cellw) << 1;  // Not confrimed
+        *texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr + addr);
       }
       break;
     case 4:
-      baseaddr += ((sh + sv * info->cellw) << 2);
+      //baseaddr += ((sh + sv * info->cellw) << 2);
       for (j = 0; j < vdp2width; j++)
       {
-        int h = (j*inch >> 8) << 2;
-        *texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr + h);
+        int h = (j*inch >> 8);
+        u32 addr = (((sh + h)&(info->cellw - 1)) + sv * info->cellw) << 2;  // Not confrimed
+        *texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr + addr);
       }
       break;
     }
@@ -3865,6 +3869,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         if (parameter->coefenab) {
           if (vdp2rGetKValue(parameter, i) == 0) {
             *(texture->textdata++) = 0x00000000;
+            i += hstep;
             continue;
           }
         }
@@ -3874,6 +3879,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         if (parameter->coefenab) {
           if (vdp2rGetKValue(parameter, i) == 0) {
             *(texture->textdata++) = 0x00000000;
+            i += hstep;
             continue;
           }
         }
@@ -3888,6 +3894,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
               parameter = &paraB;
               if( vdp2rGetKValue(parameter, i) == 0) {
                 *(texture->textdata++) = 0x00000000;
+                i += hstep;
                 continue;
               }
             }
@@ -3911,6 +3918,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
       if (parameter == NULL)
       {
         *(texture->textdata++) = 0x00000000;
+        i += hstep;
         continue;
       }
 
@@ -3918,10 +3926,9 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
       float fv = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
       h = fh;
       v = fv;
-      //fh = fh-h;
-      //fv = fv-h;
-      //h2 = h + 1;
-      //v2 = v + 1;
+
+      //v = jj;
+      //h = ii;
 
       if (info->isbitmap)
       {
@@ -3938,13 +3945,15 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
           break;
         case OVERMODE_TRANSE:
           if ((h < 0) || (h >= cellw) || (v < 0) || (v >= cellh)) {
-            *(texture->textdata++) = 0x00;
+            *(texture->textdata++) = 0x0;
+            i += hstep;
             continue;
           }
           break;
         case OVERMODE_512:
           if ((h < 0) || (h > 512) || (v < 0) || (v > 512)) {
             *(texture->textdata++) = 0x00;
+            i += hstep;
             continue;
           }
         }
@@ -3960,6 +3969,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         case OVERMODE_TRANSE:
           if ((h < 0) || (h >= parameter->MaxH) || (v < 0) || (v >= parameter->MaxV)) {
             *(texture->textdata++) = 0x00;
+            i += hstep;
             continue;
           }
           x = h;
@@ -3986,6 +3996,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         case OVERMODE_512:
           if ((h < 0) || (h > 512) || (v < 0) || (v > 512)) {
             *(texture->textdata++) = 0x00;
+            i += hstep;
             continue;
           }
           x = h;
@@ -4131,6 +4142,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
           }
         }
       }
+
       *(texture->textdata++) = color;
       i += hstep;
     }
@@ -4764,8 +4776,8 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   // ??? sakatuku2 new scene bug ???
   if (sprite.h != 0 && sprite.w == 0) {
-    sprite.w = 8;
-    sprite.h = 8;
+    sprite.w = 1;
+    sprite.h = 1;
   }
 
   sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;

@@ -38,6 +38,7 @@ public class PadTestFragment extends Fragment implements org.uoyabause.android.Y
 
   YabausePad mPadView;
   SeekBar mSlide;
+  SeekBar mSlideY;
   SeekBar mTransSlide;
   private PadManager padm;
   TextView tv;
@@ -94,6 +95,25 @@ public class PadTestFragment extends Fragment implements org.uoyabause.android.Y
         }
     );
 
+    mSlideY   = (SeekBar)rootView.findViewById(R.id.button_ypos);
+    mSlideY.setProgress( (int)(mPadView.getYpos()*100.0f) );
+    mSlideY.setOnSeekBarChangeListener(
+            new SeekBar.OnSeekBarChangeListener() {
+              public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mPadView.setYpos((float) progress / 100.0f );
+                mPadView.requestLayout();
+                mPadView.invalidate();
+              }
+
+              public void onStartTrackingTouch(SeekBar seekBar) {
+              }
+
+              public void onStopTrackingTouch(SeekBar seekBar) {
+              }
+            }
+    );
+
+
     mTransSlide   = (SeekBar)rootView.findViewById(R.id.button_transparent);
     mTransSlide.setProgress( (int)(mPadView.getTrans()*100.0f) );
     mTransSlide.setOnSeekBarChangeListener(
@@ -129,9 +149,15 @@ public class PadTestFragment extends Fragment implements org.uoyabause.android.Y
         float value = (float) mSlide.getProgress() / 100.0f;
         editor.putFloat("pref_pad_scale", value);
         editor.commit();
+
+        value = (float) mSlideY.getProgress() / 100.0f;
+        editor.putFloat("pref_pad_pos", value);
+        editor.commit();
+
         value = (float) mTransSlide.getProgress() / 100.0f;
         editor.putFloat("pref_pad_trans", value);
         editor.commit();
+
         if (listener_ != null) listener_.onFinish();
       }
     });
