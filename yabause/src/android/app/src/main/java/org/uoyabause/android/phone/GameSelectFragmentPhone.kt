@@ -68,6 +68,7 @@ import net.cattaka.android.adaptertoolbox.thirdparty.MergeRecyclerAdapter
 import org.uoyabause.android.*
 import org.uoyabause.android.FileDialog.FileSelectedListener
 import org.uoyabause.android.GameSelectPresenter.GameSelectPresenterListener
+import org.uoyabause.android.tv.GameSelectActivity
 import org.uoyabause.android.tv.GameSelectFragment
 import org.uoyabause.uranus.BuildConfig
 import org.uoyabause.uranus.R
@@ -272,9 +273,12 @@ class GameSelectFragmentPhone : Fragment(),
             }
             R.id.menu_privacy_policy -> {
                 val uri =
-                    Uri.parse("http://www.uoyabause.org/static_pages/privacy_policy.html")
+                    Uri.parse("https://www.uoyabause.org/static_pages/privacy_policy.html")
                 val i = Intent(Intent.ACTION_VIEW, uri)
                 startActivity(i)
+            }
+            R.id.menu_item_login_to_other -> {
+                ShowPinInFragment.newInstance(presenter_).show(childFragmentManager,"sample")
             }
         }
         return false
@@ -587,6 +591,12 @@ class GameSelectFragmentPhone : Fragment(),
         if (checkStoragePermission() == 0) {
             updateGameList()
         }
+
+
+        //if( isfisrtupdate == false && this@GameSelectFragmentPhone.activity?.intent!!.getBooleanExtra("showPin",false) ) {
+        //    ShowPinInFragment.newInstance(presenter_).show(childFragmentManager, "sample");
+        //}
+
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -605,9 +615,11 @@ class GameSelectFragmentPhone : Fragment(),
 
     private var observer: Observer<*>? = null
     fun updateGameList() {
-        observer = object : Observer<String> {
+        if( observer != null ) return;
+        val tmpObserver = object : Observer<String> {
             //GithubRepositoryApiCompleteEventEntity eventResult = new GithubRepositoryApiCompleteEventEntity();
             override fun onSubscribe(d: Disposable) {
+                observer = this
                 showDialog()
             }
 
@@ -616,6 +628,7 @@ class GameSelectFragmentPhone : Fragment(),
             }
 
             override fun onError(e: Throwable) {
+                observer = null
                 dismissDialog()
             }
 
@@ -634,11 +647,16 @@ class GameSelectFragmentPhone : Fragment(),
                 dismissDialog()
                 if (isfisrtupdate) {
                     isfisrtupdate = false
-                    presenter_.checkSignIn()
+                    if( this@GameSelectFragmentPhone.activity?.intent!!.getBooleanExtra("showPin",false) ){
+                        ShowPinInFragment.newInstance(presenter_).show(childFragmentManager,"sample")
+                    }else {
+                        presenter_.checkSignIn()
+                    }
                 }
+                observer = null
             }
         }
-        presenter_.updateGameList(refresh_level, observer)
+        presenter_.updateGameList(refresh_level, tmpObserver)
         refresh_level = 0
     }
 

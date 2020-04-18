@@ -50,6 +50,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -64,8 +65,12 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
+import io.reactivex.Single;
+import io.reactivex.SingleEmitter;
+import io.reactivex.SingleOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.DisposableSingleObserver;
 import io.reactivex.schedulers.Schedulers;
 
 public class GameSelectPresenter {
@@ -142,6 +147,7 @@ public class GameSelectPresenter {
 
 
     public void signIn() {
+
         target_.startActivityForResult(
                 AuthUI.getInstance()
                         .createSignInIntentBuilder()
@@ -151,6 +157,39 @@ public class GameSelectPresenter {
                         .build(),
                 GameSelectPresenter.RC_SIGN_IN);
     }
+
+
+    SingleEmitter<FirebaseUser> auth_emitter_;
+    public void signIn( DisposableSingleObserver<FirebaseUser> singleObserver ) {
+
+
+        Single.create( new SingleOnSubscribe<FirebaseUser>() {
+            @Override
+            public void subscribe(SingleEmitter<FirebaseUser> emitter) throws Exception {
+
+                auth_emitter_ = null;
+                FirebaseAuth auth = FirebaseAuth.getInstance();
+                FirebaseUser user = auth.getCurrentUser();
+                if (user != null) {
+                    emitter.onSuccess(user);
+                    return;
+                }
+                auth_emitter_ = emitter;
+                target_.startActivityForResult(
+                        AuthUI.getInstance()
+                                .createSignInIntentBuilder()
+                                .setAvailableProviders( Arrays.asList(/*new AuthUI.IdpConfig.Builder(AuthUI.TWITTER_PROVIDER).build(),
+                                            new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build(),*/
+                                        new AuthUI.IdpConfig.GoogleBuilder().build()))
+                                .build(),
+                        GameSelectPresenter.RC_SIGN_IN);
+            }
+        })
+        .subscribeOn(AndroidSchedulers.mainThread())
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(singleObserver);
+    }
+
 
     public void signOut() {
         AuthUI.getInstance()
@@ -211,8 +250,19 @@ public class GameSelectPresenter {
                 crash.setUserEmail(auth.getCurrentUser().getEmail());
                 crash.setUserIdentifier(auth.getUid());
             }
+
+            if( auth_emitter_ != null ){
+                auth_emitter_.onSuccess(auth.getCurrentUser());
+                auth_emitter_ = null;
+            }
+
             return;
         } else {
+
+            if( auth_emitter_ != null ){
+                auth_emitter_.onError( new Throwable("Sigin in failed"));
+                auth_emitter_ = null;
+            }
 
             username_ = null;
             photo_url_ = null;
@@ -233,7 +283,14 @@ public class GameSelectPresenter {
                 listener_.onShowMessage(R.string.unknown_error);
                 return;
             }
+
         }
+
+        if( auth_emitter_ != null ){
+            auth_emitter_.onError( new Throwable("Sigin in failed"));
+            auth_emitter_ = null;
+        }
+
         listener_.onShowMessage(R.string.unknown_sign_in_response);
 
     }
@@ -296,7 +353,7 @@ public class GameSelectPresenter {
                                     AuthUI.getInstance()
                                             .createSignInIntentBuilder()
                                             .setTheme(R.style.Theme_AppCompat)
-                                            .setPrivacyPolicyUrl("http://www.uoyabause.org/static_pages/privacy_policy")
+                                            .setPrivacyPolicyUrl("https://www.uoyabause.org/static_pages/privacy_policy")
                                             .setAvailableProviders(Arrays.asList(new AuthUI.IdpConfig.GoogleBuilder().build()))
                                             .build(),
                                     RC_SIGN_IN);

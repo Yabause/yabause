@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Timer;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.app.UiModeManager;
 import android.content.Context;
@@ -62,6 +63,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+
 import androidx.annotation.NonNull;
 import androidx.leanback.app.BackgroundManager;
 import androidx.leanback.app.BrowseFragment;
@@ -76,6 +78,7 @@ import androidx.leanback.widget.Presenter;
 import androidx.leanback.widget.Row;
 import androidx.leanback.widget.RowPresenter;
 import androidx.core.app.ActivityCompat;
+
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -92,7 +95,9 @@ import org.uoyabause.android.DonateActivity;
 import org.uoyabause.android.FileDialog;
 import org.uoyabause.android.GameInfo;
 import org.uoyabause.android.GameSelectPresenter;
+import org.uoyabause.android.ShowPinInFragment;
 import org.uoyabause.android.download.IsoDownload;
+import org.uoyabause.android.phone.GameSelectFragmentPhone;
 import org.uoyabause.uranus.BuildConfig;
 import org.uoyabause.uranus.R;
 import org.uoyabause.android.Yabause;
@@ -115,7 +120,7 @@ import io.reactivex.disposables.Disposable;
 
 
 public class GameSelectFragment extends BrowseSupportFragment
-        implements FileDialog.FileSelectedListener,GameSelectPresenter.GameSelectPresenterListener  {
+        implements FileDialog.FileSelectedListener, GameSelectPresenter.GameSelectPresenterListener {
     private static final String TAG = "GameSelectFragment";
 
     private static final int BACKGROUND_UPDATE_DELAY = 300;
@@ -140,12 +145,12 @@ public class GameSelectFragment extends BrowseSupportFragment
 
     //public static final int RC_SIGN_IN = 123;
     public static int refresh_level = 2;
-    public static  GameSelectFragment isForeground = null;
+    public static GameSelectFragment isForeground = null;
     View v_;
 
     GameSelectPresenter presenter_;
 
-    String alphabet[]={ "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z" };
+    String alphabet[] = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
 
     private ProgressDialog mProgressDialog = null;
 
@@ -155,8 +160,9 @@ public class GameSelectFragment extends BrowseSupportFragment
 
     /**
      * Get IP address from first non-localhost interface
-     * @param ipv4  true=return ipv4, false=return ipv6
-     * @return  address or empty string
+     *
+     * @param ipv4 true=return ipv4, false=return ipv6
+     * @return address or empty string
      */
     public static String getIPAddress(boolean useIPv4) {
         try {
@@ -167,7 +173,7 @@ public class GameSelectFragment extends BrowseSupportFragment
                     if (!addr.isLoopbackAddress()) {
                         String sAddr = addr.getHostAddress();
                         //boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
-                        boolean isIPv4 = sAddr.indexOf(':')<0;
+                        boolean isIPv4 = sAddr.indexOf(':') < 0;
 
                         if (useIPv4) {
                             if (isIPv4)
@@ -175,15 +181,17 @@ public class GameSelectFragment extends BrowseSupportFragment
                         } else {
                             if (!isIPv4) {
                                 int delim = sAddr.indexOf('%'); // drop ip6 zone suffix
-                                return delim<0 ? sAddr.toUpperCase() : sAddr.substring(0, delim).toUpperCase();
+                                return delim < 0 ? sAddr.toUpperCase() : sAddr.substring(0, delim).toUpperCase();
                             }
                         }
                     }
                 }
             }
-        } catch (Exception ex) { } // for now eat exceptions
+        } catch (Exception ex) {
+        } // for now eat exceptions
         return "";
     }
+
     /**
      * Called when the 'show camera' button is clicked.
      * Callback is defined in resource layout definition.
@@ -201,7 +209,7 @@ public class GameSelectFragment extends BrowseSupportFragment
                 //if (shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)
                 //        || shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                 //} else {
-                    requestPermissions(PERMISSIONS_STORAGE, REQUEST_STORAGE);
+                requestPermissions(PERMISSIONS_STORAGE, REQUEST_STORAGE);
                 //}
                 return -1;
 
@@ -213,7 +221,7 @@ public class GameSelectFragment extends BrowseSupportFragment
 
     boolean verifyPermissions(int[] grantResults) {
         // At least one result must be checked.
-        if(grantResults.length < 1){
+        if (grantResults.length < 1) {
             return false;
         }
 
@@ -233,8 +241,8 @@ public class GameSelectFragment extends BrowseSupportFragment
             Log.i(TAG, "Received response for contact permissions request.");
             // We have requested multiple permissions for contacts, so all of them need to be
             // checked.
-            if (verifyPermissions(grantResults) == true ){
-                    updateGameList();
+            if (verifyPermissions(grantResults) == true) {
+                updateGameList();
             } else {
             }
         } else {
@@ -244,22 +252,22 @@ public class GameSelectFragment extends BrowseSupportFragment
 
 
     public void showDialog() {
-        if( mProgressDialog == null  ) {
+        if (mProgressDialog == null) {
             mProgressDialog = new ProgressDialog(getActivity());
             mProgressDialog.setMessage("Updating...");
             mProgressDialog.show();
         }
     }
 
-    public void updateDialogString( String msg) {
-        if( mProgressDialog != null  ) {
+    public void updateDialogString(String msg) {
+        if (mProgressDialog != null) {
             mProgressDialog.setMessage("Updating... " + msg);
         }
     }
 
     public void dismissDialog() {
-        if( mProgressDialog != null ) {
-            if( mProgressDialog.isShowing() ) {
+        if (mProgressDialog != null) {
+            if (mProgressDialog.isShowing()) {
                 mProgressDialog.dismiss();
             }
             mProgressDialog = null;
@@ -285,7 +293,7 @@ public class GameSelectFragment extends BrowseSupportFragment
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        presenter_ = new GameSelectPresenter(this,this);
+        presenter_ = new GameSelectPresenter(this, this);
     }
 
 
@@ -311,7 +319,7 @@ public class GameSelectFragment extends BrowseSupportFragment
 
         Intent intent = getActivity().getIntent();
         Uri uri = intent.getData();
-        if ( uri != null && !uri.getPathSegments().isEmpty()) {
+        if (uri != null && !uri.getPathSegments().isEmpty()) {
 /*
             ComponentName componentName = new ComponentName(getActivity(), CheckPSerivce.class);
             JobInfo.Builder builder = new JobInfo.Builder(1, componentName);
@@ -321,10 +329,13 @@ public class GameSelectFragment extends BrowseSupportFragment
 */
             List<String> pathSegments = uri.getPathSegments();
             String filename = pathSegments.get(1);
-            Log.d(TAG,"filename: " + filename );
-            try { filename = URLDecoder.decode(filename,"UTF-8"); } catch( Exception e ){}
+            Log.d(TAG, "filename: " + filename);
+            try {
+                filename = URLDecoder.decode(filename, "UTF-8");
+            } catch (Exception e) {
+            }
             GameInfo game = (GameInfo) GameInfo.getFromFileName(filename);
-            if( game != null ) {
+            if (game != null) {
                 Calendar c = Calendar.getInstance();
                 game.lastplay_date = c.getTime();
                 game.save();
@@ -345,7 +356,7 @@ public class GameSelectFragment extends BrowseSupportFragment
 
                 Intent intent_game = new Intent(getActivity(), Yabause.class);
                 intent_game.putExtra("org.uoyabause.android.FileNameEx", game.file_path);
-                intent.putExtra("org.uoyabause.android.gamecode", game.product_number );
+                intent.putExtra("org.uoyabause.android.gamecode", game.product_number);
                 startActivityForResult(intent_game, YABAUSE_ACTIVITY);
             }
         }
@@ -354,7 +365,7 @@ public class GameSelectFragment extends BrowseSupportFragment
         setupUIElements();
         setupEventListeners();
 
-        if( mRowsAdapter == null ) {
+        if (mRowsAdapter == null) {
             mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
             HeaderItem gridHeader = new HeaderItem(0, "PREFERENCES");
             GridItemPresenter mGridPresenter = new GridItemPresenter();
@@ -381,12 +392,14 @@ public class GameSelectFragment extends BrowseSupportFragment
                 gridRowAdapter.add(getResources().getString(R.string.sign_in));
             }
 
+            gridRowAdapter.add(getResources().getString(R.string.sign_in_to_other_devices));
+
             mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
-            setSelectedPosition(0,false);
+            setSelectedPosition(0, false);
             setAdapter(mRowsAdapter);
         }
 
-        if( checkStoragePermission() == 0 ) {
+        if (checkStoragePermission() == 0) {
             updateBackGraound();
             updateGameList();
         }
@@ -401,8 +414,8 @@ public class GameSelectFragment extends BrowseSupportFragment
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState){
-        v_ = super.onCreateView(inflater,container,savedInstanceState);
+                             Bundle savedInstanceState) {
+        v_ = super.onCreateView(inflater, container, savedInstanceState);
 
         UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
         if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
@@ -417,14 +430,17 @@ public class GameSelectFragment extends BrowseSupportFragment
 
     private Observer observer = null;
 
-    void updateGameList(){
+    void updateGameList() {
         //showDialog();
 
-        observer = new Observer<String>() {
+        if( observer != null ) return;
+
+        Observer tmpobserver = new Observer<String>() {
             //GithubRepositoryApiCompleteEventEntity eventResult = new GithubRepositoryApiCompleteEventEntity();
 
             @Override
             public void onSubscribe(Disposable d) {
+                observer = this;
                 showDialog();
             }
 
@@ -435,43 +451,52 @@ public class GameSelectFragment extends BrowseSupportFragment
 
             @Override
             public void onError(Throwable e) {
+                observer = null;
                 dismissDialog();
             }
 
             @Override
             public void onComplete() {
+                observer = null;
                 loadRows();
                 dismissDialog();
-                if(isfisrtupdate) {
-                  isfisrtupdate = false;
-                  presenter_.checkSignIn();
+                if (isfisrtupdate) {
+                    isfisrtupdate = false;
+                    Activity ac = GameSelectFragment.this.getActivity();
+                    if( ac != null && ac.getIntent().getBooleanExtra("showPin",false) ){
+                        ShowPinInFragment.newInstance(presenter_).show(getChildFragmentManager(),"sample");
+                    }else {
+                        presenter_.checkSignIn();
+                    }
                 }
             }
         };
 
-        presenter_.updateGameList(refresh_level,observer);
+        presenter_.updateGameList(refresh_level, tmpobserver);
         refresh_level = 0;
     }
 
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
         isForeground = this;
-        if( mTracker != null ) {
+        if (mTracker != null) {
             mTracker.setScreenName(TAG);
             mTracker.send(new HitBuilders.ScreenViewBuilder().build());
         }
         updateGameList();
     }
+
     @Override
-    public void onPause(){
+    public void onPause() {
         isForeground = null;
         dismissDialog();
         super.onPause();
     }
+
     @Override
     public void onDestroy() {
-        this.setSelectedPosition(-1,false );
+        this.setSelectedPosition(-1, false);
         System.gc();
         super.onDestroy();
 /*
@@ -484,38 +509,38 @@ public class GameSelectFragment extends BrowseSupportFragment
 
     private void loadRows() {
 
-        if( !isAdded() ) return;
+        if (!isAdded()) return;
 
-       int addindex = 0;
-       mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+        int addindex = 0;
+        mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
 
         //-----------------------------------------------------------------
         // Recent Play Game
         List<GameInfo> rlist = null;
         try {
-            rlist  = new Select()
+            rlist = new Select()
                     .from(GameInfo.class)
                     .orderBy("lastplay_date DESC")
                     .limit(5)
                     .execute();
-        }catch(Exception e ){
+        } catch (Exception e) {
             System.out.println(e);
         }
 
-       HeaderItem recentHeader = new HeaderItem(addindex, "RECENT");
+        HeaderItem recentHeader = new HeaderItem(addindex, "RECENT");
         Iterator<GameInfo> itx = rlist.iterator();
         CardPresenter cardPresenter_recent = new CardPresenter();
         ArrayObjectAdapter listRowAdapter_recent = new ArrayObjectAdapter(cardPresenter_recent);
         boolean hit = false;
-        while(itx.hasNext()){
+        while (itx.hasNext()) {
             GameInfo game = itx.next();
             listRowAdapter_recent.add(game);
-            hit=true;
+            hit = true;
         }
 
         //----------------------------------------------------------------------
         // Refernce
-        if( hit ) {
+        if (hit) {
             mRowsAdapter.add(new ListRow(recentHeader, listRowAdapter_recent));
             addindex++;
         }
@@ -529,7 +554,7 @@ public class GameSelectFragment extends BrowseSupportFragment
 
         UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
         if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
-        //    gridRowAdapter.add(getResources().getString(R.string.invite));
+            //    gridRowAdapter.add(getResources().getString(R.string.invite));
         }
         SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
         //Boolean hasDonated = prefs.getBoolean("donated", false);
@@ -546,6 +571,7 @@ public class GameSelectFragment extends BrowseSupportFragment
             gridRowAdapter.add(getResources().getString(R.string.sign_in));
         }
 
+        gridRowAdapter.add(getResources().getString(R.string.sign_in_to_other_devices));
 
         mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
         addindex++;
@@ -555,11 +581,11 @@ public class GameSelectFragment extends BrowseSupportFragment
         //
         List<GameInfo> list = null;
         try {
-            list =new Select()
+            list = new Select()
                     .from(GameInfo.class)
                     .orderBy("game_title ASC")
                     .execute();
-        }catch(Exception e ){
+        } catch (Exception e) {
             System.out.println(e);
         }
 
@@ -577,9 +603,9 @@ public class GameSelectFragment extends BrowseSupportFragment
             CardPresenter cardPresenter = new CardPresenter();
             ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(cardPresenter);
             Iterator<GameInfo> it = list.iterator();
-            while(it.hasNext()){
+            while (it.hasNext()) {
                 GameInfo game = it.next();
-                if( game.game_title.toUpperCase().indexOf(alphabet[i]) == 0  ){
+                if (game.game_title.toUpperCase().indexOf(alphabet[i]) == 0) {
                     listRowAdapter.add(game);
                     Log.d("GameSelect", alphabet[i] + ":" + game.game_title);
                     it.remove();
@@ -587,7 +613,7 @@ public class GameSelectFragment extends BrowseSupportFragment
                 }
             }
 
-            if( hit ) {
+            if (hit) {
                 HeaderItem header = new HeaderItem(addindex, alphabet[i]);
                 mRowsAdapter.add(new ListRow(header, listRowAdapter));
                 addindex++;
@@ -597,7 +623,7 @@ public class GameSelectFragment extends BrowseSupportFragment
         CardPresenter cardPresenter = new CardPresenter();
         ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(cardPresenter);
         Iterator<GameInfo> it = list.iterator();
-        while(it.hasNext()){
+        while (it.hasNext()) {
             GameInfo game = it.next();
             Log.d("GameSelect", "Others:" + game.game_title);
             listRowAdapter.add(game);
@@ -620,14 +646,14 @@ public class GameSelectFragment extends BrowseSupportFragment
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
     }
 
-    private void updateBackGraound(){
+    private void updateBackGraound() {
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String image_path = sp.getString("select_image", "err");
-        if( image_path.equals("err") ) {
+        if (image_path.equals("err")) {
             mDefaultBackground = null; //getResources().getDrawable(R.drawable.saturn);
             mBackgroundManager.setDrawable(mDefaultBackground);
-        }else{
+        } else {
             try {
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
@@ -681,21 +707,19 @@ public class GameSelectFragment extends BrowseSupportFragment
     }
 
     /**
-     *
-     *
      * @param context
      * @return
      */
-    public static String getVersionName(Context context){
+    public static String getVersionName(Context context) {
 
 //        return getIPAddress(true);
 
         PackageManager pm = context.getPackageManager();
         String versionName = "";
-        try{
+        try {
             PackageInfo packageInfo = pm.getPackageInfo(context.getPackageName(), 0);
             versionName = packageInfo.versionName;
-        }catch(PackageManager.NameNotFoundException e){
+        } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
         return versionName;
@@ -731,25 +755,26 @@ public class GameSelectFragment extends BrowseSupportFragment
         setOnItemViewClickedListener(new ItemViewClickedListener());
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
     }
-/*
-    protected void updateBackground(String uri) {
-        int width = mMetrics.widthPixels;
-        int height = mMetrics.heightPixels;
-        Glide.with(getActivity())
-                .load(uri)
-                .centerCrop()
-                .error(mDefaultBackground)
-                .into(new SimpleTarget<GlideDrawable>(width, height) {
-                    @Override
-                    public void onResourceReady(GlideDrawable resource,
-                                                GlideAnimation<? super GlideDrawable>
-                                                        glideAnimation) {
-                        mBackgroundManager.setDrawable(resource);
-                    }
-                });
-        mBackgroundTimer.cancel();
-    }
-*/
+
+    /*
+        protected void updateBackground(String uri) {
+            int width = mMetrics.widthPixels;
+            int height = mMetrics.heightPixels;
+            Glide.with(getActivity())
+                    .load(uri)
+                    .centerCrop()
+                    .error(mDefaultBackground)
+                    .into(new SimpleTarget<GlideDrawable>(width, height) {
+                        @Override
+                        public void onResourceReady(GlideDrawable resource,
+                                                    GlideAnimation<? super GlideDrawable>
+                                                            glideAnimation) {
+                            mBackgroundManager.setDrawable(resource);
+                        }
+                    });
+            mBackgroundTimer.cancel();
+        }
+    */
 /*
     private void startBackgroundTimer() {
         if (null != mBackgroundTimer) {
@@ -774,7 +799,7 @@ public class GameSelectFragment extends BrowseSupportFragment
                 game.lastplay_date = c.getTime();
                 game.save();
 
-                if( mTracker != null ) {
+                if (mTracker != null) {
                     mTracker.send(new HitBuilders.EventBuilder()
                             .setCategory("Action")
                             .setAction(game.game_title)
@@ -789,25 +814,27 @@ public class GameSelectFragment extends BrowseSupportFragment
                 );
 
                 Intent intent = new Intent(getActivity(), Yabause.class);
-                intent.putExtra("org.uoyabause.android.FileNameEx", game.file_path );
-                intent.putExtra("org.uoyabause.android.gamecode", game.product_number );
+                intent.putExtra("org.uoyabause.android.FileNameEx", game.file_path);
+                intent.putExtra("org.uoyabause.android.gamecode", game.product_number);
                 startActivityForResult(intent, YABAUSE_ACTIVITY);
             } else if (item instanceof String) {
-                if (((String) item).indexOf(getString(R.string.sign_in)) >= 0) {
+                if (((String) item).equals(getString(R.string.sign_in)) ) {
                     presenter_.signIn();
-                }else if (((String) item).indexOf(getString(R.string.sign_out)) >= 0) {
+                } else if (((String) item).equals(getString(R.string.sign_out)) ) {
                     presenter_.signOut();
-                }else if (((String) item).indexOf("Backup") >= 0) {
+                }else if( ((String) item).equals(getString(R.string.sign_in_to_other_devices))  ){
+                    ShowPinInFragment.newInstance(presenter_).show(getChildFragmentManager(),"sample");
+                } else if (((String) item).indexOf("Backup") >= 0) {
                     Intent intent = new Intent(getActivity(), IsoDownload.class);
 
                     String savepath;
                     YabauseStorage ys = YabauseStorage.getStorage();
-                    if( ys.hasExternalSD() == false ) {
+                    if (ys.hasExternalSD() == false) {
                         savepath = ys.getGamePath();
-                    }else{
+                    } else {
                         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                        String sel = sharedPref.getString("pref_game_download_directory","0");
-                        if( sel != null ) {
+                        String sel = sharedPref.getString("pref_game_download_directory", "0");
+                        if (sel != null) {
                             if (sel.equals("0")) {   // internal
                                 savepath = ys.getGamePath();
                             } else if (sel.equals("1")) { // external
@@ -815,38 +842,38 @@ public class GameSelectFragment extends BrowseSupportFragment
                             } else {
                                 savepath = ys.getGamePath(); // Error
                             }
-                        }else{
+                        } else {
                             savepath = ys.getGamePath(); // Error
                         }
                     }
-                    intent.putExtra("save_path", savepath );
-                    startActivityForResult(intent, DOWNLOAD_ACTIVITY );
+                    intent.putExtra("save_path", savepath);
+                    startActivityForResult(intent, DOWNLOAD_ACTIVITY);
                     //FragmentTransaction ft = getFragmentManager().beginTransaction();
                     //DownloadDialog newFragment = new DownloadDialog();
                     //newFragment.show(ft, "dialog");
-                }else if (((String) item).indexOf(getString(R.string.setting)) >= 0) {
+                } else if (((String) item).indexOf(getString(R.string.setting)) >= 0) {
                     Intent intent = new Intent(getActivity(), YabauseSettings.class);
-                    startActivityForResult(intent, SETTING_ACTIVITY );
-                }else if (((String) item).indexOf(getString(R.string.load_game)) >= 0){
+                    startActivityForResult(intent, SETTING_ACTIVITY);
+                } else if (((String) item).indexOf(getString(R.string.load_game)) >= 0) {
 
                     File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
                     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                    String  last_dir = sharedPref.getString("pref_last_dir", yabroot.getPath());
-                    FileDialog fd = new FileDialog(getActivity(),last_dir);
+                    String last_dir = sharedPref.getString("pref_last_dir", yabroot.getPath());
+                    FileDialog fd = new FileDialog(getActivity(), last_dir);
                     fd.addFileListener(GameSelectFragment.this);
                     fd.showDialog();
 
-                }else if( ((String) item).indexOf(getString(R.string.refresh_db)) >= 0 ){
+                } else if (((String) item).indexOf(getString(R.string.refresh_db)) >= 0) {
                     refresh_level = 3;
-                    if( checkStoragePermission() == 0 ) {
+                    if (checkStoragePermission() == 0) {
                         updateGameList();
                     }
-                //}else if(  ((String) item).indexOf(getString(R.string.donation)) >= 0){
-                //    Intent intent = new Intent(getActivity(), DonateActivity.class);
-                //    startActivity(intent);
-                }else if(  ((String) item).indexOf(getString(R.string.invite)) >= 0){
+                    //}else if(  ((String) item).indexOf(getString(R.string.donation)) >= 0){
+                    //    Intent intent = new Intent(getActivity(), DonateActivity.class);
+                    //    startActivity(intent);
+                } else if (((String) item).indexOf(getString(R.string.invite)) >= 0) {
                     onInviteClicked();
-                }else if( ((String) item).indexOf("GoogleDrive") >= 0) {
+                } else if (((String) item).indexOf("GoogleDrive") >= 0) {
                     onGoogleDriveClciked();
                 }
             }
@@ -948,11 +975,11 @@ public class GameSelectFragment extends BrowseSupportFragment
     public static final int GAMELIST_NEED_TO_RESTART = 0x8002;
 
     @Override
-    public void onShowMessage( int string_id ){
-        showSnackbar( string_id );
+    public void onShowMessage(int string_id) {
+        showSnackbar(string_id);
     }
 
-    private void showSnackbar( int id ) {
+    private void showSnackbar(int id) {
         Toast.makeText(getActivity(), getString(id), Toast.LENGTH_SHORT).show();
 /*
         Snackbar
@@ -973,36 +1000,36 @@ public class GameSelectFragment extends BrowseSupportFragment
         super.onActivityResult(requestCode, resultCode, data);
         //Bundle bundle = data.getExtras();
         switch (requestCode) {
-            case GameSelectPresenter.RC_SIGN_IN:{
-                presenter_.onSignIn(resultCode,data);
+            case GameSelectPresenter.RC_SIGN_IN: {
+                presenter_.onSignIn(resultCode, data);
             }
             break;
 
             case DOWNLOAD_ACTIVITY:
-                if( resultCode == 0 ){
+                if (resultCode == 0) {
                     refresh_level = 3;
-                    if( checkStoragePermission() == 0 ) {
+                    if (checkStoragePermission() == 0) {
                         updateGameList();
                     }
                 }
             case SETTING_ACTIVITY:
-                if( resultCode == GAMELIST_NEED_TO_UPDATED ){
+                if (resultCode == GAMELIST_NEED_TO_UPDATED) {
                     refresh_level = 3;
-                    if( checkStoragePermission() == 0 ) {
+                    if (checkStoragePermission() == 0) {
                         updateGameList();
                     }
                     this.updateBackGraound();
-                }else if( resultCode == GAMELIST_NEED_TO_RESTART ){
+                } else if (resultCode == GAMELIST_NEED_TO_RESTART) {
                     Intent intent = new Intent(getActivity(), StartupActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                     getActivity().finish();
-                }else{
+                } else {
                     this.updateBackGraound();
                 }
                 break;
             case YABAUSE_ACTIVITY:
-                if( !BuildConfig.BUILD_TYPE.equals("pro") ) {
+                if (!BuildConfig.BUILD_TYPE.equals("pro")) {
                     SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
                     Boolean hasDonated = prefs.getBoolean("donated", false);
                     if (hasDonated == false) {

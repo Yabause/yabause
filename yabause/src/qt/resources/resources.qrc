@@ -39,6 +39,8 @@
         <file alias="wheel.png">icons/wheel.png</file>
       <file alias="missionstick.png">icons/missionstick.png</file>
       <file alias="doublemissionstick.png">icons/doublemissionstick.png</file>
+      <file alias="intent.png">icons/intent.png</file>
+      <file alias="menu.png">icons/menu.png</file>
     </qresource>
     <qresource prefix="/icons">
         <file>icons/made.png</file>

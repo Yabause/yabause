@@ -176,6 +176,8 @@ public class CheckPSerivce extends JobService {
         }
 
         private static  OkHttpClient.Builder getUnsafeOkHttpClientbuilder() {
+            return new OkHttpClient.Builder();
+/*
             try {
                 // Create a trust manager that does not validate certificate chains
                 final TrustManager[] trustAllCerts = new TrustManager[] {
@@ -213,6 +215,7 @@ public class CheckPSerivce extends JobService {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
+ */
         }
 
         boolean ActivateItem( Purchase purchase ){

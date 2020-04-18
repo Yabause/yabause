@@ -1306,7 +1306,7 @@ public class Yabause extends AppCompatActivity implements
       return;
     }
     AsyncReportv2 asyncTask = new AsyncReportv2(this);
-    String url = "http://www.uoyabause.org/api/";
+    String url = "https://www.uoyabause.org/api/";
     //url = "http://www.uoyabause.org:3000/api/";
     asyncTask.execute(url, YabauseRunnable.getCurrentGameCode());
 
@@ -1371,7 +1371,7 @@ public class Yabause extends AppCompatActivity implements
         }
 
         //asyncTask.execute("http://192.168.0.7:3000/api/", YabauseRunnable.getCurrentGameCode());
-        asyncTask.execute("http://www.uoyabause.org/api/", YabauseRunnable.getCurrentGameCode());
+        asyncTask.execute("https://www.uoyabause.org/api/", YabauseRunnable.getCurrentGameCode());
 
         return;
 

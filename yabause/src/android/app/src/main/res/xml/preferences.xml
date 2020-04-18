@@ -239,7 +239,7 @@
 
     <PreferenceCategory android:title="@string/information">
         <PreferenceScreen
-            android:summary="http://www.uoyabause.org/static_pages/privacy_policy.html"
+            android:summary="https://www.uoyabause.org/static_pages/privacy_policy.html"
             android:title="@string/privacy_policy"
             android:key="on_screen_pad_x">
         </PreferenceScreen>

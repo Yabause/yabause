@@ -296,12 +296,14 @@
         4. Tap the game title you want to play.\n
         5. Enjoy!\n
         \n
-        For more detail checkout our [website](http://www.uoyabause.org/static_pages/guide).\n
+        For more detail checkout our [website](https://www.uoyabause.org/static_pages/guide).\n
         ]]>
     </string>
     <string name="delete_confirm_title">DELETE CONFIRM</string>
     <string name="not_available">NOT AVAILABLE!</string>
     <string name="only_pro_version">This function is only available for pro version</string>
     <string name="got_it">Got it!</string>
+    <string name="enter_pinin">Enter this PIN to your device</string>
+    <string name="sign_in_to_other_devices">Sign in to other devices</string>
 </resources>
 	
