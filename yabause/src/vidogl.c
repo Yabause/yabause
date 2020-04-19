@@ -3341,6 +3341,7 @@ void VIDOGLDeInit(void)
     YabThreadWait(YAB_THREAD_VDP2_RBG1);
   }
 #endif
+  YglGenReset();
   YglDeInit();
 
 #ifdef SPRITE_CACHE
@@ -3349,7 +3350,6 @@ void VIDOGLDeInit(void)
   }
 #endif
   vidogl_renderer_started = 0;
-  YglGenReset();
 }
 
 //////////////////////////////////////////////////////////////////////////////
