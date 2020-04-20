@@ -2778,7 +2778,7 @@ int STVSingleInit(const char *gamepath, const char *biospath, const char *eeprom
   return -1;
 }
 
-int STVInit(int id, const char *path){
+int STVInit(int id, const char *path, const char *eepromdir){
   cryptoReset();
   if (CartridgeArea->carttype != CART_ROMSTV) return 0;
 #ifndef __LIBRETRO__
@@ -2787,6 +2787,9 @@ int STVInit(int id, const char *path){
   if (nbGames <= id) return -1;
 #endif
   if (loadGame(id) == 0) {
+    char eeprom_path[4096];
+    snprintf(eeprom_path, sizeof(eeprom_path), "%s%s.nv", eepromdir, availableGames[id].entry->romset);
+    eeprom_init(eeprom_path);
     yabsys.isSTV = 1;
     return 0;
   }

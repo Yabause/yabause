@@ -10,7 +10,7 @@ int STVGetRomList(const char *dir, int force);
 char* getSTVGameName(int id);
 int STVGetSingle(const char *pathfile, const char *biospath, int* id);
 int STVSingleInit(const char *gamepath, const char *biospath, const char *eepromdir);
-int STVInit(int id, const char *path);
+int STVInit(int id, const char *path, const char *eepromdir);
 int STVDeInit();
 #ifdef __cplusplus
 }
