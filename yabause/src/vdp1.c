@@ -462,6 +462,51 @@ void checkClipCmd(int* sysClipAddr, int* usrClipAddr, int* localCoordAddr, u8 * 
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
+   int clock = 26842600;
+   int fps = 60;
+   //Using p37, Table 4.2 of vdp1 official doc
+   if (yabsys.IsPal) {
+     fps = 50;
+     // Horizontal Resolution
+     switch (Vdp2Lines[0].TVMD & 0x7)
+     {
+     case 0:
+     case 2:
+     case 4:
+     case 6:
+       //W is 320 or 640
+       clock = 26656400;
+       break;
+     case 1:
+     case 3:
+     case 5:
+     case 7:
+       //W is 352 or 704
+       clock = 28437500;
+       break;
+     }
+   } else {
+     // Horizontal Resolution
+     switch (Vdp2Lines[0].TVMD & 0x7)
+     {
+     case 0:
+     case 2:
+     case 4:
+     case 6:
+       //W is 320 or 640
+       clock = 26842600;
+       break;
+     case 1:
+     case 3:
+     case 5:
+     case 7:
+       //W is 352 or 704
+       clock = 28636400;
+       break;
+     }
+   }
+
+   int cylesPerLine  = 1.0*clock/(fps*yabsys.MaxLineCount);
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
    int usrClipAddr = -1;
@@ -470,8 +515,10 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    u32 returnAddr = 0xffffffff;
    Vdp1External.updateVdp1Ram = 0;
    Vdp1External.checkEDSR = 0;
+   yabsys.vdp1cycles = 0;
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
+      yabsys.vdp1cycles += 16;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
@@ -522,6 +569,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
             return;
          }
+      } else {
+        yabsys.vdp1cycles += 16;
       }
 
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
