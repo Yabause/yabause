@@ -799,14 +799,16 @@ static void context_reset(void)
    }
    else
    {
-      VIDCore->DeInit();
-      // retro_set_resolution();
+      VIDCore->Init();
+      retro_set_resolution();
    }
+   rendering_started = true;
 }
 
 static void context_destroy(void)
 {
    VIDCore->DeInit();
+   rendering_started = false;
 #if !defined(_USEGLEW_)
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_DESTROY, NULL);
 #endif
@@ -1562,7 +1564,6 @@ void retro_run(void)
 {
    unsigned i;
    bool updated  = false;
-   rendering_started = true;
    one_frame_rendered = false;
    if (!all_devices_ready)
    {
@@ -1590,14 +1591,15 @@ void retro_run(void)
       //   YabauseSetVideoFormat(g_videoformattype);
       YabauseSetSkipframe(g_skipframe);
    }
-   VIDCore->Init();
+   //VIDCore->Init();
    // It appears polling can happen outside of HandleEvents
    update_inputs();
-   YabauseExec();
+   if (rendering_started)
+      YabauseExec();
 
    // If no frame rendered, dupe
    if(!one_frame_rendered)
-      video_cb(NULL, _Ygl->width, _Ygl->height, 0);
+      video_cb(NULL, (_Ygl != NULL ? _Ygl->width : game_width), (_Ygl != NULL ? _Ygl->height : game_height), 0);
 }
 
 #ifdef ANDROID
