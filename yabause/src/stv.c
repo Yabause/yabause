@@ -2518,7 +2518,7 @@ endClose:
     return gameid;
 }
 
-int loadBios(){
+int loadBios(int id){
   FILE *fp;
   JZEndRecord endRecord;
   JZFile *zip;
@@ -2526,7 +2526,7 @@ int loadBios(){
   u8 isBiosFound = 0;
   rominfo info;
   info.filename = biosLink.path;
-  info.gameId = 0;
+  info.gameId = id;
   info.bios = 1;
   memset(fileFound, 0x0, NB_STV_GAMES*MAX_GAME_FILES);
   if(!(fp = fopen(biosLink.path, "rb"))) {
@@ -2567,7 +2567,7 @@ int loadGame(int gameId){
   info.filename = availableGames[gameId].path;
   info.gameId = gameId;
   info.bios = 0;
-  hasBios = loadBios();
+  hasBios = loadBios(gameId);
   biosloaded = 0xFF;
 
   LOGSTV("Loading game[%d] %s from %s\n", gameId, availableGames[gameId].entry->name, availableGames[gameId].path);
