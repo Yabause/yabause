@@ -116,6 +116,9 @@ typedef struct
 typedef struct{
   vdp1cmd_struct cmd;
   int completionLine;
+  int start_addr;
+  int end_addr;
+  int dirty;
 } vdp1cmdctrl_struct;
 
 typedef struct

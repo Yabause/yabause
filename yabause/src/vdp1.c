@@ -809,6 +809,65 @@ static void Vdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_fr
   VIDCore->Vdp1LineDraw(cmd, ram, regs, back_framebuffer);
 }
 
+static void setupSpriteLimit(vdp1cmdctrl_struct *ctrl){
+  vdp1cmd_struct *cmd = &ctrl->cmd;
+  ctrl->dirty = 0;
+  u32 dot;
+  switch ((cmd->CMDPMOD >> 3) & 0x7)
+  {
+  case 0:
+  {
+    // 4 bpp Bank mode
+    ctrl->start_addr = cmd->CMDSRCA * 8;
+    ctrl->end_addr = ctrl->start_addr + cmd->h*cmd->w/2;
+    break;
+  }
+  case 1:
+  {
+    // 4 bpp LUT mode
+    u32 colorLut = cmd->CMDCOLR * 8;
+    u32 charAddr = cmd->CMDSRCA * 8;
+    ctrl->start_addr = cmd->CMDSRCA * 8;
+    ctrl->end_addr = ctrl->start_addr + cmd->h*cmd->w/2;
+
+    for (int i = 0; i < cmd->h; i++)
+    {
+      u16 j;
+      j = 0;
+      while (j < cmd->w/2)
+      {
+        dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
+        int lutaddr = (dot >> 4) * 2 + colorLut;
+        ctrl->start_addr = (ctrl->start_addr > lutaddr)?lutaddr:ctrl->start_addr;
+        ctrl->end_addr = (ctrl->end_addr < lutaddr)?lutaddr:ctrl->end_addr;
+        charAddr += 1;
+      }
+    }
+    break;
+  }
+  case 2:
+  case 3:
+  case 4:
+  {
+    // 8 bpp(64 color) Bank mode
+    ctrl->start_addr = cmd->CMDSRCA * 8;
+    ctrl->end_addr = ctrl->start_addr + cmd->h*cmd->w;
+    break;
+  }
+  case 5:
+  {
+    // 16 bpp Bank mode
+    // 8 bpp(64 color) Bank mode
+    ctrl->start_addr = cmd->CMDSRCA * 8;
+    ctrl->end_addr = ctrl->start_addr + cmd->h*cmd->w*2;
+    break;
+  }
+  default:
+    VDP1LOG("Unimplemented sprite color mode: %X\n", (cmd->CMDPMOD >> 3) & 0x7);
+    break;
+   }
+}
+
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    int clock = 26842600;
@@ -878,6 +937,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1NormalSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            setupSpriteLimit(ctrl);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 1: // scaled sprite draw
@@ -885,6 +945,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1ScaledSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            setupSpriteLimit(ctrl);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 2: // distorted sprite draw
@@ -894,6 +955,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1DistortedSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            setupSpriteLimit(ctrl);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 4: // polygon draw
@@ -901,6 +963,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1PolygonDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            setupSpriteLimit(ctrl);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 5: // polyline draw
@@ -909,6 +972,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1PolylineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            setupSpriteLimit(ctrl);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 6: // line draw
@@ -916,6 +980,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1LineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            setupSpriteLimit(ctrl);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 8: // user clipping coordinates
