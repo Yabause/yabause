@@ -126,7 +126,7 @@ void VIDOGLVdp1Draw();
 void VIDOGLVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1UserClipping(u8 * ram, Vdp1 * regs);
@@ -4236,7 +4236,7 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv) {
 
 }
 
-void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+void VIDOGLVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
 
 //The polygon calculation seems not so good. A good test game is break point. All the lines are blinking and none is really thin and straight.
@@ -4244,94 +4244,51 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   u16 color;
   YglSprite sprite;
   YglTexture texture;
-  u16 color2;
-  int i;
-  float col[4 * 4];
+  float *col = cmd->G;
   float vert[8];
-  int gouraud = 0;
-  int priority = 0;
-  int shadow = 0;
-  int normalshadow = 0;
-  int colorcalc = 0;
-  vdp1cmd_struct cmd;
   float line_polygon[8];
-  Vdp2 *varVdp2Regs = &Vdp2Lines[0];
-
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-
-  CONVERTCMD(cmd.CMDXA);
-  CONVERTCMD(cmd.CMDYA);
-  CONVERTCMD(cmd.CMDXB);
-  CONVERTCMD(cmd.CMDYB);
-  CONVERTCMD(cmd.CMDXC);
-  CONVERTCMD(cmd.CMDYC);
-  CONVERTCMD(cmd.CMDXD);
-  CONVERTCMD(cmd.CMDYD);
 
   sprite.blendmode = 0;
   sprite.dst = 0;
 
-  vert[0] = (float)(s16)cmd.CMDXA;
-  vert[1] = (float)(s16)cmd.CMDYA;
-  vert[2] = (float)(s16)cmd.CMDXB;
-  vert[3] = (float)(s16)cmd.CMDYB;
-  vert[4] = (float)(s16)cmd.CMDXC;
-  vert[5] = (float)(s16)cmd.CMDYC;
-  vert[6] = (float)(s16)cmd.CMDXD;
-  vert[7] = (float)(s16)cmd.CMDYD;
-
-  int w = (sqrt((cmd.CMDXA - cmd.CMDXB)*(cmd.CMDXA - cmd.CMDXB)) + sqrt((cmd.CMDXD - cmd.CMDXC)*(cmd.CMDXD - cmd.CMDXC)))/2;
-  int h = (sqrt((cmd.CMDYA - cmd.CMDYD)*(cmd.CMDYA - cmd.CMDYD)) + sqrt((cmd.CMDYB - cmd.CMDYC)*(cmd.CMDYB - cmd.CMDYC)))/2;
-  yabsys.vdp1cycles += 16 + (w * h) + (w * 2);
+  vert[0] = (float)(s16)cmd->CMDXA;
+  vert[1] = (float)(s16)cmd->CMDYA;
+  vert[2] = (float)(s16)cmd->CMDXB;
+  vert[3] = (float)(s16)cmd->CMDYB;
+  vert[4] = (float)(s16)cmd->CMDXC;
+  vert[5] = (float)(s16)cmd->CMDYC;
+  vert[6] = (float)(s16)cmd->CMDXD;
+  vert[7] = (float)(s16)cmd->CMDYD;
 
   //expandVertices(vert, sprite.vertices, !isSquare(vert));
   memcpy(sprite.vertices, vert, sizeof(float)*8);
   fixVerticesSize(sprite.vertices);
 
   for (int i = 0; i<4; i++) {
-    sprite.vertices[2*i] = (sprite.vertices[2*i] + Vdp1Regs->localX) * _Ygl->vdp1wratio;
-    sprite.vertices[2*i+1] = (sprite.vertices[2*i+1] + Vdp1Regs->localY) * _Ygl->vdp1hratio;
+    sprite.vertices[2*i] = (sprite.vertices[2*i]) * _Ygl->vdp1wratio;
+    sprite.vertices[2*i+1] = (sprite.vertices[2*i+1]) * _Ygl->vdp1hratio;
   }
 
-  color = cmd.CMDCOLR;
-  sprite.uclipmode = (cmd.CMDPMOD >> 9) & 0x03;
+  color = cmd->CMDCOLR;
+  sprite.uclipmode = (cmd->CMDPMOD >> 9) & 0x03;
 
   // Check if the Gouraud shading bit is set and the color mode is RGB
-  if ((cmd.CMDPMOD & 4))
-  {
-    yabsys.vdp1cycles += 232;
-    for (i = 0; i < 4; i++)
-    {
-      color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
-      col[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 3] = 1.0f;
-    }
-    gouraud = 1;
-  }
-
-  sprite.priority = 0;
-  sprite.w = 1;
-  sprite.h = 1;
-  sprite.flip = 0;
+  sprite.priority = cmd->priority;
+  sprite.w = cmd->w;
+  sprite.h = cmd->h;
+  sprite.flip = cmd->flip;
   sprite.cor = 0x00;
   sprite.cog = 0x00;
   sprite.cob = 0x00;
 
-  sprite.blendmode = getCCProgramId(cmd.CMDPMOD);
-
+  sprite.blendmode = getCCProgramId(cmd->CMDPMOD);
   if (sprite.blendmode == -1) return; //Invalid color mode
 
-  if (gouraud == 1)
-  {
-    YglQuadGrowShading(&sprite, &texture, col, NULL, YglTM_vdp1[_Ygl->drawframe]);
-  }
-  else {
-    YglQuadGrowShading(&sprite, &texture, NULL, NULL, YglTM_vdp1[_Ygl->drawframe]);
-  }
+  if ((cmd->CMDPMOD & 4) == 0) col = NULL;
 
-  *texture.textdata = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
+  YglQuadGrowShading(&sprite, &texture, col, NULL, YglTM_vdp1[_Ygl->drawframe]);
+
+  *texture.textdata = Vdp1ReadPolygonColor(cmd,&Vdp2Lines[0]);
 }
 
 void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)

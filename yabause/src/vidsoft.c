@@ -82,7 +82,7 @@ void VIDSoftVdp1Draw(void);
 void VIDSoftVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDSoftVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1UserClipping(u8 * ram, Vdp1 * regs);
