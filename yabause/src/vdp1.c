@@ -25,6 +25,7 @@
 
 
 #include <stdlib.h>
+#include <math.h>
 #include "yabause.h"
 #include "vdp1.h"
 #include "debug.h"
@@ -47,6 +48,18 @@ Vdp1 * Vdp1Regs;
 Vdp1External_struct Vdp1External;
 
 static int needVdp1draw = 0;
+
+#define DEBUG_BAD_COORD //YuiMsg
+
+#define  CONVERTCMD(A) {\
+  s32 toto = (A);\
+  if (((A)&0x7000) != 0) (A) |= 0xF000;\
+  else (A) &= ~0xF800;\
+  ((A) = (s32)(s16)(A));\
+  if (((A)) < -1024) { DEBUG_BAD_COORD("Bad(-1024) %x (%d, 0x%x)\n", (A), (A), toto);}\
+  if (((A)) > 1023) { DEBUG_BAD_COORD("Bad(1023) %x (%d, 0x%x)\n", (A), (A), toto);}\
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -460,6 +473,61 @@ void checkClipCmd(int* sysClipAddr, int* usrClipAddr, int* localCoordAddr, u8 * 
   regs->addr = oldaddr;
 }
 
+static void Vdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer){
+  vdp1cmd_struct cmd;
+  Vdp2 *varVdp2Regs = &Vdp2Lines[0];
+  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  if ((cmd.CMDSIZE & 0x8000)) {
+    regs->EDSR |= 2;
+    return; // BAD Command
+  }
+  if (((cmd.CMDPMOD >> 3) & 0x7) > 5) {
+    // damaged data
+    yabsys.vdp1cycles += 70;
+    return;
+  }
+  cmd.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
+  cmd.h = cmd.CMDSIZE & 0xFF;
+  if (cmd.w == 0 || cmd.h == 0) {
+    yabsys.vdp1cycles += 70;
+    return; //bad command
+  }
+
+  int w = (sqrt((cmd.CMDXA - cmd.CMDXB)*(cmd.CMDXA - cmd.CMDXB)) + sqrt((cmd.CMDXD - cmd.CMDXC)*(cmd.CMDXD - cmd.CMDXC)))/2;
+  int h = (sqrt((cmd.CMDYA - cmd.CMDYD)*(cmd.CMDYA - cmd.CMDYD)) + sqrt((cmd.CMDYB - cmd.CMDYC)*(cmd.CMDYB - cmd.CMDYC)))/2;
+  yabsys.vdp1cycles+= 70 + (w * h * 3) + (w * 5);
+
+  cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
+  cmd.priority = 0;
+  cmd.SPCTL = varVdp2Regs->SPCTL;
+
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
+  cmd.CMDXA += regs->localX;
+  cmd.CMDYA += regs->localY;
+
+  cmd.CMDXB = cmd.CMDXA + cmd.w - 1;
+  cmd.CMDYB = cmd.CMDYA;
+  cmd.CMDXC = cmd.CMDXA + cmd.w - 1;
+  cmd.CMDYC = cmd.CMDYA + cmd.h -1;
+  cmd.CMDXD = cmd.CMDXA;
+  cmd.CMDYD = cmd.CMDYA + cmd.h - 1;
+
+  memset(cmd.G, 0, sizeof(float)*16);
+  if ((cmd.CMDPMOD & 4))
+  {
+    yabsys.vdp1cycles+= 232;
+    for (int i = 0; i < 4; i++){
+      u16 color2 = Vdp1RamReadWord(NULL, ram, (Vdp1RamReadWord(NULL, ram, regs->addr + 0x1C) << 3) + (i << 1));
+      cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+      cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+      cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+    }
+  }
+
+  VIDCore->Vdp1NormalSpriteDraw(&cmd, ram, regs, back_framebuffer);
+}
+
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    int clock = 26842600;
@@ -524,7 +592,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          switch (command & 0x000F) {
          case 0: // normal sprite draw
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            VIDCore->Vdp1NormalSpriteDraw(ram, regs, back_framebuffer);
+            Vdp1NormalSpriteDraw(ram, regs, back_framebuffer);
             break;
          case 1: // scaled sprite draw
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
@@ -1553,7 +1621,7 @@ void VIDDummyResize(int, int, unsigned int, unsigned int, int);
 int VIDDummyIsFullscreen(void);
 int VIDDummyVdp1Reset(void);
 void VIDDummyVdp1Draw();
-void VIDDummyVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDDummyVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDDummyVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDDummyVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDDummyVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -1644,7 +1712,7 @@ void VIDDummyVdp1Draw()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+void VIDDummyVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
 }
 

@@ -79,7 +79,7 @@ void VIDSoftResize(int,int,unsigned int, unsigned int, int);
 int VIDSoftIsFullscreen(void);
 int VIDSoftVdp1Reset(void);
 void VIDSoftVdp1Draw(void);
-void VIDSoftVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -3147,18 +3147,16 @@ static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y,
 	}
 }
 
-void VIDSoftVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuffer) {
+void VIDSoftVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
 
 	s16 topLeftx,topLefty,topRightx,topRighty,bottomRightx,bottomRighty,bottomLeftx,bottomLefty;
 	int spriteWidth;
 	int spriteHeight;
-   vdp1cmd_struct cmd;
-	Vdp1ReadCommand(&cmd, regs->addr, ram);
 
-	topLeftx = cmd.CMDXA + regs->localX;
-	topLefty = cmd.CMDYA + regs->localY;
-	spriteWidth = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
-	spriteHeight = cmd.CMDSIZE & 0xFF;
+	topLeftx = cmd->CMDXA + regs->localX;
+	topLefty = cmd->CMDYA + regs->localY;
+	spriteWidth = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
+	spriteHeight = cmd->CMDSIZE & 0xFF;
 
 	topRightx = topLeftx + (spriteWidth - 1);
 	topRighty = topLefty;

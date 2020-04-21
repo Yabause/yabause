@@ -62,6 +62,57 @@ typedef struct {
 
 } Vdp1;
 
+// struct for Vdp1 part that shouldn't be saved
+typedef struct {
+   int disptoggle;
+   int manualerase;
+   int manualchange;
+   int onecyclemode;
+   int useVBlankErase;
+   int swap_frame_buffer;
+   int plot_trigger_line;
+   int plot_trigger_done;
+   int current_frame;
+   int updateVdp1Ram;
+   int checkEDSR;
+} Vdp1External_struct;
+
+extern Vdp1External_struct Vdp1External;
+
+typedef struct
+{
+  float G[16];
+  u32 priority;
+  u32 w;
+  u32 h;
+  u32 flip;
+  u32 type;
+  u32 CMDCTRL;
+  u32 CMDLINK;
+  u32 CMDPMOD;
+  u32 CMDCOLR;
+  u32 CMDSRCA;
+  u32 CMDSIZE;
+  s32 CMDXA;
+  s32 CMDYA;
+  s32 CMDXB;
+  s32 CMDYB;
+  s32 CMDXC;
+  s32 CMDYC;
+  s32 CMDXD;
+  s32 CMDYD;
+  s32 B[4];
+  u32 COLOR[4];
+  u32 CMDGRDA;
+  u32 SPCTL;
+  u32 nbStep;
+  float uAstepx;
+  float uAstepy;
+  float uBstepx;
+  float uBstepy;
+  u32 pad[2];
+} vdp1cmd_struct;
+
 typedef struct
 {
    int id;
@@ -73,7 +124,7 @@ typedef struct
    // VDP1 specific
    int (*Vdp1Reset)(void);
    void (*Vdp1Draw)();
-   void(*Vdp1NormalSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1NormalSpriteDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
    void(*Vdp1ScaledSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1DistortedSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1PolygonDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
@@ -125,57 +176,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs);
 
 extern Vdp1 * Vdp1Regs;
-
-// struct for Vdp1 part that shouldn't be saved
-typedef struct {
-   int disptoggle;
-   int manualerase;
-   int manualchange;
-   int onecyclemode;
-   int useVBlankErase;
-   int swap_frame_buffer;
-   int plot_trigger_line;
-   int plot_trigger_done;
-   int current_frame;
-   int updateVdp1Ram;
-   int checkEDSR;
-} Vdp1External_struct;
-
-extern Vdp1External_struct Vdp1External;
-
-typedef struct
-{
-  float G[16];
-  u32 priority;
-  u32 w;
-  u32 h;
-  u32 flip;
-  u32 type;
-  u32 CMDCTRL;
-  u32 CMDLINK;
-  u32 CMDPMOD;
-  u32 CMDCOLR;
-  u32 CMDSRCA;
-  u32 CMDSIZE;
-  s32 CMDXA;
-  s32 CMDYA;
-  s32 CMDXB;
-  s32 CMDYB;
-  s32 CMDXC;
-  s32 CMDYC;
-  s32 CMDXD;
-  s32 CMDYD;
-  s32 B[4];
-  u32 COLOR[4];
-  u32 CMDGRDA;
-  u32 SPCTL;
-  u32 nbStep;
-  float uAstepx;
-  float uAstepy;
-  float uBstepx;
-  float uBstepy;
-  u32 pad[2];
-} vdp1cmd_struct;
 
 int Vdp1Init(void);
 void Vdp1DeInit(void);
