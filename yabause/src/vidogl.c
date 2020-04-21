@@ -124,7 +124,7 @@ int VIDOGLIsFullscreen(void);
 int VIDOGLVdp1Reset(void);
 void VIDOGLVdp1Draw();
 void VIDOGLVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -3905,130 +3905,56 @@ void VIDOGLVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+void VIDOGLVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
-  vdp1cmd_struct cmd;
   YglSprite sprite;
   YglTexture texture;
   YglCache cash;
   u64 tmp;
-  s16 rw = 0, rh = 0;
-  s16 x, y;
-  u16 CMDPMOD;
-  u16 color2;
-  float col[4 * 4];
+  float* col = cmd->G;
   float vert[8];
   int i;
-  Vdp2 *varVdp2Regs = &Vdp2Lines[0];
-
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-  if (cmd.CMDSIZE == 0) {
-    yabsys.vdp1cycles += 70;
-    return; // BAD Command
-  }
 
   sprite.dst = 0;
   sprite.blendmode = 0;
-
-  CONVERTCMD(cmd.CMDXA);
-  CONVERTCMD(cmd.CMDYA);
-  CONVERTCMD(cmd.CMDXB);
-  CONVERTCMD(cmd.CMDYB);
-  CONVERTCMD(cmd.CMDXC);
-  CONVERTCMD(cmd.CMDYC);
-
-  x = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  y = (s16)cmd.CMDYA + Vdp1Regs->localY;
-  sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
-  sprite.h = cmd.CMDSIZE & 0xFF;
-  sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
+  sprite.w = cmd->w;
+  sprite.h = cmd->h;
+  sprite.flip = cmd->flip;
+  sprite.priority = cmd->priority;
+  sprite.uclipmode = (cmd->CMDPMOD >> 9) & 0x03;
 
   // Setup Zoom Point
-  switch ((cmd.CMDCTRL & 0xF00) >> 8)
+  switch ((cmd->CMDCTRL & 0xF00) >> 8)
   {
   case 0x0: // Only two coordinates
-    rw = (s16)cmd.CMDXC - (s16)cmd.CMDXA;
-    rh = (s16)cmd.CMDYC - (s16)cmd.CMDYA;
-    if (rw > 0) { rw += 1; } else { x += 1; }
-    if (rh > 0) { rh += 1; } else { y += 1; }
+    if ((s16)cmd->CMDXC > (s16)cmd->CMDXA){ cmd->CMDXB += 1; cmd->CMDXC += 1;} else { cmd->CMDXA += 1; cmd->CMDXB +=1; cmd->CMDXC += 1; cmd->CMDXD += 1;}
+    if ((s16)cmd->CMDYC > (s16)cmd->CMDYA){ cmd->CMDYC += 1; cmd->CMDYD += 1;} else { cmd->CMDYA += 1; cmd->CMDYB += 1; cmd->CMDYC += 1; cmd->CMDYD += 1;}
     break;
   case 0x5: // Upper-left
-    rw = (s16)cmd.CMDXB + 1;
-    rh = (s16)cmd.CMDYB + 1;
-    break;
   case 0x6: // Upper-Center
-    rw = (s16)cmd.CMDXB;
-    rh = (s16)cmd.CMDYB;
-    x = x - rw / 2;
-    rw++;
-    rh++;
-    break;
   case 0x7: // Upper-Right
-    rw = (s16)cmd.CMDXB;
-    rh = (s16)cmd.CMDYB;
-    x = x - rw;
-    rw++;
-    rh++;
-    break;
   case 0x9: // Center-left
-    rw = (s16)cmd.CMDXB;
-    rh = (s16)cmd.CMDYB;
-    y = y - rh / 2;
-    rw++;
-    rh++;
-    break;
   case 0xA: // Center-center
-    rw = (s16)cmd.CMDXB;
-    rh = (s16)cmd.CMDYB;
-    x = x - rw / 2;
-    y = y - rh / 2;
-    rw++;
-    rh++;
-    break;
   case 0xB: // Center-right
-    rw = (s16)cmd.CMDXB;
-    rh = (s16)cmd.CMDYB;
-    x = x - rw;
-    y = y - rh / 2;
-    rw++;
-    rh++;
-    break;
   case 0xD: // Lower-left
-    rw = (s16)cmd.CMDXB;
-    rh = (s16)cmd.CMDYB;
-    y = y - rh;
-    rw++;
-    rh++;
-    break;
   case 0xE: // Lower-center
-    rw = (s16)cmd.CMDXB;
-    rh = (s16)cmd.CMDYB;
-    x = x - rw / 2;
-    y = y - rh;
-    rw++;
-    rh++;
-    break;
   case 0xF: // Lower-right
-    rw = (s16)cmd.CMDXB;
-    rh = (s16)cmd.CMDYB;
-    x = x - rw;
-    y = y - rh;
-    rw++;
-    rh++;
+    cmd->CMDXB += 1;
+    cmd->CMDXC += 1;
+    cmd->CMDYC += 1;
+    cmd->CMDYD += 1;
     break;
   default: break;
   }
 
-  vert[0] = (float)x;
-  vert[1] = (float)y;
-  vert[2] = (float)(x + rw);
-  vert[3] = (float)y;
-  vert[4] = (float)(x + rw);
-  vert[5] = (float)(y + rh);
-  vert[6] = (float)x;
-  vert[7] = (float)(y + rh);
-
-  yabsys.vdp1cycles += 70 + (rw * rh * 3) + (rw * 5);
+  vert[0] = (float)cmd->CMDXA;
+  vert[1] = (float)cmd->CMDYA;
+  vert[2] = (float)(cmd->CMDXB);
+  vert[3] = (float)cmd->CMDYB;
+  vert[4] = (float)(cmd->CMDXC);
+  vert[5] = (float)(cmd->CMDYC);
+  vert[6] = (float)(cmd->CMDXD);
+  vert[7] = (float)(cmd->CMDYD);
 
   expandVertices(vert, sprite.vertices, 0);
 
@@ -4037,71 +3963,32 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sprite.vertices[2*i+1] = (sprite.vertices[2*i+1]) * _Ygl->vdp1hratio;
   }
 
-  tmp = cmd.CMDSRCA;
+  tmp = cmd->CMDSRCA;
   tmp <<= 16;
-  tmp |= cmd.CMDCOLR;
+  tmp |= cmd->CMDCOLR;
   tmp <<= 16;
-  tmp |= cmd.CMDSIZE;
-
-  CMDPMOD = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x4);
-  sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
-
-  sprite.priority = 0;
-
+  tmp |= cmd->CMDSIZE;
   // MSB
-  if ((CMDPMOD & 0x8000) != 0)
+  if ((cmd->CMDPMOD & 0x8000) != 0)
   {
     tmp |= 0x00020000;
   }
 
-  sprite.blendmode = getCCProgramId(CMDPMOD);
+  sprite.blendmode = getCCProgramId(cmd->CMDPMOD);
   if (sprite.blendmode == -1) return; //Invalid color mode
 
-  if ((CMDPMOD & 4))
+  if ((cmd->CMDPMOD & 4) == 0) col = NULL;
+
+  if (1 == YglIsCached(YglTM_vdp1[_Ygl->drawframe], tmp, &cash))
   {
-    yabsys.vdp1cycles += 232;
-    for (i = 0; i < 4; i++)
-    {
-      color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
-      col[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 3] = 1.0f;
-    }
-
-    if (sprite.w > 0 && sprite.h > 0)
-    {
-      if (1 == YglIsCached(YglTM_vdp1[_Ygl->drawframe], tmp, &cash))
-      {
-        YglCacheQuadGrowShading(&sprite, col, &cash, YglTM_vdp1[_Ygl->drawframe]);
-        return;
-      }
-
-      YglQuadGrowShading(&sprite, &texture, col, &cash, YglTM_vdp1[_Ygl->drawframe]);
-      YglCacheAdd(YglTM_vdp1[_Ygl->drawframe], tmp, &cash);
-      Vdp1ReadTexture(&cmd, &sprite, &texture, varVdp2Regs);
-      return;
-    }
-
-
+    YglCacheQuadGrowShading(&sprite, col, &cash, YglTM_vdp1[_Ygl->drawframe]);
+    return;
   }
-  else // No Gouraud shading, use same color for all 4 vertices
-  {
 
-    if (sprite.w > 0 && sprite.h > 0)
-    {
-      if (1 == YglIsCached(YglTM_vdp1[_Ygl->drawframe], tmp, &cash))
-      {
-        YglCacheQuadGrowShading(&sprite, NULL, &cash, YglTM_vdp1[_Ygl->drawframe]);
-        return;
-      }
-
-      YglQuadGrowShading(&sprite, &texture, NULL, &cash, YglTM_vdp1[_Ygl->drawframe]);
-      YglCacheAdd(YglTM_vdp1[_Ygl->drawframe], tmp, &cash);
-      Vdp1ReadTexture(&cmd, &sprite, &texture, varVdp2Regs);
-    }
-
-  }
+  YglQuadGrowShading(&sprite, &texture, col, &cash, YglTM_vdp1[_Ygl->drawframe]);
+  YglCacheAdd(YglTM_vdp1[_Ygl->drawframe], tmp, &cash);
+  Vdp1ReadTexture(cmd, &sprite, &texture, &Vdp2Lines[0]);
+  return;
 
 }
 

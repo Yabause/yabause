@@ -80,7 +80,7 @@ int VIDSoftIsFullscreen(void);
 int VIDSoftVdp1Reset(void);
 void VIDSoftVdp1Draw(void);
 void VIDSoftVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDSoftVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -3165,85 +3165,83 @@ void VIDSoftVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8*
 	bottomLeftx = topLeftx;
 	bottomLefty = topLefty + (spriteHeight - 1);
 
-   drawQuad(topLeftx, topLefty, bottomLeftx, bottomLefty, topRightx, topRighty, bottomRightx, bottomRighty, ram, regs, &cmd, back_framebuffer);
+   drawQuad(topLeftx, topLefty, bottomLeftx, bottomLefty, topRightx, topRighty, bottomRightx, bottomRighty, ram, regs, cmd, back_framebuffer);
 }
 
-void VIDSoftVdp1ScaledSpriteDraw(u8* ram, Vdp1*regs, u8 * back_framebuffer){
+void VIDSoftVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8* ram, Vdp1*regs, u8 * back_framebuffer){
 
 	s32 topLeftx,topLefty,topRightx,topRighty,bottomRightx,bottomRighty,bottomLeftx,bottomLefty;
 	int x0,y0,x1,y1;
-   vdp1cmd_struct cmd;
-   Vdp1ReadCommand(&cmd, regs->addr, ram);
 
-	x0 = cmd.CMDXA + regs->localX;
-	y0 = cmd.CMDYA + regs->localY;
+	x0 = cmd->CMDXA + regs->localX;
+	y0 = cmd->CMDYA + regs->localY;
 
-	switch ((cmd.CMDCTRL >> 8) & 0xF)
+	switch ((cmd->CMDCTRL >> 8) & 0xF)
 	{
 	case 0x0: // Only two coordinates
 	default:
-		x1 = ((int)cmd.CMDXC) - x0 + regs->localX + 1;
-		y1 = ((int)cmd.CMDYC) - y0 + regs->localY + 1;
+		x1 = ((int)cmd->CMDXC) - x0 + regs->localX + 1;
+		y1 = ((int)cmd->CMDYC) - y0 + regs->localY + 1;
 		break;
 	case 0x5: // Upper-left
-		x1 = ((int)cmd.CMDXB) + 1;
-		y1 = ((int)cmd.CMDYB) + 1;
+		x1 = ((int)cmd->CMDXB) + 1;
+		y1 = ((int)cmd->CMDYB) + 1;
 		break;
 	case 0x6: // Upper-Center
-		x1 = ((int)cmd.CMDXB);
-		y1 = ((int)cmd.CMDYB);
+		x1 = ((int)cmd->CMDXB);
+		y1 = ((int)cmd->CMDYB);
 		x0 = x0 - x1/2;
 		x1++;
 		y1++;
 		break;
 	case 0x7: // Upper-Right
-		x1 = ((int)cmd.CMDXB);
-		y1 = ((int)cmd.CMDYB);
+		x1 = ((int)cmd->CMDXB);
+		y1 = ((int)cmd->CMDYB);
 		x0 = x0 - x1;
 		x1++;
 		y1++;
 		break;
 	case 0x9: // Center-left
-		x1 = ((int)cmd.CMDXB);
-		y1 = ((int)cmd.CMDYB);
+		x1 = ((int)cmd->CMDXB);
+		y1 = ((int)cmd->CMDYB);
 		y0 = y0 - y1/2;
 		x1++;
 		y1++;
 		break;
 	case 0xA: // Center-center
-		x1 = ((int)cmd.CMDXB);
-		y1 = ((int)cmd.CMDYB);
+		x1 = ((int)cmd->CMDXB);
+		y1 = ((int)cmd->CMDYB);
 		x0 = x0 - x1/2;
 		y0 = y0 - y1/2;
 		x1++;
 		y1++;
 		break;
 	case 0xB: // Center-right
-		x1 = ((int)cmd.CMDXB);
-		y1 = ((int)cmd.CMDYB);
+		x1 = ((int)cmd->CMDXB);
+		y1 = ((int)cmd->CMDYB);
 		x0 = x0 - x1;
 		y0 = y0 - y1/2;
 		x1++;
 		y1++;
 		break;
 	case 0xD: // Lower-left
-		x1 = ((int)cmd.CMDXB);
-		y1 = ((int)cmd.CMDYB);
+		x1 = ((int)cmd->CMDXB);
+		y1 = ((int)cmd->CMDYB);
 		y0 = y0 - y1;
 		x1++;
 		y1++;
 		break;
 	case 0xE: // Lower-center
-		x1 = ((int)cmd.CMDXB);
-		y1 = ((int)cmd.CMDYB);
+		x1 = ((int)cmd->CMDXB);
+		y1 = ((int)cmd->CMDYB);
 		x0 = x0 - x1/2;
 		y0 = y0 - y1;
 		x1++;
 		y1++;
 		break;
 	case 0xF: // Lower-right
-		x1 = ((int)cmd.CMDXB);
-		y1 = ((int)cmd.CMDYB);
+		x1 = ((int)cmd->CMDXB);
+		y1 = ((int)cmd->CMDYB);
 		x0 = x0 - x1;
 		y0 = y0 - y1;
 		x1++;
@@ -3263,7 +3261,7 @@ void VIDSoftVdp1ScaledSpriteDraw(u8* ram, Vdp1*regs, u8 * back_framebuffer){
 	bottomLeftx = topLeftx;
 	bottomLefty = y1+y0 - 1;
 
-   drawQuad(topLeftx, topLefty, bottomLeftx, bottomLefty, topRightx, topRighty, bottomRightx, bottomRighty, ram, regs, &cmd, back_framebuffer);
+   drawQuad(topLeftx, topLefty, bottomLeftx, bottomLefty, topRightx, topRighty, bottomRightx, bottomRighty, ram, regs, cmd, back_framebuffer);
 }
 
 void VIDSoftVdp1DistortedSpriteDraw(u8* ram, Vdp1*regs, u8 * back_framebuffer) {
