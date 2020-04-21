@@ -841,6 +841,7 @@ static void setupSpriteLimit(vdp1cmdctrl_struct *ctrl){
         ctrl->start_addr = (ctrl->start_addr > lutaddr)?lutaddr:ctrl->start_addr;
         ctrl->end_addr = (ctrl->end_addr < lutaddr)?lutaddr:ctrl->end_addr;
         charAddr += 1;
+        j+=1;
       }
     }
     break;
