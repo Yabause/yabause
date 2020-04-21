@@ -113,6 +113,11 @@ typedef struct
   u32 pad[2];
 } vdp1cmd_struct;
 
+typedef struct{
+  vdp1cmd_struct cmd;
+  int completionLine;
+} vdp1cmdctrl_struct;
+
 typedef struct
 {
    int id;
