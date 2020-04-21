@@ -103,7 +103,7 @@ extern vdp2rotationparameter_struct  Vdp1ParaA;
 void VIDCSVdp1Draw();
 void VIDCSVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDCSVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -262,72 +262,24 @@ int getBestMode(vdp1cmd_struct* cmd) {
   }
   return ret;
 }
-void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+void VIDCSVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   LOG_CMD("%d\n", __LINE__);
 
-  vdp1cmd_struct cmd;
-  YglTexture texture;
-  Vdp2 *varVdp2Regs = &Vdp2Lines[0];
-
-  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
-  if (cmd.CMDSIZE == 0) {
-    yabsys.vdp1cycles += 70;
-    return; // BAD Command
-  }
-
-  cmd.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
-  cmd.h = cmd.CMDSIZE & 0xFF;
-
-  cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
-
-  CONVERTCMD(cmd.CMDXA);
-  CONVERTCMD(cmd.CMDYA);
-  CONVERTCMD(cmd.CMDXB);
-  CONVERTCMD(cmd.CMDYB);
-  CONVERTCMD(cmd.CMDXC);
-  CONVERTCMD(cmd.CMDYC);
-  CONVERTCMD(cmd.CMDXD);
-  CONVERTCMD(cmd.CMDYD);
-
-  cmd.CMDXA += regs->localX;
-  cmd.CMDYA += regs->localY;
-  cmd.CMDXB += regs->localX;
-  cmd.CMDYB += regs->localY;
-  cmd.CMDXC += regs->localX;
-  cmd.CMDYC += regs->localY;
-  cmd.CMDXD += regs->localX;
-  cmd.CMDYD += regs->localY;
-
-  int w = (sqrt((cmd.CMDXA - cmd.CMDXB)*(cmd.CMDXA - cmd.CMDXB)) + sqrt((cmd.CMDXD - cmd.CMDXC)*(cmd.CMDXD - cmd.CMDXC)))/2;
-  int h = (sqrt((cmd.CMDYA - cmd.CMDYD)*(cmd.CMDYA - cmd.CMDYD)) + sqrt((cmd.CMDYB - cmd.CMDYC)*(cmd.CMDYB - cmd.CMDYC)))/2;
-  yabsys.vdp1cycles+= 70 + (w * h * 3) + (w * 5);
-
-  if (((cmd.CMDPMOD >> 3) & 0x7u) == 5) {
+  if (((cmd->CMDPMOD >> 3) & 0x7u) == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
-    u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
+    u32 *cclist = (u32 *)&(Vdp2Lines[0].CCRSA);
     cclist[0] &= 0x1Fu;
   }
   //gouraud
-  memset(cmd.G, 0, sizeof(float)*16);
-  if ((cmd.CMDPMOD & 4))
-  {
-    yabsys.vdp1cycles+= 232;
-    for (int i = 0; i < 4; i++){
-      u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
-      cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
-    }
-  }
-  cmd.priority = 0;
-  cmd.SPCTL = varVdp2Regs->SPCTL;
 
-  if (getBestMode(&cmd) == DISTORTED) {
-    addCSCommands(&cmd,DISTORTED);
+  cmd->SPCTL = Vdp2Lines[0].SPCTL;
+
+  if (getBestMode(cmd) == DISTORTED) {
+    addCSCommands(cmd,DISTORTED);
   } else {
-    cmd.type = QUAD;
-    vdp1_add(&cmd,0);
+    cmd->type = QUAD;
+    vdp1_add(cmd,0);
   }
 
   return;

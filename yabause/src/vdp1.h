@@ -126,7 +126,7 @@ typedef struct
    void (*Vdp1Draw)();
    void(*Vdp1NormalSpriteDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
    void(*Vdp1ScaledSpriteDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1DistortedSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1DistortedSpriteDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1PolygonDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1PolylineDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1LineDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);

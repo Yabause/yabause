@@ -81,7 +81,7 @@ int VIDSoftVdp1Reset(void);
 void VIDSoftVdp1Draw(void);
 void VIDSoftVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDSoftVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -3264,26 +3264,23 @@ void VIDSoftVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8* ram, Vdp1*regs, u8 * b
    drawQuad(topLeftx, topLefty, bottomLeftx, bottomLefty, topRightx, topRighty, bottomRightx, bottomRighty, ram, regs, cmd, back_framebuffer);
 }
 
-void VIDSoftVdp1DistortedSpriteDraw(u8* ram, Vdp1*regs, u8 * back_framebuffer) {
+void VIDSoftVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8* ram, Vdp1*regs, u8 * back_framebuffer) {
 
 	s32 xa,ya,xb,yb,xc,yc,xd,yd;
-   vdp1cmd_struct cmd;
 
-   Vdp1ReadCommand(&cmd, regs->addr, ram);
+    xa = (s32)(cmd->CMDXA + regs->localX);
+    ya = (s32)(cmd->CMDYA + regs->localY);
 
-    xa = (s32)(cmd.CMDXA + regs->localX);
-    ya = (s32)(cmd.CMDYA + regs->localY);
+    xb = (s32)(cmd->CMDXB + regs->localX);
+    yb = (s32)(cmd->CMDYB + regs->localY);
 
-    xb = (s32)(cmd.CMDXB + regs->localX);
-    yb = (s32)(cmd.CMDYB + regs->localY);
+    xc = (s32)(cmd->CMDXC + regs->localX);
+    yc = (s32)(cmd->CMDYC + regs->localY);
 
-    xc = (s32)(cmd.CMDXC + regs->localX);
-    yc = (s32)(cmd.CMDYC + regs->localY);
+    xd = (s32)(cmd->CMDXD + regs->localX);
+    yd = (s32)(cmd->CMDYD + regs->localY);
 
-    xd = (s32)(cmd.CMDXD + regs->localX);
-    yd = (s32)(cmd.CMDYD + regs->localY);
-
-    drawQuad(xa, ya, xd, yd, xb, yb, xc, yc, ram, regs, &cmd, back_framebuffer);
+    drawQuad(xa, ya, xd, yd, xb, yb, xc, yc, ram, regs, cmd, back_framebuffer);
 }
 
 static void gouraudLineSetup(double * redstep, double * greenstep, double * bluestep, int length, COLOR table1, COLOR table2, u8* ram, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_framebuffer) {
