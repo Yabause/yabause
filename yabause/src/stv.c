@@ -174,10 +174,10 @@ const Game GameList[NB_STV_GAMES]={
     NULL,
     NULL,
     {
-        GAME_BYTE_BLOB, "350-mpa1.u19", 0x0000000, 0x0100000,
-        GAME_BYTE_BLOB, "350-mpa1.u19", 0x0200000, 0x0100000,
-        GAME_BYTE_BLOB, "350-mpa1.u16", 0x0000001, 0x0100000,
-        GAME_BYTE_BLOB, "350-mpa1.u16", 0x0200001, 0x0100000,
+        HEADER_BLOB,    "350-mpa1.u19", 0x0000000, 0x0100000,
+        HEADER_BLOB,    "350-mpa1.u19", 0x0200000, 0x0100000,
+        HEADER_BLOB,    "350-mpa1.u16", 0x0000001, 0x0100000,
+        HEADER_BLOB,    "350-mpa1.u16", 0x0200001, 0x0100000,
         GAME_WORD_BLOB, "gfx0.u1",      0x0400000, 0x0400000,
         GAME_WORD_BLOB, "gfx1.u3",      0x0800000, 0x0400000,
         GAME_WORD_BLOB, "gfx2.u5",      0x0c00000, 0x0400000,
@@ -301,17 +301,17 @@ const Game GameList[NB_STV_GAMES]={
     NV_2P,
     {
         HEADER_BLOB, "ic11",    0x0000001, 0x0200000,
-        GAME_WORD_BLOB, "ic13", 0x0400000, 0x0200000,
-        GAME_WORD_BLOB, "ic14", 0x0600000, 0x0200000,
-        GAME_WORD_BLOB, "ic15", 0x0800000, 0x0200000,
-        GAME_WORD_BLOB, "ic16", 0x0a00000, 0x0200000, 
-        GAME_WORD_BLOB, "ic17", 0x0c00000, 0x0200000,
-        GAME_WORD_BLOB, "ic18", 0x0e00000, 0x0200000,
-        GAME_WORD_BLOB, "ic19", 0x1000000, 0x0200000,
-        GAME_WORD_BLOB, "ic20", 0x1200000, 0x0200000,
-        GAME_WORD_BLOB, "ic21", 0x1400000, 0x0200000,
-        GAME_WORD_BLOB, "ic22", 0x1600000, 0x0200000,
-        GAME_WORD_BLOB, "ic12", 0x1800000, 0x0400000,
+        GAME_BYTE_BLOB, "ic13", 0x0400000, 0x0200000,
+        GAME_BYTE_BLOB, "ic14", 0x0600000, 0x0200000,
+        GAME_BYTE_BLOB, "ic15", 0x0800000, 0x0200000,
+        GAME_BYTE_BLOB, "ic16", 0x0a00000, 0x0200000, 
+        GAME_BYTE_BLOB, "ic17", 0x0c00000, 0x0200000,
+        GAME_BYTE_BLOB, "ic18", 0x0e00000, 0x0200000,
+        GAME_BYTE_BLOB, "ic19", 0x1000000, 0x0200000,
+        GAME_BYTE_BLOB, "ic20", 0x1200000, 0x0200000,
+        GAME_BYTE_BLOB, "ic21", 0x1400000, 0x0200000,
+        GAME_BYTE_BLOB, "ic22", 0x1600000, 0x0200000,
+        GAME_BYTE_BLOB, "ic12", 0x1800000, 0x0400000,
         GAME_END, "", 0, 0
     },
     STV,
@@ -1521,16 +1521,16 @@ const Game GameList[NB_STV_GAMES]={
     NULL,
     NULL,
     {
-        GAME_BYTE_BLOB, "2.ic13_2",      0x0200000, 0x0080000,
-        GAME_BYTE_BLOB, "1.ic13_1",      0x0200001, 0x0080000,
+        HEADER_BLOB,    "2.ic13_2",      0x0200000, 0x0080000,
+        HEADER_BLOB,    "1.ic13_1",      0x0200001, 0x0080000,
         GAME_BYTE_BLOB, "bom210-10.ic2", 0x1c00000, 0x0400000,
-        GAME_WORD_BLOB, "bom210-10.ic2", 0x0400000, 0x0400000,
-        GAME_WORD_BLOB, "bom210-11.ic3", 0x2000000, 0x0400000,
-        GAME_WORD_BLOB, "bom210-11.ic3", 0x0800000, 0x0400000,
-        GAME_WORD_BLOB, "bom210-12.ic4", 0x2400000, 0x0400000,
-        GAME_WORD_BLOB, "bom210-12.ic4", 0x0c00000, 0x0400000,
-        GAME_WORD_BLOB, "bom210-13.ic5", 0x2800000, 0x0400000,
-        GAME_WORD_BLOB, "bom210-13.ic5", 0x1000000, 0x0400000,
+        GAME_BYTE_BLOB, "bom210-10.ic2", 0x0400000, 0x0400000,
+        GAME_BYTE_BLOB, "bom210-11.ic3", 0x2000000, 0x0400000,
+        GAME_BYTE_BLOB, "bom210-11.ic3", 0x0800000, 0x0400000,
+        GAME_BYTE_BLOB, "bom210-12.ic4", 0x2400000, 0x0400000,
+        GAME_BYTE_BLOB, "bom210-12.ic4", 0x0c00000, 0x0400000,
+        GAME_BYTE_BLOB, "bom210-13.ic5", 0x2800000, 0x0400000,
+        GAME_BYTE_BLOB, "bom210-13.ic5", 0x1000000, 0x0400000,
         GAME_END, "", 0, 0
     },
     STV,
@@ -1568,8 +1568,8 @@ const Game GameList[NB_STV_GAMES]={
     NULL,
     NULL,
     {
-        GAME_BYTE_BLOB, "th-ic7_2.stv", 0x0200000, 0x0080000,
-        GAME_BYTE_BLOB, "th-ic7_1.stv", 0x0200001, 0x0080000,
+        HEADER_BLOB,    "th-ic7_2.stv", 0x0200000, 0x0080000,
+        HEADER_BLOB,    "th-ic7_1.stv", 0x0200001, 0x0080000,
         GAME_WORD_BLOB, "th-e-2.ic2",   0x0400000, 0x0400000,
         GAME_WORD_BLOB, "th-e-3.ic3",   0x0800000, 0x0400000,
         GAME_WORD_BLOB, "th-e-4.ic4",   0x0c00000, 0x0400000,
@@ -2383,12 +2383,13 @@ int copyFile(JZFile *zip, void* id) {
             case HEADER_BLOB:
               for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
                 T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+(2*j), data[j]);
-                T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+(2*j+1), 0);
+                // is zeroing odd bytes required ? i couldn't find a game requiring it, and it's breaking interlaced roms
+                //T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+(2*j+1), 0);
               }
               break;
             case GAME_BYTE_BLOB:
               for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
-                T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+(2*j), data[j]);
+                T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j, data[j]);
               }
               break;
             case EEPROM_BLOB:
