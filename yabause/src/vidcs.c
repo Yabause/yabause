@@ -126,6 +126,7 @@ extern void VIDOGLSync();
 extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 extern void VIDOGLVdp2DispOff(void);
 extern int YglGenFrameBuffer(int force);
+extern void vdp1GenerateBuffer(vdp1cmd_struct* cmd);
 
 extern u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs);
 
@@ -151,6 +152,7 @@ YglCSVdp1ReadFrameBuffer,
 YglCSVdp1WriteFrameBuffer,
 YglEraseWriteCSVDP1,
 YglFrameChangeCSVDP1,
+vdp1GenerateBuffer,
 VIDOGLVdp2Reset,
 VIDOGLVdp2Draw,
 YglGetGlSize,

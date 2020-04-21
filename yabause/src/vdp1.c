@@ -214,8 +214,8 @@ int Vdp1Init(void) {
 
    VDP1_MASK = 0xFFFF;
 
-   vdp1Ram_update_start = 0x0;
-   vdp1Ram_update_end = 0x80000;
+   vdp1Ram_update_start = 0x80000;
+   vdp1Ram_update_end = 0x0;
 
    return 0;
 }
@@ -476,22 +476,22 @@ void checkClipCmd(int* sysClipAddr, int* usrClipAddr, int* localCoordAddr, u8 * 
   regs->addr = oldaddr;
 }
 
-static void Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer){
+static int Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer){
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
   if ((cmd->CMDSIZE & 0x8000)) {
     regs->EDSR |= 2;
-    return; // BAD Command
+    return 0; // BAD Command
   }
   if (((cmd->CMDPMOD >> 3) & 0x7) > 5) {
     // damaged data
     yabsys.vdp1cycles += 70;
-    return;
+    return 0;
   }
   cmd->w = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
   cmd->h = cmd->CMDSIZE & 0xFF;
   if (cmd->w == 0 || cmd->h == 0) {
     yabsys.vdp1cycles += 70;
-    return; //bad command
+    return 0; //bad command
   }
 
   cmd->flip = (cmd->CMDCTRL & 0x30) >> 4;
@@ -526,16 +526,17 @@ static void Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8*
   }
 
   VIDCore->Vdp1NormalSpriteDraw(cmd, ram, regs, back_framebuffer);
+  return 1;
 }
 
-static void Vdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
+static int Vdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
   s16 rw = 0, rh = 0;
   s16 x, y;
 
   if (cmd->CMDSIZE == 0) {
     yabsys.vdp1cycles += 70;
-    return; // BAD Command
+    return 0; // BAD Command
   }
   cmd->w = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
   cmd->h = cmd->CMDSIZE & 0xFF;
@@ -634,14 +635,15 @@ static void Vdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8*
   }
 
   VIDCore->Vdp1ScaledSpriteDraw(cmd, ram, regs, back_framebuffer);
+  return 1;
 }
 
-static void Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
+static int Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   if (cmd->CMDSIZE == 0) {
     yabsys.vdp1cycles += 70;
-    return; // BAD Command
+    return 0; // BAD Command
   }
 
   cmd->w = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
@@ -684,9 +686,10 @@ static void Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, 
   }
 
   VIDCore->Vdp1DistortedSpriteDraw(cmd, ram, regs, back_framebuffer);
+  return 1;
 }
 
-static void Vdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
+static int Vdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   CONVERTCMD(cmd->CMDXA);
@@ -729,9 +732,10 @@ static void Vdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back
   cmd->flip = 0;
 
   VIDCore->Vdp1PolygonDraw(cmd, ram, regs, back_framebuffer);
+  return 1;
 }
 
-static void Vdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
+static int Vdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
 
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
@@ -770,9 +774,11 @@ static void Vdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* bac
     }
   }
   VIDCore->Vdp1PolylineDraw(cmd, ram, regs, back_framebuffer);
+
+  return 1;
 }
 
-static void Vdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
+static int Vdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
 
@@ -807,11 +813,12 @@ static void Vdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_fr
   cmd->flip = 0;
 
   VIDCore->Vdp1LineDraw(cmd, ram, regs, back_framebuffer);
+
+  return 1;
 }
 
 static void setupSpriteLimit(vdp1cmdctrl_struct *ctrl){
   vdp1cmd_struct *cmd = &ctrl->cmd;
-  ctrl->dirty = 0;
   u32 dot;
   switch ((cmd->CMDPMOD >> 3) & 0x7)
   {
@@ -923,6 +930,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    int localCoordAddr = -1;
    u32 returnAddr = 0xffffffff;
    Vdp1External.updateVdp1Ram = 0;
+   vdp1Ram_update_start = 0x80000;
+   vdp1Ram_update_end = 0x0;
    Vdp1External.checkEDSR = 0;
    yabsys.vdp1cycles = 0;
    nbCmdToProcess = 0;
@@ -932,57 +941,58 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          vdp1cmdctrl_struct *ctrl = NULL;
+         int ret;
          switch (command & 0x000F) {
          case 0: // normal sprite draw
-            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1NormalSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
+            nbCmdToProcess += Vdp1NormalSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
-            ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 1: // scaled sprite draw
-            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
+            ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1ScaledSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            nbCmdToProcess += Vdp1ScaledSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
-            ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 2: // distorted sprite draw
          case 3: /* this one should be invalid, but some games
                  (Hardcore 4x4 for instance) use it instead of 2 */
-            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
+            ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1DistortedSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            nbCmdToProcess += Vdp1DistortedSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
-            ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 4: // polygon draw
-            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
+            ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1PolygonDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            nbCmdToProcess += Vdp1PolygonDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
-            ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 5: // polyline draw
          case 7: // undocumented mirror
-            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
+            ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1PolylineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            nbCmdToProcess += Vdp1PolylineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
-            ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 6: // line draw
-            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
+            ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1LineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            nbCmdToProcess += Vdp1LineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
-            ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
@@ -1221,8 +1231,8 @@ int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
 
    // Read VDP1 ram
    yread(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
-   vdp1Ram_update_start = 0x0;
-   vdp1Ram_update_end = 0x80000;
+   vdp1Ram_update_start = 0x80000;
+   vdp1Ram_update_end = 0x0;
 #ifdef IMPROVED_SAVESTATES
    yread(&check, (void *)back_framebuffer, 0x40000, 1, fp);
 
@@ -2029,6 +2039,7 @@ VideoInterface_struct VIDDummy = {
 	VIDDummVdp1WriteFrameBuffer,
   VIDDummSync,
   VIDDummSync,
+  NULL,
 	VIDDummyVdp2Reset,
 	VIDDummyVdp2Draw,
 	VIDDummyGetGlSize,
@@ -2229,6 +2240,21 @@ static void startField(void) {
 
 void Vdp1HBlankIN(void)
 {
+  for (int i = 0; i<nbCmdToProcess; i++) {
+    if (cmdBufferBeingProcessed[i].completionLine == yabsys.LineCount) {
+      if (!((cmdBufferBeingProcessed[i].start_addr >= vdp1Ram_update_end) ||
+          (cmdBufferBeingProcessed[i].end_addr <= vdp1Ram_update_start))) {
+        if (Vdp1External.checkEDSR == 0) {
+          if (VIDCore->Vdp1RegenerateCmd != NULL)
+            VIDCore->Vdp1RegenerateCmd(&cmdBufferBeingProcessed[i].cmd);
+        }
+      }
+    }
+  }
+  if (cmdBufferBeingProcessed[nbCmdToProcess-1].completionLine == yabsys.LineCount) {
+    vdp1Ram_update_start = 0x80000;
+    vdp1Ram_update_end = 0x0;
+  }
   if(yabsys.LineCount == 0) {
     startField();
   }

@@ -118,7 +118,6 @@ typedef struct{
   int completionLine;
   int start_addr;
   int end_addr;
-  int dirty;
 } vdp1cmdctrl_struct;
 
 typedef struct
@@ -145,6 +144,7 @@ typedef struct
    void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val);
    void(*Vdp1EraseWrite)(int id);
    void(*Vdp1FrameChange)(void);
+   void(*Vdp1RegenerateCmd)(vdp1cmd_struct* cmd);
    // VDP2 specific
    int (*Vdp2Reset)(void);
    void (*Vdp2Draw)(void);

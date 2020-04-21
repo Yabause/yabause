@@ -347,12 +347,6 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd){
 }
 #endif
 
-void regenerateVdp1Buffer(void) {
-	for (int i = 0; i < nbCmdToProcess; i++) {
-		vdp1GenerateBuffer(&cmdBufferBeingProcessed[i].cmd);
-	}
-}
-
 int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	int minx = 1024;
 	int miny = 1024;
@@ -604,13 +598,6 @@ void vdp1_compute() {
   }
   if (needRender == 0) {
 		return;
-	}
-	if ((Vdp1External.updateVdp1Ram == 1)&&(Vdp1External.checkEDSR == 0)) {
-		//The game source code has modified the content of vdp1Ram since the drawcommands order without checking the EDSR register
-		//Let's assume the game was taking care of vdp1 drawing delay to update the vdp1Ram
-		//So update the texture just to be sure all texture are the latest one
-		regenerateVdp1Buffer();
-		Vdp1External.updateVdp1Ram = 0;
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
 	for (int i = 0; i < NB_COARSE_RAST; i++) {
