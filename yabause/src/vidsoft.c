@@ -83,8 +83,8 @@ void VIDSoftVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8*
 void VIDSoftVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDSoftVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDSoftVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1UserClipping(u8 * ram, Vdp1 * regs);
 void VIDSoftVdp1SystemClipping(u8 * ram, Vdp1 * regs);
 void VIDSoftVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
@@ -3296,15 +3296,12 @@ static void gouraudLineSetup(double * redstep, double * greenstep, double * blue
 	leftColumnColor.b = table1.b;
 }
 
-void VIDSoftVdp1PolylineDraw(u8* ram, Vdp1*regs, u8 * back_framebuffer)
+void VIDSoftVdp1PolylineDraw(vdp1cmd_struct *cmd, u8* ram, Vdp1*regs, u8 * back_framebuffer)
 {
 	int X[4];
 	int Y[4];
 	double redstep = 0, greenstep = 0, bluestep = 0;
 	int length;
-   vdp1cmd_struct cmd;
-
-   Vdp1ReadCommand(&cmd, regs->addr, ram);
 
 	X[0] = (int)regs->localX + (int)((s16)T1ReadWord(ram, regs->addr + 0x0C));
 	Y[0] = (int)regs->localY + (int)((s16)T1ReadWord(ram, regs->addr + 0x0E));
@@ -3315,40 +3312,37 @@ void VIDSoftVdp1PolylineDraw(u8* ram, Vdp1*regs, u8 * back_framebuffer)
 	X[3] = (int)regs->localX + (int)((s16)T1ReadWord(ram, regs->addr + 0x18));
 	Y[3] = (int)regs->localY + (int)((s16)T1ReadWord(ram, regs->addr + 0x1A));
 
-   length = iterateOverLine(X[0], Y[0], X[1], Y[1], 1, NULL, NULL, regs, &cmd, ram, back_framebuffer);
-   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudA, gouraudB, ram, regs, &cmd, back_framebuffer);
-   DrawLine(X[0], Y[0], X[1], Y[1], 0, 0, 0, redstep, greenstep, bluestep, regs, &cmd, ram, back_framebuffer);
+   length = iterateOverLine(X[0], Y[0], X[1], Y[1], 1, NULL, NULL, regs, cmd, ram, back_framebuffer);
+   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudA, gouraudB, ram, regs, cmd, back_framebuffer);
+   DrawLine(X[0], Y[0], X[1], Y[1], 0, 0, 0, redstep, greenstep, bluestep, regs, cmd, ram, back_framebuffer);
 
-   length = iterateOverLine(X[1], Y[1], X[2], Y[2], 1, NULL, NULL, regs, &cmd, ram, back_framebuffer);
-   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudB, gouraudC, ram, regs, &cmd, back_framebuffer);
-   DrawLine(X[1], Y[1], X[2], Y[2], 0, 0, 0, redstep, greenstep, bluestep, regs, &cmd, ram, back_framebuffer);
+   length = iterateOverLine(X[1], Y[1], X[2], Y[2], 1, NULL, NULL, regs, cmd, ram, back_framebuffer);
+   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudB, gouraudC, ram, regs, cmd, back_framebuffer);
+   DrawLine(X[1], Y[1], X[2], Y[2], 0, 0, 0, redstep, greenstep, bluestep, regs, cmd, ram, back_framebuffer);
 
-   length = iterateOverLine(X[2], Y[2], X[3], Y[3], 1, NULL, NULL, regs, &cmd, ram, back_framebuffer);
-   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudD, gouraudC, ram, regs, &cmd, back_framebuffer);
-   DrawLine(X[3], Y[3], X[2], Y[2], 0, 0, 0, redstep, greenstep, bluestep, regs, &cmd, ram, back_framebuffer);
+   length = iterateOverLine(X[2], Y[2], X[3], Y[3], 1, NULL, NULL, regs, cmd, ram, back_framebuffer);
+   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudD, gouraudC, ram, regs, cmd, back_framebuffer);
+   DrawLine(X[3], Y[3], X[2], Y[2], 0, 0, 0, redstep, greenstep, bluestep, regs, cmd, ram, back_framebuffer);
 
-   length = iterateOverLine(X[3], Y[3], X[0], Y[0], 1, NULL, NULL, regs, &cmd, ram, back_framebuffer);
-   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudA, gouraudD, ram, regs, &cmd, back_framebuffer);
-   DrawLine(X[0], Y[0], X[3], Y[3], 0, 0, 0, redstep, greenstep, bluestep, regs, &cmd, ram, back_framebuffer);
+   length = iterateOverLine(X[3], Y[3], X[0], Y[0], 1, NULL, NULL, regs, cmd, ram, back_framebuffer);
+   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudA, gouraudD, ram, regs, cmd, back_framebuffer);
+   DrawLine(X[0], Y[0], X[3], Y[3], 0, 0, 0, redstep, greenstep, bluestep, regs, cmd, ram, back_framebuffer);
 }
 
-void VIDSoftVdp1LineDraw(u8* ram, Vdp1*regs, u8* back_framebuffer)
+void VIDSoftVdp1LineDraw(vdp1cmd_struct *cmd, u8* ram, Vdp1*regs, u8* back_framebuffer)
 {
 	int x1, y1, x2, y2;
 	double redstep = 0, greenstep = 0, bluestep = 0;
 	int length;
-   vdp1cmd_struct cmd;
-
-   Vdp1ReadCommand(&cmd, regs->addr, ram);
 
 	x1 = (int)regs->localX + (int)((s16)T1ReadWord(ram, regs->addr + 0x0C));
 	y1 = (int)regs->localY + (int)((s16)T1ReadWord(ram, regs->addr + 0x0E));
 	x2 = (int)regs->localX + (int)((s16)T1ReadWord(ram, regs->addr + 0x10));
 	y2 = (int)regs->localY + (int)((s16)T1ReadWord(ram, regs->addr + 0x12));
 
-   length = iterateOverLine(x1, y1, x2, y2, 1, NULL, NULL, regs, &cmd, ram, back_framebuffer);
-   gouraudLineSetup(&redstep, &bluestep, &greenstep, length, gouraudA, gouraudB, ram, regs, &cmd, back_framebuffer);
-   DrawLine(x1, y1, x2, y2, 0, 0, 0, redstep, greenstep, bluestep, regs, &cmd, ram, back_framebuffer);
+   length = iterateOverLine(x1, y1, x2, y2, 1, NULL, NULL, regs, cmd, ram, back_framebuffer);
+   gouraudLineSetup(&redstep, &bluestep, &greenstep, length, gouraudA, gouraudB, ram, regs, cmd, back_framebuffer);
+   DrawLine(x1, y1, x2, y2, 0, 0, 0, redstep, greenstep, bluestep, regs, cmd, ram, back_framebuffer);
 }
 
 //////////////////////////////////////////////////////////////////////////////
