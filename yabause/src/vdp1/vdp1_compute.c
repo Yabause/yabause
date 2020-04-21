@@ -222,9 +222,6 @@ static int generateComputeBuffer(int w, int h) {
 
 u8 cmdBuffer[2][0x80000];
 
-vdp1cmd_struct cmdBufferToProcess[2000];
-int nbCmdToProcess = 0;
-
 void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 	int endcnt;
 	u32 dot;
@@ -352,7 +349,7 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd){
 
 void regenerateVdp1Buffer(void) {
 	for (int i = 0; i < nbCmdToProcess; i++) {
-		vdp1GenerateBuffer(&cmdBufferToProcess[i]);
+		vdp1GenerateBuffer(&cmdBufferBeingProcessed[i].cmd);
 	}
 }
 
@@ -401,7 +398,6 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 		}
 	}
 	if (clipcmd == 0) {
-		memcpy(&cmdBufferToProcess[nbCmdToProcess++], cmd, sizeof(vdp1cmd_struct));
 		vdp1GenerateBuffer(cmd);
 
 	  float Ax = cmd->CMDXA;
@@ -623,7 +619,6 @@ void vdp1_compute() {
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i*QUEUE_SIZE, nbCmd[i]*sizeof(vdp1cmd_struct), (void*)&cmdVdp1[QUEUE_SIZE*i]);
 		}
 	}
-	nbCmdToProcess = 0;
 	_Ygl->vdp1On[_Ygl->drawframe] = 1;
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_nbcmd_);

@@ -47,6 +47,9 @@ extern VideoInterface_struct *VIDCoreList[];
 Vdp1 * Vdp1Regs;
 Vdp1External_struct Vdp1External;
 
+vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
+int nbCmdToProcess = 0;
+
 static int needVdp1draw = 0;
 
 #define DEBUG_BAD_COORD //YuiMsg
@@ -862,6 +865,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    Vdp1External.updateVdp1Ram = 0;
    Vdp1External.checkEDSR = 0;
    yabsys.vdp1cycles = 0;
+   nbCmdToProcess = 0;
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       yabsys.vdp1cycles += 16;
@@ -870,55 +874,49 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          vdp1cmdctrl_struct *ctrl = NULL;
          switch (command & 0x000F) {
          case 0: // normal sprite draw
-            ctrl = (vdp1cmdctrl_struct*)malloc(sizeof(vdp1cmdctrl_struct));
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1NormalSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
-            free(ctrl);
             break;
          case 1: // scaled sprite draw
-            ctrl = (vdp1cmdctrl_struct*)malloc(sizeof(vdp1cmdctrl_struct));
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1ScaledSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
-            free(ctrl);
             break;
          case 2: // distorted sprite draw
          case 3: /* this one should be invalid, but some games
                  (Hardcore 4x4 for instance) use it instead of 2 */
-            ctrl = (vdp1cmdctrl_struct*)malloc(sizeof(vdp1cmdctrl_struct));
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1DistortedSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
-            free(ctrl);
             break;
          case 4: // polygon draw
-            ctrl = (vdp1cmdctrl_struct*)malloc(sizeof(vdp1cmdctrl_struct));
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1PolygonDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
-            free(ctrl);
             break;
          case 5: // polyline draw
          case 7: // undocumented mirror
-            ctrl = (vdp1cmdctrl_struct*)malloc(sizeof(vdp1cmdctrl_struct));
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1PolylineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
-            free(ctrl);
             break;
          case 6: // line draw
-            ctrl = (vdp1cmdctrl_struct*)malloc(sizeof(vdp1cmdctrl_struct));
+            ctrl = &cmdBufferBeingProcessed[nbCmdToProcess++];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             Vdp1LineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = yabsys.vdp1cycles/cylesPerLine;
-            free(ctrl);
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
