@@ -3868,8 +3868,8 @@ void VIDOGLVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   expandVertices(vert, sprite.vertices, 0);
 
   for (int i = 0; i<4; i++) {
-    sprite.vertices[2*i] = (sprite.vertices[2*i] + Vdp1Regs->localX) * _Ygl->vdp1wratio;
-    sprite.vertices[2*i+1] = (sprite.vertices[2*i+1] + Vdp1Regs->localY) * _Ygl->vdp1hratio;
+    sprite.vertices[2*i] = (sprite.vertices[2*i]) * _Ygl->vdp1wratio;
+    sprite.vertices[2*i+1] = (sprite.vertices[2*i+1]) * _Ygl->vdp1hratio;
   }
 
   tmp = cmd->CMDSRCA;
@@ -4125,8 +4125,8 @@ void VIDOGLVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
   fixVerticesSize(sprite.vertices);
 
   for (int i = 0; i<4; i++) {
-    sprite.vertices[2*i] = (sprite.vertices[2*i] + Vdp1Regs->localX) * _Ygl->vdp1wratio;
-    sprite.vertices[2*i+1] = (sprite.vertices[2*i+1] + Vdp1Regs->localY) * _Ygl->vdp1hratio;
+    sprite.vertices[2*i] = (sprite.vertices[2*i]) * _Ygl->vdp1wratio;
+    sprite.vertices[2*i+1] = (sprite.vertices[2*i+1]) * _Ygl->vdp1hratio;
   }
 
   tmp = cmd->CMDSRCA;
