@@ -107,6 +107,8 @@ const Game BiosList =
         BIOS_BLOB, "epr-17953a.ic8", 0x000000, 0x080000,
         BIOS_BLOB, "epr17954a.ic8", 0x000000, 0x080000,
         BIOS_BLOB, "epr-17954a.ic8", 0x000000, 0x080000,
+	BIOS_BLOB, "epr18022.ic2", 0x000000, 0x080000,
+	BIOS_BLOB, "epr-18022.ic2", 0x000000, 0x080000,
         BIOS_BLOB, "epr18343.bin", 0x000000, 0x080000,
         BIOS_BLOB, "epr19730.ic8", 0x000000, 0x080000,
         BIOS_BLOB, "epr-19730.ic8", 0x000000, 0x080000,
