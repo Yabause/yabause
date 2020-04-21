@@ -473,351 +473,337 @@ void checkClipCmd(int* sysClipAddr, int* usrClipAddr, int* localCoordAddr, u8 * 
   regs->addr = oldaddr;
 }
 
-static void Vdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer){
-  vdp1cmd_struct cmd;
+static void Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer){
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-  if ((cmd.CMDSIZE & 0x8000)) {
+  if ((cmd->CMDSIZE & 0x8000)) {
     regs->EDSR |= 2;
     return; // BAD Command
   }
-  if (((cmd.CMDPMOD >> 3) & 0x7) > 5) {
+  if (((cmd->CMDPMOD >> 3) & 0x7) > 5) {
     // damaged data
     yabsys.vdp1cycles += 70;
     return;
   }
-  cmd.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
-  cmd.h = cmd.CMDSIZE & 0xFF;
-  if (cmd.w == 0 || cmd.h == 0) {
+  cmd->w = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
+  cmd->h = cmd->CMDSIZE & 0xFF;
+  if (cmd->w == 0 || cmd->h == 0) {
     yabsys.vdp1cycles += 70;
     return; //bad command
   }
 
-  int w = (sqrt((cmd.CMDXA - cmd.CMDXB)*(cmd.CMDXA - cmd.CMDXB)) + sqrt((cmd.CMDXD - cmd.CMDXC)*(cmd.CMDXD - cmd.CMDXC)))/2;
-  int h = (sqrt((cmd.CMDYA - cmd.CMDYD)*(cmd.CMDYA - cmd.CMDYD)) + sqrt((cmd.CMDYB - cmd.CMDYC)*(cmd.CMDYB - cmd.CMDYC)))/2;
+  cmd->flip = (cmd->CMDCTRL & 0x30) >> 4;
+  cmd->priority = 0;
+
+  CONVERTCMD(cmd->CMDXA);
+  CONVERTCMD(cmd->CMDYA);
+  cmd->CMDXA += regs->localX;
+  cmd->CMDYA += regs->localY;
+
+  cmd->CMDXB = cmd->CMDXA + cmd->w - 1;
+  cmd->CMDYB = cmd->CMDYA;
+  cmd->CMDXC = cmd->CMDXA + cmd->w - 1;
+  cmd->CMDYC = cmd->CMDYA + cmd->h -1;
+  cmd->CMDXD = cmd->CMDXA;
+  cmd->CMDYD = cmd->CMDYA + cmd->h - 1;
+
+  int w = (sqrt((cmd->CMDXA - cmd->CMDXB)*(cmd->CMDXA - cmd->CMDXB)) + sqrt((cmd->CMDXD - cmd->CMDXC)*(cmd->CMDXD - cmd->CMDXC)))/2;
+  int h = (sqrt((cmd->CMDYA - cmd->CMDYD)*(cmd->CMDYA - cmd->CMDYD)) + sqrt((cmd->CMDYB - cmd->CMDYC)*(cmd->CMDYB - cmd->CMDYC)))/2;
   yabsys.vdp1cycles+= 70 + (w * h * 3) + (w * 5);
 
-  cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
-  cmd.priority = 0;
-
-  CONVERTCMD(cmd.CMDXA);
-  CONVERTCMD(cmd.CMDYA);
-  cmd.CMDXA += regs->localX;
-  cmd.CMDYA += regs->localY;
-
-  cmd.CMDXB = cmd.CMDXA + cmd.w - 1;
-  cmd.CMDYB = cmd.CMDYA;
-  cmd.CMDXC = cmd.CMDXA + cmd.w - 1;
-  cmd.CMDYC = cmd.CMDYA + cmd.h -1;
-  cmd.CMDXD = cmd.CMDXA;
-  cmd.CMDYD = cmd.CMDYA + cmd.h - 1;
-
-  memset(cmd.G, 0, sizeof(float)*16);
-  if ((cmd.CMDPMOD & 4))
+  memset(cmd->G, 0, sizeof(float)*16);
+  if ((cmd->CMDPMOD & 4))
   {
     yabsys.vdp1cycles+= 232;
     for (int i = 0; i < 4; i++){
       u16 color2 = Vdp1RamReadWord(NULL, ram, (Vdp1RamReadWord(NULL, ram, regs->addr + 0x1C) << 3) + (i << 1));
-      cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
     }
   }
 
-  VIDCore->Vdp1NormalSpriteDraw(&cmd, ram, regs, back_framebuffer);
+  VIDCore->Vdp1NormalSpriteDraw(cmd, ram, regs, back_framebuffer);
 }
 
-static void Vdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
-  vdp1cmd_struct cmd;
+static void Vdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
   s16 rw = 0, rh = 0;
   s16 x, y;
 
-  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
-
-  if (cmd.CMDSIZE == 0) {
+  if (cmd->CMDSIZE == 0) {
     yabsys.vdp1cycles += 70;
     return; // BAD Command
   }
-  cmd.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
-  cmd.h = cmd.CMDSIZE & 0xFF;
-  cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
-  cmd.priority = 0;
+  cmd->w = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
+  cmd->h = cmd->CMDSIZE & 0xFF;
+  cmd->flip = (cmd->CMDCTRL & 0x30) >> 4;
+  cmd->priority = 0;
 
-  CONVERTCMD(cmd.CMDXA);
-  CONVERTCMD(cmd.CMDYA);
-  CONVERTCMD(cmd.CMDXB);
-  CONVERTCMD(cmd.CMDYB);
-  CONVERTCMD(cmd.CMDXC);
-  CONVERTCMD(cmd.CMDYC);
+  CONVERTCMD(cmd->CMDXA);
+  CONVERTCMD(cmd->CMDYA);
+  CONVERTCMD(cmd->CMDXB);
+  CONVERTCMD(cmd->CMDYB);
+  CONVERTCMD(cmd->CMDXC);
+  CONVERTCMD(cmd->CMDYC);
 
-  x = cmd.CMDXA;
-  y = cmd.CMDYA;
+  x = cmd->CMDXA;
+  y = cmd->CMDYA;
   // Setup Zoom Point
-  switch ((cmd.CMDCTRL & 0xF00) >> 8)
+  switch ((cmd->CMDCTRL & 0xF00) >> 8)
   {
   case 0x0: // Only two coordinates
-    rw = cmd.CMDXC - cmd.CMDXA;
-    rh = cmd.CMDYC - cmd.CMDYA;
+    rw = cmd->CMDXC - cmd->CMDXA;
+    rh = cmd->CMDYC - cmd->CMDYA;
     break;
   case 0x5: // Upper-left
-    rw = cmd.CMDXB;
-    rh = cmd.CMDYB;
+    rw = cmd->CMDXB;
+    rh = cmd->CMDYB;
     break;
   case 0x6: // Upper-Center
-    rw = cmd.CMDXB;
-    rh = cmd.CMDYB;
+    rw = cmd->CMDXB;
+    rh = cmd->CMDYB;
     x = x - rw / 2;
     break;
   case 0x7: // Upper-Right
-    rw = cmd.CMDXB;
-    rh = cmd.CMDYB;
+    rw = cmd->CMDXB;
+    rh = cmd->CMDYB;
     x = x - rw;
     break;
   case 0x9: // Center-left
-    rw = cmd.CMDXB;
-    rh = cmd.CMDYB;
+    rw = cmd->CMDXB;
+    rh = cmd->CMDYB;
     y = y - rh / 2;
     break;
   case 0xA: // Center-center
-    rw = cmd.CMDXB;
-    rh = cmd.CMDYB;
+    rw = cmd->CMDXB;
+    rh = cmd->CMDYB;
     x = x - rw / 2;
     y = y - rh / 2;
     break;
   case 0xB: // Center-right
-    rw = cmd.CMDXB;
-    rh = cmd.CMDYB;
+    rw = cmd->CMDXB;
+    rh = cmd->CMDYB;
     x = x - rw;
     y = y - rh / 2;
     break;
   case 0xD: // Lower-left
-    rw = cmd.CMDXB;
-    rh = cmd.CMDYB;
+    rw = cmd->CMDXB;
+    rh = cmd->CMDYB;
     y = y - rh;
     break;
   case 0xE: // Lower-center
-    rw = cmd.CMDXB;
-    rh = cmd.CMDYB;
+    rw = cmd->CMDXB;
+    rh = cmd->CMDYB;
     x = x - rw / 2;
     y = y - rh;
     break;
   case 0xF: // Lower-right
-    rw = cmd.CMDXB;
-    rh = cmd.CMDYB;
+    rw = cmd->CMDXB;
+    rh = cmd->CMDYB;
     x = x - rw;
     y = y - rh;
     break;
   default: break;
   }
 
-  cmd.CMDXA = x + regs->localX;
-  cmd.CMDYA = y + regs->localY;
-  cmd.CMDXB = x + rw  + regs->localX;
-  cmd.CMDYB = y + regs->localY;
-  cmd.CMDXC = x + rw  + regs->localX;
-  cmd.CMDYC = y + rh + regs->localY;
-  cmd.CMDXD = x + regs->localX;
-  cmd.CMDYD = y + rh + regs->localY;
+  cmd->CMDXA = x + regs->localX;
+  cmd->CMDYA = y + regs->localY;
+  cmd->CMDXB = x + rw  + regs->localX;
+  cmd->CMDYB = y + regs->localY;
+  cmd->CMDXC = x + rw  + regs->localX;
+  cmd->CMDYC = y + rh + regs->localY;
+  cmd->CMDXD = x + regs->localX;
+  cmd->CMDYD = y + rh + regs->localY;
 
   yabsys.vdp1cycles += 70 + (rw * rh * 3) + (rw * 5);
 
   //gouraud
-  memset(cmd.G, 0, sizeof(float)*16);
-  if ((cmd.CMDPMOD & 4))
+  memset(cmd->G, 0, sizeof(float)*16);
+  if ((cmd->CMDPMOD & 4))
   {
     yabsys.vdp1cycles+= 232;
     for (int i = 0; i < 4; i++){
       u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
-      cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
     }
   }
 
-  VIDCore->Vdp1ScaledSpriteDraw(&cmd, ram, regs, back_framebuffer);
+  VIDCore->Vdp1ScaledSpriteDraw(cmd, ram, regs, back_framebuffer);
 }
 
-static void Vdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
-  vdp1cmd_struct cmd;
+static void Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
-  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
-  if (cmd.CMDSIZE == 0) {
+  if (cmd->CMDSIZE == 0) {
     yabsys.vdp1cycles += 70;
     return; // BAD Command
   }
 
-  cmd.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
-  cmd.h = cmd.CMDSIZE & 0xFF;
-  cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
-  cmd.priority = 0;
+  cmd->w = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
+  cmd->h = cmd->CMDSIZE & 0xFF;
+  cmd->flip = (cmd->CMDCTRL & 0x30) >> 4;
+  cmd->priority = 0;
 
-  CONVERTCMD(cmd.CMDXA);
-  CONVERTCMD(cmd.CMDYA);
-  CONVERTCMD(cmd.CMDXB);
-  CONVERTCMD(cmd.CMDYB);
-  CONVERTCMD(cmd.CMDXC);
-  CONVERTCMD(cmd.CMDYC);
-  CONVERTCMD(cmd.CMDXD);
-  CONVERTCMD(cmd.CMDYD);
+  CONVERTCMD(cmd->CMDXA);
+  CONVERTCMD(cmd->CMDYA);
+  CONVERTCMD(cmd->CMDXB);
+  CONVERTCMD(cmd->CMDYB);
+  CONVERTCMD(cmd->CMDXC);
+  CONVERTCMD(cmd->CMDYC);
+  CONVERTCMD(cmd->CMDXD);
+  CONVERTCMD(cmd->CMDYD);
 
-  cmd.CMDXA += regs->localX;
-  cmd.CMDYA += regs->localY;
-  cmd.CMDXB += regs->localX;
-  cmd.CMDYB += regs->localY;
-  cmd.CMDXC += regs->localX;
-  cmd.CMDYC += regs->localY;
-  cmd.CMDXD += regs->localX;
-  cmd.CMDYD += regs->localY;
+  cmd->CMDXA += regs->localX;
+  cmd->CMDYA += regs->localY;
+  cmd->CMDXB += regs->localX;
+  cmd->CMDYB += regs->localY;
+  cmd->CMDXC += regs->localX;
+  cmd->CMDYC += regs->localY;
+  cmd->CMDXD += regs->localX;
+  cmd->CMDYD += regs->localY;
 
-  int w = (sqrt((cmd.CMDXA - cmd.CMDXB)*(cmd.CMDXA - cmd.CMDXB)) + sqrt((cmd.CMDXD - cmd.CMDXC)*(cmd.CMDXD - cmd.CMDXC)))/2;
-  int h = (sqrt((cmd.CMDYA - cmd.CMDYD)*(cmd.CMDYA - cmd.CMDYD)) + sqrt((cmd.CMDYB - cmd.CMDYC)*(cmd.CMDYB - cmd.CMDYC)))/2;
+  int w = (sqrt((cmd->CMDXA - cmd->CMDXB)*(cmd->CMDXA - cmd->CMDXB)) + sqrt((cmd->CMDXD - cmd->CMDXC)*(cmd->CMDXD - cmd->CMDXC)))/2;
+  int h = (sqrt((cmd->CMDYA - cmd->CMDYD)*(cmd->CMDYA - cmd->CMDYD)) + sqrt((cmd->CMDYB - cmd->CMDYC)*(cmd->CMDYB - cmd->CMDYC)))/2;
   yabsys.vdp1cycles+= 70 + (w * h * 3) + (w * 5);
 
-  memset(cmd.G, 0, sizeof(float)*16);
-  if ((cmd.CMDPMOD & 4))
+  memset(cmd->G, 0, sizeof(float)*16);
+  if ((cmd->CMDPMOD & 4))
   {
     yabsys.vdp1cycles+= 232;
     for (int i = 0; i < 4; i++){
       u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
-      cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
     }
   }
 
-  VIDCore->Vdp1DistortedSpriteDraw(&cmd, ram, regs, back_framebuffer);
+  VIDCore->Vdp1DistortedSpriteDraw(cmd, ram, regs, back_framebuffer);
 }
 
-static void Vdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
-  vdp1cmd_struct cmd;
+static void Vdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
-  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+  CONVERTCMD(cmd->CMDXA);
+  CONVERTCMD(cmd->CMDYA);
+  CONVERTCMD(cmd->CMDXB);
+  CONVERTCMD(cmd->CMDYB);
+  CONVERTCMD(cmd->CMDXC);
+  CONVERTCMD(cmd->CMDYC);
+  CONVERTCMD(cmd->CMDXD);
+  CONVERTCMD(cmd->CMDYD);
 
-  CONVERTCMD(cmd.CMDXA);
-  CONVERTCMD(cmd.CMDYA);
-  CONVERTCMD(cmd.CMDXB);
-  CONVERTCMD(cmd.CMDYB);
-  CONVERTCMD(cmd.CMDXC);
-  CONVERTCMD(cmd.CMDYC);
-  CONVERTCMD(cmd.CMDXD);
-  CONVERTCMD(cmd.CMDYD);
+  cmd->CMDXA += regs->localX;
+  cmd->CMDYA += regs->localY;
+  cmd->CMDXB += regs->localX;
+  cmd->CMDYB += regs->localY;
+  cmd->CMDXC += regs->localX;
+  cmd->CMDYC += regs->localY;
+  cmd->CMDXD += regs->localX;
+  cmd->CMDYD += regs->localY;
 
-  cmd.CMDXA += regs->localX;
-  cmd.CMDYA += regs->localY;
-  cmd.CMDXB += regs->localX;
-  cmd.CMDYB += regs->localY;
-  cmd.CMDXC += regs->localX;
-  cmd.CMDYC += regs->localY;
-  cmd.CMDXD += regs->localX;
-  cmd.CMDYD += regs->localY;
-
-  int w = (sqrt((cmd.CMDXA - cmd.CMDXB)*(cmd.CMDXA - cmd.CMDXB)) + sqrt((cmd.CMDXD - cmd.CMDXC)*(cmd.CMDXD - cmd.CMDXC)))/2;
-  int h = (sqrt((cmd.CMDYA - cmd.CMDYD)*(cmd.CMDYA - cmd.CMDYD)) + sqrt((cmd.CMDYB - cmd.CMDYC)*(cmd.CMDYB - cmd.CMDYC)))/2;
+  int w = (sqrt((cmd->CMDXA - cmd->CMDXB)*(cmd->CMDXA - cmd->CMDXB)) + sqrt((cmd->CMDXD - cmd->CMDXC)*(cmd->CMDXD - cmd->CMDXC)))/2;
+  int h = (sqrt((cmd->CMDYA - cmd->CMDYD)*(cmd->CMDYA - cmd->CMDYD)) + sqrt((cmd->CMDYB - cmd->CMDYC)*(cmd->CMDYB - cmd->CMDYC)))/2;
   yabsys.vdp1cycles += 16 + (w * h) + (w * 2);
 
   //gouraud
-  memset(cmd.G, 0, sizeof(float)*16);
-  if ((cmd.CMDPMOD & 4))
+  memset(cmd->G, 0, sizeof(float)*16);
+  if ((cmd->CMDPMOD & 4))
   {
     yabsys.vdp1cycles+= 232;
     for (int i = 0; i < 4; i++){
       u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
-      cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
     }
   }
-  cmd.priority = 0;
-  cmd.w = 1;
-  cmd.h = 1;
-  cmd.flip = 0;
+  cmd->priority = 0;
+  cmd->w = 1;
+  cmd->h = 1;
+  cmd->flip = 0;
 
-  VIDCore->Vdp1PolygonDraw(&cmd, ram, regs, back_framebuffer);
+  VIDCore->Vdp1PolygonDraw(cmd, ram, regs, back_framebuffer);
 }
 
-static void Vdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
-  vdp1cmd_struct cmd;
+static void Vdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
+
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
-  cmd.priority = 0;
-  cmd.w = 1;
-  cmd.h = 1;
-  cmd.flip = 0;
+  cmd->priority = 0;
+  cmd->w = 1;
+  cmd->h = 1;
+  cmd->flip = 0;
 
-  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+  CONVERTCMD(cmd->CMDXA);
+  CONVERTCMD(cmd->CMDYA);
+  CONVERTCMD(cmd->CMDXB);
+  CONVERTCMD(cmd->CMDYB);
+  CONVERTCMD(cmd->CMDXC);
+  CONVERTCMD(cmd->CMDYC);
+  CONVERTCMD(cmd->CMDXD);
+  CONVERTCMD(cmd->CMDYD);
 
-  CONVERTCMD(cmd.CMDXA);
-  CONVERTCMD(cmd.CMDYA);
-  CONVERTCMD(cmd.CMDXB);
-  CONVERTCMD(cmd.CMDYB);
-  CONVERTCMD(cmd.CMDXC);
-  CONVERTCMD(cmd.CMDYC);
-  CONVERTCMD(cmd.CMDXD);
-  CONVERTCMD(cmd.CMDYD);
-
-  cmd.CMDXA += regs->localX;
-  cmd.CMDYA += regs->localY;
-  cmd.CMDXB += regs->localX;
-  cmd.CMDYB += regs->localY;
-  cmd.CMDXC += regs->localX;
-  cmd.CMDYC += regs->localY;
-  cmd.CMDXD += regs->localX;
-  cmd.CMDYD += regs->localY;
+  cmd->CMDXA += regs->localX;
+  cmd->CMDYA += regs->localY;
+  cmd->CMDXB += regs->localX;
+  cmd->CMDYB += regs->localY;
+  cmd->CMDXC += regs->localX;
+  cmd->CMDYC += regs->localY;
+  cmd->CMDXD += regs->localX;
+  cmd->CMDYD += regs->localY;
 
   //gouraud
-  memset(cmd.G, 0, sizeof(float)*16);
-  if ((cmd.CMDPMOD & 4))
+  memset(cmd->G, 0, sizeof(float)*16);
+  if ((cmd->CMDPMOD & 4))
   {
     for (int i = 0; i < 4; i++){
       u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
-      cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-      cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+      cmd->G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
     }
   }
-  VIDCore->Vdp1PolylineDraw(&cmd, ram, regs, back_framebuffer);
+  VIDCore->Vdp1PolylineDraw(cmd, ram, regs, back_framebuffer);
 }
 
-static void Vdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
-  vdp1cmd_struct cmd;
+static void Vdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
-  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
 
-  CONVERTCMD(cmd.CMDXA);
-  CONVERTCMD(cmd.CMDYA);
-  CONVERTCMD(cmd.CMDXB);
-  CONVERTCMD(cmd.CMDYB);
+  CONVERTCMD(cmd->CMDXA);
+  CONVERTCMD(cmd->CMDYA);
+  CONVERTCMD(cmd->CMDXB);
+  CONVERTCMD(cmd->CMDYB);
 
-  cmd.CMDXA += regs->localX;
-  cmd.CMDYA += regs->localY;
-  cmd.CMDXB += regs->localX;
-  cmd.CMDYB += regs->localY;
-  cmd.CMDXC = cmd.CMDXB;
-  cmd.CMDYC = cmd.CMDYB;
-  cmd.CMDXD = cmd.CMDXA;
-  cmd.CMDYD = cmd.CMDYA;
+  cmd->CMDXA += regs->localX;
+  cmd->CMDYA += regs->localY;
+  cmd->CMDXB += regs->localX;
+  cmd->CMDYB += regs->localY;
+  cmd->CMDXC = cmd->CMDXB;
+  cmd->CMDYC = cmd->CMDYB;
+  cmd->CMDXD = cmd->CMDXA;
+  cmd->CMDYD = cmd->CMDYA;
 
   //gouraud
-  memset(cmd.G, 0, sizeof(float)*16);
-  if ((cmd.CMDPMOD & 4))
+  memset(cmd->G, 0, sizeof(float)*16);
+  if ((cmd->CMDPMOD & 4))
   {
   for (int i = 0; i < 4; i++){
     u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
-    cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-    cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-    cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+    cmd->G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+    cmd->G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+    cmd->G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
   }
   }
-  cmd.priority = 0;
-  cmd.w = 1;
-  cmd.h = 1;
-  cmd.flip = 0;
+  cmd->priority = 0;
+  cmd->w = 1;
+  cmd->h = 1;
+  cmd->flip = 0;
 
-  VIDCore->Vdp1LineDraw(&cmd, ram, regs, back_framebuffer);
+  VIDCore->Vdp1LineDraw(cmd, ram, regs, back_framebuffer);
 }
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
@@ -881,33 +867,35 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       yabsys.vdp1cycles += 16;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
+         vdp1cmd_struct cmd;
+         Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
          switch (command & 0x000F) {
          case 0: // normal sprite draw
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1NormalSpriteDraw(ram, regs, back_framebuffer);
+            Vdp1NormalSpriteDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 1: // scaled sprite draw
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer);
+            Vdp1ScaledSpriteDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 2: // distorted sprite draw
          case 3: /* this one should be invalid, but some games
                  (Hardcore 4x4 for instance) use it instead of 2 */
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer);
+            Vdp1DistortedSpriteDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 4: // polygon draw
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1PolygonDraw(ram, regs, back_framebuffer);
+            Vdp1PolygonDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 5: // polyline draw
          case 7: // undocumented mirror
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1PolylineDraw(ram, regs, back_framebuffer);
+            Vdp1PolylineDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 6: // line draw
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
-            Vdp1LineDraw(ram, regs, back_framebuffer);
+            Vdp1LineDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
