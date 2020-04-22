@@ -21,7 +21,7 @@
 #include "decrypt.h"
 #include "zlib.h"
 
-#define LOGSTV printf
+#define LOGSTV
 //YuiMsg
 #define ROTATED 1
 
