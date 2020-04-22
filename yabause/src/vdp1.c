@@ -511,7 +511,7 @@ static int Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
 
   int w = (sqrt((cmd->CMDXA - cmd->CMDXB)*(cmd->CMDXA - cmd->CMDXB)) + sqrt((cmd->CMDXD - cmd->CMDXC)*(cmd->CMDXD - cmd->CMDXC)))/2;
   int h = (sqrt((cmd->CMDYA - cmd->CMDYD)*(cmd->CMDYA - cmd->CMDYD)) + sqrt((cmd->CMDYB - cmd->CMDYC)*(cmd->CMDYB - cmd->CMDYC)))/2;
-  yabsys.vdp1cycles+= 70 + (w * h * 3) + (w * 5);
+  yabsys.vdp1cycles+= 16 + (w * h) + (w * 2);
 
   memset(cmd->G, 0, sizeof(float)*16);
   if ((cmd->CMDPMOD & 4))
@@ -619,7 +619,7 @@ static int Vdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   cmd->CMDXD = x + regs->localX;
   cmd->CMDYD = y + rh + regs->localY;
 
-  yabsys.vdp1cycles += 70 + (rw * rh * 3) + (rw * 5);
+  yabsys.vdp1cycles += 16 + (rw * rh) + (rw * 2);
 
   //gouraud
   memset(cmd->G, 0, sizeof(float)*16);
@@ -671,7 +671,7 @@ static int Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
 
   int w = (sqrt((cmd->CMDXA - cmd->CMDXB)*(cmd->CMDXA - cmd->CMDXB)) + sqrt((cmd->CMDXD - cmd->CMDXC)*(cmd->CMDXD - cmd->CMDXC)))/2;
   int h = (sqrt((cmd->CMDYA - cmd->CMDYD)*(cmd->CMDYA - cmd->CMDYD)) + sqrt((cmd->CMDYB - cmd->CMDYC)*(cmd->CMDYB - cmd->CMDYC)))/2;
-  yabsys.vdp1cycles+= 70 + (w * h * 3) + (w * 5);
+  yabsys.vdp1cycles+= 70 + (w * h * 3) + (h * 5);
 
   memset(cmd->G, 0, sizeof(float)*16);
   if ((cmd->CMDPMOD & 4))
@@ -937,7 +937,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    nbCmdToProcess = 0;
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
-      yabsys.vdp1cycles += 16;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          vdp1cmdctrl_struct *ctrl = NULL;
@@ -997,14 +996,17 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
             checkClipCmd(&sysClipAddr, NULL, &localCoordAddr, ram, regs);
+            yabsys.vdp1cycles += 16;
             usrClipAddr = regs->addr;
             break;
          case 9: // system clipping coordinates
             checkClipCmd(NULL, &usrClipAddr, &localCoordAddr, ram, regs);
+            yabsys.vdp1cycles += 16;
             sysClipAddr = regs->addr;
             break;
          case 10: // local coordinate
             checkClipCmd(&sysClipAddr, &usrClipAddr, NULL, ram, regs);
+            yabsys.vdp1cycles += 16;
             localCoordAddr = regs->addr;
             break;
          default: // Abort
