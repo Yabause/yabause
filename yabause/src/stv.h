@@ -42,9 +42,10 @@ typedef enum{
 
 typedef struct FileEntry_s{
   blobType type;
-  char* filename;
+  char filename[1024];
   u32 offset;
   u32 length;
+  u32 crc32;
 } FileEntry;
 
 typedef struct Game_s{
