@@ -948,6 +948,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
+            if (ctrl->completionLine == yabsys.LineCount) ctrl->completionLine = -1;
             nbCmdToProcess += Vdp1NormalSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
             break;
@@ -955,6 +956,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
+            if (ctrl->completionLine == yabsys.LineCount) ctrl->completionLine = -1;
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             nbCmdToProcess += Vdp1ScaledSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
@@ -965,6 +967,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
+            if (ctrl->completionLine == yabsys.LineCount) ctrl->completionLine = -1;
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             nbCmdToProcess += Vdp1DistortedSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
@@ -973,6 +976,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
+            if (ctrl->completionLine == yabsys.LineCount) ctrl->completionLine = -1;
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             nbCmdToProcess += Vdp1PolygonDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
@@ -982,6 +986,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
+            if (ctrl->completionLine == yabsys.LineCount) ctrl->completionLine = -1;
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             nbCmdToProcess += Vdp1PolylineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
@@ -990,6 +995,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
+            if (ctrl->completionLine == yabsys.LineCount) ctrl->completionLine = -1;
             checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
             nbCmdToProcess += Vdp1LineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             setupSpriteLimit(ctrl);
