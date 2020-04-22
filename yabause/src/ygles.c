@@ -2572,6 +2572,9 @@ void executeTMVDP1(int in, int out) {
   }
 }
 
+void YglComposeVdp1(void) {
+  executeTMVDP1(_Ygl->drawframe, _Ygl->drawframe);
+}
 //////////////////////////////////////////////////////////////////////////////
 void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;

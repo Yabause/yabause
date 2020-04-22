@@ -147,6 +147,7 @@ void VIDOGLVdp2DispOff(void);
 void waitVdp2DrawScreensEnd(int sync, int abort);
 static int isEnabled(int id, Vdp2* varVdp2Regs);
 extern int YglGenFrameBuffer(int force);
+extern void YglComposeVdp1(void);
 
 
 VideoInterface_struct VIDOGL = {
@@ -180,7 +181,7 @@ VIDOGLSync,
 VIDOGLGetNativeResolution,
 VIDOGLVdp2DispOff,
 YglRender,
-NULL,
+YglComposeVdp1,
 YglGenFrameBuffer,
 NULL
 };

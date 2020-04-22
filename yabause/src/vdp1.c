@@ -2254,6 +2254,9 @@ void Vdp1HBlankIN(void)
   if (cmdBufferBeingProcessed[nbCmdToProcess-1].completionLine == yabsys.LineCount) {
     vdp1Ram_update_start = 0x80000;
     vdp1Ram_update_end = 0x0;
+    if (VIDCore != NULL) {
+      if (VIDCore->composeVDP1 != NULL) VIDCore->composeVDP1();
+    }
   }
   if(yabsys.LineCount == 0) {
     startField();
@@ -2283,9 +2286,9 @@ extern void vdp1_compute();
 void Vdp1VBlankIN(void)
 {
   Vdp1Regs->COPR = Vdp1Regs->lCOPR;
-  if (VIDCore != NULL) {
-    if (VIDCore->composeVDP1 != NULL) VIDCore->composeVDP1();
-  }
+  // if (VIDCore != NULL) {
+  //   if (VIDCore->composeVDP1 != NULL) VIDCore->composeVDP1();
+  // }
 }
 
 //////////////////////////////////////////////////////////////////////////////
