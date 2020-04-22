@@ -2241,7 +2241,7 @@ static void startField(void) {
 void Vdp1HBlankIN(void)
 {
   for (int i = 0; i<nbCmdToProcess; i++) {
-    if (cmdBufferBeingProcessed[i].completionLine == yabsys.LineCount) {
+    if (cmdBufferBeingProcessed[i].completionLine == yabsys.LineCount+1) {
       if (!((cmdBufferBeingProcessed[i].start_addr >= vdp1Ram_update_end) ||
           (cmdBufferBeingProcessed[i].end_addr <= vdp1Ram_update_start))) {
         if (Vdp1External.checkEDSR == 0) {
