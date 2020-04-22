@@ -2249,9 +2249,10 @@ void Vdp1HBlankIN(void)
             VIDCore->Vdp1RegenerateCmd(&cmdBufferBeingProcessed[i].cmd);
         }
       }
+      cmdBufferBeingProcessed[i].completionLine = -1;
     }
   }
-  if (cmdBufferBeingProcessed[nbCmdToProcess-1].completionLine == yabsys.LineCount) {
+  if (cmdBufferBeingProcessed[nbCmdToProcess-1].completionLine == -1) {
     vdp1Ram_update_start = 0x80000;
     vdp1Ram_update_end = 0x0;
     if (VIDCore != NULL) {
