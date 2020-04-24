@@ -181,7 +181,7 @@ VIDOGLSync,
 VIDOGLGetNativeResolution,
 VIDOGLVdp2DispOff,
 YglRender,
-YglComposeVdp1,
+NULL, // YglComposeVdp1,
 YglGenFrameBuffer,
 NULL
 };
