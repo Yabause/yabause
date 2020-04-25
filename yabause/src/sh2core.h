@@ -292,7 +292,6 @@ typedef struct
    u32 DAR0;   // 0xFFFFFF84
    u32 TCR0;   // 0xFFFFFF88
    u32 CHCR0;  // 0xFFFFFF8C
-   u32 CHCR0M;
    u32 SAR1;   // 0xFFFFFF90
    u32 DAR1;   // 0xFFFFFF94
    u32 TCR1;   // 0xFFFFFF98
@@ -309,6 +308,7 @@ typedef struct
    u16 RTCNT;  // 0xFFFFFFF4
    u16 RTCOR;  // 0xFFFFFFF8
    cache_enty cache;
+   u32 CHCR0M;
 } Onchip_struct;
 
 typedef struct
