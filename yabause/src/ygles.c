@@ -3719,7 +3719,6 @@ void YglChangeResolution(int w, int h) {
   float ratio = (float)w/(float)h;
   int par = w/h;
   releaseVDP1FB();
-       YGLDEBUG("YglChangeResolution %d,%d\n",w,h);
        if (_Ygl->smallfbo != 0) {
          glDeleteFramebuffers(1, &_Ygl->smallfbo);
          _Ygl->smallfbo = 0;
@@ -3748,29 +3747,39 @@ void YglChangeResolution(int w, int h) {
        _Ygl->upfbotex = 0;
      }
      int scale = 1;
+     int upHeight = 4096;
+     int uh = h * _Ygl->vdp2wdensity; //uniformize density
+     int uw = w * _Ygl->vdp2hdensity; //uniformize density
      switch (_Ygl->resolution_mode) {
        case RES_480p: //480p
-        scale = floor(480.0/(float)h);
+          scale = floor(480.0/(float)uh);
        break;
        case RES_720p: //720p
-        scale = floor(720.0/(float)h);
+        scale = floor(720.0/(float)uh);
        break;
        case RES_1080p: //1080p
-        scale = floor(1080.0/(float)h);
+        scale = floor(1080.0/(float)uh);
        break;
        case RES_NATIVE: //Native
-        scale = floor(GlHeight/(float)h);
+        if ((GlHeight*4) > (GlWidth*3)) {
+          scale = floor(GlHeight/(float)uh);
+        } else {
+          scale = floor((GlWidth)/(float)uw);
+        }
        break;
        case RES_ORIGINAL: //Original
        default:
         scale = 1;
      }
-     if (scale == 0) scale = 1;
+     if (scale == 0){
+       scale = 1;
+     };
      _Ygl->rwidth = w;
      _Ygl->rheight = h;
-     _Ygl->height = h * scale *_Ygl->vdp2wdensity/_Ygl->vdp2hdensity;
-     _Ygl->width = w * scale;
+     _Ygl->height = uh * scale;
+     _Ygl->width = uw * scale;
 
+     YGLDEBUG("YglChangeResolution %dx%d => %d => %dx%d (%.1f,%.1f) (%d %d)\n",w,h, scale, _Ygl->width, _Ygl->height,_Ygl->vdp2wdensity,_Ygl->vdp2hdensity, uw, uh);
 
   // Texture size for vdp1
   _Ygl->vdp1width = 512*scale*_Ygl->vdp1wdensity;
