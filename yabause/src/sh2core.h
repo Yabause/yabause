@@ -56,7 +56,7 @@ extern "C" {
 #undef MACH
 #endif
 
-//#define DMPHISTORY
+#define DMPHISTORY
 #define MAX_DMPHISTORY (512)
 
 // UBC Flags
@@ -292,6 +292,7 @@ typedef struct
    u32 DAR0;   // 0xFFFFFF84
    u32 TCR0;   // 0xFFFFFF88
    u32 CHCR0;  // 0xFFFFFF8C
+   u32 CHCR0M;
    u32 SAR1;   // 0xFFFFFF90
    u32 DAR1;   // 0xFFFFFF94
    u32 TCR1;   // 0xFFFFFF98

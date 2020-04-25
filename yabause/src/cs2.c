@@ -879,6 +879,7 @@ void Cs2Reset(void) {
   Cs2Area->_statustiming = 1000000;
   Cs2Area->_periodiccycles = 0;
   Cs2Area->_commandtiming = 0;
+  Cs2Area->_command_execlock = 0;
   Cs2SetTiming(0);
 
   // MPEG specific stuff
@@ -926,13 +927,24 @@ int Cs2ForceCloseTray( int coreid, const char * cdpath ){
   return 0;
 };
 
-
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2Exec(u32 timing) {
    Cs2Area->_statuscycles += timing * 3;
    Cs2Area->_periodiccycles += timing * 3;
 
+   // Command is not acceptable while other command is executing
+   if( Cs2Area->_command_execlock > 0  ){
+      Cs2Area->_command_execlock -= timing;
+   }
+
+   if( Cs2Area->_command_execlock <= 0 && Cs2Area->_commandtiming ){
+      Cs2Execute();
+      Cs2Area->_commandtiming = 0;
+   }
+
+
+#if 0
    if (Cs2Area->_commandtiming > 0)
    {
       if (Cs2Area->_commandtiming < timing)
@@ -940,9 +952,12 @@ void Cs2Exec(u32 timing) {
          Cs2Execute();
          Cs2Area->_commandtiming = 0;
       }
-      else
+      else{
+         printf("delay timing %d\n",Cs2Area->_commandtiming);
          Cs2Area->_commandtiming -= timing;
+      }
    }
+#endif   
 
    if (Cs2Area->_statuscycles >= Cs2Area->_statustiming)
    {
@@ -1164,11 +1179,13 @@ void Cs2Execute(void) {
 
   //Cs2Area->reg.HIRQ &= ~CDB_HIRQ_CMOK;
 
+  Cs2Area->_command_execlock = 1;
+
   switch (instruction) {
     case 0x00:
-      //CDLOG("cs2\t: Command: getStatus\n");
+      CDLOG("cs2\t: Command: getStatus\n");
       Cs2GetStatus();
-      //CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x01:
       CDLOG("cs2\t: Command: getHardwareInfo\n");
@@ -1274,9 +1291,9 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x51:
-      //CDLOG("cs2\t: Command: getSectorNumber %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      CDLOG("cs2\t: Command: getSectorNumber %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2GetSectorNumber();
-      //CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x52:
       CDLOG("cs2\t: Command: calculateActualSize %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
@@ -2521,6 +2538,8 @@ void Cs2DeleteSectorData(void)
 
    doCDReport(Cs2Area->status);
    Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+
+   Cs2Area->_command_execlock = 10000;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4125,7 +4144,7 @@ int Cs2SaveState(FILE * fp) {
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
 
-   offset = StateWriteHeader(fp, "CS2 ", 2);
+   offset = StateWriteHeader(fp, "CS2 ", 3);
 
    // Write cart type
    ywrite(&check, (void *) &Cs2Area->carttype, 4, 1, fp);
@@ -4227,6 +4246,8 @@ int Cs2SaveState(FILE * fp) {
    ywrite(&check, (void *)Cs2Area->mpegstm, sizeof(mpegstm_struct), 2, fp);
 
    ywrite(&check, (void *)&Cs2Area->playtype, 4, 1, fp);
+
+   ywrite(&check, (void *)&Cs2Area->_command_execlock, 4, 1, fp);
 
    return StateFinishHeader(fp, offset);
 }
@@ -4372,6 +4393,9 @@ int Cs2LoadState(FILE * fp, int version, int size) {
    yread(&check, (void *)Cs2Area->mpegstm, sizeof(mpegstm_struct), 2, fp);
 
    yread(&check, (void *)&Cs2Area->playtype, 4, 1, fp);
+
+   if (version > 2) yread(&check, (void *)&Cs2Area->_command_execlock, 4, 1, fp);
+   
 
    return size;
 }
