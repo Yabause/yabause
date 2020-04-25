@@ -152,6 +152,11 @@
             android:title="@string/str_use_compute_shader"
             android:defaultValue="false" />
 
+        <CheckBoxPreference
+            android:key="pref_immersive_mode"
+            android:title="@string/hide_status_bar_and_navigation_bar"
+            android:defaultValue="false" />
+
      </PreferenceCategory>        
     
     <PreferenceCategory android:title="@string/input_device_title">

@@ -251,5 +251,9 @@
     <string name="not_available">利用できません!</string>
     <string name="only_pro_version">この機能はPro versionのみ使用できます</string>
     <string name="got_it">了解!</string>
+    <string name="menu_save_state_cloud">状態をクラウドに保存</string>
+    <string name="menu_load_state_cloud">クラウドから状態を復帰</string>
+    <string name="hide_status_bar_and_navigation_bar">ステータスバーとナビゲーションバーを隠す</string>
+    <string name="sign_in_to_other_devices">ほかのデバイスにログインする</string>
 
 </resources>

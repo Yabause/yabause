@@ -305,5 +305,6 @@
     <string name="got_it">Got it!</string>
     <string name="enter_pinin">Enter this PIN to your device</string>
     <string name="sign_in_to_other_devices">Sign in to other devices</string>
+    <string name="hide_status_bar_and_navigation_bar">Hide Status bar and Navigation bar</string>
 </resources>
 	
