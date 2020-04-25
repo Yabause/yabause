@@ -2909,6 +2909,7 @@ void YglDrawCpuFramebufferWrite( int target ){
     glViewport(0,0,_Ygl->width,_Ygl->height);
     YglWindowFramebuffer(_Ygl->smallfbotex,_Ygl->vdp1fbo, width, height, _Ygl->rwidth, _Ygl->rheight);
     free(texbuf);
+    glViewport(_Ygl->originx, _Ygl->originy,_Ygl->width, _Ygl->height);
   }
   _Ygl->min_fb_x = 1024;
   _Ygl->max_fb_x = 0;
@@ -2977,6 +2978,7 @@ void YglRenderVDP1(void) {
   glDisable(GL_BLEND);
   glCullFace(GL_FRONT_AND_BACK);
   glDisable(GL_CULL_FACE);
+
   glViewport(0,0,_Ygl->width,_Ygl->height);
   glScissor(0, 0, _Ygl->width, _Ygl->height);
   glActiveTexture(GL_TEXTURE0);
