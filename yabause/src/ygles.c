@@ -1333,7 +1333,6 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->vdp1height = 256;
   _Ygl->widthRatio = 1.0f;
   _Ygl->heightRatio = 1.0f;
-  _Ygl->density = 1;
   _Ygl->resolution_mode = RES_ORIGINAL;
   _Ygl->rbg_use_compute_shader = 0;
   _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && getVdp2CSUsage();
@@ -3750,6 +3749,7 @@ void YglChangeResolution(int w, int h) {
      int upHeight = 4096;
      int uh = h * _Ygl->vdp2wdensity; //uniformize density
      int uw = w * _Ygl->vdp2hdensity; //uniformize density
+     int maxRes = GlHeight;
      switch (_Ygl->resolution_mode) {
        case RES_480p: //480p
           scale = floor(480.0/(float)uh);
@@ -3761,7 +3761,6 @@ void YglChangeResolution(int w, int h) {
         scale = floor(1080.0/(float)uh);
        break;
        case RES_NATIVE: //Native
-       int maxRes = GlHeight;
         if ((GlHeight * uw) > (GlWidth * uh)) {
           maxRes = GlWidth * uh / uw;
         }
@@ -3800,10 +3799,6 @@ void YglChangeResolution(int w, int h) {
   if (_Ygl->rwidth >= 640) _Ygl->widthRatio *= 2.0f;
 
   YglOrtho(&_Ygl->rbgModelView, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
-}
-
-void YglSetDensity(int d) {
-  _Ygl->density = d;
 }
 
 void VIDOGLSync(){

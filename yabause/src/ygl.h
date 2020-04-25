@@ -540,7 +540,6 @@ typedef struct {
    int vdp1height;
    float widthRatio;
    float heightRatio;
-   int density;
    int drawframe;
    int readframe;
    int vdp1On[2];
@@ -730,7 +729,6 @@ void YglRender(Vdp2 *varVdp2Regs);
 void YglReset(YglLevel level);
 void YglShowTexture(void);
 void YglChangeResolution(int, int);
-void YglSetDensity(int d);
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm);
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c, YglTextureManager *tm);
 void YglSetClearColor(float r, float g, float b);

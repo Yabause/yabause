@@ -3275,14 +3275,6 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void SetSaturnResolution(int width, int height)
-{
-  YglChangeResolution(width, height);
-  YglSetDensity((vdp2_interlace == 0) ? 1 : 2);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 int VIDOGLInit(void)
 {
   if(vidogl_renderer_started)
@@ -3310,7 +3302,7 @@ int VIDOGLInit(void)
 
   _Ygl->vdp2wdensity = 1.0;
   _Ygl->vdp2hdensity = 1.0;
-  SetSaturnResolution(320, 224);
+  YglChangeResolution(320, 224);
 
   vidogl_renderer_started = 1;
   return 0;
@@ -3366,7 +3358,7 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
   GlWidth = w;
   GlHeight = h;
 
-  SetSaturnResolution(_Ygl->rwidth, _Ygl->rheight);
+  YglChangeResolution(_Ygl->rwidth, _Ygl->rheight);
 
   _Ygl->originx = originx;
   _Ygl->originy = originy;
@@ -6152,7 +6144,7 @@ void VIDOGLVdp2SetResolution(u16 TVMD)
     break;
   case 3:
     width = 704;
-    wratio = 2;
+      wratio = 2;
     break;
   case 4:
     width = 320;
@@ -6221,7 +6213,7 @@ void VIDOGLVdp2SetResolution(u16 TVMD)
   change |= (width != _Ygl->rwidth);
   change |= (height != _Ygl->rheight);
 
-  if (change != 0)SetSaturnResolution(width, height);
+  if (change != 0)YglChangeResolution(width, height);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -6621,7 +6613,7 @@ void VIDOGLSetSettingValueMode(int type, int value) {
   case VDP_SETTING_RESOLUTION_MODE:
     if (_Ygl->resolution_mode != value) {
        _Ygl->resolution_mode = value;
-       SetSaturnResolution(_Ygl->rwidth, _Ygl->rheight);
+       YglChangeResolution(_Ygl->rwidth, _Ygl->rheight);
     }
     break;
   case VDP_SETTING_POLYGON_MODE:
@@ -6668,7 +6660,7 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     } else {
       _Ygl->rbg_use_compute_shader = value;
     }
-    SetSaturnResolution(_Ygl->rwidth, _Ygl->rheight);
+    YglChangeResolution(_Ygl->rwidth, _Ygl->rheight);
   break;
   case VDP_SETTING_ASPECT_RATIO:
     _Ygl->stretch = value;
