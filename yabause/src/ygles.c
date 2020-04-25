@@ -3761,11 +3761,11 @@ void YglChangeResolution(int w, int h) {
         scale = floor(1080.0/(float)uh);
        break;
        case RES_NATIVE: //Native
-        if ((GlHeight*4) > (GlWidth*3)) {
-          scale = floor(GlHeight/(float)uh);
-        } else {
-          scale = floor((GlWidth)/(float)uw);
+       int maxRes = GlHeight;
+        if ((GlHeight * uw) > (GlWidth * uh)) {
+          maxRes = GlWidth * uh / uw;
         }
+        scale = floor(maxRes/(float)uh);
        break;
        case RES_ORIGINAL: //Original
        default:
