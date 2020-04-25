@@ -79,7 +79,6 @@ class YMessageBox : public QMessageBox
 {
 public:
   explicit YMessageBox(QWidget *parent = Q_NULLPTR) {
-    QMessageBox::QMessageBox(parent);
   };
 
   int timeout = 0;
