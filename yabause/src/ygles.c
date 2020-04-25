@@ -3747,8 +3747,12 @@ void YglChangeResolution(int w, int h) {
      }
      int scale = 1;
      int upHeight = 4096;
-     int uh = h * _Ygl->vdp2wdensity; //uniformize density
-     int uw = w * _Ygl->vdp2hdensity; //uniformize density
+     int uh = h;
+     int uw = w;
+     if (_Ygl->vdp2wdensity / _Ygl->vdp2hdensity != 1.0) {
+       uh = h * _Ygl->vdp2wdensity; //uniformize density
+       uw = w * _Ygl->vdp2hdensity; //uniformize density
+     }
      int maxRes = GlHeight;
      switch (_Ygl->resolution_mode) {
        case RES_480p: //480p
