@@ -77,6 +77,7 @@ static int use_beetle_saves = 0;
 static int auto_select_cart = 0;
 static int use_cs = COMPUTE_RBG_OFF;
 static int wireframe_mode = 0;
+static int stv_favorite_region = STV_REGION_EU;
 static bool service_enabled = false;
 static bool stv_mode = false;
 static bool all_devices_ready = false;
@@ -1111,6 +1112,20 @@ void check_variables(void)
       else
          service_enabled = false;
    }
+
+   var.key = "kronos_stv_favorite_region";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "EU") == 0)
+         stv_favorite_region = STV_REGION_EU;
+      else if (strcmp(var.value, "US") == 0)
+         stv_favorite_region = STV_REGION_US;
+      else if (strcmp(var.value, "JP") == 0)
+         stv_favorite_region = STV_REGION_JP;
+      else if (strcmp(var.value, "TW") == 0)
+         stv_favorite_region = STV_REGION_TW;
+   }
 }
 
 static void set_descriptors(void)
@@ -1411,6 +1426,7 @@ bool retro_load_game_common()
    yinit.use_cs                  = use_cs;
    yinit.wireframe_mode          = wireframe_mode;
    yinit.skipframe               = g_skipframe;
+   yinit.stv_favorite_region     = stv_favorite_region;
 
    return true;
 }

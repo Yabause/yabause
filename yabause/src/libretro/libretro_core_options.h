@@ -223,6 +223,19 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "disabled"
    },
+   {
+      "kronos_stv_favorite_region",
+      "ST-V Favorite Region",
+      "Choose favorite bios region for STV.",
+      {
+         { "EU", NULL },
+         { "US", NULL },
+         { "JP", NULL },
+         { "TW", NULL },
+         { NULL, NULL},
+      },
+      "EU"
+   },
    { NULL, NULL, NULL, {{0}}, NULL },
 };
 
