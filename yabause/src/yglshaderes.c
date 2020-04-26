@@ -1055,10 +1055,18 @@ const GLchar * prg_input_e[PG_MAX][2];
 const GLchar * prg_input_g[PG_MAX][2];
 
 void initDrawShaderCode() {
+  int nbMode = 2;
+#if defined(_OGL3_)
+  int maj, min;
+  glGetIntegerv(GL_MAJOR_VERSION, &maj);
+  glGetIntegerv(GL_MINOR_VERSION, &min);
+  if ((maj <=3) && (min <=3)) {
+    nbMode = 1;
+  }
+#endif
   initVDP2DrawCode(vdp2blit_gl_start_f, Yglprg_vdp2_drawfb_gl_cram_f, vdp2blit_gl_end_f, vdp2blit_gl_final_f);
-
   //VDP1 Programs
-  for (int m = 0; m<2; m++) {
+  for (int m = 0; m<nbMode; m++) {
     //Normal or tesselation mode
     for (int i = 0; i<2; i++) {
        // MSB or not MSB
