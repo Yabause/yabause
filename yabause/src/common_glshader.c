@@ -537,6 +537,7 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  FBCol mesh = zeroFBCol();\n"
 "  if (fbon != 1) return ret;\n"
 "  int u_color_ram_offset = getVDP2Reg(23+line)<<8;\n"
+"  if (ram_mode != 1) u_color_ram_offset = u_color_ram_offset & 0x300;\n"
 "  fbmode = 1;\n"
 "  vdp1mode = 1;\n"
 "  ivec2 fbCoord = addr + ivec2(x*vdp1Ratio.x, 0);\n"
