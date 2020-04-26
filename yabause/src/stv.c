@@ -2888,7 +2888,7 @@ int STVInit(int id, const char *path, const char *eepromdir, int favorite_region
 }
 
 int STVDeInit(){
-  if (CartridgeArea->carttype != CART_ROMSTV) return 0;
+  if (CartridgeArea == NULL || CartridgeArea->carttype != CART_ROMSTV) return 0;
   eeprom_deinit();
   yabsys.isSTV = 0;
   return 0;
