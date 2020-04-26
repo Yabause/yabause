@@ -28,7 +28,7 @@
 #define NB_STV_GAMES 98
 
 GameLink availableGames[NB_STV_GAMES];
-GameLink biosLink;
+BiosLink biosLink;
 int loadGames(char* path);
 int copyFile(JZFile *zip, void* data);
 int copyBios(JZFile *zip, void* id);
@@ -82,33 +82,29 @@ void sanjeon_init(void) {
   }
 }
 
-Game BiosList = 
+
+Bios BiosList = 
 {
     "stvbios",
-    NULL,
     "STV Bios",
-    0x0,
-    0,
-    NULL,
-    NULL,
     {
         // For now, the emulator picks the first bios it finds so, worldwide, declaring english bioses first seems like a good idea.
         // Also, usa bioses are known for practicing censorship, so let's prioritize euro.
         // In the future it would be nice to have a way to choose this.
-        BIOS_BLOB, "epr-17954a.ic8", 0x000000, 0x080000, 0xf7722da3, // euro
-        BIOS_BLOB, "epr-17952a.ic8", 0x000000, 0x080000, 0xd1be2adf, // us
-        BIOS_BLOB, "epr-17741a.ic8", 0x000000, 0x080000, 0x4166c663, // us1
-        BIOS_BLOB, "epr-20091.ic8",  0x000000, 0x080000, 0x59ed40f4, // jp
-        BIOS_BLOB, "epr-19730.ic8",  0x000000, 0x080000, 0xd0e0889d, // jp1
-        BIOS_BLOB, "epr-17951a.ic8", 0x000000, 0x080000, 0x2672f9d8, // jp2
-        BIOS_BLOB, "epr-17740a.ic8", 0x000000, 0x080000, 0x3e23c81f, // jp3
-        BIOS_BLOB, "epr-17740.ic8",  0x000000, 0x080000, 0x5c5aa63d, // jp4
-        BIOS_BLOB, "epr-19854.ic8",  0x000000, 0x080000, 0xe09d1f60, // tw
-        BIOS_BLOB, "epr-17953a.ic8", 0x000000, 0x080000, 0xa4c47570, // tw1
-        BIOS_BLOB, "epr-17742a.ic8", 0x000000, 0x080000, 0x02daf123, // tw2
-        BIOS_BLOB, "stv110.bin",     0x000000, 0x080000, 0x3dfeda92, // debug
-        BIOS_BLOB, "stv1061.bin",    0x000000, 0x080000, 0x728dbca3, // dev
-        GAME_END, "", 0, 0, 0
+        BIOS_BLOB, STV_REGION_EU, "epr-17954a.ic8", 0x000000, 0x080000, 0xf7722da3, // euro
+        BIOS_BLOB, STV_REGION_US, "epr-17952a.ic8", 0x000000, 0x080000, 0xd1be2adf, // us
+        BIOS_BLOB, STV_REGION_US, "epr-17741a.ic8", 0x000000, 0x080000, 0x4166c663, // us1
+        BIOS_BLOB, STV_REGION_JP, "epr-20091.ic8",  0x000000, 0x080000, 0x59ed40f4, // jp
+        BIOS_BLOB, STV_REGION_JP, "epr-19730.ic8",  0x000000, 0x080000, 0xd0e0889d, // jp1
+        BIOS_BLOB, STV_REGION_JP, "epr-17951a.ic8", 0x000000, 0x080000, 0x2672f9d8, // jp2
+        BIOS_BLOB, STV_REGION_JP, "epr-17740a.ic8", 0x000000, 0x080000, 0x3e23c81f, // jp3
+        BIOS_BLOB, STV_REGION_JP, "epr-17740.ic8",  0x000000, 0x080000, 0x5c5aa63d, // jp4
+        BIOS_BLOB, STV_REGION_TW, "epr-19854.ic8",  0x000000, 0x080000, 0xe09d1f60, // tw
+        BIOS_BLOB, STV_REGION_TW, "epr-17953a.ic8", 0x000000, 0x080000, 0xa4c47570, // tw1
+        BIOS_BLOB, STV_REGION_TW, "epr-17742a.ic8", 0x000000, 0x080000, 0x02daf123, // tw2
+        BIOS_BLOB, STV_DEBUG,     "stv110.bin",     0x000000, 0x080000, 0x3dfeda92, // debug
+        BIOS_BLOB, STV_DEV,       "stv1061.bin",    0x000000, 0x080000, 0x728dbca3, // dev
+        GAME_END
     },
 };
 
@@ -117,6 +113,7 @@ Game GameList[NB_STV_GAMES]={
     "astrass",
     NULL,
     "Astra SuperStars (J 980514 V1.002)",
+    STV_REGION_JP,
     0x052e2901,
     0,
     NULL,
@@ -141,6 +138,7 @@ Game GameList[NB_STV_GAMES]={
     "bakubaku",
     NULL,
     "Baku Baku Animal (J 950407 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -161,6 +159,7 @@ Game GameList[NB_STV_GAMES]={
     "batmanfr",
     NULL,
     "Batman Forever (JUE 960507 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP,
     0,
     0,
     NULL,
@@ -185,6 +184,7 @@ Game GameList[NB_STV_GAMES]={
     "choroqhr",
     NULL,
     "Choro Q Hyper Racing 5 (J 981230 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -207,6 +207,7 @@ Game GameList[NB_STV_GAMES]={
     "colmns97",
     NULL,
     "Columns '97 (JET 961209 V1.000)",
+    STV_REGION_EU | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -225,6 +226,7 @@ Game GameList[NB_STV_GAMES]={
     "cotton2",
     NULL,
     "Cotton 2 (JUET 970902 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0x0,
     0,
     NULL,
@@ -246,6 +248,7 @@ Game GameList[NB_STV_GAMES]={
     "cottonbm",
     NULL,
     "Cotton Boomerang (JUET 980709 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0x0,
     0,
     NULL,
@@ -266,12 +269,12 @@ Game GameList[NB_STV_GAMES]={
     "critcrsh",
     NULL,
     "Critter Crusher (EA 951204 V1.000)",
+    STV_REGION_EU,
     0x0,
     0,
     NULL,
     NULL,
     {
-        BIOS_BLOB, "epr-17954a.ic8",      0x0000000, 0x0080000, 0xf7722da3,
         HEADER_BLOB, "epr-18821.ic13",    0x0000001, 0x0080000, 0x00000000,
         HEADER_BLOB, "epr-18821.ic13",    0x0100001, 0x0080000, 0x00000000,
         GAME_BYTE_BLOB, "epr-18821.ic13", 0x0200000, 0x0080000, 0x00000000,
@@ -287,6 +290,7 @@ Game GameList[NB_STV_GAMES]={
     "sanjeon",
     "sasissu",
     "DaeJeon! SanJeon SuJeon (AJTUE 990412 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     sanjeon_init,
@@ -312,6 +316,7 @@ Game GameList[NB_STV_GAMES]={
     "danchih",
     NULL,
     "Danchi de Hanafuda (J 990607 V1.400)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -330,6 +335,7 @@ Game GameList[NB_STV_GAMES]={
     "danchiq",
     NULL,
     "Danchi de Quiz: Okusan Yontaku Desuyo! (J 001128 V1.200)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -353,6 +359,7 @@ Game GameList[NB_STV_GAMES]={
     "decathlto",
     "decathlt",
     "Decathlete (JUET 960424 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -374,6 +381,7 @@ Game GameList[NB_STV_GAMES]={
     "decathlt",
     NULL,
     "Decathlete (JUET 960709 V1.001)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -395,12 +403,12 @@ Game GameList[NB_STV_GAMES]={
     "diehard",
     NULL,
     "Die Hard Arcade (UET 960515 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_TW,
     0,
     0,
     NULL,
     NULL,
     {
-        BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000, 0xd1be2adf,
         HEADER_BLOB, "fpr19119.13",    0x0000001, 0x0100000, 0x00000000,
         GAME_BYTE_BLOB, "fpr19119.13", 0x0200000, 0x0100000, 0x00000000,
         GAME_BYTE_BLOB, "fpr19119.13", 0x0300000, 0x0100000, 0x00000000,
@@ -416,6 +424,7 @@ Game GameList[NB_STV_GAMES]={
     "dnmtdeka",
     "diehard",
     "Dynamite Deka (J 960515 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -436,6 +445,7 @@ Game GameList[NB_STV_GAMES]={
     "ejihon",
     NULL,
     "Ejihon Tantei Jimusyo (J 950613 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -458,6 +468,7 @@ Game GameList[NB_STV_GAMES]={
     "fantazonem",
     NULL,
     "Fantasy Zone (J 990202 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -479,6 +490,7 @@ Game GameList[NB_STV_GAMES]={
     "finlarch",
     "smleague",
     "Final Arch (J 950714 V1.001)",
+    STV_REGION_JP,
     0x0524ac01,
     0,
     NULL,
@@ -503,6 +515,7 @@ Game GameList[NB_STV_GAMES]={
     "ffreveng",
     NULL,
     "Final Fight Revenge (JUET 990714 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0x0524ac01,
     0,
     NULL,
@@ -523,6 +536,7 @@ Game GameList[NB_STV_GAMES]={
     "ffrevng10",
     "ffreveng",
     "Final Fight Revenge (JUET 990930 V1.100)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0x0524ac01,
     0,
     NULL,
@@ -544,6 +558,7 @@ Game GameList[NB_STV_GAMES]={
     "fhboxers",
     NULL,
     "Funky Head Boxers (JUETBKAL 951218 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0x0524ac01,
     0,
     NULL,
@@ -568,6 +583,7 @@ Game GameList[NB_STV_GAMES]={
     "gaxeduel",
     NULL,
     "Golden Axe - The Duel (JUETL 950117 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -591,6 +607,7 @@ Game GameList[NB_STV_GAMES]={
     "groovef",
     NULL,
     "Groove on Fight - Gouketsuji Ichizoku 3 (J 970416 V1.001)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -613,6 +630,7 @@ Game GameList[NB_STV_GAMES]={
     "grdforce",
     NULL,
     "Guardian Force (JUET 980318 V0.105)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -632,6 +650,7 @@ Game GameList[NB_STV_GAMES]={
     "patocar",
     NULL,
     "Hashire Patrol Car (J 990326 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -651,6 +670,7 @@ Game GameList[NB_STV_GAMES]={
     "introdon",
     NULL,
     "Karaoke Quiz Intro Don Don! (J 960213 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -673,6 +693,7 @@ Game GameList[NB_STV_GAMES]={
     "magzun",
     NULL,
     "Magical Zunou Power (J 961031 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -696,6 +717,7 @@ Game GameList[NB_STV_GAMES]={
     "maruchan",
     NULL,
     "Maru-Chan de Goo! (J 971216 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -720,6 +742,7 @@ Game GameList[NB_STV_GAMES]={
     "mausuke",
     NULL,
     "Mausuke no Ojama the World (J 960314 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -743,6 +766,7 @@ Game GameList[NB_STV_GAMES]={
     "micrombc",
     NULL,
     "Microman Battle Charge (J 990326 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -765,6 +789,7 @@ Game GameList[NB_STV_GAMES]={
     "nameclub",
     NULL,
     "Name Club (J 960315 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -783,6 +808,7 @@ Game GameList[NB_STV_GAMES]={
     "nclubv2",
     NULL,
     "Name Club Ver.2 (J 960315 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -801,6 +827,7 @@ Game GameList[NB_STV_GAMES]={
     "nclubv3",
     NULL,
     "Name Club Ver.3 (J 970723 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -825,6 +852,7 @@ Game GameList[NB_STV_GAMES]={
     "supgoal",
     NULL,
     "Nerae! Super Goal (J 981218 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -844,6 +872,7 @@ Game GameList[NB_STV_GAMES]={
     "othellos",
     NULL,
     "Othello Shiyouyo (J 980423 V1.002)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -862,6 +891,7 @@ Game GameList[NB_STV_GAMES]={
     "pblbeach",
     NULL,
     "Pebble Beach - The Great Shot (JUE 950913 V0.990)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP,
     0,
     0,
     NULL,
@@ -883,6 +913,7 @@ Game GameList[NB_STV_GAMES]={
     "prikura",
     NULL,
     "Princess Clara Daisakusen (J 960910 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -901,6 +932,7 @@ Game GameList[NB_STV_GAMES]={
     "prc298sp",
     NULL,
     "Print Club 2 '98 Spring Ver (J 971017 V1.100)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -923,6 +955,7 @@ Game GameList[NB_STV_GAMES]={
     "prc298au",
     NULL,
     "Print Club 2 '98 Autumn Ver (J 980827 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -945,6 +978,7 @@ Game GameList[NB_STV_GAMES]={
     "prc298su",
     NULL,
     "Print Club 2 '98 Summer Ver (J 980603 V1.100)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -963,6 +997,7 @@ Game GameList[NB_STV_GAMES]={
     "prc29au",
     NULL,
     "Print Club 2 Vol. 9 Autumn (J V1.100)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -984,6 +1019,7 @@ Game GameList[NB_STV_GAMES]={
     "pclub27s",
     NULL,
     "Print Club 2 Vol. 7 Spring (J 970313 V1.100)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1003,6 +1039,7 @@ Game GameList[NB_STV_GAMES]={
     "prc28su",
     NULL,
     "Print Club 2 Vol. 8 Summer (J 970616 V1.100)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1024,12 +1061,12 @@ Game GameList[NB_STV_GAMES]={
     "pclub2",
     NULL,
     "Print Club 2 (U 970921 V1.000)",
+    STV_REGION_US,
     0,
     0,
     NULL,
     NULL,
     {
-        BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000, 0xd1be2adf,
         GAME_WORD_BLOB, "pclub2_ic22",    0x0200000, 0x0200000, 0x00000000,
         GAME_WORD_BLOB, "pclub2_ic24",    0x0400000, 0x0200000, 0x00000000,
         GAME_WORD_BLOB, "pclub2_ic26",    0x0600000, 0x0200000, 0x00000000,
@@ -1044,6 +1081,7 @@ Game GameList[NB_STV_GAMES]={
     "pclub26w",
     NULL,
     "Print Club 2 Vol. 6 Winter (J 961210 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1063,6 +1101,7 @@ Game GameList[NB_STV_GAMES]={
     "pclub26wa",
     "pclub26w",
     "Print Club 2 Vol. 6 Winter (J 970121 V1.200)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1082,6 +1121,7 @@ Game GameList[NB_STV_GAMES]={
     "prc297wi",
     NULL,
     "Print Club 2 '97 Winter Ver (J 971017 V1.100, set 1)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1106,6 +1146,7 @@ Game GameList[NB_STV_GAMES]={
     "prc297wia",
     "prc297wi",
     "Print Club 2 '97 Winter Ver (J 971017 V1.100, set 2)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1130,6 +1171,7 @@ Game GameList[NB_STV_GAMES]={
     "prc2ksu",
     NULL,
     "Print Club 2 2000 Summer (J 000509 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1149,6 +1191,7 @@ Game GameList[NB_STV_GAMES]={
     "pclb2elk",
     NULL,
     "Print Club 2 Earth Limited Kobe (Print Club Custom) (J 970808 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1171,6 +1214,7 @@ Game GameList[NB_STV_GAMES]={
     "pclub2fc",
     NULL,
     "Print Club 2 Felix The Cat (Rev. A) (J 970415 V1.100)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1190,6 +1234,7 @@ Game GameList[NB_STV_GAMES]={
     "pclubor",
     NULL,
     "Print Club Goukakenran (J 991104 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1212,6 +1257,7 @@ Game GameList[NB_STV_GAMES]={
     "pckobe99",
     NULL,
     "Print Club 2 Kobe Luminaire '99 (Print Club Custom 3) (J 991203 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1233,6 +1279,7 @@ Game GameList[NB_STV_GAMES]={
     "pclub2kc",
     NULL,
     "Print Club Kome Kome Club (J 970203 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1251,6 +1298,7 @@ Game GameList[NB_STV_GAMES]={
     "pclove",
     NULL,
     "Print Club LoveLove (J 970421 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1271,6 +1319,7 @@ Game GameList[NB_STV_GAMES]={
     "pclove2",
     NULL,
     "Print Club LoveLove Ver 2 (J 970825 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1291,6 +1340,7 @@ Game GameList[NB_STV_GAMES]={
     "pclubol",
     NULL,
     "Print Club Olive (J 980717 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1312,6 +1362,7 @@ Game GameList[NB_STV_GAMES]={
     "pclub2pe",
     NULL,
     "Print Club 2 Pepsiman (J 970618 V1.100)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1331,12 +1382,12 @@ Game GameList[NB_STV_GAMES]={
     "pclubpok",
     NULL,
     "Print Club Pokemon B (U 991126 V1.000)",
+    STV_REGION_US,
     0,
     0,
     NULL,
     NULL,
     {
-        BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000, 0xd1be2adf,
         GAME_WORD_BLOB, "pclubpok_ic22",    0x0200000, 0x0200000, 0x00000000,
         GAME_WORD_BLOB, "pclubpok_ic22",    0x0400000, 0x0200000, 0x00000000,
         GAME_WORD_BLOB, "pclubpok_ic26",    0x0600000, 0x0200000, 0x00000000,
@@ -1351,6 +1402,7 @@ Game GameList[NB_STV_GAMES]={
     "pclub2pf",
     NULL,
     "Print Club 2 Puffy (J V1.100)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1369,12 +1421,12 @@ Game GameList[NB_STV_GAMES]={
     "pclub2v3",
     NULL,
     "Print Club 2 Vol. 3 (U 990310 V1.000)",
+    STV_REGION_US,
     0,
     0,
     NULL,
     NULL,
     {
-        BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000, 0xd1be2adf,
         GAME_WORD_BLOB, "pclub2v3_ic22",    0x0200000, 0x0200000, 0x00000000,
         GAME_WORD_BLOB, "pclub2v3_ic24",    0x0400000, 0x0200000, 0x00000000,
         GAME_WORD_BLOB, "pclub2v3_ic26",    0x0600000, 0x0200000, 0x00000000,
@@ -1389,6 +1441,7 @@ Game GameList[NB_STV_GAMES]={
     "pclub2wb",
     NULL,
     "Print Club 2 Warner Bros (J 970228 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1408,6 +1461,7 @@ Game GameList[NB_STV_GAMES]={
     "pcpooh2",
     NULL,
     "Print Club Winnie-the-Pooh Vol. 2 (J 971218 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1426,6 +1480,7 @@ Game GameList[NB_STV_GAMES]={
     "pcpooh3",
     NULL,
     "Print Club Winnie-the-Pooh Vol. 3 (J 980406 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1444,6 +1499,7 @@ Game GameList[NB_STV_GAMES]={
     "pclubyo2",
     NULL,
     "Print Club Yoshimoto V2 (J 970422 V1.100)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1463,6 +1519,7 @@ Game GameList[NB_STV_GAMES]={
     "kiwames",
     NULL,
     "Pro Mahjong Kiwame S (J 951020 V1.208)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1482,6 +1539,7 @@ Game GameList[NB_STV_GAMES]={
     "puyosun",
     NULL,
     "Puyo Puyo Sun (J 961115 V0.001)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1507,6 +1565,7 @@ Game GameList[NB_STV_GAMES]={
     "thuntk",
     "sandor",
     "Puzzle & Action: BoMulEul Chajara (JUET 970125 V2.00K)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -1530,6 +1589,7 @@ Game GameList[NB_STV_GAMES]={
     "sandor",
     NULL,
     "Puzzle & Action: Sando-R (J 951114 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1554,6 +1614,7 @@ Game GameList[NB_STV_GAMES]={
     "thunt",
     "sandor",
     "Puzzle & Action: Treasure Hunt (JUET 970901 V2.00E)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -1573,6 +1634,7 @@ Game GameList[NB_STV_GAMES]={
     "rsgun",
     NULL,
     "Radiant Silvergun (JUET 980523 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0x05272d01,
     0,
     NULL,
@@ -1591,6 +1653,7 @@ Game GameList[NB_STV_GAMES]={
     "hanagumi",
     NULL,
     "Sakura Taisen - Hanagumi Taisen Columns (J 971007 V1.010)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1616,6 +1679,7 @@ Game GameList[NB_STV_GAMES]={
     "seabass",
     NULL,
     "Sea Bass Fishing (JUET 971110 V0.001)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -1641,6 +1705,7 @@ Game GameList[NB_STV_GAMES]={
     "shanhigw",
     NULL,
     "Shanghai - The Great Wall / Shanghai Triple Threat (JUE 950623 V1.005)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1656,6 +1721,7 @@ Game GameList[NB_STV_GAMES]={
     "shienryu",
     NULL,
     "Shienryu (JUET 961226 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     ROTATED,
     NULL,
@@ -1673,6 +1739,7 @@ Game GameList[NB_STV_GAMES]={
     "skychal",
     NULL,
     "Sky Challenger (J 000406 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1693,6 +1760,7 @@ Game GameList[NB_STV_GAMES]={
     "sackids",
     NULL,
     "Soreyuke Anpanman Crayon Kids (J 001026 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1715,6 +1783,7 @@ Game GameList[NB_STV_GAMES]={
     "sokyugrt",
     NULL,
     "Soukyugurentai / Terra Diver (JUET 960821 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -1735,6 +1804,7 @@ Game GameList[NB_STV_GAMES]={
     "sfish2",
     NULL,
     "Sport Fishing 2 (UET 951106 V1.10e)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -1755,6 +1825,7 @@ Game GameList[NB_STV_GAMES]={
     "sfish2j",
     "sfish2",
     "Sport Fishing 2 (J 951201 V1.100)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1774,6 +1845,7 @@ Game GameList[NB_STV_GAMES]={
     "sss",
     NULL,
     "Steep Slope Sliders (JUET 981110 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0x052b6901,
     0,
     NULL,
@@ -1797,6 +1869,7 @@ Game GameList[NB_STV_GAMES]={
     "stress",
     NULL,
     "Stress Busters (J 981020 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1823,6 +1896,7 @@ Game GameList[NB_STV_GAMES]={
     "suikoenb",
     NULL,
     "Suiko Enbu / Outlaws of the Lost Dynasty (JUETL 950314 V2.001)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -1847,12 +1921,12 @@ Game GameList[NB_STV_GAMES]={
     "smleague",
     NULL,
     "Super Major League (U 960108 V1.000)",
+    STV_REGION_US,
     0,
     0,
     NULL,
     NULL,
     {
-        BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000, 0xd1be2adf,
         HEADER_BLOB,    "epr18777.13", 0x0000001, 0x0080000, 0x00000000,
         HEADER_BLOB,    "epr18777.13", 0x0100001, 0x0080000, 0x00000000,
         GAME_BYTE_BLOB, "epr18777.13", 0x0200000, 0x0080000, 0x00000000,
@@ -1870,6 +1944,7 @@ Game GameList[NB_STV_GAMES]={
     "sasissu",
     NULL,
     "Taisen Tanto-R Sashissu!! (J 980216 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -1892,12 +1967,12 @@ Game GameList[NB_STV_GAMES]={
     "tatacot",
     "critcrsh",
     "Tatacot (JA 951128 V1.000)",
+    STV_REGION_JP,
     0x0,
     0,
     NULL,
     NV_1P,
     {
-        BIOS_BLOB, "epr-19730.ic8",       0x0000000, 0x0080000, 0xd0e0889d,
         HEADER_BLOB, "epr-18790.ic13",    0x0000001, 0x0080000, 0x00000000,
         HEADER_BLOB, "epr-18790.ic13",    0x0100001, 0x0080000, 0x00000000,
         GAME_BYTE_BLOB, "epr-18790.ic13", 0x0200000, 0x0080000, 0x00000000,
@@ -1912,6 +1987,7 @@ Game GameList[NB_STV_GAMES]={
     "techbowl",
     NULL,
     "Technical Bowling (J 971212 V1.000)",
+    STV_REGION_JP,
     0x05200913,
     0,
     NULL,
@@ -1931,6 +2007,7 @@ Game GameList[NB_STV_GAMES]={
     "twcup98",
     NULL,
     "Tecmo World Cup '98 (JUET 980410 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0x05200913,
     0,
     NULL,
@@ -1951,6 +2028,7 @@ Game GameList[NB_STV_GAMES]={
     "twsoc98",
     "twcup98",
     "Tecmo World Soccer '98 (JUET 980410 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0x05200913,
     0,
     NULL,
@@ -1971,6 +2049,7 @@ Game GameList[NB_STV_GAMES]={
     "elandore",
     NULL,
     "Touryuu Densetsu Elan-Doree / Elan Doree - Legend of Dragoon (JUET 980922 V1.006)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0x05226d41,
     0,
     NULL,
@@ -1992,6 +2071,7 @@ Game GameList[NB_STV_GAMES]={
     "vfkids",
     NULL,
     "Virtua Fighter Kids (JUET 960319 V0.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -2017,6 +2097,7 @@ Game GameList[NB_STV_GAMES]={
     "vfremix",
     NULL,
     "Virtua Fighter Remix (JUETBKAL 950428 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0,
     0,
     NULL,
@@ -2039,6 +2120,7 @@ Game GameList[NB_STV_GAMES]={
     "vmahjong",
     NULL,
     "Virtual Mahjong (J 961214 V1.000)",
+    STV_REGION_JP,
     0x0,
     0,
     NULL,
@@ -2061,6 +2143,7 @@ Game GameList[NB_STV_GAMES]={
     "myfairld",
     NULL,
     "Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)",
+    STV_REGION_JP,
     0x0,
     0,
     NULL,
@@ -2083,6 +2166,7 @@ Game GameList[NB_STV_GAMES]={
     "winterht",
     NULL,
     "Winter Heat (JUET 971012 V1.000)",
+    STV_REGION_EU | STV_REGION_US | STV_REGION_JP | STV_REGION_TW,
     0x0,
     0,
     NULL,
@@ -2106,6 +2190,7 @@ Game GameList[NB_STV_GAMES]={
     "znpwfv",
     NULL,
     "Zen Nippon Pro-Wrestling Featuring Virtua (J 971123 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -2131,12 +2216,12 @@ Game GameList[NB_STV_GAMES]={
     "znpwfvt",
     "znpwfv",
     "Zen Nippon Pro-Wrestling Featuring Virtua (T 971123 V1.000)",
+    STV_REGION_TW,
     0,
     0,
     NULL,
     NULL,
     {
-        BIOS_BLOB, "epr-19854.ic8",    0x0000000, 0x0080000, 0xe09d1f60,
         HEADER_BLOB,   "epr20408.13",  0x0000001, 0x0100000, 0x00000000,
         GAME_BYTE_BLOB, "epr20408.13", 0x0200000, 0x0100000, 0x00000000,
         GAME_BYTE_BLOB, "epr20408.13", 0x0300000, 0x0100000, 0x00000000,
@@ -2157,6 +2242,7 @@ Game GameList[NB_STV_GAMES]={
     "findlove",
     NULL,
     "Zenkoku Seifuku Bishoujo Grand Prix Find Love (J 971212 V1.000)",
+    STV_REGION_JP,
     0,
     0,
     NULL,
@@ -2186,6 +2272,7 @@ u8 hasBios = 0;
 u8 hasEeprom = 0;
 u8 fileFound[NB_STV_GAMES][MAX_GAME_FILES];
 u8 biosFound[MAX_GAME_FILES];
+static int stv_favorite_region = STV_REGION_EU;
 
 typedef struct {
     const char* filename;
@@ -2195,7 +2282,7 @@ typedef struct {
 
 int processBios(JZFile *zip,void *input) {
     JZFileHeader header;
-    char filename[1024];
+    char filename[MAX_LENGTH_FILENAME];
     int j;
     rominfo* info = (rominfo*) input;
 
@@ -2212,9 +2299,9 @@ int processBios(JZFile *zip,void *input) {
     while(BiosList.blobs[j].type != GAME_END) {
       if (header.crc32 == BiosList.blobs[j].crc32) {
         // file is the same but has a different filename, let's replace it
-        strncpy(BiosList.blobs[j].filename, filename, 1024);
+        strncpy(BiosList.blobs[j].filename, filename, MAX_LENGTH_FILENAME);
       }
-      if (strncmp(BiosList.blobs[j].filename, filename, 1024) == 0) {
+      if (strncmp(BiosList.blobs[j].filename, filename, MAX_LENGTH_FILENAME) == 0) {
         //Compatible file found
         biosFound[j] = 1;
       }
@@ -2226,7 +2313,7 @@ int processBios(JZFile *zip,void *input) {
 
 int processFile(JZFile *zip,void *input) {
     JZFileHeader header;
-    char filename[1024];
+    char filename[MAX_LENGTH_FILENAME];
     int i,j;
     rominfo* info = (rominfo*) input;
 
@@ -2244,9 +2331,9 @@ int processFile(JZFile *zip,void *input) {
       while(GameList[i].blobs[j].type != GAME_END) {
         if (header.crc32 == GameList[i].blobs[j].crc32) {
           // file is the same but has a different filename, let's replace it
-          strncpy(GameList[i].blobs[j].filename, filename, 1024);
+          strncpy(GameList[i].blobs[j].filename, filename, MAX_LENGTH_FILENAME);
         }
-        if (strncmp(GameList[i].blobs[j].filename, filename, 1024) == 0) {
+        if (strncmp(GameList[i].blobs[j].filename, filename, MAX_LENGTH_FILENAME) == 0) {
           //Compatible file found
           fileFound[i][j] = 1;
         }
@@ -2260,7 +2347,7 @@ int biosloaded = 0xFF;
 
 int copyBios(JZFile *zip, void* id) {
     JZFileHeader header;
-    char filename[1024];
+    char filename[MAX_LENGTH_FILENAME];
     char* biosname = NULL;
     u8* data;
     unsigned int i,j, dataAvailable;
@@ -2293,7 +2380,7 @@ int copyBios(JZFile *zip, void* id) {
     i=0;
     dataAvailable = 0;
     while(biosLink.entry->blobs[i].type != GAME_END) {
-      if (strncmp(biosLink.entry->blobs[i].filename, filename, 1024) == 0) {
+      if (strncmp(biosLink.entry->blobs[i].filename, filename, MAX_LENGTH_FILENAME) == 0) {
         if (dataAvailable == 0) {
           dataAvailable = (jzReadData(zip, &header, data) == Z_OK);
         }
@@ -2306,7 +2393,7 @@ int copyBios(JZFile *zip, void* id) {
           switch (biosLink.entry->blobs[i].type) {
             case BIOS_BLOB:
               if(biosname != NULL) {
-                // Load the specific bios
+                // Load the special bios (sfish2 & sfish2j have a special bios, part of the romset, which allow optical media reading)
                 if (strcmp(biosname,filename) == 0) {
                   LOGSTV("Load bios %s\n", filename);
                   for (j=0; j<biosLink.entry->blobs[i].length;j++) {
@@ -2314,8 +2401,9 @@ int copyBios(JZFile *zip, void* id) {
                   }
                 }
               } else {
-                // Load the "normal" bios (actually i don't understand this part)
-                if (biosloaded > i) {
+                // Load a bios from stvbios, restricted by allowed regions for the game, further restricted by favorite region if allowed
+                if (biosloaded > i && (biosLink.entry->blobs[i].region & availableGames[gameId].entry->regions) == biosLink.entry->blobs[i].region
+                && (stv_favorite_region == biosLink.entry->blobs[i].region || (availableGames[gameId].entry->regions & stv_favorite_region) != stv_favorite_region)) {
                   LOGSTV("Load bios %s\n", filename);
                   for (j=0; j<biosLink.entry->blobs[i].length;j++) {
                     T1WriteByte(BiosRom, biosLink.entry->blobs[i].offset+j, data[j]);
@@ -2337,7 +2425,7 @@ int copyBios(JZFile *zip, void* id) {
 
 int copyFile(JZFile *zip, void* id) {
     JZFileHeader header;
-    char filename[1024];
+    char filename[MAX_LENGTH_FILENAME];
     u8* data;
     int i,j, dataAvailable;
     rominfo* info = (rominfo*)id;
@@ -2357,7 +2445,7 @@ int copyFile(JZFile *zip, void* id) {
     i=0;
     dataAvailable = 0;
     while(availableGames[gameId].entry->blobs[i].type != GAME_END) {
-      if (strncmp(availableGames[gameId].entry->blobs[i].filename, filename, 1024) == 0) {
+      if (strncmp(availableGames[gameId].entry->blobs[i].filename, filename, MAX_LENGTH_FILENAME) == 0) {
         LOGSTV("copyFile %s\n", filename);
         if (dataAvailable == 0) {
           dataAvailable = (jzReadData(zip, &header, data) == Z_OK);
@@ -2475,7 +2563,7 @@ int updateGameList(const char* file, int *nbGames){
       if (BiosList.blobs[j].type == BIOS_BLOB && biosFound[j] == 1) {
         hasBios |= biosFound[j];
         biosLink.entry = &BiosList;
-        strncpy(biosLink.path, file, 1024);
+        strncpy(biosLink.path, file, MAX_LENGTH_FILEPATH);
         break;
       }
       j++;
@@ -2506,7 +2594,7 @@ int updateGameList(const char* file, int *nbGames){
       }
       if (found == 0) {
         availableGames[*nbGames].entry = &GameList[i];
-        strncpy(availableGames[*nbGames].path, file, 1024);
+        strncpy(availableGames[*nbGames].path, file, MAX_LENGTH_FILEPATH);
         gameid = i;
         (*nbGames)++;
         break;
@@ -2617,9 +2705,9 @@ int STVGetRomList(const char* path, int force){
   DIR *d;
   FILE *fp;
   int i, nbGames = 0;
-  char savefile[1024];
+  char savefile[MAX_LENGTH_FILEPATH];
   memset(availableGames, 0x0, sizeof(GameLink)*NB_STV_GAMES);
-  snprintf(savefile, 1024, "%s/gamelist.save", path);
+  snprintf(savefile, MAX_LENGTH_FILEPATH, "%s/gamelist.save", path);
   if (force == 0) {
     nbGames = loadGames(savefile);
     if (nbGames != 0) return nbGames;
@@ -2663,11 +2751,11 @@ int STVGetRomList(const char* path, int force){
 //List number of files in directory
   FILE *fp;
   int i, nbGames = 0;
-  char savefile[1024];
-  char pathfile[1024];
+  char savefile[MAX_LENGTH_FILEPATH];
+  char pathfile[MAX_LENGTH_FILEPATH];
   memset(availableGames, 0x0, sizeof(GameLink)*NB_STV_GAMES);
-  snprintf(savefile, 1024, "%s/gamelist.save", path);
-  snprintf(pathfile, 1024, "%s/*.zip", path);
+  snprintf(savefile, MAX_LENGTH_FILEPATH, "%s/gamelist.save", path);
+  snprintf(pathfile, MAX_LENGTH_FILEPATH, "%s/*.zip", path);
   if (force == 0) {
     nbGames = loadGames(savefile);
     if (nbGames != 0) return nbGames;
@@ -2711,7 +2799,7 @@ int loadGames(char* path) {
   int i, nbGames = 0;
   char* field;
   char gameName[1024];
-  char gamePath[1024];
+  char gamePath[MAX_LENGTH_FILEPATH];
   FILE *fp;
   fp = fopen(path, "r");
   if (fp == NULL) return 0;
@@ -2737,12 +2825,12 @@ int loadGames(char* path) {
     LOGSTV("Scan new game %s %s!!!\n", gameName, gamePath);
     if (strncmp(gameName,BiosList.name,1024)==0) {
       biosLink.entry = &BiosList;
-      strncpy(biosLink.path, gamePath, 1024);
+      strncpy(biosLink.path, gamePath, MAX_LENGTH_FILEPATH);
     } else {
       for (i=0; i<NB_STV_GAMES; i++) {
         if (strncmp(gameName,GameList[i].name,1024)==0) {
           availableGames[nbGames].entry = &GameList[i];
-          strncpy(availableGames[nbGames].path, gamePath, 1024);
+          strncpy(availableGames[nbGames].path, gamePath, MAX_LENGTH_FILEPATH);
           LOGSTV("Rebuild %s from %s\n", gameName, gamePath);
           nbGames++;
           break;
@@ -2764,9 +2852,10 @@ int STVGetSingle(const char *pathfile, const char *biospath, int* id){
   return nbGames;
 }
 
-int STVSingleInit(const char *gamepath, const char *biospath, const char *eepromdir) {
+int STVSingleInit(const char *gamepath, const char *biospath, const char *eepromdir, int favorite_region) {
   int nbGame = 0;
   int id = -1;
+  if (favorite_region != 0) stv_favorite_region = favorite_region;
   if ((gamepath == NULL) || (biospath == NULL)) return -1;
   nbGame = STVGetSingle(gamepath, biospath, &id);
   if (loadGame(0) == 0) {
@@ -2779,7 +2868,8 @@ int STVSingleInit(const char *gamepath, const char *biospath, const char *eeprom
   return -1;
 }
 
-int STVInit(int id, const char *path, const char *eepromdir){
+int STVInit(int id, const char *path, const char *eepromdir, int favorite_region){
+  if (favorite_region != 0) stv_favorite_region = favorite_region;
   cryptoReset();
   if (CartridgeArea->carttype != CART_ROMSTV) return 0;
 #ifndef __LIBRETRO__
