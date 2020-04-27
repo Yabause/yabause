@@ -22,7 +22,7 @@
 
 #include "vdp1.h"
 
-#define VIDCORE_SOFT   2
+#define VIDCORE_SOFT   3
 
 extern pixel_t *dispbuffer;
 
