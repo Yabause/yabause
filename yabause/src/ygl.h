@@ -511,7 +511,7 @@ typedef enum {
   VDP1COGS,
   VDP1COBS,
   CRAOFB, //COLOR RAM OFFSET
-	NB_VDP2_REG
+	NB_VDP2_REG = 32
 } enVdp2;
 
 

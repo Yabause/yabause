@@ -1029,12 +1029,12 @@ SHADER_VERSION
 ;
 
 const GLchar Yglprg_vdp2_drawfb_gl_cram_f[] =
-"int getVDP2Reg(int id) {\n"
-"  return int(texelFetch(s_vdp2reg, ivec2(id, 0), 0).r*255.0);\n"
+"int getVDP2Reg(int id, int line) {\n"
+"  return int(texelFetch(s_vdp2reg, ivec2(id, line), 0).r*255.0);\n"
 "}\n"
 "FBCol getFB(int x, ivec2 addr){ \n"
 "  vec4 lineCoord = vec4(gl_FragCoord.x, (u_vheight-gl_FragCoord.y), 0.0, 0.0);\n"
-"  int line = int(lineCoord.y * u_emu_height)*24;\n";
+"  int line = int(lineCoord.y * u_emu_height);\n";
 
 static const GLchar vdp2blit_gl_end_f[] =
 "";

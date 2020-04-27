@@ -2790,7 +2790,7 @@ if (_Ygl->vdp2_use_compute_shader == 0) {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp2reg_tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, NB_VDP2_REG * 512, 1, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, NB_VDP2_REG, 512, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -2812,7 +2812,7 @@ void YglSetVDP2Reg(u8 * pbuf, int start, int size){
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp2reg_tex);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp2reg_pbo);
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, NB_VDP2_REG * start, 0, NB_VDP2_REG * size, 1, GL_RED, GL_UNSIGNED_BYTE, 0);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, NB_VDP2_REG * start, 0, NB_VDP2_REG, size, GL_RED, GL_UNSIGNED_BYTE, 0);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     _Ygl->vdp2reg_buf = NULL;
     glBindTexture(GL_TEXTURE_2D, 0 );
