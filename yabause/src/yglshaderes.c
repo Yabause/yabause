@@ -997,7 +997,7 @@ SHADER_VERSION
 "uniform int screen_nb; \n"
 "uniform int ram_mode; \n"
 "uniform int extended_cc; \n"
-"uniform int u_lncl[7];  \n"
+"uniform int u_lncl;  \n"
 "uniform int mode[7];  \n"
 "uniform int isRGB[6]; \n"
 "uniform int isBlur[7]; \n"
@@ -1556,6 +1556,7 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   int perLine = 0;
   int nbScreen = 6;
   int vdp2blit_prg;
+  int lncl_val = 0;
 
   float const vertexPosition[] = {
     1.0, -1.0f,
@@ -1597,6 +1598,10 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
     glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
   } else _Ygl->vdp1On[_Ygl->readframe] = 0;
 
+  for(int i=0; i<7; i++) {
+    if (lncl[i] != 0) lncl_val |= 1<<i;
+  }
+
 #ifdef _OGL3_
 #ifdef DEBUG_BLIT
     glBindFragDataLocation(vdp2blit_prg, 1, "topColor");
@@ -1627,7 +1632,7 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbon"), (_Ygl->vdp1On[_Ygl->readframe] != 0));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x8400) == 0x400) );
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "u_lncl"), 7, lncl); //_Ygl->prioVa
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "u_lncl"),lncl_val); //_Ygl->prioVa
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
