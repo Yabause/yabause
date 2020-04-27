@@ -998,11 +998,11 @@ SHADER_VERSION
 "uniform int ram_mode; \n"
 "uniform int extended_cc; \n"
 "uniform int u_lncl;  \n"
-"uniform int mode[7];  \n"
-"uniform int isRGB[6]; \n"
-"uniform int isBlur[7]; \n"
-"uniform int isShadow[6]; \n"
+"uniform int isRGB; \n"
+"uniform int isBlur; \n"
+"uniform int isShadow; \n"
 "uniform int is_perline[8];\n"
+"uniform int mode[7];  \n"
 "uniform int is_lncl_off[6]; \n"
 "uniform int use_sp_win; \n"
 "uniform int use_trans_shadow; \n"
@@ -1557,6 +1557,9 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   int nbScreen = 6;
   int vdp2blit_prg;
   int lncl_val = 0;
+  int isRGB_val = 0;
+  int isBlur_val = 0;
+  int isShadow_val = 0;
 
   float const vertexPosition[] = {
     1.0, -1.0f,
@@ -1600,6 +1603,12 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
 
   for(int i=0; i<7; i++) {
     if (lncl[i] != 0) lncl_val |= 1<<i;
+    if (isBlur[i] != 0) isBlur_val |= 1<<i;
+  }
+
+  for(int i=0; i<6; i++) {
+    if (isRGB[i] != 0) isRGB_val |= 1<<i;
+    if (isShadow[i] != 0) isShadow_val |= 1<<i;
   }
 
 #ifdef _OGL3_
@@ -1633,12 +1642,12 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x8400) == 0x400) );
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "u_lncl"),lncl_val); //_Ygl->prioVa
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "isRGB"), isRGB_val);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "isBlur"), isBlur_val);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "isShadow"), isShadow_val);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "is_perline"), 8, isPerline);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "is_lncl_off"), 6, use_lncl_off);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isShadow"), 6, isShadow);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
   glUniform2i(glGetUniformLocation(vdp2blit_prg, "tvSize"), (int)(_Ygl->rwidth*_Ygl->vdp1wdensity/_Ygl->vdp2wdensity), (int)(_Ygl->rheight*_Ygl->vdp1hdensity/_Ygl->vdp2hdensity));
