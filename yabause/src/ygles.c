@@ -106,6 +106,26 @@ static void MessageCallback( GLenum source,
 }
 #endif
 
+static int GLCapabilities = -1;
+static int getCSUsage() {
+  if (GLCapabilities == -1) {
+    int min, maj;
+    glGetIntegerv(GL_MAJOR_VERSION, &maj);
+    glGetIntegerv(GL_MINOR_VERSION, &min);
+
+    #if defined(_OGLES3_)
+      if ((maj >=2) && (min >=0)) GLCapabilities = 0;
+      if ((maj >=3) && (min >=0)) GLCapabilities = 1;
+      if ((maj >=3) && (min >=1)) GLCapabilities = 2;
+    #else
+      if ((maj >=3) && (min >=3)) GLCapabilities = 0;
+      if ((maj >=4) && (min >=2)) GLCapabilities = 1;
+      if ((maj >=4) && (min >=3)) GLCapabilities = 2;
+    #endif
+  }
+  return GLCapabilities;
+}
+
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz)
 {
     result->m[0][0] *= sx;
@@ -864,7 +884,7 @@ void YglGenerate() {
 
   warning = 0;
   YglDestroy();
-  vdp1_compute_init( _Ygl->vdp1width, _Ygl->vdp1height, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
+  if (getCSUsage() == 2) vdp1_compute_init( _Ygl->vdp1width, _Ygl->vdp1height, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   glGenTextures(2, _Ygl->vdp1FrameBuff);
@@ -1268,20 +1288,7 @@ void initLevels(YglLevel** levels, int size) {
     }
   }
 }
-static int getVdp2CSUsage() {
-#ifndef VDP2_BLIT_CS
-  return 0;
-#endif
-  int min, maj;
-  glGetIntegerv(GL_MAJOR_VERSION, &maj);
-  glGetIntegerv(GL_MINOR_VERSION, &min);
-  #if defined(_OGLES3_)
-      if ((maj >=3) && (min >=1)) return 1;
-  #else
-      if ((maj >=4) && (min >=3))  return 1;
-  #endif
-  return 0;
-}
+
 //////////////////////////////////////////////////////////////////////////////
 int YglInit(int width, int height, unsigned int depth) {
   unsigned int i,j;
@@ -1335,7 +1342,10 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->heightRatio = 1.0f;
   _Ygl->resolution_mode = RES_ORIGINAL;
   _Ygl->rbg_use_compute_shader = 0;
-  _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && getVdp2CSUsage();
+  _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && (getCSUsage() == 2);
+#ifndef VDP2_BLIT_CS
+  _Ygl->vdp2_use_compute_shader = 0;
+#endif
 
   initLevels(&_Ygl->vdp2levels, SPRITE);
   initLevels(&_Ygl->vdp1levels, 2);
@@ -1417,7 +1427,7 @@ int YglInit(int width, int height, unsigned int depth) {
   YglTM_vdp1[1] = YglTMInit(1024, 1024);
   YglTM_vdp2 = YglTMInit(1024, 1024);
 
-  vdp1_compute_init(512.0f, 256.0f, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
+  if (getCSUsage() == 2) vdp1_compute_init(512.0f, 256.0f, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
 
   _Ygl->vdp2buf = (u8*)malloc(512 * sizeof(int)* NB_VDP2_REG);
 
@@ -3712,7 +3722,10 @@ void setupMaxSize() {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglChangeResolution(int w, int h) {
-  _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && getVdp2CSUsage();
+  _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && (getCSUsage() == 2);
+#ifndef VDP2_BLIT_CS
+  _Ygl->vdp2_use_compute_shader = 0;
+#endif
   YglLoadIdentity(&_Ygl->mtxModelView);
   YglLoadIdentity(&_Ygl->rbgModelView);
   float ratio = (float)w/(float)h;
