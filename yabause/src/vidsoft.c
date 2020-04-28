@@ -2060,7 +2060,7 @@ DECLARE_THREAD(VidsoftNbg3Thread, TITAN_NBG3, Vdp2DrawNBG3)
 
 void VIDSoftSetNumLayerThreads(int num)
 {
-   vidsoft_num_layer_threads = num;
+   vidsoft_num_layer_threads = (num > 4)?4:num;
 }
 
 //////////////////////////////////////////////////////////////////////////////
