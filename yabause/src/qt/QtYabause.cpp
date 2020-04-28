@@ -119,7 +119,13 @@ VideoInterface_struct *VIDCoreList[] = {
 #ifdef HAVE_LIBGL
 &VIDOGL,
 &VIDCS,
+#ifdef USE_SOFT_RENDER
+&VIDSoft,
+#endif
 #else
+#ifdef USE_SOFT_RENDER
+&VIDSoft,
+#endif
 &VIDDummy,
 #endif
 NULL

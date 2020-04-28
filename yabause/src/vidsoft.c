@@ -2,6 +2,7 @@
     Copyright 2004-2008 Theo Berkau
     Copyright 2006 Fabien Coulon
     Copyright 2015 R. Danbrook
+    Copyright 2020 VBT
 
     This file is part of Yabause.
 
@@ -104,6 +105,7 @@ void VIDSoftSync(){};
 void VIDSoftVdp2DispOff(void);void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * sprite_window_mask, u8* vdp1_front_framebuffer, u8 * vdp2_ram, Vdp1* vdp1_regs, Vdp2* vdp2_lines, u8*color_ram);
 void VIDSoftGetNativeResolution(int *width, int *height, int*interlace);
 void VIDSoftVdp2DispOff(void);void VIDSoftVdp2DispOff(void);
+int VIDSoftGenFrameBuffer(int force);
 
 VideoInterface_struct VIDSoft = {
 VIDCORE_SOFT,
@@ -141,6 +143,7 @@ VIDSoftGetNativeResolution,
 VIDSoftVdp2DispOff,
 NULL,
 NULL,
+VIDSoftGenFrameBuffer,
 NULL
 };
 
@@ -2341,6 +2344,12 @@ int VIDSoftVdp1Reset(void)
    Vdp1Regs->userclipY2 = Vdp1Regs->systemclipY2 = 256;
 
    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int VIDSoftGenFrameBuffer(int force)
+{
+    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

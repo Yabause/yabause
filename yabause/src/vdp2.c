@@ -38,6 +38,7 @@
 #include "threads.h"
 #include "yui.h"
 #include "ygl.h"
+#include "vidsoft.h"
 #include "frameprofile.h"
 
 u8 * Vdp2Ram;
@@ -434,7 +435,7 @@ void Vdp2HBlankIN(void) {
   } else {
 // Fix : Function doesn't exist without those defines
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
-  if(VIDCore) waitVdp2DrawScreensEnd(yabsys.LineCount == yabsys.VBlankLineCount, isSkipped );
+  if(VIDCore && (VIDCore->id != VIDCORE_SOFT)) waitVdp2DrawScreensEnd(yabsys.LineCount == yabsys.VBlankLineCount, isSkipped );
 #endif
   }
 }
@@ -514,7 +515,7 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 void Vdp2VBlankOUT(void) {
   g_frame_count++;
   FRAMELOG("***** VOUT %d *****", g_frame_count);
-  YglUpdateColorRam();
+  if (VIDCore != NULL && VIDCore->id != VIDCORE_SOFT) YglUpdateColorRam();
   if (Vdp2External.perline_alpha == Vdp2External.perline_alpha_a){
     Vdp2External.perline_alpha = Vdp2External.perline_alpha_b;
     Vdp2External.perline_alpha_draw = Vdp2External.perline_alpha_a;

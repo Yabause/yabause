@@ -125,6 +125,10 @@ if (YAB_WANT_ASYNC_VDP1_TEXTURE)
 	add_definitions(-DVDP1_TEXTURE_ASYNC=1)
 endif()
 
+option(YAB_WANT_SOFT_RENDERING "Enable software renderer support" OFF)
+if (YAB_WANT_SOFT_RENDERING)
+   add_definitions(-DUSE_SOFT_RENDER=1)
+endif()
 
 option(YAB_WANT_ASAN_DEBUG "Enable ASAN compilation sanitizer" OFF)
 if (YAB_WANT_ASAN_DEBUG)

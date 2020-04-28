@@ -2221,7 +2221,9 @@ static void startField(void) {
     FRAMELOG("Swap Line %d\n", yabsys.LineCount);
     if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))
     {
-      VIDCore->Vdp1EraseWrite(_Ygl->readframe);
+      int id = 0;
+      if (_Ygl != NULL) id = _Ygl->readframe;
+      VIDCore->Vdp1EraseWrite(id);
       Vdp1External.manualerase = 0;
     }
 
@@ -2286,7 +2288,7 @@ void Vdp1HBlankIN(void)
     }
   }
   #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
-  YglTMCheck();
+    if (VIDCore != NULL && VIDCore->id != VIDCORE_SOFT) YglTMCheck();
   #endif
 }
 //////////////////////////////////////////////////////////////////////////////
@@ -2312,6 +2314,8 @@ void Vdp1VBlankOUT(void)
 {
   //Out of VBlankOut : Break Batman
   if (needVBlankErase()) {
-    VIDCore->Vdp1EraseWrite(_Ygl->readframe);
+    int id = 0;
+    if (_Ygl != NULL) id = _Ygl->readframe;
+    VIDCore->Vdp1EraseWrite(id);
   }
 }
