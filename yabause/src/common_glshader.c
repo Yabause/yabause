@@ -1741,6 +1741,10 @@ const GLchar * Yglprg_vdp2_common_part_screen[14] = {
 const GLchar * pYglprg_vdp2_blit_f[BLIT_TEXTURE_NB_PROG][17];
 
 void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* end, const GLchar* final) {
+  int m_start = 0;
+#ifndef FORCE_VDP2_DIVERSITY
+  if (getCSUsage() == 0) m_start = 13;
+#endif
   //VDP2 programs
     for (int j = 0; j<4; j++) {
      // 4 Sprite color calculation mode
@@ -1748,7 +1752,7 @@ void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* 
         // Palette only mode or palette/RGB mode
         for (int l = 0; l<16; l++) {
           //16 sprite typed
-          for (int m = 0; m<14; m++) {
+          for (int m = m_start; m<14; m++) {
             //14 screens configuration
             for (int i = 0; i<5; i++) {
               // Sprite color calculation condition are separated by 1

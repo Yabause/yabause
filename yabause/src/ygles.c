@@ -104,7 +104,7 @@ static void MessageCallback( GLenum source,
 #endif
 
 static int GLCapabilities = -1;
-static int getCSUsage() {
+int getCSUsage() {
   if (GLCapabilities == -1) {
     int min, maj;
     glGetIntegerv(GL_MAJOR_VERSION, &maj);
