@@ -1006,7 +1006,7 @@ vec2 getFBCoord(vec2 pos) {\n \
 "
 
 #define SAMPLER_TEX(ID) "\
-uniform sampler2D s_texture"Stringify(ID)";  \n \
+uniform sampler2D s_texture"Stringify(ID)";\n \
 "
 //--------------------------------------------------------------------------------------------------------------
 static const char vdp2blit_gl_start_f_6[] =

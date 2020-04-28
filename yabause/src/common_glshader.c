@@ -1756,7 +1756,7 @@ void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* 
             int index = 5*(14*(16*(2*j+k)+l)+m)+i;
 
             LOG_SHADER("index = %d (%d %d %d %d %d)\n", index, j, k, l, m, i);
-            pYglprg_vdp2_blit_f[index][0] = start[m>>1];
+            pYglprg_vdp2_blit_f[index][0] = start[m%7];
             pYglprg_vdp2_blit_f[index][1] = Yglprg_vdp2_common_start;
             pYglprg_vdp2_blit_f[index][2] = vdp2blit_palette_mode_f[k];
             pYglprg_vdp2_blit_f[index][3] = vdp2blit_srite_type_f[l];
