@@ -1004,13 +1004,13 @@ SHADER_VERSION
 "uniform int use_sp_win; \n"
 "uniform int use_trans_shadow; \n"
 "uniform ivec2 tvSize;\n"
-"uniform int win_s[8]; \n"
-"uniform int win_s_mode[8]; \n"
-"uniform int win0[8]; \n"
-"uniform int win0_mode[8]; \n"
-"uniform int win1[8]; \n"
-"uniform int win1_mode[8]; \n"
-"uniform int win_op[8]; \n"
+"uniform int win_s; \n"
+"uniform int win_s_mode; \n"
+"uniform int win0; \n"
+"uniform int win0_mode; \n"
+"uniform int win1; \n"
+"uniform int win1_mode; \n"
+"uniform int win_op; \n"
 #ifdef DEBUG_BLIT
 "out vec4 topColor; \n"
 "out vec4 secondColor; \n"
@@ -1549,7 +1549,7 @@ void YglUpdateLineColorOffset(int id){
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int Win_s, int Win_s_mode, int Win0, int Win0_mode, int Win1, int Win1_mode, int Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs) {
   int perLine = 0;
   int nbScreen = 6;
   int vdp2blit_prg;
@@ -1663,13 +1663,13 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   // };
   // glUniformMatrix3fv(glGetUniformLocation(vdp2blit_prg, "MatRot"), 1, GL_FALSE, rotMat);
   // glUniform3f(glGetUniformLocation(vdp2blit_prg, "C"), Vdp1ParaA.Cx, Vdp1ParaA.Cy, Vdp1ParaA.Cz);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), enBGMAX+1, Win_s);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), enBGMAX+1, Win_s_mode);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0"), enBGMAX+1, Win0);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0_mode"), enBGMAX+1, Win0_mode);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1"), enBGMAX+1, Win1);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1_mode"), enBGMAX+1, Win1_mode);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_op"), enBGMAX+1, Win_op);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win_s"), Win_s);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), Win_s_mode);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win0"), Win0);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win0_mode"), Win0_mode);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win1"), Win1);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win1_mode"), Win1_mode);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win_op"), Win_op);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
