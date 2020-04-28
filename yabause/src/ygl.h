@@ -561,8 +561,6 @@ typedef struct {
    GLuint original_fbo;
    GLuint original_fbotex[NB_RENDER_LAYER];
 
-   GLuint compute_tex;
-
    GLuint back_fbo;
    GLuint back_fbotex[2];
 
@@ -681,7 +679,6 @@ typedef struct {
    int vdp1_stencil_mode;
 
    int rbg_use_compute_shader;
-   int vdp2_use_compute_shader;
    int useLineColorOffset[2];
 
    float vdp1wratio;
@@ -819,11 +816,6 @@ extern void RBGGenerator_update(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs );
 extern GLuint RBGGenerator_getTexture( int id );
 extern GLuint RBGGenerator_getLnclTexture( int id );
 extern void RBGGenerator_onFinish();
-
-extern void VDP2Generator_init(int width, int height);
-extern void VDP2Generator_update(int tex, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs);
-extern void VDP2Generator_resize(int width, int height);
-
 
 // Keep a way to switch to gles shaders for embedded devices
 #if defined(_OGLES3_) || defined(_OGLES31_)

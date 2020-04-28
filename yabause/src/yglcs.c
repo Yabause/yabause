@@ -189,9 +189,6 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_BLEND);
 
-  if (_Ygl->vdp2_use_compute_shader != 0)
-    VDP2Generator_init(_Ygl->width, _Ygl->height);
-
    glBindVertexArray(_Ygl->vao);
 
    switch(modeScreen) {
@@ -226,7 +223,6 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 
    YglGenFrameBuffer(0);
 
-  if (_Ygl->vdp2_use_compute_shader == 0) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
     //glClearBufferfv(GL_COLOR, 0, col);
@@ -236,7 +232,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
     //glClearBufferfv(GL_COLOR, 3, col);
     //glClearBufferfv(GL_COLOR, 4, col);
 #endif
-  }
+
    glDepthMask(GL_FALSE);
    glViewport(0, 0, _Ygl->width, _Ygl->height);
    glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
@@ -367,21 +363,15 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
   }
 
   VDP1fb = get_vdp1_tex();
-
-  if (_Ygl->vdp2_use_compute_shader == 0) {
 #ifdef __LIBRETRO__
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 #else
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
 #endif
-    glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
-    glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-    YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, useLineColorOffset, varVdp2Regs);
-    srcTexture = _Ygl->original_fbotex[0];
-  } else {
-    VDP2Generator_update(_Ygl->compute_tex, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, varVdp2Regs);
-    srcTexture = _Ygl->compute_tex;
-  }
+  glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
+  glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
+  YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, useLineColorOffset, varVdp2Regs);
+  srcTexture = _Ygl->original_fbotex[0];
 #ifndef __LIBRETRO__
    glViewport(x, y, w, h);
    glScissor(x, y, w, h);
