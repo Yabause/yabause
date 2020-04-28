@@ -286,35 +286,35 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int 
 
   msglength = strlen(message->message);
 
+  if (vg != NULL)
+  {
+      nvgBeginFrame(vg, vidwidth, vidheight, 1.0f);
 
+      nvgFontSize(vg, fontsize);
+      nvgFontFace(vg, "sans");
+      nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
 
-  nvgBeginFrame(vg, vidwidth, vidheight, 1.0f);
+      nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 
-  nvgFontSize(vg, fontsize);
-  nvgFontFace(vg, "sans");
-  nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
-
-  nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-
-  nvgText(vg, LeftX, TxtY, message->message, NULL);
-  TxtY += fontsize;
+      nvgText(vg, LeftX, TxtY, message->message, NULL);
+      TxtY += fontsize;
 #if 1
-  int linecnt = (vidheight - TxtY) / fontsize;
-  int start_point = current_log_history_index - linecnt;
-  if (start_point < 0) {
-    start_point = MAX_LOG_HISTORY + start_point;
-  }
-  for (i = 0; i < linecnt; i++){
-    nvgText(vg, LeftX, TxtY, log_histroy[start_point], NULL);
-    start_point++;
-    start_point %= MAX_LOG_HISTORY;
-    TxtY += fontsize;
-  }
+      int linecnt = (vidheight - TxtY) / fontsize;
+      int start_point = current_log_history_index - linecnt;
+      if (start_point < 0) {
+          start_point = MAX_LOG_HISTORY + start_point;
+      }
+      for (i = 0; i < linecnt; i++) {
+          nvgText(vg, LeftX, TxtY, log_histroy[start_point], NULL);
+          start_point++;
+          start_point %= MAX_LOG_HISTORY;
+          TxtY += fontsize;
+      }
 
 #endif
-   ProfileDrawGraph();
-   nvgEndFrame(vg);
-
+      ProfileDrawGraph();
+      nvgEndFrame(vg);
+  }
 }
 
 
