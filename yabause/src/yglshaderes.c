@@ -978,8 +978,6 @@ uniform float u_emu_vdp1_width;\n \
 uniform float u_emu_vdp2_width;\n \
 uniform float u_vheight; \n \
 uniform vec2 vdp1Ratio; \n \
-uniform int fbon; \n \
-uniform int screen_nb; \n \
 uniform int ram_mode; \n \
 uniform int extended_cc; \n \
 uniform int u_lncl;  \n \
@@ -1765,7 +1763,6 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp2_width"),(float)(_Ygl->width) / (float)(_Ygl->rwidth));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
   glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), _Ygl->vdp1wratio, _Ygl->vdp1hratio);//((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbon"), (_Ygl->vdp1On[_Ygl->readframe] != 0));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x8400) == 0x400) );
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "u_lncl"),lncl_val); //_Ygl->prioVa
@@ -1815,15 +1812,12 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glActiveTexture(GL_TEXTURE16);
   glBindTexture(GL_TEXTURE_2D, _Ygl->coloroffset_tex);
 
-  id = 0;
   for (int i=0; i<nbScreen; i++) {
     if (prioscreens[i] != 0) {
       glActiveTexture(gltext[i]);
       glBindTexture(GL_TEXTURE_2D, prioscreens[i]);
-      id++;
     }
   }
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "screen_nb"), id);
 
   glActiveTexture(gltext[7]);
   glBindTexture(GL_TEXTURE_2D, _Ygl->back_fbotex[0]);
