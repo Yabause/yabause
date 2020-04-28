@@ -31,7 +31,7 @@ extern vdp2rotationparameter_struct  Vdp1ParaA;
 
 #define DEBUGWIP
 
-static const GLchar vdp2blit_cs_start_f[] =
+static const GLchar vdp2blit_cs_start_f_full[] =
 SHADER_VERSION_COMPUTE
 "#ifdef GL_ES\n"
 "precision highp float; \n"
@@ -93,6 +93,16 @@ SHADER_VERSION_COMPUTE
 "float getVdp2RegAsFloat(int id) {\n"
 "  return float(s_vdp2reg[id])/255.0;\n"
 "};\n";
+
+const GLchar * vdp2blit_cs_start_f[7]= {
+  vdp2blit_cs_start_f_full,
+  vdp2blit_cs_start_f_full,
+  vdp2blit_cs_start_f_full,
+  vdp2blit_cs_start_f_full,
+  vdp2blit_cs_start_f_full,
+  vdp2blit_cs_start_f_full,
+  vdp2blit_cs_start_f_full
+};
 
 const GLchar Yglprg_vdp2_drawfb_cs_cram_f[] =
 "int getVDP2Reg(int id) {\n"

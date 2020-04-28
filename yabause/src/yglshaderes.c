@@ -960,70 +960,183 @@ refrence:
   hard/vdp2/hon/p12_14.htm#CCCTL_
 
 */
+#define COMMON_START "\
+in vec2 v_texcoord; \n \
+out vec4 finalColor; \n \
+uniform sampler2D s_back;  \n \
+uniform sampler2D s_lncl;  \n \
+uniform sampler2D s_lncl_off_rgb0;  \n \
+uniform sampler2D s_lncl_off_rgb1;  \n \
+uniform sampler2D s_vdp1FrameBuffer;\n \
+uniform sampler2D s_win0;  \n \
+uniform sampler2D s_win1;  \n \
+uniform sampler2D s_color; \n \
+uniform sampler2D s_vdp2reg; \n \
+uniform sampler2D s_perline; \n \
+uniform float u_emu_height;\n \
+uniform float u_emu_vdp1_width;\n \
+uniform float u_emu_vdp2_width;\n \
+uniform float u_vheight; \n \
+uniform vec2 vdp1Ratio; \n \
+uniform int fbon; \n \
+uniform int screen_nb; \n \
+uniform int ram_mode; \n \
+uniform int extended_cc; \n \
+uniform int u_lncl;  \n \
+uniform int isRGB; \n \
+uniform int isBlur; \n \
+uniform int isShadow; \n \
+uniform int is_perline[8];\n \
+uniform int mode[7];  \n \
+uniform int is_lncl_off[6]; \n \
+uniform int use_sp_win; \n \
+uniform int use_trans_shadow; \n \
+uniform ivec2 tvSize;\n \
+uniform int win_s; \n \
+uniform int win_s_mode; \n \
+uniform int win0; \n \
+uniform int win0_mode; \n \
+uniform int win1; \n \
+uniform int win1_mode; \n \
+uniform int win_op; \n \
+int PosY = int(gl_FragCoord.y)+1;\n \
+int PosX = int(gl_FragCoord.x);\n \
+vec2 getFBCoord(vec2 pos) {\n \
+ return pos;\n \
+"
 
+#define SAMPLER_TEX(ID) "\
+uniform sampler2D s_texture"Stringify(ID)";  \n \
+"
 //--------------------------------------------------------------------------------------------------------------
-static const char vdp2blit_gl_start_f[] =
+static const char vdp2blit_gl_start_f_6[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
 "precision highp float; \n"
 "#endif\n"
-"in vec2 v_texcoord; \n"
-"out vec4 finalColor; \n"
-"uniform sampler2D s_texture0;  \n"
-"uniform sampler2D s_texture1;  \n"
-"uniform sampler2D s_texture2;  \n"
-"uniform sampler2D s_texture3;  \n"
-"uniform sampler2D s_texture4;  \n"
-"uniform sampler2D s_texture5;  \n"
-"uniform sampler2D s_back;  \n"
-"uniform sampler2D s_lncl;  \n"
-"uniform sampler2D s_lncl_off_rgb0;  \n"
-"uniform sampler2D s_lncl_off_rgb1;  \n"
-"uniform sampler2D s_vdp1FrameBuffer;\n"
-"uniform sampler2D s_win0;  \n"
-"uniform sampler2D s_win1;  \n"
-"uniform sampler2D s_color; \n"
-"uniform sampler2D s_vdp2reg; \n"
-"uniform sampler2D s_perline; \n"
-"uniform float u_emu_height;\n"
-"uniform float u_emu_vdp1_width;\n"
-"uniform float u_emu_vdp2_width;\n"
-"uniform float u_vheight; \n"
-"uniform vec2 vdp1Ratio; \n"
-"uniform int fbon; \n"
-"uniform int screen_nb; \n"
-"uniform int ram_mode; \n"
-"uniform int extended_cc; \n"
-"uniform int u_lncl;  \n"
-"uniform int isRGB; \n"
-"uniform int isBlur; \n"
-"uniform int isShadow; \n"
-"uniform int is_perline[8];\n"
-"uniform int mode[7];  \n"
-"uniform int is_lncl_off[6]; \n"
-"uniform int use_sp_win; \n"
-"uniform int use_trans_shadow; \n"
-"uniform ivec2 tvSize;\n"
-"uniform int win_s; \n"
-"uniform int win_s_mode; \n"
-"uniform int win0; \n"
-"uniform int win0_mode; \n"
-"uniform int win1; \n"
-"uniform int win1_mode; \n"
-"uniform int win_op; \n"
 #ifdef DEBUG_BLIT
 "out vec4 topColor; \n"
 "out vec4 secondColor; \n"
 "out vec4 thirdColor; \n"
 "out vec4 fourthColor; \n"
 #endif
-"int PosY = int(gl_FragCoord.y)+1;\n"
-"int PosX = int(gl_FragCoord.x);\n"
-
-"vec2 getFBCoord(vec2 pos) {\n"
-" return pos;\n"
+SAMPLER_TEX(0)
+SAMPLER_TEX(1)
+SAMPLER_TEX(2)
+SAMPLER_TEX(3)
+SAMPLER_TEX(4)
+SAMPLER_TEX(5)
+COMMON_START
 "}\n";
-;
+
+static const char vdp2blit_gl_start_f_5[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+SAMPLER_TEX(0)
+SAMPLER_TEX(1)
+SAMPLER_TEX(2)
+SAMPLER_TEX(3)
+SAMPLER_TEX(4)
+COMMON_START
+"}\n";
+
+static const char vdp2blit_gl_start_f_4[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+SAMPLER_TEX(0)
+SAMPLER_TEX(1)
+SAMPLER_TEX(2)
+SAMPLER_TEX(3)
+COMMON_START
+"}\n";
+
+static const char vdp2blit_gl_start_f_3[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+SAMPLER_TEX(0)
+SAMPLER_TEX(1)
+SAMPLER_TEX(2)
+COMMON_START
+"}\n";
+
+static const char vdp2blit_gl_start_f_2[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+SAMPLER_TEX(0)
+SAMPLER_TEX(1)
+COMMON_START
+"}\n";
+
+static const char vdp2blit_gl_start_f_1[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+SAMPLER_TEX(0)
+COMMON_START
+"}\n";
+
+static const char vdp2blit_gl_start_f_0[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+COMMON_START
+"}\n";
+
+const GLchar * vdp2blit_gl_start_f[7]= {
+  vdp2blit_gl_start_f_0,
+  vdp2blit_gl_start_f_1,
+  vdp2blit_gl_start_f_2,
+  vdp2blit_gl_start_f_3,
+  vdp2blit_gl_start_f_4,
+  vdp2blit_gl_start_f_5,
+  vdp2blit_gl_start_f_6
+};
 
 const GLchar Yglprg_vdp2_drawfb_gl_cram_f[] =
 "int getVDP2Reg(int id, int line) {\n"
@@ -1624,12 +1737,22 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
 #endif
     glBindFragDataLocation(vdp2blit_prg, 0, "finalColor");
 #endif
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture0"), 0);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture1"), 1);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture2"), 2);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture3"), 3);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture4"), 4);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture5"), 5);
+  switch(id){
+    case 6:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture5"), 5);
+    case 5:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture4"), 4);
+    case 4:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture3"), 3);
+    case 3:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture2"), 2);
+    case 2:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture1"), 1);
+    case 1:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture0"), 0);
+    default:
+      break;
+  }
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_back"), 7);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_lncl"), 8);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
