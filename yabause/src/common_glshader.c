@@ -1465,7 +1465,7 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
 int setupVDP2Prog(Vdp2* varVdp2Regs, int nb_screen, int CS) {
   int pgid = PG_VDP2_DRAWFRAMEBUFF_NONE;
   int condition = 0;
-  int mode = getSpriteRenderMode(varVdp2Regs); // 4x
+  int mode = getSpriteRenderMode(varVdp2Regs) - NONE; // 4x
   const int SPCCN = ((varVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
   const int CCRTMD = ((varVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
   const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
