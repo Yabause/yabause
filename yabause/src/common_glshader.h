@@ -8,12 +8,14 @@ extern const GLchar *vdp2blit_srite_type_f[16];
 extern const GLchar *Yglprg_color_condition_f[5];
 extern const GLchar *Yglprg_color_mode_f[4];
 
-extern const GLchar *pYglprg_vdp2_blit_f[128*5][16];
-
 extern GLuint _prgid[PG_MAX];
 
 extern int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
 extern void initVDP2DrawCode(const GLchar* start, const GLchar* draw, const GLchar* end, const GLchar* final);
 extern void compileVDP2Prog(int id, const GLchar **v, int CS);
-extern int setupVDP2Prog(Vdp2* varVdp2Regs, int CS);
+extern int setupVDP2Prog(Vdp2* varVdp2Regs, int nb_screen, int CS);
+
+#define QuoteIdent(ident) #ident
+#define Stringify(macro) QuoteIdent(macro)
+
 #endif //COMMON_GLSHADER_H

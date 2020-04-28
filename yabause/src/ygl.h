@@ -295,6 +295,8 @@ void YglCheckFBSwitch(int sync);
 
 #define VDP2_CC_NONE 0x00
 
+#define BLIT_TEXTURE_NB_PROG (16*2*4*14*5)
+
 enum
 {
    //VDP1 Programs
@@ -315,12 +317,12 @@ enum
 
 
    PG_VDP2_DRAWFRAMEBUFF_NONE=512,
-   PG_VDP2_DRAWFRAMEBUFF_LESS_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128),
-   PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128*2),
-   PG_VDP2_DRAWFRAMEBUFF_MORE_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128*3),
-   PG_VDP2_DRAWFRAMEBUFF_MSB_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128*4),
+   PG_VDP2_DRAWFRAMEBUFF_LESS_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+1),
+   PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+2),
+   PG_VDP2_DRAWFRAMEBUFF_MORE_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+3),
+   PG_VDP2_DRAWFRAMEBUFF_MSB_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+4),
 
-   PG_MAX = (PG_VDP2_DRAWFRAMEBUFF_NONE+128*5)
+   PG_MAX = (PG_VDP2_DRAWFRAMEBUFF_NONE+BLIT_TEXTURE_NB_PROG)
 };
 
 
@@ -760,7 +762,7 @@ extern void executeTMVDP1(int in, int out);
 
 extern u8 * YglGetVDP2RegPointer();
 
-int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, Vdp2* varVdp2Regs);
+int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, int nb_screen, Vdp2* varVdp2Regs);
 
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz);
 void YglTranslatef(YglMatrix *result, GLfloat tx, GLfloat ty, GLfloat tz);

@@ -247,8 +247,15 @@ public:
 
     error = glGetError();
 
+    int id = 0;
+    for (int i=0; i<nbScreen; i++) {
+      if (prioscreens[i] != 0) {
+        id++;
+      }
+    }
+
 	  DEBUGWIP("prog %d\n", __LINE__);
-		setupVDP2Prog(varVdp2Regs, 1);
+		setupVDP2Prog(varVdp2Regs, id, 1);
 
     YglMatrix vdp1Mat;
 
@@ -339,7 +346,7 @@ public:
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 13, ssbo_vdp2reg_);
 #endif
 
-		int id = 0;
+		id = 0;
 	  for (int i=0; i<nbScreen; i++) {
 	    if (prioscreens[i] != 0) {
 	      glActiveTexture(gltext[i]);

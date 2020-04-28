@@ -35,9 +35,6 @@
 
 #define ALIGN(A,B) (((A)%(B))? A + (B - ((A)%(B))) : A)
 
-#define QuoteIdent(ident) #ident
-#define Stringify(macro) QuoteIdent(macro)
-
 static int saveFB;
 static void Ygl_useTmpBuffer();
 static void Ygl_releaseTmpBuffer(void);
@@ -933,7 +930,7 @@ typedef struct  {
   int idcram;
 } DrawFrameBufferUniform;
 
-#define MAX_FRAME_BUFFER_UNIFORM (128*5)
+#define MAX_FRAME_BUFFER_UNIFORM (BLIT_TEXTURE_NB_PROG)
 
 DrawFrameBufferUniform g_draw_framebuffer_uniforms[MAX_FRAME_BUFFER_UNIFORM];
 
@@ -1181,11 +1178,11 @@ int YglInitDrawFrameBufferShaders(int id, int CS) {
 *  VDP2 Draw Frame buffer Operation( Shadow drawing for ADD color mode )
 * ----------------------------------------------------------------------------------*/
 
-int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, Vdp2* varVdp2Regs)
+int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, int nb_screen, Vdp2* varVdp2Regs)
 {
    int arrayid;
 
-   int pgid = setupVDP2Prog(varVdp2Regs, 0);
+   int pgid = setupVDP2Prog(varVdp2Regs, nb_screen, 0);
 
   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF_NONE;
 
@@ -1582,7 +1579,14 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
 
     glBindVertexArray(_Ygl->vao);
 
-    vdp2blit_prg = Ygl_uniformVDP2DrawFramebuffer(offsetcol, varVdp2Regs );
+    int id = 0;
+    for (int i=0; i<nbScreen; i++) {
+      if (prioscreens[i] != 0) {
+        id++;
+      }
+    }
+
+    vdp2blit_prg = Ygl_uniformVDP2DrawFramebuffer(offsetcol, id, varVdp2Regs );
 
 
   int gltext[19] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15, GL_TEXTURE16, GL_TEXTURE17, GL_TEXTURE18};
@@ -1688,7 +1692,7 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glActiveTexture(GL_TEXTURE16);
   glBindTexture(GL_TEXTURE_2D, _Ygl->coloroffset_tex);
 
-  int id = 0;
+  id = 0;
   for (int i=0; i<nbScreen; i++) {
     if (prioscreens[i] != 0) {
       glActiveTexture(gltext[i]);

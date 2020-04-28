@@ -1,6 +1,8 @@
 #include "common_glshader.h"
 #include "yui.h"
 
+#define LOG_SHADER
+
 extern int YglInitDrawFrameBufferShaders(int id, int CS);
 
 GLuint _prgid[PG_MAX] = { 0 };
@@ -581,7 +583,7 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  ret.offset_color = texelFetch( s_perline, ivec2(int( (u_vheight-PosY) * u_emu_height), is_perline[6]), 0 ).rgb;\n"
 "  ret.offset_color = (ret.offset_color - vec3(0.5))*2.0;\n";
 
-static const GLchar Yglprg_vdp2_common_end[] =
+static const GLchar Yglprg_vdp2_common_part[] =
 "ivec2 startW0 = ivec2(0);\n"
 "ivec2 startW1 = ivec2(0);\n"
 "ivec2 endW0 = ivec2(0.0);\n"
@@ -652,146 +654,217 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  if ((win1[7] != 0) || (win0[7] != 0) || (win_s[7] != 0)) {\n"
 "    return inWindow(7);\n"
 "  } else {return false;}\n"
-"}\n"
+"}\n";
 
+//Thios can be still optimized. Sprite related variables are doubled
+#define VDP2_SPRITE_SCREN_SETUP "\
+if ((prio == FBPrio) && inWindow(6)) {\n \
+  ret.Color = FBColor; \n \
+  ret.mode = int(FBColor.a*255.0)&0x7; \n \
+  ret.normalShadow = FBNormalShadow;\n \
+  ret.lncl = (u_lncl>>6)&0x1;\n \
+  ret.offset_color = offcolFB;\n \
+  remPrio = remPrio - 1;\n \
+  ret.Color.a = float((int(ret.Color.a*255.0)&0xF8)>>3)/31.0; \n \
+  ret.isRGB = FBRgb;\n  \
+  ret.isSprite = 1;\n \
+  ret.layer = 6;\n \
+  if (remPrio == 0) return ret;\n \
+}\n \
+ret.isSprite = 0;\n \
+ret.meshColor = vec4(0.0);\n \
+ret.mesh = 0;\n \
+"
+
+#define VDP2_SCREEN_SETUP(ID) "\
+ret.offset_color = offcol"Stringify(ID)".rgb;\n \
+if (((int(vdp2col"Stringify(ID)".a*255.0)&0x7) == prio) && inWindow("Stringify(ID)")) {\n \
+remPrio = remPrio - 1;\n \
+ret.Color = vdp2col"Stringify(ID)"; \n \
+ret.mode = mode["Stringify(ID)"]; \n \
+ret.normalShadow = (((isShadow>>"Stringify(ID)")&0x1)!= 0);\n \
+ret.lncl=(u_lncl>>"Stringify(ID)")&0x1;\n \
+ret.lncl_off = is_lncl_off["Stringify(ID)"];\n \
+ret.layer = "Stringify(ID)";\n \
+ret.isRGB = (isRGB>>"Stringify(ID)")&0x1;\n \
+ret.Color.a = float((int(ret.Color.a*255.0)&0xF8)>>3)/31.0; \n \
+if (remPrio == 0) return ret;\n \
+}\n"
+
+#define VDP2_RETURN_PRIO_EMPTY "\
+ret.Color = vec4(0.0);\n \
+ret.mode = 0;\n \
+ret.normalShadow = false;\n \
+ret.lncl = 0;\n \
+ret.lncl_off = 0;\n \
+ret.isSprite = 0;\n \
+ret.layer = -1;\n \
+return ret; \
+\n"
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_6[] =
 "Col getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
-"  Col ret, empty; \n"
-"  vec4 tmpColor;\n"
+"  Col ret; \n"
 "  int remPrio = nbPrio;\n"
-"  empty.Color = vec4(0.0);\n"
-"  empty.mode = 0;\n"
-"  empty.lncl = 0;\n"
-"  empty.lncl_off = 0;\n"
-"  empty.isSprite = 0;\n"
-"  empty.layer = -1;\n"
-"  empty.meshColor = vec4(0.0);\n"
-"  empty.mesh = 0;\n"
-"  empty.normalShadow = false;\n"
-"  ret = empty;\n"
-"  int priority; \n"
-"  ret.normalShadow = false;\n"
-"  int alpha; \n"
-"  if ((fbon == 1) && (prio == FBPrio) && inWindow(6)) {\n"
-"    ret.mode = int(FBColor.a*255.0)&0x7; \n"
-"    ret.lncl = (u_lncl>>6)&0x1;\n"
-"    ret.Color = FBColor; \n"
-"    ret.offset_color = offcolFB;\n"
-"    remPrio = remPrio - 1;\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.isRGB = FBRgb;\n" //Shall not be the case always... Need to get RGB format per pixel
-"    ret.isSprite = 1;\n"
-"    ret.layer = 6;\n"
-"    ret.normalShadow = FBNormalShadow;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 0) return empty;\n"
-"  ret.isSprite = 0;\n"
-"  tmpColor = vdp2col0; \n"
-"  ret.offset_color = offcol0.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(0)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=(u_lncl>>0)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[0];\n"
-"    ret.Color = tmpColor; \n"
-"    ret.isRGB = (isRGB>>0)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>0)&0x1)!= 0);\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[0]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 0;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 1) return empty;\n"
-"  tmpColor = vdp2col1; \n"
-"  ret.offset_color = offcol1.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(1)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=(u_lncl>>1)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[1];\n"
-"    ret.isRGB = (isRGB>>1)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>1)&0x1)!= 0);\n"
-"    ret.Color = tmpColor; \n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[1]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 1;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 2) return empty;\n"
-"  tmpColor = vdp2col2; \n"
-"  ret.offset_color = offcol2.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(2)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=(u_lncl>>2)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[2];\n"
-"    ret.isRGB = (isRGB>>2)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>2)&0x1)!= 0);\n"
-"    ret.Color = tmpColor; \n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[2]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 2;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 3) return empty;\n"
-"  tmpColor = vdp2col3; \n"
-"  ret.offset_color = offcol3.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(3)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=(u_lncl>>3)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[3];\n"
-"    ret.isRGB = (isRGB>>3)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>3)&0x1)!= 0);\n"
-"    ret.Color = tmpColor; \n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[3]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 3;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 4) return empty;\n"
-"  tmpColor = vdp2col4; \n"
-"  ret.offset_color = offcol4.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(4)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.Color = tmpColor; \n"
-"    ret.lncl=(u_lncl>>4)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[4];\n"
-"    ret.isRGB = (isRGB>>4)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>4)&0x1)!= 0);\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[4]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 4;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 5) return empty;\n"
-"  tmpColor = vdp2col5; \n"
-"  ret.offset_color = offcol5.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(5)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.Color = tmpColor; \n"
-"    ret.lncl=(u_lncl>>5)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[5];\n"
-"    ret.isRGB = (isRGB>>5)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>5)&0x1)!= 0);\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[5]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 5;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  return empty;\n"
-"}  \n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_SCREEN_SETUP(4)
+  VDP2_SCREEN_SETUP(5)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
 
+static const GLchar Yglprg_vdp2_prio_part_fb_on_5[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_SCREEN_SETUP(4)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_4[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_3[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_2[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_1[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_0[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_6[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_SCREEN_SETUP(4)
+  VDP2_SCREEN_SETUP(5)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_5[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_SCREEN_SETUP(4)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_4[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_3[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_2[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_1[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_0[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_common_end[] =
 "Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
@@ -1212,34 +1285,58 @@ const GLchar * Yglprg_color_mode_f[4] = {
   Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f,
 };
 
-const GLchar * pYglprg_vdp2_blit_f[128*5][16];
+const GLchar * Yglprg_vdp2_common_part_screen[14] = {
+  Yglprg_vdp2_prio_part_fb_off_0,
+  Yglprg_vdp2_prio_part_fb_off_1,
+  Yglprg_vdp2_prio_part_fb_off_2,
+  Yglprg_vdp2_prio_part_fb_off_3,
+  Yglprg_vdp2_prio_part_fb_off_4,
+  Yglprg_vdp2_prio_part_fb_off_5,
+  Yglprg_vdp2_prio_part_fb_off_6,
+  Yglprg_vdp2_prio_part_fb_on_0,
+  Yglprg_vdp2_prio_part_fb_on_1,
+  Yglprg_vdp2_prio_part_fb_on_2,
+  Yglprg_vdp2_prio_part_fb_on_3,
+  Yglprg_vdp2_prio_part_fb_on_4,
+  Yglprg_vdp2_prio_part_fb_on_5,
+  Yglprg_vdp2_prio_part_fb_on_6,
+};
+
+const GLchar * pYglprg_vdp2_blit_f[BLIT_TEXTURE_NB_PROG][17];
 
 void initVDP2DrawCode(const GLchar* start, const GLchar* draw, const GLchar* end, const GLchar* final) {
   //VDP2 programs
-  for (int i = 0; i<5; i++) {
-     // Sprite color calculation condition are separated by 128
     for (int j = 0; j<4; j++) {
      // 4 Sprite color calculation mode
       for (int k = 0; k<2; k++) {
         // Palette only mode or palette/RGB mode
         for (int l = 0; l<16; l++) {
           //16 sprite typed
-          int index = 16*(2*(4*i+j)+k)+l;
-          pYglprg_vdp2_blit_f[index][0] = start;
-          pYglprg_vdp2_blit_f[index][1] = Yglprg_vdp2_common_start;
-          pYglprg_vdp2_blit_f[index][2] = vdp2blit_palette_mode_f[k];
-          pYglprg_vdp2_blit_f[index][3] = vdp2blit_srite_type_f[l];
-          pYglprg_vdp2_blit_f[index][4] = draw;
-          pYglprg_vdp2_blit_f[index][5] = Yglprg_vdp2_common_draw;
-          pYglprg_vdp2_blit_f[index][6] = Yglprg_color_condition_f[i];
-          pYglprg_vdp2_blit_f[index][7] = Yglprg_color_mode_f[j];
-          pYglprg_vdp2_blit_f[index][8] = Yglprg_vdp2_drawfb_cram_eiploge_f;
-          pYglprg_vdp2_blit_f[index][9] = vdp2blit_filter_f;
-          pYglprg_vdp2_blit_f[index][10] = Yglprg_vdp2_common_end;
-          pYglprg_vdp2_blit_f[index][11] = end;
-          pYglprg_vdp2_blit_f[index][12] = Yglprg_vdp2_common_final;
-          pYglprg_vdp2_blit_f[index][13] = final;
-          pYglprg_vdp2_blit_f[index][14] =  NULL;
+          for (int m = 0; m<14; m++) {
+            //14 screens configuration
+            for (int i = 0; i<5; i++) {
+              // Sprite color calculation condition are separated by 1
+            int index = 5*(14*(16*(2*j+k)+l)+m)+i;
+
+            LOG_SHADER("index = %d (%d %d %d %d %d)\n", index, j, k, l, m, i);
+            pYglprg_vdp2_blit_f[index][0] = start;
+            pYglprg_vdp2_blit_f[index][1] = Yglprg_vdp2_common_start;
+            pYglprg_vdp2_blit_f[index][2] = vdp2blit_palette_mode_f[k];
+            pYglprg_vdp2_blit_f[index][3] = vdp2blit_srite_type_f[l];
+            pYglprg_vdp2_blit_f[index][4] = draw;
+            pYglprg_vdp2_blit_f[index][5] = Yglprg_vdp2_common_draw;
+            pYglprg_vdp2_blit_f[index][6] = Yglprg_color_condition_f[i];
+            pYglprg_vdp2_blit_f[index][7] = Yglprg_color_mode_f[j];
+            pYglprg_vdp2_blit_f[index][8] = Yglprg_vdp2_drawfb_cram_eiploge_f;
+            pYglprg_vdp2_blit_f[index][9] = vdp2blit_filter_f;
+            pYglprg_vdp2_blit_f[index][10] = Yglprg_vdp2_common_part;
+            pYglprg_vdp2_blit_f[index][11] = Yglprg_vdp2_common_part_screen[m];
+            pYglprg_vdp2_blit_f[index][12] = Yglprg_vdp2_common_end;
+            pYglprg_vdp2_blit_f[index][13] = end;
+            pYglprg_vdp2_blit_f[index][14] = Yglprg_vdp2_common_final;
+            pYglprg_vdp2_blit_f[index][15] = final;
+            pYglprg_vdp2_blit_f[index][16] =  NULL;
+          }
         }
       }
     }
@@ -1365,36 +1462,30 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
     return 0;
 }
 
-int setupVDP2Prog(Vdp2* varVdp2Regs, int CS) {
+int setupVDP2Prog(Vdp2* varVdp2Regs, int nb_screen, int CS) {
   int pgid = PG_VDP2_DRAWFRAMEBUFF_NONE;
-  int mode = getSpriteRenderMode(varVdp2Regs);
+  int condition = 0;
+  int mode = getSpriteRenderMode(varVdp2Regs); // 4x
   const int SPCCN = ((varVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
   const int CCRTMD = ((varVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
   const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
   const int SPLCEN = (varVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
 
+  //Consider x5
   if ( SPCCN ) {
-    const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
-    switch (SPCCCS)
-    {
-      case 0:
-        pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_NONE;
-        break;
-      case 1:
-        pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE;
-        break;
-      case 2:
-        pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_NONE;
-        break;
-      case 3:
-        pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_NONE;
-        break;
-   }
+    condition += (varVdp2Regs->SPCTL >> 12) & 0x3; //5x
   }
-  int colormode =  (varVdp2Regs->SPCTL & 0x20) != 0;
-  int spritetype =  (varVdp2Regs->SPCTL & 0xF);
+  int colormode =  (varVdp2Regs->SPCTL & 0x20) != 0; // 2x
+  int spritetype =  (varVdp2Regs->SPCTL & 0xF); // 16x
 
-  pgid += (mode-NONE)*16*2 + colormode*16 + spritetype;
+  int screen_nb = nb_screen; //14x
+  if (_Ygl->vdp1On[_Ygl->readframe] != 0) {
+    screen_nb += 7;
+  }
+
+  pgid += 5*(14*(16*(2*mode+colormode)+spritetype)+screen_nb)+condition;
+
+  LOG_SHADER("get = %d (%d %d %d %d %d)\n", pgid-PG_VDP2_DRAWFRAMEBUFF_NONE, mode, colormode, spritetype, screen_nb, condition);
 
   if (_prgid[pgid] == 0) {
    if (YglInitDrawFrameBufferShaders(pgid, CS) != 0) {
@@ -1438,10 +1529,11 @@ GLuint createCSProgram(int id, int count, const GLchar * cs[]) {
 
 void compileVDP2Prog(int id, const GLchar **v, int CS){
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START [%d]--\n", arrayid);
+  LOG_SHADER("%d %d %d\n", id, PG_VDP2_DRAWFRAMEBUFF_NONE, id-PG_VDP2_DRAWFRAMEBUFF_NONE);
   if (CS == 0) {
-    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 14, NULL, NULL, NULL) != 0) { YuiMsg("Error init prog %d\n",id); abort(); }
+    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 16, NULL, NULL, NULL) != 0) { YuiMsg("Error init prog %d\n",id); abort(); }
   } else {
-    if (createCSProgram(id, 14, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0) { YuiMsg("Error init prog %d\n",id); abort(); }
+    if (createCSProgram(id, 16, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0) { YuiMsg("Error init prog %d\n",id); abort(); }
   }
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --DONE [%d]--\n", arrayid);
 }
