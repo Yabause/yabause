@@ -48,9 +48,9 @@ UIDebugVDP2Viewer::UIDebugVDP2Viewer( QWidget* p )
 }
 
 void UIDebugVDP2Viewer::on_cbScreen_currentIndexChanged ( int index )
-{   
-	if (!Vdp2Regs)
-		return;
+{
+    if (!Vdp2Regs)
+        return;
 
    if (vdp2texture)
       free(vdp2texture);
@@ -60,6 +60,7 @@ void UIDebugVDP2Viewer::on_cbScreen_currentIndexChanged ( int index )
 
    // Redraw screen
    QGraphicsScene *scene = gvScreen->scene();
+
 #ifdef USE_RGB_555
    QImage img((uchar *)vdp2texture, width, height, QImage::Format_RGB555);
 #elif USE_RGB_565
@@ -71,6 +72,8 @@ void UIDebugVDP2Viewer::on_cbScreen_currentIndexChanged ( int index )
    scene->clear();
    scene->addPixmap(pixmap);
    scene->setSceneRect(scene->itemsBoundingRect());
+// VBT : corrige le premier affichage du graphicView (permet le calcul de la taille du frameRec)
+   show();
    gvScreen->fitInView(scene->sceneRect());
    gvScreen->invalidateScene();
 }
