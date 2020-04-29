@@ -411,9 +411,9 @@ static const GLchar Yglprg_vdp2_sprite_type_F[] =
 */
 static const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " fbmode = 0; \n";
 
-static const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ fbmode = 2;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ fbmode = 2;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > getVDP2Reg(16, line) ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != getVDP2Reg(16, line) ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < getVDP2Reg(16, line) ){ fbmode = 2;} \n ";
 static const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ fbmode = 2;} \n ";
 
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
