@@ -409,29 +409,35 @@ static const GLchar Yglprg_vdp2_sprite_type_F[] =
  Color calculation option
   hard/vdp2/hon/p09_21.htm
 */
-static const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " tmpColor.a = float(alpha|0x1)/255.0;\n";
+static const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " fbmode = 0; \n";
 
-static const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > getVDP2Reg(16, line) ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != getVDP2Reg(16, line) ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < getVDP2Reg(16, line) ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ fbmode = 2;} \n ";
 
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
 "//No Color calculation\n";
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_as_is_f[] =
-" tmpColor.a = float(alpha|0x2)/255.0; \n";
+" if (fbmode == 1) vdp1mode = 2; \n";
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f[] =
-" tmpColor.a = float(alpha|0x3)/255.0; \n";
+" if (fbmode == 1) vdp1mode = 3; \n";
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
-" tmpColor.a = float(alpha|0x4)/255.0; \n";
+" if (fbmode == 1) vdp1mode = 4; \n";
 
 static const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
+"   if (fbmode == 2) vdp1mode = 5; \n"
+" }\n"
+" tmpColor.a = float(alpha|vdp1mode)/255.0; \n"
 " ret.color = tmpColor;\n"
 " ret.prio = depth;\n"
 " return ret;\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_common_start[] =
+
+"int fbmode = 1;\n"
+"int vdp1mode = 1;\n"
 
 "vec4 FBColor = vec4(0.0);\n"
 "vec4 vdp2col0 = vec4(0.0);\n"
@@ -533,6 +539,8 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  FBCol mesh = zeroFBCol();\n"
 "  int u_color_ram_offset = getVDP2Reg(23, line)<<8;\n"
 "  if (ram_mode != 1) u_color_ram_offset = u_color_ram_offset & 0x300;\n"
+"  fbmode = 1;\n"
+"  vdp1mode = 1;\n"
 "  ivec2 fbCoord = addr + ivec2(x*vdp1Ratio.x, 0);\n"
 "  fbCoord = ivec2(getFBCoord(vec2(fbCoord)));\n"
 "  vec4 col = texelFetch(s_vdp1FrameBuffer, fbCoord, 0);\n"
@@ -580,7 +588,8 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "    msb = 1;\n"
 "  } \n"
 "  ret.offset_color = texelFetch( s_perline, ivec2(int( (u_vheight-PosY) * u_emu_height), is_perline[6]), 0 ).rgb;\n"
-"  ret.offset_color = (ret.offset_color - vec3(0.5))*2.0;\n";
+"  ret.offset_color = (ret.offset_color - vec3(0.5))*2.0;\n"
+"  if (fbmode != 0) {\n";
 
 static const GLchar Yglprg_vdp2_common_part[] =
 "ivec2 startW0 = ivec2(0);\n"
@@ -1742,9 +1751,6 @@ const GLchar * pYglprg_vdp2_blit_f[BLIT_TEXTURE_NB_PROG][17];
 
 void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* end, const GLchar* final) {
   int m_start = 0;
-#ifndef FORCE_VDP2_DIVERSITY
-  if (getCSUsage() == 0) m_start = 13;
-#endif
   //VDP2 programs
     for (int j = 0; j<4; j++) {
      // 4 Sprite color calculation mode
@@ -1752,13 +1758,17 @@ void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* 
         // Palette only mode or palette/RGB mode
         for (int l = 0; l<16; l++) {
           //16 sprite typed
-          for (int m = m_start; m<14; m++) {
+          for (int m = 0; m<14; m++) {
             //14 screens configuration
             for (int i = 0; i<5; i++) {
               // Sprite color calculation condition are separated by 1
             int index = 5*(14*(16*(2*j+k)+l)+m)+i;
 
             LOG_SHADER("index = %d (%d %d %d %d %d)\n", index, j, k, l, m, i);
+            #ifndef FORCE_VDP2_DIVERSITY
+            if (getCSUsage() == 0) pYglprg_vdp2_blit_f[index][0] = start[6];
+            else
+            #endif
             pYglprg_vdp2_blit_f[index][0] = start[m%7];
             pYglprg_vdp2_blit_f[index][1] = Yglprg_vdp2_common_start;
             pYglprg_vdp2_blit_f[index][2] = vdp2blit_palette_mode_f[k];
