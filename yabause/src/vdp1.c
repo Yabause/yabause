@@ -53,6 +53,7 @@ int nbCmdToProcess = 0;
 static int needVdp1draw = 0;
 static void Vdp1NoDraw(void);
 static void Vdp1Draw(void);
+static void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram);
 
 #define DEBUG_BAD_COORD //YuiMsg
 
@@ -1191,7 +1192,7 @@ static void Vdp1NoDraw(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram) {
+static void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram) {
    cmd->CMDCTRL = T1ReadWord(ram, addr);
    cmd->CMDLINK = T1ReadWord(ram, addr + 0x2);
    cmd->CMDPMOD = T1ReadWord(ram, addr + 0x4);
@@ -2013,30 +2014,30 @@ void ToggleVDP1(void)
 //////////////////////////////////////////////////////////////////////////////
 // Dummy Video Interface
 //////////////////////////////////////////////////////////////////////////////
-int VIDDummyInit(void);
-void VIDDummyDeInit(void);
-void VIDDummyResize(int, int, unsigned int, unsigned int, int);
-int VIDDummyIsFullscreen(void);
-int VIDDummyVdp1Reset(void);
-void VIDDummyVdp1Draw();
-void VIDDummyVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
-void VIDDummyVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
-void VIDDummyVdp1LocalCoordinate(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
-int VIDDummyVdp2Reset(void);
-void VIDDummyVdp2Draw(void);
-void VIDDummyGetGlSize(int *width, int *height);
-void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
-void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
-void VIDDummSetFilterMode(int type, int value){};
-void VIDDummSync(){};
-void VIDDummyGetNativeResolution(int *width, int * height, int *interlace);
-void VIDDummyVdp2DispOff(void);
+static int VIDDummyInit(void);
+static void VIDDummyDeInit(void);
+static void VIDDummyResize(int, int, unsigned int, unsigned int, int);
+static int VIDDummyIsFullscreen(void);
+static int VIDDummyVdp1Reset(void);
+static void VIDDummyVdp1Draw();
+static void VIDDummyVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+static void VIDDummyVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+static void VIDDummyVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+static void VIDDummyVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+static void VIDDummyVdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+static void VIDDummyVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+static void VIDDummyVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+static void VIDDummyVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+static void VIDDummyVdp1LocalCoordinate(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+static int VIDDummyVdp2Reset(void);
+static void VIDDummyVdp2Draw(void);
+static void VIDDummyGetGlSize(int *width, int *height);
+static void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
+static void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
+static void VIDDummSetFilterMode(int type, int value){};
+static void VIDDummSync(){};
+static void VIDDummyGetNativeResolution(int *width, int * height, int *interlace);
+static void VIDDummyVdp2DispOff(void);
 
 VideoInterface_struct VIDDummy = {
 	VIDCORE_DUMMY,
@@ -2072,113 +2073,113 @@ VideoInterface_struct VIDDummy = {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int VIDDummyInit(void)
+static int VIDDummyInit(void)
 {
    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyDeInit(void)
+static void VIDDummyDeInit(void)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyResize(int x, int y, UNUSED unsigned int i, UNUSED unsigned int j, UNUSED int on)
+static void VIDDummyResize(int x, int y, UNUSED unsigned int i, UNUSED unsigned int j, UNUSED int on)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-int VIDDummyIsFullscreen(void)
-{
-   return 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-int VIDDummyVdp1Reset(void)
+static int VIDDummyIsFullscreen(void)
 {
    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1Draw()
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp1LocalCoordinate(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-int VIDDummyVdp2Reset(void)
+static int VIDDummyVdp1Reset(void)
 {
    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp2Draw(void)
+static void VIDDummyVdp1Draw()
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyGetGlSize(int *width, int *height)
+static void VIDDummyVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void VIDDummyVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void VIDDummyVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void VIDDummyVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void VIDDummyVdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void VIDDummyVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void VIDDummyVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void VIDDummyVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void VIDDummyVdp1LocalCoordinate(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static int VIDDummyVdp2Reset(void)
+{
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void VIDDummyVdp2Draw(void)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void VIDDummyGetGlSize(int *width, int *height)
 {
    *width = 0;
    *height = 0;
@@ -2186,19 +2187,19 @@ void VIDDummyGetGlSize(int *width, int *height)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out)
+static void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val)
+static void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyGetNativeResolution(int *width, int * height, int * interlace)
+static void VIDDummyGetNativeResolution(int *width, int * height, int * interlace)
 {
    *width = 0;
    *height = 0;
@@ -2207,7 +2208,7 @@ void VIDDummyGetNativeResolution(int *width, int * height, int * interlace)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp2DispOff(void)
+static void VIDDummyVdp2DispOff(void)
 {
 }
 

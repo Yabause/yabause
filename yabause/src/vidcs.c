@@ -113,7 +113,7 @@ extern void YglCSRender(Vdp2 *varVdp2Regs);
 extern void YglCSRenderVDP1(void);
 extern void YglCSFinsihDraw(void);
 
-extern void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
+extern void VIDOGLVdp1LocalCoordinate(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
 extern int VIDOGLVdp2Reset(void);
 extern void VIDOGLVdp2Draw(void);
 extern void VIDOGLVdp2SetResolution(u16 TVMD);
@@ -350,7 +350,7 @@ void VIDCSVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
   if (((cmd->CMDXC+1) == regs->systemclipX2) && (regs->systemclipY2 == (cmd->CMDYC+1))) return;
   cmd->type = SYSTEM_CLIPPING;
-  vdp1_add(&cmd,1);
+  vdp1_add(cmd,1);
   regs->systemclipX2 = cmd->CMDXC+1;
   regs->systemclipY2 = cmd->CMDYC+1;
 }
