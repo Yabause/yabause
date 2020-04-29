@@ -177,7 +177,7 @@ struct retro_core_option_definition option_defs_us[] = {
          { "cpu_tesselation", NULL },
          { NULL, NULL},
       },
-      "perspective_correction"
+      "cpu_tesselation"
    },
    {
       "kronos_meshmode",
