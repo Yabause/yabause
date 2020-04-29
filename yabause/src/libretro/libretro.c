@@ -83,7 +83,6 @@ static bool stv_mode = false;
 static bool all_devices_ready = false;
 static bool libretro_supports_bitmasks = false;
 static bool rendering_started = false;
-static bool one_frame_rendered = false;
 static int16_t libretro_input_bitmask[12] = {-1,};
 static int pad_type[12] = {RETRO_DEVICE_NONE,};
 static int multitap[2] = {0,0};
@@ -585,7 +584,7 @@ static u32 soundbufsize;
 static s16 *sound_buf;
 
 static int SNDLIBRETROInit(void) {
-    int vertfreq = (yabsys.IsPal == 1 ? 50 : 60);
+    int vertfreq = (retro_get_region() == RETRO_REGION_PAL ? 50 : 60);
     soundlen = (SAMPLERATE * 100 + (vertfreq >> 1)) / vertfreq;
     soundbufsize = (soundlen<<2 * sizeof(s16));
     if ((sound_buf = (s16 *)malloc(soundbufsize)) == NULL)
@@ -779,8 +778,6 @@ void YuiSwapBuffers(void)
    if ((prev_game_width != game_width) || (prev_game_height != game_height))
       retro_set_resolution();
    audio_size = soundlen;
-   video_cb(RETRO_HW_FRAME_BUFFER_VALID, _Ygl->width, _Ygl->height, 0);
-   one_frame_rendered = true;
 }
 
 static void context_reset(void)
@@ -1548,6 +1545,10 @@ void retro_unload_game(void)
 
 unsigned retro_get_region(void)
 {
+   if (g_videoformattype == VIDEOFORMATTYPE_NTSC)
+      return RETRO_REGION_NTSC;
+   if (g_videoformattype == VIDEOFORMATTYPE_PAL)
+      return RETRO_REGION_PAL;
    return yabsys.IsPal == 1 ? RETRO_REGION_PAL : RETRO_REGION_NTSC;
 }
 
@@ -1580,7 +1581,6 @@ void retro_run(void)
 {
    unsigned i;
    bool updated  = false;
-   one_frame_rendered = false;
    if (!all_devices_ready)
    {
       // Running first frame, so we can assume all devices id were set
@@ -1607,15 +1607,11 @@ void retro_run(void)
       //   YabauseSetVideoFormat(g_videoformattype);
       YabauseSetSkipframe(g_skipframe);
    }
-   //VIDCore->Init();
    // It appears polling can happen outside of HandleEvents
    update_inputs();
    if (rendering_started)
       YabauseExec();
-
-   // If no frame rendered, dupe
-   if(!one_frame_rendered)
-      video_cb(NULL, (_Ygl != NULL ? _Ygl->width : game_width), (_Ygl != NULL ? _Ygl->height : game_height), 0);
+   video_cb(RETRO_HW_FRAME_BUFFER_VALID, _Ygl->width, _Ygl->height, 0);
 }
 
 #ifdef ANDROID
