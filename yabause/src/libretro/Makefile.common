@@ -179,7 +179,6 @@ else
 endif
 
 SOURCES_CXX := $(SOURCE_DIR)/rbg_compute.cpp \
-	$(SOURCE_DIR)/vdp2_compute.cpp \
 	$(SOURCE_DIR)/Counter.cpp
 
 ifeq ($(HAVE_MUSASHI), 1)
