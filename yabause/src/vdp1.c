@@ -51,6 +51,8 @@ vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
 int nbCmdToProcess = 0;
 
 static int needVdp1draw = 0;
+static void Vdp1NoDraw(void);
+static void Vdp1Draw(void);
 
 #define DEBUG_BAD_COORD //YuiMsg
 
@@ -361,14 +363,14 @@ void FASTCALL Vdp1WriteByte(SH2_struct *context, u8* mem, u32 addr, UNUSED u8 va
 static int needVBlankErase() {
   return (Vdp1External.useVBlankErase != 0);
 }
-void updateTVMRMode() {
+static void updateTVMRMode() {
   Vdp1External.useVBlankErase = 0;
   if (((Vdp1Regs->FBCR & 3) == 3) && (((Vdp1Regs->TVMR >> 3) & 0x01) == 1)) {
     Vdp1External.useVBlankErase = 1;
   }
 }
 
-void updateFBCRMode() {
+static void updateFBCRMode() {
   Vdp1External.manualchange = 0;
   Vdp1External.onecyclemode = 0;
   Vdp1External.useVBlankErase = 0;
@@ -450,30 +452,28 @@ void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 v
 
 //////////////////////////////////////////////////////////////////////////////
 
-void checkClipCmd(int* sysClipAddr, int* usrClipAddr, int* localCoordAddr, u8 * ram, Vdp1 * regs) {
-  int oldaddr = regs->addr;
-  if (sysClipAddr != NULL) {
-    if (*sysClipAddr != -1) {
-      regs->addr = *sysClipAddr;
-      VIDCore->Vdp1SystemClipping(ram, regs);
-      *sysClipAddr = -1;
+static void checkClipCmd(vdp1cmd_struct **sysClipCmd, vdp1cmd_struct **usrClipCmd, vdp1cmd_struct **localCoordCmd, u8 * ram, Vdp1 * regs) {
+  if (sysClipCmd != NULL) {
+    if (*sysClipCmd != NULL) {
+      VIDCore->Vdp1SystemClipping(*sysClipCmd, ram, regs);
+      free(*sysClipCmd);
+      *sysClipCmd = NULL;
     }
   }
-  if (usrClipAddr != NULL) {
-    if (*usrClipAddr != -1) {
-      regs->addr = *usrClipAddr;
-      VIDCore->Vdp1UserClipping(ram, regs);
-      *usrClipAddr = -1;
+  if (usrClipCmd != NULL) {
+    if (*usrClipCmd != NULL) {
+      VIDCore->Vdp1UserClipping(*usrClipCmd, ram, regs);
+      free(*usrClipCmd);
+      *usrClipCmd = NULL;
     }
   }
-  if (localCoordAddr != NULL) {
-    if (*localCoordAddr != -1) {
-      regs->addr = *localCoordAddr;
-      VIDCore->Vdp1LocalCoordinate(ram, regs);
-      *localCoordAddr = -1;
+  if (localCoordCmd != NULL) {
+    if (*localCoordCmd != NULL) {
+      VIDCore->Vdp1LocalCoordinate(*localCoordCmd, ram, regs);
+      free(*localCoordCmd);
+      *localCoordCmd = NULL;
     }
   }
-  regs->addr = oldaddr;
 }
 
 static int Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer){
@@ -925,9 +925,9 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    int cylesPerLine  = 1.0*clock/(fps*yabsys.MaxLineCount);
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
-   int usrClipAddr = -1;
-   int sysClipAddr = -1;
-   int localCoordAddr = -1;
+   vdp1cmd_struct * usrClipCmd = NULL;
+   vdp1cmd_struct * sysClipCmd = NULL;
+   vdp1cmd_struct * localCoordCmd = NULL;
    u32 returnAddr = 0xffffffff;
    Vdp1External.updateVdp1Ram = 0;
    vdp1Ram_update_start = 0x80000;
@@ -946,7 +946,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
             ctrl->dirty = 0;
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
+            checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             nbCmdToProcess += Vdp1NormalSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
@@ -957,7 +957,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl->dirty = 0;
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
+            checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             nbCmdToProcess += Vdp1ScaledSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             setupSpriteLimit(ctrl);
@@ -969,7 +969,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl->dirty = 0;
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
+            checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             nbCmdToProcess += Vdp1DistortedSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             setupSpriteLimit(ctrl);
@@ -979,7 +979,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl->dirty = 0;
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
+            checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             nbCmdToProcess += Vdp1PolygonDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             setupSpriteLimit(ctrl);
@@ -990,7 +990,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl->dirty = 0;
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
+            checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             nbCmdToProcess += Vdp1PolylineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             setupSpriteLimit(ctrl);
@@ -1000,30 +1000,33 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl->dirty = 0;
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
+            checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             nbCmdToProcess += Vdp1LineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             setupSpriteLimit(ctrl);
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
-            checkClipCmd(&sysClipAddr, NULL, &localCoordAddr, ram, regs);
+            checkClipCmd(&sysClipCmd, NULL, &localCoordCmd, ram, regs);
             yabsys.vdp1cycles += 16;
-            usrClipAddr = regs->addr;
+            usrClipCmd = (vdp1cmd_struct *)malloc(sizeof(vdp1cmd_struct));
+            Vdp1ReadCommand(usrClipCmd, regs->addr, ram);
             break;
          case 9: // system clipping coordinates
-            checkClipCmd(NULL, &usrClipAddr, &localCoordAddr, ram, regs);
+            checkClipCmd(NULL, &usrClipCmd, &localCoordCmd, ram, regs);
             yabsys.vdp1cycles += 16;
-            sysClipAddr = regs->addr;
+            sysClipCmd = (vdp1cmd_struct *)malloc(sizeof(vdp1cmd_struct));
+            Vdp1ReadCommand(sysClipCmd, regs->addr, ram);
             break;
          case 10: // local coordinate
-            checkClipCmd(&sysClipAddr, &usrClipAddr, NULL, ram, regs);
+            checkClipCmd(&sysClipCmd, &usrClipCmd, NULL, ram, regs);
             yabsys.vdp1cycles += 16;
-            localCoordAddr = regs->addr;
+            localCoordCmd = (vdp1cmd_struct *)malloc(sizeof(vdp1cmd_struct));
+            Vdp1ReadCommand(localCoordCmd, regs->addr, ram);
             break;
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
-            checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
+            checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             regs->EDSR |= 2;
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
             return;
@@ -1034,7 +1037,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
 	  if (regs->EDSR & 0x02){
-		  checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
+		  checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
 		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
 		  return;
 	  }
@@ -1070,7 +1073,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
-   checkClipCmd(&sysClipAddr, &usrClipAddr, &localCoordAddr, ram, regs);
+   checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
 }
 
 //ensure that registers are set correctly
@@ -1079,6 +1082,7 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
    u16 command = T1ReadWord(ram, regs->addr);
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
+   vdp1cmd_struct cmd;
 
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       // First, process the command
@@ -1096,13 +1100,16 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
-            VIDCore->Vdp1UserClipping(ram, regs);
+            Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+            VIDCore->Vdp1UserClipping(&cmd, ram, regs);
             break;
          case 9: // system clipping coordinates
-            VIDCore->Vdp1SystemClipping(ram, regs);
+            Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+            VIDCore->Vdp1SystemClipping(&cmd, ram, regs);
             break;
          case 10: // local coordinate
-            VIDCore->Vdp1LocalCoordinate(ram, regs);
+            Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+            VIDCore->Vdp1LocalCoordinate(&cmd, ram, regs);
             break;
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
@@ -1141,7 +1148,7 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
    }
 }
 
-void Vdp1Draw(void)
+static void Vdp1Draw(void)
 {
   FRAMELOG("Vdp1Draw\n");
   Vdp1Regs->EDSR >>= 1;
@@ -1170,7 +1177,7 @@ void Vdp1Draw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Vdp1NoDraw(void) {
+static void Vdp1NoDraw(void) {
    // beginning of a frame (ST-013-R3-061694 page 53)
    // BEF <- CEF
    // CEF <- 0
@@ -2018,9 +2025,9 @@ void VIDDummyVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs,
 void VIDDummyVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDDummyVdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDDummyVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1UserClipping(u8 * ram, Vdp1 * regs);
-void VIDDummyVdp1SystemClipping(u8 * ram, Vdp1 * regs);
-void VIDDummyVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
+void VIDDummyVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+void VIDDummyVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+void VIDDummyVdp1LocalCoordinate(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
 int VIDDummyVdp2Reset(void);
 void VIDDummyVdp2Draw(void);
 void VIDDummyGetGlSize(int *width, int *height);
@@ -2140,19 +2147,19 @@ void VIDDummyVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_f
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1UserClipping(u8 * ram, Vdp1 * regs)
+void VIDDummyVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1SystemClipping(u8 * ram, Vdp1 * regs)
+void VIDDummyVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1LocalCoordinate(u8 * ram, Vdp1 * regs)
+void VIDDummyVdp1LocalCoordinate(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
 }
 

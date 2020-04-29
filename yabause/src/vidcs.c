@@ -107,8 +107,8 @@ void VIDCSVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8
 void VIDCSVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDCSVdp1UserClipping(u8 * ram, Vdp1 * regs);
-void VIDCSVdp1SystemClipping(u8 * ram, Vdp1 * regs);
+void VIDCSVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+void VIDCSVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
 extern void YglCSRender(Vdp2 *varVdp2Regs);
 extern void YglCSRenderVDP1(void);
 extern void YglCSFinsihDraw(void);
@@ -327,38 +327,32 @@ void VIDCSVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_fram
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDCSVdp1UserClipping(u8 * ram, Vdp1 * regs)
+void VIDCSVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
-  vdp1cmd_struct cmd;
-  Vdp1ReadCommand(&cmd, regs->addr, ram);
   if (
-    (regs->userclipX1 == cmd.CMDXA) &&
-    (regs->userclipY1 == cmd.CMDYA) &&
-    (regs->userclipX2 == cmd.CMDXC) &&
-    (regs->userclipY2 == cmd.CMDYC)
+    (regs->userclipX1 == cmd->CMDXA) &&
+    (regs->userclipY1 == cmd->CMDYA) &&
+    (regs->userclipX2 == cmd->CMDXC) &&
+    (regs->userclipY2 == cmd->CMDYC)
   ) return;
 
-  cmd.type = USER_CLIPPING;
-  vdp1_add(&cmd,1);
-  regs->userclipX1 = cmd.CMDXA;
-  regs->userclipY1 = cmd.CMDYA;
-  regs->userclipX2 = cmd.CMDXC+1;
-  regs->userclipY2 = cmd.CMDYC+1;
+  cmd->type = USER_CLIPPING;
+  vdp1_add(cmd,1);
+  regs->userclipX1 = cmd->CMDXA;
+  regs->userclipY1 = cmd->CMDYA;
+  regs->userclipX2 = cmd->CMDXC+1;
+  regs->userclipY2 = cmd->CMDYC+1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDCSVdp1SystemClipping(u8 * ram, Vdp1 * regs)
+void VIDCSVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
-  vdp1cmd_struct cmd;
-  Vdp1ReadCommand(&cmd, regs->addr, ram);
-
-
-  if (((cmd.CMDXC+1) == regs->systemclipX2) && (regs->systemclipY2 == (cmd.CMDYC+1))) return;
-  cmd.type = SYSTEM_CLIPPING;
+  if (((cmd->CMDXC+1) == regs->systemclipX2) && (regs->systemclipY2 == (cmd->CMDYC+1))) return;
+  cmd->type = SYSTEM_CLIPPING;
   vdp1_add(&cmd,1);
-  regs->systemclipX2 = cmd.CMDXC+1;
-  regs->systemclipY2 = cmd.CMDYC+1;
+  regs->systemclipX2 = cmd->CMDXC+1;
+  regs->systemclipY2 = cmd->CMDYC+1;
 }
 
 #endif

@@ -86,9 +86,9 @@ void VIDSoftVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, 
 void VIDSoftVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDSoftVdp1UserClipping(u8 * ram, Vdp1 * regs);
-void VIDSoftVdp1SystemClipping(u8 * ram, Vdp1 * regs);
-void VIDSoftVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
+void VIDSoftVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+void VIDSoftVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+void VIDSoftVdp1LocalCoordinate(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
 void VIDSoftVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDSoftVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 void VIDSoftVdp1EraseWrite(int id);
@@ -3357,30 +3357,30 @@ void VIDSoftVdp1LineDraw(vdp1cmd_struct *cmd, u8* ram, Vdp1*regs, u8* back_frame
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp1UserClipping(u8* ram, Vdp1*regs)
+void VIDSoftVdp1UserClipping(vdp1cmd_struct *cmd, u8* ram, Vdp1*regs)
 {
-   regs->userclipX1 = T1ReadWord(ram, regs->addr + 0xC);
-   regs->userclipY1 = T1ReadWord(ram, regs->addr + 0xE);
-   regs->userclipX2 = T1ReadWord(ram, regs->addr + 0x14);
-   regs->userclipY2 = T1ReadWord(ram, regs->addr + 0x16);
+  regs->userclipX1 = cmd->CMDXA;
+  regs->userclipY1 = cmd->CMDYA;
+  regs->userclipX2 = cmd->CMDXC;
+  regs->userclipY2 = cmd->CMDYC;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp1SystemClipping(u8* ram, Vdp1*regs)
+void VIDSoftVdp1SystemClipping(vdp1cmd_struct *cmd, u8* ram, Vdp1*regs)
 {
    regs->systemclipX1 = 0;
    regs->systemclipY1 = 0;
-   regs->systemclipX2 = T1ReadWord(ram, regs->addr + 0x14);
-   regs->systemclipY2 = T1ReadWord(ram, regs->addr + 0x16);
+   regs->systemclipX2 = cmd->CMDXC;
+   regs->systemclipY2 = cmd->CMDYC;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp1LocalCoordinate(u8* ram, Vdp1*regs)
+void VIDSoftVdp1LocalCoordinate(vdp1cmd_struct *cmd, u8* ram, Vdp1*regs)
 {
-   regs->localX = T1ReadWord(ram, regs->addr + 0xC);
-   regs->localY = T1ReadWord(ram, regs->addr + 0xE);
+  regs->localX = cmd->CMDXA;
+  regs->localY = cmd->CMDYA;
 }
 
 //////////////////////////////////////////////////////////////////////////////

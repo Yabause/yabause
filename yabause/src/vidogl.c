@@ -129,9 +129,9 @@ void VIDOGLVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
 void VIDOGLVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDOGLVdp1UserClipping(u8 * ram, Vdp1 * regs);
-void VIDOGLVdp1SystemClipping(u8 * ram, Vdp1 * regs);
-void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
+void VIDOGLVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+void VIDOGLVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+void VIDOGLVdp1LocalCoordinate(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
 int VIDOGLVdp2Reset(void);
 void VIDOGLVdp2Draw(void);
 static void VIDOGLVdp2DrawScreens(void);
@@ -4377,7 +4377,6 @@ void VIDOGLVdp1PolylineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back
     YglQuadGrowShading(&polygon, &texture, NULL, &c, YglTM_vdp1[_Ygl->drawframe]);
   }
 
-  Vdp1ReadCommand(cmd, Vdp1Regs->addr, Vdp1Ram);
   *texture.textdata = Vdp1ReadPolygonColor(cmd,varVdp2Regs);
 
   makeLinePolygon(&v[2], &v[4], line_poygon);
@@ -4552,36 +4551,35 @@ void VIDOGLVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_fra
 
   YglQuadGrowShading(&polygon, &texture, col, NULL, YglTM_vdp1[_Ygl->drawframe]);
 
-  Vdp1ReadCommand(cmd, Vdp1Regs->addr, Vdp1Ram);
   *texture.textdata = Vdp1ReadPolygonColor(cmd,varVdp2Regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1UserClipping(u8 * ram, Vdp1 * regs)
+void VIDOGLVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
-  Vdp1Regs->userclipX1 = Vdp1RamReadWord(NULL, ram, regs->addr + 0xC);
-  Vdp1Regs->userclipY1 = Vdp1RamReadWord(NULL, ram, regs->addr + 0xE);
-  Vdp1Regs->userclipX2 = Vdp1RamReadWord(NULL, ram, regs->addr + 0x14)+1;
-  Vdp1Regs->userclipY2 = Vdp1RamReadWord(NULL, ram, regs->addr + 0x16)+1;
+  regs->userclipX1 = cmd->CMDXA;
+  regs->userclipY1 = cmd->CMDYA;
+  regs->userclipX2 = cmd->CMDXC+1;
+  regs->userclipY2 = cmd->CMDYC+1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1SystemClipping(u8 * ram, Vdp1 * regs)
+void VIDOGLVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
-  Vdp1Regs->systemclipX1 = 0;
-  Vdp1Regs->systemclipY1 = 0;
-  Vdp1Regs->systemclipX2 = Vdp1RamReadWord(NULL, ram, regs->addr + 0x14)+1;
-  Vdp1Regs->systemclipY2 = Vdp1RamReadWord(NULL, ram, regs->addr + 0x16)+1;
+  regs->systemclipX1 = 0;
+  regs->systemclipY1 = 0;
+  regs->systemclipX2 = cmd->CMDXC+1;
+  regs->systemclipY2 = cmd->CMDYC+1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs)
+void VIDOGLVdp1LocalCoordinate(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
-  Vdp1Regs->localX = Vdp1RamReadWord(NULL, ram, regs->addr + 0xC);
-  Vdp1Regs->localY = Vdp1RamReadWord(NULL, ram, regs->addr + 0xE);
+  regs->localX = cmd->CMDXA;
+  regs->localY = cmd->CMDYA;
 }
 
 //////////////////////////////////////////////////////////////////////////////

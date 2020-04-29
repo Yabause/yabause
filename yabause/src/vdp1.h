@@ -139,9 +139,9 @@ typedef struct
    void(*Vdp1PolygonDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1PolylineDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1LineDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1UserClipping)(u8 * ram, Vdp1 * regs);
-   void(*Vdp1SystemClipping)(u8 * ram, Vdp1 * regs);
-   void(*Vdp1LocalCoordinate)(u8 * ram, Vdp1 * regs);
+   void(*Vdp1UserClipping)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+   void(*Vdp1SystemClipping)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
+   void(*Vdp1LocalCoordinate)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs);
    void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out);
    void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val);
    void(*Vdp1EraseWrite)(int id);
@@ -205,8 +205,6 @@ void FASTCALL	Vdp1WriteByte(SH2_struct *context, u8*, u32, u8);
 void FASTCALL	Vdp1WriteWord(SH2_struct *context, u8*, u32, u16);
 void FASTCALL	Vdp1WriteLong(SH2_struct *context, u8*, u32, u32);
 
-void Vdp1Draw(void);
-void Vdp1NoDraw(void);
 void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram);
 
 int Vdp1SaveState(FILE *fp);
