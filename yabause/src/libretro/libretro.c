@@ -83,6 +83,7 @@ static bool stv_mode = false;
 static bool all_devices_ready = false;
 static bool libretro_supports_bitmasks = false;
 static bool rendering_started = false;
+static bool resolution_need_update = false;
 static int16_t libretro_input_bitmask[12] = {-1,};
 static int pad_type[12] = {RETRO_DEVICE_NONE,};
 static int multitap[2] = {0,0};
@@ -757,26 +758,13 @@ void retro_reinit_av_info(void)
     environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &av_info);
 }
 
-void retro_set_resolution()
-{
-   // If resolution_mode > initial_resolution_mode, we'll need a restart to reallocate the max size for buffer
-   if (resolution_mode > initial_resolution_mode)
-   {
-      log_cb(RETRO_LOG_INFO, "Restart the core for the new resolution\n", resolution_mode);
-      resolution_mode = initial_resolution_mode;
-   }
-   retro_reinit_av_info();
-   VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
-   VIDCore->Resize(0, 0, window_width, window_height, 0);
-}
-
 void YuiSwapBuffers(void)
 {
    int prev_game_width = game_width;
    int prev_game_height = game_height;
    VIDCore->GetNativeResolution(&game_width, &game_height, &game_interlace);
-   if ((prev_game_width != game_width) || (prev_game_height != game_height))
-      retro_set_resolution();
+   if (resolution_need_update || (prev_game_width != game_width) || (prev_game_height != game_height))
+      retro_reinit_av_info();
    audio_size = soundlen;
    video_cb(RETRO_HW_FRAME_BUFFER_VALID, _Ygl->width, _Ygl->height, 0);
 }
@@ -798,14 +786,14 @@ static void context_reset(void)
       YabauseInit(&yinit);
       if (g_videoformattype != -1)
          YabauseSetVideoFormat(g_videoformattype);
-      retro_set_resolution();
       OSDChangeCore(OSDCORE_DUMMY);
    }
    else
    {
       VIDCore->Init();
-      retro_set_resolution();
+      retro_reinit_av_info();
    }
+   VIDCore->Resize(0, 0, window_width, window_height, 0);
    rendering_started = true;
 }
 
@@ -1233,6 +1221,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
       environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &yabsys.isRotated);
       info->geometry.aspect_ratio = 1.0 / info->geometry.aspect_ratio;
    }
+   resolution_need_update = false;
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
@@ -1430,6 +1419,7 @@ bool retro_load_game_common()
    yinit.wireframe_mode          = wireframe_mode;
    yinit.skipframe               = g_skipframe;
    yinit.stv_favorite_region     = stv_favorite_region;
+   yinit.resolution_mode         = resolution_mode;
 
    return true;
 }
@@ -1600,8 +1590,15 @@ void retro_run(void)
       int prev_resolution_mode = resolution_mode;
       int prev_multitap[2] = {multitap[0],multitap[1]};
       check_variables();
-      if(prev_resolution_mode != resolution_mode)
-         retro_set_resolution();
+      // If resolution_mode > initial_resolution_mode, we'll need a restart to reallocate the max size for buffer
+      if (resolution_mode > initial_resolution_mode)
+      {
+         log_cb(RETRO_LOG_INFO, "Restart the core for the new resolution\n", resolution_mode);
+         resolution_mode = initial_resolution_mode;
+      }
+      resolution_need_update = (prev_resolution_mode != resolution_mode);
+      if (prev_resolution_mode != resolution_mode)
+         VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
       if(PERCore && (prev_multitap[0] != multitap[0] || prev_multitap[1] != multitap[1]))
          PERCore->Init();
       VIDCore->SetSettingValue(VDP_SETTING_POLYGON_MODE, polygon_mode);
