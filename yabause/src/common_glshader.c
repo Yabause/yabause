@@ -1923,7 +1923,7 @@ int setupVDP2Prog(Vdp2* varVdp2Regs, int nb_screen, int CS) {
 
   //Consider x5
   if ( SPCCN ) {
-    condition += (varVdp2Regs->SPCTL >> 12) & 0x3; //5x
+    condition += ((varVdp2Regs->SPCTL >> 12) & 0x3) + 1; //5x
   }
   int colormode =  (varVdp2Regs->SPCTL & 0x20) != 0; // 2x
   int spritetype =  (varVdp2Regs->SPCTL & 0xF); // 16x
