@@ -778,6 +778,12 @@ void YuiSwapBuffers(void)
    if ((prev_game_width != game_width) || (prev_game_height != game_height))
       retro_set_resolution();
    audio_size = soundlen;
+   video_cb(RETRO_HW_FRAME_BUFFER_VALID, _Ygl->width, _Ygl->height, 0);
+}
+
+void YuiFrameDropped(void)
+{
+   video_cb(NULL, _Ygl->width, _Ygl->height, 0);
 }
 
 static void context_reset(void)
@@ -1611,7 +1617,6 @@ void retro_run(void)
    update_inputs();
    if (rendering_started)
       YabauseExec();
-   video_cb(RETRO_HW_FRAME_BUFFER_VALID, _Ygl->width, _Ygl->height, 0);
 }
 
 #ifdef ANDROID
