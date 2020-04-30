@@ -266,7 +266,7 @@ SHADER_VERSION_COMPUTE
 "}\n"
 
 "uint isOnAQuad(vec2 P, vec2 V0, vec2 V1, out vec2 uv) {\n"
-"  uint step = uint(abs(V1.y-V0.y)+1);\n"
+"  uint step = uint(abs(V1.y-V0.y))+1;\n"
 "  float way = sign(V1.y - V0.y);\n"
 "  vec2 A = V0+(vec2(0.5)*upscale);\n"
 "  vec2 B = vec2(V1.x, V0.y)+(vec2(0.5)*upscale);\n"
