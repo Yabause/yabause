@@ -629,7 +629,7 @@ static const GLchar Yglprg_vdp2_common_part[] =
 "  int sW1 = startW1.x;\n"
 "  int eW1 = endW1.x;\n"
 "  if (id == 6) { sW1 = startW1.y; eW1 = endW1.y;}\n"
-"  if (((win0_mode>>id)&0x1) != 0) { \n"
+"  if (((win1_mode>>id)&0x1) != 0) { \n"
 "    if (sW1 > eW1) valid = false;\n"
 "    if ((sW1 < eW1) && ((pos < sW1) || (pos > eW1))) valid = false;\n"
 "  } else { \n"
