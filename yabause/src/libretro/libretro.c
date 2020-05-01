@@ -673,11 +673,7 @@ SoundInterface_struct SNDLIBRETRO = {
 
 M68K_struct *M68KCoreList[] = {
     &M68KDummy,
-#ifdef HAVE_MUSASHI
     &M68KMusashi,
-#else
-    &M68KC68K,
-#endif
     NULL
 };
 
@@ -1393,11 +1389,7 @@ bool retro_load_game_common()
    yinit.percoretype             = PERCORE_LIBRETRO;
    yinit.sh2coretype             = g_sh2coretype;
    yinit.sndcoretype             = SNDCORE_LIBRETRO;
-#ifdef HAVE_MUSASHI
    yinit.m68kcoretype            = M68KCORE_MUSASHI;
-#else
-   yinit.m68kcoretype            = M68KCORE_C68K;
-#endif
    yinit.regionid                = REGION_AUTODETECT;
    yinit.mpegpath                = NULL;
    yinit.vsyncon                 = 0;
@@ -1405,9 +1397,6 @@ bool retro_load_game_common()
    yinit.basetime                = 0;
    yinit.usethreads              = 1;
    yinit.numthreads              = numthreads;
-#ifdef SPRITE_CACHE
-   yinit.useVdp1cache            = 0;
-#endif
    yinit.usecache                = 0;
    yinit.skip_load               = 0;
    yinit.polygon_generation_mode = polygon_mode;

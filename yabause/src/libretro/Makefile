@@ -4,7 +4,6 @@ DEBUG_UBSAN = 0
 DEBUG_TSAN = 0
 HAVE_SSE = 1
 __USE_OPENGL_DEBUG__ = 0
-HAVE_MUSASHI = 1
 FORCE_GLES = 0
 FASTMATH = 1
 UNROLL_LOOPS = 1
@@ -301,16 +300,11 @@ CFLAGS += $(FLAGS) -std=gnu11
 all: $(TARGET)
 
 generate-files:
-ifeq ($(HAVE_MUSASHI), 1)
-	$(CC) -o $(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(SOURCE_DIR)/musashi/m68kmake.c;\
-	$(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(SOURCE_DIR)/musashi/ $(SOURCE_DIR)/musashi/m68k_in.c
-else
-	$(CC) -DC68K_GEN -o $(SOURCE_DIR)/c68k/$(GEN68K_EXE) $(SOURCE_DIR)/c68k/c68kexec.c $(SOURCE_DIR)/c68k/c68k.c $(SOURCE_DIR)/c68k/gen68k.c;\
-	cd $(SOURCE_DIR)/c68k/; ./$(GEN68K_EXE)
-endif
+	$(CC) -o $(SOURCE_DIR)/core/m68k/musashi/$(M68KMAKE_EXE) $(SOURCE_DIR)/core/m68k/musashi/m68kmake.c;\
+	$(SOURCE_DIR)/core/m68k/musashi/$(M68KMAKE_EXE) $(SOURCE_DIR)/core/m68k/musashi/ $(SOURCE_DIR)/core/m68k/musashi/m68k_in.c
 
 generate-files-clean:
-	rm -f $(M68KMAKE_INC_SOURCES) $(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(GEN68K_INC_SOURCES) $(SOURCE_DIR)/c68k/$(GEN68K_EXE)
+	rm -f $(M68KMAKE_INC_SOURCES) $(SOURCE_DIR)/core/m68k/musashi/$(M68KMAKE_EXE)
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
@@ -335,6 +329,6 @@ $(C68KEXEC_OBJECT): $(C68KEXEC_SOURCE)
 	$(CC) -c -o $@ $< $(CFLAGS) -O0
 
 clean:
-	rm -f $(TARGET) $(OBJECTS) $(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(SOURCE_DIR)/c68k/$(GEN68K_EXE)
+	rm -f $(TARGET) $(OBJECTS) $(SOURCE_DIR)/core/m68k/musashi/$(M68KMAKE_EXE)
 
 .PHONY: clean
