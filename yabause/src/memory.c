@@ -592,7 +592,7 @@ void MappedMemoryInit()
                                 &LowWramMemoryWriteLong,
                                 &LowWram);
    FillMemoryArea(0x040, 0x041, &IOPortReadByte,
-                                &UnhandledMemoryReadWord,
+                                &IOPortReadWord,
                                 &UnhandledMemoryReadLong,
                                 &IOPortWriteByte,
                                 &UnhandledMemoryWriteWord,

@@ -220,19 +220,24 @@ u8 FASTCALL IOPortReadByte(SH2_struct *context, UNUSED u8* memory,  u32 addr)
      case 0x09: val = IOPORT[PORT_E]; break; // P3
      case 0x0b: val = IOPORT[PORT_F]; break; // P4
      case 0x0d: //PORT-G 
-                if (m_ioga_mode & 0x80) // PORT-G in counter mode
-		{
-		  val = IOPORT[PORT_G0+((m_ioga_portg >> 1) & 3)] >> (((m_ioga_portg & 1) ^ 1) * 8);
-		  m_ioga_portg = (m_ioga_portg & 0xf8) | ((m_ioga_portg + 1) & 7); // counter# is auto-incremented then read
-		 }
-		 else
-		  val = IOPORT[PORT_G];
-                break;
+       if (m_ioga_mode & 0x80) // PORT-G in counter mode
+       {
+         val = IOPORT[PORT_G0+((m_ioga_portg >> 1) & 3)] >> (((m_ioga_portg & 1) ^ 1) * 8);
+         m_ioga_portg = (m_ioga_portg & 0xf8) | ((m_ioga_portg + 1) & 7); // counter# is auto-incremented then read
+       }
+       else
+         val = IOPORT[PORT_G];
+       break;
      case 0x1b: val = 0x0; break; // Serial COM READ status
      case 0x1d: val = m_ioga_mode; break;
 
    }
    return val;
+}
+
+u16 FASTCALL IOPortReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
+{
+   return IOPortReadByte(context, memory, addr|1);
 }
 
 void FASTCALL IOPortWriteByte(SH2_struct *context, UNUSED u8* memory,UNUSED u32 addr, UNUSED u8 val)

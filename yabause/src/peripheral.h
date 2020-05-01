@@ -81,7 +81,8 @@ extern PerInterface_struct * PERCore;
 
 extern PerInterface_struct PERDummy;
 
-extern u8 FASTCALL IOPortReadByte(SH2_struct *context, UNUSED u8* memory,  u32 addr);
+extern u8 FASTCALL IOPortReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr);
+extern u16 FASTCALL IOPortReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr);
 extern void FASTCALL IOPortWriteByte(SH2_struct *context, UNUSED u8* memory,UNUSED u32 addr, UNUSED u8 val);
 
 /**
