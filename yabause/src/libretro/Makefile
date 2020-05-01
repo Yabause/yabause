@@ -168,7 +168,7 @@ else ifneq (,$(findstring osx,$(platform)))
 	OSX_GT_MOJAVE = $(shell (( $(OSXVER) >= 14)) && echo "YES")
 	ifneq ($(OSX_GT_MOJAVE),YES)
 		#this breaks compiling on Mac OS Mojave
-		fpic += -mmacosx-version-min=10.1
+		fpic += -mmacosx-version-min=10.10
 	endif
 	ARCH_IS_MACOSX = 1
 	SHARED := -dynamiclib
