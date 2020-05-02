@@ -968,6 +968,8 @@ void vdp2VBlankOUT(void) {
     if (Vdp1External.frame_change_plot == 1 || Vdp1External.status == VDP1_STATUS_RUNNING ){
       FRAMELOG("[VDP1] frame_change_plot == 1 start drawing immidiatly", Vdp1Regs->EDSR);
       LOG("[VDP1] Start Drawing");
+      Vdp1Regs->addr = 0;
+      Vdp1Regs->COPR = 0;
       Vdp1Draw();
       isrender = 1;
     }

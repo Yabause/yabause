@@ -125,7 +125,7 @@ u8 FASTCALL Vdp1FrameBufferReadByte(u32 addr) {
 
 u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
    addr &= 0x3FFFF;
-   if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
+   if (VIDCore->Vdp1ReadFrameBuffer ){
      u16 val;
      VdpLockVram();
      VIDCore->Vdp1ReadFrameBuffer(1, addr, &val);
@@ -139,7 +139,7 @@ u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
 
 u32 FASTCALL Vdp1FrameBufferReadLong(u32 addr) {
    addr &= 0x3FFFF;
-   if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
+   if (VIDCore->Vdp1ReadFrameBuffer ){
      u32 val;
      VdpLockVram();
      VIDCore->Vdp1ReadFrameBuffer(2, addr, &val);

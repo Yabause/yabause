@@ -3749,10 +3749,11 @@ static const char fblit_img[] =
   "in highp vec2 vTexCoord;     \n"
   "uniform sampler2D u_Src;     \n"
   "out vec4 fragColor;            \n"
-  "void main()                                         \n"
-  "{                                                   \n"
-  "  fragColor = texture( u_Src, vTexCoord ) ; \n"
+  "void main()                               \n"
+  "{                                         \n"
+  " fragColor = texture( u_Src, vTexCoord ) ; "
   "} \n";
+
 
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
@@ -3880,6 +3881,27 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   return 0;
 }
 
+static int blit_to_fb_prg = -1;
+
+static const char fblit_img_to_fb[] =
+#if defined (_OGLES3_)
+"#version 300 es \n"
+"precision highp float;       \n"
+#else
+"#version 330 \n"
+#endif
+"in highp vec2 vTexCoord;     \n"
+"uniform sampler2D u_Src;     \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  vec4 txcol = texture( u_Src, vTexCoord ) ; \n"
+"  if(txcol == vec4(1.0) )\n                                 "
+"     discard;\n                         "
+"  else \n                                            "
+"     fragColor = txcol;\n"
+"} \n";
+
 int YglWindowFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float ww, float hh ) {
 
   float aspectRatio = 1.0;
@@ -3896,16 +3918,16 @@ int YglWindowFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float 
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
 
-  if (blit_prg == -1) {
+  if (blit_to_fb_prg == -1) {
     GLuint vshader;
     GLuint fshader;
     GLint compiled, linked;
 
     const GLchar * vblit_img_v[] = { vblit_img, NULL };
-    const GLchar * fblit_img_v[] = { fblit_img, NULL };
+    const GLchar * fblit_img_v[] = { fblit_img_to_fb, NULL };
 
-    blit_prg = glCreateProgram();
-    if (blit_prg == 0) {
+    blit_to_fb_prg = glCreateProgram();
+    if (blit_to_fb_prg == 0) {
       return -1;
     }
 
@@ -3918,7 +3940,7 @@ int YglWindowFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float 
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in vertex shader.\n");
       Ygl_printShaderError(vshader);
-      blit_prg = -1;
+      blit_to_fb_prg = -1;
       return -1;
     }
     glShaderSource(fshader, 1, fblit_img_v, NULL);
@@ -3927,26 +3949,25 @@ int YglWindowFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float 
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in fragment shader.\n");
       Ygl_printShaderError(fshader);
-      blit_prg = -1;
+      blit_to_fb_prg = -1;
       return -1;
     }
 
-    glAttachShader(blit_prg, vshader);
-    glAttachShader(blit_prg, fshader);
-    glLinkProgram(blit_prg);
-    glGetProgramiv(blit_prg, GL_LINK_STATUS, &linked);
+    glAttachShader(blit_to_fb_prg, vshader);
+    glAttachShader(blit_to_fb_prg, fshader);
+    glLinkProgram(blit_to_fb_prg);
+    glGetProgramiv(blit_to_fb_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
       YGLLOG("Link error..\n");
-      Ygl_printShaderError(blit_prg);
-      blit_prg = -1;
+      Ygl_printShaderError(blit_to_fb_prg);
+      blit_to_fb_prg = -1;
       return -1;
     }
-
-    glUseProgram(blit_prg);
-    glUniform1i(glGetUniformLocation(blit_prg, "u_Src"), 0);
+    glUseProgram(blit_to_fb_prg);
+    glUniform1i(glGetUniformLocation(blit_to_fb_prg, "u_Src"), 0);
   }
   else {
-    glUseProgram(blit_prg);
+    glUseProgram(blit_to_fb_prg);
   }
 
 

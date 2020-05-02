@@ -210,7 +210,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg);
 static void Vdp2DrawRotationSync();
 static void Vdp2DrawRBG0(void);
 
-static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
+u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
 static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y);
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy, int lines);
 static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask);
@@ -1135,7 +1135,7 @@ static u16 Vdp2ColorRamGetColorRaw(u32 colorindex) {
   return 0;
 }
 
-static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
+u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
 {
   switch (Vdp2Internal.ColorMode)
   {
@@ -2536,7 +2536,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy, int lines )
 {
-  u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) |
+  u64 cacheaddr = (((u64)(info->priority&0xF))<<35) | ((u32)(info->alpha >> 3) << 27) |
     (info->paladdr << 20) | info->charaddr | info->transparencyenable |
     ((info->patternpixelwh >> 4) << 1) | (((u64)(info->coloroffset >> 8) & 0x07) << 32);
 
@@ -2597,10 +2597,12 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 
   if (1 == YglIsCached(_Ygl->texture_manager, cacheaddr, &c))
   {
+    //printf("x=%d,y=%d %lx cached\n",x,y,cacheaddr);
     YglCachedQuadOffset(&tile, &c, cx, cy, info->coordincx, info->coordincy);
     return;
   }
 
+  //printf("x=%d,y=%d %lx not cached\n",x,y,cacheaddr);
   YglQuadOffset(&tile, texture, &c, cx, cy, info->coordincx, info->coordincy);
   YglCacheAdd(_Ygl->texture_manager, cacheaddr, &c);
 
