@@ -3668,6 +3668,7 @@ void VIDOGLVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
   int isSquare;
 
   sprite.blendmode = 0;
+  sprite.dst = 1;
   sprite.w = cmd->w;
   sprite.h = cmd->h;
   sprite.cor = 0;
