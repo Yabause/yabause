@@ -2074,7 +2074,9 @@ void WDTExec(u32 cycles) {
 //////////////////////////////////////////////////////////////////////////////
 
 void DMAExec(void) {
-#if 0
+#if 1
+  DMAProc(24);
+#else
    // If AE and NMIF bits are set, we can't continue
    if (CurrentSH2->onchip.DMAOR & 0x6)
       return;
@@ -2177,7 +2179,7 @@ void DMATransferCycles(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA, int
    int size;
    u32 i, i2;
 
-   LOG("sh2 dma src=%08X,dst=%08X,%d\n", *SAR, *DAR, *TCR);
+   LOG("sh2 dma src=%08X,dst=%08X,%d type:%d cycle:%d\n", *SAR, *DAR, *TCR, ((*CHCR & 0x0C00) >> 10), cycles);
 
    if (!(*CHCR & 0x2)) { // TE is not set
       int srcInc;
