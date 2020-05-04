@@ -134,7 +134,7 @@ SOURCES_C := \
 	$(SOURCE_DIR)/core/video/opengl/common/src/upscale_shader.c \
 	$(SOURCE_DIR)/core/sound/dummy/snddummy.c \
 	$(SOURCE_DIR)/sys/vdp1/src/vdp1.c \
-	$(SOURCE_DIR)/sys/vdp1/include/vdp1_interface.c \
+	$(SOURCE_DIR)/sys/vdp1/src/vdp1_interface.c \
 	$(SOURCE_DIR)/core/video/opengl/compute_shader/src/vdp1_compute.c \
 	$(SOURCE_DIR)/sys/vdp2/src/vdp2.c \
 	$(SOURCE_DIR)/core/video/opengl/common/src/common_glshader.c \
