@@ -202,7 +202,7 @@ static void sh2ExecuteSync( SH2_struct* sh, int req ) {
     }
 }
 
-#ifdef SSH2_ASYNC
+#ifdef xSH2_ASYNC
 static void sh2Execute( void * p ){
   SH2_struct* sh = (SH2_struct*)p;
   sh->thread_running = 1;
@@ -216,8 +216,28 @@ static void sh2Execute( void * p ){
   }
   sh->thread_running = 0;
 }
-#endif
 
+static void Msh2Execute( void * p ){
+  SH2_struct* sh = (SH2_struct*)p;
+  sh->thread_running = 1;
+  while(sh->thread_running) {
+    sh->cycles_request = 0;
+    int nbLoop = 1;
+    YabWaitEventQueue(sh->start);
+    while(YaGetQueueSize(sh->start) != 0){
+      YabWaitEventQueue(sh->start);
+      nbLoop++;
+    }
+    for (int i = 0; i< nbLoop*DECILINE_STEP; i++) {
+      sh2ExecuteSync(sh, yabsys.DecilineStop);
+      if (yabsys.IsSSH2Running) {
+          sh2ExecuteSync(SSH2, yabsys.DecilineStop);
+      }
+      // YabAddEventQueue(sh->end, NULL);
+    }
+  }
+}
+#endif
 
 int YabauseSh2Init(yabauseinit_struct *init)
 {
@@ -263,9 +283,9 @@ int YabauseSh2Init(yabauseinit_struct *init)
 
    MappedMemoryInit();
 
-#define NB_MSG (128)
+#define NB_MSG (1)
 
-#ifdef SSH2_ASYNC
+#ifdef xSH2_ASYNC
    MSH2->thread_running = 0;
    MSH2->start = YabThreadCreateQueue(NB_MSG);
    MSH2->end = YabThreadCreateQueue(NB_MSG);
@@ -276,7 +296,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
    MSH2->cycleFrac = 0;
    MSH2->cycleLost = 0;
    MSH2->cdiff = 0;
-#ifdef SSH2_ASYNC
+#ifdef xSH2_ASYNC
    SSH2->thread_running = 0;
    SSH2->start = YabThreadCreateQueue(NB_MSG);
    SSH2->end = YabThreadCreateQueue(NB_MSG);
@@ -287,8 +307,9 @@ int YabauseSh2Init(yabauseinit_struct *init)
    SSH2->cycleFrac = 0;
    SSH2->cycleLost = 0;
    SSH2->cdiff = 0;
-#ifdef SSH2_ASYNC
-   YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
+#ifdef xSH2_ASYNC
+   // YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
+   YabThreadStart(YAB_THREAD_MSH2, Msh2Execute, MSH2);
 #endif
    return 0;
 }
@@ -441,7 +462,7 @@ int YabauseInit(yabauseinit_struct *init)
    }
 
    MappedMemoryInit();
-#ifdef SSH2_ASYNC
+#ifdef xSH2_ASYNC
    MSH2->thread_running = 0;
    MSH2->start = YabThreadCreateQueue(NB_MSG);
    MSH2->end = YabThreadCreateQueue(NB_MSG);
@@ -452,7 +473,7 @@ int YabauseInit(yabauseinit_struct *init)
    MSH2->cycleFrac = 0;
    MSH2->cycleLost = 0;
    MSH2->cdiff = 0;
-#ifdef SSH2_ASYNC
+#ifdef xSH2_ASYNC
    SSH2->thread_running = 0;
    SSH2->start = YabThreadCreateQueue(NB_MSG);
    SSH2->end = YabThreadCreateQueue(NB_MSG);
@@ -463,8 +484,9 @@ int YabauseInit(yabauseinit_struct *init)
    SSH2->cycleFrac = 0;
    SSH2->cycleLost = 0;
    SSH2->cdiff = 0;
-#ifdef SSH2_ASYNC
-   YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
+#ifdef xSH2_ASYNC
+   // YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
+   YabThreadStart(YAB_THREAD_MSH2, Msh2Execute, MSH2);
 #endif
 
    if (VideoInit(init->vidcoretype) != 0)
@@ -833,17 +855,16 @@ int YabauseEmulate(void) {
 		 u64 current_cpu_clock = YabauseGetTicks();
 #endif
 
-           THREAD_LOG("Unlock MSH2\n");
-           sh2ExecuteSync(MSH2, yabsys.DecilineStop);
-#ifdef SSH2_ASYNC
-           if (yabsys.IsSSH2Running) {
-             YabAddEventQueue(SSH2->start, NULL);
-           }
-#endif
-#ifndef SSH2_ASYNC
-          if (yabsys.IsSSH2Running) {
-             sh2ExecuteSync(SSH2, yabsys.DecilineStop);
-           }
+      THREAD_LOG("Unlock MSH2\n");
+ #ifdef xSH2_ASYNC
+       if(yabsys.DecilineCount == 0) {
+         YabAddEventQueue(MSH2->start, NULL);
+       }
+#else
+       sh2ExecuteSync(MSH2, yabsys.DecilineStop);
+       if (yabsys.IsSSH2Running) {
+         sh2ExecuteSync(SSH2, yabsys.DecilineStop);
+       }
 #endif
 
 #ifdef YAB_STATICS

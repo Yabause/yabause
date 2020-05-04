@@ -150,9 +150,9 @@ set(kronos_SOURCES ${kronos_SOURCES} tools/nanovg/nanovg.c)
 
 #-------------------------------------------------------
 
-option(YAB_WANT_SSH2_ASYNC "Execute slave SH2 emulation in a thread" OFF)
-if (YAB_WANT_SSH2_ASYNC)
-  add_definitions(-DSSH2_ASYNC=1)
+option(YAB_WANT_SH2_ASYNC "Execute slave SH2 emulation in a thread" OFF)
+if (YAB_WANT_SH2_ASYNC)
+  add_definitions(-DxSH2_ASYNC=1)
 endif()
 
 option(YAB_WANT_DYNAREC_KRONOS "Enable Sh2 dynarec by Kronos" ON)
