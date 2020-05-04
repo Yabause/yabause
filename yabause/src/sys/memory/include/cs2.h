@@ -240,6 +240,8 @@ typedef struct {
   u16 mpegvideostatus;
   u16 vcounter;
 
+  int _command_execlock;
+
 } Cs2;
 
 typedef struct {

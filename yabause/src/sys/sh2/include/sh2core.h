@@ -287,6 +287,7 @@ typedef struct
    u16 RTCSR;  // 0xFFFFFFF0
    u16 RTCNT;  // 0xFFFFFFF4
    u16 RTCOR;  // 0xFFFFFFF8
+   u32 CHCR0M;
 } Onchip_struct;
 
 typedef struct
