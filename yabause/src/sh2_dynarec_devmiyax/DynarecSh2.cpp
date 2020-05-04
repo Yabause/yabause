@@ -817,7 +817,7 @@ Block * CompileBlocks::CompileBlock(u32 pc, addrs * ParentT = NULL)
 }
 
 void CompileBlocks::ShowStatics() {
-  LOG("Compile\t%d\t%d\t%d\n", compile_count_, exec_count_, remove_count_);
+  //LOG("Compile\t%d\t%d\t%d\n", compile_count_, exec_count_, remove_count_);
   compile_count_ = 0;
   exec_count_ = 0;
   remove_count_ = 0;
@@ -1288,6 +1288,7 @@ DynarecSh2::DynarecSh2() {
   ctx_ = NULL;
   mtx_ = YabThreadCreateMutex();
   logenable_ = false;
+  memcycle_ = 0;
 }
 
 DynarecSh2::~DynarecSh2(){
@@ -1301,61 +1302,64 @@ void DynarecSh2::ResetCPU(){
 
   m_pDynaSh2->CtrlReg[0] = 0x000000;  // SR
   m_pDynaSh2->CtrlReg[2] = 0x000000; // VBR
-  m_pDynaSh2->SysReg[3] = memGetLong(m_pDynaSh2->CtrlReg[2]);
-  m_pDynaSh2->GenReg[15] = memGetLong(m_pDynaSh2->CtrlReg[2] + 4);
+  m_pDynaSh2->SysReg[3] = MappedMemoryReadLong(m_pDynaSh2->CtrlReg[2],NULL);
+  m_pDynaSh2->GenReg[15] = MappedMemoryReadLong(m_pDynaSh2->CtrlReg[2] + 4,NULL);
   m_pDynaSh2->SysReg[4] = 0;
   m_pDynaSh2->SysReg[5] = 0;
   pre_cnt_ = 0;
   pre_exe_count_ = 0;
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
+  memcycle_ = 0;
   m_IntruptTbl.clear();
 }
 
 void DynarecSh2::ExecuteCount( u32 Count ) {
-  
   u32 targetcnt = 0;
   
-  if (Count > pre_exe_count_) {
-    targetcnt = m_pDynaSh2->SysReg[4] + Count - pre_exe_count_;
+  m_pDynaSh2->SysReg[4] = 0;
+    if (Count > pre_exe_count_) {
+    targetcnt = Count - pre_exe_count_;
   }
   else {
-    pre_exe_count_ = pre_exe_count_-Count;
+    // Just Onestep
+    //Execute();
+    pre_exe_count_ = (pre_exe_count_ + m_pDynaSh2->SysReg[4]) - Count ;
     return;
   }
 
+#if 0
   // Overflow
   if (targetcnt < m_pDynaSh2->SysReg[4]){
     targetcnt = Count + (0xFFFFFFFF - m_pDynaSh2->SysReg[4]) + 1;
     m_pDynaSh2->SysReg[4] = 0;
   }
+#endif
 
   m_pDynaSh2->exitcount = targetcnt;
 
   //if ((GET_SR() & 0xF0) < GET_ICOUNT()) {
   //  this->CheckInterupt();
   //}
-
-  while (GET_COUNT() < targetcnt) {
+  memcycle_ = 0;
+  while (m_pDynaSh2->SysReg[4] < targetcnt) {
     if (Execute() == IN_INFINITY_LOOP ) {
-      SET_COUNT(targetcnt);
-      loopskip_cnt_++;
+        SET_COUNT(targetcnt);
+        loopskip_cnt_++;
     }
+    m_pDynaSh2->SysReg[4] += memcycle_;
+    memcycle_ = 0;
     //printf("%d/%d\n",GET_COUNT(),targetcnt);
-
-    if (addcycle_ != 0) {
-      m_pDynaSh2->SysReg[4] += addcycle_; addcycle_ = 0;
-    }
-    CurrentSH2->cycles = GET_COUNT();
   }
 
+  CurrentSH2->cycles = m_pDynaSh2->SysReg[4];
   //if (Count == 1) {
   //  one_step_ = true;
   //  pre_exe_count_ = 0;
   //}
   //else {
   //  one_step_ = false;
-  pre_exe_count_ = m_pDynaSh2->SysReg[4] - targetcnt;
+    pre_exe_count_ = m_pDynaSh2->SysReg[4] - targetcnt;
   //}
 }
 

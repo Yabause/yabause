@@ -133,6 +133,11 @@ static INLINE void Cs2SetIRQ(u32 irq){
   }
 }
 
+//Cs2SetDelayIRQ(u32 timing, u32 irq) {
+//  Cs2Area->delay_irq[Cs2Area->irq_index].time = timing;
+//  Cs2Area->delay_irq[Cs2Area->irq_index].irq = irq;
+//}
+
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Cs2ReadByte(u32 addr)
@@ -936,28 +941,25 @@ void Cs2Exec(u32 timing) {
    // Command is not acceptable while other command is executing
    if( Cs2Area->_command_execlock > 0  ){
       Cs2Area->_command_execlock -= timing;
+      if (Cs2Area->_command_execlock <= 0) {
+        Cs2SetIRQ(Cs2Area->_delay_irq);
+      }
    }
-
-   if( Cs2Area->_command_execlock <= 0 && Cs2Area->_commandtiming ){
-      Cs2Execute();
-      Cs2Area->_commandtiming = 0;
-   }
-
-
-#if 0
-   if (Cs2Area->_commandtiming > 0)
-   {
-      if (Cs2Area->_commandtiming < timing)
-      {
+   else {
+     if (Cs2Area->_commandtiming > 0)
+     {
+       if (Cs2Area->_commandtiming <= timing)
+       {
          Cs2Execute();
          Cs2Area->_commandtiming = 0;
-      }
-      else{
-         printf("delay timing %d\n",Cs2Area->_commandtiming);
+       }
+       else {
+         //printf("delay timing %d\n",Cs2Area->_commandtiming);
          Cs2Area->_commandtiming -= timing;
-      }
+       }
+     }
    }
-#endif   
+
 
    if (Cs2Area->_statuscycles >= Cs2Area->_statustiming)
    {
@@ -1165,11 +1167,14 @@ void Cs2SetTiming(int playing) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2SetCommandTiming(u8 cmd) {
-   switch(cmd) {
-      default:
-               Cs2Area->_commandtiming = 1;
-               break;
-   }
+  switch(cmd) {
+    case 0x02: // Cs2GetToc
+      Cs2Area->_commandtiming = 250;
+      break;
+    default:
+      Cs2Area->_commandtiming = 50;
+      break;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1178,8 +1183,6 @@ void Cs2Execute(void) {
   u16 instruction = Cs2Area->reg.CR1 >> 8;
 
   //Cs2Area->reg.HIRQ &= ~CDB_HIRQ_CMOK;
-
-  Cs2Area->_command_execlock = 1;
 
   switch (instruction) {
     case 0x00:
@@ -1818,6 +1821,9 @@ void Cs2PlayDisc(void) {
   // Calculate Seek time
   length = abs((int)current_fad - (int)Cs2Area->FAD);
   Cs2Area->_periodictiming = length; // seektime
+  if (Cs2Area->_periodictiming < 40000) {
+    Cs2Area->_periodictiming = 40000;
+  }
   if (Cs2Area->_periodictiming > (u32)SEEK_TIME) {
      Cs2Area->_periodictiming = (u32)SEEK_TIME;
   }
@@ -2264,7 +2270,9 @@ void Cs2ResetSelector(void) {
   }
 
   doCDReport(Cs2Area->status);
-  Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  Cs2SetIRQ(CDB_HIRQ_CMOK);
+  Cs2Area->_command_execlock = 450;
+  Cs2Area->_delay_irq = CDB_HIRQ_ESEL;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2333,7 +2341,11 @@ void Cs2CalculateActualSize(void) {
   CDLOG("Cs2Area->calcsize = %d", Cs2Area->calcsize);
 
   doCDReport(Cs2Area->status);
-  Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  Cs2SetIRQ(CDB_HIRQ_CMOK);
+
+  Cs2Area->_command_execlock = 30 * casnumsect;
+  Cs2Area->_delay_irq = CDB_HIRQ_ESEL;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2486,7 +2498,7 @@ void Cs2GetSectorData(void)
    Cs2Area->datasectstotrans = (u16)gsdsectnum;
 
    doCDReport(Cs2Area->status);
-   Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
+   Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_DRDY );
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2537,9 +2549,10 @@ void Cs2DeleteSectorData(void)
       Cs2Area->isonesectorstored = 0;
 
    doCDReport(Cs2Area->status);
-   Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+   Cs2SetIRQ(CDB_HIRQ_CMOK);
 
-   Cs2Area->_command_execlock = 10000;
+   Cs2Area->_command_execlock = 30 * dsdsectnum;
+   Cs2Area->_delay_irq = CDB_HIRQ_EHST;
 }
 
 //////////////////////////////////////////////////////////////////////////////

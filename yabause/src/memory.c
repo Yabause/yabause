@@ -79,12 +79,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #if CACHE_ENABLE
 #else
-u8 FASTCALL MappedMemoryReadByteNocache(u32 addr){ return MappedMemoryReadByte(addr); }
-u16 FASTCALL MappedMemoryReadWordNocache(u32 addr){ return MappedMemoryReadWord(addr); }
-u32 FASTCALL MappedMemoryReadLongNocache(u32 addr){ return MappedMemoryReadLong(addr); }
-void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val){ MappedMemoryWriteByte(addr,val);  }
-void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val){ MappedMemoryWriteWord(addr, val); }
-void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val){ MappedMemoryWriteLong(addr, val); }
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr){ return MappedMemoryReadByte(addr, NULL); }
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr){ return MappedMemoryReadWord(addr, NULL); }
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr){ return MappedMemoryReadLong(addr, NULL); }
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val){ MappedMemoryWriteByte(addr,val, NULL);  }
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val){ MappedMemoryWriteWord(addr, val, NULL); }
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val){ MappedMemoryWriteLong(addr, val, NULL); }
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -728,6 +728,99 @@ void MappedMemoryInit()
      &BupRamMemoryWriteLong);
 }
 
+// gcc 4.9 bug
+#define GET_MEM_CYCLE_W \
+  switch (addr & 0xDFF00000) { \
+  case 0x00200000: /* Low */ \
+    *cycle = 7; \
+    break; \
+  case 0x05A00000: /* SOUND */ \
+    *cycle = 7; \
+    break; \
+  case 0x05C00000: /* VDP1 */ \
+    *cycle = 2; \
+    break; \
+  case 0x05e00000: /* VDP2 */ \
+    if (yabsys.LineCount >= yabsys.VBlankLineCount) { *cycle = 2; } else { *cycle = 200; } \
+    break; \
+  case 0x06000000: /* High */ \
+    *cycle = 2; \
+    break; \
+  default: \
+    *cycle = 0; \
+    break; \
+  } \
+
+#define GET_MEM_CYCLE_R \
+  switch (addr & 0xDFF00000) { \
+  case 0x00000000: /* ROM */ \
+  case 0x00100000: /* Backup */ \
+    *cycle = 16; \
+    break; \
+  case 0x00200000: /* Low */ \
+    *cycle = 12; \
+    break; \
+  case 0x02000000: /* CS0 */ \
+  case 0x05800000: /* CS2 */ \
+    *cycle = 24; \
+    break; \
+  case 0x05A00000: /* SOUND RAM */ \
+  case 0x05B00000: /* SOUND REG */ \
+  case 0x05C00000: /* VDP1 RAM */ \
+    *cycle = 50; \
+    break; \
+  case 0x05E00000: /* VDP2 RAM */ \
+    if (yabsys.LineCount >= yabsys.VBlankLineCount) { *cycle = 50; } else { *cycle = 400; } \
+    break; \
+  case 0x06000000: /* High */ \
+    *cycle = 0; \
+    break; \
+  default: \
+    *cycle = 0; \
+    break; \
+  } \
+
+#if 0
+inline u32 getMemCycle(u32 addr) {
+  switch (addr & 0xFFF00000) {
+  case 0x26000000: // High
+    return 7;
+    break;
+  case 0x20200000: // Low
+    return 7; 
+    break;
+  case 0x25A00000: // SOUND RAM
+  case 0x25B00000: // SOUND REG
+    return 30;
+    break;
+  case 0x25C00000: // VDP1 RAM
+    return 7;
+  case 0x25D00000: // VDP1 REG
+    return 7;
+    break;
+  case 0x25E00000: // VDP2 RAM
+    if (yabsys.LineCount >= yabsys.VBlankLineCount) {
+      return 7;
+    }
+    else {
+      return 80;
+    }
+    break;
+  case 0x25F00000: // VDP2 REG
+    return 2;
+    break;
+  case 0x06000000: // High
+  case 0x00200000: // Low
+    return 0;
+    break;
+  default:
+    return 0;
+    break;
+  }
+  return 1;
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
 u8 FASTCALL MappedMemoryReadByte(u32 addr){
@@ -735,9 +828,13 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr){
 }
 u8 FASTCALL MappedMemoryReadByteNocache(u32 addr)
 #else
-u8 FASTCALL MappedMemoryReadByte(u32 addr)
+u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle)
 #endif
 {
+  if (cycle != NULL) { 
+    //*cycle = getMemCycle(addr); 
+    GET_MEM_CYCLE_R
+  }
    switch (addr >> 29)
    {
       case 0x0:
@@ -752,7 +849,7 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
       case 0x5:
       {
         // Purge Area
-        return 0xFFFFFFFF;
+        return 0xFF;
       }
 
 
@@ -787,6 +884,7 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
    return 0;
 }
 
+
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
 u16 FASTCALL MappedMemoryReadWord(u32 addr){
@@ -794,9 +892,13 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr){
 }
 u16 FASTCALL MappedMemoryReadWordNocache(u32 addr)
 #else
-u16 FASTCALL MappedMemoryReadWord(u32 addr)
+u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle)
 #endif
 {
+  if (cycle != NULL) { 
+    //*cycle = getMemCycle(addr); 
+    GET_MEM_CYCLE_R
+  }
    switch (addr >> 29)
    {
       case 0x0:
@@ -853,9 +955,13 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr){
 }
 u32 FASTCALL MappedMemoryReadLongNocache(u32 addr)
 #else
-u32 FASTCALL MappedMemoryReadLong(u32 addr)
+u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle)
 #endif
 {
+  if (cycle != NULL) { 
+    //*cycle = getMemCycle(addr); 
+    GET_MEM_CYCLE_R
+  }
    switch (addr >> 29)
    {
       case 0x0:
@@ -915,11 +1021,14 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val){
 }
 void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val)
 #else
-void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
+void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle)
 #endif
 {
-
-   switch (addr >> 29)
+  if (cycle != NULL) { 
+    //*cycle = getMemCycle(addr); ]
+    GET_MEM_CYCLE_W
+  }
+  switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
@@ -976,9 +1085,13 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val){
 }
 void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val)
 #else
-void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
+void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle )
 #endif
 {
+  if (cycle != NULL) { 
+    //*cycle = getMemCycle(addr); 
+    GET_MEM_CYCLE_W
+  }
    switch (addr >> 29)
    {
       case 0x0:
@@ -1036,9 +1149,13 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val){
 }
 void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val)
 #else
-void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
+void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val, u32 * cycle )
 #endif
 {
+  if (cycle != NULL) { 
+    //*cycle = getMemCycle(addr); 
+    GET_MEM_CYCLE_W
+  }
    switch (addr >> 29)
    {
       case 0x0:
@@ -1097,7 +1214,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int MappedMemoryLoad(const char *filename, u32 addr)
+int MappedMemoryLoad(const char *filename, u32 addr )
 {
    FILE *fp;
    long filesize;
@@ -1134,7 +1251,7 @@ int MappedMemoryLoad(const char *filename, u32 addr)
    fclose(fp);
 
    for (i = 0; i < filesize; i++)
-      MappedMemoryWriteByte(addr+i, buffer[i]);
+      MappedMemoryWriteByte(addr+i, buffer[i], NULL);
 
    free(buffer);
 
@@ -1162,7 +1279,7 @@ int MappedMemorySave(const char *filename, u32 addr, u32 size)
    }
 
    for (i = 0; i < size; i++)
-      buffer[i] = MappedMemoryReadByte(addr+i);
+      buffer[i] = MappedMemoryReadByte(addr+i, NULL);
 
    fwrite((void *)buffer, 1, size, fp);
    fclose(fp);
@@ -1558,6 +1675,8 @@ int YabLoadStateStream(FILE *fp)
    u32 temp32;
 	int test_endian;
 
+  yabsys.frame_count = 0;
+
    headersize = 0xC;
    check.done = 0;
    check.size = 0;
@@ -1881,7 +2000,7 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
       {
          case SEARCHSTRING:
          {
-            u8 val = MappedMemoryReadByte(addr);
+            u8 val = MappedMemoryReadByte(addr, NULL);
             addr++;
 
             if (val == buf[counter])
@@ -1899,12 +2018,12 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
             int diff;
             u32 j;
             u8 val2;
-            u8 val = MappedMemoryReadByte(addr);
+            u8 val = MappedMemoryReadByte(addr, NULL);
 
             for (j = 1; j < buflen; j++)
             {
                // grab the next value
-               val2 = MappedMemoryReadByte(addr+j);
+               val2 = MappedMemoryReadByte(addr+j, NULL);
 
                // figure out the diff
                diff = (int)val2 - (int)val;
@@ -1928,12 +2047,12 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
             int diff;
             u32 j;
             u16 val2;
-            u16 val = MappedMemoryReadWord(addr);
+            u16 val = MappedMemoryReadWord(addr, NULL);
 
             for (j = 1; j < buflen; j++)
             {
                // grab the next value
-               val2 = MappedMemoryReadWord(addr+(j*2));
+               val2 = MappedMemoryReadWord(addr+(j*2), NULL);
 
                // figure out the diff
                diff = (int)val2 - (int)val;
@@ -2026,7 +2145,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
        switch (searchtype & 0x3)
        {
           case SEARCHBYTE:
-             val = MappedMemoryReadByte(addr);
+             val = MappedMemoryReadByte(addr, NULL);
              // sign extend if neccessary
              if (issigned)
                 val = (s8)val;
@@ -2035,7 +2154,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
                 return results;
              break;
           case SEARCHWORD:
-             val = MappedMemoryReadWord(addr);
+             val = MappedMemoryReadWord(addr, NULL);
              // sign extend if neccessary
              if (issigned)
                 val = (s16)val;
@@ -2044,7 +2163,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
                 return results;
              break;
           case SEARCHLONG:
-             val = MappedMemoryReadLong(addr);
+             val = MappedMemoryReadLong(addr, NULL);
 
              if (SearchIncrementAndCheckBounds(prevresults, maxresults, numresults, &i, addr+4, &newaddr, endaddr))
                 return results;

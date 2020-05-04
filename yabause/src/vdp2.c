@@ -174,9 +174,6 @@ void FASTCALL Vdp2RamWriteWord(u32 addr, u16 val) {
 
 void FASTCALL Vdp2RamWriteLong(u32 addr, u32 val) {
    addr &= 0x7FFFF;
-   if (0x00000 == addr && 0xD5C3D9C4 == val) {
-     LOG("%08X = %02X", addr, val);
-   }
    if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
      A0_Updated = 1;
    }

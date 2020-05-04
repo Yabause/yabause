@@ -260,6 +260,7 @@ typedef struct {
   u16 vcounter;
 
   int _command_execlock;
+  int _delay_irq;
 
 } Cs2;
 

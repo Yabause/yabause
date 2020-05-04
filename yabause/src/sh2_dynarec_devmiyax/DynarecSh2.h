@@ -335,7 +335,7 @@ public:
   }
 
   u32 addcycle_ = 0;
-
+  u32 memcycle_ = 0;
   void ShowStatics();
   void ShowCompileInfo();
   void ResetCompileInfo();

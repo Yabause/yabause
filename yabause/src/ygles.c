@@ -843,10 +843,11 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
     {
       u32 y = (addr >> 10) & 0xFF;
       u32 x = (addr & 0x3FF) >> 1;
-      if (x > Vdp1Regs->systemclipX2 || y >= _Ygl->rheight) {
+      if (x >=_Ygl->rwidth || y >= _Ygl->rheight) {
         return;
       }
       u32 texaddr = _Ygl->rwidth*(_Ygl->rheight - y - 1) + x;
+
       switch (type)
       {
       case 0:
@@ -891,11 +892,10 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
     case 1: { // 8bit 1024x256
       u32 y = (addr >> 10) & 0xFF;
       u32 x = (addr & 0x3FF) >> 1;
-      if (x > Vdp1Regs->systemclipX2 || y >= _Ygl->rheight) {
+      if (x >= _Ygl->rwidth || y >= _Ygl->rheight) {
         return;
       }
       u32 texaddr = _Ygl->rwidth*(_Ygl->rheight - y - 1) + x;
-
       switch (type)
       {
       case 0:
@@ -915,7 +915,7 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
     case 3: { // 8bit 512x512
       u32 y = (addr >> 9) & 0x1FF;
       u32 x = addr & 0x1FF;
-      if (x > Vdp1Regs->systemclipX2 || y >= _Ygl->rheight) {
+      if (x > _Ygl->rwidth || y >= _Ygl->rheight) {
         return;
       }
       u32 texaddr = _Ygl->rwidth*(_Ygl->rheight - y - 1) + x;

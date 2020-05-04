@@ -4913,8 +4913,8 @@ void SyncSh2And68k(){
     */
     // Memory Access cycle = 128 times per 44.1Khz
     // 28437500 / 4410 / 128 = 50
-    SH2Core->AddCycle(MSH2, 50);
-    SH2Core->AddCycle(SSH2, 50);
+    //SH2Core->AddCycle(MSH2, 50);
+    //SH2Core->AddCycle(SSH2, 50);
 
     if (mem_access_counter++ >= 128) {
 #if defined(ARCH_IS_LINUX)
