@@ -21,7 +21,7 @@
 #ifndef THREADS_H
 #define THREADS_H
 
-#ifdef SSH2_ASYNC
+#ifdef xSH2_ASYNC
 #include <semaphore.h>
 #endif
 

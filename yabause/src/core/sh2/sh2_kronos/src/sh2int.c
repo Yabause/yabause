@@ -34,7 +34,7 @@
 
 #include "cs2.h"
 
-#ifdef SSH2_ASYNC
+#ifdef xSH2_ASYNC
 #define LOCK(A) sem_wait(&A->lock)
 #define UNLOCK(A) sem_post(&A->lock)
 #else

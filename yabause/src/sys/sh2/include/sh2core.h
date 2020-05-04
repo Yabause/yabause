@@ -359,7 +359,7 @@ typedef struct SH2_struct_s
    u32 cycleLost;
    int cdiff;
    int trace;
-#ifdef SSH2_ASYNC
+#ifdef xSH2_ASYNC
    int cycles_request;
    int thread_running;
    YabEventQueue *start;
