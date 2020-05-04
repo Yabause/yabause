@@ -211,7 +211,7 @@ static void sh2Execute( void * p ){
     sh->cycles_request = *cycles;
     free(cycles);
     sh2ExecuteSync(sh, sh->cycles_request);
-    YabAddEventQueue(sh->end, NULL);
+    // YabAddEventQueue(sh->end, NULL);
   }
   sh->thread_running = 0;
 }
