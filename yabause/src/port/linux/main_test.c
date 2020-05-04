@@ -83,7 +83,6 @@ SoundInterface_struct *SNDCoreList[] = {
 };
 
 VideoInterface_struct *VIDCoreList[] = {
-&VIDDummy,
 };
 
 #ifdef YAB_PORT_OSD

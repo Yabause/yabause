@@ -82,7 +82,6 @@ NULL
 };
 
 VideoInterface_struct *VIDCoreList[] = {
-&VIDDummy,
 NULL
 };
 

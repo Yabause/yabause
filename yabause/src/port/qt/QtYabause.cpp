@@ -115,7 +115,6 @@ VideoInterface_struct *VIDCoreList[] = {
 #ifdef USE_SOFT_RENDER
 &VIDSoft,
 #endif
-&VIDDummy,
 #endif
 NULL
 };

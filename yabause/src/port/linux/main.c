@@ -116,7 +116,6 @@ NULL
 };
 
 VideoInterface_struct *VIDCoreList[] = {
-&VIDDummy,
 #ifdef HAVE_LIBGL
 &VIDOGL,
 #endif

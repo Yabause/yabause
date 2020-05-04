@@ -25,7 +25,6 @@
 #include "vdp2.h"
 
 #define VIDCORE_DEFAULT         -1
-#define VIDCORE_DUMMY           0
 
 //#define YAB_ASYNC_RENDERING 1
 
@@ -162,7 +161,6 @@ typedef struct
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;
-extern VideoInterface_struct VIDDummy;
 
 extern vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
 extern int nbCmdToProcess;
