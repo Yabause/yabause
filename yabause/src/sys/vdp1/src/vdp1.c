@@ -35,6 +35,7 @@
 #include "threads.h"
 #include "sh2core.h"
 #include "ygl.h"
+#include "vdp1_interface.h"
 
 u8 * Vdp1Ram;
 int vdp1Ram_update_start;
@@ -65,7 +66,6 @@ static void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram);
   if (((A)) < -1024) { DEBUG_BAD_COORD("Bad(-1024) %x (%d, 0x%x)\n", (A), (A), toto);}\
   if (((A)) > 1023) { DEBUG_BAD_COORD("Bad(1023) %x (%d, 0x%x)\n", (A), (A), toto);}\
 }
-
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -156,44 +156,6 @@ u32 FASTCALL Vdp1FrameBufferReadLong(SH2_struct *context, u8* mem, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1FrameBufferWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
-   addr &= 0x7FFFF;
-
-   if (VIDCore->Vdp1WriteFrameBuffer)
-   {
-      if (addr < 0x40000) VIDCore->Vdp1WriteFrameBuffer(0, addr, val);
-      return;
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL Vdp1FrameBufferWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
-  addr &= 0x7FFFF;
-
-   if (VIDCore->Vdp1WriteFrameBuffer)
-   {
-      if (addr < 0x40000) VIDCore->Vdp1WriteFrameBuffer(1, addr, val);
-      return;
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL Vdp1FrameBufferWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
-  addr &= 0x7FFFF;
-
-   if (VIDCore->Vdp1WriteFrameBuffer)
-   {
-     if (addr < 0x40000) VIDCore->Vdp1WriteFrameBuffer(2, addr, val);
-     return;
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////////////
-
 int Vdp1Init(void) {
    if ((Vdp1Regs = (Vdp1 *) malloc(sizeof(Vdp1))) == NULL)
       return -1;
@@ -219,6 +181,8 @@ int Vdp1Init(void) {
 
    vdp1Ram_update_start = 0x80000;
    vdp1Ram_update_end = 0x0;
+
+   vdp1_q = YabThreadCreateQueue(NB_VDP1_MSG);
 
    return 0;
 }
@@ -2262,8 +2226,7 @@ static void startField(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Vdp1HBlankIN(void)
-{
+static void Vdp1HBlankINSync(void) {
   for (int i = 0; i<nbCmdToProcess; i++) {
     if (cmdBufferBeingProcessed[i].ignitionLine == yabsys.LineCount+1) {
       if (!((cmdBufferBeingProcessed[i].start_addr >= vdp1Ram_update_end) ||
@@ -2299,31 +2262,33 @@ void Vdp1HBlankIN(void)
     if (VIDCore != NULL && VIDCore->id != VIDCORE_SOFT) YglTMCheck();
   #endif
 }
-//////////////////////////////////////////////////////////////////////////////
 
-void Vdp1HBlankOUT(void)
-{
-  Vdp1TryDraw();
-
-}
-
-//////////////////////////////////////////////////////////////////////////////
-extern void vdp1_compute();
-void Vdp1VBlankIN(void)
-{
-  // if (VIDCore != NULL) {
-  //   if (VIDCore->composeVDP1 != NULL) VIDCore->composeVDP1();
-  // }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void Vdp1VBlankOUT(void)
-{
-  //Out of VBlankOut : Break Batman
-  if (needVBlankErase()) {
-    int id = 0;
-    if (_Ygl != NULL) id = _Ygl->readframe;
-    VIDCore->Vdp1EraseWrite(id);
+void Vdp1Exec(int cycles){
+  vdp1Command_struct *p;
+  while(YaGetQueueSize(vdp1_q) != 0){
+    p = (vdp1Command_struct *)YabWaitEventQueue(vdp1_q);
+    switch(p->cmd) {
+      case VDP1FB_WRITE:
+        if (VIDCore->Vdp1WriteFrameBuffer)
+        {
+           if (((int*)(p->msg))[1] < 0x40000) VIDCore->Vdp1WriteFrameBuffer(((int*)(p->msg))[0], ((int*)(p->msg))[1], ((int*)(p->msg))[2]);
+        }
+        break;
+      case VDP1_VBLANKOUT:
+        if (needVBlankErase()) {
+          int id = 0;
+          if (_Ygl != NULL) id = _Ygl->readframe;
+          VIDCore->Vdp1EraseWrite(id);
+        }
+      break;
+      case VDP1_HBLANKOUT:
+        Vdp1TryDraw();
+      break;
+      case VDP1_HBLANKIN:
+        Vdp1HBlankINSync();
+      break;
+    }
+    if (p->msg != NULL) free(p->msg);
+    free(p);
   }
 }

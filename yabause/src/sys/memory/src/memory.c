@@ -40,7 +40,7 @@
 #include "scsp.h"
 #include "scu.h"
 #include "smpc.h"
-#include "vdp1.h"
+#include "vdp1_interface.h"
 #include "vdp2.h"
 #include "yabause.h"
 #include "yui.h"
