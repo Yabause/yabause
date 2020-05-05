@@ -32,6 +32,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import net.nend.android.NendAdListener
 import net.nend.android.NendAdView
+import org.uoyabause.android.ShowPinInFragment
+import org.uoyabause.android.tv.GameSelectActivity
 import org.uoyabause.uranus.BuildConfig
 import org.uoyabause.uranus.R
 
@@ -110,6 +112,7 @@ class GameSelectActivityPhone : AppCompatActivity(), NendAdListener {
 //if (mDrawerToggle.onOptionsItemSelected(item)) {
 //    return true;
 //}
+
         if (frg_ != null) {
             val rtn = frg_!!.onOptionsItemSelected(item)
             if (rtn == true) {
@@ -148,6 +151,6 @@ class GameSelectActivityPhone : AppCompatActivity(), NendAdListener {
     }
 
     companion object {
-        private const val CONTENT_VIEW_ID = 10101010
+        const val CONTENT_VIEW_ID = 10101010
     }
 }

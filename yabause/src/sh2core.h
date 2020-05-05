@@ -56,7 +56,7 @@ extern "C" {
 #undef MACH
 #endif
 
-//#define DMPHISTORY
+#define DMPHISTORY
 #define MAX_DMPHISTORY (512)
 
 // UBC Flags
@@ -308,6 +308,7 @@ typedef struct
    u16 RTCNT;  // 0xFFFFFFF4
    u16 RTCOR;  // 0xFFFFFFF8
    cache_enty cache;
+   u32 CHCR0M;
 } Onchip_struct;
 
 typedef struct

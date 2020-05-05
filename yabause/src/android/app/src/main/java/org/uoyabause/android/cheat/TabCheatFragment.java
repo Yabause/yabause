@@ -209,7 +209,7 @@ public class TabCheatFragment extends Fragment {
 
     @Override
     public void onAttach(Context context) {
-        disableFullScreen();
+        //disableFullScreen();
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
@@ -220,7 +220,7 @@ public class TabCheatFragment extends Fragment {
 
     @Override
     public void onDetach() {
-        enableFullScreen();
+        //enableFullScreen();
         sendCheatListToYabause();
         super.onDetach();
         mListener = null;

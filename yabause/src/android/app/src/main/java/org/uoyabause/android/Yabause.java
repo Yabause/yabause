@@ -128,6 +128,9 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.schedulers.Schedulers;
 
+import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
 import static org.uoyabause.android.SelInputDeviceFragment.PLAYER1;
 import static org.uoyabause.android.SelInputDeviceFragment.PLAYER2;
 
@@ -252,7 +255,9 @@ public class Yabause extends AppCompatActivity implements
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
       getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
     }
-
+    if( sharedPref.getBoolean("pref_immersive_mode", false)) {
+      getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+    }
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
     updateViewLayout(getResources().getConfiguration().orientation);
@@ -384,21 +389,22 @@ public class Yabause extends AppCompatActivity implements
 
     getWindow().setStatusBarColor(getResources().getColor(R.color.black));
 
-    View decorView = findViewById(R.id.drawer_layout);
-    if( decorView != null ) {
-      if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+    int immersiveFlags = 0;
+    if(sharedPref.getBoolean("pref_immersive_mode", false)){
+      immersiveFlags = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION  | SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+    }
+
+    View decorView = getWindow().getDecorView();
+    if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
         decorView.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        //| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | immersiveFlags
+                        | SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-      }
-
-      if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-        decorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-      }
+                        | SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+    }else if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+        decorView.setSystemUiVisibility( View.SYSTEM_UI_FLAG_LAYOUT_STABLE | immersiveFlags  );
     }
   }
 
@@ -1306,7 +1312,7 @@ public class Yabause extends AppCompatActivity implements
       return;
     }
     AsyncReportv2 asyncTask = new AsyncReportv2(this);
-    String url = "http://www.uoyabause.org/api/";
+    String url = "https://www.uoyabause.org/api/";
     //url = "http://www.uoyabause.org:3000/api/";
     asyncTask.execute(url, YabauseRunnable.getCurrentGameCode());
 
@@ -1371,7 +1377,7 @@ public class Yabause extends AppCompatActivity implements
         }
 
         //asyncTask.execute("http://192.168.0.7:3000/api/", YabauseRunnable.getCurrentGameCode());
-        asyncTask.execute("http://www.uoyabause.org/api/", YabauseRunnable.getCurrentGameCode());
+        asyncTask.execute("https://www.uoyabause.org/api/", YabauseRunnable.getCurrentGameCode());
 
         return;
 

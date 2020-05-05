@@ -152,6 +152,11 @@
             android:title="@string/str_use_compute_shader"
             android:defaultValue="false" />
 
+        <CheckBoxPreference
+            android:key="pref_immersive_mode"
+            android:title="@string/hide_status_bar_and_navigation_bar"
+            android:defaultValue="false" />
+
      </PreferenceCategory>        
     
     <PreferenceCategory android:title="@string/input_device_title">
@@ -239,7 +244,7 @@
 
     <PreferenceCategory android:title="@string/information">
         <PreferenceScreen
-            android:summary="http://www.uoyabause.org/static_pages/privacy_policy.html"
+            android:summary="https://www.uoyabause.org/static_pages/privacy_policy.html"
             android:title="@string/privacy_policy"
             android:key="on_screen_pad_x">
         </PreferenceScreen>
