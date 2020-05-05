@@ -714,7 +714,6 @@ void Cs2Reset(void) {
   Cs2Area->_statustiming = 1000000;
   Cs2Area->_periodiccycles = 0;
   Cs2Area->_commandtiming = 0;
-  Cs2Area->_command_execlock = 0;
   Cs2SetTiming(0);
 
   // MPEG specific stuff
@@ -771,18 +770,6 @@ void Cs2Exec(u32 timing) {
    Cs2Area->_statuscycles += timing * 3;
    Cs2Area->_periodiccycles += timing * 3;
 
-   // Command is not acceptable while other command is executing
-   if( Cs2Area->_command_execlock > 0  ){
-      Cs2Area->_command_execlock -= timing;
-   }
-
-   if( Cs2Area->_command_execlock <= 0 && Cs2Area->_commandtiming ){
-      Cs2Execute();
-      Cs2Area->_commandtiming = 0;
-   }
-
-
-#if 0
    if (Cs2Area->_commandtiming > 0)
    {
       if (Cs2Area->_commandtiming < timing)
@@ -793,7 +780,6 @@ void Cs2Exec(u32 timing) {
       else
          Cs2Area->_commandtiming -= timing;
    }
-#endif   
 
    if (Cs2Area->_statuscycles >= Cs2Area->_statustiming)
    {
@@ -877,7 +863,6 @@ void Cs2Exec(u32 timing) {
 
                            if (Cs2Area->playtype == CDB_PLAYTYPE_FILE){
                              Cs2SetIRQ(CDB_HIRQ_EFLS);
-                             Cs2SetIRQ(CDB_HIRQ_EHST); // Need for Assault Leynos 2
                            }
 
                            CDLOG("PLAY HAS ENDED\n");
@@ -1016,8 +1001,6 @@ void Cs2Execute(void) {
   u16 instruction = Cs2Area->reg.CR1 >> 8;
 
   //Cs2Area->reg.HIRQ &= ~CDB_HIRQ_CMOK;
-
-  Cs2Area->_command_execlock = 1;
 
   switch (instruction) {
     case 0x00:
@@ -2374,8 +2357,6 @@ void Cs2DeleteSectorData(void)
 
    doCDReport(Cs2Area->status);
    Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
-
-   Cs2Area->_command_execlock = 10000;
 }
 
 //////////////////////////////////////////////////////////////////////////////
