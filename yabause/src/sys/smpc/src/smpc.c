@@ -791,7 +791,7 @@ void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 
    switch(addr) {
       case 0x01: // Maybe an INTBACK continue/break request
-         if (SmpcInternalVars->firstPeri)
+         if (SmpcInternalVars->firstPeri == 1)
          {
             if (SmpcRegs->IREG[0] & 0x40) {
                // Break
