@@ -210,7 +210,7 @@ extern "C" {
       s += strlen(s); \
      }
 #else
-#define AddString(s, r...) \
+#define AddString(s, ...) \
      { \
       sprintf(s, ## r); \
       s += strlen(s); \

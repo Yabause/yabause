@@ -19,6 +19,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+
 /*! \file sh2int.c
     \brief SH2 interpreter interface
 */
@@ -309,9 +310,9 @@ FASTCALL void SH2KronosDebugInterpreterExec(SH2_struct *context, u32 cycles)
         if ((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != decode) && (cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != biosDecode))
           printf("Error of interpreter cache @ 0x%x\n", context->regs.PC);
 
-     if (enableTrace) {
-       SH2Disasm(context->regs.PC, krfetchlist[id](context, context->regs.PC), 0, &(context->regs), res);
-     }
+//     if (enableTrace) {
+//       SH2Disasm(context->regs.PC, krfetchlist[id](context, context->regs.PC), 0, &(context->regs), res);
+//     }
 
      cacheCode[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
      execInterrupt |= (context->cycles >= target_cycle);
