@@ -51,7 +51,6 @@
 #include "movie.h"
 #include "osdcore.h"
 #include "stv.h"
-#include "vdp1_interface.h"
 
 #ifdef HAVE_LIBSDL
 #if defined(__APPLE__) || defined(GEKKO)
@@ -892,7 +891,6 @@ int YabauseEmulate(void) {
          PROFILE_STOP("hblankout");
          PROFILE_START("SCSP");
          ScspExec();
-         Vdp1Exec(0);
          PROFILE_STOP("SCSP");
          yabsys.DecilineCount = 0;
          yabsys.LineCount++;

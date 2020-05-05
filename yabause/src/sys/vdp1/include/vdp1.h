@@ -169,7 +169,6 @@ extern u8 * Vdp1Ram;
 extern int vdp1Ram_update_start;
 extern int vdp1Ram_update_end;
 
-extern void Vdp1Exec(int cycles);
 
 u8 FASTCALL	Vdp1RamReadByte(SH2_struct *context, u8*, u32);
 u16 FASTCALL	Vdp1RamReadWord(SH2_struct *context, u8*, u32);
@@ -180,6 +179,9 @@ void FASTCALL	Vdp1RamWriteLong(SH2_struct *context, u8*, u32, u32);
 u8 FASTCALL Vdp1FrameBufferReadByte(SH2_struct *context, u8*, u32);
 u16 FASTCALL Vdp1FrameBufferReadWord(SH2_struct *context, u8*, u32);
 u32 FASTCALL Vdp1FrameBufferReadLong(SH2_struct *context, u8*, u32);
+void FASTCALL Vdp1FrameBufferWriteByte(SH2_struct *context, u8*, u32, u8);
+void FASTCALL Vdp1FrameBufferWriteWord(SH2_struct *context, u8*, u32, u16);
+void FASTCALL Vdp1FrameBufferWriteLong(SH2_struct *context, u8*, u32, u32);
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs);
@@ -208,6 +210,11 @@ char *Vdp1DebugGetCommandNumberName(u32 number);
 void Vdp1DebugCommand(u32 number, char *outstring);
 u32 *Vdp1DebugTexture(u32 number, int *w, int *h);
 void ToggleVDP1(void);
+
+void Vdp1HBlankIN(void);
+void Vdp1HBlankOUT(void);
+void Vdp1VBlankIN(void);
+void Vdp1VBlankOUT(void);
 
 
 #endif
