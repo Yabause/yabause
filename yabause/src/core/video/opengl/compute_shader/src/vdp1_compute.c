@@ -623,11 +623,11 @@ void vdp1_setup(void) {
 }
 
 int get_vdp1_tex() {
-	return compute_tex[_Ygl->drawframe];
+	return compute_tex[_Ygl->readframe];
 }
 
 int get_vdp1_mesh() {
-	return mesh_tex[_Ygl->drawframe];
+	return mesh_tex[_Ygl->readframe];
 }
 
 void vdp1_compute() {
