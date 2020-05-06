@@ -470,7 +470,6 @@ const GLchar Yglprg_userclip_f[] =
       "out vec4 fragColor;            \n"
       "void main()                                         \n"
       "{ \n"
-      "  vec2 tag = vec2(0.0);\n"
       "  vec4 outColor = vec4( 0.0 );\n";
 
 #define MESH_PROCESS \
@@ -485,7 +484,7 @@ const GLchar Yglprg_userclip_f[] =
 } \n"
 
 #define MESH_IMPROVED_PROCESS(A, B) \
-" tag = "Stringify(A)".rg; \n \
+" meshColor = "Stringify(A)".rg; \n \
   "Stringify(A)".rg = "Stringify(B)".rg; \n"
 
 // we have a gouraud value, we can consider the pixel code is RGB otherwise gouraud effect is not guaranted (VDP1 doc p26)
@@ -731,8 +730,7 @@ const GLchar* vdp1drawversion[2]= {
   version_core_3_3,
   version_core_4_2
 };
-
-const GLchar vdp1drawstart[] = {
+const GLchar vdp1drawstart_no_mesh[] = {
   "#ifdef GL_ES\n"
   "precision highp float;\n"
   "#endif\n"
@@ -747,8 +745,33 @@ const GLchar vdp1drawstart[] = {
   "  if (any(greaterThan(ivec2(gl_FragCoord.x, sysClip.z - gl_FragCoord.y), sysClip.xy))) discard;\n"
   "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
   "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-  "  vec2 tag = vec2(0.0);\n"
   COLINDEX(spriteColor)
+};
+
+const GLchar vdp1drawstart_mesh[] = {
+  "#ifdef GL_ES\n"
+  "precision highp float;\n"
+  "#endif\n"
+  "uniform sampler2D u_sprite;\n"
+  "uniform sampler2D u_fbo;\n"
+  "uniform ivec3 sysClip;\n"
+  "in vec4 v_texcoord;\n"
+  "in vec4 v_vtxcolor; \n"
+  "out vec4 fragColor; \n"
+  "out vec2 fragMesh; \n"
+  "void main() {\n"
+  "  vec4 outColor = vec4(0.0);\n"
+  "  vec2 meshColor = vec2(0.0);\n"
+  "  if (any(greaterThan(ivec2(gl_FragCoord.x, sysClip.z - gl_FragCoord.y), sysClip.xy))) discard;\n"
+  "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+  "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
+  COLINDEX(spriteColor)
+};
+
+const GLchar* vdp1drawstart[3]= {
+  vdp1drawstart_no_mesh,
+  vdp1drawstart_no_mesh,
+  vdp1drawstart_mesh
 };
 
 //SPD Mode handling
@@ -787,8 +810,8 @@ MESH_PROCESS
 };
 
 const GLchar improved_mesh[] = {
-  "vec4 curColor = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
-  MESH_IMPROVED_PROCESS(outColor, curColor)
+"vec4 curColor = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
+MESH_IMPROVED_PROCESS(outColor, curColor)
 };
 
 const GLchar* vdp1drawmesh[3]= {
@@ -873,9 +896,20 @@ const GLchar* vdp1drawmode[8]= {
 };
 
 //ENd of shaders
-const GLchar vdp1drawend[] = {
-  "  fragColor.rgba = vec4(outColor.rg, tag);\n"
+const GLchar vdp1drawend_no_mesh[] = {
+  "  fragColor.rgba = vec4(outColor.rg,vec2(0.0));\n"
   "}\n"
+};
+const GLchar vdp1drawend_mesh[] = {
+  "  fragColor.rgba = vec4(outColor.rg,vec2(0.0));\n"
+  "  fragMesh.rg = meshColor.rg;\n"
+  "}\n"
+};
+
+const GLchar* vdp1drawend[3]= {
+  vdp1drawend_no_mesh,
+  vdp1drawend_no_mesh,
+  vdp1drawend_mesh
 };
 
 //Common Vertex shader
@@ -926,6 +960,7 @@ const GLchar* vdp1drawvertex[2]= {
 
 typedef struct  {
   int idvdp1FrameBuffer;
+  int idvdp1Mesh;
   int idvdp2regs;
   int idcram;
 } DrawFrameBufferUniform;
@@ -968,6 +1003,7 @@ uniform sampler2D s_lncl;  \n \
 uniform sampler2D s_lncl_off_rgb0;  \n \
 uniform sampler2D s_lncl_off_rgb1;  \n \
 uniform sampler2D s_vdp1FrameBuffer;\n \
+uniform sampler2D s_vdp1Mesh;\n \
 uniform sampler2D s_win0;  \n \
 uniform sampler2D s_win1;  \n \
 uniform sampler2D s_color; \n \
@@ -1188,13 +1224,13 @@ void initDrawShaderCode() {
               //7 color calculation mode
               int index = l+7*(k1+2*(k+2*(j+3*(i+2*m))));
               prg_input_f[index][0] = vdp1drawversion[m];
-              prg_input_f[index][1] = vdp1drawstart;
+              prg_input_f[index][1] = vdp1drawstart[j];
               prg_input_f[index][2] = vdp1drawcheckend[k1];
               prg_input_f[index][3] = vdp1drawcheck[k];
               prg_input_f[index][4] = vdp1drawmsb[i];
               prg_input_f[index][5] = vdp1drawmode[l];
               prg_input_f[index][6] = vdp1drawmesh[j];
-              prg_input_f[index][7] = vdp1drawend;
+              prg_input_f[index][7] = vdp1drawend[j];
               prg_input_f[index][8] =  NULL;
 
               prg_input_v[index][0] = vdp1drawversion[m];
@@ -1232,7 +1268,7 @@ void initDrawShaderCode() {
   prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][4] = vdp1drawmsb[0];
   prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][5] = vdp1drawmode[7];
   prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][6] = vdp1drawmesh[0];
-  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][7] = vdp1drawend;
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][7] = vdp1drawend[0];
   prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][8] = NULL;
 
   prg_input_v[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][0] = vdp1drawversion[0];
@@ -1254,7 +1290,7 @@ void initDrawShaderCode() {
   prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][4] = vdp1drawmsb[0];
   prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][5] = vdp1drawmode[7];
   prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][6] = vdp1drawmesh[0];
-  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][7] = vdp1drawend;
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][7] = vdp1drawend[0];
   prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][8] = NULL;
 
   prg_input_v[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = vdp1drawversion[0];
@@ -1279,6 +1315,7 @@ int YglInitDrawFrameBufferShaders(int id, int CS) {
     abort();
   }
   g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp1FrameBuffer");
+  g_draw_framebuffer_uniforms[arrayid].idvdp1Mesh = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp1Mesh");
   g_draw_framebuffer_uniforms[arrayid].idvdp2regs = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp2reg");
   g_draw_framebuffer_uniforms[arrayid].idcram = glGetUniformLocation(_prgid[id], (const GLchar *)"s_color");
   return 0;
@@ -1318,6 +1355,7 @@ int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, int nb_screen, Vdp2* varVd
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp2reg_tex);
 
   glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer, 9);
+  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1Mesh, 19);
   return _prgid[pgid];
 }
 
@@ -1700,7 +1738,7 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
     vdp2blit_prg = Ygl_uniformVDP2DrawFramebuffer(offsetcol, id, varVdp2Regs );
 
 
-  int gltext[19] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15, GL_TEXTURE16, GL_TEXTURE17, GL_TEXTURE18};
+  int gltext[20] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15, GL_TEXTURE16, GL_TEXTURE17, GL_TEXTURE18, GL_TEXTURE19};
   int useLnclRBG0 = 0;
   int useLnclRBG1 = 0;
   for (int i = 0; i< 6; i++) {
@@ -1714,6 +1752,8 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   if (vdp1fb != NULL) {
     glActiveTexture(GL_TEXTURE9);
     glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
+    glActiveTexture(GL_TEXTURE19);
+    glBindTexture(GL_TEXTURE_2D, vdp1fb[1]);
   } else _Ygl->vdp1On[_Ygl->readframe] = 0;
 
   for(int i=0; i<7; i++) {
@@ -1822,8 +1862,10 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glActiveTexture(gltext[7]);
   glBindTexture(GL_TEXTURE_2D, _Ygl->back_fbotex[0]);
 
-  glActiveTexture(gltext[8]);
-  glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorscreen_tex);
+  if (_Ygl->linecolorscreen_tex != 0){
+    glActiveTexture(gltext[8]);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorscreen_tex);
+  }
 
   if(useLnclRBG0 != 0) {
     glActiveTexture(gltext[17]);

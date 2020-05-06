@@ -40,6 +40,7 @@ static int cmdRam_update_end[2] = {0x80000};
 static int generateComputeBuffer(int w, int h);
 
 static GLuint compute_tex[2] = {0};
+static GLuint mesh_tex[2] = {0};
 static GLuint ssbo_cmd_ = 0;
 static GLuint ssbo_vdp1ram_[2] = {0};
 static GLuint ssbo_nbcmd_ = 0;
@@ -58,15 +59,15 @@ static const GLchar * a_prg_vdp1[NB_PRG][4] = {
 	{
 		vdp1_start_f,
 		vdp1_standard_mesh_f,
-		vdp1_continue_f,
+		vdp1_continue_no_mesh_f,
 		vdp1_end_f
 	},
 	//VDP1_MESH_IMPROVED
 	{
 		vdp1_start_f,
 		vdp1_improved_mesh_f,
-		vdp1_continue_f,
-		vdp1_end_f
+		vdp1_continue_mesh_f,
+		vdp1_end_mesh_f
 	},
 	//WRITE
 	{
@@ -168,6 +169,9 @@ static int generateComputeBuffer(int w, int h) {
   if (compute_tex[0] != 0) {
     glDeleteTextures(2,&compute_tex[0]);
   }
+	if (mesh_tex[0] != 0) {
+		glDeleteTextures(2,&mesh_tex[0]);
+	}
 	if (ssbo_vdp1ram_[0] != 0) {
     glDeleteBuffers(2, &ssbo_vdp1ram_[0]);
 	}
@@ -212,6 +216,23 @@ static int generateComputeBuffer(int w, int h) {
   glBindTexture(GL_TEXTURE_2D, compute_tex[1]);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, w, h);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glGenTextures(2, &mesh_tex[0]);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, mesh_tex[0]);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RG8, w, h);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glBindTexture(GL_TEXTURE_2D, mesh_tex[1]);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RG8, w, h);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -455,6 +476,7 @@ void vdp1_clear(int id, float *col) {
   glUseProgram(prg_vdp1[progId]);
 
 	glBindImageTexture(0, compute_tex[id], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	glBindImageTexture(1, mesh_tex[id], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG);
 	glUniform4fv(2, 1, col);
 	glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 }
@@ -572,8 +594,12 @@ void vdp1_setup(void) {
 	}
 }
 
-int * get_vdp1_tex() {
-	return &compute_tex[_Ygl->readframe];
+int get_vdp1_tex() {
+	return compute_tex[_Ygl->drawframe];
+}
+
+int get_vdp1_mesh() {
+	return mesh_tex[_Ygl->drawframe];
 }
 
 void vdp1_compute() {
@@ -609,6 +635,7 @@ void vdp1_compute() {
   glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int)*NB_COARSE_RAST, (void*)nbCmd);
 
 	glBindImageTexture(0, compute_tex[_Ygl->drawframe], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	glBindImageTexture(1, mesh_tex[_Ygl->drawframe], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG8);
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_vdp1ram_[_Ygl->drawframe]);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_nbcmd_);

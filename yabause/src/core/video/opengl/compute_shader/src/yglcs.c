@@ -136,7 +136,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 
    GLuint cprg=0;
    GLuint srcTexture;
-   GLuint *VDP1fb;
+   GLuint VDP1fb[2];
    int nbPass = 0;
    unsigned int i,j;
    double w = 0;
@@ -359,7 +359,8 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
     glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
   }
 
-  VDP1fb = get_vdp1_tex();
+  VDP1fb[0] = get_vdp1_tex();
+  VDP1fb[1] = get_vdp1_mesh();
 #ifdef __LIBRETRO__
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 #else

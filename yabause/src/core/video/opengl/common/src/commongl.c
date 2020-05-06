@@ -771,7 +771,7 @@ static u32* getVdp1DrawingFBMem() {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex, 0);
     glViewport(0,0,512,256);
     //glClearBufferfv(GL_COLOR, 0, col);
-    YglBlitVDP1(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->vdp1width, _Ygl->vdp1height, 0);
+    YglBlitVDP1(_Ygl->vdp1FrameBuff[_Ygl->drawframe*2], _Ygl->vdp1width, _Ygl->vdp1height, 0);
     glReadPixels(0, 0, 512, 256, GL_RGBA, GL_UNSIGNED_BYTE, write_fb);
     manualfb = write_fb;
   }
@@ -846,7 +846,7 @@ void YglDestroy() {
     _Ygl->upfbotex = 0;
   }
   if (_Ygl->vdp1FrameBuff[0] != 0) {
-    glDeleteTextures(2,_Ygl->vdp1FrameBuff);
+    glDeleteTextures(4,_Ygl->vdp1FrameBuff);
     _Ygl->vdp1FrameBuff[0] = 0;
   }
   if (_Ygl->vdp1_pbo != 0) {
@@ -879,7 +879,7 @@ void YglGenerate() {
   if (getCSUsage() == 2) vdp1_compute_init( _Ygl->vdp1width, _Ygl->vdp1height, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  glGenTextures(2, _Ygl->vdp1FrameBuff);
+  glGenTextures(4, _Ygl->vdp1FrameBuff);
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0]);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -887,7 +887,19 @@ void YglGenerate() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[1]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RG, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[2]);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[3]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RG, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -915,6 +927,8 @@ void YglGenerate() {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[1], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[2], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[3], 0);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -2471,11 +2485,12 @@ int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache *
 void YglEraseWriteVDP1(int id) {
 
   float col[4] = {0.0};
+  float meshcol[4] = {0.0};
   u16 color;
   int priority;
   u32 alpha = 0;
   int status = 0;
-  GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
+  GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3};
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
   _Ygl->vdp1On[id] = 0;
 
@@ -2484,9 +2499,10 @@ void YglEraseWriteVDP1(int id) {
   // _Ygl->vdp1IsNotEmpty = 0;
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-  int drawBuf = 0;
-  glGetIntegerv(GL_DRAW_BUFFER0, &drawBuf);
-  glDrawBuffers(1, &DrawBuffers[id]);
+  int drawBuf[2] = {0};
+  glGetIntegerv(GL_DRAW_BUFFER0, &drawBuf[0]);
+  glGetIntegerv(GL_DRAW_BUFFER1, &drawBuf[1]);
+  glDrawBuffers(2, &DrawBuffers[id*2]);
 
   _Ygl->vdp1_stencil_mode = 0;
 
@@ -2505,10 +2521,11 @@ void YglEraseWriteVDP1(int id) {
   col[1] = ((color >> 8) & 0xFF) / 255.0f;
 
   glClearBufferfv(GL_COLOR, 0, col);
+  glClearBufferfv(GL_COLOR, 1, meshcol);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
   FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", id);
   //Get back to drawframe
-  glDrawBuffers(1, &drawBuf);
+  glDrawBuffers(2, &drawBuf[0]);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
@@ -2645,7 +2662,8 @@ void YglRenderVDP1(void) {
   YglGenFrameBuffer(0);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-  glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
+  glDrawBuffers(2, &DrawBuffers[_Ygl->drawframe*2]);
+  printf("Draw buffer %d\n", _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
@@ -2850,13 +2868,13 @@ static void releaseVDP1FB() {
 static void YglUpdateVDP1FB(void) {
   waitVdp1End(_Ygl->drawframe);
   if (_Ygl->vdp1IsNotEmpty != 0) {
-    GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
+    GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT2};
     _Ygl->vdp1On[_Ygl->drawframe] = 1;
     YglGenFrameBuffer(0);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex);
     glTexSubImage2D(GL_TEXTURE_2D,0,0,0,512, 256,GL_RGBA, GL_UNSIGNED_BYTE,write_fb);
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-    glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
+    glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe*2]);
     glViewport(0,0, _Ygl->vdp1width, _Ygl->vdp1height);
     YglBlitVDP1(_Ygl->vdp1AccessTex, 512, 256, 1);
     // clean up
@@ -3064,7 +3082,7 @@ SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
 void YglRender(Vdp2 *varVdp2Regs) {
    GLuint cprg=0;
    GLuint srcTexture;
-   GLuint *VDP1fb;
+   GLuint VDP1fb[2];
    int nbPass = 0;
    YglMatrix mtx;
    YglMatrix dmtx;
@@ -3294,7 +3312,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
     glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
   }
 
-  VDP1fb = &_Ygl->vdp1FrameBuff[_Ygl->readframe];
+  VDP1fb[0] = _Ygl->vdp1FrameBuff[_Ygl->readframe*2];
+  VDP1fb[1] = _Ygl->vdp1FrameBuff[_Ygl->readframe*2+1];
 
 #ifdef __LIBRETRO__
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);

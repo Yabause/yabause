@@ -81,6 +81,7 @@ SHADER_VERSION_COMPUTE
 "#endif\n"
 "layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
 "layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
+"layout(rg8, binding = 1) writeonly uniform image2D outMesh;\n"
 "layout(location = 2) uniform vec4 col;\n"
 "void main()\n"
 "{\n"
@@ -88,6 +89,7 @@ SHADER_VERSION_COMPUTE
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
 "  imageStore(outSurface,texel,col);\n"
+"  imageStore(outMesh, texel, vec4(0.0));\n"
 "}\n";
 
 #define COLINDEX(A) \
@@ -184,6 +186,7 @@ SHADER_VERSION_COMPUTE
 
 "layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
 "layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
+"layout(rg8, binding = 1) writeonly uniform image2D meshSurface;\n"
 "layout(std430, binding = 3) readonly buffer VDP1RAM { uint Vdp1Ram[]; };\n"
 "layout(std430, binding = 4) readonly buffer NB_CMD { uint nbCmd[]; };\n"
 "layout(std430, binding = 5) readonly buffer CMD { \n"
@@ -482,6 +485,7 @@ SHADER_VERSION_COMPUTE
 "void main()\n"
 "{\n"
 "  vec4 finalColor = vec4(0.0);\n"
+"  vec4 meshColor = vec4(0.0);\n"
 "  vec4 newColor = vec4(0.0);\n"
 "  vec4 outColor = vec4(0.0);\n"
 "  vec2 tag = vec2(0.0);\n"
@@ -632,9 +636,14 @@ static const char vdp1_improved_mesh_f[] =
 "    tag = vec2(0.0);\n"
 "  }\n";
 
-static const char vdp1_continue_f[] =
+static const char vdp1_continue_mesh_f[] =
 "    if (drawn) {"
-"      finalColor.ba = tag;\n"
+"      meshColor.rg = tag;\n"
+"      finalColor.rg = outColor.rg;\n"
+"    }\n";
+
+static const char vdp1_continue_no_mesh_f[] =
+"    if (drawn) {"
 "      finalColor.rg = outColor.rg;\n"
 "    }\n";
 
@@ -642,5 +651,12 @@ static const char vdp1_end_f[] =
 "  }\n"
 "  if (!drawn) return;\n"
 "  imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
+"}\n";
+
+static const char vdp1_end_mesh_f[] =
+"  }\n"
+"  if (!drawn) return;\n"
+"  imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
+"  imageStore(meshSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),meshColor);\n"
 "}\n";
 #endif //VDP1_PROG_COMPUTE_H
