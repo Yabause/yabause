@@ -377,6 +377,32 @@ void UISettings::changeFilterMode(int id)
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, (mVideoFilterMode.at(id).id).toInt());
 }
 
+void UISettings::changeVideoMode(int id)
+{
+	if (VIDCoreList[id]->id == 1) {//OpenGL
+		//Tesselation on
+		Tesselation->setVisible(true);
+		cbPolygonGeneration->setVisible(true);
+		//Gouraud off
+		BandingMode->setVisible(false);
+		cbBandingModeFilter->setVisible(false);
+		//Wireframe off
+		Wireframe->setVisible(false);
+		cbWireframeFilter->setVisible(false);
+	}
+	if (VIDCoreList[id]->id == 2) {//Compute Shader
+		//Tesselation offcol4
+		Tesselation->setVisible(false);
+		cbPolygonGeneration->setVisible(false);
+		//Gouraud on
+		BandingMode->setVisible(true);
+		cbBandingModeFilter->setVisible(true);
+		//Wireframe on
+		Wireframe->setVisible(true);
+		cbWireframeFilter->setVisible(true);
+	}
+}
+
 void UISettings::changeUpscaleMode(int id)
 {
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, (mUpscaleFilterMode.at(id).id).toInt());
@@ -421,6 +447,8 @@ void UISettings::loadCores()
 	// VDI Drivers
 	for ( int i = 0; VIDCoreList[i] != NULL; i++ )
 		cbVideoCore->addItem( QtYabause::translate( VIDCoreList[i]->Name ), VIDCoreList[i]->id );
+
+		connect(cbVideoCore, SIGNAL(currentIndexChanged(int)), this, SLOT(changeVideoMode(int)));
 
 #if YAB_PORT_OSD
 	// OSD Drivers
@@ -604,6 +632,7 @@ void UISettings::loadSettings()
 
 	// video
 	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore", QtYabause::defaultVIDCore().id ).toInt() ) );
+	changeVideoMode(cbVideoCore->currentIndex());
 #if YAB_PORT_OSD
 	cbOSDCore->setCurrentIndex( cbOSDCore->findData( s->value( "Video/OSDCore", QtYabause::defaultOSDCore().id ).toInt() ) );
 #endif

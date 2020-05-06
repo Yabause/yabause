@@ -60,6 +60,7 @@ protected slots:
 	void accept();
         void changeResolution(int id);
         void changeFilterMode(int id);
+				void changeVideoMode(int id);
         void changeUpscaleMode(int id);
         void changeAspectRatio(int id);
         void changeScanLine(int id);

@@ -258,19 +258,6 @@
          </property>
         </widget>
        </item>
-       <item row="25" column="0" colspan="3">
-        <spacer>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>2</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
        <item row="12" column="0">
         <widget class="QCheckBox" name="cbFullscreen">
          <property name="text">
@@ -350,7 +337,7 @@
 				</font>
 				</property>
 				<property name="text">
-					<string>OpenGL size :</string>
+					<string>Window size :</string>
 				</property>
 				<property name="textFormat">
 					<enum>Qt::PlainText</enum>
@@ -430,6 +417,28 @@
       <widget class="QComboBox" name="cbMeshModeFilter"/>
     </item>
     <item row="25" column="0">
+      <widget class="QLabel" name="GPU RBG">
+        <property name="font">
+          <font>
+            <weight>75</weight>
+            <bold>true</bold>
+          </font>
+        </property>
+        <property name="text">
+          <string>GPU RBG :</string>
+        </property>
+        <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+        </property>
+        <property name="alignment" >
+          <set>Qt::AlignRight|Qt::AlignVCenter</set>
+        </property>
+      </widget>
+    </item>
+    <item row="25" column="1">
+      <widget class="QComboBox" name="cbGPURBG"/>
+    </item>
+    <item row="26" column="0">
       <widget class="QLabel" name="BandingMode">
         <property name="font">
         <font>
@@ -448,30 +457,8 @@
         </property>
       </widget>
     </item>
-    <item row="25" column="1">
-      <widget class="QComboBox" name="cbBandingModeFilter"/>
-    </item>
-    <item row="26" column="0">
-			<widget class="QLabel" name="GPU RBG">
-				<property name="font">
-				<font>
-					<weight>75</weight>
-					<bold>true</bold>
-				</font>
-				</property>
-				<property name="text">
-					<string>GPU RBG :</string>
-				</property>
-				<property name="textFormat">
-					<enum>Qt::PlainText</enum>
-				</property>
-				<property name="alignment" >
-					<set>Qt::AlignRight|Qt::AlignVCenter</set>
-				</property>
-			</widget>
-		</item>
     <item row="26" column="1">
-      <widget class="QComboBox" name="cbGPURBG"/>
+      <widget class="QComboBox" name="cbBandingModeFilter"/>
     </item>
     <item row="27" column="0">
 			<widget class="QLabel" name="Wireframe">
