@@ -441,7 +441,7 @@ static void SmpcINTBACKPeripheral(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 static void SmpcINTBACK(void) {
-  if (SmpcInternalVars->firstPeri != 0) {
+  if (SmpcInternalVars->firstPeri == 1) {
      //in a continous mode.
       SmpcINTBACKPeripheral();
       SmpcRegs->SF = 0;
@@ -791,7 +791,7 @@ void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 
    switch(addr) {
       case 0x01: // Maybe an INTBACK continue/break request
-         if (SmpcInternalVars->firstPeri == 1)
+         if (SmpcInternalVars->firstPeri != 0)
          {
             if (SmpcRegs->IREG[0] & 0x40) {
                // Break
