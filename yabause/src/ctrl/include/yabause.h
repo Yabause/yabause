@@ -65,6 +65,7 @@ typedef struct
    int use_cs;
    int scanline;
    int meshmode;
+   int bandingmode;
    int resolution_mode;
    int extend_backup;
    int usecache;

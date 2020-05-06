@@ -399,6 +399,7 @@ void YabauseThread::reloadSettings()
   mYabauseConf.scanline = vs->value("Video/ScanLine", mYabauseConf.scanline).toInt();
 	mYabauseConf.wireframe_mode = vs->value("Video/Wireframe", mYabauseConf.wireframe_mode).toInt();
 	mYabauseConf.meshmode = vs->value("Video/MeshMode", mYabauseConf.meshmode).toInt();
+	mYabauseConf.bandingmode = vs->value("Video/BandingMode", mYabauseConf.bandingmode).toInt();
 
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );

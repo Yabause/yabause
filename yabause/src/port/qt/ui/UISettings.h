@@ -65,6 +65,7 @@ protected slots:
         void changeScanLine(int id);
 				void changeWireframe(int id);
 				void changeMeshMode(int id);
+				void changeBandingMode(int id);
 				void changePolygonMode(int id);
 				void changeCSMode(int id);
 };

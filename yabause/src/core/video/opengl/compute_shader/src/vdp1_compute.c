@@ -54,17 +54,35 @@ static int vdp1_generate_run = 0;
 
 static u32 write_fb[512*256];
 
-static const GLchar * a_prg_vdp1[NB_PRG][4] = {
-  //VDP1_MESH_STANDARD
+static const GLchar * a_prg_vdp1[NB_PRG][5] = {
+  //VDP1_MESH_STANDARD - BANDING
 	{
 		vdp1_start_f,
+		vdp1_banding_f,
 		vdp1_standard_mesh_f,
 		vdp1_continue_no_mesh_f,
 		vdp1_end_f
 	},
-	//VDP1_MESH_IMPROVED
+	//VDP1_MESH_IMPROVED - BANDING
 	{
 		vdp1_start_f,
+		vdp1_banding_f,
+		vdp1_improved_mesh_f,
+		vdp1_continue_mesh_f,
+		vdp1_end_mesh_f
+	},
+	//VDP1_MESH_STANDARD - NO BANDING
+	{
+		vdp1_start_f,
+		vdp1_no_banding_f,
+		vdp1_standard_mesh_f,
+		vdp1_continue_no_mesh_f,
+		vdp1_end_f
+	},
+	//VDP1_MESH_IMPROVED- NO BANDING
+	{
+		vdp1_start_f,
+		vdp1_no_banding_f,
 		vdp1_improved_mesh_f,
 		vdp1_continue_mesh_f,
 		vdp1_end_mesh_f
@@ -74,11 +92,13 @@ static const GLchar * a_prg_vdp1[NB_PRG][4] = {
 		vdp1_write_f,
 		NULL,
 		NULL,
+		NULL,
 		NULL
 	},
 	//READ
 	{
 		vdp1_read_f,
+		NULL,
 		NULL,
 		NULL,
 		NULL
@@ -88,15 +108,23 @@ static const GLchar * a_prg_vdp1[NB_PRG][4] = {
 		vdp1_clear_f,
 		NULL,
 		NULL,
+		NULL,
 		NULL
   },
 };
 
 static int getProgramId() {
-	if (_Ygl->meshmode == ORIGINAL_MESH)
-    return VDP1_MESH_STANDARD;
-	else
-	  return VDP1_MESH_IMPROVED;
+	if (_Ygl->meshmode == ORIGINAL_MESH){
+	  if (_Ygl->bandingmode == ORIGINAL_BANDING)
+    	return VDP1_MESH_STANDARD_BANDING;
+		else
+			return VDP1_MESH_STANDARD_NO_BANDING;
+	}else{
+		if (_Ygl->bandingmode == ORIGINAL_BANDING)
+	  	return VDP1_MESH_IMPROVED_BANDING;
+		else
+			return VDP1_MESH_IMPROVED_NO_BANDING;
+	}
 }
 
 int ErrorHandle(const char* name)

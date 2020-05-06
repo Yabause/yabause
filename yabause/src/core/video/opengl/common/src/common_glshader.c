@@ -547,7 +547,8 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  vec2 meshpix = texelFetch(s_vdp1Mesh, fbCoord, 0).rg;\n"
 "  FBTest = col;\n"
 "  ret = getVDP1PixelCode(col.rg);\n"
-"  mesh = getVDP1PixelCode(meshpix);"
+//Support of extended mesh mode
+"  mesh = getVDP1PixelCode(meshpix);\n"
 "  if (mesh.valid != 0) { \n"
 "    vec4 meshcol=vec4(0.0,0.0,0.0,1.0);\n"
 "    int meshdepth = getVDP2Reg(mesh.prio+8, line);\n"
@@ -586,6 +587,10 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "    }\n"
 "  }else{ // direct color \n"
 "    tmpColor = ret.color;\n"
+//Support of extended gouraud mode
+"    tmpColor.r += (int(col.b*255.0)&0x7)/255.0;\n"
+"    tmpColor.g += ((int(col.b*255.0)>>4)&0x7)/255.0;\n"
+"    tmpColor.b += (int(col.a*255.0)&0x7)/255.0;\n"
 "    msb = 1;\n"
 "  } \n"
 "  ret.offset_color = texelFetch( s_perline, ivec2(int( (u_vheight-PosY) * u_emu_height), is_perline[6]), 0 ).rgb;\n"

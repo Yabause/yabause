@@ -334,18 +334,18 @@ static void requestDrawCellOrder(vdp2draw_struct * info, YglTexture *texture, Vd
 #define IS_MSB_SHADOW(a) ((a&0x8000)!=0)
 
 static int getCCProgramId(int CMDPMOD) {
-  int cctype = CMDPMOD & 0x7;
+  int cctype = (CMDPMOD & 0x7);
   int MSB = IS_MSB_SHADOW(CMDPMOD)?1:0;
   int Mesh = IS_MESH(CMDPMOD)?((_Ygl->meshmode == ORIGINAL_MESH)?1:2):0;
   int SPD = IS_SPD(CMDPMOD)?1:0;
   int END = IS_END(CMDPMOD)?1:0;
   int TESS = (_Ygl->polygonmode == GPU_TESSERATION)?1:0;
-  if (cctype == 5) return -1;
-  if (cctype > 5) cctype -=1;
-
+  if ((cctype) == 5) return -1;
+  if ((cctype) > 5) cctype -=1;
+  cctype += 7*((_Ygl->bandingmode == ORIGINAL_BANDING)?0:1);
   YGLLOG("Setup program %d %d %d %d %d\n", cctype, SPD, Mesh, MSB, TESS);
 
-  return cctype+7*(END+2*(SPD+2*(Mesh+3*(MSB+2*TESS))))+PG_VDP1_START;
+  return cctype+14*(END+2*(SPD+2*(Mesh+3*(MSB+2*TESS))))+PG_VDP1_START;
 }
 
 
@@ -6393,6 +6393,9 @@ void VIDOGLSetSettingValueMode(int type, int value) {
   break;
   case VDP_SETTING_MESH_MODE:
     _Ygl->meshmode = value;
+  break;
+  case VDP_SETTING_BANDING_MODE:
+    _Ygl->bandingmode = value;
   break;
   default:
   return;

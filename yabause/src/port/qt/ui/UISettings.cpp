@@ -121,6 +121,10 @@ const Items mMeshMode = Items()
 	<< Item("0", "Original")
 	<< Item("1", "Improved");
 
+const Items mBandingMode = Items()
+	<< Item("0", "Original")
+	<< Item("1", "Improved");
+
 const Items mWireframe = Items()
 	<< Item("0", "Off")
 	<< Item("1", "On");
@@ -358,6 +362,11 @@ void UISettings::changeMeshMode(int id)
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, (mMeshMode.at(id).id).toInt());
 }
 
+void UISettings::changeBandingMode(int id)
+{
+    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_BANDING_MODE, (mBandingMode.at(id).id).toInt());
+}
+
 void UISettings::changeResolution(int id)
 {
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, (mResolutionMode.at(id).id).toInt());
@@ -471,7 +480,12 @@ void UISettings::loadCores()
 	foreach(const Item& it, mMeshMode)
 		cbMeshModeFilter->addItem(QtYabause::translate(it.Name), it.id);
 
+	foreach(const Item& it, mBandingMode)
+		cbBandingModeFilter->addItem(QtYabause::translate(it.Name), it.id);
+
 	connect(cbMeshModeFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(changeMeshMode(int)));
+
+	connect(cbBandingModeFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(changeBandingMode(int)));
 
 	// SND Drivers
 	for ( int i = 0; SNDCoreList[i] != NULL; i++ )
@@ -604,6 +618,7 @@ void UISettings::loadSettings()
   cbScanlineFilter->setCurrentIndex(cbScanlineFilter->findData(s->value("Video/ScanLine", mScanLine.at(0).id).toInt()));
 	cbWireframeFilter->setCurrentIndex(cbWireframeFilter->findData(s->value("Video/Wireframe", mWireframe.at(0).id).toInt()));
 	cbMeshModeFilter->setCurrentIndex(cbMeshModeFilter->findData(s->value("Video/MeshMode", mMeshMode.at(0).id).toInt()));
+	cbBandingModeFilter->setCurrentIndex(cbBandingModeFilter->findData(s->value("Video/BandingMode", mBandingMode.at(0).id).toInt()));
 
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
@@ -678,6 +693,7 @@ void UISettings::saveSettings()
         s->setValue("Video/ScanLine", cbScanlineFilter->itemData(cbScanlineFilter->currentIndex()).toInt());
 				s->setValue("Video/Wireframe", cbWireframeFilter->itemData(cbWireframeFilter->currentIndex()).toInt());
 				s->setValue("Video/MeshMode", cbMeshModeFilter->itemData(cbMeshModeFilter->currentIndex()).toInt());
+				s->setValue("Video/BandingMode", cbBandingModeFilter->itemData(cbBandingModeFilter->currentIndex()).toInt());
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());

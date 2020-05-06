@@ -496,6 +496,23 @@ int MSBg = (col"Stringify(A)" & 0x8000) >> 8;\n \
 "Stringify(A)".r = float(Rg | ((Gg & 0x7)<<5))/255.0;\n \
 "Stringify(A)".g = float((Gg>>3) | (Bg<<2) | MSBg)/255.0;\n"
 
+// the v_vtxcolor interpolated value has not enough precision to avoid banding with gouraud shading
+//The only solution might be to upload the four gouraud point and compute the interpolated value with texcoord
+#define GOURAUD_PROCESS_IMPROVED(A) "\
+float Rg = float((col"Stringify(A)" >> 00) & 0x1F)/31.0;\n \
+float Gg = float((col"Stringify(A)" >> 05) & 0x1F)/31.0;\n \
+float Bg = float((col"Stringify(A)" >> 10) & 0x1F)/31.0;\n \
+int MSBg = (col"Stringify(A)" & 0x8000) >> 8;\n \
+Rg = clamp(Rg + v_vtxcolor.r, 0.0, 1.0);\n \
+Gg = clamp(Gg+ v_vtxcolor.g, 0.0, 1.0);\n \
+Bg = clamp(Bg + v_vtxcolor.b, 0.0, 1.0);\n \
+"Stringify(A)".r = float((int(Rg*255.0)>>3) | (((int(Gg*255.0)>>3) & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float(((int(Gg*255.0)>>3)>>3) | ((int(Bg*255.0)>>3)<<2) | MSBg)/255.0;\n \
+"Stringify(A)".b = float((int(Rg*255.0)&0x7) | (int(Gg*255.0)&0x7)<< 4  )/255.0;\n \
+"Stringify(A)".a = float((int(Bg*255.0)&0x7))/255.0;\n \
+""\n"
+
+
 #define HALF_TRANPARENT_MIX(A, B) \
 "if ((col"Stringify(B)" & 0x8000) != 0) { \
   int Rht = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
@@ -838,39 +855,52 @@ const GLchar* vdp1drawmsb[2]= {
 
 //Color calculation mode
 const GLchar replace_mode[] = {
-  "outColor.rg = spriteColor.rg;\n"
+  "outColor = spriteColor;\n"
 };
 
 const GLchar shadow_mode[] = {
   "vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
   COLINDEX(fboColor)
   SHADOW(fboColor)
-    "outColor.rg = fboColor.rg;\n"
+    "outColor = fboColor;\n"
 };
 
 const GLchar half_luminance_mode[] = {
   HALF_LUMINANCE(spriteColor)
-  "outColor.rg = spriteColor.rg;\n"
+  "outColor = spriteColor;\n"
 };
 
 const GLchar half_trans_mode[] = {
   "vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
   COLINDEX(fboColor)
   HALF_TRANPARENT_MIX(spriteColor, fboColor)
-  "outColor.rg = spriteColor.rg;\n"
+  "outColor = spriteColor;\n"
 };
 
 const GLchar gouraud_mode[] = {
   GOURAUD_PROCESS(spriteColor)
-  "outColor.rg = spriteColor.rg;\n"
+  "outColor = spriteColor;\n"
+};
+
+const GLchar gouraud_mode_improved[] = {
+  GOURAUD_PROCESS_IMPROVED(spriteColor)
+  "outColor = spriteColor;\n"
 };
 
 const GLchar gouraud_half_luminance_mode[] = {
   GOURAUD_PROCESS(spriteColor)
   RECOLINDEX(spriteColor)
   HALF_LUMINANCE(spriteColor)
-  "outColor.rg = spriteColor.rg;\n"
+  "outColor = spriteColor;\n"
 };
+
+const GLchar gouraud_half_luminance_mode_improved[] = {
+  GOURAUD_PROCESS_IMPROVED(spriteColor)
+  RECOLINDEX(spriteColor)
+  HALF_LUMINANCE(spriteColor)
+  "outColor = spriteColor;\n"
+};
+
 
 const GLchar gouraud_half_trans_mode[] = {
   GOURAUD_PROCESS(spriteColor)
@@ -878,13 +908,22 @@ const GLchar gouraud_half_trans_mode[] = {
   "vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
   COLINDEX(fboColor)
   HALF_TRANPARENT_MIX(spriteColor, fboColor)
-  "outColor.rg = spriteColor.rg;\n"
+  "outColor = spriteColor;\n"
+};
+
+const GLchar gouraud_half_trans_mode_improved[] = {
+  GOURAUD_PROCESS_IMPROVED(spriteColor)
+  RECOLINDEX(spriteColor)
+  "vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
+  COLINDEX(fboColor)
+  HALF_TRANPARENT_MIX(spriteColor, fboColor)
+  "outColor = spriteColor;\n"
 };
 
 const GLchar nothing_mode[] =
 {"//No CC mode\n"};
 
-const GLchar* vdp1drawmode[8]= {
+const GLchar* vdp1drawmode[15]= {
   replace_mode,
   shadow_mode,
   half_luminance_mode,
@@ -892,16 +931,23 @@ const GLchar* vdp1drawmode[8]= {
   gouraud_mode,
   gouraud_half_luminance_mode,
   gouraud_half_trans_mode,
-  nothing_mode
+  replace_mode,
+  shadow_mode,
+  half_luminance_mode,
+  half_trans_mode,
+  gouraud_mode_improved,
+  gouraud_half_luminance_mode_improved,
+  gouraud_half_trans_mode_improved,
+  nothing_mode,
 };
 
 //ENd of shaders
 const GLchar vdp1drawend_no_mesh[] = {
-  "  fragColor.rgba = vec4(outColor.rg,vec2(0.0));\n"
+  "  fragColor.rgba = outColor;\n"
   "}\n"
 };
 const GLchar vdp1drawend_mesh[] = {
-  "  fragColor.rgba = vec4(outColor.rg,vec2(0.0));\n"
+  "  fragColor.rgba = outColor;\n"
   "  fragMesh.rg = meshColor.rg;\n"
   "}\n"
 };
@@ -1220,9 +1266,9 @@ void initDrawShaderCode() {
           //SPD or not
           for (int k1 = 0; k1<2; k1++) {
             //END code or not
-            for (int l = 0; l<7; l++) {
+            for (int l = 0; l<14; l++) {
               //7 color calculation mode
-              int index = l+7*(k1+2*(k+2*(j+3*(i+2*m))));
+              int index = l+14*(k1+2*(k+2*(j+3*(i+2*m))));
               prg_input_f[index][0] = vdp1drawversion[m];
               prg_input_f[index][1] = vdp1drawstart[j];
               prg_input_f[index][2] = vdp1drawcheckend[k1];
@@ -1266,7 +1312,7 @@ void initDrawShaderCode() {
   prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][2] = vdp1drawcheckend[1];
   prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][3] = vdp1drawcheck[1];
   prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][4] = vdp1drawmsb[0];
-  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][5] = vdp1drawmode[7];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][5] = vdp1drawmode[14];
   prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][6] = vdp1drawmesh[0];
   prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][7] = vdp1drawend[0];
   prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][8] = NULL;
@@ -1288,7 +1334,7 @@ void initDrawShaderCode() {
   prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][2] = vdp1drawcheckend[1];
   prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][3] = vdp1drawcheck[1];
   prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][4] = vdp1drawmsb[0];
-  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][5] = vdp1drawmode[7];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][5] = vdp1drawmode[14];
   prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][6] = vdp1drawmesh[0];
   prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][7] = vdp1drawend[0];
   prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][8] = NULL;
