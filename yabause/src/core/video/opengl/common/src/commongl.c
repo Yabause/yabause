@@ -2663,7 +2663,6 @@ void YglRenderVDP1(void) {
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
   glDrawBuffers(2, &DrawBuffers[_Ygl->drawframe*2]);
-  printf("Draw buffer %d\n", _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
