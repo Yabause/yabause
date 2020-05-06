@@ -705,7 +705,7 @@ static void SmpcSetTiming(void) {
          SmpcInternalVars->timing = 1; // this has to be tested on a real saturn
          return;
       case 0x10:
-          if (SmpcInternalVars->firstPeri != 0) {
+          if (SmpcInternalVars->firstPeri == 1) {
             SmpcInternalVars->timing = 16000;
             intback_wait_for_line = 1;
           } else {
