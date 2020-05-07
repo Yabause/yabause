@@ -33,18 +33,28 @@
 #define REGION_EUROPE                   12
 #define REGION_CENTRALSOUTHAMERICAPAL   13
 
+enum
+{
+   LANGUAGE_ENGLISH = 0,
+   LANGUAGE_GERMAN = 1,
+   LANGUAGE_FRENCH = 2,
+   LANGUAGE_SPANISH = 3,
+   LANGUAGE_ITALIAN = 4,
+   LANGUAGE_JAPANESE = 5,
+};
+
 typedef struct {
-        u8 IREG[7];
-        u8 padding[8];
-	u8 COMREG;
-        u8 OREG[32];
-	u8 SR;
-	u8 SF;
-        u8 padding2[8];
-        u8 PDR[2];
-        u8 DDR[2];
-        u8 IOSEL;
-        u8 EXLE;
+   u8 IREG[7];
+   u8 padding[8];
+   u8 COMREG;
+   u8 OREG[32];
+   u8 SR;
+   u8 SF;
+   u8 padding2[8];
+   u8 PDR[2];
+   u8 DDR[2];
+   u8 IOSEL;
+   u8 EXLE;
 } Smpc;
 
 extern Smpc * SmpcRegs;
@@ -70,6 +80,7 @@ typedef struct {
    u8 firstPeri;
    u8 regionid;
    u8 regionsetting;
+   u8 languageid;
    u8 SMEM[4];
    s32 timing;
    PortData_struct port1;
@@ -80,7 +91,7 @@ typedef struct {
 
 extern SmpcInternal * SmpcInternalVars;
 
-int SmpcInit(u8 regionid, int clocksync, u32 basetime);
+int SmpcInit(u8 regionid, int clocksync, u32 basetime, u8 languageid);
 void SmpcDeInit(void);
 void SmpcRecheckRegion(void);
 void SmpcReset(void);

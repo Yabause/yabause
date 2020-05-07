@@ -39,6 +39,7 @@ typedef struct
    int carttype;
    int stvgame;
    u8 regionid;
+   u8 languageid;
    const char *biospath;
    const char *cdpath;
    const char *buppath;

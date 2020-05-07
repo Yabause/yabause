@@ -55,7 +55,7 @@ static u8 bustmp = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SmpcInit(u8 regionid, int clocksync, u32 basetime) {
+int SmpcInit(u8 regionid, int clocksync, u32 basetime, u8 languageid) {
    if ((SmpcRegsT = (u8 *) calloc(1, sizeof(Smpc))) == NULL)
       return -1;
  
@@ -68,6 +68,7 @@ int SmpcInit(u8 regionid, int clocksync, u32 basetime) {
    SmpcInternalVars->regionid = regionid;
    SmpcInternalVars->clocksync = clocksync;
    SmpcInternalVars->basetime = basetime ? basetime : time(NULL);
+   SmpcInternalVars->languageid = languageid;
 
    return 0;
 }
@@ -318,7 +319,10 @@ static void SmpcINTBACKStatus(void) {
    // system state, second part in OREG11, bit 6
    // bit 6 -> CDRES
    SmpcRegs->OREG[11] = SmpcInternalVars->cdres << 6; // FIXME
-    
+
+   // set language
+   SmpcInternalVars->SMEM[3] = (SmpcInternalVars->SMEM[3] & 0xF0) | SmpcInternalVars->languageid;
+
    // SMEM
    for(i = 0;i < 4;i++)
       SmpcRegs->OREG[12+i] = SmpcInternalVars->SMEM[i];
