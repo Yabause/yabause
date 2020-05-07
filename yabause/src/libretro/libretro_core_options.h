@@ -191,6 +191,17 @@ struct retro_core_option_definition option_defs_us[] = {
       "disabled"
    },
    {
+      "kronos_bandingmode",
+      "Improved banding",
+      "Apply gouraud shading instead of flat shading, requires OpenGL CS renderer.",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
       "kronos_use_cs",
       "RBG Compute shaders",
       "Use compute shaders for upscaling RBG, requires OpenGL 4.3+.",

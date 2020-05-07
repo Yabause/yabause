@@ -61,6 +61,7 @@ static int window_height;
 static bool hle_bios_force = false;
 static int addon_cart_type = CART_NONE;
 static int mesh_mode = ORIGINAL_MESH;
+static int banding_mode = ORIGINAL_BANDING;
 #if !defined(_OGLES3_)
 static int opengl_version = 330;
 #endif
@@ -894,6 +895,37 @@ void retro_get_system_info(struct retro_system_info *info)
    info->valid_extensions = "cue|iso|mds|ccd|zip|chd";
 }
 
+static void set_variable_visibility(void)
+{
+   struct retro_core_option_display option_display;
+
+   // Hide settings specific to OpenGL
+   option_display.visible = (g_vidcoretype == VIDCORE_OGL);
+   option_display.key = "kronos_polygon_mode";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   // Hide settings specific to OpenGL CS
+   option_display.visible = (g_vidcoretype == VIDCORE_CS);
+   option_display.key = "kronos_bandingmode";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = "kronos_wireframe_mode";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   // Hide settings specific to ST-V
+   option_display.visible = stv_mode;
+   option_display.key = "kronos_service_enabled";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = "kronos_stv_favorite_region";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   // Hide settings specific to compute shaders
+   option_display.visible = (getCSUsage() == 2);
+   option_display.key = "kronos_videocoretype";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = "kronos_use_cs";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+}
+
 void check_variables(void)
 {
    struct retro_variable var;
@@ -1066,6 +1098,16 @@ void check_variables(void)
          mesh_mode = IMPROVED_MESH;
    }
 
+   var.key = "kronos_bandingmode";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         banding_mode = ORIGINAL_BANDING;
+      else if (strcmp(var.value, "enabled") == 0)
+         banding_mode = IMPROVED_BANDING;
+   }
+
    var.key = "kronos_use_cs";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1109,6 +1151,7 @@ void check_variables(void)
       else if (strcmp(var.value, "TW") == 0)
          stv_favorite_region = STV_REGION_TW;
    }
+   set_variable_visibility();
 }
 
 static void set_descriptors(void)
@@ -1173,11 +1216,12 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    memset(info, 0, sizeof(*info));
 
+   check_variables();
+
    if(initial_resolution_mode == 0)
    {
       // Get the initial resolution mode at start
       // It will be the resolution_mode limit until the core is restarted
-      check_variables();
       initial_resolution_mode = resolution_mode;
       switch(resolution_mode)
       {
@@ -1400,6 +1444,7 @@ bool retro_load_game_common()
    yinit.extend_backup           = 0;
    yinit.buppath                 = bup_path;
    yinit.meshmode                = mesh_mode;
+   yinit.bandingmode             = banding_mode;
    yinit.use_cs                  = use_cs;
    yinit.wireframe_mode          = wireframe_mode;
    yinit.skipframe               = g_skipframe;
@@ -1589,6 +1634,7 @@ void retro_run(void)
          PERCore->Init();
       VIDCore->SetSettingValue(VDP_SETTING_POLYGON_MODE, polygon_mode);
       VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, mesh_mode);
+      VIDCore->SetSettingValue(VDP_SETTING_BANDING_MODE, banding_mode);
       VIDCore->SetSettingValue(VDP_SETTING_COMPUTE_SHADER, use_cs);
       VIDCore->SetSettingValue(VDP_SETTING_WIREFRAME, wireframe_mode);
       // changing video format on the fly is causing issues
