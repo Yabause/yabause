@@ -351,22 +351,20 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.sndcoretype = vs->value( "Sound/SoundCore", mYabauseConf.sndcoretype ).toInt();
 	mYabauseConf.cdcoretype = vs->value( "General/CdRom", mYabauseConf.cdcoretype ).toInt();
 	mYabauseConf.carttype = vs->value( "Cartridge/Type", mYabauseConf.carttype ).toInt();
-        mYabauseConf.stvgame = vs->value( "Cartridge/STVGame", mYabauseConf.stvgame ).toInt();
-	const QString r = vs->value( "Advanced/Region", mYabauseConf.regionid ).toString();
+  mYabauseConf.stvgame = vs->value( "Cartridge/STVGame", mYabauseConf.stvgame ).toInt();
+	mYabauseConf.regionid = 0;
+	const QString r = vs->value( "STV/Region", mYabauseConf.regionid ).toString();
 	if ( r.isEmpty() || r == "Auto" )
-		mYabauseConf.regionid = 0;
+		mYabauseConf.stv_favorite_region = 1;
 	else
 	{
 		switch ( r[0].toLatin1() )
 		{
-			case 'J': mYabauseConf.regionid = 1; break;
-			case 'T': mYabauseConf.regionid = 2; break;
-			case 'U': mYabauseConf.regionid = 4; break;
-			case 'B': mYabauseConf.regionid = 5; break;
-			case 'K': mYabauseConf.regionid = 6; break;
-			case 'A': mYabauseConf.regionid = 0xA; break;
-			case 'E': mYabauseConf.regionid = 0xC; break;
-			case 'L': mYabauseConf.regionid = 0xD; break;
+			case 'E': mYabauseConf.stv_favorite_region = 1; break;
+			case 'U': mYabauseConf.stv_favorite_region = 2; break;
+			case 'J': mYabauseConf.stv_favorite_region = 4; break;
+			case 'T': mYabauseConf.stv_favorite_region = 8; break;
+			default : mYabauseConf.stv_favorite_region = 1; break;
 		}
 	}
 	if (vs->value("General/EnableEmulatedBios", false).toBool())

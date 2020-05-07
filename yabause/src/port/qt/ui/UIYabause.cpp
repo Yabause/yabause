@@ -533,7 +533,7 @@ void UIYabause::on_aFileSettings_triggered()
 		}
 		if(newhash["General/Bios"]!=hash["General/Bios"] ||
 			newhash["General/EnableEmulatedBios"]!=hash["General/EnableEmulatedBios"] ||
-			newhash["Advanced/Region"]!=hash["Advanced/Region"] ||
+			newhash["STV/Region"]!=hash["STV/Region"] ||
 			newhash["Cartridge/Type"]!=hash["Cartridge/Type"] ||
 			newhash["Memory/Path"]!=hash["Memory/Path"] ||
 			newhash["MpegROM/Path" ]!=hash["MpegROM/Path" ] ||

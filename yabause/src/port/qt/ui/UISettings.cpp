@@ -56,15 +56,10 @@ struct Item
 typedef QList<Item> Items;
 
 const Items mRegions = Items()
-	<< Item( "Auto" , "Auto-detect" )
-	<< Item( "J" , "Japan (NTSC)" )
-	<< Item( "T", "Asia (NTSC)" )
+  << Item( "E", "Europe (PAL)" )
 	<< Item( "U", "North America (NTSC)" )
-	<< Item( "B", "Central/South America (NTSC)" )
-	<< Item( "K", "Korea (NTSC)" )
-	<< Item( "A", "Asia (PAL)" )
-	<< Item( "E", "Europe + others (PAL)" )
-	<< Item( "L", "Central/South America (PAL)" );
+	<< Item( "J" , "Japan (NTSC)" )
+	<< Item( "T", "Asia (NTSC)" );
 
 const Items mCartridgeTypes = Items()
 	<< Item( "0", "None", false, false )
@@ -436,6 +431,8 @@ void UISettings::on_cbCartridge_currentIndexChanged( int id )
           cbSTVGame->model()->sort(0);
         }
         cbSTVGame->setVisible(mCartridgeTypes[id].pathFlag);
+				lRegion->setVisible(mCartridgeTypes[id].pathFlag);
+				cbRegion->setVisible(mCartridgeTypes[id].pathFlag);
 }
 
 void UISettings::loadCores()
@@ -668,7 +665,7 @@ void UISettings::loadSettings()
 	sGunMouseSensitivity->setValue(s->value( "Input/GunMouseSensitivity", 100).toInt() );
 
 	// advanced
-	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", mRegions.at( 0 ).id ).toString() ) );
+	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "STV/Region", mRegions.at( 0 ).id ).toString() ) );
 	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
    cb68kCore->setCurrentIndex(cb68kCore->findData(s->value("Advanced/68kCore", QtYabause::default68kCore().id).toInt()));
 
@@ -755,7 +752,7 @@ void UISettings::saveSettings()
 	s->setValue( "Input/GunMouseSensitivity", sGunMouseSensitivity->value() );
 
 	// advanced
-	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );
+	s->setValue( "STV/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );
 	s->setValue( "Advanced/SH2Interpreter", cbSH2Interpreter->itemData( cbSH2Interpreter->currentIndex() ).toInt() );
    s->setValue("Advanced/68kCore", cb68kCore->itemData(cb68kCore->currentIndex()).toInt());
 
