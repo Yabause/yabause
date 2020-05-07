@@ -724,13 +724,7 @@ else()
 	add_library(kronos ${kronos_SOURCES} ${kronos_HEADERS})
 endif()
 
-if (YAB_WANT_C68K)
-	add_dependencies(kronos c68kinc)
-endif(YAB_WANT_C68K)
-
-if (YAB_WANT_MUSASHI)
-	add_dependencies(kronos m68kmake)
-endif(YAB_WANT_MUSASHI)
+add_dependencies(kronos m68kmake)
 
 macro(yab_port_start)
 	if (YAB_PORT_BUILT AND NOT YAB_MULTIBUILD)
