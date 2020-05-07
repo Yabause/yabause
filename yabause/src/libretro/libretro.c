@@ -79,6 +79,7 @@ static int auto_select_cart = 0;
 static int use_cs = COMPUTE_RBG_OFF;
 static int wireframe_mode = 0;
 static int stv_favorite_region = STV_REGION_EU;
+static int language_id = LANGUAGE_ENGLISH;
 static bool service_enabled = false;
 static bool stv_mode = false;
 static bool all_devices_ready = false;
@@ -1152,6 +1153,25 @@ void check_variables(void)
          stv_favorite_region = STV_REGION_TW;
    }
    set_variable_visibility();
+
+   var.key = "kronos_language_id";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "English") == 0)
+         language_id = LANGUAGE_ENGLISH;
+      else if (strcmp(var.value, "German") == 0)
+         language_id = LANGUAGE_GERMAN;
+      else if (strcmp(var.value, "French") == 0)
+         language_id = LANGUAGE_FRENCH;
+      else if (strcmp(var.value, "Spanish") == 0)
+         language_id = LANGUAGE_SPANISH;
+      else if (strcmp(var.value, "Italian") == 0)
+         language_id = LANGUAGE_ITALIAN;
+      else if (strcmp(var.value, "Japanese") == 0)
+         language_id = LANGUAGE_JAPANESE;
+   }
+   set_variable_visibility();
 }
 
 static void set_descriptors(void)
@@ -1431,6 +1451,7 @@ bool retro_load_game_common()
    yinit.sndcoretype             = SNDCORE_LIBRETRO;
    yinit.m68kcoretype            = M68KCORE_MUSASHI;
    yinit.regionid                = REGION_AUTODETECT;
+   yinit.languageid              = language_id;
    yinit.mpegpath                = NULL;
    yinit.vsyncon                 = 0;
    yinit.clocksync               = 0;

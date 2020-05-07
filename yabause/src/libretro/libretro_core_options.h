@@ -247,6 +247,21 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "EU"
    },
+   {
+      "kronos_language_id",
+      "Bios Language",
+      "Choose your favorite language, will translate some games. Requires a restart.",
+      {
+         { "English", NULL },
+         { "German", NULL },
+         { "French", NULL },
+         { "Spanish", NULL },
+         { "Italian", NULL },
+         { "Japanese", NULL },
+         { NULL, NULL},
+      },
+      "EU"
+   },
    { NULL, NULL, NULL, {{0}}, NULL },
 };
 
