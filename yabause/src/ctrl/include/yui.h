@@ -40,11 +40,6 @@ int YuiGetFB(void);
    up being moved to the Video Core. */
 void YuiSwapBuffers(void);
 
-#ifdef __LIBRETRO__
-/* Libretro wants to be told when a frame has been dropped, would that be useful with other UIs ? */
-void YuiFrameDropped(void);
-#endif
-
 /* need to call before glXXXXX call in a thread */
 int YuiUseOGLOnThisThread();
 

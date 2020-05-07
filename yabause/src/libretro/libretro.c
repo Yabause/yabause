@@ -83,6 +83,7 @@ static bool stv_mode = false;
 static bool all_devices_ready = false;
 static bool libretro_supports_bitmasks = false;
 static bool rendering_started = false;
+static bool buffer_swapped = false;
 static bool resolution_need_update = false;
 static int16_t libretro_input_bitmask[12] = {-1,};
 static int pad_type[12] = {RETRO_DEVICE_NONE,};
@@ -762,12 +763,7 @@ void YuiSwapBuffers(void)
    if (resolution_need_update || (prev_game_width != game_width) || (prev_game_height != game_height))
       retro_reinit_av_info();
    audio_size = soundlen;
-   video_cb(RETRO_HW_FRAME_BUFFER_VALID, _Ygl->width, _Ygl->height, 0);
-}
-
-void YuiFrameDropped(void)
-{
-   video_cb(NULL, _Ygl->width, _Ygl->height, 0);
+   buffer_swapped = true;
 }
 
 static void context_reset(void)
@@ -1566,6 +1562,7 @@ void retro_run(void)
 {
    unsigned i;
    bool updated  = false;
+   buffer_swapped = false;
    if (!all_devices_ready)
    {
       // Running first frame, so we can assume all devices id were set
@@ -1603,6 +1600,8 @@ void retro_run(void)
    update_inputs();
    if (rendering_started)
       YabauseExec();
+   // Libretro likes having 1 frame rendered at each retro_run iteration, so let's give up on real saturn's behavior
+   video_cb((buffer_swapped ? RETRO_HW_FRAME_BUFFER_VALID : NULL), _Ygl->width, _Ygl->height, 0);
 }
 
 #ifdef ANDROID

@@ -402,9 +402,6 @@ void Vdp2VBlankIN(void) {
    if (checkFrameSkip() != 0) {
      dropFrameDisplay();
      isSkipped = 1;
-#ifdef __LIBRETRO__
-     YuiFrameDropped();
-#endif
    } else {
      VIDCore->Vdp2Draw();
      isSkipped = 0;
