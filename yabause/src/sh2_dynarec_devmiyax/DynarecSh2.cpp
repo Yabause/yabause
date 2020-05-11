@@ -940,7 +940,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   //while (ptr - startptr < MaxSize) {
   while (1) {
     // translate the opcode and insert code
-    op = memGetWord(addr);
+    op = MappedMemoryReadWord(addr, NULL);
 #ifdef SET_DIRTY
     if (ParentT) {
       u32 keepaddr = adress_mask(addr);
@@ -976,7 +976,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }else if(delay == 1 || delay == 5) {
       calsize = (ptr - startptr) + *asm_list[i].size + nomal_seperator_size + DELAYJUMPSIZE + EPILOGSIZE;
     } else {
-      u32 op2 = memGetWord(addr+2);
+      u32 op2 = MappedMemoryReadWord(addr+2,NULL);
       u32 delayop = dsh2_instructions[op2];
       calsize = (ptr - startptr) + *asm_list[i].size + *asm_list[delayop].size + delay_seperator_size + SEPERATORSIZE_DELAY_AFTER + EPILOGSIZE;
     }
@@ -1118,7 +1118,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       ptr += *(asm_list[i].size) + delay_seperator_size;
 
       // Get NExt instruction
-      temp = memGetWord(addr);
+      temp = MappedMemoryReadWord(addr,NULL);
 #ifdef SET_DIRTY
       if (ParentT) {
         u32 keepaddr = adress_mask(addr);
@@ -1441,7 +1441,8 @@ inline int DynarecSh2::Execute(){
       }
       if (yabsys.emulatebios) {
         BiosHandleFunc(ctx_);
-        return IN_INFINITY_LOOP;
+        memcycle_ += 10;
+        return 0;
       }
       pBlock = m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1];
       if (pBlock == NULL)
@@ -1508,7 +1509,6 @@ inline int DynarecSh2::Execute(){
         fflush(fp);
     }
 #endif
-//  u32 prepc  = GET_PC();
 //  if(yabsys.frame_count == 7){
 //    logenable_ = true;
 //  }
@@ -1516,6 +1516,7 @@ inline int DynarecSh2::Execute(){
 //    LOG("[%s] dynaExecute start %08X %08X", (is_slave_ == false) ? "M" : "S", GET_PC(), GET_PR());
 //  }
 #if defined(DEBUG_CPU) || defined(EXECUTE_STAT)
+    u32 prepc = GET_PC();
   if (is_slave_) { //statics_trigger_ == COLLECTING) {
     u64 pretime = YabauseGetTicks();
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
@@ -1627,10 +1628,16 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
 
     interruput_cnt_++;
     m_pDynaSh2->GenReg[15] -= 4;
-    memSetLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->CtrlReg[0]);
+    MappedMemoryWriteLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->CtrlReg[0],NULL);
     m_pDynaSh2->GenReg[15] -= 4;
-    memSetLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->SysReg[3]);
-    m_pDynaSh2->CtrlReg[0] |= ((u32)(level << 4) & 0x000000F0);
+    MappedMemoryWriteLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->SysReg[3],NULL);
+    if (level == 0x10) { //NMI
+      m_pDynaSh2->CtrlReg[0] |= 0x000000F0;
+    }
+    else {
+      m_pDynaSh2->CtrlReg[0] &= ~0x000000F0;
+      m_pDynaSh2->CtrlReg[0] |= ((u32)(level << 4) & 0x000000F0);
+    }
     m_pDynaSh2->SysReg[3] = memGetLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2));
 
     //LOG("**** [%s] Exception vecnum=%s(%x), PC=%08X to %08X, level=%08X\n", (is_slave_ == false) ? "M" : "S", ScuGetVectorString(Vector), Vector,prepc, m_pDynaSh2->SysReg[3], level);
@@ -1648,7 +1655,7 @@ int DynarecSh2GetDisasmebleString(string & out, u32 from, u32 to) {
   char linebuf[128];
   if (from > to) return -1;
   for (u32 i = from; i < (to+2); i += 2) {
-    SH2Disasm(i, memGetWord(i), 0, NULL, linebuf);
+    SH2Disasm(i, MappedMemoryReadWord(i,NULL), 0, NULL, linebuf);
     out += linebuf;
     out += "\n";
   }

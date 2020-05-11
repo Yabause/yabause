@@ -446,6 +446,7 @@ typedef struct
 
    Dmac dma_ch0;
    Dmac dma_ch1;
+   u32 pre_cycle;
    void * ext;  
 
 } SH2_struct;

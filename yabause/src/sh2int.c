@@ -187,7 +187,13 @@ void SH2HandleInterrupts(SH2_struct *context)
       MappedMemoryWriteLong(context->regs.R[15], context->regs.SR.all, NULL);
       context->regs.R[15] -= 4;
       MappedMemoryWriteLong(context->regs.R[15], context->regs.PC, NULL);
-      context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts - 1].level;
+      u32 level = context->interrupts[context->NumberOfInterrupts - 1].level;
+      if (level == 0x10) {
+        context->regs.SR.part.I = 0xF;
+      }
+      else {
+        context->regs.SR.part.I = level;
+      }
       context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2), NULL);
       LOG("[%s] Exception %u, vecnum=%02x, saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", 9, context->interrupts[context->NumberOfInterrupts - 1].vector, oldpc, context->regs.PC);
       context->NumberOfInterrupts--;
@@ -3047,7 +3053,7 @@ void SH2HandleBreakpoints(SH2_struct *context)
 
 FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 {
-  u32 target_cycle = context->cycles + cycles;
+  int target_cycle = context->cycles + cycles - context->pre_cycle;
 #if 0 //def SH2_TRACE
    /* Avoid accumulating leftover cycles multiple times, since the trace
     * code automatically adds state->cycles to the cycle accumulator when
@@ -3136,6 +3142,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 #if 0 //def SH2_TRACE
    sh2_trace_add_cycles(context->cycles);
 #endif
+   context->pre_cycle = context->cycles - target_cycle;
 }
 
 
@@ -3143,7 +3150,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
 FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
-  u32 target_cycle = context->cycles + cycles;
+  int target_cycle = context->cycles + cycles - context->pre_cycle;
   SH2HandleInterrupts(context);
 
 #ifndef EXEC_FROM_CACHE
@@ -3166,6 +3173,8 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
       // Execute it
       opcodes[context->instruction](context);
    }
+
+   context->pre_cycle = context->cycles - target_cycle;
 }
 
 //////////////////////////////////////////////////////////////////////////////
