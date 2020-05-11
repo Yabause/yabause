@@ -758,7 +758,9 @@ int YabauseEmulate(void) {
          PROFILE_STOP("SCSP");
          yabsys.DecilineCount = 0;
          yabsys.LineCount++;
+
          if (yabsys.LineCount == yabsys.VBlankLineCount) {
+
 #if defined(ASYNC_SCSP)
             setM68kCounter((u64)(44100 * 256 / 60) << SCSP_FRACTIONAL_BITS);
 #endif
@@ -780,6 +782,7 @@ int YabauseEmulate(void) {
             yabsys.LineCount = 0;
             oneframeexec = 1;
             PROFILE_STOP("VDP1/VDP2");
+
          }
       }
 

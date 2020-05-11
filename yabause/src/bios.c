@@ -156,7 +156,7 @@ static void FASTCALL BiosSetScuInterrupt(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-//   LOG("BiosSetScuInterrupt. vector = %02X, func = %08X\n", sh->regs.R[4], sh->regs.R[5]);
+   LOG("BiosSetScuInterrupt. vector = %02X, func = %08X\n", sh->regs.R[4], sh->regs.R[5]);
 
    if (sh->regs.R[5] == 0)
    {
@@ -180,7 +180,7 @@ static void FASTCALL BiosGetScuInterrupt(SH2_struct * sh)
    SH2GetRegisters(sh, &sh->regs);
 
    // check me
-//   LOG("BiosGetScuInterrupt\n"); 
+   LOG("BiosGetScuInterrupt\n"); 
 
    sh->regs.R[0] = MappedMemoryReadLongNocache(0x06000900+(sh->regs.R[4] << 2));
    sh->cycles += 5;
@@ -195,7 +195,7 @@ static void FASTCALL BiosSetSh2Interrupt(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-//   LOG("BiosSetSh2Interrupt\n");
+   LOG("BiosSetSh2Interrupt\n");
 
    if (sh->regs.R[5] == 0)
    {            
@@ -219,7 +219,7 @@ static void FASTCALL BiosGetSh2Interrupt(SH2_struct * sh)
    SH2GetRegisters(sh, &sh->regs);
 
    // check me
-//   LOG("BiosGetSh2Interrupt\n");
+   LOG("BiosGetSh2Interrupt\n");
 
    sh->regs.R[0] = MappedMemoryReadLongNocache(sh->regs.VBR+(sh->regs.R[4] << 2));
    sh->cycles += 5;
@@ -235,7 +235,7 @@ static void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
    SH2GetRegisters(sh, &sh->regs);
 
    // check me
-   //LOG("BiosSetScuInterruptMask\n");
+   LOG("BiosSetScuInterruptMask\n");
 
    if (!sh->isslave)
    {
@@ -261,7 +261,7 @@ static void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
 
    SH2GetRegisters(sh, &sh->regs);
 
-//   LOG("BiosChangeScuInterruptMask\n");
+   LOG("BiosChangeScuInterruptMask\n");
 
    // Read Stored Scu Interrupt Mask, AND it by R4, OR it by R5, then put it back
    newmask = (MappedMemoryReadLongNocache(0x06000348) & sh->regs.R[4]) | sh->regs.R[5];
@@ -308,7 +308,7 @@ static void FASTCALL BiosGetSemaphore(SH2_struct * sh)
    SH2GetRegisters(sh, &sh->regs);
 
    // check me
-//   LOG("BiosGetSemaphore\n");
+   LOG("BiosGetSemaphore\n");
   
    if ((temp = MappedMemoryReadByte(0x06000B00 + sh->regs.R[4], NULL)) == 0)
       sh->regs.R[0] = 1;
@@ -330,7 +330,7 @@ static void FASTCALL BiosClearSemaphore(SH2_struct * sh)
    SH2GetRegisters(sh, &sh->regs);
 
    // check me
-//   LOG("BiosClearSemaphore\n");
+   LOG("BiosClearSemaphore\n");
 
    MappedMemoryWriteByte(0x06000B00 + sh->regs.R[4], 0, NULL);
 
@@ -347,7 +347,7 @@ static void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
    u32 mask;
    SH2GetRegisters(sh, &sh->regs);
 
-//   LOG("BiosChangeSystemClock\n");
+   LOG("BiosChangeSystemClock\n");
 
    // Set new system clock speed
    MappedMemoryWriteLongNocache(0x06000324, sh->regs.R[4]);
@@ -389,6 +389,7 @@ static void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
+   sh->cycles += 200;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -400,7 +401,7 @@ static void FASTCALL BiosChangeScuInterruptPriority(SH2_struct * sh)
    SH2GetRegisters(sh, &sh->regs);
 
    // check me
-//   LOG("BiosChangeScuInterruptPriority\n");
+   LOG("BiosChangeScuInterruptPriority\n");
 
    for (i = 0; i < 0x20; i++)
    {
@@ -423,7 +424,7 @@ static void FASTCALL BiosExecuteCDPlayer(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-//   LOG("BiosExecuteCDPlayer\n");
+   LOG("BiosExecuteCDPlayer\n");
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -435,7 +436,7 @@ static void FASTCALL BiosPowerOnMemoryClear(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-//   LOG("BiosPowerOnMemoryClear\n");
+   LOG("BiosPowerOnMemoryClear\n");
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -447,7 +448,7 @@ static void FASTCALL BiosCheckMPEGCard(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-   //LOG("BiosCheckMPEGCard\n");
+   LOG("BiosCheckMPEGCard\n");
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -833,7 +834,7 @@ static void FASTCALL BiosBUPFormat(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-//   LOG("BiosBUPFormat. PR = %08X\n", sh->regs.PR);
+   LOG("BiosBUPFormat. PR = %08X\n", sh->regs.PR);
 
    BupFormat(sh->regs.R[4]);
 
@@ -1528,6 +1529,8 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
 {
    SH2GetRegisters(sh, &sh->regs);
 
+   LOG("BiosHandleScuInterrupt");
+
    // Save R0-R7, PR, GBR, and old Interrupt mask to stack
    sh->regs.R[15] -= 4;
    MappedMemoryWriteLongNocache(sh->regs.R[15], sh->regs.R[0]);
@@ -1567,7 +1570,7 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
    sh->regs.PC = MappedMemoryReadLongNocache(0x06000900+(vector << 2));
    //LOG("Interrupt from: %08X to %08X", old_pc, sh->regs.PC );
 
-   sh->cycles += 33;
+   sh->cycles += 44;
    SH2SetRegisters(sh, &sh->regs);
 }
 
@@ -1576,6 +1579,8 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
 static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
 {
    u32 oldmask;
+
+   LOG("BiosHandleScuInterruptReturn");
 
    SH2GetRegisters(sh, &sh->regs);
 
@@ -1614,7 +1619,7 @@ static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
 
    //LOG("Interrupt return PC = %08X\n", sh->regs.PC);
 
-   sh->cycles += 24;
+   sh->cycles += 44;
    SH2SetRegisters(sh, &sh->regs);
 }
 
@@ -1623,6 +1628,8 @@ static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
 int FASTCALL BiosHandleFunc(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
+
+   LOG("BiosHandleFunc");
 
    // Let's see if it's a bios function
    switch((sh->regs.PC - 0x200) >> 2)
@@ -1747,7 +1754,6 @@ int FASTCALL BiosHandleFunc(SH2_struct * sh)
       default:
          return 0;
    }
-
    return 1;
 }
 
@@ -2350,6 +2356,8 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
+
+   sh->cycles += 200;
 }
 
 

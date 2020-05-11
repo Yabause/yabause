@@ -354,67 +354,6 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
 
 //////////////////////////////////////
 
-void ScuSetAddValue(scudmainfo_struct * dmainfo ) {
-
-  if (dmainfo->AddValue & 0x100)
-    dmainfo->ReadAdd = 4;
-  else
-    dmainfo->ReadAdd = 0;
-
-  switch (dmainfo->AddValue & 0x7) {
-  case 0x0:
-    dmainfo->WriteAdd = 0;
-    break;
-  case 0x1:
-    dmainfo->WriteAdd = 2;
-    break;
-  case 0x2:
-    dmainfo->WriteAdd = 4;
-    break;
-  case 0x3:
-    dmainfo->WriteAdd = 8;
-    break;
-  case 0x4:
-    dmainfo->WriteAdd = 16;
-    break;
-  case 0x5:
-    dmainfo->WriteAdd = 32;
-    break;
-  case 0x6:
-    dmainfo->WriteAdd = 64;
-    break;
-  case 0x7:
-    dmainfo->WriteAdd = 128;
-    break;
-  default:
-    dmainfo->WriteAdd = 0;
-    break;
-  }
-  if (dmainfo->ModeAddressUpdate & 0x1000000) {
-    dmainfo->InDirectAdress = dmainfo->WriteAddress;
-    dmainfo->TransferNumber = MappedMemoryReadLong(dmainfo->InDirectAdress, NULL);
-    dmainfo->WriteAddress = MappedMemoryReadLong(dmainfo->InDirectAdress + 4, NULL);
-    dmainfo->ReadAddress = MappedMemoryReadLong(dmainfo->InDirectAdress + 8, NULL);
-    dmainfo->InDirectAdress += 0xC;
-  }
-  else {
-
-    if (dmainfo->mode > 0) {
-      dmainfo->TransferNumber &= 0xFFF;
-      if (dmainfo->TransferNumber == 0)
-        dmainfo->TransferNumber = 0x1000;
-    }
-    else {
-      if (dmainfo->TransferNumber == 0)
-        dmainfo->TransferNumber = 0x100000;
-    }
-  }
-
-  LOG("DoDMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n",
-    dmainfo->ReadAddress, dmainfo->WriteAddress, dmainfo->TransferNumber, 
-    dmainfo->ReadAdd, dmainfo->WriteAdd, yabsys.frame_count, yabsys.LineCount);
-
-}
 
 static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
    u8 ReadAdd, WriteAdd;
@@ -1019,6 +958,68 @@ INLINE void ScuTimer1Exec( u32 timing ) {
   }
 }
 
+void ScuSetAddValue(scudmainfo_struct * dmainfo) {
+
+  if (dmainfo->AddValue & 0x100)
+    dmainfo->ReadAdd = 4;
+  else
+    dmainfo->ReadAdd = 0;
+
+  switch (dmainfo->AddValue & 0x7) {
+  case 0x0:
+    dmainfo->WriteAdd = 0;
+    break;
+  case 0x1:
+    dmainfo->WriteAdd = 2;
+    break;
+  case 0x2:
+    dmainfo->WriteAdd = 4;
+    break;
+  case 0x3:
+    dmainfo->WriteAdd = 8;
+    break;
+  case 0x4:
+    dmainfo->WriteAdd = 16;
+    break;
+  case 0x5:
+    dmainfo->WriteAdd = 32;
+    break;
+  case 0x6:
+    dmainfo->WriteAdd = 64;
+    break;
+  case 0x7:
+    dmainfo->WriteAdd = 128;
+    break;
+  default:
+    dmainfo->WriteAdd = 0;
+    break;
+  }
+  if (dmainfo->ModeAddressUpdate & 0x1000000) {
+    dmainfo->InDirectAdress = dmainfo->WriteAddress;
+    dmainfo->TransferNumber = MappedMemoryReadLong(dmainfo->InDirectAdress, NULL);
+    dmainfo->WriteAddress = MappedMemoryReadLong(dmainfo->InDirectAdress + 4, NULL);
+    dmainfo->ReadAddress = MappedMemoryReadLong(dmainfo->InDirectAdress + 8, NULL);
+    dmainfo->InDirectAdress += 0xC;
+  }
+  else {
+
+    if (dmainfo->mode > 0) {
+      dmainfo->TransferNumber &= 0xFFF;
+      if (dmainfo->TransferNumber == 0)
+        dmainfo->TransferNumber = 0x1000;
+    }
+    else {
+      if (dmainfo->TransferNumber == 0)
+        dmainfo->TransferNumber = 0x100000;
+    }
+  }
+
+ // LOG("DoDMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n",
+ //   dmainfo->ReadAddress, dmainfo->WriteAddress, dmainfo->TransferNumber,
+ //   dmainfo->ReadAdd, dmainfo->WriteAdd, yabsys.frame_count, yabsys.LineCount);
+
+}
+
 void SucDmaExec(scudmainfo_struct * dma, int * time ) {
   //LOG("DoDMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n",
   //  dma->ReadAddress, dma->WriteAddress, dma->TransferNumber, dma->ReadAdd, dma->WriteAdd, yabsys.frame_count, yabsys.LineCount);
@@ -1040,21 +1041,20 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
       if (constant_source) {
         u32 val;
         if (dma->ReadAddress & 2) {  // Avoid misaligned access
-          val = MappedMemoryReadWord(dma->ReadAddress, NULL) << 16
-            | MappedMemoryReadWord(dma->ReadAddress + 2, NULL);
+          val = MappedMemoryReadWord( (dma->ReadAddress&0x0FFFFFFF) , NULL) << 16
+            | MappedMemoryReadWord( (dma->ReadAddress&0x0FFFFFFF) + 2, NULL);
         }
         else {
-          val = MappedMemoryReadLong(dma->ReadAddress, NULL);
+          val = MappedMemoryReadLong((dma->ReadAddress & 0x0FFFFFFF), NULL);
         }
 
         u32 start = dma->WriteAddress;
         while ( *time > 0 ) {
+          *time -= 1;
           MappedMemoryWriteWord(dma->WriteAddress, (u16)(val >> 16), &cycle);
           dma->WriteAddress += dma->WriteAdd;
-          *time -= cycle;
           MappedMemoryWriteWord(dma->WriteAddress, (u16)val, &cycle);
           dma->WriteAddress += dma->WriteAdd;
-          *time -= cycle;
           dma->TransferNumber -= 4;
           if (dma->TransferNumber <= 0 ) {
             SH2WriteNotify(start, dma->WriteAddress - start);
@@ -1066,13 +1066,11 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
       else {
         u32 start = dma->WriteAddress;
         while ( *time > 0) {
-          u32 tmp = MappedMemoryReadLong(dma->ReadAddress, &cycle);
-          *time -= cycle;
+          *time -= 1;
+          u32 tmp = MappedMemoryReadLong((dma->ReadAddress & 0x0FFFFFFF), &cycle);
           MappedMemoryWriteWord(dma->WriteAddress, (u16)(tmp >> 16), &cycle);
-          *time -= cycle;
           dma->WriteAddress += dma->WriteAdd;
           MappedMemoryWriteWord(dma->WriteAddress, (u16)tmp, &cycle);
-          *time -= cycle;
           dma->WriteAddress += dma->WriteAdd;
           dma->ReadAddress += dma->ReadAdd;
           dma->TransferNumber -= 4;
@@ -1088,11 +1086,10 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
       // Fill in 32-bit units (always aligned).
       u32 start = dma->WriteAddress;
       if (constant_source) {
-        u32 val = MappedMemoryReadLong(dma->ReadAddress, &cycle);
-        *time -= cycle;
+        u32 val = MappedMemoryReadLong((dma->ReadAddress & 0x0FFFFFFF), &cycle);
         while ( *time > 0) {
+          *time -= 1;
           MappedMemoryWriteLong(dma->WriteAddress, val, &cycle);
-          *time -= cycle;
           dma->ReadAddress += dma->ReadAdd;
           dma->WriteAddress += dma->WriteAdd;
           dma->TransferNumber -= 4;
@@ -1104,10 +1101,9 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
       }
       else {
         while (*time > 0) {
-          u32 val = MappedMemoryReadLong(dma->ReadAddress, &cycle);
-          *time -= cycle;
+          *time -= 1;
+          u32 val = MappedMemoryReadLong((dma->ReadAddress & 0x0FFFFFFF), &cycle);
           MappedMemoryWriteLong(dma->WriteAddress, val, &cycle);
-          *time -= cycle;
           dma->ReadAddress += dma->ReadAdd;
           dma->WriteAddress += dma->WriteAdd;
           dma->TransferNumber -= 4;
@@ -1131,10 +1127,9 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
       u32 counter = 0;
       u32 start = dma->WriteAddress;
       while (*time > 0) {
-        u16 tmp = MappedMemoryReadWord(dma->ReadAddress, &cycle);
         *time -= 1;
+        u16 tmp = MappedMemoryReadWord((dma->ReadAddress & 0x0FFFFFFF), &cycle);
         MappedMemoryWriteWord(dma->WriteAddress, tmp, &cycle);
-        *time -= 1;
         dma->WriteAddress += dma->WriteAdd;
         dma->ReadAddress += 2;
         dma->TransferNumber -= 2;
@@ -1148,10 +1143,9 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
     else if (((dma->ReadAddress & 0x1FFFFFFF) >= 0x5A00000 && (dma->ReadAddress & 0x1FFFFFFF) < 0x5FF0000)) {
       u32 start = dma->WriteAddress;
       while ( *time > 0) {
-        u16 tmp = MappedMemoryReadWord(dma->ReadAddress, &cycle);
-        *time -= cycle;
+        *time -= 1;
+        u16 tmp = MappedMemoryReadWord((dma->ReadAddress & 0x0FFFFFFF), &cycle);
         MappedMemoryWriteWord(dma->WriteAddress, tmp, &cycle);
-        *time -= cycle;
         dma->WriteAddress += (dma->WriteAdd >> 1);
         dma->ReadAddress += 2;
         dma->TransferNumber -= 2;
@@ -1165,11 +1159,10 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
     else {
       u32 counter = 0;
       u32 start = dma->WriteAddress;
-      while (time > 0) {
-        u32 val = MappedMemoryReadLong(dma->ReadAddress, &cycle);
-        *time -= cycle;
+      while (*time > 0) {
+        *time -= 1;
+        u32 val = MappedMemoryReadLong((dma->ReadAddress & 0x0FFFFFFF), &cycle);
         MappedMemoryWriteLong(dma->WriteAddress, val , &cycle);
-        *time -= cycle;
         dma->ReadAddress += 4;
         dma->WriteAddress += dma->WriteAdd;
         dma->TransferNumber -= 4;

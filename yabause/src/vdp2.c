@@ -652,7 +652,12 @@ void Vdp2HBlankOUT(void) {
    //if (yabsys.LineCount == 0){
    //  vdp2VBlankOUT();
    //}
-  if (yabsys.LineCount == 0) {
+
+  // In the case of Vbalnk Erase is enabled, plot trigger is delayed and accept registry changes
+  // ex: Jikkyou Oshaberi Parodius
+ // if ( (yabsys.LineCount == 0 && Vdp1External.vbalnk_erase == 0) ||    
+ //      (yabsys.LineCount == 5 && Vdp1External.vbalnk_erase == 1) ) {
+  if (yabsys.LineCount == 0 ){
     FrameProfileAdd("VOUT event");
     // Manual Change
     if (Vdp1External.manualchange == 1) {
