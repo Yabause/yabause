@@ -58,7 +58,6 @@ typedef struct
    int numthreads;
    int osdcoretype;
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
-   int auto_cart_select;
    int video_filter_type;
    int video_upscale_type;
    int polygon_generation_mode;

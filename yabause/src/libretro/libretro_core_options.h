@@ -126,10 +126,9 @@ struct retro_core_option_definition option_defs_us[] = {
          { "1M_backup_ram", NULL },
          { "2M_backup_ram", NULL },
          { "4M_backup_ram", NULL },
-         { "auto", NULL },
          { NULL, NULL},
       },
-      "auto"
+      "512K_backup_ram"
    },
    {
       "kronos_multitap_port1",

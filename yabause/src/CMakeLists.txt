@@ -82,6 +82,7 @@ set(kronos_HEADERS
   utils/include/profile.h
   utils/include/netlink.h
   utils/include/cheat.h
+  utils/include/db.h
   utils/include/gameinfo.h
   utils/include/japmodem.h
 	tools/junzip/junzip.h
@@ -101,6 +102,7 @@ endif (CMAKE_COMPILER_IS_GNUCC)
 
 set(kronos_SOURCES
   utils/src/cheat.c
+  utils/src/db.c
 	utils/src/gameinfo.c
 	utils/src/japmodem.c
 	core/m68k/m68kcore.c

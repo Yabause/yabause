@@ -75,7 +75,6 @@ static int polygon_mode = PERSPECTIVE_CORRECTION;
 static int initial_resolution_mode = 0;
 static int numthreads = 4;
 static int use_beetle_saves = 0;
-static int auto_select_cart = 0;
 static int use_cs = COMPUTE_RBG_OFF;
 static int wireframe_mode = 0;
 static int stv_favorite_region = STV_REGION_EU;
@@ -1021,9 +1020,7 @@ void check_variables(void)
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (strcmp(var.value, "auto") == 0)
-         auto_select_cart = 1;
-      else if (strcmp(var.value, "none") == 0)
+      if (strcmp(var.value, "none") == 0)
          addon_cart_type = CART_NONE;
       else if (strcmp(var.value, "1M_extended_ram") == 0)
          addon_cart_type = CART_DRAM8MBIT;
@@ -1369,30 +1366,21 @@ static void extract_basename(char *buf, const char *path, size_t size)
 
 void configure_saturn_addon_cart()
 {
-   if (use_beetle_saves == 1 && (addon_cart_type == CART_BACKUPRAM8MBIT || addon_cart_type == CART_BACKUPRAM16MBIT || addon_cart_type == CART_BACKUPRAM32MBIT))
+   if (use_beetle_saves == 1)
+   {
       addon_cart_type = CART_BACKUPRAM4MBIT;
-
-   if (addon_cart_type == CART_BACKUPRAM4MBIT || auto_select_cart == 1)
+      snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%c%s.bcr", g_save_dir, slash, game_basename);
+   }
+   else
    {
-      if (use_beetle_saves == 1)
-         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%c%s.bcr", g_save_dir, slash, game_basename);
-      else
+      if (addon_cart_type == CART_BACKUPRAM4MBIT)
          snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext512K.ram", g_save_dir, slash, slash, slash, game_basename);
-   }
-
-   if (addon_cart_type == CART_BACKUPRAM8MBIT)
-   {
-      snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext1M.ram", g_save_dir, slash, slash, slash, game_basename);
-   }
-
-   if (addon_cart_type == CART_BACKUPRAM16MBIT)
-   {
-      snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext2M.ram", g_save_dir, slash, slash, slash, game_basename);
-   }
-
-   if (addon_cart_type == CART_BACKUPRAM32MBIT)
-   {
-      snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext4M.ram", g_save_dir, slash, slash, slash, game_basename);
+      if (addon_cart_type == CART_BACKUPRAM8MBIT)
+         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext1M.ram", g_save_dir, slash, slash, slash, game_basename);
+      if (addon_cart_type == CART_BACKUPRAM16MBIT)
+         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext2M.ram", g_save_dir, slash, slash, slash, game_basename);
+      if (addon_cart_type == CART_BACKUPRAM32MBIT)
+         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext4M.ram", g_save_dir, slash, slash, slash, game_basename);
    }
 }
 
@@ -1574,7 +1562,6 @@ bool retro_load_game(const struct retro_game_info *info)
       yinit.carttype         = addon_cart_type;
       yinit.cartpath         = addon_cart_path;
       yinit.supportdir       = g_system_dir;
-      yinit.auto_cart_select = auto_select_cart;
    }
 
    return retro_load_game_common();
