@@ -40,6 +40,7 @@ yabauseinit_struct yinit;
 
 static char slash = path_default_slash_c();
 
+static char g_roms_dir[PATH_MAX];
 static char g_save_dir[PATH_MAX];
 static char g_system_dir[PATH_MAX];
 static char full_path[PATH_MAX];
@@ -90,6 +91,18 @@ static int16_t libretro_input_bitmask[12] = {-1,};
 static int pad_type[12] = {RETRO_DEVICE_NONE,};
 static int multitap[2] = {0,0};
 static unsigned players = 7;
+
+// disk swapping
+#define M3U_MAX_FILE 5
+static char disk_paths[M3U_MAX_FILE][PATH_MAX];
+static char disk_labels[M3U_MAX_FILE][PATH_MAX];
+static struct retro_disk_control_callback retro_disk_control_cb;
+static struct retro_disk_control_ext_callback retro_disk_control_ext_cb;
+static unsigned disk_initial_index = 0;
+static char disk_initial_path[PATH_MAX];
+static unsigned disk_index = 0;
+static unsigned disk_total = 0;
+static bool disk_tray_open = false;
 
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
@@ -1364,6 +1377,22 @@ static void extract_basename(char *buf, const char *path, size_t size)
       *ext = '\0';
 }
 
+static void extract_directory(char *buf, const char *path, size_t size)
+{
+   strncpy(buf, path, size - 1);
+   buf[size - 1] = '\0';
+
+   char *base = strrchr(buf, path_default_slash_c());
+
+   if (base)
+      *base = '\0';
+   else
+   {
+      buf[0] = '.';
+      buf[1] = '\0';
+   }
+}
+
 void configure_saturn_addon_cart()
 {
    if (use_beetle_saves == 1)
@@ -1382,6 +1411,202 @@ void configure_saturn_addon_cart()
       if (addon_cart_type == CART_BACKUPRAM32MBIT)
          snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext4M.ram", g_save_dir, slash, slash, slash, game_basename);
    }
+}
+
+static bool disk_set_eject_state(bool ejected)
+{
+   disk_tray_open = ejected;
+   if (ejected)
+   {
+      Cs2ForceOpenTray();
+      return true;
+   }
+   else
+   {
+      return (Cs2ForceCloseTray(CDCORE_ISO, disk_paths[disk_index]) == 0);
+   }
+}
+
+static bool disk_get_eject_state()
+{
+   return disk_tray_open;
+}
+
+static bool disk_set_image_index(unsigned index)
+{
+   if ( disk_tray_open == true )
+   {
+      if ( index < disk_total ) {
+         disk_index = index;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+static unsigned disk_get_image_index()
+{
+   return disk_index;
+}
+
+static unsigned disk_get_num_images(void)
+{
+   return disk_total;
+}
+
+static bool disk_add_image_index(void)
+{
+   if (disk_total >= M3U_MAX_FILE)
+      return false;
+   disk_total++;
+   disk_paths[disk_total-1][0] = '\0';
+   disk_labels[disk_total-1][0] = '\0';
+   return true;
+}
+
+static bool disk_replace_image_index(unsigned index, const struct retro_game_info *info)
+{
+   if ((index >= disk_total))
+      return false;
+
+   if (!info)
+   {
+      disk_paths[index][0] = '\0';
+      disk_labels[index][0] = '\0';
+      disk_total--;
+
+      if ((disk_index >= index) && (disk_index > 0))
+         disk_index--;
+   }
+   else
+   {
+      snprintf(disk_paths[index], sizeof(disk_paths[index]), "%s", info->path);
+      fill_short_pathname_representation(disk_labels[index], disk_paths[index], sizeof(disk_labels[index]));
+   }
+
+   return true;
+}
+
+static bool disk_set_initial_image(unsigned index, const char *path)
+{
+   if (!path || (*path == '\0'))
+      return false;
+
+   disk_initial_index = index;
+   snprintf(disk_initial_path, sizeof(disk_initial_path), "%s", path);
+
+   return true;
+}
+
+static bool disk_get_image_path(unsigned index, char *path, size_t len)
+{
+   if (len < 1)
+      return false;
+
+   if (index >= disk_total)
+      return false;
+
+   if (disk_paths[index] == NULL || disk_paths[index][0] == '\0')
+      return false;
+
+   strncpy(path, disk_paths[index], len - 1);
+   path[len - 1] = '\0';
+
+   return true;
+}
+
+static bool disk_get_image_label(unsigned index, char *label, size_t len)
+{
+   if (len < 1)
+      return false;
+
+   if (index >= disk_total)
+      return false;
+
+   if (disk_labels[index] == NULL || disk_labels[index][0] == '\0')
+      return false;
+
+   strncpy(label, disk_labels[index], len - 1);
+   label[len - 1] = '\0';
+
+   return true;
+}
+
+static void init_disk_control_interface(void)
+{
+   unsigned dci_version = 0;
+
+   retro_disk_control_cb.set_eject_state     = disk_set_eject_state;
+   retro_disk_control_cb.get_eject_state     = disk_get_eject_state;
+   retro_disk_control_cb.set_image_index     = disk_set_image_index;
+   retro_disk_control_cb.get_image_index     = disk_get_image_index;
+   retro_disk_control_cb.get_num_images      = disk_get_num_images;
+   retro_disk_control_cb.add_image_index     = disk_add_image_index;
+   retro_disk_control_cb.replace_image_index = disk_replace_image_index;
+
+   retro_disk_control_ext_cb.set_eject_state     = disk_set_eject_state;
+   retro_disk_control_ext_cb.get_eject_state     = disk_get_eject_state;
+   retro_disk_control_ext_cb.set_image_index     = disk_set_image_index;
+   retro_disk_control_ext_cb.get_image_index     = disk_get_image_index;
+   retro_disk_control_ext_cb.get_num_images      = disk_get_num_images;
+   retro_disk_control_ext_cb.add_image_index     = disk_add_image_index;
+   retro_disk_control_ext_cb.replace_image_index = disk_replace_image_index;
+   retro_disk_control_ext_cb.set_initial_image   = disk_set_initial_image;
+   retro_disk_control_ext_cb.get_image_path      = disk_get_image_path;
+   retro_disk_control_ext_cb.get_image_label     = disk_get_image_label;
+
+   disk_initial_index = 0;
+   disk_initial_path[0] = '\0';
+   if (environ_cb(RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION, &dci_version) && (dci_version >= 1))
+      environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, &retro_disk_control_ext_cb);
+   else
+      environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, &retro_disk_control_cb);
+}
+
+static bool read_m3u(const char *file)
+{
+   char line[PATH_MAX];
+   char name[PATH_MAX];
+   FILE *f = fopen(file, "r");
+
+   disk_total = 0;
+
+   if (!f)
+   {
+      log_cb(RETRO_LOG_ERROR, "Could not read file\n");
+      return false;
+   }
+
+   while (fgets(line, sizeof(line), f) && disk_total <= M3U_MAX_FILE)
+   {
+      if (line[0] == '#')
+         continue;
+
+      char *carriage_return = strchr(line, '\r');
+      if (carriage_return)
+         *carriage_return = '\0';
+
+      char *newline = strchr(line, '\n');
+      if (newline)
+         *newline = '\0';
+
+      if (line[0] == '"')
+         memmove(line, line + 1, strlen(line));
+
+      if (line[strlen(line) - 1] == '"')
+         line[strlen(line) - 1]  = '\0';
+
+      if (line[0] != '\0')
+      {
+         snprintf(disk_paths[disk_total], sizeof(disk_paths[disk_total]), "%s%c%s", g_roms_dir, slash, line);
+         fill_short_pathname_representation(disk_labels[disk_total], disk_paths[disk_total], sizeof(disk_labels[disk_total]));
+         disk_total++;
+      }
+   }
+
+   fclose(f);
+   return (disk_total != 0);
 }
 
 void retro_init(void)
@@ -1423,6 +1648,8 @@ void retro_init(void)
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
 
    environ_cb(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialization_quirks);
+
+   init_disk_control_interface();
 }
 
 bool retro_load_game_common()
@@ -1505,6 +1732,7 @@ bool retro_load_game(const struct retro_game_info *info)
    }
 
    extract_basename(game_basename, info->path, sizeof(game_basename));
+   extract_directory(g_roms_dir, info->path, sizeof(g_roms_dir));
 
    // Check if the path lead to a ST-V game
    // Store the game "id", if no game id found then this is most likely not a ST-V game
@@ -1514,6 +1742,25 @@ bool retro_load_game(const struct retro_game_info *info)
 
    if (stvgame != -1)
       stv_mode = true;
+
+   if (strcmp(path_get_extension(info->path), "m3u") == 0)
+   {
+      if (!read_m3u(info->path))
+         return false;
+      else
+      {
+         // m3u won't work with stv games
+         stv_mode = false;
+         disk_index = 0;
+         // saturn requires real bios to swap discs
+         hle_bios_force = false;
+
+         if ((disk_total > 1) && (disk_initial_index > 0) && (disk_initial_index < disk_total))
+            if (strcmp(disk_paths[disk_initial_index], disk_initial_path) == 0)
+               disk_index = disk_initial_index;
+         snprintf(full_path, sizeof(full_path), "%s", disk_paths[disk_index]);
+      }
+   }
 
    if(stv_mode)
    {
