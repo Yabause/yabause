@@ -446,7 +446,6 @@ static int LoadBinCue(const char *cuefilename, RFILE *iso_file)
    RFILE *trackfp = NULL;
    int trackfp_size = 0;
    int fad = 150;
-   int current_file_id = 0;
 
    memset(trk, 0, sizeof(trk));
    disc.session_num = 1;
@@ -743,7 +742,7 @@ static int LoadBinCueInZip(const char *filename, RFILE *fp)
    JZEndRecord* endRecord = (JZEndRecord*)malloc(sizeof(JZEndRecord));
    JZFileHeader header;
    u8* data;
-   ZipEntry* tracktr;
+   ZipEntry* tracktr = NULL;
    JZFile *zip;
    ZipEntry *cue;
    int index = 0;
@@ -1497,7 +1496,6 @@ static int ISOCDInit(const char * iso) {
       return -1;
    }
 
-   num_read = filestream_read(iso_file, (void *)header, 6);
    ext = strrchr(iso, '.');
 
    // Figure out what kind of image format we're dealing with
@@ -1513,11 +1511,15 @@ static int ISOCDInit(const char * iso) {
       imgtype = IMG_BINCUE;
       ret = LoadBinCueInZip(iso, iso_file);
    }
-   else if (strcasecmp(ext, ".MDS") == 0 && strncmp(header, "MEDIA ", sizeof(header)) == 0)
+   else if (strcasecmp(ext, ".MDS") == 0)
    {
-      // It's a MDS
-      imgtype = IMG_MDS;
-      ret = LoadMDS(iso, iso_file);
+      num_read = filestream_read(iso_file, (void *)header, 6);
+      if (strncmp(header, "MEDIA ", sizeof(header)) == 0)
+      {
+         // It's a MDS
+         imgtype = IMG_MDS;
+         ret = LoadMDS(iso, iso_file);
+      }
    }
    else if (strcasecmp(ext, ".CCD") == 0)
    {
