@@ -15,6 +15,7 @@
 #include <libretro.h>
 
 #include <file/file_path.h>
+#include <streams/file_stream.h>
 
 #include "vdp1.h"
 #include "vdp2.h"
@@ -43,7 +44,6 @@ static char slash = path_default_slash_c();
 static char g_roms_dir[PATH_MAX];
 static char g_save_dir[PATH_MAX];
 static char g_system_dir[PATH_MAX];
-static char full_path[PATH_MAX];
 static char bios_path[PATH_MAX];
 static char stv_bios_path[PATH_MAX];
 static char bup_path[PATH_MAX];
@@ -123,6 +123,14 @@ extern struct retro_hw_render_callback hw_render;
 void retro_set_environment(retro_environment_t cb)
 {
    environ_cb = cb;
+
+#ifdef HAVE_CDROM
+   struct retro_vfs_interface_info vfs_iface_info;
+   vfs_iface_info.required_interface_version = 1;
+   vfs_iface_info.iface                      = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_iface_info))
+      filestream_vfs_init(&vfs_iface_info);
+#endif
 
    libretro_set_core_options(environ_cb);
 
@@ -1457,7 +1465,7 @@ static unsigned disk_get_num_images(void)
 
 static bool disk_add_image_index(void)
 {
-   if (disk_total >= M3U_MAX_FILE)
+   if (disk_total >= M3U_MAX_FILE || stv_mode)
       return false;
    disk_total++;
    disk_paths[disk_total-1][0] = '\0';
@@ -1467,7 +1475,7 @@ static bool disk_add_image_index(void)
 
 static bool disk_replace_image_index(unsigned index, const struct retro_game_info *info)
 {
-   if ((index >= disk_total))
+   if (index >= disk_total || stv_mode)
       return false;
 
    if (!info)
@@ -1697,8 +1705,6 @@ bool retro_load_game(const struct retro_game_info *info)
 
    check_variables();
 
-   snprintf(full_path, sizeof(full_path), "%s", info->path);
-
    snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%ckronos%cstvbios.zip", g_system_dir, slash, slash);
    if (does_file_exist(stv_bios_path) != 1)
    {
@@ -1738,7 +1744,7 @@ bool retro_load_game(const struct retro_game_info *info)
    // Store the game "id", if no game id found then this is most likely not a ST-V game
    int stvgame = -1;
    if (strcmp(path_get_extension(info->path), "zip") == 0)
-      STVGetSingle(full_path, stv_bios_path, &stvgame);
+      STVGetSingle(info->path, stv_bios_path, &stvgame);
 
    if (stvgame != -1)
       stv_mode = true;
@@ -1758,8 +1764,13 @@ bool retro_load_game(const struct retro_game_info *info)
          if ((disk_total > 1) && (disk_initial_index > 0) && (disk_initial_index < disk_total))
             if (strcmp(disk_paths[disk_initial_index], disk_initial_path) == 0)
                disk_index = disk_initial_index;
-         snprintf(full_path, sizeof(full_path), "%s", disk_paths[disk_index]);
       }
+   }
+   else
+   {
+      snprintf(disk_paths[disk_total], sizeof(disk_paths[disk_total]), "%s", info->path);
+      fill_short_pathname_representation(disk_labels[disk_total], disk_paths[disk_total], sizeof(disk_labels[disk_total]));
+      disk_total++;
    }
 
    if(stv_mode)
@@ -1773,7 +1784,7 @@ bool retro_load_game(const struct retro_game_info *info)
       snprintf(bup_path, sizeof(bup_path), "%s%ckronos%cstv%c%s.ram", g_save_dir, slash, slash, slash, game_basename);
       snprintf(eeprom_dir, sizeof(eeprom_dir), "%s%ckronos%cstv%c", g_save_dir, slash, slash, slash);
 
-      yinit.stvgamepath     = full_path;
+      yinit.stvgamepath     = disk_paths[disk_index];
       yinit.stvgame         = stvgame;
       yinit.cartpath        = NULL;
       yinit.carttype        = CART_ROMSTV;
@@ -1804,7 +1815,7 @@ bool retro_load_game(const struct retro_game_info *info)
       configure_saturn_addon_cart();
 
       yinit.cdcoretype       = CDCORE_ISO;
-      yinit.cdpath           = full_path;
+      yinit.cdpath           = disk_paths[disk_index];
       yinit.biospath         = (hle_bios_force ? NULL : bios_path);
       yinit.carttype         = addon_cart_type;
       yinit.cartpath         = addon_cart_path;

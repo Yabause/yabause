@@ -14,6 +14,7 @@ FORCE_GLEW = 0
 HAVE_SYS_PARAM_H = 1
 HAVE_FSEEKO = 0
 USE_RTHREADS = 0
+HAVE_CDROM = 0
 
 ifeq ($(platform),)
 	platform = unix

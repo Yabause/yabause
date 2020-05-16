@@ -174,6 +174,20 @@ SOURCES_C := \
 	$(ZLIB_DIR)/zutil.c \
 	$(CORE_DIR)/libretro.c
 
+ifeq ($(HAVE_CDROM), 1)
+	FLAGS += -DHAVE_CDROM
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/cdrom/cdrom.c \
+		$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation_cdrom.c \
+		$(LIBRETRO_COMM_DIR)/memmap/memalign.c \
+		$(LIBRETRO_COMM_DIR)/lists/string_list.c \
+		$(LIBRETRO_COMM_DIR)/lists/dir_list.c \
+		$(LIBRETRO_COMM_DIR)/string/stdstring.c \
+		$(LIBRETRO_COMM_DIR)/file/retro_dirent.c
+	ifeq ($(CDROM_DEBUG), 1)
+		FLAGS += -DCDROM_DEBUG
+	endif
+endif
+
 ifeq ($(ARCH_IS_WINDOWS), 1)
 	SOURCES_C += $(FLAC_DIR)/src/libFLAC/windows_unicode_filenames.c
 endif
