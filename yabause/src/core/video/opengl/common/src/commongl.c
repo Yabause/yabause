@@ -1420,21 +1420,21 @@ int YglInit(int width, int height, unsigned int depth) {
     abort();
   }
 
-    // YglInitDrawFrameBufferShaders(2144, 0);
-    // YglInitDrawFrameBufferShaders(2179, 0);
-    // YglInitDrawFrameBufferShaders(6665, 0);
-    // YglInitDrawFrameBufferShaders(6670, 0);
-    // YglInitDrawFrameBufferShaders(6635, 0);
-    // YglInitDrawFrameBufferShaders(2149, 0);
-    // YglInitDrawFrameBufferShaders(1024, 0);
-    // YglInitDrawFrameBufferShaders(1094, 0);
-    // YglInitDrawFrameBufferShaders(1129, 0);
-    // YglInitDrawFrameBufferShaders(1059, 0);
-    // YglInitDrawFrameBufferShaders(2184, 0);
-    // YglInitDrawFrameBufferShaders(2669, 0);
-    // YglInitDrawFrameBufferShaders(2634, 0);
-    // YglInitDrawFrameBufferShaders(2249, 0);
-    // YglInitDrawFrameBufferShaders(2259, 0);
+    YglInitDrawFrameBufferShaders(2144, 0);
+    YglInitDrawFrameBufferShaders(2179, 0);
+    YglInitDrawFrameBufferShaders(6665, 0);
+    YglInitDrawFrameBufferShaders(6670, 0);
+    YglInitDrawFrameBufferShaders(6635, 0);
+    YglInitDrawFrameBufferShaders(2149, 0);
+    YglInitDrawFrameBufferShaders(1024, 0);
+    YglInitDrawFrameBufferShaders(1094, 0);
+    YglInitDrawFrameBufferShaders(1129, 0);
+    YglInitDrawFrameBufferShaders(1059, 0);
+    YglInitDrawFrameBufferShaders(2184, 0);
+    YglInitDrawFrameBufferShaders(2669, 0);
+    YglInitDrawFrameBufferShaders(2634, 0);
+    YglInitDrawFrameBufferShaders(2249, 0);
+    YglInitDrawFrameBufferShaders(2259, 0);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo );
   glBindTexture(GL_TEXTURE_2D, 0);
