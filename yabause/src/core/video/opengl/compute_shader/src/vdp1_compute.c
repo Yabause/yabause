@@ -611,7 +611,10 @@ void vdp1_set_directFB() {
 }
 void vdp1_wait_regenerate(void) {
 	#ifdef VDP1RAM_CS_ASYNC
-	while (YaGetQueueSize(cmdq[_Ygl->drawframe])!=0);
+	while (YaGetQueueSize(cmdq[_Ygl->drawframe])!=0)
+	{
+		YabThreadYield();
+	}
 	#endif
 }
 

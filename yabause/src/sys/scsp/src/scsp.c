@@ -4831,6 +4831,7 @@ void SyncSh2And68k(SH2_struct *context){
       pthread_mutex_unlock(&sync_mutex);
 #else
       sh2_read_req++;
+      YabThreadYield();
 #endif
       mem_access_counter = 0;
     }

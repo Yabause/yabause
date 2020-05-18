@@ -310,6 +310,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vd
    }
    YabAddEventQueue(cellq_end, NULL);
    YabAddEventQueue(cellq, task);
+   YabThreadYield();
 }
 
 static void requestDrawCellOrder(vdp2draw_struct * info, YglTexture *texture, Vdp2* varVdp2Regs, int order) {
@@ -714,12 +715,16 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    }
    YabAddEventQueue(vdp1q_end, NULL);
    YabAddEventQueue(vdp1q, task);
+   YabThreadYield();
 }
 
 int waitVdp1Textures( int sync) {
     int empty = 1;
     if (vdp1q_end == NULL) return 1;
-    while (((empty = YaGetQueueSize(vdp1q_end))!=0) && (sync == 1));
+    while (((empty = YaGetQueueSize(vdp1q_end))!=0) && (sync == 1))
+    {
+      YabThreadYield();
+    }
     return (empty == 0);
 }
 #else
@@ -3236,6 +3241,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
    }
    YabAddEventQueue(rotq_end, NULL);
    YabAddEventQueue(rotq, task);
+   YabThreadYield();
 }
 #endif
 
@@ -5807,7 +5813,10 @@ int WaitVdp2Async(int sync) {
 #ifdef RGB_ASYNC
     if (rotq_end != NULL) {
       empty = 1;
-      while (((empty = YaGetQueueSize(rotq_end))!=0) && (sync == 1));
+      while (((empty = YaGetQueueSize(rotq_end))!=0) && (sync == 1))
+      {
+        YabThreadYield();
+      }
       finishRbgQueue();
       if (empty != 0) return empty;
     }
@@ -5815,7 +5824,10 @@ int WaitVdp2Async(int sync) {
 #ifdef CELL_ASYNC
     if (cellq_end != NULL) {
       empty = 1;
-      while (((empty = YaGetQueueSize(cellq_end))!=0) && (sync == 1));
+      while (((empty = YaGetQueueSize(cellq_end))!=0) && (sync == 1))
+      {
+        YabThreadYield();
+      }
     }
 #endif
     RBGGenerator_onFinish();
