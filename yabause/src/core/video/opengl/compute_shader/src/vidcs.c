@@ -123,7 +123,6 @@ extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 extern void VIDOGLVdp2DispOff(void);
 extern int YglGenFrameBuffer(int force);
 extern void vdp1GenerateBuffer(vdp1cmd_struct* cmd);
-extern void YglFrameSync(void);
 
 extern u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs);
 
@@ -160,8 +159,7 @@ VIDOGLVdp2DispOff,
 YglCSRender,
 YglCSRenderVDP1,
 YglGenFrameBuffer,
-YglCSFinsihDraw,
-YglFrameSync,
+YglCSFinsihDraw
 };
 
 void addCSCommands(vdp1cmd_struct* cmd, int type)

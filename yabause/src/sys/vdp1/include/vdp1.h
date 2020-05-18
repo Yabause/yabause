@@ -158,7 +158,6 @@ typedef struct
    void (*composeVDP1)(void);
    int (*setupFrame)(int);
    void (*FinsihDraw)(void);
-   void (*frameSync)(void);
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;

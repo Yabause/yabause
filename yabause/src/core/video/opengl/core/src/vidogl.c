@@ -144,7 +144,6 @@ void waitVdp2DrawScreensEnd(int sync, int abort);
 static int isEnabled(int id, Vdp2* varVdp2Regs);
 extern int YglGenFrameBuffer(int force);
 extern void YglComposeVdp1(void);
-extern void YglFrameSync(void);
 
 
 VideoInterface_struct VIDOGL = {
@@ -180,8 +179,7 @@ VIDOGLVdp2DispOff,
 YglRender,
 NULL, // YglComposeVdp1,
 YglGenFrameBuffer,
-NULL,
-YglFrameSync,
+NULL
 };
 
 static int vdp1_interlace = 0;
@@ -4332,7 +4330,7 @@ int VIDOGLVdp2Reset(void)
 
 void VIDOGLVdp2Draw(void)
 {
-  // YglCheckFBSwitch(1);
+  YglCheckFBSwitch(1);
   //varVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
   //if (varVdp2Regs == NULL) varVdp2Regs = Vdp2Regs;
   VIDOGLVdp2SetResolution(Vdp2Lines[0].TVMD);
@@ -5828,7 +5826,7 @@ int WaitVdp2Async(int sync) {
 
 void waitVdp2DrawScreensEnd(int sync, int abort) {
   if (abort == 0){
-    // YglCheckFBSwitch(0);
+    YglCheckFBSwitch(0);
     if (vdp2busy == 1) {
       int empty = WaitVdp2Async(sync);
       if (empty == 0) {
