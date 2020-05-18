@@ -111,7 +111,10 @@ void YabThreadCancel(unsigned int id)
 
 void YabThreadYield(void)
 {
-   sched_yield();
+  // Linux per default is SCHED_OTHER.
+  // As we are not forcing kronos to be SCHED_RR o SCHED_FIFO
+  // This call is meaningless.
+   // sched_yield();
 }
 
 //////////////////////////////////////////////////////////////////////////////
