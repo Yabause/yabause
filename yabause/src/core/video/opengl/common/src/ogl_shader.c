@@ -115,7 +115,7 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   if (prg->ids->fbo != -1){
     glUniform1i(prg->ids->fbo, 1);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2]);
     #if defined(_OGL3_)
         if (glTextureBarrier) glTextureBarrier();
         else if (glTextureBarrierNV) glTextureBarrierNV();
