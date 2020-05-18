@@ -81,6 +81,10 @@ ifneq (,$(findstring unix,$(platform)))
 		FLAGS += -DARM
 	endif
 
+ifneq ($(findstring Linux,$(shell uname -s)),)
+	HAVE_CDROM = 1
+endif
+
 # Jetson Nano
 else ifeq ($(platform), jetson-nano)
 	override platform += unix
@@ -247,6 +251,7 @@ else
 	FLAGS += -D_WINDOWS
 	HAVE_FSEEKO = 1
 	ARCH_IS_WINDOWS = 1
+	HAVE_CDROM = 1
 
 endif
 

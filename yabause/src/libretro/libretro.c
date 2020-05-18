@@ -85,7 +85,7 @@ static bool stv_mode = false;
 static bool all_devices_ready = false;
 static bool libretro_supports_bitmasks = false;
 static bool rendering_started = false;
-static bool buffer_swapped = false;
+static int frame_expected = 0;
 static bool resolution_need_update = false;
 static int16_t libretro_input_bitmask[12] = {-1,};
 static int pad_type[12] = {RETRO_DEVICE_NONE,};
@@ -785,11 +785,16 @@ void YuiSwapBuffers(void)
    if (resolution_need_update || (prev_game_width != game_width) || (prev_game_height != game_height))
       retro_reinit_av_info();
    audio_size = soundlen;
-   buffer_swapped = true;
+   frame_expected--;
+   video_cb(RETRO_HW_FRAME_BUFFER_VALID, _Ygl->width, _Ygl->height, 0);
 }
 
 void YuiEndOfFrame(void)
 {
+   if (frame_expected > 0) {
+      video_cb(NULL, _Ygl->width, _Ygl->height, 0);
+      frame_expected--;
+   }
 }
 
 static void context_reset(void)
@@ -917,7 +922,7 @@ void retro_get_system_info(struct retro_system_info *info)
    info->library_version  = "v" VERSION GIT_VERSION;
    info->need_fullpath    = true;
    info->block_extract    = true;
-   info->valid_extensions = "cue|iso|mds|ccd|zip|chd";
+   info->valid_extensions = "cue|iso|mds|ccd|zip|chd|m3u";
 }
 
 static void set_variable_visibility(void)
@@ -1877,7 +1882,6 @@ void retro_run(void)
 {
    unsigned i;
    bool updated  = false;
-   buffer_swapped = false;
    if (!all_devices_ready)
    {
       // Running first frame, so we can assume all devices id were set
@@ -1914,10 +1918,9 @@ void retro_run(void)
    }
    // It appears polling can happen outside of HandleEvents
    update_inputs();
+   frame_expected++;
    if (rendering_started)
       YabauseExec();
-   // Libretro likes having 1 frame rendered at each retro_run iteration, so let's give up on real saturn's behavior
-   video_cb((buffer_swapped ? RETRO_HW_FRAME_BUFFER_VALID : NULL), _Ygl->width, _Ygl->height, 0);
 }
 
 #ifdef ANDROID
