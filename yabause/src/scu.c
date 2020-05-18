@@ -1014,9 +1014,9 @@ void ScuSetAddValue(scudmainfo_struct * dmainfo) {
     }
   }
 
- // LOG("DoDMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n",
- //   dmainfo->ReadAddress, dmainfo->WriteAddress, dmainfo->TransferNumber,
- //   dmainfo->ReadAdd, dmainfo->WriteAdd, yabsys.frame_count, yabsys.LineCount);
+  LOG("DoDMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n",
+    dmainfo->ReadAddress, dmainfo->WriteAddress, dmainfo->TransferNumber,
+    dmainfo->ReadAdd, dmainfo->WriteAdd, yabsys.frame_count, yabsys.LineCount);
 
 }
 

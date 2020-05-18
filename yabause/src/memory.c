@@ -770,7 +770,7 @@ void MappedMemoryInit()
     *cycle = 50; \
     break; \
   case 0x05E00000: /* VDP2 RAM */ \
-    if (yabsys.LineCount >= yabsys.VBlankLineCount) { *cycle = 50; } else { *cycle = 400; } \
+    if (yabsys.LineCount >= yabsys.VBlankLineCount) { *cycle = 50; } else { *cycle = 64; } \
     break; \
   case 0x06000000: /* High */ \
     *cycle = 0; \

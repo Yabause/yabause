@@ -1570,7 +1570,7 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
    sh->regs.PC = MappedMemoryReadLongNocache(0x06000900+(vector << 2));
    //LOG("Interrupt from: %08X to %08X", old_pc, sh->regs.PC );
 
-   sh->cycles += 44;
+   sh->cycles += 32;
    SH2SetRegisters(sh, &sh->regs);
 }
 
@@ -1619,7 +1619,7 @@ static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
 
    //LOG("Interrupt return PC = %08X\n", sh->regs.PC);
 
-   sh->cycles += 44;
+   sh->cycles += 32;
    SH2SetRegisters(sh, &sh->regs);
 }
 
@@ -1629,7 +1629,7 @@ int FASTCALL BiosHandleFunc(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-   LOG("BiosHandleFunc");
+   LOG("BiosHandleFunc %02X", (sh->regs.PC - 0x200) >> 2);
 
    // Let's see if it's a bios function
    switch((sh->regs.PC - 0x200) >> 2)
@@ -1752,7 +1752,9 @@ int FASTCALL BiosHandleFunc(SH2_struct * sh)
          BiosHandleScuInterruptReturn(sh);
          break;
       default:
-         return 0;
+        LOG("BIOS NOT IMPEMENTED");
+        sh->cycles += 128;
+        return 0;
    }
    return 1;
 }
@@ -2357,7 +2359,6 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
 
-   sh->cycles += 200;
 }
 
 

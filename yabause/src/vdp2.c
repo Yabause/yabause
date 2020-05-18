@@ -649,15 +649,7 @@ void Vdp2HBlankOUT(void) {
     }
   }
 
-   //if (yabsys.LineCount == 0){
-   //  vdp2VBlankOUT();
-   //}
-
-  // In the case of Vbalnk Erase is enabled, plot trigger is delayed and accept registry changes
-  // ex: Jikkyou Oshaberi Parodius
- // if ( (yabsys.LineCount == 0 && Vdp1External.vbalnk_erase == 0) ||    
- //      (yabsys.LineCount == 5 && Vdp1External.vbalnk_erase == 1) ) {
-  if (yabsys.LineCount == 0 ){
+  if (yabsys.LineCount == 6 ){ // I don't know what this value should be ...
     FrameProfileAdd("VOUT event");
     // Manual Change
     if (Vdp1External.manualchange == 1) {
@@ -691,7 +683,8 @@ void Vdp2HBlankOUT(void) {
     {
       Vdp1Regs->EDSR >>= 1;
       if (Vdp1External.frame_change_plot == 1) {
-        yabsys.wait_line_count = 45;
+        yabsys.wait_line_count += 45;
+        yabsys.wait_line_count %= yabsys.VBlankLineCount;
         FRAMELOG("SET Vdp1 end wait at %d", yabsys.wait_line_count);
       }
     }
@@ -1001,7 +994,8 @@ void vdp2VBlankOUT(void) {
      FRAMELOG("Vdp1DrawEnd");
     VIDCore->Vdp1DrawEnd();
 #if !defined(YAB_ASYNC_RENDERING)
-    yabsys.wait_line_count = 45;
+    yabsys.wait_line_count += 45;
+    yabsys.wait_line_count %= yabsys.VBlankLineCount;
 #endif
   }
 
