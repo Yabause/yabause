@@ -788,6 +788,10 @@ void YuiSwapBuffers(void)
    buffer_swapped = true;
 }
 
+void YuiEndOfFrame(void)
+{
+}
+
 static void context_reset(void)
 {
 #if !defined(_USEGLEW_)

@@ -137,6 +137,7 @@ static void syncVideoMode(void) {
   unsigned long sleep = 0;
   unsigned long now = YabauseGetTicks();
   unsigned long delay = 0;
+  YuiEndOfFrame();
   if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks();
   if(nextFrameTime > now) {
     sleep = ((nextFrameTime - now)*1000000.0)/yabsys.tickfreq;

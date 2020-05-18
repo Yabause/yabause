@@ -37,8 +37,12 @@ void YuiErrorMsg(const char *string);
 /* profide the framebuffer id to render into */
 int YuiGetFB(void);
 /* Tells the yui to exchange front and back video buffers. This may end
-   up being moved to the Video Core. */
+   up being moved to the Video Core - It is called only when frame has been drawn and dirty. */
 void YuiSwapBuffers(void);
+
+/* Tells the yui that a frame loop has been processed - It is
+reported for each frame. */
+void YuiEndOfFrame(void);
 
 /* need to call before glXXXXX call in a thread */
 int YuiUseOGLOnThisThread();

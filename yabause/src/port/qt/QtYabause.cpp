@@ -196,6 +196,10 @@ extern "C"
          YuiMsg("Error: %s\n", error_text);
        }
 
+  void YuiEndOfFrame()
+	{
+		
+	}
 	void YuiSwapBuffers()
 	{
           QtYabause::mainWindow()->swapBuffers();
