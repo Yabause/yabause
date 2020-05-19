@@ -29,6 +29,8 @@
 #include "vdp1.h"
 #include "yabause.h"
 
+//#define TIMING_SWAP
+
 void YuiMsg(const char *format, ...);
 
 /* If Yabause encounters any fatal errors, it sends the error text to this function */
@@ -49,5 +51,11 @@ int YuiUseOGLOnThisThread();
 
 /* Bfore rendering in a thread, it needs to revoke current rendering thread */
 int YuiRevokeOGLOnThisThread();
+
+#ifndef TIMING_SWAP
+#define YuiTimedSwapBuffers YuiSwapBuffers
+#else
+void YuiTimedSwapBuffers(void);
+#endif
 
 #endif

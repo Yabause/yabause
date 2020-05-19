@@ -133,6 +133,14 @@ void print_usage(const char *program_name) {
 static unsigned long nextFrameTime = 0;
 static int autoframeskipenab=0;
 
+#ifdef TIMING_SWAP
+void YuiTimedSwapBuffers(){
+  unsigned long now = YabauseGetTicks();
+  YuiSwapBuffers();
+  YuiMsg("delay %ld\n",YabauseGetTicks() - now);
+}
+#endif
+
 static void syncVideoMode(void) {
   unsigned long sleep = 0;
   unsigned long now = YabauseGetTicks();

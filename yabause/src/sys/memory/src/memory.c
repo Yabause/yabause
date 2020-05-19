@@ -1988,7 +1988,7 @@ int YabLoadStateStream(FILE *fp)
 
    yread(&check, (void *)buf, totalsize, 1, fp);
 
-   YuiSwapBuffers();
+   YuiTimedSwapBuffers();
 
    #ifdef USE_OPENGL
    if(VIDCore->id == VIDCORE_SOFT)
@@ -2002,7 +2002,7 @@ int YabLoadStateStream(FILE *fp)
    glPixelZoom((float)curroutputwidth / (float)outputwidth, ((float)curroutputheight / (float)outputheight));
    glDrawPixels(outputwidth, outputheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
    #endif
-   YuiSwapBuffers();
+   YuiTimedSwapBuffers();
    free(buf);
 
    fseek(fp, movieposition, SEEK_SET);

@@ -2914,7 +2914,7 @@ void YglCheckFBSwitch(int sync) {
   if ((ret == GL_CONDITION_SATISFIED) || (ret == GL_ALREADY_SIGNALED)) {
     glDeleteSync(_Ygl->sync);
     _Ygl->sync = 0;
-    YuiSwapBuffers();
+    YuiTimedSwapBuffers();
   }
 }
 
