@@ -1067,8 +1067,10 @@ void Vdp2ReadReg(int addr) {
       }
    }
 }
-
+#define SHOW_PATTERN_CYCLE
 void updateCyclePattern() {
+  u8 *ac;
+  SHOW_PATTERN_CYCLE("************************** LINE %d\n", yabsys.LineCount);
   AC_VRAM[0][0] = (Vdp2Regs->CYCA0L >> 12) & 0x0F;
   AC_VRAM[0][1] = (Vdp2Regs->CYCA0L >> 8) & 0x0F;
   AC_VRAM[0][2] = (Vdp2Regs->CYCA0L >> 4) & 0x0F;
@@ -1077,6 +1079,9 @@ void updateCyclePattern() {
   AC_VRAM[0][5] = (Vdp2Regs->CYCA0U >> 8) & 0x0F;
   AC_VRAM[0][6] = (Vdp2Regs->CYCA0U >> 4) & 0x0F;
   AC_VRAM[0][7] = (Vdp2Regs->CYCA0U >> 0) & 0x0F;
+
+  ac = AC_VRAM[0];
+  SHOW_PATTERN_CYCLE("%x %x %x %x %x %x %x %x\n",ac[0],ac[1],ac[2],ac[3],ac[4],ac[5],ac[6],ac[7]);
 
   AC_VRAM[1][0] = (Vdp2Regs->CYCA1L >> 12) & 0x0F;
   AC_VRAM[1][1] = (Vdp2Regs->CYCA1L >> 8) & 0x0F;
@@ -1087,6 +1092,9 @@ void updateCyclePattern() {
   AC_VRAM[1][6] = (Vdp2Regs->CYCA1U >> 4) & 0x0F;
   AC_VRAM[1][7] = (Vdp2Regs->CYCA1U >> 0) & 0x0F;
 
+  ac = AC_VRAM[1];
+  SHOW_PATTERN_CYCLE("%x %x %x %x %x %x %x %x\n",ac[0],ac[1],ac[2],ac[3],ac[4],ac[5],ac[6],ac[7]);
+
   AC_VRAM[2][0] = (Vdp2Regs->CYCB0L >> 12) & 0x0F;
   AC_VRAM[2][1] = (Vdp2Regs->CYCB0L >> 8) & 0x0F;
   AC_VRAM[2][2] = (Vdp2Regs->CYCB0L >> 4) & 0x0F;
@@ -1096,6 +1104,9 @@ void updateCyclePattern() {
   AC_VRAM[2][6] = (Vdp2Regs->CYCB0U >> 4) & 0x0F;
   AC_VRAM[2][7] = (Vdp2Regs->CYCB0U >> 0) & 0x0F;
 
+  ac = AC_VRAM[2];
+  SHOW_PATTERN_CYCLE("%x %x %x %x %x %x %x %x\n",ac[0],ac[1],ac[2],ac[3],ac[4],ac[5],ac[6],ac[7]);
+
   AC_VRAM[3][0] = (Vdp2Regs->CYCB1L >> 12) & 0x0F;
   AC_VRAM[3][1] = (Vdp2Regs->CYCB1L >> 8) & 0x0F;
   AC_VRAM[3][2] = (Vdp2Regs->CYCB1L >> 4) & 0x0F;
@@ -1104,6 +1115,10 @@ void updateCyclePattern() {
   AC_VRAM[3][5] = (Vdp2Regs->CYCB1U >> 8) & 0x0F;
   AC_VRAM[3][6] = (Vdp2Regs->CYCB1U >> 4) & 0x0F;
   AC_VRAM[3][7] = (Vdp2Regs->CYCB1U >> 0) & 0x0F;
+
+  ac = AC_VRAM[3];
+  SHOW_PATTERN_CYCLE("%x %x %x %x %x %x %x %x\n",ac[0],ac[1],ac[2],ac[3],ac[4],ac[5],ac[6],ac[7]);
+  SHOW_PATTERN_CYCLE("========================================\n");
 }
 
 void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
