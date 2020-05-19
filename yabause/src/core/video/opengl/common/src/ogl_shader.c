@@ -166,26 +166,16 @@ SHADER_VERSION
 "precision highp int;\n"
 "#endif\n"
 "in vec4 v_texcoord;\n"
-"uniform float u_emu_height;\n"
-"uniform float u_vheight; \n"
 "uniform highp sampler2D s_texture;\n"
 "out vec4 fragColor;\n"
 "void main()   \n"
 "{  \n"
-"  ivec2 addr; \n"
-"  ivec2 linepos; \n "
-"  linepos.y = 0; \n "
-"  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
-"  addr.x = int(v_texcoord.x);  \n"
-"  addr.y = int(v_texcoord.y);  \n"
-"  fragColor = texelFetch( s_texture, addr,0 );\n"
+"  fragColor = texelFetch( s_texture, ivec2(v_texcoord.xy),0 );\n"
 "}  \n";
 
 const GLchar * pYglprg_vdp2_normal_f[] = {Yglprg_normal_f, NULL};
 static int id_normal_s_texture = -1;
 static int id_normal_matrix = -1;
-static int id_normal_vheight = -1;
-static int id_normal_emu_height = -1;
 
 
 int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
@@ -196,8 +186,6 @@ int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_s_texture, 0);
-  glUniform1f(id_normal_vheight, (float)_Ygl->rheight);
-  glUniform1f(id_normal_emu_height,  (float)_Ygl->rheight / (float)_Ygl->rheight);
   return 0;
 }
 
@@ -1430,10 +1418,7 @@ int YglProgramInit()
       return -1;
 //vdp2 normal looks not to be setup as it should
   id_normal_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"s_texture");
-  //id_normal_s_texture_size = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_texsize");
   id_normal_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_mvpMatrix");
-  id_normal_vheight = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_vheight");
-  id_normal_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_emu_height");
 
    YGLLOG("PG_VDP2_NORMAL_CRAM\n");
 
