@@ -143,9 +143,10 @@ void YuiTimedSwapBuffers(){
 
 static void syncVideoMode(void) {
   unsigned long sleep = 0;
-  unsigned long now = YabauseGetTicks();
+  unsigned long now;
   unsigned long delay = 0;
   YuiEndOfFrame();
+  now = YabauseGetTicks();
   if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks();
   if(nextFrameTime > now) {
     sleep = ((nextFrameTime - now)*1000000.0)/yabsys.tickfreq;
