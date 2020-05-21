@@ -59,6 +59,19 @@ typedef struct
 
 typedef struct
 {
+  int mode;
+  u32 ReadAddress;
+  u32 WriteAddress;
+  s32 TransferNumber;
+  u32 AddValue;
+  u32 ModeAddressUpdate;
+  u32 ReadAdd;
+  u32 WriteAdd;
+  u32 InDirectAdress;
+} scudmainfo_struct;
+
+typedef struct
+{
    /* DMA registers */
    u32 D0R;
    u32 D0W;
@@ -122,6 +135,10 @@ typedef struct
    s32 dma0_time;
    s32 dma1_time;
    s32 dma2_time;
+
+   scudmainfo_struct dma0;
+   scudmainfo_struct dma1;
+   scudmainfo_struct dma2;
 
 } Scu;
 
@@ -269,15 +286,6 @@ typedef struct {
 #endif
 } scudspregs_struct;
 
-typedef struct
-{
-   int mode;
-   u32 ReadAddress;
-   u32 WriteAddress;
-   u32 TransferNumber;
-   u32 AddValue;
-   u32 ModeAddressUpdate;
-} scudmainfo_struct;
 
 int ScuInit(void);
 void ScuDeInit(void);

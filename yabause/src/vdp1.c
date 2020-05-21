@@ -87,7 +87,9 @@ u32 FASTCALL Vdp1RamReadLong(u32 addr) {
 
 void FASTCALL Vdp1RamWriteByte(u32 addr, u8 val) {
    addr &= 0x7FFFF;
+   VdpLockVram();
    T1WriteByte(Vdp1Ram, addr, val);
+   VdpUnLockVram();
 }
 
 #include "sh2core.h"
@@ -95,7 +97,9 @@ void FASTCALL Vdp1RamWriteByte(u32 addr, u8 val) {
 //////////////////////////////////////////////////////////////////////////////
 void FASTCALL Vdp1RamWriteWord(u32 addr, u16 val) {
    addr &= 0x7FFFF;
+   VdpLockVram();
    T1WriteWord(Vdp1Ram, addr, val);
+   VdpUnLockVram();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -103,8 +107,9 @@ void FASTCALL Vdp1RamWriteLong(u32 addr, u32 val) {
    addr &= 0x7FFFF;
    //if(addr == 0x00000)
    //LOG("Vdp1RamWriteLong @ %08X", CurrentSH2->regs.PC);
-
+   VdpLockVram();
    T1WriteLong(Vdp1Ram, addr, val);
+   VdpUnLockVram();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -125,7 +130,7 @@ u8 FASTCALL Vdp1FrameBufferReadByte(u32 addr) {
 
 u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
    addr &= 0x3FFFF;
-   if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
+   if (VIDCore->Vdp1ReadFrameBuffer ){
      u16 val;
      VdpLockVram();
      VIDCore->Vdp1ReadFrameBuffer(1, addr, &val);
@@ -139,7 +144,7 @@ u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
 
 u32 FASTCALL Vdp1FrameBufferReadLong(u32 addr) {
    addr &= 0x3FFFF;
-   if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
+   if (VIDCore->Vdp1ReadFrameBuffer ){
      u32 val;
      VdpLockVram();
      VIDCore->Vdp1ReadFrameBuffer(2, addr, &val);

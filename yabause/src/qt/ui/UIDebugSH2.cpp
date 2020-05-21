@@ -23,7 +23,7 @@
 
 int SH2Dis(u32 addr, char *string)
 {
-   SH2Disasm(addr, MappedMemoryReadWord(addr), 0, NULL, string);
+   SH2Disasm(addr, MappedMemoryReadWord(addr, NULL), 0, NULL, string);
    return 2;
 }
 
@@ -391,7 +391,7 @@ void UIDebugSH2::reserved3()
 				int op = sh2iasm(text.toLatin1().data(), errorMsg);
 				if (op != 0)
 				{
-					MappedMemoryWriteWord(debugSH2->regs.PC, op);
+					MappedMemoryWriteWord(debugSH2->regs.PC, op, NULL);
 					break;
 				}
 				else

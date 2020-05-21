@@ -362,12 +362,12 @@ extern "C" {
   static INLINE void DummyWriteLong(Dummy UNUSED * d, u32 UNUSED a, u32 UNUSED v) {}
 
   void MappedMemoryInit(void);
-  u8 FASTCALL MappedMemoryReadByte(u32 addr);
-  u16 FASTCALL MappedMemoryReadWord(u32 addr);
-  u32 FASTCALL MappedMemoryReadLong(u32 addr);
-  void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val);
-  void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val);
-  void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val);
+  u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle);
+  u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle);
+  u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle);
+  void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle);
+  void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle);
+  void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val, u32 * cycle);
   u8 FASTCALL MappedMemoryReadByteNocache(u32 addr);
   u16 FASTCALL MappedMemoryReadWordNocache(u32 addr);
   u32 FASTCALL MappedMemoryReadLongNocache(u32 addr);

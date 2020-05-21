@@ -203,7 +203,7 @@ typedef struct
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE u32 FASTCALL Vdp2ColorRamGetColor(u32 addr, u8* vdp2_color_ram)
+static INLINE u32 FASTCALL Vdp2ColorRamGetColorSoft(u32 addr, u8* vdp2_color_ram)
 {
    switch(Vdp2Internal.ColorMode)
    {
@@ -392,7 +392,7 @@ static INLINE int Vdp2FetchPixel(vdp2draw_struct *info, int x, int y, u32 *color
          if (!(*dot & 0xF) && info->transparencyenable) return 0;
          else
          {
-            *color = Vdp2ColorRamGetColor(info->coloroffset + (paladdr | (*dot & 0xF)),vdp2_color_ram);
+            *color = Vdp2ColorRamGetColorSoft(info->coloroffset + (paladdr | (*dot & 0xF)),vdp2_color_ram);
             return 1;
          }
       case 1: // 8 BPP
@@ -400,7 +400,7 @@ static INLINE int Vdp2FetchPixel(vdp2draw_struct *info, int x, int y, u32 *color
          if (!(*dot & 0xFF) && info->transparencyenable) return 0;
          else
          {
-            *color = Vdp2ColorRamGetColor(info->coloroffset + (paladdr | (*dot & 0xFF)), vdp2_color_ram);
+            *color = Vdp2ColorRamGetColorSoft(info->coloroffset + (paladdr | (*dot & 0xFF)), vdp2_color_ram);
             return 1;
          }
       case 2: // 16 BPP(palette)
@@ -408,7 +408,7 @@ static INLINE int Vdp2FetchPixel(vdp2draw_struct *info, int x, int y, u32 *color
          if ((*dot == 0) && info->transparencyenable) return 0;
          else
          {
-            *color = Vdp2ColorRamGetColor(info->coloroffset + *dot, vdp2_color_ram);
+            *color = Vdp2ColorRamGetColorSoft(info->coloroffset + *dot, vdp2_color_ram);
             return 1;
          }
       case 3: // 16 BPP(RGB)      

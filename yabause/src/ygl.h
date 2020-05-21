@@ -628,10 +628,6 @@ typedef struct {
    u32 targetfbo;
    int vpd1_running;
    int cpu_framebuffer_write[2];
-   int min_fb_x;
-   int max_fb_x;
-   int min_fb_y;
-   int max_fb_y;
 
    GLuint cram_tex;
    GLuint cram_tex_pbo;
@@ -651,6 +647,9 @@ typedef struct {
    int isFullScreen;
 
    ASPECT_RATE_MODE aspect_rate_mode;
+
+   int bWriteCpuFrameBuffer;
+   u32 * CpuWriteFrameBuffer;
 
 }  Ygl;
 
@@ -847,6 +846,9 @@ static INLINE u32 VDP1COLOR16TO24(u16 temp) {
 void Ygl_uniformVDP2DrawFrameBufferShadow(void * p);
 void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offsetcol, int blend);
 int YglDrawBackScreen(float w, float h);
+
+u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
+
 
 #endif // YGL_H
 

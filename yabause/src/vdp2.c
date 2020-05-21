@@ -174,9 +174,6 @@ void FASTCALL Vdp2RamWriteWord(u32 addr, u16 val) {
 
 void FASTCALL Vdp2RamWriteLong(u32 addr, u32 val) {
    addr &= 0x7FFFF;
-   if (0x00000 == addr && 0xD5C3D9C4 == val) {
-     LOG("%08X = %02X", addr, val);
-   }
    if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
      A0_Updated = 1;
    }
@@ -652,10 +649,7 @@ void Vdp2HBlankOUT(void) {
     }
   }
 
-   //if (yabsys.LineCount == 0){
-   //  vdp2VBlankOUT();
-   //}
-  if (yabsys.LineCount == 0) {
+  if (yabsys.LineCount == 6 ){ // I don't know what this value should be ...
     FrameProfileAdd("VOUT event");
     // Manual Change
     if (Vdp1External.manualchange == 1) {
@@ -689,7 +683,8 @@ void Vdp2HBlankOUT(void) {
     {
       Vdp1Regs->EDSR >>= 1;
       if (Vdp1External.frame_change_plot == 1) {
-        yabsys.wait_line_count = 45;
+        yabsys.wait_line_count += 45;
+        yabsys.wait_line_count %= yabsys.VBlankLineCount;
         FRAMELOG("SET Vdp1 end wait at %d", yabsys.wait_line_count);
       }
     }
@@ -968,6 +963,8 @@ void vdp2VBlankOUT(void) {
     if (Vdp1External.frame_change_plot == 1 || Vdp1External.status == VDP1_STATUS_RUNNING ){
       FRAMELOG("[VDP1] frame_change_plot == 1 start drawing immidiatly", Vdp1Regs->EDSR);
       LOG("[VDP1] Start Drawing");
+      Vdp1Regs->addr = 0;
+      Vdp1Regs->COPR = 0;
       Vdp1Draw();
       isrender = 1;
     }
@@ -997,7 +994,8 @@ void vdp2VBlankOUT(void) {
      FRAMELOG("Vdp1DrawEnd");
     VIDCore->Vdp1DrawEnd();
 #if !defined(YAB_ASYNC_RENDERING)
-    yabsys.wait_line_count = 45;
+    yabsys.wait_line_count += 45;
+    yabsys.wait_line_count %= yabsys.VBlankLineCount;
 #endif
   }
 
