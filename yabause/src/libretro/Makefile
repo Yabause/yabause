@@ -262,7 +262,7 @@ ifeq ($(__USE_OPENGL_DEBUG__),1)
 endif
 
 ifeq ($(HAVE_SSE),1)
-	FLAGS += -mfpmath=sse
+	FLAGS += -msse -mfpmath=sse
 endif
 
 ifeq ($(DEBUG_ASAN), 1)
