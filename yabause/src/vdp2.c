@@ -649,7 +649,7 @@ void Vdp2HBlankOUT(void) {
     }
   }
 
-  if (yabsys.LineCount == 6 ){ // I don't know what this value should be ...
+  if (yabsys.LineCount == 5 ){ // I don't know what this value should be ...
     FrameProfileAdd("VOUT event");
     // Manual Change
     if (Vdp1External.manualchange == 1) {
