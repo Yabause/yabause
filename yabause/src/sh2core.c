@@ -2227,7 +2227,7 @@ int getEatClock(u32 src, u32 dst) {
       return 427;
       break;
     case 0x05E00000: // VDP2 RAM
-      return 427;
+      return 1;
       break;
     case 0x05F00000: // VDP2 REG
       return 50;
