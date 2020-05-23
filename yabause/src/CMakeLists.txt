@@ -886,8 +886,8 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
 		add_definitions(-DAARCH64)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=c99 -march=armv8-a -mtune=cortex-a57.cortex-a53 ")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -march=armv8-a -mtune=cortex-a57.cortex-a53 -std=c++11 ")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=c99 -march=armv8-a ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -march=armv8-a -std=c++11 ")
 endif()
 
 # Warnings defined to know when we're breaking compilation with MSVC
