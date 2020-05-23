@@ -733,6 +733,37 @@ VideoInterface_struct *VIDCoreList[] = {
 
 #pragma mark Yabause Callbacks
 
+static void set_variable_visibility(void)
+{
+   struct retro_core_option_display option_display;
+
+   // Hide settings specific to OpenGL
+   option_display.visible = (g_vidcoretype == VIDCORE_OGL);
+   option_display.key = "kronos_polygon_mode";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   // Hide settings specific to OpenGL CS
+   option_display.visible = (g_vidcoretype == VIDCORE_CS);
+   option_display.key = "kronos_bandingmode";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = "kronos_wireframe_mode";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   // Hide settings specific to ST-V
+   option_display.visible = stv_mode;
+   option_display.key = "kronos_service_enabled";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = "kronos_stv_favorite_region";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   // Hide settings specific to compute shaders
+   option_display.visible = (getCSUsage() == 2);
+   option_display.key = "kronos_videocoretype";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = "kronos_use_cs";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+}
+
 void YuiMsg(const char *format, ...)
 {
   char buf[512];
@@ -817,6 +848,7 @@ static void context_reset(void)
       retro_reinit_av_info();
    }
    VIDCore->Resize(0, 0, window_width, window_height, 0);
+   set_variable_visibility();
    rendering_started = true;
 }
 
@@ -829,7 +861,7 @@ static void context_destroy(void)
 #endif
 }
 
-static bool retro_init_hw_context(void)
+static bool retro_init_hw_context(u32 preferred)
 {
 #if defined(_USEGLEW_)
    hw_render.context_reset = context_reset;
@@ -843,25 +875,29 @@ static bool retro_init_hw_context(void)
    if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
       return false;
 #else
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
-   switch (opengl_version)
+   hw_render.context_type = preferred;
+   // see below
+   if (preferred == RETRO_HW_CONTEXT_OPENGL_CORE)
    {
-      case 330:
-         hw_render.version_major = 3;
-         hw_render.version_minor = 3;
-         break;
-      case 420:
-         hw_render.version_major = 4;
-         hw_render.version_minor = 2;
-         break;
-      case 430:
-         hw_render.version_major = 4;
-         hw_render.version_minor = 3;
-         break;
-      case 450:
-         hw_render.version_major = 4;
-         hw_render.version_minor = 5;
-         break;
+      switch (opengl_version)
+      {
+         case 330:
+            hw_render.version_major = 3;
+            hw_render.version_minor = 3;
+            break;
+         case 420:
+            hw_render.version_major = 4;
+            hw_render.version_minor = 2;
+            break;
+         case 430:
+            hw_render.version_major = 4;
+            hw_render.version_minor = 3;
+            break;
+         case 450:
+            hw_render.version_major = 4;
+            hw_render.version_minor = 5;
+            break;
+      }
    }
    if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
        return false;
@@ -879,25 +915,29 @@ static bool retro_init_hw_context(void)
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
       return false;
 #else
-   params.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
-   switch (opengl_version)
+   params.context_type = preferred;
+   // 2020-05-23 : specify version only for glcore, otherwise RA returns crap
+   if (preferred == RETRO_HW_CONTEXT_OPENGL_CORE)
    {
-      case 330:
-         params.major = 3;
-         params.minor = 3;
-         break;
-      case 420:
-         params.major = 4;
-         params.minor = 2;
-         break;
-      case 430:
-         params.major = 4;
-         params.minor = 3;
-         break;
-      case 450:
-         params.major = 4;
-         params.minor = 5;
-         break;
+      switch (opengl_version)
+      {
+         case 330:
+            params.major = 3;
+            params.minor = 3;
+            break;
+         case 420:
+            params.major = 4;
+            params.minor = 2;
+            break;
+         case 430:
+            params.major = 4;
+            params.minor = 3;
+            break;
+         case 450:
+            params.major = 4;
+            params.minor = 5;
+            break;
+      }
    }
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
       return false;
@@ -923,37 +963,6 @@ void retro_get_system_info(struct retro_system_info *info)
    info->need_fullpath    = true;
    info->block_extract    = true;
    info->valid_extensions = "cue|iso|mds|ccd|zip|chd|m3u";
-}
-
-static void set_variable_visibility(void)
-{
-   struct retro_core_option_display option_display;
-
-   // Hide settings specific to OpenGL
-   option_display.visible = (g_vidcoretype == VIDCORE_OGL);
-   option_display.key = "kronos_polygon_mode";
-   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-
-   // Hide settings specific to OpenGL CS
-   option_display.visible = (g_vidcoretype == VIDCORE_CS);
-   option_display.key = "kronos_bandingmode";
-   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-   option_display.key = "kronos_wireframe_mode";
-   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-
-   // Hide settings specific to ST-V
-   option_display.visible = stv_mode;
-   option_display.key = "kronos_service_enabled";
-   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-   option_display.key = "kronos_stv_favorite_region";
-   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-
-   // Hide settings specific to compute shaders
-   option_display.visible = (getCSUsage() == 2);
-   option_display.key = "kronos_videocoretype";
-   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-   option_display.key = "kronos_use_cs";
-   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 }
 
 void check_variables(void)
@@ -1198,7 +1207,6 @@ void check_variables(void)
       else if (strcmp(var.value, "Japanese") == 0)
          language_id = LANGUAGE_JAPANESE;
    }
-   set_variable_visibility();
 }
 
 static void set_descriptors(void)
@@ -1262,8 +1270,6 @@ static void set_descriptors(void)
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    memset(info, 0, sizeof(*info));
-
-   check_variables();
 
    if(initial_resolution_mode == 0)
    {
@@ -1674,7 +1680,27 @@ bool retro_load_game_common()
    enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
    if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
       return false;
-   if (!retro_init_hw_context())
+
+   // get current video driver
+   u32 preferred;
+   if (!environ_cb(RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, &preferred))
+      preferred = RETRO_HW_CONTEXT_DUMMY;
+   bool found_hw_context = false;
+   if (preferred == RETRO_HW_CONTEXT_OPENGL || preferred == RETRO_HW_CONTEXT_OPENGL_CORE)
+   {
+      // try requesting the right context for current driver
+      found_hw_context = retro_init_hw_context(preferred);
+   }
+   else
+   {
+      // try every context as fallback if current driver wasn't found
+      found_hw_context = retro_init_hw_context(RETRO_HW_CONTEXT_OPENGL);
+      if (!found_hw_context)
+         found_hw_context = retro_init_hw_context(RETRO_HW_CONTEXT_OPENGL_CORE);
+   }
+
+   // if no compatible context was found at all, give up
+   if (!found_hw_context)
       return false;
 
    yinit.vidcoretype             = g_vidcoretype;
