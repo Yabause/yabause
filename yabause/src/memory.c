@@ -741,7 +741,7 @@ void MappedMemoryInit()
     *cycle = 2; \
     break; \
   case 0x05e00000: /* VDP2 */ \
-    if (yabsys.LineCount >= yabsys.VBlankLineCount) { *cycle = 2; } else { *cycle = 200; } \
+    if (yabsys.LineCount >= yabsys.VBlankLineCount) { *cycle = 2; } else { *cycle = 24; } \
     break; \
   case 0x06000000: /* High */ \
     *cycle = 2; \
