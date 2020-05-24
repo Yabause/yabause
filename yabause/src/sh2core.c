@@ -2715,7 +2715,7 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
      yread(&check, (void *)&context->dma_ch0.copy_clock, sizeof(u32), 1, fp);
      yread(&check, (void *)&context->dma_ch1.copy_clock, sizeof(u32), 1, fp);
    }
-   
+   yabsys.frame_count = 0;
    return size;
 }
 
