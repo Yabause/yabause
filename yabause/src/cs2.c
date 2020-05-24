@@ -1821,9 +1821,9 @@ void Cs2PlayDisc(void) {
   // Calculate Seek time
   length = abs((int)current_fad - (int)Cs2Area->FAD);
   Cs2Area->_periodictiming = length; // seektime
-  if (Cs2Area->_periodictiming < 40000) {
-    Cs2Area->_periodictiming = 40000;
-  }
+  //if (Cs2Area->_periodictiming < 40000) {
+  //  Cs2Area->_periodictiming = 40000;
+  //}
   if (Cs2Area->_periodictiming > (u32)SEEK_TIME) {
      Cs2Area->_periodictiming = (u32)SEEK_TIME;
   }
