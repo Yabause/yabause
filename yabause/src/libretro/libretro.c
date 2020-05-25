@@ -861,7 +861,7 @@ static void context_destroy(void)
 #endif
 }
 
-static bool retro_init_hw_context(u32 preferred)
+static bool init_gl_context(u32 preferred)
 {
 #if defined(_USEGLEW_)
    hw_render.context_reset = context_reset;
@@ -899,6 +899,11 @@ static bool retro_init_hw_context(u32 preferred)
             break;
       }
    }
+   else
+   {
+       hw_render.version_major = 3;
+       hw_render.version_minor = 0;
+   }
    if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
        return false;
 #endif
@@ -916,7 +921,9 @@ static bool retro_init_hw_context(u32 preferred)
       return false;
 #else
    params.context_type = preferred;
-   // 2020-05-23 : specify version only for glcore, otherwise RA returns crap
+   // 2020-05-25 - i identified 2 issues with RA's gl context's versioning :
+   // - any value above 3.0 won't provide a valid context, while the GLSM_CTL_STATE_CONTEXT_INIT call returned true...
+   // - the only way to overwrite previously set version with zero values is to set them directly in hw_render, otherwise they are ignored (see glsm_state_ctx_init logic)
    if (preferred == RETRO_HW_CONTEXT_OPENGL_CORE)
    {
       switch (opengl_version)
@@ -938,6 +945,11 @@ static bool retro_init_hw_context(u32 preferred)
             params.minor = 5;
             break;
       }
+   }
+   else
+   {
+       hw_render.version_major = 3;
+       hw_render.version_minor = 1;
    }
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
       return false;
@@ -1689,14 +1701,21 @@ bool retro_load_game_common()
    if (preferred == RETRO_HW_CONTEXT_OPENGL || preferred == RETRO_HW_CONTEXT_OPENGL_CORE)
    {
       // try requesting the right context for current driver
-      found_hw_context = retro_init_hw_context(preferred);
+      found_hw_context = init_gl_context(preferred);
+   }
+   else if (preferred == RETRO_HW_CONTEXT_VULKAN)
+   {
+      // if vulkan is the current driver, we probably prefer glcore over gl so that the same slang shaders can be used
+      // in the future, when a vulkan video renderer will be available, we'll need to intialize it here
+      found_hw_context = init_gl_context(RETRO_HW_CONTEXT_OPENGL_CORE);
+      
    }
    else
    {
       // try every context as fallback if current driver wasn't found
-      found_hw_context = retro_init_hw_context(RETRO_HW_CONTEXT_OPENGL);
+      found_hw_context = init_gl_context(RETRO_HW_CONTEXT_OPENGL_CORE);
       if (!found_hw_context)
-         found_hw_context = retro_init_hw_context(RETRO_HW_CONTEXT_OPENGL_CORE);
+         found_hw_context = init_gl_context(RETRO_HW_CONTEXT_OPENGL);
    }
 
    // if no compatible context was found at all, give up
