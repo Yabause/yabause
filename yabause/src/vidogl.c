@@ -6164,7 +6164,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
 
 }
 
-inline int Vdp2CheckCharAccessPenalty(int char_access, int ptn_access) {
+INLINE int Vdp2CheckCharAccessPenalty(int char_access, int ptn_access) {
 
   if (_Ygl->rwidth >= 640) {
     if (char_access < ptn_access) {
