@@ -521,6 +521,24 @@ u8 memGetByte(u32 addr)
   dynaLock();
   u8 val;
   u32 cycle = 0;
+  
+  switch (addr & 0xDFF00000)
+  {
+    // Low Memory
+  case 0x00200000:
+    val = T2ReadByte(LowWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 4;
+    dynaFree();
+    return val;
+    break;
+    // High Memory
+  case 0x06000000:
+    val = T2ReadByte(HighWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 2;
+    dynaFree();
+    return val;
+    break;
+  }
   val = MappedMemoryReadByte(addr, &cycle);
   DynarecSh2::CurrentContext->memcycle_ += cycle;
   dynaFree();
@@ -532,6 +550,24 @@ u16 memGetWord(u32 addr)
   dynaLock();
   u16 val;
   u32 cycle = 0;
+
+  switch (addr & 0xDFF00000)
+  {
+  // Low Memory
+  case 0x00200000:
+    val = T2ReadWord(LowWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 4;
+    dynaFree();
+    return val;
+    break;
+    // High Memory
+  case 0x06000000:
+    val = T2ReadWord(HighWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 2;
+    dynaFree();
+    return val;
+    break;
+  }
   val = MappedMemoryReadWord(addr, &cycle);
   DynarecSh2::CurrentContext->memcycle_ += cycle;
   dynaFree();
@@ -543,6 +579,23 @@ u32 memGetLong(u32 addr)
   dynaLock();
   u32 val;
   u32 cycle = 0;
+  switch (addr & 0xDFF00000)
+  {
+  // Low Memory
+  case 0x00200000:
+    val = T2ReadLong(LowWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 4;
+    dynaFree();
+    return val;
+    break;
+    // High Memory
+  case 0x06000000:
+    val = T2ReadLong(HighWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 2;
+    dynaFree();
+    return val;
+    break;
+  }
   val = MappedMemoryReadLong(addr, &cycle);
   DynarecSh2::CurrentContext->memcycle_ += cycle;
   dynaFree();

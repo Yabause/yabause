@@ -728,28 +728,19 @@ void MappedMemoryInit()
      &BupRamMemoryWriteLong);
 }
 
-static int getVramCycle(u32 addr) {
-  if (yabsys.LineCount >= yabsys.VBlankLineCount) { return 2; }
+#if 0
+#define GET_MEM_CYCLE_W *cycle = 0;
+#define GET_MEM_CYCLE_R *cycle = 0;
+#else
+INLINE int getVramCycle(u32 addr) {
+  if (yabsys.LineCount >= yabsys.VBlankLineCount) { 
+    return 2; 
+  }
   if ((addr & 0x000F0000) < 0x00040000) {
-    if (Vdp2External.cpu_cycle_a == 0) {
-      return 200;
-    }
-    else if (Vdp2External.cpu_cycle_a == 1) {
-      return 24;
-    }
-    else {
-      return 2;
-    }
+    return Vdp2External.cpu_cycle_a;
   }
   else {
-    if (Vdp2External.cpu_cycle_b == 0) {
-      return 200;
-    }else if (Vdp2External.cpu_cycle_b == 1) {
-      return 24;
-    }
-    else {
-      return 2;
-    }
+    return Vdp2External.cpu_cycle_b;
   }
   return 2;
 }
@@ -805,6 +796,8 @@ static int getVramCycle(u32 addr) {
     *cycle = 0; \
     break; \
   } \
+
+#endif
 
 #if 0
 inline u32 getMemCycle(u32 addr) {

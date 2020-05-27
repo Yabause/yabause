@@ -7755,8 +7755,26 @@ void VDP2genVRamCyclePattern() {
 
   //cpu_cycle_a = 1;
   //cpu_cycle_b = 1;
-  Vdp2External.cpu_cycle_a = cpu_cycle_a;
-  Vdp2External.cpu_cycle_b = cpu_cycle_b;
+
+  if (cpu_cycle_a == 0) {
+    Vdp2External.cpu_cycle_a = 200;
+  }
+  else if (Vdp2External.cpu_cycle_a == 1) {
+    Vdp2External.cpu_cycle_a = 24;
+  }
+  else {
+    Vdp2External.cpu_cycle_a = 2;
+  }
+
+  if (cpu_cycle_b == 0) {
+    Vdp2External.cpu_cycle_b = 200;
+  }
+  else if (Vdp2External.cpu_cycle_a == 1) {
+    Vdp2External.cpu_cycle_b = 24;
+  }
+  else {
+    Vdp2External.cpu_cycle_b = 2;
+  }
 
 }
 

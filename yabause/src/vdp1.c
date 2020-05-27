@@ -87,9 +87,7 @@ u32 FASTCALL Vdp1RamReadLong(u32 addr) {
 
 void FASTCALL Vdp1RamWriteByte(u32 addr, u8 val) {
    addr &= 0x7FFFF;
-   VdpLockVram();
    T1WriteByte(Vdp1Ram, addr, val);
-   VdpUnLockVram();
 }
 
 #include "sh2core.h"
@@ -97,9 +95,7 @@ void FASTCALL Vdp1RamWriteByte(u32 addr, u8 val) {
 //////////////////////////////////////////////////////////////////////////////
 void FASTCALL Vdp1RamWriteWord(u32 addr, u16 val) {
    addr &= 0x7FFFF;
-   VdpLockVram();
    T1WriteWord(Vdp1Ram, addr, val);
-   VdpUnLockVram();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -107,9 +103,7 @@ void FASTCALL Vdp1RamWriteLong(u32 addr, u32 val) {
    addr &= 0x7FFFF;
    //if(addr == 0x00000)
    //LOG("Vdp1RamWriteLong @ %08X", CurrentSH2->regs.PC);
-   VdpLockVram();
    T1WriteLong(Vdp1Ram, addr, val);
-   VdpUnLockVram();
 }
 
 //////////////////////////////////////////////////////////////////////////////
