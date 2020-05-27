@@ -812,18 +812,19 @@ void YuiSwapBuffers(void)
 {
    int prev_game_width = game_width;
    int prev_game_height = game_height;
-   VIDCore->GetNativeResolution(&game_width, &game_height, &game_interlace);
+   game_width = _Ygl->width;
+   game_height = _Ygl->height;
    if (resolution_need_update || (prev_game_width != game_width) || (prev_game_height != game_height))
       retro_reinit_av_info();
    audio_size = soundlen;
    frame_expected--;
-   video_cb(RETRO_HW_FRAME_BUFFER_VALID, _Ygl->width, _Ygl->height, 0);
+   video_cb(RETRO_HW_FRAME_BUFFER_VALID, game_width, game_height, 0);
 }
 
 void YuiEndOfFrame(void)
 {
    if (frame_expected > 0) {
-      video_cb(NULL, _Ygl->width, _Ygl->height, 0);
+      video_cb(NULL, game_width, game_height, 0);
       frame_expected--;
    }
 }
@@ -848,6 +849,8 @@ static void context_reset(void)
       retro_reinit_av_info();
    }
    VIDCore->Resize(0, 0, window_width, window_height, 0);
+   game_width = _Ygl->width;
+   game_height = _Ygl->height;
    set_variable_visibility();
    rendering_started = true;
 }
@@ -1312,8 +1315,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
    info->timing.fps            = (retro_get_region() == RETRO_REGION_NTSC ? 60.0f : 50.0f);
    info->timing.sample_rate    = SAMPLERATE;
-   info->geometry.base_width   = (_Ygl != NULL ? _Ygl->width : game_width);
-   info->geometry.base_height  = (_Ygl != NULL ? _Ygl->height : game_height);
+   info->geometry.base_width   = game_width;
+   info->geometry.base_height  = game_height;
    info->geometry.max_width    = window_width;
    info->geometry.max_height   = window_height;
    info->geometry.aspect_ratio = (retro_get_region() == RETRO_REGION_NTSC) ? 4.0 / 3.0 : 5.0 / 4.0;
