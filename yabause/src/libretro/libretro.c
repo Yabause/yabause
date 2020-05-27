@@ -952,7 +952,7 @@ static bool init_gl_context(u32 preferred)
    else
    {
        hw_render.version_major = 3;
-       hw_render.version_minor = 1;
+       hw_render.version_minor = 0;
    }
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
       return false;
