@@ -7031,7 +7031,7 @@ static void Vdp2DrawNBG2(void)
       }
     }
   }
-  if (char_access == -1) return;
+  //if (char_access == -1) return;
 
  
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x400);
@@ -7167,7 +7167,7 @@ static void Vdp2DrawNBG3(void)
       }
     }
   }
-  if (char_access == -1) return;
+  //if (char_access == -1) return;
 
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x800);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 6) & 0x3;
