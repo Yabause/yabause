@@ -407,6 +407,8 @@ typedef struct {
    int * perline_alpha_draw;
    int perline_alpha_a;
    int perline_alpha_b;
+   int cpu_cycle_a;
+   int cpu_cycle_b;
 } Vdp2External_struct;
 
 extern Vdp2External_struct Vdp2External;

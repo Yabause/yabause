@@ -131,9 +131,21 @@ u32 FASTCALL Vdp2RamReadLong(u32 addr) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+//#define VRAM_WRITE_CHECK 1
+#if VRAM_WRITE_CHECK
+int prelinev = 0;
+#endif
 void FASTCALL Vdp2RamWriteByte(u32 addr, u8 val) {
    addr &= 0x7FFFF;
+#if VRAM_WRITE_CHECK
+   if (yabsys.LineCount != prelinev) {
+     LOG("VRAM: write byte @%d, cycle_a=%d cycle_b=%d A0=%04X%04X A1=%04X%04X B0=%04X%04X B1=%04X%04X ",
+       yabsys.LineCount,
+       Vdp2External.cpu_cycle_a, Vdp2External.cpu_cycle_b,
+       Vdp2Regs->CYCA0L, Vdp2Regs->CYCA0U, Vdp2Regs->CYCA0L, Vdp2Regs->CYCA0U, Vdp2Regs->CYCB0L, Vdp2Regs->CYCB0U, Vdp2Regs->CYCB1L, Vdp2Regs->CYCB1U);
+     prelinev = yabsys.LineCount;
+   }
+#endif
    if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
      A0_Updated = 1;
    }
@@ -154,6 +166,15 @@ void FASTCALL Vdp2RamWriteByte(u32 addr, u8 val) {
 
 void FASTCALL Vdp2RamWriteWord(u32 addr, u16 val) {
    addr &= 0x7FFFF;
+#if VRAM_WRITE_CHECK
+   if (yabsys.LineCount != prelinev) {
+     LOG("VRAM: write word @%d, cycle_a=%d cycle_b=%d A0=%04X%04X A1=%04X%04X B0=%04X%04X B1=%04X%04X ",
+       yabsys.LineCount,
+       Vdp2External.cpu_cycle_a, Vdp2External.cpu_cycle_b,
+       Vdp2Regs->CYCA0L, Vdp2Regs->CYCA0U, Vdp2Regs->CYCA0L, Vdp2Regs->CYCA0U, Vdp2Regs->CYCB0L, Vdp2Regs->CYCB0U, Vdp2Regs->CYCB1L, Vdp2Regs->CYCB1U);
+     prelinev = yabsys.LineCount;
+   }
+#endif
    if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
      A0_Updated = 1;
    }
@@ -173,8 +194,17 @@ void FASTCALL Vdp2RamWriteWord(u32 addr, u16 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteLong(u32 addr, u32 val) {
-   addr &= 0x7FFFF;
-   if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
+  addr &= 0x7FFFF;
+#if VRAM_WRITE_CHECK
+  if (yabsys.LineCount != prelinev) {
+    LOG("VRAM: write long @%d, cycle_a=%d cycle_b=%d A0=%04X%04X A1=%04X%04X B0=%04X%04X B1=%04X%04X ", 
+      yabsys.LineCount, 
+      Vdp2External.cpu_cycle_a, Vdp2External.cpu_cycle_b,
+      Vdp2Regs->CYCA0L, Vdp2Regs->CYCA0U, Vdp2Regs->CYCA0L, Vdp2Regs->CYCA0U, Vdp2Regs->CYCB0L, Vdp2Regs->CYCB0U, Vdp2Regs->CYCB1L, Vdp2Regs->CYCB1U );
+    prelinev = yabsys.LineCount;
+  }
+#endif
+  if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
      A0_Updated = 1;
    }
    else if (A1_Updated == 0 && addr >= 0x20000 && addr < 0x40000){
@@ -428,6 +458,8 @@ void Vdp2Reset(void) {
    Vdp2External.perline_alpha_b = 0;
    Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
    Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
+   Vdp2External.cpu_cycle_a = 0;
+   Vdp2External.cpu_cycle_b = 0;
 
 #if defined(YAB_ASYNC_RENDERING)
    if (rcv_evqueue != NULL){
@@ -649,7 +681,11 @@ void Vdp2HBlankOUT(void) {
     }
   }
 
-  if (yabsys.LineCount == 6 ){ // I don't know what this value should be ...
+  if (yabsys.LineCount == 1) {
+    VDP2genVRamCyclePattern();
+  }
+
+  if (yabsys.LineCount == 5 ){ // I don't know what this value should be ...
     FrameProfileAdd("VOUT event");
     // Manual Change
     if (Vdp1External.manualchange == 1) {
@@ -1138,7 +1174,6 @@ void Vdp2VBlankOUT(void) {
       if (SmpcRegs->EXLE & 0x1)
          Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
    }
-
 }
 
 //////////////////////////////////////////////////////////////////////////////

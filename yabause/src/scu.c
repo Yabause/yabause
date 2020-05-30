@@ -2628,8 +2628,12 @@ u32 FASTCALL ScuReadLong(u32 addr) {
          return ScuRegs->D2W;
       case 0x48:
          return ScuRegs->D2C;
-      case 0x7C:
-         return ScuRegs->DSTA;
+      case 0x7C: {
+        if (ScuRegs->dma0.TransferNumber > 0) { ScuRegs->DSTA |= 0x10; }else{ ScuRegs->DSTA &= ~0x10;  }
+        if (ScuRegs->dma1.TransferNumber > 0) { ScuRegs->DSTA |= 0x100; }else{ ScuRegs->DSTA &= ~0x100;  }
+        if (ScuRegs->dma2.TransferNumber > 0) { ScuRegs->DSTA |= 0x1000; }else{ ScuRegs->DSTA &= ~0x1000; }
+        return ScuRegs->DSTA;
+      }
       case 0x80: // DSP Program Control Port
          return (ScuDsp->ProgControlPort.all & 0x00FD00FF);
       case 0x8C: // DSP Data Ram Data Port

@@ -728,6 +728,23 @@ void MappedMemoryInit()
      &BupRamMemoryWriteLong);
 }
 
+#if 0
+#define GET_MEM_CYCLE_W *cycle = 0;
+#define GET_MEM_CYCLE_R *cycle = 0;
+#else
+INLINE int getVramCycle(u32 addr) {
+  if (yabsys.LineCount >= yabsys.VBlankLineCount) { 
+    return 2; 
+  }
+  if ((addr & 0x000F0000) < 0x00040000) {
+    return Vdp2External.cpu_cycle_a;
+  }
+  else {
+    return Vdp2External.cpu_cycle_b;
+  }
+  return 2;
+}
+
 // gcc 4.9 bug
 #define GET_MEM_CYCLE_W \
   switch (addr & 0xDFF00000) { \
@@ -741,7 +758,7 @@ void MappedMemoryInit()
     *cycle = 2; \
     break; \
   case 0x05e00000: /* VDP2 */ \
-    if (yabsys.LineCount >= yabsys.VBlankLineCount) { *cycle = 2; } else { *cycle = 200; } \
+    *cycle = getVramCycle(addr);  \
     break; \
   case 0x06000000: /* High */ \
     *cycle = 2; \
@@ -770,7 +787,7 @@ void MappedMemoryInit()
     *cycle = 50; \
     break; \
   case 0x05E00000: /* VDP2 RAM */ \
-    if (yabsys.LineCount >= yabsys.VBlankLineCount) { *cycle = 50; } else { *cycle = 64; } \
+    *cycle = getVramCycle(addr); \
     break; \
   case 0x06000000: /* High */ \
     *cycle = 0; \
@@ -779,6 +796,8 @@ void MappedMemoryInit()
     *cycle = 0; \
     break; \
   } \
+
+#endif
 
 #if 0
 inline u32 getMemCycle(u32 addr) {

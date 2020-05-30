@@ -1131,7 +1131,7 @@ void OnchipReset(SH2_struct *context) {
 
 u8 FASTCALL OnchipReadByte(u32 addr) {
    
-   //printf("[%s] OnchipReadByte %08X\n", CurrentSH2->isslave?"SH2-S":"SH2-M", addr);
+   //LOG("[%s] OnchipReadByte %08X\n", CurrentSH2->isslave?"SH2-S":"SH2-M", addr);
 
    switch(addr)
    {
@@ -1241,7 +1241,7 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
 
 u16 FASTCALL OnchipReadWord(u32 addr) {
 
-   //printf("[%s] OnchipReadWord %08X\n", CurrentSH2->isslave?"SH2-S":"SH2-M", addr);
+   //LOG("[%s] OnchipReadWord %08X\n", CurrentSH2->isslave?"SH2-S":"SH2-M", addr);
          
    switch(addr)
    {
@@ -1289,8 +1289,8 @@ u16 FASTCALL OnchipReadWord(u32 addr) {
 
 u32 FASTCALL OnchipReadLong(u32 addr) {
 
-   //printf("[%s] OnchipReadLong %08X\n", CurrentSH2->isslave?"SH2-S":"SH2-M", addr);
-
+   //LOG("[%s] OnchipReadLong %08X@%08X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC );
+   
    switch(addr)
    {
       case 0x100:
@@ -1804,6 +1804,9 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
          CurrentSH2->onchip.TCR0 = val & 0xFFFFFF;
          return;
       case 0x18C:
+        if (CurrentSH2->onchip.TCR0 != 0) {
+          DMAProc(0x7FFFFFFF);
+        }
          CurrentSH2->onchip.CHCR0 = val & 0xFFFF;
 
          CurrentSH2->onchip.CHCR0 = (val & ~2) | (CurrentSH2->onchip.CHCR0 & (val| CurrentSH2->onchip.CHCR0M) & 2);
@@ -1835,6 +1838,9 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
          CurrentSH2->onchip.TCR1 = val & 0xFFFFFF;
          return;
       case 0x19C:
+        if (CurrentSH2->onchip.TCR1 != 0) {
+          DMAProc(0x7FFFFFFF);
+        }
          CurrentSH2->onchip.CHCR1 = val & 0xFFFF;
 
          CurrentSH2->onchip.CHCR1 = (val & ~2) | (CurrentSH2->onchip.CHCR1 & (val| CurrentSH2->onchip.CHCR1M) & 2);
@@ -2227,7 +2233,7 @@ int getEatClock(u32 src, u32 dst) {
       return 427;
       break;
     case 0x05E00000: // VDP2 RAM
-      return 427;
+      return 1;
       break;
     case 0x05F00000: // VDP2 REG
       return 50;
@@ -2715,7 +2721,7 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
      yread(&check, (void *)&context->dma_ch0.copy_clock, sizeof(u32), 1, fp);
      yread(&check, (void *)&context->dma_ch1.copy_clock, sizeof(u32), 1, fp);
    }
-   
+   yabsys.frame_count = 0;
    return size;
 }
 

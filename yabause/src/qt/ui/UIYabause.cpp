@@ -19,6 +19,7 @@
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 #include "UIYabause.h"
+#include "debug.h"
 #include "../Settings.h"
 #include "../VolatileSettings.h"
 #include "UISettings.h"
@@ -182,6 +183,7 @@ UIYabause::UIYabause( QWidget* parent )
 	mIsCdIn = true;
 
 	// Initialize cloud service
+	std::thread t([&]{
     firebase::AppOptions options;
     options.set_app_id("1:749919523054:android:3a92de2bc803c4bf");
     options.set_api_key("AIzaSyAAqH_-n3Q42YAyVJvF-0nCvjLBaUa79-A");
@@ -190,6 +192,8 @@ UIYabause::UIYabause( QWidget* parent )
     options.set_storage_bucket("uoyabause.appspot.com");
     options.set_project_id("uoyabause");
     app = firebase::App::Create(options);	
+	});
+	t.detach();
 
 }
 

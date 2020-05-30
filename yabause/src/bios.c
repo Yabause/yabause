@@ -655,7 +655,7 @@ static u16 *GetFreeBlocks(u32 addr, u32 blocksize, u32 numblocks, u32 size)
    for (i = ((2 * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
    {
       // Find a block with the start of a save
-      if (((s8)MappedMemoryReadByte(addr + i + 1, NULL), NULL) < 0)
+      if (((s8)MappedMemoryReadByte(addr + i + 1, NULL)) < 0)
       {
          tableaddr = addr+i+0x45;
          blocktbl[i / (blocksize << 1)] = 1;

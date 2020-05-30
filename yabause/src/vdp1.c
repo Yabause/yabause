@@ -87,9 +87,7 @@ u32 FASTCALL Vdp1RamReadLong(u32 addr) {
 
 void FASTCALL Vdp1RamWriteByte(u32 addr, u8 val) {
    addr &= 0x7FFFF;
-   VdpLockVram();
    T1WriteByte(Vdp1Ram, addr, val);
-   VdpUnLockVram();
 }
 
 #include "sh2core.h"
@@ -97,9 +95,7 @@ void FASTCALL Vdp1RamWriteByte(u32 addr, u8 val) {
 //////////////////////////////////////////////////////////////////////////////
 void FASTCALL Vdp1RamWriteWord(u32 addr, u16 val) {
    addr &= 0x7FFFF;
-   VdpLockVram();
    T1WriteWord(Vdp1Ram, addr, val);
-   VdpUnLockVram();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -107,9 +103,7 @@ void FASTCALL Vdp1RamWriteLong(u32 addr, u32 val) {
    addr &= 0x7FFFF;
    //if(addr == 0x00000)
    //LOG("Vdp1RamWriteLong @ %08X", CurrentSH2->regs.PC);
-   VdpLockVram();
    T1WriteLong(Vdp1Ram, addr, val);
-   VdpUnLockVram();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -422,7 +416,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
         Vdp1Regs->EDSR >>= 1;
         yabsys.wait_line_count = yabsys.LineCount + 50;
         yabsys.wait_line_count %= yabsys.MaxLineCount;
-        if (yabsys.wait_line_count == 0) { yabsys.wait_line_count = 1; }
+        if (yabsys.wait_line_count == 5) { yabsys.wait_line_count = 4; }
         FRAMELOG("SET DIRECT WAIT %d", yabsys.wait_line_count);
         YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
         YabThreadYield();
@@ -435,7 +429,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
         VIDCore->Vdp1DrawEnd();
         yabsys.wait_line_count = yabsys.LineCount + 50;
         yabsys.wait_line_count %= yabsys.MaxLineCount;
-        if (yabsys.wait_line_count == 0) { yabsys.wait_line_count = 1; }
+        if (yabsys.wait_line_count == 5) { yabsys.wait_line_count = 4; } // it should not be the same line with render.
         FRAMELOG("VDP1: end line is %d", yabsys.wait_line_count);
     }
 #endif
