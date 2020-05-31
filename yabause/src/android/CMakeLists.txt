@@ -77,7 +77,7 @@ target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES}
 	${PORT_LIBRARIES}
 	${LIBCHDR_LIBRARIES}	
 	png16
-	z
+	${ZLIB_LIBRARY_RELEASE}
 	#${zlib_STATIC_LIBRARIES}
 	#    ${PROJECT_SOURCE_DIR}/debuglib/libNvidia_gfx_debugger_stub.a
 )
