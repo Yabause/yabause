@@ -614,9 +614,9 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_initViewport( J
         }else{
             if( g_window != ANativeWindow_fromSurface(jenv, surface) ){
                 g_window = ANativeWindow_fromSurface(jenv, surface);
-                YUI_LOG("Chg window %08X %d,%d ", g_window, g_msg,width,height);
-                g_msg = MSG_WINDOW_CHG;
             }
+            YUI_LOG("Chg window %08X %d,%d ", g_window, g_msg,width,height);
+            g_msg = MSG_WINDOW_CHG;
             //YUI_LOG("Got window ignore %p %d,%d", g_window, g_msg,width,height );
         }
     } else {
