@@ -237,7 +237,7 @@ int yprintf( const char * fmt, ... )
     int result = 0;
    va_list ap;
    va_start(ap, fmt);
-   result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
+   result = __android_log_vprint(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ap);
    va_end(ap);
    return result;
 }
@@ -247,7 +247,7 @@ int printf( const char * fmt, ... )
     int result = 0;
    va_list ap;
    va_start(ap, fmt);
-   result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
+   result = __android_log_vprint(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ap);
    va_end(ap);
    return result;
 }
@@ -607,21 +607,22 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_initViewport( J
 {
     if (surface != 0) {
         
-        if( g_window == 0 ){
+        if( g_Surface == EGL_NO_SURFACE ){
             g_window = ANativeWindow_fromSurface(jenv, surface);
             YUI_LOG("Got window %08X %d,%d", g_window, g_msg,width,height );
             g_msg = MSG_WINDOW_SET;         
         }else{
-            //if( g_window != ANativeWindow_fromSurface(jenv, surface) ){
+            if( g_window != ANativeWindow_fromSurface(jenv, surface) ){
                 g_window = ANativeWindow_fromSurface(jenv, surface);
                 YUI_LOG("Chg window %08X %d,%d ", g_window, g_msg,width,height);
                 g_msg = MSG_WINDOW_CHG;
-            //}
+            }
             //YUI_LOG("Got window ignore %p %d,%d", g_window, g_msg,width,height );
         }
     } else {
         YUI_LOG("Releasing window");
         ANativeWindow_release(g_window);
+        g_window = NULL;
     }
     
    return 0;
@@ -1224,10 +1225,10 @@ int switchWindow( ANativeWindow* window ){
 		 VIDCoreList[i]->Resize(0,0,width,height,1,g_aspect_rate_mode);
          glDisable(GL_SCISSOR_TEST);
          glClearColor( 0.0f,0.0f,0.0f,1.0f);
-         glClear( GL_COLOR_BUFFER_BIT );
-         eglSwapBuffers(g_Display, surface);
-         glClear( GL_COLOR_BUFFER_BIT );
-         eglSwapBuffers(g_Display, surface);
+         //glClear( GL_COLOR_BUFFER_BIT );
+         //eglSwapBuffers(g_Display, surface);
+         //glClear( GL_COLOR_BUFFER_BIT );
+         //eglSwapBuffers(g_Display, surface);
 		 break;
 	  }
    }
@@ -1651,7 +1652,7 @@ void renderLoop()
 
     while (renderingEnabled != 0) {
 
-        if (g_Display && pause == 0) {
+        if (g_Display && pause == 0 && g_window != NULL) {
            YabauseExec();
         }
 

@@ -1004,7 +1004,7 @@ public class Yabause extends AppCompatActivity implements
 
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.remove(fragment);
-            transaction.commit();
+            transaction.commitNow();
 
 
             waiting_reault = false;

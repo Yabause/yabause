@@ -91,7 +91,7 @@ public class YabauseView extends SurfaceView implements Callback {
 
     private void init(boolean translucent, int depth, int stencil) {
        getHolder().addCallback(this);
-       getHolder().setType(SurfaceHolder.SURFACE_TYPE_GPU);
+       //getHolder().setType(SurfaceHolder.SURFACE_TYPE_GPU);
      
     }
 
@@ -100,7 +100,6 @@ public class YabauseView extends SurfaceView implements Callback {
       YabauseRunnable.lockGL();
       YabauseRunnable.initViewport(holder.getSurface(),width, height);
       YabauseRunnable.unlockGL();
-
     }
 
     @Override
@@ -110,6 +109,9 @@ public class YabauseView extends SurfaceView implements Callback {
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        YabauseRunnable.lockGL();
+        YabauseRunnable.initViewport(null,0,0);
+        YabauseRunnable.unlockGL();
 
     }
 /*
