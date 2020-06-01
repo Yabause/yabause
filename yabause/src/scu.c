@@ -2932,7 +2932,7 @@ void ScuTestInterruptMask()
      u32 mask = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].mask;
 
      // A-BUS?
-     if (mask & 0xFFFF0000){
+     if (mask & 0x8000){
        if (ScuRegs->AIACK){
          ScuRegs->AIACK = 0;
          if (!(ScuRegs->IMS & 0x8000)) {
@@ -3012,7 +3012,7 @@ static void ScuQueueInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit)
 static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
 
   // A-BUS?
-  if ((mask & 0xFFFF0000) ){
+  if ((mask & 0x8000) ){
     if (ScuRegs->AIACK){
       ScuRegs->AIACK = 0;
       if (!(ScuRegs->IMS & 0x8000)){
