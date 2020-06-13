@@ -113,6 +113,8 @@ int YabThreadGetCurrentThreadAffinityMask();
 
 void YabThreadUSleep( unsigned int stime );
 
+int YabCopyFile(const char * src, const char * dst);
+
 ///////////////////////////////////////////////////////////////////////////
 
 #ifdef __cplusplus

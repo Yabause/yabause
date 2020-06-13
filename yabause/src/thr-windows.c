@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <windows.h>
 #include "core.h"
 #include "threads.h"
+#include "debug.h"
 
 struct thd_s {
    int running;
@@ -308,6 +309,22 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
 
 int YabThreadGetCurrentThreadAffinityMask(){
 	return GetCurrentProcessorNumber();
+}
+
+int YabCopyFile( const char * src, const char * dst) {
+  BOOL rtn =  CopyFileA(src, dst, FALSE);
+  if (rtn == TRUE) {
+    return 0;
+  }
+  else {
+    DWORD errorMessageID = GetLastError();
+    LPSTR messageBuffer = NULL;
+    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+    LOG(messageBuffer);
+    LocalFree(messageBuffer);
+    return -1;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////

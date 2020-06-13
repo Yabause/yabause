@@ -43,7 +43,12 @@ public:
 	void OpenTray();
 	void CloseTray();
 
+  static YabauseThread * getInstance() {
+    return instance;
+  }
+
 protected:
+  static YabauseThread * instance;
 	yabauseinit_struct mYabauseConf;
 	bool showFPS;
 	QMutex mMutex;

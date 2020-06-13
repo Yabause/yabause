@@ -96,6 +96,8 @@ public:
 		return app;
 	}
 
+  void takeScreenshot(const char * fname);
+
 signals: // [1]
   void setStateFileLoaded(std::string filename );
 
@@ -134,6 +136,7 @@ protected:
 
   void *state_buffer = nullptr;
   size_t state_size = 0;
+  QString default_title;
   
 
 #if defined Q_OS_WIN
@@ -188,6 +191,8 @@ protected slots:
 	void on_aEmulationPause_triggered();
 	void on_aEmulationReset_triggered();
 	void on_aEmulationFrameSkipLimiter_toggled( bool toggled );
+  void on_actionRecord_triggered();
+  void on_actionPlay_triggered();
 	// tools
   void on_actionOpen_web_interface_triggered();
 	void on_aToolsBackupManager_triggered();
