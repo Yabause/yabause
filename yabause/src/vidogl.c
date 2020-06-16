@@ -6167,112 +6167,108 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
 INLINE int Vdp2CheckCharAccessPenalty(int char_access, int ptn_access) {
 
   if (_Ygl->rwidth >= 640) {
-    if (char_access < ptn_access) {
-      return -1;
+    //if (char_access < ptn_access) {
+    //  return -1;
+    //}
+    if (ptn_access & 0x01) { // T0
+      // T0-T2
+      if ((char_access & 0x07) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
+        return 0;
+      }
     }
-    switch (ptn_access) {
-    case 0:
-      if (char_access > 2) {
-        return -1;
-      }
-      else {
+
+    if (ptn_access & 0x02) { // T1
+      // T1-T3
+      if ((char_access & 0x0E) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
         return 0;
       }
-      break;
-    case 1:
-      if (char_access == 0 || char_access > 3) {
-        return -1;
-      }
-      else {
+    }
+
+    if (ptn_access & 0x04) { // T2
+      // T0,T2,T3
+      if ((char_access & 0x0D) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
         return 0;
       }
-      break;
-    case 2:
-      if (char_access == 0 || char_access == 2 || char_access == 3 ) {
+    }
+
+    if (ptn_access & 0x08) { // T3
+      // T0,T1,T3
+      if ((char_access & 0xB) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
         return 0;
       }
-      else {
-        return -1;
-      }
-      break;
-    case 3:
-      if (char_access == 0 || char_access == 1 || char_access == 3) {
-        return 0;
-      }
-      else {
-        return -1;
-      }
-      break;
     }
     return -1;
   }
   else {
-    switch (ptn_access) {
-    case 0:
-      if (char_access == 3) {
-        return -1;
-      }
-      else {
+
+    if (ptn_access & 0x01) { // T0
+      // T0-T2, T4-T7
+      if ((char_access & 0xF7) != 0) {
         return 0;
       }
-      break;
-    case 1:
-      if (char_access == 4) {
-        return -1;
-      }
-      else {
-        return 0;
-      }
-      break;
-    case 2:
-      if (char_access == 4 || char_access == 5) {
-        return -1;
-      }
-      else {
-        return 0;
-      }
-      break;
-    case 3:
-      if (char_access == 4 || char_access == 5 || char_access == 6) {
-        return -1;
-      }
-      else {
-        return 0;
-      }
-      break;
-    case 4:
-      if (char_access > 3) {
-        return -1;
-      }
-      else {
-        return 0;
-      }
-      break;
-    case 5:
-      if (char_access >= 1 && char_access <= 3) {
-        return 0;
-      }
-      else {
-        return -1;
-      }
-      break;
-    case 6:
-      if (char_access == 2 || char_access == 3) {
-        return 0;
-      }
-      else {
-        return -1;
-      }
-      break;
-    case 7:
-      if (char_access == 3) {
-        return 0;
-      }
-      else {
-        return -1;
-      }
-      break;
     }
+
+    if (ptn_access & 0x02) { // T1
+      // T0-T3, T5-T7
+      if ((char_access & 0xEF) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x04) { // T2
+      // T0-T3, T6-T7
+      if ((char_access & 0xCF) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x08) { // T3
+      // T0-T3, T7
+      if ((char_access & 0x8F) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x10) { // T4
+      // T0-T3
+      if ((char_access & 0x0F) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x20) { // T5
+      // T1-T3
+      if ((char_access & 0x0E) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x40) { // T6
+      // T2,T3
+      if ((char_access & 0x0C) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x40) { // T7
+      // T3
+      if ((char_access & 0x08) != 0) {
+        return 0;
+      }
+    }
+    return -1;
   }
   return 0;
 }
@@ -6286,8 +6282,8 @@ static void Vdp2DrawNBG0(void)
   vdp2draw_struct info = { 0 };
   YglTexture texture;
   YglCache tmpc;
-  int char_access = -1;
-  int ptn_access = -1;
+  int char_access = 0;
+  int ptn_access = 0;
 
   info.dst = 0;
   info.uclipmode = 0;
@@ -6310,11 +6306,11 @@ static void Vdp2DrawNBG0(void)
     for (int j=0; j < 8; j++) {
       if (AC_VRAM[i][j] == 0x04) {
         info.char_bank[i] = 1;
-        if (char_access == -1)char_access = j;
+        char_access |= 1<<j;
       }
       if (AC_VRAM[i][j] == 0x00) {
         info.pname_bank[i] = 1;
-        if (ptn_access == -1)ptn_access = j;
+        ptn_access |= 1<<j;
       }
     }
   }
@@ -6704,8 +6700,8 @@ static void Vdp2DrawNBG1(void)
   vdp2draw_struct info;
   YglTexture texture;
   YglCache tmpc;
-  int char_access = -1;
-  int ptn_access = -1;
+  int char_access = 0;
+  int ptn_access = 0;
   
   info.dst = 0;
   info.id = 1;
@@ -6724,11 +6720,11 @@ static void Vdp2DrawNBG1(void)
     for (int j = 0; j < 8; j++) {
       if (AC_VRAM[i][j] == 0x05) {
         info.char_bank[i] = 1;
-        if (char_access == -1) char_access = j;
+        char_access |= (1<<j);
       }
       if (AC_VRAM[i][j] == 0x01) {
         info.pname_bank[i] = 1;
-        if (ptn_access == -1) ptn_access = j;
+        ptn_access |= (1<<j);
       }
     }
   }
@@ -7011,8 +7007,8 @@ static void Vdp2DrawNBG2(void)
   info.cob = 0;
   info.specialcolorfunction = 0;
   info.blendmode = 0;
-  int char_access = -1;
-  int ptn_access = -1;
+  int char_access = 0;
+  int ptn_access = 0;
 
   info.enable = fixVdp2Regs->BGON & 0x4;
   if (!info.enable) return;
@@ -7023,11 +7019,11 @@ static void Vdp2DrawNBG2(void)
     for (int j = 0; j < 8; j++) {
       if (AC_VRAM[i][j] == 0x06) {
         info.char_bank[i] = 1;
-        if (char_access == -1)char_access = j;
+        char_access |= (1 << j);
       }
       if (AC_VRAM[i][j] == 0x02) {
         info.pname_bank[i] = 1;
-        if (ptn_access == -1)ptn_access = j;
+        ptn_access |= (1<<j);
       }
     }
   }
@@ -7147,8 +7143,8 @@ static void Vdp2DrawNBG3(void)
   info.cob = 0;
   info.specialcolorfunction = 0;
   info.blendmode = 0;
-  int char_access = -1;
-  int ptn_access = -1;
+  int char_access = 0;
+  int ptn_access = 0;
 
   info.enable = fixVdp2Regs->BGON & 0x8;
   if (!info.enable) return;
@@ -7159,11 +7155,11 @@ static void Vdp2DrawNBG3(void)
     for (int j = 0; j < 8; j++) {
       if (AC_VRAM[i][j] == 0x07) {
         info.char_bank[i] = 1;
-        if (char_access == -1)char_access = j;
+        char_access |= (1<<j); 
       }
       if (AC_VRAM[i][j] == 0x03) {
         info.pname_bank[i] = 1;
-        if (ptn_access == -1)ptn_access = j;
+        ptn_access |= (1<<j);
       }
     }
   }
