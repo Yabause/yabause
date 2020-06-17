@@ -57,7 +57,7 @@ static DWORD wrapper(void *hnd)
    return 0;
 }
 
-int YabThreadStart(unsigned int id, void (*func)(void *), void *arg) 
+int YabThreadStart(unsigned int id, void * (*func)(void *), void *arg) 
 { 
    if (!hnd_key_once)
    {
@@ -79,7 +79,7 @@ int YabThreadStart(unsigned int id, void (*func)(void *), void *arg)
    	  return -1;
    }
 
-   thread_handle[id].func = func;
+   thread_handle[id].func =func;
    thread_handle[id].arg = arg;
 
    if ((thread_handle[id].thd = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)wrapper, &thread_handle[id], 0, NULL)) == NULL)
@@ -310,6 +310,8 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
 int YabThreadGetCurrentThreadAffinityMask(){
 	return GetCurrentProcessorNumber();
 }
+
+
 
 int YabCopyFile( const char * src, const char * dst) {
   BOOL rtn =  CopyFileA(src, dst, FALSE);

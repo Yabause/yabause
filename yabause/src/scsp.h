@@ -47,6 +47,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "core.h"
 
+#if defined (__cplusplus)
+extern "C"{
+#endif
+
 #define SNDCORE_DEFAULT -1
 #define SNDCORE_DUMMY   0
 #define SNDCORE_WAV     10 // should really be 1, but I'll probably break people's stuff
@@ -186,4 +190,10 @@ void setM68kCounter(u64 counter);
 void setM68kDoneCounter(u64 counter);
 
 extern int use_new_scsp;
+
+#if defined (__cplusplus)
+}
+#endif
+
+
 #endif

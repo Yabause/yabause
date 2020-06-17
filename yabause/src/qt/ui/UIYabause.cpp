@@ -1178,16 +1178,18 @@ void UIYabause::on_actionRecord_triggered() {
 
 void UIYabause::on_actionPlay_triggered() {
   PlayRecorder * p = PlayRecorder::getInstance();
-
   if (p->getStatus() == -1) {
     using std::placeholders::_1;
     p->f_takeScreenshot = std::bind(&UIYabause::takeScreenshot, this, _1);
-
-    QString s = CommonDialogs::getExistingDirectory(QString(), QtYabause::translate("Choose a location of your record"));
+		QString s = QFileDialog::getExistingDirectory(
+    this, 
+    tr("Choose a location of your record"),
+    NULL,
+    QFileDialog::ShowDirsOnly | QFileDialog::DontUseNativeDialog);		
 
     if (!s.isEmpty()) {
       QByteArray ba = s.toLocal8Bit();
-      p->startPlay(ba.data(), true);
+      p->startPlay(ba.data(), true, nullptr);
       default_title = windowTitle();
       setWindowTitle("Playing");
     }

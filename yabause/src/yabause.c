@@ -187,7 +187,7 @@ int YabauseInit(yabauseinit_struct *init)
   setM68kCounter(0);
 
   if( init->playRecordPath && strlen(init->playRecordPath) != 0) {
-    PlayRecorder_setPlayMode(init->playRecordPath);
+    PlayRecorder_setPlayMode(init->playRecordPath,init);
   }
 
    yabsys.frame_count = 0;

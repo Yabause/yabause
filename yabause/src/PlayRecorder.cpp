@@ -74,10 +74,12 @@ extern "C" {
 }
 
 PlayRecorder::PlayRecorder() {
-  mode_ = -1;
+  mode_ = IDLE;
   scindex_ = 0;
   index_ = 0;
   take_screenshot = false;
+  basedir = "./";
+  f_takeScreenshot = nullptr;
 }
 
 PlayRecorder * PlayRecorder::instance = NULL;
@@ -92,7 +94,20 @@ PlayRecorder * PlayRecorder::instance = NULL;
  }
 
 #include <filesystem>
+#ifdef _WINDOWS
 namespace fs = experimental::filesystem;
+extern "C" int YabMakeCleanDir(const char * dirname) {
+  fs::remove_all(dirname);
+  if (fs::create_directories(dirname) == false) {
+    printf("Fail to create %s\n", dirname);
+    return -1;
+  }
+  return 0;
+}
+#else
+namespace fs = std::filesystem;
+#endif
+
 
  int PlayRecorder::startRocord() {
     
@@ -101,13 +116,12 @@ namespace fs = experimental::filesystem;
     std::ostringstream ss;
     ss << Cs2GetCurrentGmaecode();
     //ss << std::put_time(std::localtime(&t_c), "_%Y_%m_%d_%H_%M_%S");
-    std::string dirname = ss.str();
+    std::string dirname = basedir + ss.str();
 
     try {
-      fs::remove_all(dirname);
-      fs::create_directories(dirname);
+      YabMakeCleanDir(dirname.c_str());
       const char * backup = YabauseThread_getBackupPath();
-      std::string dst_path = "./" + dirname + "/backup.bin";
+      std::string dst_path = dirname + "/backup.bin";
       YabCopyFile(backup,dst_path.c_str());
     }
     catch (std::exception e) {
@@ -127,7 +141,7 @@ namespace fs = experimental::filesystem;
     string date = ssdate.str();
     record_["setting"]["date"] = date;
 
-    mode_ = 0;
+    mode_ = RECORDING;
     dirname_ = dirname;
     PerKeyRecordInit();
     YabauseReset();
@@ -136,7 +150,7 @@ namespace fs = experimental::filesystem;
  }
 
 int PlayRecorder::stopRocord() {
-  if (mode_ != 0) return -1;
+  if (mode_ != RECORDING) return -1;
   
   Json::Value item;
 
@@ -164,11 +178,11 @@ int PlayRecorder::stopRocord() {
   writer->write(record_, &record_file);
   record_file << std::endl;  // add lf and flush
   record_file.close();
-  mode_ = -1;
+  mode_ = IDLE;
   return 0;
 }
 
-int PlayRecorder::startPlay( const char * recorddir, bool clodboot ) {
+int PlayRecorder::startPlay( const char * recorddir, bool clodboot, yabauseinit_struct *init ) {
 
   YabauseThread_resetPlaymode();
 
@@ -217,16 +231,16 @@ int PlayRecorder::startPlay( const char * recorddir, bool clodboot ) {
   dirname_ = recorddir;
   dirname_ = dirname_ + "out";
   printf("Dir is %s\n", dirname_.c_str());
-  fs::remove_all(dirname_);
-  if (fs::create_directories(dirname_) == false) {
-    printf("Fail to create %s\n", dirname_.c_str());
-  }
-  string fnameback_test = dirname_ + "/backup.bin.new";
+  YabMakeCleanDir(dirname_.c_str());
+  fnameback_test = dirname_ + "/backup.bin.new";
   YabCopyFile(fnameback.c_str(), fnameback_test.c_str());
   YabauseThread_setBackupPath(fnameback_test.c_str());
-  mode_ = 1;
+  mode_ = PLAYING;
   if (clodboot) {
     YabauseThread_coldBoot();
+  }
+  if( init ){
+    init->buppath = fnameback_test.c_str();
   }
   return 0;
 }
@@ -235,7 +249,7 @@ int PlayRecorder::proc(u32 framecount) {
 
   current_frame = framecount;
 
-  if (mode_ == 0) {
+  if (mode_ == RECORDING) {
     PerKeyRecord(framecount, record_);
     if (take_screenshot) {
       take_screenshot = false;
@@ -249,13 +263,13 @@ int PlayRecorder::proc(u32 framecount) {
     return 0;
   }
 
-  if (mode_ == 1) {
+  if (mode_ == PLAYING) {
     if (framecount == 1) {
       SmpcSetClockSync(1, (u32)this->start_time);
     }
 
     if (index_ >= record_["records"].size()) {
-      mode_ = -1;
+      mode_ = IDLE;
       printf("Test is finished\n");
       exit(0);
       return -1; // Finish
@@ -267,12 +281,14 @@ int PlayRecorder::proc(u32 framecount) {
      }
 
     if (framecount == record_["screenshots"][scindex_].asUInt()) {
-      std::string fname;
-      ostringstream ss;
-      ss << dirname_ << "/" << current_frame << ".png";
-      fname = ss.str();
-      printf("Take screen shot for %s\n", fname.c_str());
-      f_takeScreenshot(fname.c_str());
+      if( f_takeScreenshot ){
+        std::string fname;
+        ostringstream ss;
+        ss << dirname_ << "/" << current_frame << ".png";
+        fname = ss.str();
+        printf("Take screen shot for %s\n", fname.c_str());
+        f_takeScreenshot(fname.c_str());
+      } 
       scindex_++;
     }
 
@@ -355,9 +371,9 @@ extern "C" {
   }
 
 
-  void PlayRecorder_setPlayMode( const char * dir ) {
+  void PlayRecorder_setPlayMode( const char * dir, yabauseinit_struct *init  ) {
     PlayRecorder * p = PlayRecorder::getInstance();
-    p->startPlay(dir,false);
+    p->startPlay(dir,false, init);
   }
 
 }

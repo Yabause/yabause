@@ -46,15 +46,21 @@ private:
   PortData_struct PORTDATA2Pre;
   u32 index_;
   u32 scindex_;
-  u32 mode_;
   Json::Value record_;
   u32 current_frame;
   std::string dirname_;
   bool take_screenshot;
   u64 start_time;
+  string fnameback_test;
 
+  string basedir;
   
 public:
+  enum eStatus {
+    IDLE = -1,
+    RECORDING = 0,
+    PLAYING = 1
+  };
   static PlayRecorder * getInstance() {
     if (PlayRecorder::instance == NULL) {
       PlayRecorder::instance = new PlayRecorder();
@@ -62,12 +68,12 @@ public:
     return PlayRecorder::instance;
   }
   void PerKeyRecordInit();
-  u32 getStatus() {
+  eStatus getStatus() {
     return mode_;
   }
   int startRocord();
   int stopRocord();
-  int startPlay( const char * record_dir, bool clodboot);
+  int startPlay( const char * record_dir, bool clodboot, yabauseinit_struct *init);
   int proc(u32 framecount);
   void PerKeyRecord(u32 frame, Json::Value & recordArray);
   void PerKeyPlay(Json::Value & item);
@@ -76,6 +82,11 @@ public:
   std::function<void(const char *)> f_takeScreenshot;
 
   void takeShot();
+
+  void setBaseDir( const char * dir){ basedir = dir; }
+
+private: 
+  eStatus mode_;  
 
 };
 

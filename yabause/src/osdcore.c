@@ -76,7 +76,7 @@ extern OSD_struct * OSDCoreList[];
 #endif
 
 static OSD_struct * OSD = NULL;
-static OSDMessage_struct osdmessages[OSDMSG_COUNT];
+static OSDMessage_struct osdmessages[OSDMSG_COUNT] ={0};
 
 int OSDInit(int coreid)
 {
@@ -142,6 +142,10 @@ void OSDPushMessage(int msgtype, int ttl, const char * format, ...)
    va_end(arglist);
 
    osdmessages[msgtype].type = msgtype;
+   if( osdmessages[msgtype].message != NULL ){
+      free(osdmessages[msgtype].message);
+      osdmessages[msgtype].message = NULL;
+   }
    osdmessages[msgtype].message = strdup(message);
    osdmessages[msgtype].timetolive = ttl;
    osdmessages[msgtype].timeleft = ttl;
@@ -164,7 +168,10 @@ int OSDDisplayMessages(pixel_t * buffer, int w, int h)
             OSD->DisplayMessage(osdmessages + i, buffer, w, h);
          }
          osdmessages[i].timeleft--;
-         if (osdmessages[i].timeleft == 0) free(osdmessages[i].message);
+         if (osdmessages[i].timeleft == 0) {
+            free(osdmessages[i].message);
+            osdmessages[i].message = NULL;
+         }
       }
 
    return somethingnew;

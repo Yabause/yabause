@@ -78,6 +78,16 @@
             android:title="@string/menu_load_state"
             android:visible="true" />
 
+        <item
+            android:id="@+id/record"
+            android:title="操作記録"
+            android:visible="true" />
+
+        <item
+            android:id="@+id/play"
+            android:title="操作再生"
+            android:visible="true" />
+
     </group>
 
     <item android:id="@+id/gametitle"
