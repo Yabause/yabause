@@ -6261,7 +6261,7 @@ INLINE int Vdp2CheckCharAccessPenalty(int char_access, int ptn_access) {
       }
     }
 
-    if (ptn_access & 0x40) { // T7
+    if (ptn_access & 0x80) { // T7
       // T3
       if ((char_access & 0x08) != 0) {
         return 0;
