@@ -74,6 +74,7 @@ parts:
       - libqt5svg5-dev 
       - qtmultimedia5-dev 
       - libqt5opengl5-dev 
+      - resolvconf
     stage-packages:
       - libsdl2-2.0-0
       - libboost-all-dev
