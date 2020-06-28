@@ -38,7 +38,7 @@ apps:
 parts:
   yabasanshiro:
     source: "https://github.com/devmiyax/yabause.git"
-    source-branch: snaptest2
+    source-branch: master
     source-depth: 1
     source-type: git
     plugin: cmake
