@@ -38,35 +38,42 @@ apps:
 parts:
   yabasanshiro:
     source: "https://github.com/devmiyax/yabause.git"
-    source-branch: master
+    source-branch: snaptest2
     source-depth: 1
     source-type: git
-    plugin: make
-    after: [qt5]    
+    plugin: cmake
+    after: [qt5]   
+    configflags:
+      - ${SNAPCRAFT_PART_SRC}/yabause 
+    build-environment:
+      - PYTHONPATH: "/usr/local/lib/python2.7/dist-packages:/usr/lib/python2.7/dist-packages:$PYTHONPATH"
     override-pull: |
       snapcraftctl pull
       sed -i 's|^Icon=.*|Icon=usr/share/pixmaps/yabasanshiro.png|' ./yabause/src/qt/yabause.desktop.in   
-      pip install absl-py
-      pip install protobuf    
       git clone https://github.com/firebase/firebase-cpp-sdk.git -b v6.11.0 yabause/src/qt/firebase-cpp-sdk
-    override-build: |
-      cmake ./yabause -DCMAKE_INSTALL_PREFIX=/usr
-      snapcraftctl build
+      export PYTHONPATH="/usr/local/lib/python2.7/dist-packages:/usr/lib/python2.7/dist-packages:$PYTHONPATH"
+      pip install wheel
+      pip install absl-py
+      pip install protobuf
     build-packages:
       - git 
       - python-pip 
+      - python-setuptools
+      - python-wheel
+      - python-protobuf
       - cmake 
+      - build-essential
       - protobuf-compiler 
       - libprotobuf-dev 
       - libsecret-1-dev 
       - libssl-dev 
+      - zlib1g-dev 
       - libsdl2-dev 
       - libboost-all-dev 
       - qttools5-dev-tools 
       - libqt5svg5-dev 
       - qtmultimedia5-dev 
       - libqt5opengl5-dev 
-      - qtwebengine5-dev
     stage-packages:
       - libsdl2-2.0-0
       - libboost-all-dev

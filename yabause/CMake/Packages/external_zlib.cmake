@@ -26,7 +26,7 @@ if(WIN32)
       optimized ${CMAKE_CURRENT_BINARY_DIR}/zlib/install/lib/zlibstatic.lib)
 else()
   set(zlib_STATIC_LIBRARIES
-      ${CMAKE_CURRENT_BINARY_DIR}/zlib/install/lib/libz.a)
+      ${ZLIB_BUILD}/libz.a)
 endif()
 
 if(ANDROID)
