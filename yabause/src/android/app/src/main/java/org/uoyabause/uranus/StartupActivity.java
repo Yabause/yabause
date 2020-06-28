@@ -33,9 +33,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
 import android.util.Log;
 import android.widget.Toast;
 
@@ -82,7 +84,7 @@ import okhttp3.Route;
 
 public class StartupActivity extends AppCompatActivity {
 
-    final String TAG ="StartupActivity";
+    final String TAG = "StartupActivity";
 
     IabHelper mHelper;
 
@@ -127,17 +129,21 @@ public class StartupActivity extends AppCompatActivity {
     };
 
     static class MyX509TrustManager implements X509TrustManager {
-        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException { }
-        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException { }
+        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+        }
+
+        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+        }
+
         public java.security.cert.X509Certificate[] getAcceptedIssuers() {
             return new java.security.cert.X509Certificate[]{};
         }
     }
 
-    private static  OkHttpClient.Builder getUnsafeOkHttpClientbuilder() {
+    private static OkHttpClient.Builder getUnsafeOkHttpClientbuilder() {
         try {
             // Create a trust manager that does not validate certificate chains
-            final TrustManager[] trustAllCerts = new TrustManager[] {
+            final TrustManager[] trustAllCerts = new TrustManager[]{
                     new X509TrustManager() {
                         @Override
                         public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
@@ -161,7 +167,7 @@ public class StartupActivity extends AppCompatActivity {
             final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
-            builder.sslSocketFactory(sslSocketFactory, (X509TrustManager)trustAllCerts[0]);
+            builder.sslSocketFactory(sslSocketFactory, (X509TrustManager) trustAllCerts[0]);
             builder.hostnameVerifier(new HostnameVerifier() {
                 @Override
                 public boolean verify(String hostname, SSLSession session) {
@@ -174,7 +180,7 @@ public class StartupActivity extends AppCompatActivity {
         }
     }
 
-    boolean ActivateItem( Purchase purchase ){
+    boolean ActivateItem(Purchase purchase) {
         Log.d(TAG, "ActivateItem , purchase: " + purchase);
         String type = "small";
         if (purchase.getSku().equals(DonateActivity.SKU_DONATE_SMALL)) {
@@ -184,15 +190,15 @@ public class StartupActivity extends AppCompatActivity {
             type = "midium";
         }
 
-        if (purchase.getSku().equals(DonateActivity.SKU_DONATE_LARGE) || purchase.getSku().equals(DonateActivity.SKU_DONATE_EXTRA_LARGE) ) {
-            type ="large";
+        if (purchase.getSku().equals(DonateActivity.SKU_DONATE_LARGE) || purchase.getSku().equals(DonateActivity.SKU_DONATE_EXTRA_LARGE)) {
+            type = "large";
         }
 
         activating_status_ = AS_ACTIVATING;
         client_ = getUnsafeOkHttpClientbuilder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(60*3, TimeUnit.SECONDS)  // needs 3 minutes for generating md5
+                .readTimeout(60 * 3, TimeUnit.SECONDS)  // needs 3 minutes for generating md5
                 .authenticator(new Authenticator() {
                     public Request authenticate(Route route, Response response) throws IOException {
                         String credential = Credentials.basic(mFirebaseRemoteConfig.getString(ORDER_USER), mFirebaseRemoteConfig.getString(ORDER_KEY));
@@ -204,7 +210,7 @@ public class StartupActivity extends AppCompatActivity {
         sip_ = getString(R.string.check_order_url);
         String url = sip_ + "/api/orders/activate";
         try {
-            MediaType MIMEType= MediaType.parse("application/json; charset=utf-8");
+            MediaType MIMEType = MediaType.parse("application/json; charset=utf-8");
 
             String req = "{ ";
             req += "\"gpa\": \"" + purchase.getDeveloperPayload() + "\",";
@@ -213,7 +219,7 @@ public class StartupActivity extends AppCompatActivity {
             req += "\"token\": \"" + purchase.getToken() + "\",";
             req += "\"gorder\": \"" + purchase.getOrderId() + "\" }";
 
-            RequestBody requestBody = RequestBody.create (MIMEType,req);
+            RequestBody requestBody = RequestBody.create(MIMEType, req);
             Request request = new Request.Builder().url(url).post(requestBody).build();
 
             client_.newCall(request).enqueue(new Callback() {
@@ -232,13 +238,13 @@ public class StartupActivity extends AppCompatActivity {
                         JSONObject Jobject = new JSONObject(res);
                         if (Jobject.getBoolean("result") == false) {
                             errormsg_ = Jobject.getString("msg");
-                            if( errormsg_.equals("not found")){
+                            if (errormsg_.equals("not found")) {
                                 errormsg_ = getString(R.string.order_number_not_found);
                             }
-                            if( errormsg_.equals("too much")){
+                            if (errormsg_.equals("too much")) {
                                 errormsg_ = getString(R.string.order_number_used);
                             }
-                            if( errormsg_.equals("bad token")){
+                            if (errormsg_.equals("bad token")) {
                                 errormsg_ = getString(R.string.order_number_used);
                                 runOnUiThread(new Runnable() {
                                     @Override
@@ -248,19 +254,19 @@ public class StartupActivity extends AppCompatActivity {
                                     }
                                 });
                             }
-                        }else {
+                        } else {
 
                         }
                         activating_status_ = AS_IDLE;
 
-                    }catch(Exception e) {
+                    } catch (Exception e) {
                         errormsg_ = getString(R.string.network_error) + e.getLocalizedMessage();
                         activating_status_ = AS_IDLE;
                     }
                     Log.d(TAG, "ActivateItem result: " + errormsg_);
                 }
             });
-        }catch( Exception e ){
+        } catch (Exception e) {
             errormsg_ = getString(R.string.network_error) + e.getLocalizedMessage();
             Log.d(TAG, "ActivateItem failed: " + errormsg_);
             activating_status_ = AS_IDLE;
@@ -269,20 +275,20 @@ public class StartupActivity extends AppCompatActivity {
         return true;
     }
 
-    int CheckItemStatus(final Purchase purchase, int id ) {
-        if( activating_status_ != AS_IDLE) return -1;
+    int CheckItemStatus(final Purchase purchase, int id) {
+        if (activating_status_ != AS_IDLE) return -1;
 
         SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString("donate_payload", purchase.getDeveloperPayload());
-        editor.putString( "donate_item", purchase.getSku());
+        editor.putString("donate_item", purchase.getSku());
         editor.apply();
 
         activating_status_ = AS_ACTIVATING;
         OkHttpClient.Builder clientBuilder = getUnsafeOkHttpClientbuilder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(60*3, TimeUnit.SECONDS)  // needs 3 minutes for generating md5
+                .readTimeout(60 * 3, TimeUnit.SECONDS)  // needs 3 minutes for generating md5
                 .authenticator(new Authenticator() {
                     public Request authenticate(Route route, Response response) throws IOException {
                         String credential = Credentials.basic(mFirebaseRemoteConfig.getString(ORDER_USER), mFirebaseRemoteConfig.getString(ORDER_KEY));
@@ -318,6 +324,7 @@ public class StartupActivity extends AppCompatActivity {
                     Log.d(TAG, "CheckItem failed but accepted :" + errormsg_);
                     activating_status_ = AS_IDLE;
                 }
+
                 @Override
                 public void onResponse(Call call, final Response response) throws IOException {
                     String res = response.body().string();
@@ -328,7 +335,7 @@ public class StartupActivity extends AppCompatActivity {
                         SharedPreferences.Editor editor = prefs.edit();
                         if (Jobject.getBoolean("result") == false) {
                             errormsg_ = Jobject.getString("msg");
-                            if( errormsg_.equals("bad token") || errormsg_.equals("canceled") ){
+                            if (errormsg_.equals("bad token") || errormsg_.equals("canceled")) {
                                 editor.putBoolean("donated", false);
                                 editor.apply();
                                 Log.d(TAG, "CheckItem failed:" + errormsg_);
@@ -340,29 +347,29 @@ public class StartupActivity extends AppCompatActivity {
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        mHelper.consumeAsync(purchase,mConsumeFinishedListener);
+                                        mHelper.consumeAsync(purchase, mConsumeFinishedListener);
                                     }
                                 });
 
-                            }else{
+                            } else {
                                 editor.putBoolean("donated", true);
                                 editor.putBoolean("uoyabause_donation", false);
                                 editor.apply();
                                 Log.d(TAG, "CheckItem failed but accepted :" + errormsg_);
                             }
-                        }else {
+                        } else {
                             editor.putBoolean("donated", true);
                             editor.putBoolean("uoyabause_donation", false);
                             int count = Jobject.getInt("count");
                             editor.putInt("donate_activate_count", count);
                             editor.apply();
                         }
-                    }catch(Exception e) {
+                    } catch (Exception e) {
                         errormsg_ = getString(R.string.network_error) + e.getLocalizedMessage();
                     }
                 }
             });
-        }catch( Exception e ){
+        } catch (Exception e) {
             errormsg_ = getString(R.string.network_error) + e.getLocalizedMessage();
             Log.d(TAG, "CheckItem failed:" + errormsg_);
             activating_status_ = AS_IDLE;
@@ -370,14 +377,15 @@ public class StartupActivity extends AppCompatActivity {
         }
         return 0;
     }
-    boolean UpdateDonationStatus(final Purchase purchase ){
+
+    boolean UpdateDonationStatus(final Purchase purchase) {
 
         SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean("donated", true);
         editor.putBoolean("uoyabause_donation", false);
         editor.putString("donate_payload", purchase.getDeveloperPayload());
-        editor.putString( "donate_item", purchase.getSku());
+        editor.putString("donate_item", purchase.getSku());
         editor.apply();
 
         activating_status_ = AS_ACTIVATING;
@@ -386,7 +394,7 @@ public class StartupActivity extends AppCompatActivity {
         OkHttpClient.Builder clientBuilder = getUnsafeOkHttpClientbuilder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(60*3, TimeUnit.SECONDS)  // needs 3 minutes for generating md5
+                .readTimeout(60 * 3, TimeUnit.SECONDS)  // needs 3 minutes for generating md5
                 .authenticator(new Authenticator() {
                     public Request authenticate(Route route, Response response) throws IOException {
                         String credential = Credentials.basic(mFirebaseRemoteConfig.getString(ORDER_USER), mFirebaseRemoteConfig.getString(ORDER_KEY));
@@ -399,8 +407,8 @@ public class StartupActivity extends AppCompatActivity {
         sip_ = getString(R.string.check_order_url);
         String url = sip_ + "/api/orders/check";
         try {
-            MediaType MIMEType= MediaType.parse("application/json; charset=utf-8");
-            RequestBody requestBody = RequestBody.create (MIMEType,"{ \"gpa\": \"" + purchase.getDeveloperPayload() + "\" }");
+            MediaType MIMEType = MediaType.parse("application/json; charset=utf-8");
+            RequestBody requestBody = RequestBody.create(MIMEType, "{ \"gpa\": \"" + purchase.getDeveloperPayload() + "\" }");
             Request request = new Request.Builder().url(url).post(requestBody).build();
 
             client_.newCall(request).enqueue(new Callback() {
@@ -419,7 +427,7 @@ public class StartupActivity extends AppCompatActivity {
                         JSONObject Jobject = new JSONObject(res);
                         if (Jobject.getBoolean("result") == false) {
                             errormsg_ = Jobject.getString("msg");
-                            if( errormsg_.equals("canceled")){
+                            if (errormsg_.equals("canceled")) {
                                 SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
                                 SharedPreferences.Editor editor = prefs.edit();
                                 editor.putBoolean("donated", false);
@@ -428,11 +436,10 @@ public class StartupActivity extends AppCompatActivity {
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        mHelper.consumeAsync(purchase,mConsumeFinishedListener);
+                                        mHelper.consumeAsync(purchase, mConsumeFinishedListener);
                                     }
                                 });
-                            }
-                            else if( errormsg_.equals("not found")){
+                            } else if (errormsg_.equals("not found")) {
                                 errormsg_ = getString(R.string.order_number_not_found);
                                 runOnUiThread(new Runnable() {
                                     @Override
@@ -440,8 +447,7 @@ public class StartupActivity extends AppCompatActivity {
                                         ActivateItem(purchase);
                                     }
                                 });
-                            }
-                            else if( errormsg_.equals("too much")){
+                            } else if (errormsg_.equals("too much")) {
                                 errormsg_ = getString(R.string.order_number_used);
 
                                 //itemcount_--;
@@ -456,12 +462,12 @@ public class StartupActivity extends AppCompatActivity {
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        mHelper.consumeAsync(purchase,mConsumeFinishedListener);
+                                        mHelper.consumeAsync(purchase, mConsumeFinishedListener);
                                     }
                                 });
 
                             }
-                        }else {
+                        } else {
                             SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
                             SharedPreferences.Editor editor = prefs.edit();
                             int count = Jobject.getInt("count");
@@ -472,14 +478,14 @@ public class StartupActivity extends AppCompatActivity {
                         activating_status_ = AS_IDLE;
                         return;
 
-                    }catch(Exception e){
+                    } catch (Exception e) {
                         errormsg_ = getString(R.string.network_error) + e.getLocalizedMessage();
                         activating_status_ = AS_IDLE;
                         return;
                     }
                 }
             });
-        }catch( Exception e ){
+        } catch (Exception e) {
             errormsg_ = getString(R.string.network_error) + e.getLocalizedMessage();
             Log.d(TAG, "CheckItem failed:" + errormsg_);
             activating_status_ = AS_IDLE;
@@ -503,7 +509,7 @@ public class StartupActivity extends AppCompatActivity {
 
                 SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
                 Boolean hasDonated = prefs.getBoolean("donated", false);
-                if( hasDonated == false ) {
+                if (hasDonated == false) {
                     if (purchaseList_ == null || purchaseList_.size() == 0) {
                         return;
                     }
@@ -515,10 +521,10 @@ public class StartupActivity extends AppCompatActivity {
                         //}
                     }
 
-                }else{
+                } else {
 
                     Boolean uoyabause_donation = prefs.getBoolean("uoyabause_donation", false);
-                    if(uoyabause_donation){
+                    if (uoyabause_donation) {
                         return;
                     }
 
@@ -533,7 +539,7 @@ public class StartupActivity extends AppCompatActivity {
                     }
                     current_checkitem_ = 0;
                     Purchase p = purchaseList_.get(current_checkitem_);
-                    CheckItemStatus(p,current_checkitem_);
+                    CheckItemStatus(p, current_checkitem_);
                     //for (int i = 0; i < purchaseList_.size(); i++) {
                     //    Purchase p = purchaseList_.get(i);
                     //    // 0 (purchased), 1 (canceled), or 2 (refunded).
@@ -594,7 +600,6 @@ public class StartupActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
 
-
         GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
         int resultCode = googleAPI.isGooglePlayServicesAvailable(this);
 
@@ -618,7 +623,7 @@ public class StartupActivity extends AppCompatActivity {
         builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         scheduler.schedule(builder.build());
-
+/*
         Intent intent = getIntent();
         Uri uri = intent.getData();
         if ( uri != null && !uri.getPathSegments().isEmpty()) {
@@ -628,7 +633,7 @@ public class StartupActivity extends AppCompatActivity {
             startActivity(i);
             return;
         }
-
+*/
 
         final Handler handler = new Handler();
         final Runnable r = new Runnable() {
@@ -636,19 +641,35 @@ public class StartupActivity extends AppCompatActivity {
             public void run() {
                 UiModeManager uiModeManager = (UiModeManager) getSystemService(Context.UI_MODE_SERVICE);
                 SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(StartupActivity.this);
-                boolean tvmode = sharedPref.getBoolean("pref_force_androidtv_mode",false);
+                boolean tvmode = sharedPref.getBoolean("pref_force_androidtv_mode", false);
 
                 Intent i;
                 if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION || tvmode) {
                     i = new Intent(StartupActivity.this, GameSelectActivity.class);
-                }else{
+                    Log.d(TAG,"executing: GameSelectActivity");
+                } else {
                     i = new Intent(StartupActivity.this, GameSelectActivityPhone.class);
+                    Log.d(TAG,"executing: GameSelectActivityPhone");
+                }
+
+                String sargs = getIntent().getDataString();
+                if ( sargs != null ) {
+                    Log.d(TAG,"getDataString = " + sargs);
+                    if( sargs.contains("//login") ){
+                        i.putExtra("showPin", true);
+                    }
+                }
+
+                Uri args = getIntent().getData();
+                if ( args != null && !args.getPathSegments().isEmpty()) {
+                    Log.d(TAG,"getData = " + args.toString());
+                    i.setData(args);
                 }
                 startActivity(i);
                 return;
             }
         };
-        handler.postDelayed(r,2000);
+        handler.postDelayed(r, 2000);
 
     }
 

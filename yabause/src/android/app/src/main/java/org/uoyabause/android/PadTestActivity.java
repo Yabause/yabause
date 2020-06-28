@@ -72,7 +72,7 @@ public class PadTestActivity extends AppCompatActivity implements PadTestFragmen
 
     // Immersive mode
     View decor = this.getWindow().getDecorView();
-    decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE);
+    decor.setSystemUiVisibility( View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE);
 
     FrameLayout frame = new FrameLayout(this);
     frame.setId(CONTENT_VIEW_ID);

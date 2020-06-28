@@ -210,7 +210,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg);
 static void Vdp2DrawRotationSync();
 static void Vdp2DrawRBG0(void);
 
-static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
+u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
 static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y);
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy, int lines);
 static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask);
@@ -1135,7 +1135,7 @@ static u16 Vdp2ColorRamGetColorRaw(u32 colorindex) {
   return 0;
 }
 
-static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
+u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
 {
   switch (Vdp2Internal.ColorMode)
   {
@@ -2435,21 +2435,20 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
     else
       sv = v + info->sv;
 
-    sh &= (info->cellw - 1);
+    //sh &= (info->cellw - 1);
     sv &= (info->cellh - 1);
 
     switch (info->colornumber) {
     case 0:
-      baseaddr = baseaddr + (sh >> 1) + (sv * (info->cellw >> 1));
       for (j = 0; j < vdp2width; j++)
       {
         u32 h = ((j*inch) >> 8);
-        u32 addr = (baseaddr + (h >> 1));
+        u32 addr = ((sh + h)&(info->cellw-1) + (sv*info->cellw))>>1; // Not confrimed!
         if (addr >= 0x80000) {
           *texture->textdata++ = 0x0000;
         }
         else {
-          u8 dot = T1ReadByte(Vdp2Ram, addr);
+          u8 dot = T1ReadByte(Vdp2Ram, baseaddr + addr);
           u32 alpha = info->alpha;
           if (!(h & 0x01)) dot >> 4;
           if (!(dot & 0xF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
@@ -2471,16 +2470,18 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
         }
       }
       break;
-    case 1:
-      baseaddr += sh + sv * info->cellw;
-      
+    case 1: {
+
+      // Shining force 3 battle sciene
+      u32 maxaddr = (info->cellw * info->cellh) + info->cellw;
       for (j = 0; j < vdp2width; j++)
       {
         int h = ((j*inch) >> 8);
         u32 alpha = info->alpha;
-        u8 dot = T1ReadByte(Vdp2Ram, baseaddr + h);
-        if (!dot && info->transparencyenable) { 
-          *texture->textdata++ = 0; continue; 
+        u32 addr = ((sh + h)&(info->cellw-1))  + sv * info->cellw;
+        u8 dot = T1ReadByte(Vdp2Ram, baseaddr + addr);
+        if (!dot && info->transparencyenable) {
+          *texture->textdata++ = 0; continue;
         }
         else {
           color = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
@@ -2496,33 +2497,36 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
             break;
           }
         }
-        *texture->textdata++ = color | (alpha<<24);
+        *texture->textdata++ = color | (alpha << 24);
       }
-
       break;
+    }
     case 2:
-      baseaddr += ((sh + sv * info->cellw) << 1);
+      //baseaddr += ((sh + sv * info->cellw) << 1);
       for (j = 0; j < vdp2width; j++)
       {
-        int h = ((j*inch) >> 8) << 1;
-        *texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr + h);
+        int h = ((j*inch) >> 8);
+        u32 addr = (((sh + h)&(info->cellw - 1)) + sv * info->cellw) << 1;  // Not confrimed
+        *texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr + addr);
 
       }
       break;
     case 3:
-      baseaddr += ((sh + sv * info->cellw) << 1);
+      //baseaddr += ((sh + sv * info->cellw) << 1);
       for (j = 0; j < vdp2width; j++)
       {
-        int h = ((j*inch) >> 8) << 1;
-        *texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr + h);
+        int h = ((j*inch) >> 8);
+        u32 addr = (((sh + h)&(info->cellw - 1)) + sv * info->cellw) << 1;  // Not confrimed
+        *texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr + addr);
       }
       break;
     case 4:
-      baseaddr += ((sh + sv * info->cellw) << 2);
+      //baseaddr += ((sh + sv * info->cellw) << 2);
       for (j = 0; j < vdp2width; j++)
       {
-        int h = (j*inch >> 8) << 2;
-        *texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr + h);
+        int h = (j*inch >> 8);
+        u32 addr = (((sh + h)&(info->cellw - 1)) + sv * info->cellw) << 2;  // Not confrimed
+        *texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr + addr);
       }
       break;
     }
@@ -2532,7 +2536,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy, int lines )
 {
-  u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) |
+  u64 cacheaddr = (((u64)(info->priority&0xF))<<35) | ((u32)(info->alpha >> 3) << 27) |
     (info->paladdr << 20) | info->charaddr | info->transparencyenable |
     ((info->patternpixelwh >> 4) << 1) | (((u64)(info->coloroffset >> 8) & 0x07) << 32);
 
@@ -2593,10 +2597,12 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 
   if (1 == YglIsCached(_Ygl->texture_manager, cacheaddr, &c))
   {
+    //printf("x=%d,y=%d %lx cached\n",x,y,cacheaddr);
     YglCachedQuadOffset(&tile, &c, cx, cy, info->coordincx, info->coordincy);
     return;
   }
 
+  //printf("x=%d,y=%d %lx not cached\n",x,y,cacheaddr);
   YglQuadOffset(&tile, texture, &c, cx, cy, info->coordincx, info->coordincy);
   YglCacheAdd(_Ygl->texture_manager, cacheaddr, &c);
 
@@ -3865,6 +3871,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         if (parameter->coefenab) {
           if (vdp2rGetKValue(parameter, i) == 0) {
             *(texture->textdata++) = 0x00000000;
+            i += hstep;
             continue;
           }
         }
@@ -3874,6 +3881,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         if (parameter->coefenab) {
           if (vdp2rGetKValue(parameter, i) == 0) {
             *(texture->textdata++) = 0x00000000;
+            i += hstep;
             continue;
           }
         }
@@ -3888,6 +3896,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
               parameter = &paraB;
               if( vdp2rGetKValue(parameter, i) == 0) {
                 *(texture->textdata++) = 0x00000000;
+                i += hstep;
                 continue;
               }
             }
@@ -3911,6 +3920,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
       if (parameter == NULL)
       {
         *(texture->textdata++) = 0x00000000;
+        i += hstep;
         continue;
       }
 
@@ -3918,10 +3928,9 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
       float fv = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
       h = fh;
       v = fv;
-      //fh = fh-h;
-      //fv = fv-h;
-      //h2 = h + 1;
-      //v2 = v + 1;
+
+      //v = jj;
+      //h = ii;
 
       if (info->isbitmap)
       {
@@ -3938,13 +3947,15 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
           break;
         case OVERMODE_TRANSE:
           if ((h < 0) || (h >= cellw) || (v < 0) || (v >= cellh)) {
-            *(texture->textdata++) = 0x00;
+            *(texture->textdata++) = 0x0;
+            i += hstep;
             continue;
           }
           break;
         case OVERMODE_512:
           if ((h < 0) || (h > 512) || (v < 0) || (v > 512)) {
             *(texture->textdata++) = 0x00;
+            i += hstep;
             continue;
           }
         }
@@ -3960,6 +3971,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         case OVERMODE_TRANSE:
           if ((h < 0) || (h >= parameter->MaxH) || (v < 0) || (v >= parameter->MaxV)) {
             *(texture->textdata++) = 0x00;
+            i += hstep;
             continue;
           }
           x = h;
@@ -3986,6 +3998,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         case OVERMODE_512:
           if ((h < 0) || (h > 512) || (v < 0) || (v > 512)) {
             *(texture->textdata++) = 0x00;
+            i += hstep;
             continue;
           }
           x = h;
@@ -4131,6 +4144,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
           }
         }
       }
+
       *(texture->textdata++) = color;
       i += hstep;
     }
@@ -4764,8 +4778,8 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   // ??? sakatuku2 new scene bug ???
   if (sprite.h != 0 && sprite.w == 0) {
-    sprite.w = 8;
-    sprite.h = 8;
+    sprite.w = 1;
+    sprite.h = 1;
   }
 
   sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
@@ -5909,6 +5923,7 @@ void VIDOGLVdp2DrawStart(void)
 
 void VIDOGLVdp2DrawEnd(void)
 {
+  if (fixVdp2Regs == NULL) return;
   Vdp2DrawRotationSync();
   FrameProfileAdd("Vdp2DrawRotationSync end");
 
@@ -6149,6 +6164,119 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
 
 }
 
+INLINE int Vdp2CheckCharAccessPenalty(int char_access, int ptn_access) {
+
+  if (_Ygl->rwidth >= 640) {
+    if (char_access < ptn_access) {
+      return -1;
+    }
+    switch (ptn_access) {
+    case 0:
+      if (char_access > 2) {
+        return -1;
+      }
+      else {
+        return 0;
+      }
+      break;
+    case 1:
+      if (char_access == 0 || char_access > 3) {
+        return -1;
+      }
+      else {
+        return 0;
+      }
+      break;
+    case 2:
+      if (char_access == 0 || char_access == 2 || char_access == 3 ) {
+        return 0;
+      }
+      else {
+        return -1;
+      }
+      break;
+    case 3:
+      if (char_access == 0 || char_access == 1 || char_access == 3) {
+        return 0;
+      }
+      else {
+        return -1;
+      }
+      break;
+    }
+    return -1;
+  }
+  else {
+    switch (ptn_access) {
+    case 0:
+      if (char_access == 3) {
+        return -1;
+      }
+      else {
+        return 0;
+      }
+      break;
+    case 1:
+      if (char_access == 4) {
+        return -1;
+      }
+      else {
+        return 0;
+      }
+      break;
+    case 2:
+      if (char_access == 4 || char_access == 5) {
+        return -1;
+      }
+      else {
+        return 0;
+      }
+      break;
+    case 3:
+      if (char_access == 4 || char_access == 5 || char_access == 6) {
+        return -1;
+      }
+      else {
+        return 0;
+      }
+      break;
+    case 4:
+      if (char_access > 3) {
+        return -1;
+      }
+      else {
+        return 0;
+      }
+      break;
+    case 5:
+      if (char_access >= 1 && char_access <= 3) {
+        return 0;
+      }
+      else {
+        return -1;
+      }
+      break;
+    case 6:
+      if (char_access == 2 || char_access == 3) {
+        return 0;
+      }
+      else {
+        return -1;
+      }
+      break;
+    case 7:
+      if (char_access == 3) {
+        return 0;
+      }
+      else {
+        return -1;
+      }
+      break;
+    }
+  }
+  return 0;
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -6158,6 +6286,9 @@ static void Vdp2DrawNBG0(void)
   vdp2draw_struct info = { 0 };
   YglTexture texture;
   YglCache tmpc;
+  int char_access = -1;
+  int ptn_access = -1;
+
   info.dst = 0;
   info.uclipmode = 0;
   info.id = 0;
@@ -6177,10 +6308,14 @@ static void Vdp2DrawNBG0(void)
     info.char_bank[i] = 0;
     info.pname_bank[i] = 0;
     for (int j=0; j < 8; j++) {
-      if (AC_VRAM[i][j] == 0x04) 
+      if (AC_VRAM[i][j] == 0x04) {
         info.char_bank[i] = 1;
-      if (AC_VRAM[i][j] == 0x00)
+        if (char_access == -1)char_access = j;
+      }
+      if (AC_VRAM[i][j] == 0x00) {
         info.pname_bank[i] = 1;
+        if (ptn_access == -1)ptn_access = j;
+      }
     }
   }
 
@@ -6263,6 +6398,7 @@ static void Vdp2DrawNBG0(void)
     // NBG0 mode
     info.enable = fixVdp2Regs->BGON & 0x1;
     if (!info.enable) return;
+    if (char_access == -1) return;
 
     if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0)
     {
@@ -6568,6 +6704,9 @@ static void Vdp2DrawNBG1(void)
   vdp2draw_struct info;
   YglTexture texture;
   YglCache tmpc;
+  int char_access = -1;
+  int ptn_access = -1;
+  
   info.dst = 0;
   info.id = 1;
   info.uclipmode = 0;
@@ -6583,12 +6722,17 @@ static void Vdp2DrawNBG1(void)
     info.char_bank[i] = 0;
     info.pname_bank[i] = 0;
     for (int j = 0; j < 8; j++) {
-      if (AC_VRAM[i][j] == 0x05)
+      if (AC_VRAM[i][j] == 0x05) {
         info.char_bank[i] = 1;
-      if (AC_VRAM[i][j] == 0x01)
+        if (char_access == -1) char_access = j;
+      }
+      if (AC_VRAM[i][j] == 0x01) {
         info.pname_bank[i] = 1;
+        if (ptn_access == -1) ptn_access = j;
+      }
     }
   }
+  if (char_access == -1) return;
 
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x200);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 2) & 0x3;
@@ -6867,6 +7011,8 @@ static void Vdp2DrawNBG2(void)
   info.cob = 0;
   info.specialcolorfunction = 0;
   info.blendmode = 0;
+  int char_access = -1;
+  int ptn_access = -1;
 
   info.enable = fixVdp2Regs->BGON & 0x4;
   if (!info.enable) return;
@@ -6875,13 +7021,19 @@ static void Vdp2DrawNBG2(void)
     info.char_bank[i] = 0;
     info.pname_bank[i] = 0;
     for (int j = 0; j < 8; j++) {
-      if (AC_VRAM[i][j] == 0x06)
+      if (AC_VRAM[i][j] == 0x06) {
         info.char_bank[i] = 1;
-      if (AC_VRAM[i][j] == 0x02)
+        if (char_access == -1)char_access = j;
+      }
+      if (AC_VRAM[i][j] == 0x02) {
         info.pname_bank[i] = 1;
+        if (ptn_access == -1)ptn_access = j;
+      }
     }
   }
-  
+  //if (char_access == -1) return;
+
+ 
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x400);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 4) & 0x3;
 
@@ -6972,6 +7124,10 @@ static void Vdp2DrawNBG2(void)
   info.lineinc = 0;
   info.isverticalscroll = 0;
   info.x = fixVdp2Regs->SCXN2 & 0x7FF;
+  // Setting miss of cycle patten need to plus 8 dot vertical
+  if (Vdp2CheckCharAccessPenalty(char_access,ptn_access)!=0) {
+    info.x -= 8;
+  }
   info.y = fixVdp2Regs->SCYN2 & 0x7FF;
   Vdp2DrawMapTest(&info, &texture);
 
@@ -6991,6 +7147,8 @@ static void Vdp2DrawNBG3(void)
   info.cob = 0;
   info.specialcolorfunction = 0;
   info.blendmode = 0;
+  int char_access = -1;
+  int ptn_access = -1;
 
   info.enable = fixVdp2Regs->BGON & 0x8;
   if (!info.enable) return;
@@ -6999,12 +7157,17 @@ static void Vdp2DrawNBG3(void)
     info.char_bank[i] = 0;
     info.pname_bank[i] = 0;
     for (int j = 0; j < 8; j++) {
-      if (AC_VRAM[i][j] == 0x07)
+      if (AC_VRAM[i][j] == 0x07) {
         info.char_bank[i] = 1;
-      if (AC_VRAM[i][j] == 0x03)
+        if (char_access == -1)char_access = j;
+      }
+      if (AC_VRAM[i][j] == 0x03) {
         info.pname_bank[i] = 1;
+        if (ptn_access == -1)ptn_access = j;
+      }
     }
   }
+  //if (char_access == -1) return;
 
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x800);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 6) & 0x3;
@@ -7096,10 +7259,15 @@ static void Vdp2DrawNBG3(void)
   info.lineinc = 0;
   info.isverticalscroll = 0;
   info.x = fixVdp2Regs->SCXN3 & 0x7FF;
+  // Setting miss of cycle patten need to plus 8 dot vertical
+  if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
+    info.x -= 8;
+  }
   info.y = fixVdp2Regs->SCYN3 & 0x7FF;
   Vdp2DrawMapTest(&info, &texture);
 
 }
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -7457,14 +7625,13 @@ static void Vdp2DrawRBG0(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp2DrawScreens(void)
-{
-  fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
-  if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
-  memcpy(&baseVdp2Regs, fixVdp2Regs, sizeof(Vdp2));
-  fixVdp2Regs = &baseVdp2Regs;
+void VDP2genVRamCyclePattern() {
+  int cpu_cycle_a = 0;
+  int cpu_cycle_b = 0;
+  int i = 0;
 
-  
+  fixVdp2Regs = Vdp2Regs;
+
   AC_VRAM[0][0] = (fixVdp2Regs->CYCA0L >> 12) & 0x0F;
   AC_VRAM[0][1] = (fixVdp2Regs->CYCA0L >> 8) & 0x0F;
   AC_VRAM[0][2] = (fixVdp2Regs->CYCA0L >> 4) & 0x0F;
@@ -7474,7 +7641,19 @@ void VIDOGLVdp2DrawScreens(void)
   AC_VRAM[0][6] = (fixVdp2Regs->CYCA0U >> 4) & 0x0F;
   AC_VRAM[0][7] = (fixVdp2Regs->CYCA0U >> 0) & 0x0F;
 
+  for (i = 0; i < 8; i++) {
+    if (AC_VRAM[0][i] >= 0x0E) {
+      cpu_cycle_a++;
+    }
+    else if (AC_VRAM[0][i] >= 4 && AC_VRAM[0][i] <= 7 ) {
+      if ((fixVdp2Regs->BGON & (1 << (AC_VRAM[0][i] - 4))) == 0) {
+        cpu_cycle_a++;
+      }
+    }
+  }
+
   if (fixVdp2Regs->RAMCTL & 0x100) {
+    int fcnt = 0;
     AC_VRAM[1][0] = (fixVdp2Regs->CYCA1L >> 12) & 0x0F;
     AC_VRAM[1][1] = (fixVdp2Regs->CYCA1L >> 8) & 0x0F;
     AC_VRAM[1][2] = (fixVdp2Regs->CYCA1L >> 4) & 0x0F;
@@ -7483,6 +7662,24 @@ void VIDOGLVdp2DrawScreens(void)
     AC_VRAM[1][5] = (fixVdp2Regs->CYCA1U >> 8) & 0x0F;
     AC_VRAM[1][6] = (fixVdp2Regs->CYCA1U >> 4) & 0x0F;
     AC_VRAM[1][7] = (fixVdp2Regs->CYCA1U >> 0) & 0x0F;
+    
+    for (i = 0; i < 8; i++) {
+      if (AC_VRAM[0][i] == 0x0E) {
+        if (AC_VRAM[1][i] != 0x0E) {
+          cpu_cycle_a--;
+        }
+        else {
+          if (fcnt == 0) {
+            cpu_cycle_a--;
+          }
+        }
+      }
+      if (AC_VRAM[1][i] == 0x0F) {
+        fcnt++;
+      }
+    }
+    if (fcnt == 0)cpu_cycle_a = 0;
+    if (cpu_cycle_a < 0)cpu_cycle_a = 0;
   }
   else {
     AC_VRAM[1][0] = AC_VRAM[0][0];
@@ -7504,7 +7701,20 @@ void VIDOGLVdp2DrawScreens(void)
   AC_VRAM[2][6] = (fixVdp2Regs->CYCB0U >> 4) & 0x0F;
   AC_VRAM[2][7] = (fixVdp2Regs->CYCB0U >> 0) & 0x0F;
 
+  for (i = 0; i < 8; i++) {
+    if (AC_VRAM[2][i] >= 0x0E) {
+      cpu_cycle_b++;
+    }
+    else if (AC_VRAM[2][i] >= 4 && AC_VRAM[2][i] <= 7 ) {
+      if ((fixVdp2Regs->BGON & (1 << (AC_VRAM[2][i] - 4))) == 0) {
+        cpu_cycle_b++;
+      }
+    }
+  }
+
+
   if (fixVdp2Regs->RAMCTL & 0x200) {
+    int fcnt = 0;
     AC_VRAM[3][0] = (fixVdp2Regs->CYCB1L >> 12) & 0x0F;
     AC_VRAM[3][1] = (fixVdp2Regs->CYCB1L >> 8) & 0x0F;
     AC_VRAM[3][2] = (fixVdp2Regs->CYCB1L >> 4) & 0x0F;
@@ -7513,6 +7723,24 @@ void VIDOGLVdp2DrawScreens(void)
     AC_VRAM[3][5] = (fixVdp2Regs->CYCB1U >> 8) & 0x0F;
     AC_VRAM[3][6] = (fixVdp2Regs->CYCB1U >> 4) & 0x0F;
     AC_VRAM[3][7] = (fixVdp2Regs->CYCB1U >> 0) & 0x0F;
+
+    for (i = 0; i < 8; i++) {
+      if (AC_VRAM[2][i] == 0x0E ) {
+        if (AC_VRAM[3][i] != 0x0E) {
+          cpu_cycle_b--;
+        }
+        else {
+          if (fcnt == 0) {
+            cpu_cycle_b--;
+          }
+        }
+      }
+      if (AC_VRAM[3][i] == 0x0F) {
+        fcnt++;
+      }
+    }
+    if(fcnt == 0 )cpu_cycle_b = 0;
+    if (cpu_cycle_b < 0)cpu_cycle_b = 0;
   }
   else {
     AC_VRAM[3][0] = AC_VRAM[2][0];
@@ -7525,6 +7753,37 @@ void VIDOGLVdp2DrawScreens(void)
     AC_VRAM[3][7] = AC_VRAM[2][7];
   }
 
+  //cpu_cycle_a = 1;
+  //cpu_cycle_b = 1;
+
+  if (cpu_cycle_a == 0) {
+    Vdp2External.cpu_cycle_a = 200;
+  }
+  else if (Vdp2External.cpu_cycle_a == 1) {
+    Vdp2External.cpu_cycle_a = 24;
+  }
+  else {
+    Vdp2External.cpu_cycle_a = 2;
+  }
+
+  if (cpu_cycle_b == 0) {
+    Vdp2External.cpu_cycle_b = 200;
+  }
+  else if (Vdp2External.cpu_cycle_a == 1) {
+    Vdp2External.cpu_cycle_b = 24;
+  }
+  else {
+    Vdp2External.cpu_cycle_b = 2;
+  }
+
+}
+
+void VIDOGLVdp2DrawScreens(void)
+{
+  fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
+  if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
+  memcpy(&baseVdp2Regs, fixVdp2Regs, sizeof(Vdp2));
+  fixVdp2Regs = &baseVdp2Regs;
 
   YglUpdateColorRam();
 

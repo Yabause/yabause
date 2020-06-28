@@ -66,8 +66,8 @@ android {
         minSdkVersion 21
         targetSdkVersion 29
         multiDexEnabled true
-        versionCode 117
-        versionName '3.0.0'
+        versionCode 137
+        versionName '3.2.4'
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.pro
@@ -203,7 +203,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:20.1.0'
     implementation 'com.google.firebase:firebase-config:19.1.0'
     implementation 'com.google.android.gms:play-services-analytics:17.0.0'
-    implementation 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
+    //implementation 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
+    implementation files('libs/activeandroid-3.1.0-SNAPSHOT.jar')
     implementation 'com.github.bumptech.glide:glide:4.9.0'
     implementation 'commons-io:commons-io:2.5'
     implementation 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'

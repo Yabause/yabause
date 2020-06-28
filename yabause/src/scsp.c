@@ -4359,11 +4359,10 @@ scsp_w_d (u32 a, u32 d)
           return;
         }
     }
-  else if (a < 0x700)
-    {
-
-    }
-  else if (a < 0xee4)
+  else if (a < 0x700)  {
+  }else if (a >= 0xEC0 && a <= 0xEDF){
+    scsp_dsp.efreg[ (a>>1) & 0x1F] = d;
+  }else if (a < 0xee4)
     {
       a &= 0x3ff;
       *(u32 *)&scsp_dcr[a] = d;
@@ -4393,8 +4392,14 @@ scsp_r_b (u32 a)
     }
   else if (a < 0x700)
     {
-
+  }else if (a >= 0xEC0 && a <= 0xEDF){
+    u16 val = scsp_dsp.efreg[ (a>>1) & 0x1F];
+    if( a&0x01 == 0){
+      return val >> 8;
+    }else{
+      return val & 0xFF;
     }
+  }
   else if (a < 0xee4)
     {
 
@@ -4485,7 +4490,7 @@ scsp_r_w (u32 a)
       return (scsp_dsp.mixs[((a & 0x3F) >> 2)]>>4)&0xFFFF;
     }
   }else if (a >= 0xEC0 && a <= 0xEDF){
-    return scsp_dsp.efreg[a & 0x1F];
+    return scsp_dsp.efreg[ (a>>1) & 0x1F];
   }else if (a == 0xee0) { 
     return scsp_dsp.exts[0]; 
   }else if (a == 0xee2) { 
@@ -4913,8 +4918,8 @@ void SyncSh2And68k(){
     */
     // Memory Access cycle = 128 times per 44.1Khz
     // 28437500 / 4410 / 128 = 50
-    SH2Core->AddCycle(MSH2, 50);
-    SH2Core->AddCycle(SSH2, 50);
+    //SH2Core->AddCycle(MSH2, 50);
+    //SH2Core->AddCycle(SSH2, 50);
 
     if (mem_access_counter++ >= 128) {
 #if defined(ARCH_IS_LINUX)

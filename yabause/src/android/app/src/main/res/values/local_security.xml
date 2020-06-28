@@ -32,6 +32,12 @@
     <string name="schema" translatable="false">fkweorijc</string>
     <string name="nend_spoid" translatable="false">000000</string>
     <string name="nend_apikey" translatable="false">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</string>
+
+    <string name="key_getLoginPinIn" translatable="false" >pass</string>
+    <string name="key_getTokenAndDelete" translatable="false" >pass</string>
+    <string name="url_getLoginPinIn" translatable="false" >"https://localhost:3000/getLoginPinIn"</string>
+    <string name="url_getTokenAndDelete" translatable="false" >"https://localhost:3000/getTokenAndDelete"</string>
+
     <!--
     <string name="check_order_url" translatable="false">http://192.168.0.8:3000</string>
     -->

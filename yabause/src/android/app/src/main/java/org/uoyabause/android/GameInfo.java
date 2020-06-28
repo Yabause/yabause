@@ -430,7 +430,7 @@ public class GameInfo extends Model {
             encoded_product_id = encoded_product_id.replace(".","%2E");
             encoded_product_id = encoded_product_id.replace("-","%2D");
             encoded_product_id = encoded_product_id.replace(" ","%20");
-            String urlstr = "http://www.uoyabause.org/api/games/" + encoded_product_id +"/getstatus";
+            String urlstr = "https://www.uoyabause.org/api/games/" + encoded_product_id +"/getstatus";
             Context ctx = YabauseApplication.getAppContext();
             String user = ctx.getString(R.string.basic_user);
             String password = ctx.getString(R.string.basic_password);
@@ -481,7 +481,7 @@ public class GameInfo extends Model {
                                 .put("game_title", this.game_title)
                                 .put("input_device", this.input_device)
                         );
-                        urlstr = "http://www.uoyabause.org/api/games/";
+                        urlstr = "https://www.uoyabause.org/api/games/";
                         MediaType MIMEType = MediaType.parse("application/json; charset=utf-8");
                         RequestBody requestBody = RequestBody.create(MIMEType, job.toString());
                         Request request = new Request.Builder().url(urlstr).post(requestBody).build();

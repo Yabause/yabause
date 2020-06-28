@@ -1936,7 +1936,7 @@ static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer) {
   chdlba = loglba;
   for (i = 0; i < disc.session_num; i++)
   {
-    for (j = 0; j < disc.session[i].track_num; j++)
+    for (j = 0; j < disc.session[i].track_num-1; j++)
     {
       //if (j == 1) {
       //  int a = 0;

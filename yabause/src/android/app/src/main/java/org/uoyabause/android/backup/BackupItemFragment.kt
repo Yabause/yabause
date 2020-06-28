@@ -347,7 +347,7 @@ class BackupItemFragment : AuthFragment(),
             Log.e(TAG, "Fail to convert to json", e)
         }
     }
-
+/*
     fun setFullscreen(activity: Activity) {
         if (Build.VERSION.SDK_INT > 10) {
             var flags =
@@ -378,7 +378,7 @@ class BackupItemFragment : AuthFragment(),
                 )
         }
     }
-
+*/
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated

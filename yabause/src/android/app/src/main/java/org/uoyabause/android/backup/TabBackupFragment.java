@@ -180,7 +180,7 @@ public class TabBackupFragment extends Fragment  {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        disableFullScreen();
+//        disableFullScreen();
 /*
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
@@ -193,7 +193,7 @@ public class TabBackupFragment extends Fragment  {
 
     @Override
     public void onDetach() {
-        enableFullScreen();
+        //enableFullScreen();
         super.onDetach();
         mListener = null;
     }
