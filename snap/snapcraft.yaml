@@ -38,30 +38,36 @@ apps:
 parts:
   yabasanshiro:
     source: "https://github.com/devmiyax/yabause.git"
-    source-branch: master
+    source-branch: snaptest2
     source-depth: 1
     source-type: git
     plugin: cmake
     after: [qt5]   
     configflags:
       - ${SNAPCRAFT_PART_SRC}/yabause 
-      - -DCMAKE_INSTALL_PREFIX=/usr
     build-environment:
       - PYTHONPATH: "/usr/local/lib/python2.7/dist-packages:/usr/lib/python2.7/dist-packages:$PYTHONPATH"
     override-pull: |
       snapcraftctl pull
       sed -i 's|^Icon=.*|Icon=usr/share/pixmaps/yabasanshiro.png|' ./yabause/src/qt/yabause.desktop.in   
       git clone https://github.com/firebase/firebase-cpp-sdk.git -b v6.11.0 yabause/src/qt/firebase-cpp-sdk
+      export PYTHONPATH="/usr/local/lib/python2.7/dist-packages:/usr/lib/python2.7/dist-packages:$PYTHONPATH"
+      pip install wheel
+      pip install absl-py
+      pip install protobuf
     build-packages:
       - git 
       - python-pip 
       - python-setuptools
+      - python-wheel
+      - python-protobuf
       - cmake 
       - build-essential
       - protobuf-compiler 
       - libprotobuf-dev 
       - libsecret-1-dev 
       - libssl-dev 
+      - zlib1g-dev 
       - libsdl2-dev 
       - libboost-all-dev 
       - qttools5-dev-tools 
