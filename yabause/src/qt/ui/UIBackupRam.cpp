@@ -627,7 +627,9 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 		u32 id = cbDeviceList->itemData(cbDeviceList->currentIndex()).toInt();
 		string filejson;
 		backupman_->getFilelist(id, filejson);
-		backupman_->getFile(index, new_backup_data);
+    if (backupman_->getFile(index, new_backup_data) != 0) {
+      CommonDialogs::information(QtYabause::translate("Fail to export backup data"));
+    }
 
 		firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
 		firebase::auth::User *user = auth->current_user();
