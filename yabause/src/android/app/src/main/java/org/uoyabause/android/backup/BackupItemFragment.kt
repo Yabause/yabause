@@ -464,7 +464,8 @@ class BackupItemFragment : AuthFragment(),
                         } else {
                             YabauseRunnable.deletefile(backupitem.index_)
                         }
-                        view_!!.removeViewAt(position)
+                        //view_!!.clearFocus()
+                        //view_!!.removeViewAt(position)
                         _items!!.removeAt(position)
                         adapter_!!.notifyItemRemoved(position)
                         adapter_!!.notifyItemRangeChanged(
