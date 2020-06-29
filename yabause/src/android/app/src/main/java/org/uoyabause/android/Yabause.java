@@ -267,7 +267,7 @@ public class Yabause extends AppCompatActivity implements
     mNavigationView.setNavigationItemSelectedListener(this);
     Menu menu = mNavigationView.getMenu();
 
-    if(BuildConfig.BUILD_TYPE != "debug" ) {
+    if(!BuildConfig.BUILD_TYPE.equals("debug")) {
       MenuItem rec = menu.findItem(R.id.record);
       if( rec != null ){
         rec.setVisible(false);
@@ -832,9 +832,12 @@ public class Yabause extends AppCompatActivity implements
         transaction.show(fragment);
         transaction.commit();
       }
+      break;
 
       case R.id.record: {
-        YabauseRunnable.record( YabauseStorage.getStorage().getRecordPath() );
+        if( BuildConfig.BUILD_TYPE.equals("debug") ) {
+          YabauseRunnable.record(YabauseStorage.getStorage().getRecordPath());
+        }
       }
       break;
 
