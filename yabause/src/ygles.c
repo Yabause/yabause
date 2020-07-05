@@ -3360,6 +3360,9 @@ void YglRenderFrameBuffer(int from, int to) {
     rotate.m[1][0] = paraA.deltaXst;
     rotate.m[1][1] = paraA.deltaYst;
     YglTranslatef(&rotate, -paraA.Xst, -paraA.Yst, 0.0f);
+    if( _Ygl->rheight <= 240 ){ 
+      YglScalef(&rotate, 1.0f, 0.5f, 1.0f);
+    }
     YglMatrixMultiply(&result, &_Ygl->mtxModelView, &rotate);
     cwidth = Vdp1Regs->systemclipX2;
     cheight = Vdp1Regs->systemclipY2;

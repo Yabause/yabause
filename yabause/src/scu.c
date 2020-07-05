@@ -1258,7 +1258,7 @@ void ScuExec(u32 timing) {
        ScuTimer1Exec(timing);
      }
      else {
-       if (yabsys.LineCount == ScuRegs->T0C) {
+       if (yabsys.LineCount == ScuRegs->T0C || ScuRegs->T0C > 500 ) {
          ScuTimer1Exec(timing);
        }
      }

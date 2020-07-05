@@ -216,6 +216,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask);
 static INLINE u16 Vdp2ColorRamGetColorRaw(u32 colorindex);
 static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg);
+void Vdp2DrawMapPerLineNbg23(vdp2draw_struct *info, YglTexture *texture, int id, int xoffset );
 
 // Window Parameter
 static vdp2WindowInfo * m_vWindinfo0 = NULL;
@@ -3142,6 +3143,174 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture) {
 
     }
     if((v & linemask) == linemask) lineindex++;
+    texture->textdata += texture->w;
+  }
+
+}
+
+void Vdp2DrawMapPerLineNbg23(vdp2draw_struct *info, YglTexture *texture, int id, int xoffset ) {
+
+  int sx; //, sy;
+  int mapx, mapy;
+  int planex, planey;
+  int pagex, pagey;
+  int charx, chary;
+  int dot_on_planey;
+  int dot_on_pagey;
+  int dot_on_planex;
+  int dot_on_pagex;
+  int h, v;
+  const int planeh_shift = 9 + (info->planeh - 1);
+  const int planew_shift = 9 + (info->planew - 1);
+  const int plane_shift = 9;
+  const int plane_mask = 0x1FF;
+  const int page_shift = 9 - 7 + (64 / info->pagewh);
+  const int page_mask = 0x0f >> ((info->pagewh / 32) - 1);
+
+  int preplanex = -1;
+  int preplaney = -1;
+  int prepagex = -1;
+  int prepagey = -1;
+  int mapid = 0;
+  int premapid = -1;
+  
+  info->patternpixelwh = 8 * info->patternwh;
+  info->draww = vdp2width;
+
+  int res_shift = 0;
+  if (vdp2height >= 448){
+    info->drawh = (vdp2height >> 1);
+    res_shift = 1;
+  }else{
+    info->drawh = vdp2height;
+    res_shift = 0;
+  }
+
+  for (v = 0; v < vdp2height; v += 1) {  
+
+    int targetv = 0;
+    Vdp2 * regs = Vdp2RestoreRegs(v>>res_shift, Vdp2Lines);
+
+    if( id == 2 ){
+      sx = (regs->SCXN2 & 0x7FF) + xoffset;
+      targetv = (regs->SCYN2 & 0x7FF);
+    }else if( id == 3 ){
+      sx = (regs->SCXN3 & 0x7FF) + xoffset;
+      targetv = (regs->SCYN3 & 0x7FF);
+    }else{
+      LOG("Bad id");
+      return;
+    }
+    
+    // determine which chara shoud be used.
+    //mapy   = (v+sy) / (512 * info->planeh);
+    mapy = (targetv) >> planeh_shift;
+    //int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
+    dot_on_planey = (targetv)-(mapy << planeh_shift);
+    mapy = mapy & 0x01;
+    //planey = dot_on_planey / 512;
+    planey = dot_on_planey >> plane_shift;
+    //int dot_on_pagey = dot_on_planey - planey * 512;
+    dot_on_pagey = dot_on_planey & plane_mask;
+    planey = planey & (info->planeh - 1);
+    //pagey = dot_on_pagey / (512 / info->pagewh);
+    pagey = dot_on_pagey >> page_shift;
+    //chary = dot_on_pagey - pagey*(512 / info->pagewh);
+    chary = dot_on_pagey & page_mask;
+    if (pagey < 0) pagey = info->pagewh - 1 + pagey;
+
+    for (int j = 0; j < info->draww; j += 1) {
+      
+      //mapx = (h + sx) / (512 * info->planew);
+      mapx = (j + sx) >> planew_shift;
+      //int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
+      dot_on_planex = (j + sx) - (mapx << planew_shift);
+      mapx = mapx & 0x01;
+
+      mapid = info->mapwh * mapy + mapx;
+      if (mapid != premapid) {
+        info->PlaneAddr(info, mapid, fixVdp2Regs);
+        premapid = mapid;
+      }
+
+      //planex = dot_on_planex / 512;
+      planex = dot_on_planex >> plane_shift;
+      //int dot_on_pagex = dot_on_planex - planex * 512;
+      dot_on_pagex = dot_on_planex & plane_mask;
+      planex = planex & (info->planew - 1);
+      //pagex = dot_on_pagex / (512 / info->pagewh);
+      pagex = dot_on_pagex >> page_shift;
+      //charx = dot_on_pagex - pagex*(512 / info->pagewh);
+      charx = dot_on_pagex & page_mask;
+      if (pagex < 0) pagex = info->pagewh - 1 + pagex;
+
+      if (planex != preplanex || pagex != prepagex || planey != preplaney || pagey != prepagey) {
+        Vdp2PatternAddrPos(info, planex, pagex, planey, pagey);
+        preplanex = planex;
+        preplaney = planey;
+        prepagex = pagex;
+        prepagey = pagey;
+      }
+
+      int x = charx;
+      int y = chary;
+
+      if (info->patternwh == 1)
+      {
+        x &= 8 - 1;
+        y &= 8 - 1;
+
+        // vertical flip
+        if (info->flipfunction & 0x2)
+          y = 8 - 1 - y;
+
+        // horizontal flip	
+        if (info->flipfunction & 0x1)
+          x = 8 - 1 - x;
+      }
+      else
+      {
+        if (info->flipfunction)
+        {
+          y &= 16 - 1;
+          if (info->flipfunction & 0x2)
+          {
+            if (!(y & 8))
+              y = 8 - 1 - y + 16;
+            else
+              y = 16 - 1 - y;
+          }
+          else if (y & 8)
+            y += 8;
+
+          if (info->flipfunction & 0x1)
+          {
+            if (!(x & 8))
+              y += 8;
+
+            x &= 8 - 1;
+            x = 8 - 1 - x;
+          }
+          else if (x & 8)
+          {
+            y += 8;
+            x &= 8 - 1;
+          }
+          else
+            x &= 8 - 1;
+        }
+        else
+        {
+          y &= 16 - 1;
+          if (y & 8)
+            y += 8;
+          if (x & 8)
+            y += 8;
+          x &= 8 - 1;
+        }
+      }
+      *texture->textdata++ = Vdp2RotationFetchPixel(info, x, y, info->cellw);
+    }
     texture->textdata += texture->w;
   }
 
@@ -7095,8 +7264,8 @@ static void Vdp2DrawNBG2(void)
   info.linescrolltbl = 0;
   info.lineinc = 0;
   info.isverticalscroll = 0;
-  info.x = fixVdp2Regs->SCXN2 & 0x7FF;
 
+  int xoffset = 0;
   {
     int char_access = 0;
     int ptn_access = 0;
@@ -7118,11 +7287,35 @@ static void Vdp2DrawNBG2(void)
 
     // Setting miss of cycle patten need to plus 8 dot vertical
     if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
-      info.x -= 8;
+      xoffset = -8;
     }
   }
-  info.y = fixVdp2Regs->SCYN2 & 0x7FF;
-  Vdp2DrawMapTest(&info, &texture);
+
+  if ( (*Vdp2External.perline_alpha & 0x100) != 0 ) {
+    YglCache tmpc;
+    info.sh = 0;
+    info.sv = 0;
+    info.x = 0;
+    info.y = 0;
+    info.vertices[0] = 0;
+    info.vertices[1] = 0;
+    info.vertices[2] = vdp2width;
+    info.vertices[3] = 0;
+    info.vertices[4] = vdp2width;
+    info.vertices[5] = vdp2height;
+    info.vertices[6] = 0;
+    info.vertices[7] = vdp2height;
+    vdp2draw_struct infotmp = info;
+    infotmp.cellw = vdp2width;
+    infotmp.cellh = vdp2height;
+    infotmp.flipfunction = 0;
+    YglQuad(&infotmp, &texture, &tmpc);
+    Vdp2DrawMapPerLineNbg23(&info, &texture,2,xoffset);
+  } else {
+    info.x = (fixVdp2Regs->SCXN2 & 0x7FF) + xoffset;
+    info.y = fixVdp2Regs->SCYN2 & 0x7FF;
+    Vdp2DrawMapTest(&info, &texture);
+  }
 
 }
 
@@ -7233,8 +7426,8 @@ static void Vdp2DrawNBG3(void)
   info.linescrolltbl = 0;
   info.lineinc = 0;
   info.isverticalscroll = 0;
-  info.x = fixVdp2Regs->SCXN3 & 0x7FF;
 
+  int xoffset = 0;
   {
     int char_access = 0;
     int ptn_access = 0;
@@ -7254,11 +7447,35 @@ static void Vdp2DrawNBG3(void)
     }
     // Setting miss of cycle patten need to plus 8 dot vertical
     if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
-      info.x -= 8;
+      xoffset = -8;
     }
   }
-  info.y = fixVdp2Regs->SCYN3 & 0x7FF;
-  Vdp2DrawMapTest(&info, &texture);
+
+  if ( (*Vdp2External.perline_alpha & 0x80) != 0 ) {
+    YglCache tmpc;
+    info.sh = 0;
+    info.sv = 0;
+    info.x = 0;
+    info.y = 0;
+    info.vertices[0] = 0;
+    info.vertices[1] = 0;
+    info.vertices[2] = vdp2width;
+    info.vertices[3] = 0;
+    info.vertices[4] = vdp2width;
+    info.vertices[5] = vdp2height;
+    info.vertices[6] = 0;
+    info.vertices[7] = vdp2height;
+    vdp2draw_struct infotmp = info;
+    infotmp.cellw = vdp2width;
+    infotmp.cellh = vdp2height;
+    infotmp.flipfunction = 0;
+    YglQuad(&infotmp, &texture, &tmpc);
+    Vdp2DrawMapPerLineNbg23(&info, &texture,3,xoffset);
+  } else {
+    info.x = (fixVdp2Regs->SCXN3 & 0x7FF) + xoffset;
+    info.y = fixVdp2Regs->SCYN3 & 0x7FF;
+    Vdp2DrawMapTest(&info, &texture);
+  }
 
 }
 
