@@ -680,6 +680,17 @@ void Vdp2HBlankOUT(void) {
       *Vdp2External.perline_alpha |= 0x40;
     }
 
+    if ( Vdp2Lines[0].SCYN2 != Vdp2Lines[yabsys.LineCount].SCYN2  ||  Vdp2Lines[0].SCXN2 != Vdp2Lines[yabsys.LineCount].SCXN2 ) {
+
+      *Vdp2External.perline_alpha |= 0x100;
+    }
+
+    if ( Vdp2Lines[0].SCYN3 != Vdp2Lines[yabsys.LineCount].SCYN3  ||  Vdp2Lines[0].SCXN3 != Vdp2Lines[yabsys.LineCount].SCXN3 ) {
+
+      *Vdp2External.perline_alpha |= 0x80;
+    }
+
+
     if (Vdp2Lines[0].PRINA != Vdp2Lines[yabsys.LineCount].PRINA) {
       //printf("Perline priority");
     }
