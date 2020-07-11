@@ -1016,7 +1016,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
   const int Line = y;
   const int Pix = x;
-  if (_Ygl->cpu_framebuffer_write[_Ygl->drawframe] || (Pix > Vdp1Regs->systemclipX2 || Line >= Vdp1Regs->systemclipY2)){
+  if (_Ygl->cpu_framebuffer_write[_Ygl->drawframe] || (Pix >= Vdp1Regs->systemclipX2 || Line >= Vdp1Regs->systemclipY2)){
     switch (type)
     {
     case 0:
@@ -1117,7 +1117,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth * _Ygl->rheight* 4, GL_MAP_READ_BIT);
+    _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth * (_Ygl->rheight)* 4, GL_MAP_READ_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER,_Ygl->default_fbo);
     glViewport(params[0], params[1], params[2], params[3]);
 
@@ -1142,8 +1142,6 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   }else{
     index = (_Ygl->rheight-1-Line) *(_Ygl->rwidth * 4) + Pix * 4;  
   }
-
-  
  
   // 16bit mode
   if ((Vdp2Regs->SPCTL & 0xF) < 8) {
