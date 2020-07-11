@@ -1136,7 +1136,14 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     FrameProfileAdd("ReadFrameBuffer end");
   }
 
-  int index = (_Ygl->rheight-1-Line) *(_Ygl->rwidth * 4) + Pix * 4;
+  int index;
+  if( _Ygl->rwidth >= 640 ){
+    index = (_Ygl->rheight-1-Line) *(_Ygl->rwidth * 4) + (Pix<<1) * 4;  
+  }else{
+    index = (_Ygl->rheight-1-Line) *(_Ygl->rwidth * 4) + Pix * 4;  
+  }
+
+  
  
   // 16bit mode
   if ((Vdp2Regs->SPCTL & 0xF) < 8) {
