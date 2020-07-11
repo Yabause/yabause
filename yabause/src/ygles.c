@@ -1152,6 +1152,9 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       }else{
         u8 sptype = Vdp2Regs->SPCTL & 0x0F;
         switch(sptype){
+        case 0:
+          *(u16*)out = ((a<<(5+8))&0xE000) | (((a>>3)&0x03)<<11) | (((g<<8)|r)&0x7FF);
+          break;
         case 1:
           *(u16*)out = ((a<<(5+8))&0xE000) | (((a>>3)&0x03)<<11) | (((g<<8)|r)&0x7FF);
           break;

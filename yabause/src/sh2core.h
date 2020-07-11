@@ -309,6 +309,7 @@ typedef struct
    u16 RTCOR;  // 0xFFFFFFF8
    cache_enty cache;
    u32 CHCR0M;
+   u32 WTCSRM;   // 0xFFFFFE80 mirror
 } Onchip_struct;
 
 typedef struct
