@@ -659,8 +659,52 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
    }
 }
 
+
+int Vdp1GenerateCCode() {
+
+  FILE * regfp = fopen("v1reg.c", "w");
+  fprintf(regfp, "short v1reg[] = { \n");
+    fprintf(regfp, "0x%04X,\n", Vdp1Regs->TVMR);
+    fprintf(regfp, "0x%04X,\n", Vdp1Regs->FBCR);
+    fprintf(regfp, "0x%04X,\n", Vdp1Regs->PTMR);
+    fprintf(regfp, "0x%04X,\n", Vdp1Regs->EWDR);
+    fprintf(regfp, "0x%04X,\n", Vdp1Regs->EWLR);
+    fprintf(regfp, "0x%04X\n", Vdp1Regs->ENDR);
+  fprintf(regfp, "};\n");
+  fclose(regfp);
+
+  FILE * ramfp = fopen("v1ram.c", "w");
+  fprintf(ramfp, "short v1ram[] = { \n");
+  for (int i = 0; i < 0x80000; i+=2) {
+    u16 data = Vdp1RamReadWord(i);
+    fprintf(ramfp, "0x%04X", data);
+    if (i != 0 && (i % 16) == 0) {
+      fprintf(ramfp, ",\n");
+    }
+    else {
+      fprintf(ramfp, ",");
+    }
+  }
+  fprintf(ramfp, "};\n");
+  fclose(ramfp);
+
+  return 0;
+}
+
+#if _DEBUG
+int g_vdp1_debug_dmp = 0;
+#endif
+
 void Vdp1Draw(void) 
 {
+#if _DEBUG
+  if (g_vdp1_debug_dmp == 1) {
+    Vdp1GenerateCCode();
+    g_vdp1_debug_dmp = 0;
+    vdp2ReqDump();
+  }
+#endif
+
   FRAMELOG("Vdp1Draw");
    if (!Vdp1External.disptoggle)
    {

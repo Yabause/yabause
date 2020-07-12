@@ -924,6 +924,7 @@ void vdp2VBlankOUT(void) {
   VdpLockVram();
   FRAMELOG("***** VOUT(T) swap=%d,plot=%d,vdp1status=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot, Vdp1External.status );
 
+#if _DEBUG
   if (g_vdp_debug_dmp == 1) {
     g_vdp_debug_dmp = 0;
     restorevram();
@@ -934,7 +935,7 @@ void vdp2VBlankOUT(void) {
     dumpvram();
     Vdp2GenerateCCode();
   }
- 
+#endif 
 
   if (pre_swap_frame_buffer == 0 && skipnextframe && Vdp1External.swap_frame_buffer ){
     skipnextframe = 0;
