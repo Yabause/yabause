@@ -4622,6 +4622,8 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   tmp |= cmd.CMDCOLR;
   tmp <<= 16;
   tmp |= cmd.CMDSIZE;
+  tmp <<= 16;
+  tmp |= cmd.CMDPMOD;
 
   sprite.priority = 8;
 
@@ -4633,10 +4635,10 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
 
-  if ((CMDPMOD & 0x8000) != 0)
-  {
-    tmp |= 0x00020000;
-  }
+  //if ((CMDPMOD & 0x8000) != 0)
+  //{
+  //  tmp |= 0x00020000;
+  //}
 
   if (IS_REPLACE(CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_REPLACE;
@@ -4648,11 +4650,11 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
   }
   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
-    tmp |= 0x00010000;
+    //tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
   }
   if (IS_MESH(CMDPMOD)) {
-    tmp |= 0x00010000;
+    //tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_MESH;
   }
 
@@ -4826,6 +4828,8 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   tmp |= cmd.CMDCOLR;
   tmp <<= 16;
   tmp |= cmd.CMDSIZE;
+  tmp <<= 16;
+  tmp |= cmd.CMDPMOD;
 
   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
   sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
@@ -4833,10 +4837,10 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.priority = 8;
 
   // MSB
-  if ((CMDPMOD & 0x8000) != 0)
-  {
-    tmp |= 0x00020000;
-  }
+  //if ((CMDPMOD & 0x8000) != 0)
+  //{
+  //  tmp |= 0x00020000;
+  //}
 
   if (IS_REPLACE(CMDPMOD)) {
     if ((CMDPMOD & 0x8000))
@@ -4857,11 +4861,11 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
   }
   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
-    tmp |= 0x00010000;
+    //tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
   }
   if (IS_MESH(CMDPMOD)) {
-    tmp |= 0x00010000;
+    //tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_MESH;
   }
 
@@ -4925,7 +4929,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   YglTexture texture;
   YglCache cash;
   u64 tmp;
-  u16 CMDPMOD;
   u16 color2;
   int i;
   float col[4 * 4];
@@ -5087,21 +5090,20 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   tmp |= cmd.CMDCOLR;
   tmp <<= 16;
   tmp |= cmd.CMDSIZE;
-
-
-  CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+  tmp <<= 16;
+  tmp |= cmd.CMDPMOD;
 
   sprite.priority = 8;
 
-  sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
+  sprite.uclipmode = (cmd.CMDPMOD >> 9) & 0x03;
 
   // MSB
-  if ((CMDPMOD & 0x8000) != 0)
-  {
-    tmp |= 0x00020000;
-  }
+  //if ((cmd.CMDPMOD & 0x8000) != 0)
+  //{
+    //tmp |= 0x00020000;
+  //}
 
-  if (IS_REPLACE(CMDPMOD)) {
+  if (IS_REPLACE(cmd.CMDPMOD)) {
     //if ((CMDPMOD & 0x40) != 0) {
     //  sprite.blendmode = VDP1_COLOR_SPD;
     //}
@@ -5109,24 +5111,24 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sprite.blendmode = VDP1_COLOR_CL_REPLACE;
     //}
   }
-  else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)) {
+  else if (IS_DONOT_DRAW_OR_SHADOW(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_SHADOW;
   }
-  else if (IS_HALF_LUMINANCE(CMDPMOD)) {
+  else if (IS_HALF_LUMINANCE(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
   }
-  else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
-    tmp |= 0x00010000;
+  else if (IS_REPLACE_OR_HALF_TRANSPARENT(cmd.CMDPMOD)) {
+    //tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
   }
-  if (IS_MESH(CMDPMOD)) {
-    tmp |= 0x00010000;
+  if (IS_MESH(cmd.CMDPMOD)) {
+    //tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_MESH;
   }
 
 
   // Check if the Gouraud shading bit is set and the color mode is RGB
-  if ((CMDPMOD & 4))
+  if ((cmd.CMDPMOD & 4))
   {
     for (i = 0; i < 4; i++)
     {
@@ -5159,7 +5161,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
     Vdp1ReadTexture(&cmd, &sprite, &texture);
   }
-
   return;
       }
 
