@@ -44,6 +44,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "vdp2.h"
 #include "debug.h"
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 #define YGL_TESS_COUNT (8)
 #define YGL_MAX_NEED_BUFFER (12*YGL_TESS_COUNT*YGL_TESS_COUNT)
 
@@ -1008,5 +1012,11 @@ static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int
 
 int Vdp2GetBank(Vdp2* regs, u32 addr);
 int PixelIsSpecialPriority(int specialcode, int dot);
+
+void VDP2genVRamCyclePattern();
+
+#if defined (__cplusplus)
+}
+#endif
 
 #endif

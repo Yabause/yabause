@@ -39,6 +39,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #ifndef VIDOGL_H
 #define VIDOGL_H
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS) || defined(NX)
 
 #include "vdp1.h"
@@ -50,6 +54,10 @@ void VIDOGLVdp2DrawEnd(void);
 void VIDOGLVdp2DrawScreens(void);
 
 extern VideoInterface_struct VIDOGL;
+
 #endif
 
+#if defined(__cplusplus)
+}
+#endif
 #endif

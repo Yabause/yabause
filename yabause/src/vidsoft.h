@@ -20,6 +20,11 @@
 #ifndef VIDSOFT_H
 #define VIDSOFT_H
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+
 #include "vdp1.h"
 
 #define VIDCORE_SOFT   2
@@ -45,5 +50,9 @@ void VidsoftWaitForVdp1Thread();
 void VIDSoftVdp2DrawStart(void);
 void VIDSoftVdp2DrawEnd(void);
 void VIDSoftVdp2DrawScreens(void);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif
