@@ -127,7 +127,7 @@ class InGamePreference(val gamecode: String ) : PreferenceFragmentCompat() {
         return view
     }
 
-    fun setonEndObserver( onEndObserver: Observer<String> ){
+    fun setonEndObserver(onEndObserver: Observer<String?>){
         Observable.create(ObservableOnSubscribe<String> { emitter ->
             this.emitter = emitter
         }).observeOn(AndroidSchedulers.mainThread())
