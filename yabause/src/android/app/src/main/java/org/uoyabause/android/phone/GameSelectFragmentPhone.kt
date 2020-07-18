@@ -86,7 +86,7 @@ internal class GameViewPagerAdapter(var fm: FragmentManager?) :
 
     fun setGameList(gameListPages: List<GameListPage>?) {
 
-        var fragments = fm?.fragments
+        val fragments = fm?.fragments
         if (fragments != null) {
             val ft = fm?.beginTransaction();
             for (f in fragments) {
@@ -94,7 +94,7 @@ internal class GameViewPagerAdapter(var fm: FragmentManager?) :
                     ft?.remove(f);
                 }
             }
-            ft?.commitNow()
+            ft?.commit()
         }
 
         var position = 0
@@ -266,10 +266,10 @@ class GameSelectFragmentPhone : Fragment(),
                 }
             }
             R.id.menu_item_login -> if (item.title == getString(R.string.sign_out) == true) {
-                presenter_!!.signOut()
+                presenter_.signOut()
                 item.setTitle(R.string.sign_in)
             } else {
-                presenter_!!.signIn()
+                presenter_.signIn()
             }
             R.id.menu_privacy_policy -> {
                 val uri =
@@ -343,7 +343,7 @@ class GameSelectFragmentPhone : Fragment(),
 
     private fun showSnackbar(id: Int) {
         Snackbar
-            .make(rootview_!!.rootView, getString(id), Snackbar.LENGTH_SHORT)
+            .make(rootview_.rootView, getString(id), Snackbar.LENGTH_SHORT)
             .show()
     }
 
@@ -616,6 +616,7 @@ class GameSelectFragmentPhone : Fragment(),
     private var observer: Observer<*>? = null
     fun updateGameList() {
         if( observer != null ) return;
+        isBackGroundComplete = false
         val tmpObserver = object : Observer<String> {
             //GithubRepositoryApiCompleteEventEntity eventResult = new GithubRepositoryApiCompleteEventEntity();
             override fun onSubscribe(d: Disposable) {
@@ -633,16 +634,22 @@ class GameSelectFragmentPhone : Fragment(),
             }
 
             override fun onComplete() {
+                if( !isFront ){
+                    observer = null
+                    dismissDialog()
+                    isBackGroundComplete = true
+                    return
+                }
+
                 loadRows()
                 val viewPager = rootview_.findViewById(R.id.view_pager_game_index) as? ViewPager
-                viewPager!!.setSaveFromParentEnabled(false)
-                viewPager!!.removeAllViews()
+                //viewPager!!.setSaveFromParentEnabled(false)
+                //viewPager!!.removeAllViews()
                 tabpage_adapter = GameViewPagerAdapter(this@GameSelectFragmentPhone.childFragmentManager)
                 tabpage_adapter.setGameList(gameListPages)
                 viewPager!!.adapter = tabpage_adapter
-                viewPager!!.adapter!!.notifyDataSetChanged()
-                tablayout_!!.removeAllTabs()
-                tablayout_!!.setupWithViewPager(viewPager)
+                //tablayout_.removeAllTabs()
+                tablayout_.setupWithViewPager(viewPager)
 
                 dismissDialog()
                 if (isfisrtupdate) {
@@ -653,6 +660,7 @@ class GameSelectFragmentPhone : Fragment(),
                         presenter_.checkSignIn()
                     }
                 }
+                viewPager.adapter!!.notifyDataSetChanged()
                 observer = null
             }
         }
@@ -711,6 +719,7 @@ class GameSelectFragmentPhone : Fragment(),
                 return
             }
         } catch ( e: Exception ){
+            Log.d(TAG,e.localizedMessage)
         }
 
         val viewMessage = rootview_.findViewById(R.id.empty_message) as? View
@@ -729,7 +738,7 @@ class GameSelectFragmentPhone : Fragment(),
                 .limit(5)
                 .execute<GameInfo?>()
         } catch (e: Exception) {
-            println(e)
+            Log.d(TAG,e.localizedMessage)
         }
 
         gameListPages = mutableListOf()
@@ -748,7 +757,7 @@ class GameSelectFragmentPhone : Fragment(),
                 .orderBy("game_title ASC")
                 .execute()
         } catch (e: Exception) {
-            println(e)
+            Log.d(TAG,e.localizedMessage)
         }
         var hit: Boolean
         var i: Int
@@ -866,15 +875,23 @@ class GameSelectFragmentPhone : Fragment(),
         mInterstitialAd!!.loadAd(adRequest)
     }
 
+    private var isBackGroundComplete = false
+
     override fun onResume() {
         super.onResume()
         if (mTracker != null) { //mTracker.setScreenName(TAG);
             mTracker!!.send(ScreenViewBuilder().build())
         }
+        isFront = true
+        if( isBackGroundComplete ){
+            updateGameList()
+        }
     }
 
+    var isFront = true
+
     override fun onPause() {
-        dismissDialog()
+        isFront = false
         super.onPause()
     }
 
