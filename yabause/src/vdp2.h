@@ -449,7 +449,7 @@ void VdpResume(void);
 Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines);
 
 #include "threads.h"
-void VdpProc( void *arg );
+void * VdpProc( void *arg );
 
 // Ansyc VDP
 #define VDPEV_VBLANK_IN 0x000

@@ -100,7 +100,7 @@ YabEventQueue * command_ = NULL;
 
 //---------------------------------------------------------------------------------------
 
-void VdpProc(void *arg);      // rendering thread.
+extern "C" void * VdpProc(void *arg);      // rendering thread.
 static void vdp2VBlankIN(void); // VBLANK-IN handler
 static void vdp2VBlankOUT(void);// VBLANK-OUT handler
 void VDP2genVRamCyclePattern();
@@ -486,13 +486,13 @@ void Vdp2Reset(void) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void VdpProc( void *arg ){
+extern "C" void * VdpProc( void *arg ){
 
   int evcode;
 
   if( YuiUseOGLOnThisThread() < 0 ){
     LOG("VDP2 Fail to USE GL");
-    return;
+    return NULL;
   }
 
   while( vdp_proc_running ){
@@ -536,6 +536,7 @@ void VdpProc( void *arg ){
       break;
     }
   }
+  return NULL;
 }
 
 void VDP2genVRamCyclePattern() {
