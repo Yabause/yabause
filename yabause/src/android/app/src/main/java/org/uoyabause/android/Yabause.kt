@@ -210,51 +210,25 @@ class Yabause : AppCompatActivity(), FileSelectedListener, NavigationView.OnNavi
             }
         }
         val drawerListener: DrawerListener = object : DrawerListener {
-            override fun onDrawerSlide(view: View, v: Float) {}
-            override fun onDrawerOpened(view: View) {
-                if (!menu_showing) {
-                    menu_showing = true
-                    YabauseRunnable.pause()
-                    audio!!.mute(audio!!.SYSTEM)
-                    val name = YabauseRunnable.getGameTitle()
-                    val tx = findViewById<View>(R.id.menu_title) as TextView
-                    tx.text = name
-                    if (BuildConfig.BUILD_TYPE != "pro") {
-                        val prefs = getSharedPreferences("private", Context.MODE_PRIVATE)
-                        val hasDonated = prefs.getBoolean("donated", false)
-                        if (hasDonated == false) {
-                            if (adView != null) {
-                                val lp = findViewById<View>(R.id.navilayer) as LinearLayout
-                                val mCount = lp.childCount
-                                    var find = false
-                                    for (i in 0 until mCount) {
-                                        val mChild = lp.getChildAt(i)
-                                        if (mChild === adView) {
-                                            find = true
-                                        }
-                                    }
-                                    if (!find) {
-                                        lp.addView(adView)
-                                    }
-                                    val adRequest = AdRequest.Builder().addTestDevice("303A789B146C169D4BDB5652D928FF8E").build()
-                                    adView!!.loadAd(adRequest)
-                            }
-                        }
-                    }
-                }
+            override fun onDrawerSlide(view: View, v: Float) {
+                //Log.d(this.javaClass.name,"onDrawerSlide ${v}")
             }
-
+            override fun onDrawerOpened(view: View) {
+                //Log.d(this.javaClass.name,"onDrawerOpened")
+            }
             override fun onDrawerClosed(view: View) {
+                //Log.d(this.javaClass.name,"onDrawerClosed")
                 if (waiting_reault == false && menu_showing == true) {
                     menu_showing = false
                     YabauseRunnable.resume()
                     audio!!.unmute(audio!!.SYSTEM)
                 }
             }
-
-            override fun onDrawerStateChanged(i: Int) {}
+            override fun onDrawerStateChanged(i: Int) {
+                //Log.d(this.javaClass.name,"onDrawerStateChanged")
+            }
         }
-        mDrawerLayout!!.setDrawerListener(drawerListener)
+        mDrawerLayout!!.addDrawerListener(drawerListener)
         audio = YabauseAudio(this)
         val intent = intent
         val bundle = intent.extras
@@ -1164,7 +1138,7 @@ class Yabause : AppCompatActivity(), FileSelectedListener, NavigationView.OnNavi
                 }
                 var fg = supportFragmentManager.findFragmentByTag(StateListFragment.TAG)
                 if (fg != null) {
-                    cancelStateLoad()
+                    //cancelStateLoad()
                     val transaction = supportFragmentManager.beginTransaction()
                     transaction.remove(fg)
                     transaction.commit()
@@ -1254,24 +1228,36 @@ class Yabause : AppCompatActivity(), FileSelectedListener, NavigationView.OnNavi
             menu_showing = true
             YabauseRunnable.pause()
             audio!!.mute(audio!!.SYSTEM)
-            val name = YabauseRunnable.getGameTitle()
-            val tx = findViewById<View>(R.id.menu_title) as TextView
-            tx.text = name
-            if (adView != null) {
-                val lp = findViewById<View>(R.id.navilayer) as LinearLayout
-                    val mCount = lp.childCount
-                    var find = false
-                    for (i in 0 until mCount) {
-                        val mChild = lp.getChildAt(i)
-                        if (mChild === adView) {
-                            find = true
+
+            val tx = findViewById<TextView>(R.id.menu_title)
+            if (tx != null) {
+                val name = YabauseRunnable.getGameTitle()
+                tx.text = name
+            }
+
+            if (BuildConfig.BUILD_TYPE != "pro") {
+                val prefs = getSharedPreferences("private", Context.MODE_PRIVATE)
+                val hasDonated = prefs.getBoolean("donated", false)
+                if (hasDonated == false) {
+                    if (adView != null) {
+                        val lp = findViewById<LinearLayout>(R.id.navilayer)
+                        if (lp != null) {
+                            val mCount = lp.childCount
+                            var find = false
+                            for (i in 0 until mCount) {
+                                val mChild = lp.getChildAt(i)
+                                if (mChild === adView) {
+                                    find = true
+                                }
+                            }
+                            if (find == false) {
+                                lp.addView(adView)
+                            }
+                            val adRequest = AdRequest.Builder().addTestDevice("303A789B146C169D4BDB5652D928FF8E").build()
+                            adView!!.loadAd(adRequest)
                         }
                     }
-                    if (find == false) {
-                        lp.addView(adView)
-                    }
-                    val adRequest = AdRequest.Builder().addTestDevice("303A789B146C169D4BDB5652D928FF8E").build()
-                    adView!!.loadAd(adRequest)
+                }
             }
             mDrawerLayout!!.openDrawer(GravityCompat.START)
         }
