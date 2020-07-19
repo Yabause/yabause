@@ -52,6 +52,8 @@ int numbupdevices = 0;
 saveinfo_struct *saves = NULL;
 int numsaves = 0;
 
+UIBackupRam * UIBackupRam::instance = nullptr;
+
 void UIBackupRam::OnValueChanged(
 		const firebase::database::DataSnapshot &snapshot)
 {
@@ -193,6 +195,10 @@ UIBackupRam::UIBackupRam(QWidget *p)
 		: QDialog(p)
 {
 	backupman_ = BackupManager::getInstance();
+  UIBackupRam::instance = this;
+
+  connect(this, SIGNAL(errorMessage(QString)),
+    SLOT(onErrorMessage(QString)));
 
 	new_metadata = nullptr;
 
@@ -644,6 +650,9 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 		firebase::database::DatabaseReference user_dir = dbref.Child(baseurl);
 		new_post = user_dir.PushChild();
 
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    std::string sComment = codec->toUnicode(saves[index].comment).toStdString();
+
 		char datestring[256];
 		snprintf(datestring, 256, "%04d/%02d/%02d %02d:%02d:00",
 						 saves[index].year + 1980,
@@ -653,7 +662,7 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 						 saves[index].minute);
 
 		new_data["filename"] = saves[index].filename;
-		new_data["comment"] = saves[index].comment;
+		new_data["comment"] = sComment;
 		new_data["language"] = (int)saves[index].language;
 		new_data["savedate"] = datestring;
 		new_data["datasize"] = (int)saves[index].datasize;
@@ -684,7 +693,7 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 		custom_metadata->insert(std::make_pair("dbref", baseurl + new_post.key()));
 		custom_metadata->insert(std::make_pair("uid", user->uid()));
 		custom_metadata->insert(std::make_pair("filename", saves[index].filename));
-		custom_metadata->insert(std::make_pair("comment", saves[index].comment));
+		custom_metadata->insert(std::make_pair("comment", sComment));
 		custom_metadata->insert(std::make_pair("size", bytesize));
 		custom_metadata->insert(std::make_pair("date", datestring));
 
@@ -736,13 +745,17 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 											else
 											{
 												std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
-												self->new_key = "";
+                        QString meg = result.error_message();
+                        QMetaObject::invokeMethod(UIBackupRam::instance, "onErrorMessage", Q_ARG(QString, meg));
+                        self->new_key = "";
 											}
 										}
 										else
 										{
 											std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
-											self->new_key = "";
+                      QString meg = result.error_message();
+                      QMetaObject::invokeMethod(UIBackupRam::instance, "onErrorMessage", Q_ARG(QString, meg));
+                      self->new_key = "";
 										}
 									},
 									user_data);
@@ -750,6 +763,9 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 						else
 						{
 							std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
+              QString meg = result.error_message();
+              QMetaObject::invokeMethod(UIBackupRam::instance, "onErrorMessage", Q_ARG(QString, meg));
+
 							self->new_key = "";
 						}
 					}
@@ -760,4 +776,8 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 			QThread::sleep(1);
 		}
 	}
+}
+
+void UIBackupRam::onErrorMessage(QString info) {
+  CommonDialogs::warning(info);
 }
