@@ -1,6 +1,5 @@
 package org.uoyabause.android.phone
 
-import android.app.Activity
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,7 +11,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.uoyabause.uranus.R
-
 
 /*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
@@ -32,13 +30,12 @@ import org.uoyabause.uranus.R
     along with YabaSanshiro; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-class GameListFragment  : Fragment() {
-
+class GameListFragment : Fragment() {
 
     lateinit var recyclerView: RecyclerView
     var rootview_: View? = null
-    var gameList:GameItemAdapter? = null
-    var index:String? = null
+    var gameList: GameItemAdapter? = null
+    var index: String? = null
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -52,26 +49,27 @@ class GameListFragment  : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
 
-        if( savedInstanceState != null ){
+        if (savedInstanceState != null) {
             index = savedInstanceState.getString("index")
-            if( index != null ) {
+            if (index != null) {
                 gameList = GameSelectFragmentPhone.getInstance()!!.getGameItemAdapter(index!!)
             }
         }
 
         rootview_ = inflater.inflate(R.layout.content_game_select_list_phone, container, false)
-        if( rootview_ != null ) {
+        if (rootview_ != null) {
             recyclerView = rootview_!!.findViewById<View>(R.id.my_recycler_view) as RecyclerView
             recyclerView.setHasFixedSize(true)
             recyclerView.itemAnimator = DefaultItemAnimator() as RecyclerView.ItemAnimator?
 
-            if( activity?.resources?.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            if (activity?.resources?.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 recyclerView.layoutManager = GridLayoutManager(activity, 2)
-            }else{
+            } else {
                 recyclerView.layoutManager =
                         LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
             }
@@ -82,17 +80,16 @@ class GameListFragment  : Fragment() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        if( index != null ) {
+        if (index != null) {
             outState.putString("index", index)
         }
     }
-
 
     companion object {
         const val TAG = "BackupItemFragment"
         private const val RC_SIGN_IN = 1232
         @JvmStatic
-        fun getInstance(position: Int, index: String, gameList:GameItemAdapter): GameListFragment {
+        fun getInstance(position: Int, index: String, gameList: GameItemAdapter): GameListFragment {
             val f = GameListFragment()
             f.gameList = gameList
             f.index = index
