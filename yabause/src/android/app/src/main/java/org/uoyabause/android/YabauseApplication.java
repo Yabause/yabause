@@ -32,8 +32,6 @@ import androidx.multidex.MultiDexApplication;
 
 import com.activeandroid.ActiveAndroid;
 import com.activeandroid.Configuration;
-import com.crashlytics.android.Crashlytics;
-import com.crashlytics.android.ndk.CrashlyticsNdk;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.google.firebase.FirebaseApp;
@@ -41,8 +39,6 @@ import com.google.firebase.FirebaseApp;
 import org.uoyabause.android.cheat.Cheat;
 import org.uoyabause.uranus.BuildConfig;
 import org.uoyabause.uranus.R;
-
-import io.fabric.sdk.android.Fabric;
 
 public class YabauseApplication extends MultiDexApplication {
 
@@ -55,9 +51,6 @@ public class YabauseApplication extends MultiDexApplication {
         super.attachBaseContext(base);
         MultiDex.install(this);
     }
-
-    Crashlytics _crash  = new Crashlytics();
-    CrashlyticsNdk _crashndk = new CrashlyticsNdk();
 
     @Override
     public void onCreate() {
@@ -72,17 +65,10 @@ public class YabauseApplication extends MultiDexApplication {
         ActiveAndroid.initialize(config);
 
         YabauseApplication.context = getApplicationContext();
-        Fabric fabric = new Fabric.Builder(this)
-                .kits(_crash, _crashndk)
-                .build();
-        Fabric.with(fabric);
-
         FirebaseApp.initializeApp(YabauseApplication.context);
 
        // Log.d(TAG,"Firebase token: " + FirebaseInstanceId.getInstance().getToken() );
     }
-
-    Crashlytics getCrashlytics() { return _crash; }
 
 
     public static Context getAppContext() {
