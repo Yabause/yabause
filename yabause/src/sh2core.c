@@ -1213,8 +1213,8 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
       case 0x068:
          return CurrentSH2->onchip.VCRD >> 8;
       case 0x080:
-         CurrentSH2->onchip.WTCSR = 0;
-         return CurrentSH2->onchip.WTCSR & 0x18;
+         //CurrentSH2->onchip.WTCSR = 0;
+        return CurrentSH2->onchip.WTCSR;// &0x18;
       case 0x081:
          return CurrentSH2->onchip.WTCNT;
       case 0x092:
