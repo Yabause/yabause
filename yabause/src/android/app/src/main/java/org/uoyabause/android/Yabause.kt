@@ -925,7 +925,6 @@ class Yabause : AppCompatActivity(), FileSelectedListener,
         if (file != null) {
             gamePath = file.absolutePath
         }
-        val btn = findViewById<View>(R.id.button_open_cd) as Button
         YabauseRunnable.closeTray()
     }
 
