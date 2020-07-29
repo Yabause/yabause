@@ -58,6 +58,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "frameprofile.h"
 #include "vidogl.h"
 #include "vidsoft.h"
+#include <atomic>
 
 u8 * Vdp2Ram;
 u8 * Vdp2ColorRam;
@@ -88,9 +89,6 @@ YabEventQueue * rcv_evqueue = NULL;
 YabEventQueue * vdp1_rcv_evqueue = NULL;
 YabEventQueue * vout_rcv_evqueue = NULL;
 static u64 syncticks = 0;       // CPU time sync for real time.
-void VdpProc( void *arg );      // rendering thread.
-static void vdp2VBlankIN(void); // VBLANK-IN handler
-static void vdp2VBlankOUT(void);// VBLANK-OUT handler
 static int vdp_proc_running = 0;
 YabMutex * vrammutex = NULL;
 int g_frame_count = 0;
@@ -98,7 +96,18 @@ int g_frame_count = 0;
 //#define LOG yprintf
 #define PROFILE_RENDERING 0
 
-YabEventQueue * command_ = NULL;;
+YabEventQueue * command_ = NULL;
+
+//---------------------------------------------------------------------------------------
+
+extern "C" void * VdpProc(void *arg);      // rendering thread.
+static void vdp2VBlankIN(void); // VBLANK-IN handler
+static void vdp2VBlankOUT(void);// VBLANK-OUT handler
+void VDP2genVRamCyclePattern();
+int Vdp2GenerateCCode();
+
+
+void Vdp1_onHblank();
 
 void VdpLockVram() {
   YabThreadLock(vrammutex);
@@ -477,13 +486,13 @@ void Vdp2Reset(void) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void VdpProc( void *arg ){
+extern "C" void * VdpProc( void *arg ){
 
   int evcode;
 
   if( YuiUseOGLOnThisThread() < 0 ){
     LOG("VDP2 Fail to USE GL");
-    return;
+    return NULL;
   }
 
   while( vdp_proc_running ){
@@ -527,7 +536,156 @@ void VdpProc( void *arg ){
       break;
     }
   }
+  return NULL;
 }
+
+void VDP2genVRamCyclePattern() {
+  int cpu_cycle_a = 0;
+  int cpu_cycle_b = 0;
+  int i = 0;
+
+  Vdp2External.AC_VRAM[0][0] = (Vdp2Regs->CYCA0L >> 12) & 0x0F;
+  Vdp2External.AC_VRAM[0][1] = (Vdp2Regs->CYCA0L >> 8) & 0x0F;
+  Vdp2External.AC_VRAM[0][2] = (Vdp2Regs->CYCA0L >> 4) & 0x0F;
+  Vdp2External.AC_VRAM[0][3] = (Vdp2Regs->CYCA0L >> 0) & 0x0F;
+  Vdp2External.AC_VRAM[0][4] = (Vdp2Regs->CYCA0U >> 12) & 0x0F;
+  Vdp2External.AC_VRAM[0][5] = (Vdp2Regs->CYCA0U >> 8) & 0x0F;
+  Vdp2External.AC_VRAM[0][6] = (Vdp2Regs->CYCA0U >> 4) & 0x0F;
+  Vdp2External.AC_VRAM[0][7] = (Vdp2Regs->CYCA0U >> 0) & 0x0F;
+
+  for (i = 0; i < 8; i++) {
+    if (Vdp2External.AC_VRAM[0][i] >= 0x0E) {
+      cpu_cycle_a++;
+    }
+    else if (Vdp2External.AC_VRAM[0][i] >= 4 && Vdp2External.AC_VRAM[0][i] <= 7) {
+      if ((Vdp2Regs->BGON & (1 << (Vdp2External.AC_VRAM[0][i] - 4))) == 0) {
+        cpu_cycle_a++;
+      }
+    }
+  }
+
+  if (Vdp2Regs->RAMCTL & 0x100) {
+    int fcnt = 0;
+    Vdp2External.AC_VRAM[1][0] = (Vdp2Regs->CYCA1L >> 12) & 0x0F;
+    Vdp2External.AC_VRAM[1][1] = (Vdp2Regs->CYCA1L >> 8) & 0x0F;
+    Vdp2External.AC_VRAM[1][2] = (Vdp2Regs->CYCA1L >> 4) & 0x0F;
+    Vdp2External.AC_VRAM[1][3] = (Vdp2Regs->CYCA1L >> 0) & 0x0F;
+    Vdp2External.AC_VRAM[1][4] = (Vdp2Regs->CYCA1U >> 12) & 0x0F;
+    Vdp2External.AC_VRAM[1][5] = (Vdp2Regs->CYCA1U >> 8) & 0x0F;
+    Vdp2External.AC_VRAM[1][6] = (Vdp2Regs->CYCA1U >> 4) & 0x0F;
+    Vdp2External.AC_VRAM[1][7] = (Vdp2Regs->CYCA1U >> 0) & 0x0F;
+
+    for (i = 0; i < 8; i++) {
+      if (Vdp2External.AC_VRAM[0][i] == 0x0E) {
+        if (Vdp2External.AC_VRAM[1][i] != 0x0E) {
+          cpu_cycle_a--;
+        }
+        else {
+          if (fcnt == 0) {
+            cpu_cycle_a--;
+          }
+        }
+      }
+      if (Vdp2External.AC_VRAM[1][i] == 0x0F) {
+        fcnt++;
+      }
+    }
+    if (fcnt == 0)cpu_cycle_a = 0;
+    if (cpu_cycle_a < 0)cpu_cycle_a = 0;
+  }
+  else {
+    Vdp2External.AC_VRAM[1][0] = Vdp2External.AC_VRAM[0][0];
+    Vdp2External.AC_VRAM[1][1] = Vdp2External.AC_VRAM[0][1];
+    Vdp2External.AC_VRAM[1][2] = Vdp2External.AC_VRAM[0][2];
+    Vdp2External.AC_VRAM[1][3] = Vdp2External.AC_VRAM[0][3];
+    Vdp2External.AC_VRAM[1][4] = Vdp2External.AC_VRAM[0][4];
+    Vdp2External.AC_VRAM[1][5] = Vdp2External.AC_VRAM[0][5];
+    Vdp2External.AC_VRAM[1][6] = Vdp2External.AC_VRAM[0][6];
+    Vdp2External.AC_VRAM[1][7] = Vdp2External.AC_VRAM[0][7];
+  }
+
+  Vdp2External.AC_VRAM[2][0] = (Vdp2Regs->CYCB0L >> 12) & 0x0F;
+  Vdp2External.AC_VRAM[2][1] = (Vdp2Regs->CYCB0L >> 8) & 0x0F;
+  Vdp2External.AC_VRAM[2][2] = (Vdp2Regs->CYCB0L >> 4) & 0x0F;
+  Vdp2External.AC_VRAM[2][3] = (Vdp2Regs->CYCB0L >> 0) & 0x0F;
+  Vdp2External.AC_VRAM[2][4] = (Vdp2Regs->CYCB0U >> 12) & 0x0F;
+  Vdp2External.AC_VRAM[2][5] = (Vdp2Regs->CYCB0U >> 8) & 0x0F;
+  Vdp2External.AC_VRAM[2][6] = (Vdp2Regs->CYCB0U >> 4) & 0x0F;
+  Vdp2External.AC_VRAM[2][7] = (Vdp2Regs->CYCB0U >> 0) & 0x0F;
+
+  for (i = 0; i < 8; i++) {
+    if (Vdp2External.AC_VRAM[2][i] >= 0x0E) {
+      cpu_cycle_b++;
+    }
+    else if (Vdp2External.AC_VRAM[2][i] >= 4 && Vdp2External.AC_VRAM[2][i] <= 7) {
+      if ((Vdp2Regs->BGON & (1 << (Vdp2External.AC_VRAM[2][i] - 4))) == 0) {
+        cpu_cycle_b++;
+      }
+    }
+  }
+
+
+  if (Vdp2Regs->RAMCTL & 0x200) {
+    int fcnt = 0;
+    Vdp2External.AC_VRAM[3][0] = (Vdp2Regs->CYCB1L >> 12) & 0x0F;
+    Vdp2External.AC_VRAM[3][1] = (Vdp2Regs->CYCB1L >> 8) & 0x0F;
+    Vdp2External.AC_VRAM[3][2] = (Vdp2Regs->CYCB1L >> 4) & 0x0F;
+    Vdp2External.AC_VRAM[3][3] = (Vdp2Regs->CYCB1L >> 0) & 0x0F;
+    Vdp2External.AC_VRAM[3][4] = (Vdp2Regs->CYCB1U >> 12) & 0x0F;
+    Vdp2External.AC_VRAM[3][5] = (Vdp2Regs->CYCB1U >> 8) & 0x0F;
+    Vdp2External.AC_VRAM[3][6] = (Vdp2Regs->CYCB1U >> 4) & 0x0F;
+    Vdp2External.AC_VRAM[3][7] = (Vdp2Regs->CYCB1U >> 0) & 0x0F;
+
+    for (i = 0; i < 8; i++) {
+      if (Vdp2External.AC_VRAM[2][i] == 0x0E) {
+        if (Vdp2External.AC_VRAM[3][i] != 0x0E) {
+          cpu_cycle_b--;
+        }
+        else {
+          if (fcnt == 0) {
+            cpu_cycle_b--;
+          }
+        }
+      }
+      if (Vdp2External.AC_VRAM[3][i] == 0x0F) {
+        fcnt++;
+      }
+    }
+    if (fcnt == 0)cpu_cycle_b = 0;
+    if (cpu_cycle_b < 0)cpu_cycle_b = 0;
+  }
+  else {
+    Vdp2External.AC_VRAM[3][0] = Vdp2External.AC_VRAM[2][0];
+    Vdp2External.AC_VRAM[3][1] = Vdp2External.AC_VRAM[2][1];
+    Vdp2External.AC_VRAM[3][2] = Vdp2External.AC_VRAM[2][2];
+    Vdp2External.AC_VRAM[3][3] = Vdp2External.AC_VRAM[2][3];
+    Vdp2External.AC_VRAM[3][4] = Vdp2External.AC_VRAM[2][4];
+    Vdp2External.AC_VRAM[3][5] = Vdp2External.AC_VRAM[2][5];
+    Vdp2External.AC_VRAM[3][6] = Vdp2External.AC_VRAM[2][6];
+    Vdp2External.AC_VRAM[3][7] = Vdp2External.AC_VRAM[2][7];
+  }
+
+  if (cpu_cycle_a == 0) {
+    Vdp2External.cpu_cycle_a = 200;
+  }
+  else if (Vdp2External.cpu_cycle_a == 1) {
+    Vdp2External.cpu_cycle_a = 24;
+  }
+  else {
+    Vdp2External.cpu_cycle_a = 2;
+  }
+
+  if (cpu_cycle_b == 0) {
+    Vdp2External.cpu_cycle_b = 200;
+  }
+  else if (Vdp2External.cpu_cycle_a == 1) {
+    Vdp2External.cpu_cycle_b = 24;
+  }
+  else {
+    Vdp2External.cpu_cycle_b = 2;
+  }
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 void vdp2VBlankIN(void) {
@@ -613,6 +771,10 @@ void Vdp2HBlankIN(void) {
   }
 }
 
+using std::atomic;
+extern atomic<int> vdp1_clock;
+
+
 void Vdp2HBlankOUT(void) {
   int i;
   if (yabsys.LineCount < yabsys.VBlankLineCount)
@@ -680,6 +842,17 @@ void Vdp2HBlankOUT(void) {
       *Vdp2External.perline_alpha |= 0x40;
     }
 
+    if ( Vdp2Lines[0].SCYN2 != Vdp2Lines[yabsys.LineCount].SCYN2  ||  Vdp2Lines[0].SCXN2 != Vdp2Lines[yabsys.LineCount].SCXN2 ) {
+
+      *Vdp2External.perline_alpha |= 0x100;
+    }
+
+    if ( Vdp2Lines[0].SCYN3 != Vdp2Lines[yabsys.LineCount].SCYN3  ||  Vdp2Lines[0].SCXN3 != Vdp2Lines[yabsys.LineCount].SCXN3 ) {
+
+      *Vdp2External.perline_alpha |= 0x80;
+    }
+
+
     if (Vdp2Lines[0].PRINA != Vdp2Lines[yabsys.LineCount].PRINA) {
       //printf("Perline priority");
     }
@@ -687,10 +860,12 @@ void Vdp2HBlankOUT(void) {
 
   if (yabsys.LineCount == 1) {
     VDP2genVRamCyclePattern();
+    Vdp2External.frame_render_flg = 0;
   }
 
-  if (yabsys.LineCount == 5 ){ // I don't know what this value should be ...
+  if (Vdp2External.frame_render_flg == 0 && vdp1_clock>0 ){ // Delay if vdp1 ram was written
     FrameProfileAdd("VOUT event");
+    Vdp2External.frame_render_flg = 1;
     // Manual Change
     if (Vdp1External.manualchange == 1) {
       Vdp1External.swap_frame_buffer = 1;
@@ -753,7 +928,8 @@ void Vdp2HBlankOUT(void) {
 #else
     vdp2VBlankOUT();
   }
-  else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
+  
+  if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
     //Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
     //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
     if ( Vdp1External.status == VDP1_STATUS_IDLE) {
@@ -770,6 +946,7 @@ void Vdp2HBlankOUT(void) {
   }
   
 #endif
+  Vdp1_onHblank();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -830,7 +1007,7 @@ static void FPSDisplay(void)
     cpu_f[0] / 1000, cpu_f[1] / 1000, cpu_f[2] / 1000, cpu_f[3] / 1000,
     cpu_f[4] / 1000, cpu_f[5] / 1000, cpu_f[6] / 1000, cpu_f[7] / 1000);
 #endif   
-  OSDPushMessage(OSDMSG_DEBUG, 1, "%d %d %s %s", framecounter, lagframecounter, MovieStatus, InputDisplayString);
+  //OSDPushMessage(OSDMSG_DEBUG, 1, "%d %d %s %s", framecounter, lagframecounter, MovieStatus, InputDisplayString);
   fpsframecount++;
   if (YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
   {
@@ -913,6 +1090,7 @@ void vdp2VBlankOUT(void) {
   VdpLockVram();
   FRAMELOG("***** VOUT(T) swap=%d,plot=%d,vdp1status=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot, Vdp1External.status );
 
+#if _DEBUG
   if (g_vdp_debug_dmp == 1) {
     g_vdp_debug_dmp = 0;
     restorevram();
@@ -923,7 +1101,7 @@ void vdp2VBlankOUT(void) {
     dumpvram();
     Vdp2GenerateCCode();
   }
- 
+#endif 
 
   if (pre_swap_frame_buffer == 0 && skipnextframe && Vdp1External.swap_frame_buffer ){
     skipnextframe = 0;
@@ -2268,6 +2446,8 @@ void VdpRevoke( void ){
   YabWaitEventQueue(command_);
 #endif
 }
+
+
 
 //////////////////////////////////////////////////////////////////////////////
 // This dump code can be used by the real SEGA saturn link this code.

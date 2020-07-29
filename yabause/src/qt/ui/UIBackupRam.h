@@ -82,6 +82,8 @@ public:
 
 	char *tmpbuf;
 
+  static UIBackupRam * instance;
+
 protected:
 	void refreshSaveList();
   BackupManager * backupman_;
@@ -99,6 +101,9 @@ protected:
 
   void finishedGetBackupData();
 
+signals:
+  void errorMessage(QString info);
+
 protected slots:
 	void on_cbDeviceList_currentIndexChanged( int id );
 	void on_lwSaveList_itemSelectionChanged();
@@ -111,6 +116,8 @@ protected slots:
   void on_pbCopyFromCloud_clicked();
   void on_pbCopyFromLocal_clicked();
 	void on_pbDeleteCloudItem_clicked();
+
+  void onErrorMessage(QString info);
 
 };
 

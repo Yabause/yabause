@@ -598,8 +598,10 @@ static u32 FindSave2(UNUSED u32 device, const char *string, u32 blockoffset, u32
 
    for (i = ((blockoffset * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
    {
+     
+
       // Find a block with the start of a save
-      if (((s8)MappedMemoryReadByte(addr + i + 1, NULL), NULL) < 0)
+      if ( ((s8)MappedMemoryReadByte(addr + i + 1, NULL))  < 0)
       {
          int i3;
 

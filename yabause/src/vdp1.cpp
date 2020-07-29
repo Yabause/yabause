@@ -51,64 +51,98 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "vdp2.h"
 #include "vidsoft.h"
 #include "threads.h"
+#include "sh2core.h"
+#include <atomic>
+#include <condition_variable>
+#include <chrono>
 
+using std::atomic;
+using std::condition_variable;
+using std::mutex;
+namespace chrono = std::chrono;
+
+extern "C" {
 u8 * Vdp1Ram;
 u8 * Vdp1FrameBuffer[2];
-
-VideoInterface_struct *VIDCore=NULL;
+VideoInterface_struct *VIDCore = NULL;
 extern VideoInterface_struct *VIDCoreList[];
 extern YabEventQueue * rcv_evqueue;
-
 Vdp1 * Vdp1Regs;
-Vdp1External_struct Vdp1External = {0};
+Vdp1External_struct Vdp1External = { 0 };
+}
+
+atomic<int> vdp1_clock{ 0 };
+condition_variable vdp1_clock_cv;
+mutex vdp1_clock_mtx;
+
+
+void Vdp1_onHblank() {
+#if 0
+  {
+    std::unique_lock<std::mutex> lk(vdp1_clock_mtx);
+    vdp1_clock += 100;
+  }
+  if (Vdp1External.status == VDP1_STATUS_RUNNING) {
+#if defined(YAB_ASYNC_RENDERING)
+    vdp1_clock_cv.notify_one();
+#else
+    Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
+#endif
+  }
+#else
+  vdp1_clock += 100;
+#endif
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL Vdp1RamReadByte(u32 addr) {
+extern "C" u8 FASTCALL Vdp1RamReadByte(u32 addr) {
    addr &= 0x7FFFF;
    return T1ReadByte(Vdp1Ram, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL Vdp1RamReadWord(u32 addr) {
+extern "C" u16 FASTCALL Vdp1RamReadWord(u32 addr) {
     addr &= 0x07FFFF;
     return T1ReadWord(Vdp1Ram, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL Vdp1RamReadLong(u32 addr) {
+extern "C" u32 FASTCALL Vdp1RamReadLong(u32 addr) {
    addr &= 0x7FFFF;
    return T1ReadLong(Vdp1Ram, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1RamWriteByte(u32 addr, u8 val) {
+extern "C" void FASTCALL Vdp1RamWriteByte(u32 addr, u8 val) {
    addr &= 0x7FFFF;
    T1WriteByte(Vdp1Ram, addr, val);
+   vdp1_clock = 0;
 }
 
-#include "sh2core.h"
-
 //////////////////////////////////////////////////////////////////////////////
-void FASTCALL Vdp1RamWriteWord(u32 addr, u16 val) {
+extern "C" void FASTCALL Vdp1RamWriteWord(u32 addr, u16 val) {
    addr &= 0x7FFFF;
    T1WriteWord(Vdp1Ram, addr, val);
+   vdp1_clock = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void FASTCALL Vdp1RamWriteLong(u32 addr, u32 val) {
+extern "C" void FASTCALL Vdp1RamWriteLong(u32 addr, u32 val) {
    addr &= 0x7FFFF;
    //if(addr == 0x00000)
    //LOG("Vdp1RamWriteLong @ %08X", CurrentSH2->regs.PC);
    T1WriteLong(Vdp1Ram, addr, val);
+   vdp1_clock = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL Vdp1FrameBufferReadByte(u32 addr) {
+extern "C" u8 FASTCALL Vdp1FrameBufferReadByte(u32 addr) {
    addr &= 0x3FFFF;
    //if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
    //  u8 val;
@@ -122,7 +156,7 @@ u8 FASTCALL Vdp1FrameBufferReadByte(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
+extern "C" u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
    addr &= 0x3FFFF;
    if (VIDCore->Vdp1ReadFrameBuffer ){
      u16 val;
@@ -136,7 +170,7 @@ u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL Vdp1FrameBufferReadLong(u32 addr) {
+extern "C" u32 FASTCALL Vdp1FrameBufferReadLong(u32 addr) {
    addr &= 0x3FFFF;
    if (VIDCore->Vdp1ReadFrameBuffer ){
      u32 val;
@@ -150,7 +184,7 @@ u32 FASTCALL Vdp1FrameBufferReadLong(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1FrameBufferWriteByte(u32 addr, u8 val) {
+extern "C" void FASTCALL Vdp1FrameBufferWriteByte(u32 addr, u8 val) {
    addr &= 0x3FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
@@ -165,7 +199,7 @@ void FASTCALL Vdp1FrameBufferWriteByte(u32 addr, u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1FrameBufferWriteWord(u32 addr, u16 val) {
+extern "C" void FASTCALL Vdp1FrameBufferWriteWord(u32 addr, u16 val) {
    addr &= 0x3FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
@@ -180,7 +214,7 @@ void FASTCALL Vdp1FrameBufferWriteWord(u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1FrameBufferWriteLong(u32 addr, u32 val) {
+extern "C" void FASTCALL Vdp1FrameBufferWriteLong(u32 addr, u32 val) {
    addr &= 0x3FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
@@ -197,7 +231,7 @@ void FASTCALL Vdp1FrameBufferWriteLong(u32 addr, u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Vdp1Init(void) {
+extern "C" int Vdp1Init(void) {
    if ((Vdp1Regs = (Vdp1 *) malloc(sizeof(Vdp1))) == NULL)
       return -1;
 
@@ -223,7 +257,7 @@ int Vdp1Init(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Vdp1DeInit(void) {
+extern "C" void Vdp1DeInit(void) {
    if (Vdp1Regs)
       free(Vdp1Regs);
    Vdp1Regs = NULL;
@@ -243,13 +277,13 @@ void Vdp1DeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int VideoInit(int coreid) {
+extern "C" int VideoInit(int coreid) {
    return VideoChangeCore(coreid);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-int VideoChangeCore(int coreid)
+extern "C" int VideoChangeCore(int coreid)
 {
    int i;
 
@@ -288,7 +322,7 @@ int VideoChangeCore(int coreid)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VideoDeInit(void) {
+extern "C" void VideoDeInit(void) {
    if (VIDCore)
       VIDCore->DeInit();
    VIDCore = NULL;
@@ -296,7 +330,7 @@ void VideoDeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Vdp1Reset(void) {
+extern "C" void Vdp1Reset(void) {
   memset(Vdp1Regs, 0, sizeof(Vdp1Regs));
    Vdp1Regs->PTMR = 0;
    Vdp1Regs->MODR = 0x1000; // VDP1 Version 1
@@ -319,9 +353,11 @@ void Vdp1Reset(void) {
    // Safe tarminator for Radient silvergun with no bios
    T1WriteWord(Vdp1Ram, 0x40000, 0x8000);
 
+   vdp1_clock = 0;
+
 }
 
-int VideoSetSetting( int type, int value )
+extern "C" int VideoSetSetting( int type, int value )
 {
 	if (VIDCore) VIDCore->SetSettingValue( type, value );
 	return 0;
@@ -330,7 +366,7 @@ int VideoSetSetting( int type, int value )
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL Vdp1ReadByte(u32 addr) {
+extern "C" u8 FASTCALL Vdp1ReadByte(u32 addr) {
    addr &= 0xFF;
    LOG("trying to byte-read a Vdp1 register\n");
    return 0;
@@ -338,7 +374,7 @@ u8 FASTCALL Vdp1ReadByte(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL Vdp1ReadWord(u32 addr) {
+extern "C" u16 FASTCALL Vdp1ReadWord(u32 addr) {
    addr &= 0xFF;
    switch(addr) {
       case 0x10:
@@ -363,7 +399,7 @@ u16 FASTCALL Vdp1ReadWord(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL Vdp1ReadLong(u32 addr) {
+extern "C" u32 FASTCALL Vdp1ReadLong(u32 addr) {
    addr &= 0xFF;
    LOG("trying to long-read a Vdp1 register - %08X\n", addr);
    return 0;
@@ -371,7 +407,7 @@ u32 FASTCALL Vdp1ReadLong(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1WriteByte(u32 addr, UNUSED u8 val) {
+extern "C" void FASTCALL Vdp1WriteByte(u32 addr, UNUSED u8 val) {
    addr &= 0xFF;
    LOG("trying to byte-write a Vdp1 register - %08X\n", addr);
 }
@@ -380,7 +416,7 @@ extern YabEventQueue * vdp1_rcv_evqueue;
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
+extern "C" void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
   addr &= 0xFF;
   switch(addr) {
     case 0x0:
@@ -429,7 +465,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
         VIDCore->Vdp1DrawEnd();
         yabsys.wait_line_count = yabsys.LineCount + 50;
         yabsys.wait_line_count %= yabsys.MaxLineCount;
-        if (yabsys.wait_line_count == 5) { yabsys.wait_line_count = 4; } // it should not be the same line with render.
+        //if (yabsys.wait_line_count == 2) { yabsys.wait_line_count = 3; } // it should not be the same line with render.
         FRAMELOG("VDP1: end line is %d", yabsys.wait_line_count);
     }
 #endif
@@ -456,15 +492,16 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1WriteLong(u32 addr, UNUSED u32 val) {
+extern "C" void FASTCALL Vdp1WriteLong(u32 addr, UNUSED u32 val) {
    addr &= 0xFF;
    LOG("trying to long-write a Vdp1 register - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+extern "C" void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
+  std::unique_lock<std::mutex> lk(vdp1_clock_mtx);
   LOG("VDP1: DrawCommands - %08X\n", regs->addr);
   regs->COPR = regs->addr >> 3;
   if (regs->addr > 0x7FFFF) {
@@ -478,12 +515,23 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      LOG("VDP1: Imidiate Finish - %08X\n", regs->addr);
      return;
    }
-   Vdp1External.status = VDP1_STATUS_RUNNING;
+
    int command_count = 0;
    u32 returnAddr = 0xffffffff;
 
    while (!(command & 0x8000) && command_count < 4096) { // fix me
       regs->COPR = regs->addr >> 3;
+      u32 to = 0;
+#if 0
+#if defined(YAB_ASYNC_RENDERING)
+      vdp1_clock_cv.wait_for(lk, chrono::milliseconds(1000), [] { return (vdp1_clock > 0); });
+#else
+      if (vdp1_clock <= 0) {
+        return;
+      }
+#endif
+      vdp1_clock -= 10;
+#endif
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
@@ -548,6 +596,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          // Badd adress. it causes infinity loop 
          if (regs->addr == 0) {
            LOG("VDP1: BAD jump to 0, forced to finish");
+           Vdp1External.status = VDP1_STATUS_IDLE;
            return;
          }
 
@@ -559,6 +608,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          // Badd adress. it causes infinity loop 
          if (regs->addr == 0) {
            LOG("VDP1: BAD jump to 0, forced to finish");
+           Vdp1External.status = VDP1_STATUS_IDLE;
            return;
          }
          break;
@@ -572,6 +622,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          // Badd adress. it causes infinity loop 
          if (regs->addr == 0) {
            LOG("VDP1: BAD jump to 0, forced to finish");
+           Vdp1External.status = VDP1_STATUS_IDLE;
            return;
          }
          break;
@@ -591,7 +642,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 }
 
 //ensure that registers are set correctly 
-void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
+extern "C" void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
 {
    u16 command = T1ReadWord(ram, regs->addr);
    u32 commandCounter = 0;
@@ -659,8 +710,52 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
    }
 }
 
-void Vdp1Draw(void) 
+
+int Vdp1GenerateCCode() {
+
+  FILE * regfp = fopen("v1reg.c", "w");
+  fprintf(regfp, "short v1reg[] = { \n");
+    fprintf(regfp, "0x%04X,\n", Vdp1Regs->TVMR);
+    fprintf(regfp, "0x%04X,\n", Vdp1Regs->FBCR);
+    fprintf(regfp, "0x%04X,\n", Vdp1Regs->PTMR);
+    fprintf(regfp, "0x%04X,\n", Vdp1Regs->EWDR);
+    fprintf(regfp, "0x%04X,\n", Vdp1Regs->EWLR);
+    fprintf(regfp, "0x%04X\n", Vdp1Regs->ENDR);
+  fprintf(regfp, "};\n");
+  fclose(regfp);
+
+  FILE * ramfp = fopen("v1ram.c", "w");
+  fprintf(ramfp, "short v1ram[] = { \n");
+  for (int i = 0; i < 0x80000; i+=2) {
+    u16 data = Vdp1RamReadWord(i);
+    fprintf(ramfp, "0x%04X", data);
+    if (i != 0 && (i % 16) == 0) {
+      fprintf(ramfp, ",\n");
+    }
+    else {
+      fprintf(ramfp, ",");
+    }
+  }
+  fprintf(ramfp, "};\n");
+  fclose(ramfp);
+
+  return 0;
+}
+
+#if _DEBUG
+int g_vdp1_debug_dmp = 0;
+#endif
+
+extern "C" void Vdp1Draw(void)
 {
+#if _DEBUG
+  if (g_vdp1_debug_dmp == 1) {
+    Vdp1GenerateCCode();
+    g_vdp1_debug_dmp = 0;
+    vdp2ReqDump();
+  }
+#endif
+
   FRAMELOG("Vdp1Draw");
    if (!Vdp1External.disptoggle)
    {
@@ -679,6 +774,7 @@ void Vdp1Draw(void)
      //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
    }
 
+   Vdp1External.status = VDP1_STATUS_RUNNING;
    VIDCore->Vdp1DrawStart();
 
    //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
@@ -695,7 +791,7 @@ void Vdp1Draw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Vdp1NoDraw(void) {
+extern "C" void Vdp1NoDraw(void) {
    // beginning of a frame (ST-013-R3-061694 page 53)
    // BEF <- CEF
    // CEF <- 0
@@ -712,7 +808,7 @@ void Vdp1NoDraw(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram) {
+extern "C" void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram) {
   addr &= 0x7FFFF;
    cmd->CMDCTRL = T1ReadWord(ram, addr);
    cmd->CMDLINK = T1ReadWord(ram, addr + 0x2);
@@ -733,7 +829,7 @@ void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Vdp1SaveState(FILE *fp)
+extern "C" int Vdp1SaveState(FILE *fp)
 {
    int offset;
    IOCheck_struct check = { 0, 0 };
@@ -771,7 +867,7 @@ int Vdp1SaveState(FILE *fp)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
+extern "C" int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
 {
    IOCheck_struct check = { 0, 0 };
 #ifdef IMPROVED_SAVESTATES
@@ -807,7 +903,7 @@ int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 Vdp1DebugGetCommandNumberAddr(u32 number)
+u32 Vdp1DebugGetCommandNumberAddr(u32 number)
 {
    u32 addr = 0;
    u32 returnAddr = 0xFFFFFFFF;

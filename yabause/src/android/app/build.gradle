@@ -19,7 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
 apply plugin: 'com.android.application'
-apply plugin: 'io.fabric'
+apply plugin: 'com.google.firebase.crashlytics'
 
 
 android {
@@ -66,8 +66,8 @@ android {
         minSdkVersion 21
         targetSdkVersion 29
         multiDexEnabled true
-        versionCode 141
-        versionName '3.3.1'
+        versionCode 145
+        versionName '3.4.0'
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.pro
@@ -100,6 +100,11 @@ android {
             applicationVariants.all { variant ->
                 renameAPK(variant, defaultConfig, 'R')
             }
+            firebaseCrashlytics {
+                nativeSymbolUploadEnabled true
+                strippedNativeLibsDir  'src/main/jniLibs'
+                unstrippedNativeLibsDir  'src/main/jniLibs'
+            }
             resValue "string", "app_name", "Yaba Sanshiro"
         }
         pro {
@@ -112,6 +117,12 @@ android {
             applicationVariants.all { variant ->
                 renameAPK(variant, defaultConfig, 'P')
             }
+            firebaseCrashlytics {
+                nativeSymbolUploadEnabled true
+                strippedNativeLibsDir  'src/main/jniLibs'
+                unstrippedNativeLibsDir  'src/main/jniLibs'
+            }
+
         }
         debug {
             debuggable true
@@ -122,6 +133,12 @@ android {
             packagingOptions {
                 doNotStrip "**/*/*.so"
             }
+            firebaseCrashlytics {
+                nativeSymbolUploadEnabled true
+                strippedNativeLibsDir  'src/main/jniLibs'
+                unstrippedNativeLibsDir  'src/main/jniLibs'
+            }
+
         }
     }
 
@@ -137,12 +154,12 @@ android {
 */
 }
 
-crashlytics {
-    enableNdk true
-    androidNdkOut 'src/main/jniLibs'
-    androidNdkLibsOut 'src/main/jniLibs'
-    manifestPath 'src/main/AndroidManifest.xml'
-}
+//crashlytics {
+//    enableNdk true
+//    androidNdkOut 'src/main/jniLibs'
+//    androidNdkLibsOut 'src/main/jniLibs'
+//    manifestPath 'src/main/AndroidManifest.xml'
+//}
 
 def renameAPK(variant, defaultConfig, buildType) {
     variant.outputs.all {
@@ -211,8 +228,8 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'androidx.multidex:multidex:2.0.1'
-    implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
-    implementation 'com.crashlytics.sdk.android:crashlytics-ndk:2.1.1'
+    implementation 'com.google.firebase:firebase-analytics-ktx:17.4.4'
+    implementation 'com.google.firebase:firebase-crashlytics-ndk:17.1.1'
     implementation 'net.cattaka:adapter-toolbox:0.5.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'net.nend.android:nend-sdk:5.2.0'
@@ -241,6 +258,30 @@ dependencies {
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+}
+
+configurations {
+  ktlint
+}
+
+dependencies {
+  ktlint "com.github.shyiko:ktlint:0.29.0"
+}
+
+task ktlint(type: JavaExec, group: "verification") {
+  description = "Check Kotlin code style."
+  classpath = configurations.ktlint
+  main = "com.github.shyiko.ktlint.Main"
+  args "src/**/*.kt"
+}
+
+check.dependsOn ktlint
+
+task ktlintFormat(type: JavaExec, group: "formatting") {
+ description = "Fix Kotlin code style deviations."
+ classpath = configurations.ktlint
+ main = "com.github.shyiko.ktlint.Main"
+ args "-F", "src/**/*.kt"
 }
 
 // ADD THIS AT THE BOTTOM

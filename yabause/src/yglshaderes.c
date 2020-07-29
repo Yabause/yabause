@@ -1603,13 +1603,13 @@ const GLchar Yglprg_vdp1_shadow_f[] =
 "  addr.s = addr.s / (v_texcoord.q);\n"
 "  addr.t = addr.t / (v_texcoord.q);\n"
 "  vec4 spriteColor = texture(u_sprite,addr);\n"
-"  if( spriteColor.a == 0.0 ) discard;\n"
+"  if( spriteColor.a == 0.0 ){ discard; }\n"
 "  vec4 fboColor = texture(u_fbo,faddr);\n"
 "  int additional = int(fboColor.a * 255.0);\n"
 "  if( ((additional & 0xC0)==0x80) ) { \n"
 "    fragColor = vec4(fboColor.r*0.5,fboColor.g*0.5,fboColor.b*0.5,fboColor.a);\n"
 "  }else{\n"
-"    discard;"
+"    discard;\n"
 "  }\n"
 "}\n";
 const GLchar * pYglprg_vdp1_shadow_f[] = { Yglprg_vdp1_shadow_f, NULL };
@@ -2967,7 +2967,7 @@ int YglProgramInit()
    shadow.fbo = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_fbo");
    shadow.fbowidth = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_fbowidth");
    shadow.fboheight = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_fbohegiht");
-
+   shadow.texsize = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_texsize");
 
    //-----------------------------------------------------------------------------------------------------------
    YGLLOG("PG_VFP1_GOURAUDSAHDING_HALFTRANS\n");
@@ -3146,6 +3146,7 @@ int YglTesserationProgramInit()
     shadow_tess.fbo = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbo");
     shadow_tess.fbowidth = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbowidth");
     shadow_tess.fboheight = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbohegiht");
+    shadow_tess.texsize = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_texsize");
 
     //---------------------------------------------------------------------------------------------------------
     YGLLOG("PG_VFP1_HALFTRANS_TESS");

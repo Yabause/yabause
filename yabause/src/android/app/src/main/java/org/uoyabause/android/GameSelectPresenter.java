@@ -42,7 +42,6 @@ import androidx.appcompat.view.ContextThemeWrapper;
 import android.view.View;
 import android.widget.CheckBox;
 
-import com.crashlytics.android.Crashlytics;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.ErrorCodes;
 import com.firebase.ui.auth.IdpResponse;
@@ -51,6 +50,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -226,7 +226,7 @@ public class GameSelectPresenter {
 
             baseref.child(baseurl).child("android_token").setValue(token);
 
-            Crashlytics.setUserIdentifier( username_ + "_" + auth.getCurrentUser().getEmail());
+            FirebaseCrashlytics.getInstance().setUserId(username_ + "_" + auth.getCurrentUser().getEmail());
             mFirebaseAnalytics.setUserId(username_ + "_" + auth.getCurrentUser().getEmail());
             mFirebaseAnalytics.setUserProperty ("name", username_ + "_" + auth.getCurrentUser().getEmail());
 
@@ -245,10 +245,7 @@ public class GameSelectPresenter {
             //startActivity(SignedInActivity.createIntent(this, response));
             YabauseApplication application = (YabauseApplication)target_.getActivity().getApplication();
             if( application != null ) {
-                Crashlytics crash = application.getCrashlytics();
-                crash.setUserName(auth.getCurrentUser().getDisplayName());
-                crash.setUserEmail(auth.getCurrentUser().getEmail());
-                crash.setUserIdentifier(auth.getUid());
+                FirebaseCrashlytics.getInstance().setUserId( auth.getCurrentUser().getDisplayName() + "_" + auth.getCurrentUser().getEmail());
             }
 
             if( auth_emitter_ != null ){
@@ -322,7 +319,7 @@ public class GameSelectPresenter {
         if( do_not_ask == true ){
             FirebaseAuth auth = FirebaseAuth.getInstance();
             if (auth.getCurrentUser() != null) {
-                Crashlytics.setUserIdentifier( auth.getCurrentUser().getDisplayName() + "_" + auth.getCurrentUser().getEmail());
+                FirebaseCrashlytics.getInstance().setUserId( auth.getCurrentUser().getDisplayName() + "_" + auth.getCurrentUser().getEmail());
                 mFirebaseAnalytics.setUserId(auth.getCurrentUser().getDisplayName() + "_" + auth.getCurrentUser().getEmail());
                 mFirebaseAnalytics.setUserProperty ("name", auth.getCurrentUser().getDisplayName() + "_" + auth.getCurrentUser().getEmail());
             }
@@ -374,7 +371,7 @@ public class GameSelectPresenter {
 
             builder.create().show();
         }else{
-            Crashlytics.setUserIdentifier( auth.getCurrentUser().getDisplayName() + "_" + auth.getCurrentUser().getEmail());
+            FirebaseCrashlytics.getInstance().setUserId( auth.getCurrentUser().getDisplayName() + "_" + auth.getCurrentUser().getEmail());
             mFirebaseAnalytics.setUserId(auth.getCurrentUser().getDisplayName() + "_" + auth.getCurrentUser().getEmail());
             mFirebaseAnalytics.setUserProperty ("name", auth.getCurrentUser().getDisplayName() + "_" + auth.getCurrentUser().getEmail());
         }

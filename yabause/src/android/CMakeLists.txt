@@ -32,7 +32,7 @@ include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libpng.cmake )
 
 set( SOURCES 
  jni/yui.cpp
- jni/sndaudiotrack.c
+ #jni/sndaudiotrack.c
  jni/sndopensl.c
  jni/jniBackupManager.cpp
  jni/jniBackupManager.h

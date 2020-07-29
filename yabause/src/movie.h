@@ -19,6 +19,11 @@
 #ifndef MOVIE_H
 #define MOVIE_H
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+
 #include "core.h"
 
 #define Stopped	  1
@@ -83,4 +88,10 @@ extern int lagframecounter;
 extern char MovieStatus[40];
 extern char InputDisplayString[40];
 extern int FrameAdvanceVariable;
+
+#if defined(__cplusplus)
+}
+#endif
+
+
 #endif

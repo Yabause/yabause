@@ -68,7 +68,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <GLES3/gl3ext.h>
 #include <pthread.h>
 
-#include "sndaudiotrack.h"
+//#include "sndaudiotrack.h"
 #ifdef HAVE_OPENSL
 #include "sndopensl.h"
 #endif
@@ -211,7 +211,7 @@ NULL
 
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
-&SNDAudioTrack,
+//&SNDAudioTrack,
 #ifdef HAVE_OPENSL
 &SNDOpenSL,
 #endif
