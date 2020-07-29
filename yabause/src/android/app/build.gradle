@@ -59,15 +59,15 @@ android {
     }
 
     compileSdkVersion 29
-    buildToolsVersion '29.0.2'
+    buildToolsVersion '29.0.3'
 
     defaultConfig {
         applicationId "org.uoyabause.uranus"
         minSdkVersion 21
         targetSdkVersion 29
         multiDexEnabled true
-        versionCode 137
-        versionName '3.2.4'
+        versionCode 141
+        versionName '3.3.1'
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.pro
@@ -196,12 +196,12 @@ dependencies {
     implementation 'androidx.tvprovider:tvprovider:1.0.0'
 
     implementation 'com.firebaseui:firebase-ui-auth:6.2.0'
-    implementation 'com.google.firebase:firebase-core:17.2.1'
-    implementation 'com.google.firebase:firebase-database:19.2.0'
-    implementation 'com.google.firebase:firebase-storage:19.1.0'
-    implementation 'com.google.firebase:firebase-ads:18.3.0'
-    implementation 'com.google.firebase:firebase-messaging:20.1.0'
-    implementation 'com.google.firebase:firebase-config:19.1.0'
+    implementation 'com.google.firebase:firebase-core:17.4.2'
+    implementation 'com.google.firebase:firebase-database:19.3.0'
+    implementation 'com.google.firebase:firebase-storage:19.1.1'
+    implementation 'com.google.firebase:firebase-ads:19.1.0'
+    implementation 'com.google.firebase:firebase-messaging:20.2.0'
+    implementation 'com.google.firebase:firebase-config:19.1.4'
     implementation 'com.google.android.gms:play-services-analytics:17.0.0'
     //implementation 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
     implementation files('libs/activeandroid-3.1.0-SNAPSHOT.jar')
@@ -216,14 +216,14 @@ dependencies {
     implementation 'net.cattaka:adapter-toolbox:0.5.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'net.nend.android:nend-sdk:5.2.0'
-    implementation "com.google.android.material:material:1.2.0-alpha03"
+    implementation "com.google.android.material:material:1.2.0-beta01"
 
     // Add the In-App Messaging dependency:
-    implementation 'com.google.firebase:firebase-inappmessaging-display:19.0.2'
+    implementation 'com.google.firebase:firebase-inappmessaging-display:19.0.7'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.6'
 
-    def preference_version = "1.1.0"
+    def preference_version = "1.1.1"
 
     // Java
     implementation "androidx.preference:preference:$preference_version"

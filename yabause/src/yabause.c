@@ -148,6 +148,7 @@ void print_usage(const char *program_name) {
    printf("   -ns        --nosound              turn sound off\n");
    printf("   -a         --autostart            autostart emulation\n");
    printf("   -f         --fullscreen           start in fullscreen mode\n");
+   printf("   -r DIR     --playrecord           play play record\n");
 }
 #endif
 
@@ -185,6 +186,11 @@ int YabauseInit(yabauseinit_struct *init)
   q_scsp_finish = YabThreadCreateQueue(1);
   setM68kCounter(0);
 
+  if( init->playRecordPath && strlen(init->playRecordPath) != 0) {
+    PlayRecorder_setPlayMode(init->playRecordPath,init);
+  }
+
+   yabsys.frame_count = 0;
    yabsys.sync_shift = init->sync_shift;
 
    // Need to set this first, so init routines see it
@@ -535,6 +541,8 @@ void YabauseReset(void) {
    if (yabsys.playing_ssf)
       yabsys.playing_ssf = 0;
 
+   yabsys.frame_count = 0;
+
    YabauseResetNoLoad();
 
    if (yabsys.usequickload || yabsys.emulatebios)
@@ -565,6 +573,8 @@ int YabauseExec(void) {
 	//automatically advance lag frames, this should be optional later
 	//if (FrameAdvanceVariable > 0 && LagFrameFlag == 1){ 
 		//FrameAdvanceVariable = NeedAdvance; //advance a frame
+
+
 		YabauseEmulate();
 		//FrameAdvanceVariable = Paused; //pause next time
 		return(0);
@@ -631,6 +641,7 @@ u64 g_m68K_dec_cycle = 0;
 int YabauseEmulate(void) {
    int oneframeexec = 0;
    yabsys.frame_count++;
+   PlayRecorder_proc(yabsys.frame_count);
 
    const u32 cyclesinc =
       yabsys.DecilineMode ? yabsys.DecilineStop : yabsys.DecilineStop * 10;

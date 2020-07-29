@@ -6165,114 +6165,109 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
 }
 
 INLINE int Vdp2CheckCharAccessPenalty(int char_access, int ptn_access) {
-
   if (_Ygl->rwidth >= 640) {
-    if (char_access < ptn_access) {
-      return -1;
+    //if (char_access < ptn_access) {
+    //  return -1;
+    //}
+    if (ptn_access & 0x01) { // T0
+      // T0-T2
+      if ((char_access & 0x07) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
+        return 0;
+      }
     }
-    switch (ptn_access) {
-    case 0:
-      if (char_access > 2) {
-        return -1;
-      }
-      else {
+
+    if (ptn_access & 0x02) { // T1
+      // T1-T3
+      if ((char_access & 0x0E) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
         return 0;
       }
-      break;
-    case 1:
-      if (char_access == 0 || char_access > 3) {
-        return -1;
-      }
-      else {
+    }
+
+    if (ptn_access & 0x04) { // T2
+      // T0,T2,T3
+      if ((char_access & 0x0D) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
         return 0;
       }
-      break;
-    case 2:
-      if (char_access == 0 || char_access == 2 || char_access == 3 ) {
+    }
+
+    if (ptn_access & 0x08) { // T3
+      // T0,T1,T3
+      if ((char_access & 0xB) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
         return 0;
       }
-      else {
-        return -1;
-      }
-      break;
-    case 3:
-      if (char_access == 0 || char_access == 1 || char_access == 3) {
-        return 0;
-      }
-      else {
-        return -1;
-      }
-      break;
     }
     return -1;
   }
   else {
-    switch (ptn_access) {
-    case 0:
-      if (char_access == 3) {
-        return -1;
-      }
-      else {
+
+    if (ptn_access & 0x01) { // T0
+      // T0-T2, T4-T7
+      if ((char_access & 0xF7) != 0) {
         return 0;
       }
-      break;
-    case 1:
-      if (char_access == 4) {
-        return -1;
-      }
-      else {
-        return 0;
-      }
-      break;
-    case 2:
-      if (char_access == 4 || char_access == 5) {
-        return -1;
-      }
-      else {
-        return 0;
-      }
-      break;
-    case 3:
-      if (char_access == 4 || char_access == 5 || char_access == 6) {
-        return -1;
-      }
-      else {
-        return 0;
-      }
-      break;
-    case 4:
-      if (char_access > 3) {
-        return -1;
-      }
-      else {
-        return 0;
-      }
-      break;
-    case 5:
-      if (char_access >= 1 && char_access <= 3) {
-        return 0;
-      }
-      else {
-        return -1;
-      }
-      break;
-    case 6:
-      if (char_access == 2 || char_access == 3) {
-        return 0;
-      }
-      else {
-        return -1;
-      }
-      break;
-    case 7:
-      if (char_access == 3) {
-        return 0;
-      }
-      else {
-        return -1;
-      }
-      break;
     }
+
+    if (ptn_access & 0x02) { // T1
+      // T0-T3, T5-T7
+      if ((char_access & 0xEF) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x04) { // T2
+      // T0-T3, T6-T7
+      if ((char_access & 0xCF) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x08) { // T3
+      // T0-T3, T7
+      if ((char_access & 0x8F) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x10) { // T4
+      // T0-T3
+      if ((char_access & 0x0F) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x20) { // T5
+      // T1-T3
+      if ((char_access & 0x0E) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x40) { // T6
+      // T2,T3
+      if ((char_access & 0x0C) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x80) { // T7
+      // T3
+      if ((char_access & 0x08) != 0) {
+        return 0;
+      }
+    }
+    return -1;
   }
   return 0;
 }
@@ -6283,24 +6278,20 @@ INLINE int Vdp2CheckCharAccessPenalty(int char_access, int ptn_access) {
 
 static void Vdp2DrawNBG0(void)
 {
-  vdp2draw_struct info = { 0 };
+  vdp2draw_struct info;
   YglTexture texture;
   YglCache tmpc;
-  int char_access = -1;
-  int ptn_access = -1;
-
+  int char_access = 0;
+  int ptn_access = 0;
   info.dst = 0;
   info.uclipmode = 0;
   info.id = 0;
   info.coordincx = 1.0f;
   info.coordincy = 1.0f;
-
   info.cor = 0;
   info.cog = 0;
   info.cob = 0;
-  int i;
   info.enable = 0;
-
   info.cellh = 256;
   info.specialcolorfunction = 0;
 
@@ -6310,11 +6301,11 @@ static void Vdp2DrawNBG0(void)
     for (int j=0; j < 8; j++) {
       if (AC_VRAM[i][j] == 0x04) {
         info.char_bank[i] = 1;
-        if (char_access == -1)char_access = j;
+        char_access |= 1<<j;
       }
       if (AC_VRAM[i][j] == 0x00) {
         info.pname_bank[i] = 1;
-        if (ptn_access == -1)ptn_access = j;
+        ptn_access |= 1<<j;
       }
     }
   }
@@ -6360,7 +6351,7 @@ static void Vdp2DrawNBG0(void)
     paraB.coefenab = fixVdp2Regs->KTCTL & 0x100;
     paraB.charaddr = (fixVdp2Regs->MPOFR & 0x70) * 0x2000;
     ReadPlaneSizeR(&paraB, fixVdp2Regs->PLSZ >> 12);
-    for (i = 0; i < 16; i++)
+    for (int i = 0; i < 16; i++)
     {
 	  Vdp2ParameterBPlaneAddr(&info, i, fixVdp2Regs);
       paraB.PlaneAddrv[i] = info.addr;
@@ -6704,9 +6695,7 @@ static void Vdp2DrawNBG1(void)
   vdp2draw_struct info;
   YglTexture texture;
   YglCache tmpc;
-  int char_access = -1;
-  int ptn_access = -1;
-  
+
   info.dst = 0;
   info.id = 1;
   info.uclipmode = 0;
@@ -6718,21 +6707,23 @@ static void Vdp2DrawNBG1(void)
   info.enable = fixVdp2Regs->BGON & 0x2;
   if (!info.enable) return;
 
+  int char_access = 0;
+  int ptn_access = 0;
+
   for (int i = 0; i < 4; i++) {
     info.char_bank[i] = 0;
     info.pname_bank[i] = 0;
     for (int j = 0; j < 8; j++) {
       if (AC_VRAM[i][j] == 0x05) {
         info.char_bank[i] = 1;
-        if (char_access == -1) char_access = j;
+        char_access |= (1<<j);
       }
       if (AC_VRAM[i][j] == 0x01) {
         info.pname_bank[i] = 1;
-        if (ptn_access == -1) ptn_access = j;
+        ptn_access |= (1<<j);
       }
     }
   }
-  if (char_access == -1) return;
 
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x200);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 2) & 0x3;
@@ -7011,29 +7002,10 @@ static void Vdp2DrawNBG2(void)
   info.cob = 0;
   info.specialcolorfunction = 0;
   info.blendmode = 0;
-  int char_access = -1;
-  int ptn_access = -1;
 
   info.enable = fixVdp2Regs->BGON & 0x4;
   if (!info.enable) return;
 
-  for (int i = 0; i < 4; i++) {
-    info.char_bank[i] = 0;
-    info.pname_bank[i] = 0;
-    for (int j = 0; j < 8; j++) {
-      if (AC_VRAM[i][j] == 0x06) {
-        info.char_bank[i] = 1;
-        if (char_access == -1)char_access = j;
-      }
-      if (AC_VRAM[i][j] == 0x02) {
-        info.pname_bank[i] = 1;
-        if (ptn_access == -1)ptn_access = j;
-      }
-    }
-  }
-  //if (char_access == -1) return;
-
- 
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x400);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 4) & 0x3;
 
@@ -7062,27 +7034,27 @@ static void Vdp2DrawNBG2(void)
   }
 
 
-    if (fixVdp2Regs->CCCTL & 0x4)
+  if (fixVdp2Regs->CCCTL & 0x4)
+  {
+    info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
+    if (fixVdp2Regs->CCCTL & 0x100 /*&& info.specialcolormode == 0*/)
     {
-      info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
-      if (fixVdp2Regs->CCCTL & 0x100 /*&& info.specialcolormode == 0*/ )
-      {
-        info.blendmode |= VDP2_CC_ADD;
-      }
-      else {
-        info.blendmode |= VDP2_CC_RATE;
-      }
+      info.blendmode |= VDP2_CC_ADD;
     }
     else {
-      // 12.14 CCRTMD
-      if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
-        info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
-      }
-      else {
-        info.alpha = 0xFF;
-      }
-      info.blendmode |= VDP2_CC_NONE;
+      info.blendmode |= VDP2_CC_RATE;
     }
+  }
+  else {
+    // 12.14 CCRTMD
+    if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
+      info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
+    }
+    else {
+      info.alpha = 0xFF;
+    }
+    info.blendmode |= VDP2_CC_NONE;
+  }
 
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG2);
@@ -7124,9 +7096,30 @@ static void Vdp2DrawNBG2(void)
   info.lineinc = 0;
   info.isverticalscroll = 0;
   info.x = fixVdp2Regs->SCXN2 & 0x7FF;
-  // Setting miss of cycle patten need to plus 8 dot vertical
-  if (Vdp2CheckCharAccessPenalty(char_access,ptn_access)!=0) {
-    info.x -= 8;
+
+  {
+    int char_access = 0;
+    int ptn_access = 0;
+
+    for (int i = 0; i < 4; i++) {
+      info.char_bank[i] = 0;
+      info.pname_bank[i] = 0;
+      for (int j = 0; j < 8; j++) {
+        if (AC_VRAM[i][j] == 0x06) {
+          info.char_bank[i] = 1;
+          char_access |= (1 << j);
+        }
+        if (AC_VRAM[i][j] == 0x02) {
+          info.pname_bank[i] = 1;
+          ptn_access |= (1 << j);
+        }
+      }
+    }
+
+    // Setting miss of cycle patten need to plus 8 dot vertical
+    if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
+      info.x -= 8;
+    }
   }
   info.y = fixVdp2Regs->SCYN2 & 0x7FF;
   Vdp2DrawMapTest(&info, &texture);
@@ -7147,27 +7140,9 @@ static void Vdp2DrawNBG3(void)
   info.cob = 0;
   info.specialcolorfunction = 0;
   info.blendmode = 0;
-  int char_access = -1;
-  int ptn_access = -1;
 
   info.enable = fixVdp2Regs->BGON & 0x8;
   if (!info.enable) return;
-
-  for (int i = 0; i < 4; i++) {
-    info.char_bank[i] = 0;
-    info.pname_bank[i] = 0;
-    for (int j = 0; j < 8; j++) {
-      if (AC_VRAM[i][j] == 0x07) {
-        info.char_bank[i] = 1;
-        if (char_access == -1)char_access = j;
-      }
-      if (AC_VRAM[i][j] == 0x03) {
-        info.pname_bank[i] = 1;
-        if (ptn_access == -1)ptn_access = j;
-      }
-    }
-  }
-  //if (char_access == -1) return;
 
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x800);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 6) & 0x3;
@@ -7259,9 +7234,28 @@ static void Vdp2DrawNBG3(void)
   info.lineinc = 0;
   info.isverticalscroll = 0;
   info.x = fixVdp2Regs->SCXN3 & 0x7FF;
-  // Setting miss of cycle patten need to plus 8 dot vertical
-  if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
-    info.x -= 8;
+
+  {
+    int char_access = 0;
+    int ptn_access = 0;
+    for (int i = 0; i < 4; i++) {
+      info.char_bank[i] = 0;
+      info.pname_bank[i] = 0;
+      for (int j = 0; j < 8; j++) {
+        if (AC_VRAM[i][j] == 0x07) {
+          info.char_bank[i] = 1;
+          char_access |= (1 << j);
+        }
+        if (AC_VRAM[i][j] == 0x03) {
+          info.pname_bank[i] = 1;
+          ptn_access |= (1 << j);
+        }
+      }
+    }
+    // Setting miss of cycle patten need to plus 8 dot vertical
+    if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
+      info.x -= 8;
+    }
   }
   info.y = fixVdp2Regs->SCYN3 & 0x7FF;
   Vdp2DrawMapTest(&info, &texture);

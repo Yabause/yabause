@@ -64,7 +64,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 Smpc * SmpcRegs;
 u8 * SmpcRegsT;
-SmpcInternal * SmpcInternalVars;
+SmpcInternal * SmpcInternalVars = NULL;
 int intback_wait_for_line = 0;
 u8 bustmp = 0;
 
@@ -85,6 +85,12 @@ int SmpcInit(u8 regionid, int clocksync, u32 basetime) {
    SmpcInternalVars->basetime = basetime ? basetime : time(NULL);
 
    return 0;
+}
+
+int SmpcSetClockSync(int clocksync, u32 basetime) {
+  if (SmpcInternalVars == NULL) return -1;
+  SmpcInternalVars->clocksync = clocksync;
+  SmpcInternalVars->basetime = basetime ? basetime : time(NULL);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -247,7 +253,7 @@ static void SmpcINTBACKStatus(void) {
     
    // write time data in OREG1-7
    if (SmpcInternalVars->clocksync) {
-      tmp = SmpcInternalVars->basetime + ((u64)framecounter * 1001 / 60000);
+      tmp = SmpcInternalVars->basetime + ((u64)yabsys.frame_count * 1001 / 60000);
    } else {
       tmp = time(NULL);
    }

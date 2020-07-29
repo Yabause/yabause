@@ -25,6 +25,10 @@
 #include "smpc.h"
 #include "yabause.h"
 
+#if defined (__cplusplus)
+extern "C"{
+#endif
+
 /** @defgroup peripheral Peripheral
  *
  * @brief This module provides two kind of functions
@@ -302,5 +306,9 @@ void PerGunMove(PerGun_struct * gun, s32 dispx, s32 dispy);
 /** @} */
 
 /** @} */
+
+#if defined (__cplusplus)
+}
+#endif
 
 #endif

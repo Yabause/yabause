@@ -42,6 +42,8 @@
 #include "../QtYabause.h"
 #include "../CommonDialogs.h"
 
+#include "PlayRecorder.h"
+
 #include <QKeyEvent>
 #include <QTextEdit>
 #include <QDockWidget>
@@ -181,6 +183,10 @@ UIYabause::UIYabause( QWidget* parent )
 	VIDSoftSetBilinear(QtYabause::settings()->value( "Video/Bilinear", false ).toBool());
 
 	mIsCdIn = true;
+
+  PlayRecorder * p = PlayRecorder::getInstance();
+  using std::placeholders::_1;
+  p->f_takeScreenshot = std::bind(&UIYabause::takeScreenshot, this, _1);
 
 	// Initialize cloud service
 	std::thread t([&]{
@@ -1084,8 +1090,21 @@ void UIYabause::on_aFileLoadStateAs_triggered()
 		aEmulationRun->trigger();
 }
 
+void UIYabause::takeScreenshot(const char * fname) {
+  YabauseLocker locker(mYabauseThread);
+  QImage screenshot = mYabauseGL->grabFrameBuffer();
+  QImageWriter iw(fname);
+  iw.write(screenshot);
+}
+
 void UIYabause::on_aFileScreenshot_triggered()
 {
+  PlayRecorder * p = PlayRecorder::getInstance();
+  if (p->getStatus() == 0) {
+    p->takeShot();
+    return;
+  }
+  
 	YabauseLocker locker( mYabauseThread );
 	// images filter that qt can write
 	QStringList filters;
@@ -1135,6 +1154,50 @@ void UIYabause::on_aEmulationRun_triggered()
 		if (isFullScreen())
 			hideMouseTimer->start(3 * 1000);
 	}
+}
+
+void UIYabause::on_actionRecord_triggered() {
+
+  PlayRecorder * p = PlayRecorder::getInstance();
+  if (p->getStatus() == -1) {
+    using std::placeholders::_1;
+    p->f_takeScreenshot = std::bind(&UIYabause::takeScreenshot, this, _1);
+    p->startRocord();
+    default_title = windowTitle();
+    setWindowTitle("Recording");
+    this->actionRecord->setText("Stop Record");
+
+  }
+  else if (p->getStatus() == 0) {
+    p->stopRocord();
+    setWindowTitle(default_title);
+    this->actionRecord->setText("Record");
+  }
+
+}
+
+void UIYabause::on_actionPlay_triggered() {
+  PlayRecorder * p = PlayRecorder::getInstance();
+  if (p->getStatus() == -1) {
+    using std::placeholders::_1;
+    p->f_takeScreenshot = std::bind(&UIYabause::takeScreenshot, this, _1);
+		QString s = QFileDialog::getExistingDirectory(
+    this, 
+    tr("Choose a location of your record"),
+    NULL,
+    QFileDialog::ShowDirsOnly | QFileDialog::DontUseNativeDialog);		
+
+    if (!s.isEmpty()) {
+      QByteArray ba = s.toLocal8Bit();
+      p->startPlay(ba.data(), true, nullptr);
+      default_title = windowTitle();
+      setWindowTitle("Playing");
+    }
+  }
+  else if (p->getStatus() == 1) {
+    //p->stopRocord();
+  }
+    
 }
 
 void UIYabause::on_aEmulationPause_triggered()

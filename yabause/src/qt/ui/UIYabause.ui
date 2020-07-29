@@ -124,7 +124,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="mFile">
@@ -263,6 +263,8 @@
     <addaction name="aEmulationReset"/>
     <addaction name="separator"/>
     <addaction name="aEmulationFrameSkipLimiter"/>
+    <addaction name="actionRecord"/>
+    <addaction name="actionPlay"/>
    </widget>
    <addaction name="mFile"/>
    <addaction name="mEmulation"/>
@@ -415,7 +417,7 @@
     <string>Sc&amp;reenshot</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+P</string>
+    <string>F8</string>
    </property>
   </action>
   <action name="aEmulationFrameSkipLimiter">
@@ -1037,6 +1039,16 @@
    </property>
    <property name="shortcut">
     <string>Shift+F5</string>
+   </property>
+  </action>
+  <action name="actionRecord">
+   <property name="text">
+    <string>Record</string>
+   </property>
+  </action>
+  <action name="actionPlay">
+   <property name="text">
+    <string>Play</string>
    </property>
   </action>
  </widget>

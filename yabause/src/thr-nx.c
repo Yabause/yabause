@@ -37,7 +37,7 @@ static Thread thread_handle[YAB_NUM_THREADS] = {0};
 //////////////////////////////////////////////////////////////////////////////
 
 
-int YabThreadStart(unsigned int id, void (*func)(void *), void *arg)
+int YabThreadStart(unsigned int id, void * (*func)(void *), void *arg)
 {
   Result result;
   if((result = threadCreate(&thread_handle[id],(ThreadFunc)func,arg, 0x10000, 0x2C, -2)) != 0 ){

@@ -818,7 +818,7 @@ void Cs2Reset(void) {
   Cs2Area->reg.CR3 = ('L'<<8) | 'O';
   Cs2Area->reg.CR4 = ('C'<<8) | 'K';
   Cs2Area->reg.HIRQ = 0xFFFF;
-  Cs2Area->reg.HIRQMASK = 0xFFFF;
+  Cs2Area->reg.HIRQMASK = 0x0000;
 
   Cs2Area->playFAD = 0xFFFFFFFF;
   Cs2Area->playendFAD = 0xFFFFFFFF;

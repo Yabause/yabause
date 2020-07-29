@@ -741,7 +741,7 @@ void CompileBlocks::Init()
 
 int CompileBlocks::opcodeIndex(u16 op)
 {
-  register int i = 0;
+  /*register*/ int i = 0;
   while (((op & opcode_list[i].mask) != opcode_list[i].bits) && opcode_list[i].mnem != 0) i++;
   return i;
 }

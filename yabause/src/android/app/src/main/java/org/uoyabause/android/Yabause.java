@@ -178,6 +178,7 @@ public class Yabause extends AppCompatActivity implements
   private ProgressDialog mProgressDialog;
   private Boolean isShowProgress;
   private String gameCode;
+  private String testCase = "";
 
   void print(String msg) {
     StackTraceElement calledClass = Thread.currentThread().getStackTrace()[3];
@@ -266,6 +267,17 @@ public class Yabause extends AppCompatActivity implements
     mNavigationView.setNavigationItemSelectedListener(this);
     Menu menu = mNavigationView.getMenu();
 
+    if(BuildConfig.BUILD_TYPE != "debug" ) {
+      MenuItem rec = menu.findItem(R.id.record);
+      if( rec != null ){
+        rec.setVisible(false);
+      }
+      MenuItem play = menu.findItem(R.id.play);
+      if( play != null ){
+        play.setVisible(false);
+      }
+    }
+
     DrawerLayout.DrawerListener drawerListener = new DrawerLayout.DrawerListener() {
       @Override
       public void onDrawerSlide(View view, float v) {
@@ -329,6 +341,14 @@ public class Yabause extends AppCompatActivity implements
 
     audio = new YabauseAudio(this);
     Intent intent = getIntent();
+
+    Bundle bundle = intent.getExtras();
+    if (bundle != null) {
+      for (String key : bundle.keySet()) {
+        Log.e(TAG, key + " : " + (bundle.get(key) != null ? bundle.get(key) : "NULL"));
+      }
+    }
+
     String game = intent.getStringExtra("org.uoyabause.android.FileName");
     if (game != null && game.length() > 0) {
       YabauseStorage storage = YabauseStorage.getStorage();
@@ -341,17 +361,39 @@ public class Yabause extends AppCompatActivity implements
       gamepath = exgame;
     }
 
+    Log.d(TAG,"File is " + gamepath );
+
     String gameCode = intent.getStringExtra("org.uoyabause.android.gamecode");
     if (gameCode != null) {
       this.gameCode = gameCode;
     }else {
-      GameInfo gf = GameInfo.getFromFileName(gamepath);
-      this.gameCode = gf.product_number;
+      GameInfo gameinfo = GameInfo.getFromFileName(gamepath);
+      if( gameinfo != null ) {
+        this.gameCode = gameinfo.product_number;
+      }else{
+        if (gamepath.toUpperCase().endsWith("CUE")) {
+          gameinfo = GameInfo.genGameInfoFromCUE(gamepath);
+        } else if (gamepath.toUpperCase().endsWith("MDS")) {
+          gameinfo = GameInfo.genGameInfoFromMDS(gamepath);
+        } else if (gamepath.toUpperCase().endsWith("CCD")) {
+          gameinfo = GameInfo.genGameInfoFromMDS(gamepath);
+        } else if (gamepath.toUpperCase().endsWith("CHD")) {
+          gameinfo = GameInfo.genGameInfoFromCHD(gamepath);
+        } else {
+          gameinfo = GameInfo.genGameInfoFromIso(gamepath);
+        }
+        if( gameinfo != null ) {
+          this.gameCode = gameinfo.product_number;
+        }
+      }
     }
 
+    testCase = intent.getStringExtra("TestCase");
 
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-    readPreferences(this.gameCode);
+    if( this.gameCode != null ) {
+      readPreferences(this.gameCode);
+    }
 
     padm = PadManager.getPadManager();
     padm.loadSettings();
@@ -790,7 +832,17 @@ public class Yabause extends AppCompatActivity implements
         transaction.show(fragment);
         transaction.commit();
       }
+
+      case R.id.record: {
+        YabauseRunnable.record( YabauseStorage.getStorage().getRecordPath() );
+      }
       break;
+
+      case R.id.play: {
+        //YabauseRunnable.play( YabauseStorage.getStorage().getRecordPath() );
+      }
+      break;
+
       case R.id.menu_item_backup: {
         waiting_reault = true;
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
@@ -1004,7 +1056,7 @@ public class Yabause extends AppCompatActivity implements
 
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.remove(fragment);
-            transaction.commit();
+            transaction.commitNow();
 
 
             waiting_reault = false;
@@ -1135,7 +1187,11 @@ public class Yabause extends AppCompatActivity implements
 
   @Override
   public void show() {
-    this.toggleMenu();
+    if( YabauseRunnable.getRecordingStatus() == YabauseRunnable.RECORDING ) {
+      YabauseRunnable.screenshot("");
+    }else {
+      this.toggleMenu();
+    }
   }
 
 
@@ -1835,6 +1891,13 @@ public class Yabause extends AppCompatActivity implements
 
   public String getGamePath() {
     return gamepath;
+  }
+
+  public String getTestPath() {
+    if( testCase == null ){
+      return null;
+    }
+    return YabauseStorage.getStorage().getRecordPath() + this.testCase;
   }
 
   public String getMemoryPath() {

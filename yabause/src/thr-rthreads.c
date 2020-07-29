@@ -65,7 +65,7 @@ static int hnd_key_once = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
-int YabThreadStart(unsigned int id, void (*func)(void *), void *arg)
+int YabThreadStart(unsigned int id, void * (*func)(void *), void *arg)
 {
 #ifdef _WIN32
 #ifdef HAVE_THREAD_STORAGE

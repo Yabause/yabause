@@ -52,7 +52,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <sys/stat.h>
 #include <sys/types.h>
+
+
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #ifdef ARCH_IS_MACOSX
 pid_t gettid(void)
@@ -69,11 +74,13 @@ static pthread_t thread_handle[YAB_NUM_THREADS];
 
 static void dummy_sighandler(int signum_unused) {}  // For thread sleep/wake
 
-int YabThreadStart(unsigned int id, void (*func)(void *), void *arg)
+extern "C" {
+
+int YabThreadStart(unsigned int id, void* (*func)(void *), void *arg)
 {
    // Set up a dummy signal handler for SIGUSR1 so we can return from pause()
    // in YabThreadSleep()
-   static const struct sigaction sa = {.sa_handler = dummy_sighandler};
+   static struct sigaction sa; // = {.sa_handler = dummy_sighandler};
    if (sigaction(SIGUSR1, &sa, NULL) != 0)
    {
       perror("sigaction(SIGUSR1)");
@@ -86,7 +93,7 @@ int YabThreadStart(unsigned int id, void (*func)(void *), void *arg)
       return -1;
    }
 
-   if ((errno = pthread_create(&thread_handle[id], NULL, (void *)func, arg)) != 0)
+   if (pthread_create(&thread_handle[id], NULL, func, arg) != 0)
    {
       perror("pthread_create");
       return -1;
@@ -211,6 +218,7 @@ int YabClearEventQueue(YabEventQueue * queue_t) {
     queue->out %= queue->capacity;
   }
   pthread_mutex_unlock(&(queue->mutex));
+  return 0;
 }
 
 int YabWaitEventQueue( YabEventQueue * queue_t ){
@@ -309,6 +317,7 @@ int getCpuId() {
         return (int) cpu;
     }
  #endif
+  return 0;
 }
 
 
@@ -322,6 +331,37 @@ int YabThreadGetCurrentThreadAffinityMask()
 
 }
 
+int YabMakeCleanDir( const char * dirname ){
+#if defined(ANDROID)
+  std::string cmd;
+  cmd = "exec rm -r " + std::string(dirname) + "/*";
+  system(cmd.c_str());
+  rmdir(dirname);
+  mkdir(dirname,777);
+#else
+  fs::remove_all(dirname);
+  if (fs::create_directories(dirname) == false) {
+    printf("Fail to create %s\n", dirname);
+  }
+#endif  
+  return 0;
+}
 
+int YabCopyFile( const char * src, const char * dst) {
+#if defined(ANDROID)
+  std::string cmd;
+  cmd = "exec cp -f " + std::string(src) + " " + std::string(dst);
+  system(cmd.c_str());
+#else
+  std::error_code ec;
+  if( !fs::copy_file(src,dst,fs::copy_options::overwrite_existing,ec ) ){
+    return -1;
+  }
+#endif  
+  return 0;
+}
+
+
+} // extern "C"
 
 //////////////////////////////////////////////////////////////////////////////

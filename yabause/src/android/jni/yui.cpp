@@ -37,6 +37,10 @@ along with YabaSanshiro; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#include <stdio.h>
+#include <dlfcn.h>
+#include <unistd.h>
+
 #include <jni.h>
 #include <android/native_window.h> // requires ndk r5 or newer
 #include <android/native_window_jni.h> // requires ndk r5 or newer
@@ -54,11 +58,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "sh2int.h"
 #include "cdbase.h"
 #include "cs2.h"
+#include "vdp2.h"
 #include "debug.h"
 #include "osdcore.h"
-
-#include <stdio.h>
-#include <dlfcn.h>
+#include "cheat.h"
 
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
@@ -71,6 +74,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #endif
 
 #include "libpng16/png.h"
+
+#include "PlayRecorder.h"
 
 JavaVM * yvm;
 static jobject yabause = NULL;
@@ -135,6 +140,8 @@ const char * s_biospath = NULL;
 const char * s_cdpath = NULL;
 const char * s_buppath = NULL;
 const char * s_cartpath = NULL;
+char * s_playrecord_path = NULL;
+char * s_playdatadir = NULL;
 int s_carttype;
 char s_savepath[256] ="\0";
 int s_vidcoretype = VIDCORE_OGL;
@@ -144,21 +151,22 @@ int s_player2Enable = -1;
 void update_pad_mode();
 
 enum RenderThreadMessage {
-        MSG_NONE = 0,
-        MSG_WINDOW_SET,
-        MSG_WINDOW_CHG,
-        MSG_RENDER_LOOP_EXIT,
-        MSG_SAVE_STATE,
-        MSG_LOAD_STATE,
-        MSG_SAVE_STATE_COMPRESSED,
-        MSG_LOAD_STATE_COMPRESSED,
-        MSG_PAUSE,
-        MSG_RESUME,
-        MSG_SCREENSHOT,
-        MSG_OPEN_TRAY,
-        MSG_CLOSE_TRAY,
-        MSG_RESET
-
+    MSG_NONE = 0,
+    MSG_WINDOW_SET,
+    MSG_WINDOW_CHG,
+    MSG_RENDER_LOOP_EXIT,
+    MSG_SAVE_STATE,
+    MSG_LOAD_STATE,
+    MSG_SAVE_STATE_COMPRESSED,
+    MSG_LOAD_STATE_COMPRESSED,
+    MSG_PAUSE,
+    MSG_RESUME,
+    MSG_SCREENSHOT,
+    MSG_OPEN_TRAY,
+    MSG_CLOSE_TRAY,
+    MSG_RESET,
+    MSG_PLAY,
+    MSG_RECORD
 };
 
 volatile int g_msg = MSG_NONE;
@@ -226,8 +234,10 @@ NULL
 #endif
 
 void YuidrawSoftwareBuffer();
-static int saveScreenshot( const char * filename );
-
+int saveScreenshot( const char * filename );
+void saveScreenshotV( const char * filename );
+GLuint LoadShader ( GLenum type, const char *shaderSrc );
+int destroy() ;
 
 #define  LOG_TAG    "yabause"
 
@@ -237,7 +247,7 @@ int yprintf( const char * fmt, ... )
     int result = 0;
    va_list ap;
    va_start(ap, fmt);
-   result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
+   result = __android_log_vprint(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ap);
    va_end(ap);
    return result;
 }
@@ -247,10 +257,24 @@ int printf( const char * fmt, ... )
     int result = 0;
    va_list ap;
    va_start(ap, fmt);
-   result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
+   result = __android_log_vprint(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ap);
    va_end(ap);
    return result;
 }
+
+class ScreenRecorder{
+public:
+    void setScreenshotCallback( PlayRecorder * p ){
+        using std::placeholders::_1;
+        p->f_takeScreenshot = std::bind(&ScreenRecorder::takeScreenshot,this,_1);
+    }
+    void takeScreenshot( const char * fname ){
+        ::saveScreenshot(fname);
+    }
+};
+
+ScreenRecorder gsc;
+
 
 
 #define YUI_LOG yprintf
@@ -263,17 +287,52 @@ const char * GetBiosPath()
     jstring message;
     jboolean dummy;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
-      return NULL;
+    const char * rtn;
+
+    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
+        return NULL;
     }
 
-    yclass = (*env)->GetObjectClass(env, yabause);
-    getBiosPath = (*env)->GetMethodID(env, yclass, "getBiosPath", "()Ljava/lang/String;");
-    message = (*env)->CallObjectMethod(env, yabause, getBiosPath);
-    if ((*env)->GetStringLength(env, message) == 0)
-        return NULL;
+    yclass = env->GetObjectClass(yabause);
+    getBiosPath = env->GetMethodID(yclass, "getBiosPath", "()Ljava/lang/String;");
+    message = (jstring)env->CallObjectMethod(yabause,getBiosPath);
+    if (env->GetStringLength(message) == 0)
+        rtn = NULL;
     else
-        return (*env)->GetStringUTFChars(env, message, &dummy);
+        rtn = env->GetStringUTFChars(message, &dummy);
+    return rtn;
+}
+
+char * GetPlayDataDir() {
+    jclass yclass;
+    jmethodID mid;
+    jstring message;
+    jboolean dummy;
+    JNIEnv * env;
+    const char * buf;
+    char * rtn;
+
+    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
+        return NULL;
+    }
+
+    yclass = env->GetObjectClass(yabause);
+    mid = env->GetMethodID(yclass, "getTestPath", "()Ljava/lang/String;");
+    message = (jstring)env->CallObjectMethod(yabause,mid);
+    if( message == NULL ){
+        return NULL;
+    }
+    if (env->GetStringLength(message) == 0)
+        buf = NULL;
+    else
+        buf = env->GetStringUTFChars(message, &dummy);
+
+    if( buf != NULL){
+        rtn = (char *)malloc( strlen(buf) + 1 );
+        strcpy(rtn,buf);
+        env->ReleaseStringUTFChars(message, buf);
+    }
+    return rtn;
 }
 
 const char * GetGamePath()
@@ -283,17 +342,17 @@ const char * GetGamePath()
     jstring message;
     jboolean dummy;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
         return NULL;
     }
 
-    yclass = (*env)->GetObjectClass(env, yabause);
-    getGamePath = (*env)->GetMethodID(env, yclass, "getGamePath", "()Ljava/lang/String;");
-    message = (*env)->CallObjectMethod(env, yabause, getGamePath);
-    if ((*env)->GetStringLength(env, message) == 0)
+    yclass = env->GetObjectClass(yabause);
+    getGamePath = env->GetMethodID(yclass, "getGamePath", "()Ljava/lang/String;");
+    message = (jstring)env->CallObjectMethod(yabause, getGamePath);
+    if (env->GetStringLength( message) == 0)
         return NULL;
     else
-        return (*env)->GetStringUTFChars(env, message, &dummy);
+        return env->GetStringUTFChars(message, &dummy);
 }
 
 const char * GetMemoryPath()
@@ -303,17 +362,17 @@ const char * GetMemoryPath()
     jstring message;
     jboolean dummy;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
         return NULL;
     }
 
-    yclass = (*env)->GetObjectClass(env, yabause);
-    getMemoryPath = (*env)->GetMethodID(env, yclass, "getMemoryPath", "()Ljava/lang/String;");
-    message = (*env)->CallObjectMethod(env, yabause, getMemoryPath);
-    if ((*env)->GetStringLength(env, message) == 0)
+    yclass = env->GetObjectClass( yabause);
+    getMemoryPath = env->GetMethodID(yclass, "getMemoryPath", "()Ljava/lang/String;");
+    message = (jstring)env->CallObjectMethod(yabause, getMemoryPath);
+    if (env->GetStringLength(message) == 0)
         return NULL;
     else
-        return (*env)->GetStringUTFChars(env, message, &dummy);
+        return env->GetStringUTFChars(message, &dummy);
 }
 
 int GetCartridgeType()
@@ -321,13 +380,13 @@ int GetCartridgeType()
     jclass yclass;
     jmethodID getCartridgeType;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
         return -1;
     }
 
-    yclass = (*env)->GetObjectClass(env, yabause);
-    getCartridgeType = (*env)->GetMethodID(env, yclass, "getCartridgeType", "()I");
-    return (*env)->CallIntMethod(env, yabause, getCartridgeType);
+    yclass = env->GetObjectClass(yabause);
+    getCartridgeType = env->GetMethodID(yclass, "getCartridgeType", "()I");
+    return env->CallIntMethod(yabause, getCartridgeType);
 }
 
 int GetVideoInterface()
@@ -335,13 +394,13 @@ int GetVideoInterface()
     jclass yclass;
     jmethodID getVideoInterface;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
         return -1;
     }
 
-    yclass = (*env)->GetObjectClass(env, yabause);
-    getVideoInterface = (*env)->GetMethodID(env, yclass, "getVideoInterface", "()I");
-    return (*env)->CallIntMethod(env, yabause, getVideoInterface);
+    yclass = env->GetObjectClass(yabause);
+    getVideoInterface = env->GetMethodID(yclass, "getVideoInterface", "()I");
+    return (int)env->CallIntMethod(yabause, getVideoInterface);
 }
 
 const char * GetCartridgePath()
@@ -351,17 +410,17 @@ const char * GetCartridgePath()
     jstring message;
     jboolean dummy;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
         return NULL;
     }
 
-    yclass = (*env)->GetObjectClass(env, yabause);
-    getCartridgePath = (*env)->GetMethodID(env, yclass, "getCartridgePath", "()Ljava/lang/String;");
-    message = (*env)->CallObjectMethod(env, yabause, getCartridgePath);
-    if ((*env)->GetStringLength(env, message) == 0)
+    yclass = env->GetObjectClass(yabause);
+    getCartridgePath = env->GetMethodID(yclass, "getCartridgePath", "()Ljava/lang/String;");
+    message = (jstring)env->CallObjectMethod(yabause, getCartridgePath);
+    if (env->GetStringLength(message) == 0)
         return NULL;
     else
-        return (*env)->GetStringUTFChars(env, message, &dummy);
+        return env->GetStringUTFChars(message, &dummy);
 }
 
 int GetPlayer2Device(){
@@ -369,16 +428,16 @@ int GetPlayer2Device(){
     jclass yclass;
     jmethodID getPlayer2InputDevice;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    if (yvm->GetEnv( (void**) &env, JNI_VERSION_1_6) != JNI_OK){
         return -1;
     }
 
-    yclass = (*env)->GetObjectClass(env, yabause);
-    getPlayer2InputDevice = (*env)->GetMethodID(env, yclass, "getPlayer2InputDevice", "()I");
-    return (*env)->CallIntMethod(env, yabause, getPlayer2InputDevice);
+    yclass = env->GetObjectClass( yabause);
+    getPlayer2InputDevice = env->GetMethodID( yclass, "getPlayer2InputDevice", "()I");
+    return env->CallIntMethod( yabause, getPlayer2InputDevice);
 }
 
-void YuiErrorMsg(const char *string)
+extern "C" void YuiErrorMsg(const char *string)
 {
 	//YUI_LOG("YuiErrorMsg %s",string);
 	
@@ -387,20 +446,20 @@ void YuiErrorMsg(const char *string)
     jstring message;
     JNIEnv * env;
 
-	(*yvm)->AttachCurrentThread(yvm, &env, NULL);	
+	yvm->AttachCurrentThread( &env, NULL);	
 
 	YUI_LOG("YuiErrorMsg2 %s",string);
 	
-    yclass = (*env)->GetObjectClass(env, yabause);
-    errorMsg = (*env)->GetMethodID(env, yclass, "errorMsg", "(Ljava/lang/String;)V");
-    message = (*env)->NewStringUTF(env, string);
-    (*env)->CallVoidMethod(env, yabause, errorMsg, message);
-	(*yvm)->DetachCurrentThread(yvm);
+    yclass = env->GetObjectClass( yabause);
+    errorMsg = env->GetMethodID( yclass, "errorMsg", "(Ljava/lang/String;)V");
+    message = env->NewStringUTF( string);
+    env->CallVoidMethod( yabause, errorMsg, message);
+	yvm->DetachCurrentThread();
 }
 
 void* threadStartCallback(void *myself);
 
-void YuiSwapBuffers(void)
+extern "C" void YuiSwapBuffers(void)
 {
    if( g_Display == EGL_NO_DISPLAY ){
       return;
@@ -440,7 +499,7 @@ GLuint LoadShader ( GLenum type, const char *shaderSrc )
 
       if ( infoLen > 1 )
       {
-         char* infoLog = malloc (sizeof(char) * infoLen );
+         char* infoLog = (char*)malloc (sizeof(char) * infoLen );
          glGetShaderInfoLog ( shader, infoLen, NULL, infoLog );
          YUI_LOG ( "Error compiling shader:\n%s\n", infoLog );
          free ( infoLog );
@@ -480,8 +539,8 @@ int YuiInitProgramForSoftwareRendering()
    GLint linked;
 
    // Load the vertex/fragment shaders
-   vertexShader = LoadShader ( GL_VERTEX_SHADER, vShaderStr );
-   fragmentShader = LoadShader ( GL_FRAGMENT_SHADER, fShaderStr );
+   vertexShader = LoadShader ( GL_VERTEX_SHADER, (char*)vShaderStr );
+   fragmentShader = LoadShader ( GL_FRAGMENT_SHADER, (char*)fShaderStr );
 
    // Create the program object
    programObject = glCreateProgram ( );
@@ -506,7 +565,7 @@ int YuiInitProgramForSoftwareRendering()
 
       if ( infoLen > 1 )
       {
-        char* infoLog = malloc (sizeof(char) * infoLen );
+        char* infoLog = (char*)malloc (sizeof(char) * infoLen );
         glGetProgramInfoLog ( programObject, infoLen, NULL, infoLog );
         YUI_LOG ( "Error linking program:\n%s\n", infoLog );
         free ( infoLog );
@@ -603,62 +662,68 @@ void YuidrawSoftwareBuffer() {
 }
 
 
-JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_initViewport( JNIEnv* jenv, jobject obj, jobject surface, int width, int height)
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_initViewport( JNIEnv* jenv, jobject obj, jobject surface, int width, int height)
 {
     if (surface != 0) {
         
-        if( g_window == 0 ){
+        if( g_Surface == EGL_NO_SURFACE ){
             g_window = ANativeWindow_fromSurface(jenv, surface);
             YUI_LOG("Got window %08X %d,%d", g_window, g_msg,width,height );
             g_msg = MSG_WINDOW_SET;         
         }else{
-            //if( g_window != ANativeWindow_fromSurface(jenv, surface) ){
+            if( g_window != ANativeWindow_fromSurface(jenv, surface) ){
                 g_window = ANativeWindow_fromSurface(jenv, surface);
-                YUI_LOG("Chg window %08X %d,%d ", g_window, g_msg,width,height);
-                g_msg = MSG_WINDOW_CHG;
-            //}
+            }
+            YUI_LOG("Chg window %08X %d,%d ", g_window, g_msg,width,height);
+            g_msg = MSG_WINDOW_CHG;
             //YUI_LOG("Got window ignore %p %d,%d", g_window, g_msg,width,height );
         }
     } else {
         YUI_LOG("Releasing window");
         ANativeWindow_release(g_window);
+        g_window = NULL;
     }
     
    return 0;
 }
 
-JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_lockGL()
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_lockGL()
 {
    pthread_mutex_lock(&g_mtxGlLock);
+   return 0;
 }
 
-JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_unlockGL()
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_unlockGL()
 {
    pthread_mutex_unlock(&g_mtxGlLock);
+   return 0;
 }
 
-JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleShowFps( JNIEnv* env )
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleShowFps( JNIEnv* env )
 {
     printf("%s","Java_org_uoyabause_android_YabauseRunnable_toggleShowFps");
    ToggleFPS();
+   return 0;
 }
 
 
-JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_pause( JNIEnv* env )
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_pause( JNIEnv* env )
 {
     pthread_mutex_lock(&g_mtxGlLock);
     g_msg = MSG_PAUSE;
     pthread_mutex_unlock(&g_mtxGlLock);
+    return 0;
 }
 
-JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_resume( JNIEnv* env )
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_resume( JNIEnv* env )
 {
     pthread_mutex_lock(&g_mtxGlLock);
     g_msg = MSG_RESUME;
     pthread_mutex_unlock(&g_mtxGlLock);
+    return 0;
 }
 
-JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_openTray( JNIEnv* env )
+extern "C" JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_openTray( JNIEnv* env )
 {
     yprintf("sending MSG_OPEN_TRAY");
     pthread_mutex_lock(&g_mtxGlLock);
@@ -666,7 +731,7 @@ JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_openTray( JNIE
     pthread_mutex_unlock(&g_mtxGlLock);
 }
 
-JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_closeTray( JNIEnv* env )
+extern "C" JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_closeTray( JNIEnv* env )
 {
     yprintf("sending MSG_CLOSE_TRAY");
     s_cdpath = GetGamePath();    
@@ -677,13 +742,13 @@ JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_closeTray( JNI
 }
 
 
-JNIEXPORT jstring  JNICALL Java_org_uoyabause_android_YabauseRunnable_getCurrentGameCode( JNIEnv* env)
+extern "C" JNIEXPORT jstring  JNICALL Java_org_uoyabause_android_YabauseRunnable_getCurrentGameCode( JNIEnv* env)
 {
-    return(*env)->NewStringUTF(env,(const char*)Cs2GetCurrentGmaecode());
+    return (jstring)env->NewStringUTF((const char*)Cs2GetCurrentGmaecode());
 }
 
 static int enableautofskip = 0;
-JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleFrameSkip( JNIEnv* env )
+extern "C"  JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleFrameSkip( JNIEnv* env )
 {
     enableautofskip = 1 - enableautofskip;
 
@@ -693,6 +758,8 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleFrameSkip
        EnableAutoFrameSkip();
     else
        DisableAutoFrameSkip();
+    
+    return 0;
 }
 
 #ifdef _ANDROID_2_2_
@@ -744,37 +811,91 @@ int initEGLFunc()
 }
 #endif
 
-jstring Java_org_uoyabause_android_YabauseRunnable_savestate_1compress( JNIEnv* env, jobject thiz, jstring  path ){
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_record( JNIEnv* env, jobject thiz, jstring  path ){
+
+    jboolean dummy;
+    const char *cpath = env->GetStringUTFChars(path, &dummy);
+
+    pthread_mutex_lock(&g_mtxGlLock);
+    if( s_playrecord_path != NULL ){
+        free(s_playrecord_path);
+    }
+    s_playrecord_path = (char*)malloc( strlen(cpath)+1 );
+    strcpy(s_playrecord_path,cpath);
+    g_msg =MSG_RECORD;
+    pthread_mutex_unlock(&g_mtxGlLock);
+
+    env->ReleaseStringUTFChars(path, cpath);
+
+    pthread_mutex_lock(&g_mtxFuncSync); 
+    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_unlock(&g_mtxFuncSync);
+
+    return 0;
+}
+
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_getRecordingStatus( JNIEnv* env, jobject thiz ){
+   return PlayRecorder::getInstance()->getStatus();
+}
+
+
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_play( JNIEnv* env, jobject thiz, jstring  path ){
+
+    jboolean dummy;
+    const char *cpath = env->GetStringUTFChars(path, &dummy);
+
+    pthread_mutex_lock(&g_mtxGlLock);
+    if( s_playdatadir != NULL ){
+        free(s_playdatadir);
+    }
+    s_playdatadir = (char*)malloc( strlen(cpath)+1 );
+    strcpy(s_playdatadir,cpath);
+    g_msg =MSG_PLAY;
+    pthread_mutex_unlock(&g_mtxGlLock);
+
+    env->ReleaseStringUTFChars(path, cpath);
+
+    pthread_mutex_lock(&g_mtxFuncSync); 
+    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_unlock(&g_mtxFuncSync);
+
+    return 0;
+}
+
+
+
+
+extern "C" jstring Java_org_uoyabause_android_YabauseRunnable_savestate_1compress( JNIEnv* env, jobject thiz, jstring  path ){
 
     jboolean dummy;
     if( cdip == NULL ) return NULL;
-    const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
+    const char *cpath = env->GetStringUTFChars(path, &dummy);
 
     pthread_mutex_lock(&g_mtxGlLock);
     strcpy(s_savepath,cpath);
     g_msg =MSG_SAVE_STATE_COMPRESSED;
     pthread_mutex_unlock(&g_mtxGlLock);
 
-    (*env)->ReleaseStringUTFChars(env,path, cpath);
+    env->ReleaseStringUTFChars(path, cpath);
 
     pthread_mutex_lock(&g_mtxFuncSync); 
     pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
     pthread_mutex_unlock(&g_mtxFuncSync);
 
-    return (*env)->NewStringUTF(env,(const char*)last_state_filename);
+    return env->NewStringUTF((const char*)last_state_filename);
 }
 
-jint Java_org_uoyabause_android_YabauseRunnable_loadstate_1compress( JNIEnv* env, jobject thiz, jstring  path ){
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_loadstate_1compress( JNIEnv* env, jobject thiz, jstring  path ){
 
     jboolean dummy;
-    const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
+    const char *cpath = env->GetStringUTFChars(path, &dummy);
 
     pthread_mutex_lock(&g_mtxGlLock);
     strcpy(s_savepath,cpath);
     g_msg =MSG_LOAD_STATE_COMPRESSED;
     pthread_mutex_unlock(&g_mtxGlLock);
 
-    (*env)->ReleaseStringUTFChars(env,path, cpath);
+    env->ReleaseStringUTFChars(path, cpath);
 
     pthread_mutex_lock(&g_mtxFuncSync); 
     pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
@@ -783,38 +904,37 @@ jint Java_org_uoyabause_android_YabauseRunnable_loadstate_1compress( JNIEnv* env
     return 0;
 }
 
-
-jstring Java_org_uoyabause_android_YabauseRunnable_savestate( JNIEnv* env, jobject thiz, jstring  path ){
+extern "C" jstring Java_org_uoyabause_android_YabauseRunnable_savestate( JNIEnv* env, jobject thiz, jstring  path ){
 
     jboolean dummy;
     if( cdip == NULL ) return NULL;
-    const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
+    const char *cpath = env->GetStringUTFChars(path, &dummy);
 
     pthread_mutex_lock(&g_mtxGlLock);
     strcpy(s_savepath,cpath);
     g_msg =MSG_SAVE_STATE;
     pthread_mutex_unlock(&g_mtxGlLock);
 
-    (*env)->ReleaseStringUTFChars(env,path, cpath);
+    env->ReleaseStringUTFChars(path, cpath);
 
     pthread_mutex_lock(&g_mtxFuncSync); 
     pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
     pthread_mutex_unlock(&g_mtxFuncSync);
 
-    return (*env)->NewStringUTF(env,(const char*)last_state_filename);
+    return env->NewStringUTF((const char*)last_state_filename);
 }
 
-jint Java_org_uoyabause_android_YabauseRunnable_loadstate( JNIEnv* env, jobject thiz, jstring  path ){
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_loadstate( JNIEnv* env, jobject thiz, jstring  path ){
 
     jboolean dummy;
-    const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
+    const char *cpath = env->GetStringUTFChars(path, &dummy);
 
     pthread_mutex_lock(&g_mtxGlLock);
     strcpy(s_savepath,cpath);
     g_msg =MSG_LOAD_STATE;
     pthread_mutex_unlock(&g_mtxGlLock);
 
-    (*env)->ReleaseStringUTFChars(env,path, cpath);
+    env->ReleaseStringUTFChars(path, cpath);
 
     pthread_mutex_lock(&g_mtxFuncSync); 
     pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
@@ -823,15 +943,15 @@ jint Java_org_uoyabause_android_YabauseRunnable_loadstate( JNIEnv* env, jobject 
     return 0;
 }
 
-JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject thiz, jstring filename )
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject thiz, jstring filename )
 {
     jboolean dummy;
-    const char *cpath = (*env)->GetStringUTFChars(env,filename, &dummy);
+    const char *cpath = env->GetStringUTFChars(filename, &dummy);
     pthread_mutex_lock(&g_mtxGlLock);
     strcpy(screenShotFilename,cpath);
     g_msg = MSG_SCREENSHOT;
     pthread_mutex_unlock(&g_mtxGlLock);
-    (*env)->ReleaseStringUTFChars(env,filename, cpath);
+    env->ReleaseStringUTFChars(filename, cpath);
 
     pthread_mutex_lock(&g_mtxFuncSync); 
     s_status = -1;
@@ -840,13 +960,13 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_screenshot( JNI
     return s_status;
 }
 
-jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab )
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab )
 {
     int res=0;
 
     if( initEGLFunc() == -1 ) return -1;
 
-    yabause = (*env)->NewGlobalRef(env, yab);
+    yabause = env->NewGlobalRef(yab);
 
     s_biospath = GetBiosPath();
     s_cdpath = GetGamePath();
@@ -855,8 +975,9 @@ jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, 
     s_vidcoretype = GetVideoInterface();
     s_carttype =  GetCartridgeType();
 	s_player2Enable = GetPlayer2Device();
+    s_playdatadir = GetPlayDataDir();
 	
-	 YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
+	YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
     
     OSDInit(0);
 
@@ -865,7 +986,7 @@ jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, 
     return res;
 }
 
-int YuiRevokeOGLOnThisThread(){
+extern "C" int YuiRevokeOGLOnThisThread(){
 #if defined(YAB_ASYNC_RENDERING)
     if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
         YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
@@ -898,7 +1019,7 @@ int YuiRevokeOGLOnThisThread(){
     return 0;
 }
 
-int YuiUseOGLOnThisThread(){
+extern "C" int YuiUseOGLOnThisThread(){
 #if defined(YAB_ASYNC_RENDERING)
     if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
         YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
@@ -939,7 +1060,6 @@ int initEgl( ANativeWindow* window )
 {
 	int i;
     int res;
-    yabauseinit_struct yinit ={};
     void * padbits;
 
      const EGLint attribs[] = {
@@ -1100,6 +1220,20 @@ int initEgl( ANativeWindow* window )
     glClearColor( 0.0f, 0.0f,0.0f,1.0f);
     glClear( GL_COLOR_BUFFER_BIT );
 
+    return 0;
+}
+
+int YabauseInit(){
+	int i;
+    int res;    
+    EGLint width;
+    EGLint height;
+
+    yabauseinit_struct yinit ={};
+
+    eglQuerySurface(g_Display,g_Surface,EGL_WIDTH,&width);
+    eglQuerySurface(g_Display,g_Surface,EGL_HEIGHT,&height);
+
 	memset(&yinit,0,sizeof(yinit));
     //yinit.m68kcoretype = M68KCORE_C68K;
 	yinit.m68kcoretype = M68KCORE_MUSASHI;
@@ -1143,6 +1277,11 @@ int initEgl( ANativeWindow* window )
     yinit.scsp_main_mode = g_scsp_sync_time_mode;
     yinit.rbg_resolution_mode = g_rbg_resolution_mode;
     yinit.rbg_use_compute_shader = g_use_compute_shader;
+    yinit.playRecordPath = s_playdatadir;
+    if( yinit.playRecordPath != NULL ){
+       PlayRecorder * p = PlayRecorder::getInstance();
+       gsc.setScreenshotCallback(p);
+    }
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -1164,9 +1303,9 @@ int initEgl( ANativeWindow* window )
             glDisable(GL_SCISSOR_TEST);
             glClearColor( 0.0f, 0.0f,0.0f,1.0f);
             glClear( GL_COLOR_BUFFER_BIT );
-            eglSwapBuffers(g_Display, surface);
+            eglSwapBuffers(g_Display, g_Surface);
             glClear( GL_COLOR_BUFFER_BIT );
-            eglSwapBuffers(g_Display, surface);
+            eglSwapBuffers(g_Display, g_Surface);
     		break;
 		  }
 	   }
@@ -1179,6 +1318,7 @@ int initEgl( ANativeWindow* window )
     }
 
     return 0;
+
 }
 
 int switchWindow( ANativeWindow* window ){
@@ -1224,10 +1364,10 @@ int switchWindow( ANativeWindow* window ){
 		 VIDCoreList[i]->Resize(0,0,width,height,1,g_aspect_rate_mode);
          glDisable(GL_SCISSOR_TEST);
          glClearColor( 0.0f,0.0f,0.0f,1.0f);
-         glClear( GL_COLOR_BUFFER_BIT );
-         eglSwapBuffers(g_Display, surface);
-         glClear( GL_COLOR_BUFFER_BIT );
-         eglSwapBuffers(g_Display, surface);
+         //glClear( GL_COLOR_BUFFER_BIT );
+         //eglSwapBuffers(g_Display, surface);
+         //glClear( GL_COLOR_BUFFER_BIT );
+         //eglSwapBuffers(g_Display, surface);
 		 break;
 	  }
    }
@@ -1259,6 +1399,8 @@ int destroy() {
     return 0;
 }
 
+extern "C" {
+
 void
 Java_org_uoyabause_android_YabauseRunnable_deinit( JNIEnv* env )
 {
@@ -1283,92 +1425,26 @@ Java_org_uoyabause_android_YabauseRunnable_reset( JNIEnv* env )
 void
 Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
 {
+    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) return;
 	//yprintf("press: %d,%d",player,key);
     PerKeyDown(MAKE_PAD(player,key));
 }
 
-void update_pad_mode(){
-    void * padbits;
+void
+Java_org_uoyabause_android_YabauseRunnable_axis( JNIEnv* env, jobject obj, jint key, jint player, jint val )
+{
+    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) return;
+	//yprintf("axis: %d,%d,%d",player,key,val);
+    PerAxisValue(MAKE_PAD(player,key),val); // from 0 to 255
+}
 
-    PerPortReset();
 
-    if( g_pad_mode == 0 ) {
-        padbits = PerPadAdd(&PORTDATA1);
-        PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-
-    } else if( g_pad_mode == 1 ){
-
-        padbits = Per3DPadAdd(&PORTDATA1);
-
-        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
-        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
-        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
-        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
-
-        PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-    }
-
-    if( s_player2Enable != -1 ) {
-        if( g_pad2_mode == 0 ) {
-            padbits = PerPadAdd(&PORTDATA2);
-            PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-        }else{
-            padbits = Per3DPadAdd(&PORTDATA2);
-            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
-            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
-            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
-            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-        }
-    }
+void
+Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key, jint player )
+{
+	//yprintf("release: %d,%d",player,key);
+    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) return;  
+    PerKeyUp(MAKE_PAD(player,key));
 }
 
 void
@@ -1386,23 +1462,6 @@ void Java_org_uoyabause_android_YabauseRunnable_switch_1padmode2( JNIEnv* env, j
     update_pad_mode();
 }
 
-void
-Java_org_uoyabause_android_YabauseRunnable_axis( JNIEnv* env, jobject obj, jint key, jint player, jint val )
-{
-	//yprintf("axis: %d,%d,%d",player,key,val);
-    PerAxisValue(MAKE_PAD(player,key),val); // from 0 to 255
-}
-
-
-
-
-
-void
-Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key, jint player )
-{
-	//yprintf("release: %d,%d",player,key);
-    PerKeyUp(MAKE_PAD(player,key));
-}
 
 void
 Java_org_uoyabause_android_YabauseRunnable_enableFPS( JNIEnv* env, jobject obj, jint enable )
@@ -1540,33 +1599,33 @@ jstring Java_org_uoyabause_android_YabauseRunnable_getGameTitle(JNIEnv *env) {
 	    sprintf(buf,"%s(%s)",cdip->gamename,cdip->cdinfo);
     }
 			
-	rtn = (*env)->NewStringUTF(env,buf);
+	rtn = env->NewStringUTF(buf);
 	free(buf);
 	return rtn;
 }
 
 void Java_org_uoyabause_android_YabauseRunnable_updateCheat(JNIEnv *env, jobject object, jobjectArray stringArray) {
 
-    if( stringArray == NULL || (*env)->GetArrayLength(env,stringArray) == 0 ){
+    if( stringArray == NULL || env->GetArrayLength(stringArray) == 0 ){
         CheatClearCodes();    
         return;
     }
 
-    int stringCount = (*env)->GetArrayLength(env,stringArray);
+    int stringCount = env->GetArrayLength(stringArray);
     int i = 0;
     int index = 0;
     CheatClearCodes();
     for (i=0; i<stringCount; i++) {
-        jstring string = (jstring) ((*env)->GetObjectArrayElement(env,stringArray, i));
+        jstring string = (jstring) (env->GetObjectArrayElement(stringArray, i));
         if( string == NULL ){
             continue;
         }
-        const char * rawString = (*env)->GetStringUTFChars(env,string, 0);
+        const char * rawString = env->GetStringUTFChars(string, 0);
         // Don't forget to call `ReleaseStringUTFChars` when you're done.
 
         index = CheatAddARCode(rawString);
         CheatEnableCode(index);
-        (*env)->ReleaseStringUTFChars(env,string,rawString);
+        env->ReleaseStringUTFChars(string,rawString);
     }
     // CheatDoPatches(); will call at  Vblank-in
     return;
@@ -1587,7 +1646,7 @@ jstring Java_org_uoyabause_android_YabauseRunnable_getGameinfo(JNIEnv *env) {
 		"area:\"%s\",game_title:\"%s\",input_device:\"%s\"}}",
 			cdip->company,cdip->itemnum,cdip->version,cdip->date,cdip->cdinfo,cdip->region, cdip->gamename, cdip->peripheral);
 			
-	rtn = (*env)->NewStringUTF(env,buf);
+	rtn = env->NewStringUTF(buf);
 	free(buf);
 	return rtn;
 }
@@ -1601,9 +1660,9 @@ Java_org_uoyabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject obj,
     void * pixels;
     int x, y;
 
-    AndroidBitmap_getInfo(env, bitmap, &info);
+    AndroidBitmap_getInfo( bitmap, &info);
 
-    AndroidBitmap_lockPixels(env, bitmap, &pixels);
+    AndroidBitmap_lockPixels( bitmap, &pixels);
 
     buffer = dispbuffer;
 
@@ -1615,7 +1674,7 @@ Java_org_uoyabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject obj,
         buffer += g_buf_width;
     }
 
-    AndroidBitmap_unlockPixels(env, bitmap);
+    AndroidBitmap_unlockPixels( bitmap);
 }
 #endif
 
@@ -1628,8 +1687,10 @@ crashlytics_context_t* context = NULL;
 
 jint JNI_OnLoad(JavaVM * vm, void * reserved)
 {
+    __android_log_print(ANDROID_LOG_INFO, "yabause", "JNI_OnLoad is called");
+
     JNIEnv * env;
-    if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
+    if (vm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK)
         return -1;
     yvm = vm;
 
@@ -1641,6 +1702,92 @@ jint JNI_OnLoad(JavaVM * vm, void * reserved)
     return JNI_VERSION_1_6;
 }
 
+} // extern "C"
+
+
+void update_pad_mode(){
+    void * padbits;
+
+    PerPortReset();
+
+    if( g_pad_mode == 0 ) {
+        padbits = PerPadAdd(&PORTDATA1);
+        PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+
+    } else if( g_pad_mode == 1 ){
+
+        padbits = Per3DPadAdd(&PORTDATA1);
+
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+
+        PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+    }
+
+    if( s_player2Enable != -1 ) {
+        if( g_pad2_mode == 0 ) {
+            padbits = PerPadAdd(&PORTDATA2);
+            PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+        }else{
+            padbits = Per3DPadAdd(&PORTDATA2);
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+        }
+    }
+}
 
 void renderLoop()
 {
@@ -1651,7 +1798,7 @@ void renderLoop()
 
     while (renderingEnabled != 0) {
 
-        if (g_Display && pause == 0) {
+        if (g_Display && pause == 0 && g_window != NULL) {
            YabauseExec();
         }
 
@@ -1666,6 +1813,7 @@ void renderLoop()
                   pthread_mutex_unlock(&g_mtxGlLock);
                   return;
                 }
+                YabauseInit();
                 break;
             case MSG_WINDOW_CHG:
                 YUI_LOG("MSG_WINDOW_CHG");
@@ -1786,16 +1934,48 @@ void renderLoop()
                 YUI_LOG("MSG_CLOSE_TRAY");
                 Cs2ForceCloseTray(CDCORE_ISO, s_cdpath);
                 break;                
-            case MSG_SCREENSHOT:
+            case MSG_SCREENSHOT:{
                 YUI_LOG("MSG_SCREENSHOT");
-                s_status = saveScreenshot(screenShotFilename);
+                PlayRecorder * p = PlayRecorder::getInstance();
+                if (p->getStatus() == PlayRecorder::RECORDING) {
+                    p->takeShot();
+                }else{
+                    s_status = saveScreenshot(screenShotFilename);
+                }
                 pthread_mutex_lock(&g_mtxFuncSync);
                 pthread_cond_signal(&g_cndFuncSync);
                 pthread_mutex_unlock(&g_mtxFuncSync);
-                break;
+            }
+            break;
             case MSG_RESET:
                 YabauseReset();
                 break;
+            case MSG_RECORD:{
+                PlayRecorder * p = PlayRecorder::getInstance();
+                if (p->getStatus() == PlayRecorder::IDLE) {
+                    gsc.setScreenshotCallback(p);
+                    p->setBaseDir(s_playrecord_path);
+                    p->startRocord();
+                }
+                else if (p->getStatus() == 0) {
+                    p->stopRocord();
+                }
+                pthread_mutex_lock(&g_mtxFuncSync);
+                pthread_cond_signal(&g_cndFuncSync);
+                pthread_mutex_unlock(&g_mtxFuncSync);                
+            }
+            break;
+            case MSG_PLAY:{
+                PlayRecorder * p = PlayRecorder::getInstance();
+                if (p->getStatus() == PlayRecorder::IDLE) {
+                    gsc.setScreenshotCallback(p);
+                    p->startPlay(s_playdatadir, true, NULL );
+                }
+                pthread_mutex_lock(&g_mtxFuncSync);
+                pthread_cond_signal(&g_cndFuncSync);
+                pthread_mutex_unlock(&g_mtxFuncSync);                
+            }
+            break;
             default:
                 break;
         }
@@ -1870,7 +2050,7 @@ int saveScreenshot( const char * filename ){
 	for( u = 3; u <width*height*4; u+=4 ){
 		buf[u]=0xFF;
 	}
-    row_pointers = malloc(sizeof(png_bytep) * height);
+    row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
     for (v=0; v<height; v++)
         row_pointers[v] = (png_byte*)&buf[ (height-1-v) * width * 4];
 
@@ -1923,13 +2103,13 @@ int saveScreenshot( const char * filename ){
         png_convert_from_time_t(&mod_time, gmt);
         png_set_tIME(png_ptr, info_ptr, &mod_time);
     
-        text[txt_fields].key = "Title";
+        text[txt_fields].key = (png_charp)"Title";
         text[txt_fields].text = Cs2GetCurrentGmaecode();
         text[txt_fields].compression = PNG_TEXT_COMPRESSION_NONE;
         txt_fields++;
 
         sprintf( desc, "uoYabause Version %s\n VENDER: %s\n RENDERER: %s\n VERSION %s\n",YAB_VERSION,glGetString(GL_VENDOR),glGetString(GL_RENDERER),glGetString(GL_VERSION));
-        text[txt_fields].key ="Description";
+        text[txt_fields].key =(char*)"Description";
         text[txt_fields].text=desc;
         text[txt_fields].compression = PNG_TEXT_COMPRESSION_NONE;
         txt_fields++;
@@ -2023,4 +2203,44 @@ FINISH:
 	YuiRevokeOGLOnThisThread();
     
     return rtn;
+}
+
+extern "C" {
+
+  int YabauseThread_IsUseBios() {
+    if( s_biospath == NULL){
+        return 1;
+    }
+    return 0;
+
+  }
+
+  const char * YabauseThread_getBackupPath() {
+    return s_buppath;
+  }
+
+  void YabauseThread_setUseBios(int use) {
+
+
+  }
+
+  char tmpbakcup[256];
+  void YabauseThread_setBackupPath( const char * buf) {
+      strcpy(tmpbakcup,buf);
+      s_buppath = tmpbakcup;
+  }
+
+  void YabauseThread_resetPlaymode() {
+      if( s_playrecord_path != NULL ){
+          free(s_playrecord_path);
+          s_playrecord_path = NULL;
+      }
+      s_buppath = GetMemoryPath();
+  }
+
+  void YabauseThread_coldBoot() {
+    YabauseDeInit();
+    YabauseInit();
+    YabauseReset();
+  }
 }

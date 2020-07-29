@@ -77,9 +77,14 @@ public class GameSelectActivity extends FragmentActivity {
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION ) {
 
-            Subscription subscription = Subscription.createSubscription("RECENT","recent played games", "saturngame://yabasanshiro/", R.mipmap.ic_launcher );
-            long channelId = TvUtil.createChannel(this,subscription);
-            TvUtil.syncPrograms(this,channelId);
+            new Thread(new Runnable() {
+                public void run(){
+                    Subscription subscription = Subscription.createSubscription("RECENT","recent played games", "saturngame://yabasanshiro/", R.mipmap.ic_launcher );
+                    long channelId = TvUtil.createChannel(GameSelectActivity.this,subscription);
+                    TvUtil.syncPrograms(GameSelectActivity.this,channelId);
+                }
+            }).start();
+
         }
         else {
             // Use the recommendations row API

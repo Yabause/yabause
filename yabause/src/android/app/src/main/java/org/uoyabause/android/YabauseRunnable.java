@@ -52,6 +52,9 @@ public class YabauseRunnable implements Runnable
     public static native void loadstate( String path );
     public static native String savestate_compress( String path );
     public static native void loadstate_compress( String path );
+    public static native int record( String path );
+    public static native int play( String path );
+    public static native int getRecordingStatus();
     public static native void pause();
     public static native void resume();
     public static native void setPolygonGenerationMode( int pg );
@@ -79,6 +82,10 @@ public class YabauseRunnable implements Runnable
 
     private boolean inited;
     private boolean paused;
+
+    static final int IDLE = -1;
+    static final int RECORDING = 0;
+    static final int PLAYING = 1;
 
     public YabauseRunnable(Yabause yabause)
     {

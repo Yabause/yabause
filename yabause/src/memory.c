@@ -189,7 +189,7 @@ void * YabMemMap(char * filename, u32 size ) {
   hFile = CreateFileA(
     filename, 
     GENERIC_READ|GENERIC_WRITE, 
-    0, 
+    FILE_SHARE_READ,
     0, 
     OPEN_EXISTING, 
     FILE_ATTRIBUTE_NORMAL,

@@ -679,6 +679,10 @@ void Vdp2HBlankOUT(void) {
 
       *Vdp2External.perline_alpha |= 0x40;
     }
+
+    if (Vdp2Lines[0].PRINA != Vdp2Lines[yabsys.LineCount].PRINA) {
+      //printf("Perline priority");
+    }
   }
 
   if (yabsys.LineCount == 1) {

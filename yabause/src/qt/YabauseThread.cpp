@@ -30,6 +30,64 @@
 #include <QStringList>
 #include <QDebug>
 
+extern "C" {
+
+  int YabauseThread_IsUseBios() {
+    VolatileSettings* vs = QtYabause::volatileSettings();
+    if (vs->value("General/EnableEmulatedBios", false).toBool()) {
+      return -1;
+    }
+    else {
+      return 0;
+    }
+    return -1;
+  }
+
+  const char * YabauseThread_getBackupPath() {
+    yabauseinit_struct* conf = YabauseThread::getInstance()->yabauseConf();
+    return conf->buppath;
+  }
+
+  void YabauseThread_setUseBios(int use) {
+
+    VolatileSettings* vs = QtYabause::volatileSettings();
+    if (use == 0) {
+      vs->setValue("General/EnableEmulatedBios",true);
+    }
+    else {
+      vs->setValue("General/EnableEmulatedBios", false);
+    }
+
+    yabauseinit_struct* conf = YabauseThread::getInstance()->yabauseConf();
+    if (vs->value("General/EnableEmulatedBios", false).toBool())
+      conf->biospath = strdup("");
+    else
+      conf->biospath = strdup(vs->value("General/Bios", conf->biospath).toString().toLatin1().constData());
+
+  }
+
+  void YabauseThread_setBackupPath( const char * buf) {
+    VolatileSettings* vs = QtYabause::volatileSettings();
+    vs->setValue("Memory/Path", buf);
+    yabauseinit_struct* conf = YabauseThread::getInstance()->yabauseConf();
+    conf->buppath = strdup(vs->value("Memory/Path", conf->buppath).toString().toLatin1().constData());
+  }
+
+  void YabauseThread_resetPlaymode() {
+    VolatileSettings* vs = QtYabause::volatileSettings();
+    vs->setValue("General/RecordDir", "");
+    yabauseinit_struct* conf = YabauseThread::getInstance()->yabauseConf();
+    conf->buppath = strdup(vs->value("General/RecordDir", conf->buppath).toString().toLatin1().constData());
+  }
+
+  void YabauseThread_coldBoot() {
+    YabauseThread::getInstance()->pauseEmulation(false, true);
+    YabauseThread::getInstance()->reset();
+  }
+}
+
+YabauseThread * YabauseThread::instance = nullptr;
+
 YabauseThread::YabauseThread( QObject* o )
 	: QObject( o )
 {
@@ -38,6 +96,7 @@ YabauseThread::YabauseThread( QObject* o )
 	mInit = -1;
 	memset(&mYabauseConf, 0, sizeof(mYabauseConf));
 	showFPS = false;
+  instance = this;
 }
 
 YabauseThread::~YabauseThread()
@@ -427,6 +486,9 @@ void YabauseThread::reloadSettings()
   mYabauseConf.rotate_screen = vs->value("Video/RotateScreen", false).toBool() ;
   mYabauseConf.scsp_sync_count_per_frame = vs->value("Sound/ScspSync", 1).toInt();
   mYabauseConf.scsp_main_mode = vs->value("Sound/ScspMainMode", 1).toInt();
+
+  mYabauseConf.playRecordPath = strdup(vs->value("General/RecordDir", mYabauseConf.playRecordPath).toString().toLatin1().constData());
+
 	reloadClock();
 	reloadControllers();
 }
@@ -488,6 +550,7 @@ void YabauseThread::resetYabauseConf()
   mYabauseConf.scsp_main_mode = 1;
   mYabauseConf.use_new_scsp = 1;
   mYabauseConf.buppath = strdup(getDataDirPath().append("/bkram.bin").toLatin1().constData());
+  mYabauseConf.playRecordPath = NULL;
 }
 
 void YabauseThread::timerEvent( QTimerEvent* )

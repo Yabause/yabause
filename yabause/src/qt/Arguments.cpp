@@ -30,6 +30,7 @@ namespace Arguments
 	void nobios(const QString& param);
 	void nosound(const QString& param);
 	void version(const QString& param);
+  void playRecord(const QString& param);
 
 	struct Option
 	{
@@ -52,6 +53,7 @@ namespace Arguments
 		{ "-b",  "--bios=", "<BIOS>",       "Choose a bios file.",                                3, bios },
 		{ "-c",  "--cdrom=", "<CDROM>",     "Choose the cdrom device.",                           4, cdrom },
 		{ "-f",  "--fullscreen", NULL,      "Start the emulator in fullscreen.",                  5, fullscreen },
+    { "-p",  "--playrecord", "<DIR>",   "Play play record.",                  5, playRecord },
 		{ "-h",  "--help", NULL,            "Show this help and exit.",                           0, help },
 		{ "-i",  "--iso=", "<ISO>",         "Choose a dump file.",                                4, iso },
                 { "-nb", "--no-bios", NULL,         "Use the emulated bios",                              3, nobios },
@@ -100,6 +102,11 @@ namespace Arguments
 					option->callback(QString());
 		}
 	}
+
+  void playRecord(const QString& param) {
+    VolatileSettings * vs = QtYabause::volatileSettings();
+    vs->setValue("General/RecordDir", param);
+  }
 
 	void autoframeskip(const QString& param)
 	{

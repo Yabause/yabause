@@ -174,6 +174,11 @@ int PERSDLJoyHandleEvents(void) {
 	Uint8 newHatState;
 	Uint8 oldHatState;
 	int hatValue;
+
+  if (PlayRecorder_getStatus() == 1) {
+    YabauseExec();
+    return 0;
+  }
 	
 	// update joysticks states
 	SDL_JoystickUpdate();

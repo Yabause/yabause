@@ -31,7 +31,7 @@ include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libpng.cmake )
 #include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_zlib.cmake )
 
 set( SOURCES 
- jni/yui.c
+ jni/yui.cpp
  jni/sndaudiotrack.c
  jni/sndopensl.c
  jni/jniBackupManager.cpp
@@ -49,6 +49,7 @@ set (PORT_LIBRARIES
  android
  GLESv3
  EGL
+ c++_static
 )
 
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJSONCPP_NO_LOCALE_SUPPORT -fexceptions " )
@@ -77,7 +78,7 @@ target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES}
 	${PORT_LIBRARIES}
 	${LIBCHDR_LIBRARIES}	
 	png16
-	z
+	${ZLIB_LIBRARY_RELEASE}
 	#${zlib_STATIC_LIBRARIES}
 	#    ${PROJECT_SOURCE_DIR}/debuglib/libNvidia_gfx_debugger_stub.a
 )

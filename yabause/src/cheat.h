@@ -45,6 +45,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "core.h"
 
+#if defined (__cplusplus)
+extern "C"{
+#endif
+
 enum
 {
    CHEATTYPE_NONE=0,
@@ -79,5 +83,9 @@ void CheatDoPatches(void);
 cheatlist_struct *CheatGetList(int *cheatnum);
 int CheatSave(const char *filename);
 int CheatLoad(const char *filename);
+
+#if defined (__cplusplus)
+}
+#endif
 
 #endif
