@@ -567,7 +567,7 @@ class Yabause : AppCompatActivity(), FileSelectedListener,
                     val loginobserver: Observer<FirebaseUser?> = object : Observer<FirebaseUser?> {
                         override fun onSubscribe(d: Disposable) {}
                         override fun onNext(t: FirebaseUser) {
-                            TODO("Not yet implemented")
+                            //TODO("Not yet implemented")
                         }
 
                         override fun onError(e: Throwable) {
@@ -612,7 +612,7 @@ class Yabause : AppCompatActivity(), FileSelectedListener,
                                 }
 
                                 override fun onNext(t: String) {
-                                    TODO("Not yet implemented")
+                                    //TODO("Not yet implemented")
                                 }
                             }
                             setSaveStateObserver(observer)
