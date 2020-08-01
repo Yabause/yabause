@@ -24,7 +24,6 @@ buildscript {
     repositories {
         google()
         jcenter()
-        maven { url 'https://maven.fabric.io/public' }
         maven {
             // nendSDK
             url 'http://fan-adn.github.io/nendSDK-Android-lib/library'
