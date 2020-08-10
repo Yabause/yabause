@@ -147,7 +147,13 @@ static INLINE void SH2HandleInterrupts(SH2_struct *context)
       SH2MappedMemoryWriteLong(context, context->regs.R[15], context->regs.SR.all);
       context->regs.R[15] -= 4;
       SH2MappedMemoryWriteLong(context, context->regs.R[15], context->regs.PC);
-      context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts - 1].level;
+      if (context->interrupts[context->NumberOfInterrupts - 1].level == 0x10) {
+        //NMI
+        context->regs.SR.part.I = 0xF;
+      }
+      else {
+        context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts - 1].level;
+      }
       context->regs.PC = SH2MappedMemoryReadLong(context,context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2));
       //LOG("[%s] Exception %u, vecnum=%u, saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", 9, context->interrupts[context->NumberOfInterrupts - 1].vector, oldpc, context->regs.PC);
       context->NumberOfInterrupts--;
