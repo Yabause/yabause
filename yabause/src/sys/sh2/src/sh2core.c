@@ -270,6 +270,7 @@ void OnchipReset(SH2_struct *context) {
    context->onchip.DRCR0 = 0x00;
    context->onchip.DRCR1 = 0x00;
    context->onchip.WTCSR = 0x18;
+   context->onchip.WTCSRM = 0x0;
    context->onchip.WTCNT = 0x00;
    context->onchip.RSTCSR = 0x1F;
    context->onchip.SBYCR = 0x60;
@@ -381,7 +382,7 @@ u8 FASTCALL OnchipReadByte(SH2_struct *context, u32 addr) {
       case 0x068:
          return context->onchip.VCRD >> 8;
       case 0x080:
-         return context->onchip.WTCSR;
+         return context->onchip.WTCSR & 0x18;
       case 0x081:
          return context->onchip.WTCNT;
       case 0x092:
@@ -411,6 +412,13 @@ u8 FASTCALL OnchipReadByte(SH2_struct *context, u32 addr) {
 u16 FASTCALL OnchipReadWord(SH2_struct *context, u32 addr) {
    switch(addr)
    {
+      case 0x012:
+         return context->onchip.FRC.all;
+      case 0x014:
+         if (!(context->onchip.TOCR & 0x10))
+            return context->onchip.OCRA;
+         else
+            return context->onchip.OCRB;
       case 0x060:
          return context->onchip.IPRB;
       case 0x062:
@@ -741,12 +749,20 @@ void FASTCALL OnchipWriteWord(SH2_struct *context, u32 addr, u16 val) {
             context->wdt.isenable = (val & 0x20);
             context->wdt.isinterval = (~val & 0x40);
 
-            context->onchip.WTCSR = (u8)val | 0x18;
+            context->onchip.WTCSR = (context->onchip.WTCSR & (context->onchip.WTCSRM | val) & 0x80) | (val & 0x67);
+            context->onchip.WTCSR &= ~0x80;
+            if(context->onchip.WTCSR & 0x20){
+               context->onchip.SBYCR &= 0x7F;
+            }else {
+               context->onchip.WTCSR &= ~0x80;
+               context->onchip.WTCNT = 0;
+            }
          }
          else if (val >> 8 == 0x5A)
          {
             // WTCNT
-            context->onchip.WTCNT = (u8)val;
+            if(context->onchip.WTCSR & 0x20)
+               context->onchip.WTCNT = (u8)val;
          }
          return;
       case 0x082:
@@ -776,6 +792,7 @@ void FASTCALL OnchipWriteWord(SH2_struct *context, u32 addr, u16 val) {
          context->onchip.IPRA = val & 0xFFF0;
          return;
       case 0x0E4:
+      case 0x0E5:
          context->onchip.VCRWDT = val & 0x7F7F;
          return;
       case 0x108:

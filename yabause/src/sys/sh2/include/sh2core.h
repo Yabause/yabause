@@ -151,6 +151,7 @@ typedef struct
    u8 DRCR0;   // 0xFFFFFE71
    u8 DRCR1;   // 0xFFFFFE72
    u8 WTCSR;   // 0xFFFFFE80
+   u32 WTCSRM;   // 0xFFFFFE80 mirror
    u8 WTCNT;   // 0xFFFFFE81
    u8 RSTCSR;  // 0xFFFFFE83
    u8 SBYCR;   // 0xFFFFFE91
@@ -344,7 +345,7 @@ typedef struct SH2_struct_s
    u32 pchistory_index;
 #endif
 
-   void * ext; 
+   void * ext;
 
 #ifdef USE_CACHE
    u8 cacheOn;
