@@ -288,6 +288,8 @@ extern "C" {
       s64 all;
     } MUL;
 #endif
+    u32 dsp_dma_instruction;
+    s32 dsp_dma_count;
   } scudspregs_struct;
 
 

@@ -646,7 +646,6 @@ static void writeloadimdest(u8 num, u32 val)
    }
 }
 
-
 void dsp_dma01(scudspregs_struct *sc, u32 inst)
 {
     u32 imm = ((inst & 0xFF));
@@ -691,6 +690,8 @@ void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
 
   int i;
   u32 Adr = (sc->WA0 << 2) & 0x0FFFFFFF;
+
+  LOG("dsp_dma_write_d0bus to %08X %d times", Adr, count);
 
   // A-BUS?
   if (Adr >= 0x02000000 && Adr < 0x05A00000){
@@ -942,6 +943,54 @@ void dsp_dma08(scudspregs_struct *sc, u32 inst)
     dsp_dma04(sc, inst);
     sc->WA0 = saveWa0;
 }
+
+
+void step_dsp_dma(scudspregs_struct *sc) {
+
+  if (sc->ProgControlPort.part.T0 == 0) return;
+
+  sc->dsp_dma_count--;
+  if (sc->dsp_dma_count > 0) return;
+
+  if (((sc->dsp_dma_instruction >> 10) & 0x1F) == 0x00)
+  {
+    dsp_dma01(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 10) & 0x1F) == 0x04)
+  {
+    dsp_dma02(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 11) & 0x0F) == 0x04)
+  {
+    dsp_dma03(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 10) & 0x1F) == 0x0C)
+  {
+    dsp_dma04(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 11) & 0x0F) == 0x08)
+  {
+    dsp_dma05(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 10) & 0x1F) == 0x14)
+  {
+    dsp_dma06(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 11) & 0x0F) == 0x0C)
+  {
+    dsp_dma07(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 10) & 0x1F) == 0x1C)
+  {
+    dsp_dma08(ScuDsp, sc->dsp_dma_instruction);
+  }
+
+  sc->ProgControlPort.part.T0 = 0;
+  sc->dsp_dma_instruction = 0;
+  sc->dsp_dma_count = 0;
+
+}
+
 
 INLINE void ScuTimer1Exec( u32 timing ) {
   if (ScuRegs->timer1_counter > 0) {
@@ -1320,6 +1369,10 @@ void ScuExec(u32 timing) {
             }
          }
 
+         if (ScuDsp->ProgControlPort.part.T0 != 0) {
+           step_dsp_dma(ScuDsp);
+         }
+
          instruction = ScuDsp->ProgramRam[ScuDsp->PC];
          //LOG("scu: dsp %08X @ %08X", instruction, ScuDsp->PC);
          incFlg[0] = 0;
@@ -1332,7 +1385,7 @@ void ScuExec(u32 timing) {
          if (slogp){
            char buf[128];
            ScuDspDisasm(ScuDsp->PC, buf);
-           fprintf(slogp, "%s ALU=%" PRId64 "P = %" PRId64 "\n", buf, ScuDsp->ALU.all, ScuDsp->P.all);
+           fprintf(slogp, "%s ALU=%" PRId64 ",P=%" PRId64 "\n", buf, ScuDsp->ALU.all, ScuDsp->P.all);
          }
 #endif
 
@@ -1421,29 +1474,39 @@ void ScuExec(u32 timing) {
                //   ScuDsp->ProgControlPort.part.V = 0;
                break;
             case 0x5: // SUB
-               ScuDsp->ALU.part.L = (s32)ScuDsp->AC.part.L - (s32)ScuDsp->P.part.L;
+            {
+              u64 ans = (u64)ScuDsp->AC.part.L - (u32)ScuDsp->P.part.L;
+#ifdef DSPLOG
+              if (slogp) {
+                fprintf(slogp, "%02X: %" PRId64 " - %d = %" PRId64 " \n", ScuDsp->PC, (u64)ScuDsp->AC.part.L, (u32)ScuDsp->P.part.L, ans);
+              }
+#endif
+              ScuDsp->ProgControlPort.part.C = ((ans >> 32) & 0x01);
 
-               if (ScuDsp->ALU.part.L == 0)
-                  ScuDsp->ProgControlPort.part.Z = 1;
-               else
-                  ScuDsp->ProgControlPort.part.Z = 0;
+              ScuDsp->ALU.part.L = ans;
 
-               if ((s64)ScuDsp->ALU.part.L < 0)
-                  ScuDsp->ProgControlPort.part.S = 1;
-               else
-                  ScuDsp->ProgControlPort.part.S = 0;
+              if (ScuDsp->ALU.part.L == 0)
+                ScuDsp->ProgControlPort.part.Z = 1;
+              else
+                ScuDsp->ProgControlPort.part.Z = 0;
 
-               //0x00000001 - 0xFFFFFFFF will set the carry bit, needs to be unsigned math
-               if ((((u64)(u32)ScuDsp->AC.part.L - (u64)(u32)ScuDsp->P.part.L)) & 0x100000000)
-                  ScuDsp->ProgControlPort.part.C = 1;
-               else
-                  ScuDsp->ProgControlPort.part.C = 0;
+              if ((s64)ScuDsp->ALU.part.L < 0)
+                ScuDsp->ProgControlPort.part.S = 1;
+              else
+                ScuDsp->ProgControlPort.part.S = 0;
+
+              //0x00000001 - 0xFFFFFFFF will set the carry bit, needs to be unsigned math
+              //if ((((u64)(u32)ScuDsp->AC.part.L - (u64)(u32)ScuDsp->P.part.L)) & 0x100000000)
+              //  ScuDsp->ProgControlPort.part.C = 1;
+              //else
+              //  ScuDsp->ProgControlPort.part.C = 0;
 
 
-//               if (ScuDsp->ALU.part.L ??) // set overflow flag
-//                  ScuDsp->ProgControlPort.part.V = 1;
-//               else
-//                  ScuDsp->ProgControlPort.part.V = 0;
+              //               if (ScuDsp->ALU.part.L ??) // set overflow flag
+              //                  ScuDsp->ProgControlPort.part.V = 1;
+              //               else
+              //                  ScuDsp->ProgControlPort.part.V = 0;
+            }
                break;
             case 0x6: // AD2
               ScuDsp->ALU.all = (s64)ScuDsp->AC.all +(s64)ScuDsp->P.all;
@@ -1638,7 +1701,7 @@ void ScuExec(u32 timing) {
                            writeloadimdest((instruction >> 26) & 0xF, (instruction & 0x7FFFF) | ((instruction & 0x40000) ? 0xFFF80000 : 0x00000000));
                         break;
                      case 0x03: // MVI Imm,[d]NZS
-                        if (!ScuDsp->ProgControlPort.part.Z || !ScuDsp->ProgControlPort.part.S)
+                        if ( ScuDsp->ProgControlPort.part.Z == 0 && ScuDsp->ProgControlPort.part.S == 0)
                            writeloadimdest((instruction >> 26) & 0xF, (instruction & 0x7FFFF) | ((instruction & 0x40000) ? 0xFFF80000 : 0x00000000));
                         break;
                      case 0x04: // MVI Imm,[d]NC
@@ -1685,41 +1748,21 @@ void ScuExec(u32 timing) {
                switch((instruction >> 28) & 0xF) {
                  case 0x0C: // DMA Commands
                  {
-                   if (((instruction >> 10) & 0x1F) == 0x00/*0x08*/)
-                   {
-                       dsp_dma01(ScuDsp, instruction);
+                   // Finish Previous DMA operation
+                   if (ScuDsp->dsp_dma_count > 0) {
+                     ScuDsp->dsp_dma_count = 0;
+                     step_dsp_dma(ScuDsp);
                    }
-                   else if (((instruction >> 10) & 0x1F) == 0x04)
-                   {
-                       dsp_dma02(ScuDsp, instruction);
-                   }
-                   else if (((instruction >> 11) & 0x0F) == 0x04)
-                   {
-                       dsp_dma03(ScuDsp, instruction);
-                   }
-                   else if (((instruction >> 10) & 0x1F) == 0x0C)
-                   {
-                       dsp_dma04(ScuDsp, instruction);
-                   }
-                   else if (((instruction >> 11) & 0x0F) == 0x08)
-                   {
-                       dsp_dma05(ScuDsp, instruction);
-                   }
-                   else if (((instruction >> 10) & 0x1F) == 0x14)
-                   {
-                       dsp_dma06(ScuDsp, instruction);
-                   }
-                   else if (((instruction >> 11) & 0x0F) == 0x0C)
-                   {
-                       dsp_dma07(ScuDsp, instruction);
-                   }
-                   else if (((instruction >> 10) & 0x1F) == 0x1C)
-                   {
-                       dsp_dma08(ScuDsp, instruction);
-                   }
-                     break;
+                   ScuDsp->dsp_dma_instruction = instruction;
+                   ScuDsp->ProgControlPort.part.T0 = 1;
+                   ScuDsp->dsp_dma_count = 2; // DMA operation will be start when this count is zero
+                   LOG("Start DSP DMA %08X", ScuDsp->dsp_dma_instruction);
+                   break;
                   }
                   case 0x0D: // Jump Commands
+                    if (ScuDsp->jmpaddr != 0xffffffff) {
+                      break;
+                    }
                      switch ((instruction >> 19) & 0x7F) {
                         case 0x00: // JMP Imm
                            ScuDsp->jmpaddr = instruction & 0xFF;
@@ -1742,7 +1785,7 @@ void ScuExec(u32 timing) {
                            //LOG("scu\t: JMP NS: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x43: // JMP NZS, Imm
-                           if (!ScuDsp->ProgControlPort.part.Z || !ScuDsp->ProgControlPort.part.S)
+                           if ( ScuDsp->ProgControlPort.part.Z==0 && ScuDsp->ProgControlPort.part.S == 0)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
                               ScuDsp->delayed = 0; 
@@ -3398,7 +3441,7 @@ int ScuSaveState(FILE *fp)
    int offset;
    IOCheck_struct check = { 0, 0 };
 
-   offset = StateWriteHeader(fp, "SCU ", 3);
+   offset = StateWriteHeader(fp, "SCU ", 4);
 
    // Write registers and internal variables
    ywrite(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
@@ -3424,17 +3467,26 @@ int ScuLoadState(FILE *fp, UNUSED int version, int size)
      ScuRegs->dma0.TransferNumber = 0;
      ScuRegs->dma1.TransferNumber = 0;
      ScuRegs->dma2.TransferNumber = 0;
+     yread(&check, (void *)ScuDsp, sizeof(scudspregs_struct) - sizeof(ScuDsp->dsp_dma_instruction) - sizeof(ScuDsp->dsp_dma_count), 1, fp);
+     ScuDsp->dsp_dma_instruction = 0;
+     ScuDsp->dsp_dma_count = 0;
+   }
+   else if (version == 3) {
+     yread(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
+     yread(&check, (void *)ScuDsp, sizeof(scudspregs_struct) - sizeof(ScuDsp->dsp_dma_instruction) - sizeof(ScuDsp->dsp_dma_count), 1, fp);
+     ScuDsp->dsp_dma_instruction = 0;
+     ScuDsp->dsp_dma_count = 0;
    }
    else {
      yread(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
+     yread(&check, (void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
    }
 
-   // Read DSP area
-   yread(&check, (void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
 
    if (version >= 2) {
      yread(&check, incFlg, sizeof(int), 4, fp);
    }
+
    return size;
 }
 
