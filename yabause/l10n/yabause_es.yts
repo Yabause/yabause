@@ -32,7 +32,7 @@
 &Slave SH2|SH2 E&sclavo
 &Tools|Herramien&tas
 &Transfer|&Transferir
-&Vertical synchronization|
+&Vertical synchronization|&Sincronización vertical
 &View|&Ver
 16-bit|16-bit
 16-bit Relative value(s)|Valor(es) relativo(s) a 16-bit
@@ -81,7 +81,7 @@ Axis Y|Eje Y
 Axis L Trigger|Eje gatillo izq
 Axis R Trigger|Eje gatillo der
 Backup Ram Manager|Gestor de RAM de backup
-BiCubic|
+BiCubic|Bicúbico
 Bilinear|Bilinear
 Bilinear Filtering (Restart required)|Filtro bilinear (Requiere reinicio)
 Binary Files (*.bin)|Archivos binarios (*.bin)
@@ -197,7 +197,8 @@ General|General
 General Info|Información general
 German|Alemán
 Goto Address|Ir a dirección
-GPU RBG :|
+Gouraud Mode :|Modo Gouraud
+GPU RBG :| GPU RGB (OpenGL 4.3)
 GPU Tesselation|Teselado GPU
 Greater then|Mayor a
 Gun|Pistola
@@ -416,20 +417,20 @@ Trigger|Detonante
 TV effect :|Efecto TV
 Type:|Tipo:
 Unable to add code|Imposible añadir código
-Unable to change description|Imposible cambiar descripción
+Unable to change description|Imposible cambiar la descripción
+Unable to open file for loading|Imposible abrir archivo para cargar
+Unable to open file for saving|Imposible abrir archivo para guardar
+Unable to remove code|Imposible eliminar código
+Unknow (%1)|Desconocido (%1)
 Unsigned|Sin signo
 Unsigned 8-bit value|Valor de 8-bit sin signo
 Unsigned 16-bit value|Valor de 16-bit sin signo					  
 Unsigned 32-bit value|Valor de 32-bit sin signo
 Up|Arriba
 Upload|Subir
-Unable to add code|Imposible añadir código		 
-Unable to open file for loading|Imposible abrir archivo para cargar
-Unable to open file for saving|Imposible abrir archivo para guardar
-Unable to remove code|Imposible eliminar código
-Unknow (%1)|Desconocido (%1)
 Upscale Filter :|Filtro de escalado
 Use Vdp1 Cache|Usar caché Vdp1
+Use System Locale|
 Value|Valor
 Value :|Valor :
 Value :|Valor :
@@ -449,14 +450,10 @@ Wheel|Volante
 Wheel Configuration|Configuración Volante
 Window Resolution|Resolución de ventana
 Windows SPTI Driver|Driver SPTI para Windows
+Window size :|Tamaño de ventana
 Wireframe :| Estructura de diseño
 Word|Palabra(word)
 Word Write|Escribir WORD
 Word Write : %1 %2|Escribir WORD : %1 %2 
 Write|Escribir
 Yes|Si
-&Vertical synchronization|&Sincronización vertical
-BiCubic|Bicúbico
-GPU RBG :| GPU RGB
-add GPU RBG (OpenGl 4.3):| Añadir GPU RGB (OpenGL 4.3)
-Wireframe|Estructura de diseño
