@@ -197,6 +197,7 @@ General|Général
 General Info|Info Général
 German|Allemand
 Goto Address|Va sur l'Adresse
+Gouraud Mode :|Mode Gouraud :
 GPU RBG :|GPU RBG (OpenGl 4.3)
 GPU Tesselation|Tesselation GPU
 Greater then|Plus grand que
@@ -291,7 +292,6 @@ Open &ISO...|Ouvrir un Fichier &ISO...
 Open CD Rom|Ouvrir un Lecteur CD ROM
 Open SSF|Ouvrir le Lecteur SSF
 Open&Tray|Ouvrir le Plateau
-OpenGL size :|Taille en OpenGL :
 OpenGL Video Interface|Interface Vidéo OpenGL
 Options|Options
 Original|Original
@@ -308,6 +308,7 @@ Qt Keyboard Input Interface|Interface Qt du Clavier
 RBG0|RGB0
 RBG0 Info|Info RBG0
 Read|Lecture
+Record|Enregistrer
 Region|Région :
 Remove Peripheral|Supprimer le Périphérique
 Restart|Redémarrer
@@ -360,7 +361,7 @@ Search Memory|Fouiller dans la Mémoire
 Search Value:|Rechercher une Valeur :
 Sega Saturn Sound Format files (*.ssf *.minissf)|Fichiers au Format Son Sega Saturn (*.ssf *.minissf)
 Select a file to load your state|Choisissez un Fichier pour Charger l'Etat
-Select your iso/cue/bin/zip file|Choisissez votre fichier ISO/CUE/BIN/ZIP
+Select your iso/cue/bin/zip/chd file|Choisissez votre fichier ISO/CUE/BIN/ZIP/CHD
 Select your ssf file|Sélectionner votre fichier SSF
 Set PC to Start Address|Sélection PC vers l'Adresse de Démarrage
 Settings|Paramètres
@@ -449,6 +450,7 @@ Wheel|Volant
 Wheel Configuration|Configuration du Volant
 Window Resolution|Résolution Fenêtrée :
 Windows SPTI Driver|Pilote Windows SPTI
+Window size :|Taille de la Fenêtre :
 Wireframe :|Mode Fil de Fer (Wireframe) :
 Word|Word
 Word Write|Ecrire un Word
