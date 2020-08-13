@@ -32,7 +32,7 @@
 &Slave SH2|&Slave SH2
 &Tools|&Werkzeuge
 &Transfer|&Transferieren
-&Vertical synchronization|
+&Vertical synchronization|&Vertikale Synchronisation
 &View|&Ansicht
 16-bit|16-bit
 16-bit Relative value(s)|16-bit Relative value(s)
@@ -81,7 +81,7 @@ Axis Y|Achse Y
 Axis L Trigger|Achse L Abzug
 Axis R Trigger|Achse R Abzug  
 Backup Ram Manager|Backup Ram Manager
-BiCubic|		  
+BiCubic|Bikubisch		  
 Bilinear|Bilinear
 Bilinear Filtering (Restart required)|Bilineare Filterung (Neustart erforderlich)	   
 Binary Files (*.bin)|Binary Files (*.bin)	   
@@ -197,8 +197,9 @@ General|Allgemein
 General Info|General Info
 German|Deutsch
 Goto Address|Goto Address
-GPU RBG :|
-GPU Tesselation|			 
+Gouraud Mode :|Gouraud manier
+GPU RBG :| GPU RGB (OpenGl 4.3)
+GPU Tesselation|GPU Tesselation			 
 Greater then|Größer als
 Gun|Pistole
 Gun Configuration|Pistolen-Konfiguration
@@ -417,19 +418,19 @@ TV effect :|TV-Effekt
 Type:|Type:
 Unable to add code|Code konnte nicht hinzugefügt werden
 Unable to change description|Beschreibung konnte nicht geändert werden
-Unsigned|Unsigniert
-Unsigned 8-bit value|Unsigned 8-bit value	
-Unsigned 16-bit value|Unsigned 16-bit value
-Unsigned 32-bit value|Unsigned 32-bit value					  
-Up|Hoch					  
-Upload|Hochladen					  
-Unable to add code|   
 Unable to open file for loading|Datei konnte nicht zum Laden geöffnet werden
 Unable to open file for saving|Datei konnte nicht zum Speichern geöffnet werden
 Unable to remove code|Code konnte nicht entfernt werden
-Unknow (%1)|Unbekannt (%1)
+Unknown (%1)|Inconnu (%1)
+Unsigned|Unsigniert
+Unsigned 8-bit value|Unsigned 8-bit value	
+Unsigned 16-bit value|Unsigned 16-bit value
+Unsigned 32-bit value|Unsigned 32-bit value	
+Up|Hoch					  
+Upload|Hochladen					  
 Upscale Filter :|
 Use Vdp1 Cache|Verwenden Sie den Vdp1-Cache
+Use System Locale|
 Value|Wert
 Value:|Value:
 Value :|Wert :
@@ -446,17 +447,13 @@ View|Ansicht
 Viewer|Viewer
 WAV Files (*.wav)|WAV-Dateien (* .wav)
 Wheel|Rad
-Wheel Configuration|
+Wheel Configuration|Radkonfiguration
 Window Resolution|Bildschirmauflösung
 Windows SPTI Driver|Windows SPTI Treiber
+Window size :|Fenstergröße
 Wireframe :|Drahtmodell	  
 Word|Word
 Word Write|Word Schreiben
 Word Write : %1 %2|Wortschreiben:% 1% 2 
 Write|Schreiben
 Yes|Ja
-&Vertical synchronization|&Vertikale Synchronisation
-BiCubic|Bikubisch
-GPU RBG :| GPU RGB
-add GPU RBG (OpenGl 4.3):| GPU RGB hinzufügen (OpenGL 4.3)
-Wireframe|Drahtmodell
