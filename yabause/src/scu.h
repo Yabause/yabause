@@ -291,6 +291,9 @@ extern "C" {
     u32 dsp_dma_instruction;
     s32 dsp_dma_wait;
     u32 dsp_dma_size;
+    u32 WA0M;
+    u32 RA0M;
+    u32 dmy;
   } scudspregs_struct;
 
 
