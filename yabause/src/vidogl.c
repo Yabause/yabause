@@ -262,6 +262,123 @@ u32 FASTCALL Vdp2ColorRamGetColorCM01SC3(vdp2draw_struct * info, u32 colorindex,
 u32 FASTCALL Vdp2ColorRamGetColorCM2(vdp2draw_struct * info, u32 colorindex, int alpha, u8 lowdot);
 
 
+static INLINE void Vdp1MaskSpritePixel(int type, u16 * pixel, int *colorcalc)
+{
+  switch (type)
+  {
+  case 0x0:
+  {
+    *pixel |= (*colorcalc & 0x07) << 11;
+    *colorcalc = (*pixel >> 11) & 0x7;
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x1:
+  {
+    *pixel |= (*colorcalc & 0x03) << 11;
+    *colorcalc = (*pixel >> 11) & 0x3;
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x2:
+  {
+    *pixel |= (*colorcalc & 0x07) << 11;
+    *colorcalc = (*pixel >> 11) & 0x7;
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x3:
+  {
+    *pixel |= (*colorcalc & 0x03) << 11;
+    *colorcalc = (*pixel >> 11) & 0x3;
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x4:
+  {
+    *pixel |= (*colorcalc & 0x07) << 10;
+    *colorcalc = (*pixel >> 10) & 0x7;
+    *pixel &= 0x3FF;
+    break;
+  }
+  case 0x5:
+  {
+    *pixel |= (*colorcalc & 0x01) << 11;
+    *colorcalc = (*pixel >> 11) & 0x1;
+    *pixel &= 0x7FF;
+    break;
+  }
+  case 0x6:
+  {
+    *pixel |= (*colorcalc & 0x03) << 10;
+    *colorcalc = (*pixel >> 10) & 0x3;
+    *pixel &= 0x3FF;
+    break;
+  }
+  case 0x7:
+  {
+    *pixel |= (*colorcalc & 0x09) << 7;
+    *colorcalc = (*pixel >> 9) & 0x7;
+    *pixel &= 0x1FF;
+    break;
+  }
+  case 0x8:
+  {
+    *colorcalc = 0;
+    *pixel &= 0x7F;
+    break;
+  }
+  case 0x9:
+  {
+    *pixel |= (*colorcalc & 0x01) << 6;
+    *colorcalc = (*pixel >> 6) & 0x1;
+    *pixel &= 0x3F;
+    break;
+  }
+  case 0xA:
+  {
+    *colorcalc = 0;
+    *pixel &= 0x3F;
+    break;
+  }
+  case 0xB:
+  {
+    *pixel |= (*colorcalc & 0x03) << 6;
+    *colorcalc = (*pixel >> 6) & 0x3;
+    *pixel &= 0x3F;
+    break;
+  }
+  case 0xC:
+  {
+    *colorcalc = 0;
+    *pixel &= 0xFF;
+    break;
+  }
+  case 0xD:
+  {
+    *pixel |= (*colorcalc & 0x01) << 6;
+    *colorcalc = (*pixel >> 6) & 0x1;
+    *pixel &= 0xFF;
+    break;
+  }
+  case 0xE:
+  {
+    *colorcalc = 0;
+    *pixel &= 0xFF;
+    break;
+  }
+  case 0xF:
+  {
+    *pixel |= (*colorcalc & 0x03) << 6;
+    *colorcalc = (*pixel >> 6) & 0x3;
+    *pixel &= 0xFF;
+    break;
+  }
+  default: break;
+  }
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
@@ -426,7 +543,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
       }
       else {
-        Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &shadow, &normalshadow, &priority, &colorcl);
+        Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &colorcl);
         color = VDP1COLOR(1, colorcl, priority, 0, dot);
       }
     }
