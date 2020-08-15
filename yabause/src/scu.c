@@ -691,7 +691,7 @@ void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
   int i;
   u32 Adr = (sc->WA0 << 2) & 0x0FFFFFFF;
 
-  LOG("dsp_dma_write_d0bus to %08X %d times", Adr, count);
+  //LOG("dsp_dma_write_d0bus to %08X %d times", Adr, count);
 
   // A-BUS?
   if (Adr >= 0x02000000 && Adr < 0x05A00000){
@@ -1756,7 +1756,7 @@ void ScuExec(u32 timing) {
                    ScuDsp->dsp_dma_instruction = instruction;
                    ScuDsp->ProgControlPort.part.T0 = 1;
                    ScuDsp->dsp_dma_count = 2; // DMA operation will be start when this count is zero
-                   LOG("Start DSP DMA %08X", ScuDsp->dsp_dma_instruction);
+                   //LOG("Start DSP DMA %08X", ScuDsp->dsp_dma_instruction);
                    break;
                   }
                   case 0x0D: // Jump Commands
