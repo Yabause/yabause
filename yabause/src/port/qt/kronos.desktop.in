@@ -2,7 +2,7 @@
 Type=Application
 Name=Kronos (Qt port)
 Comment=Sega Saturn emulator
-TryExec=yabause
+TryExec=kronos
 Exec=@YAB_PORT_NAME@
 Icon=kronos
 Categories=KDE;Qt;Game;
