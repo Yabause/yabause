@@ -358,6 +358,8 @@ if (WIN32)
 	#install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../README     DESTINATION "." RENAME README.txt)
 	#install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../README.WIN DESTINATION "." RENAME README.WIN.txt)
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/donate.png DESTINATION "." )
+	install(FILES c:/bin/libeay32.dll DESTINATION "." )
+	install(FILES c:/bin/ssleay32.dll DESTINATION "." )
 	
 	if (MINGW)
 		get_filename_component( Mingw_Path ${CMAKE_CXX_COMPILER} PATH )
