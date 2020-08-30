@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="menu_exit">Выход</string>
     <string name="menu_reset">Сброс</string>
-    <string name="menu_save_state">Сохранение</string>
-    <string name="menu_load_state">Загрузка</string>
+    <string name="menu_save_state">Сохранить</string>
+    <strin name="menu_load_state">Загрузить</string>
+    <string name="menu_save_state_cloud">Сохранить в облако</string>
+    <string name="menu_load_state_cloud">Загрузить из облака</string>
     <string name="load_game">Загрузить игру</string>
     <string name="setting">Настройки</string>
     <string name="choose_bios">Выбор BIOS</string>
@@ -29,18 +31,18 @@
     <string name="setting_sound">Звук</string>
     <string name="setting_graphics">Графика</string>
     <string name="setting_general">Общие</string>
-    <string name="msg_opengl_not_supported">Устройство не поддерживает OpenGL ES 3.0 или выше.\nOpenGL рендер недоступен.\n</string>
+    <string name="msg_opengl_not_supported">Устройство не поддерживает OpenGL ES 3.0 или выше.\nOpenGL-рендер недоступен.\n</string>
     <string name="skip">Пропуск</string>
     <string name="donation">Поддержать проект</string>
     <string name="donate_message">
         Поддержите разработку!\n\n
-	Вы можете помочь развитию Yaba Sanshiro сделав пожертвование на официальном сайте http://yabause.org.
-	Вы также можете оказать поддержку перечислив любую указанную сумму - это ускорит работу по повышению точности эмуляции, поддержке новых геймпадов и устройств.
-	Данное сообщение не отображается, если вы уже помогли проекту.
+	Вы можете поддержать оригинальных разработчиков, сделав пожертвование на официальном сайте http://yabause.org.
+	Вы также можете оказать поддержку Yaba Sanshiro, нажав кнопку 'Поддержать', чтобы ускорить работу по повышению точности эмуляции, поддержке новых геймпадов и устройств.
+	Это сообщение и реклама не будут отображаться, если вы поддержите проект.
     </string>
-    <string name="thank_you">Благодарим за Вашу поддержку!</string>
+    <string name="thank_you">Спасибо за поддержку!</string>
     <string name="error_consume">Ошибка перечисления</string>
-    <string name="do_donation">Перечислить</string>
+    <string name="do_donation">Поддержать</string>
     <string name="no_thank_you">Нет, спасибо</string>
     <string name="donate_3doller">$3</string>
     <string name="donate_5doller">$5</string>
@@ -48,8 +50,8 @@
     <string name="donate_30doller">$30</string>
 
     <string name="input_the_key">Нажмите кнопку</string>
-    <string name="joystick_is_not_connected">Геймпад не подключен!</string>
-    <string name="this_key_has_already_been_set">Кнопка уже используется!</string>
+    <string name="joystick_is_not_connected">Геймпад не подключен.</string>
+    <string name="this_key_has_already_been_set">Кнопка уже используется.</string>
     <string name="up">Вверх</string>
     <string name="down">Вниз</string>
     <string name="left">Влево</string>
@@ -76,7 +78,8 @@
     <string name="exit">Выход</string>
     <string name="ignore">Пропустить</string>
 
-    <string name="dynrec_cpu_interface">Рекомпилятор (быстрый, менее точный)</string>
+    <string name="new_dynrec_cpu_interface">Новый динамический рекомпилятор (быстрей интерпретатора и точней старого рекомпилятора)</string>
+    <string name="dynrec_cpu_interface">Старый динамический рекомпилятор (быстрый, но менее точный)</string>
     <string name="software_cpu_interface">Интерпретатор (медленный, более точный)</string>
 
     <string name="opengl_video_interface">OpenGL</string>
@@ -85,19 +88,19 @@
     <string name="select_from_other_directory">Загрузить из другой папки</string>
 
     <string name="menu_save_screenshot">Скриншот</string>
-    <string name="menu_report">Отчёт</string>
+    <string name="menu_report">Отправить отчёт</string>
 
     <string name="video_filter">Фильтрация</string>
-    <string name="choose_video_filter">Выбор видеофильтра</string>
+    <string name="choose_video_filter">Выбор графического фильтра</string>
 
     <string name="video_filter_none">Нет</string>
     <string name="video_filter_fxaa">FXAA</string>
-    <string name="video_filter_scanline">Scanline (эффект ЭЛТ)</string>
-    <string name="video_filter_bilinear">Билинейный (не работает с нативным разрешением рендеринга)</string>
+    <string name="video_filter_scanline">Сканлайны (эффект ЭЛТ)</string>
+    <string name="video_filter_bilinear">Билинейный (не работает для рендеринга в нативном разрешении)</string>
     <string name="browse_title"><![CDATA[Videos by Your Company]]></string>
     <string name="related_movies">Похожие видео</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
-    <string name="delete_confirm">"Удалить данную запись?"</string>string>
+    <string name="delete_confirm">"Удалить данную запись?"</string>
     <string name="error">Ошибка</string>
     <string name="ok">OK</string>
     <string name="cancel">Отмена</string>
@@ -105,7 +108,7 @@
     <string name="play">Пуск</string>
     <string name="stop">Стоп</string>
     <string name="init_text">00:00</string>
-    <string name="play_pause_description">Пуск Пауза Кнопка</string>
+    <string name="play_pause_description">Кнопка пуск/пауза</string>
     <string name="loading">Загрузка&#8230;</string>
     <string name="no_video_found">Видео не найдено</string>
     <string name="about_app">О программе DemoCast Player</string>
@@ -119,47 +122,189 @@
     <string name="select_bk_image">Фоновое изображение меню</string>
 
     <!-- Error messages -->
-    <string name="video_error_media_load_timeout">Время ожидания загрузки истекло</string>
+    <string name="video_error_media_load_timeout">Истекло время ожидания загрузки</string>
     <string name="video_error_server_inaccessible">Медиа-сервер недоступен</string>
     <string name="video_error_unknown_error">Не удалось загрузить видео</string>
     <string name="error_fragment_message">Произошла ошибка</string>
     <string name="dismiss_error">Отклонить</string>
-    <string name="oops">Oops</string>
+    <string name="oops">Ой</string>
 
+    <string name="title_activity_game_select" translatable="false">Yaba Sanshiro</string>
     <string name="polygon_generation_type">Полигональная генерация</string>
-    <string name="choose_polygon_generation_type">Выбор метода полигональной генерации</string>
+    <string name="choose_polygon_generation_type">Метод генерации полигонов</string>
     <string name="sound_engine">Звуковой движок</string>
     <string name="choose_sound_engine">Выбор звукового движка</string>
+    <string name="invitation_title">Рекомендовать uoYabause</string>
+    <string name="invitation_message">Играйте в SEGA Saturn с помощью данного приложения!</string>
+    <string name="invitation_deep_link" translatable="false">https://b472u.app.goo.gl/YJ5F</string>
+    <string name="invitation_custom_image" translatable="false">https://lh3.googleusercontent.com/orp-j3lNGj24xvfVBEQvwWyaVhOQ_aTGc0nwIInDXBlNGUnSOdB_hb8sPGSmgmd0Jvkx=h310-rw</string>
+    <string name="invitation_cta">Установить!</string>
+    <string name="invite">Рекомендовать</string>
+    <string name="invite_message">Хотите порекомендовать приложение?</string>
     <string name="video_resolution">Разрешение рендеринга</string>
+    <string name="video_aspect_ratio">Соотношение сторон</string>
+    <string name="rbg_resolution">Разрешение RBG</string>
     <string name="choose_video_resolution">Выбор разрешения рендеринга</string>
-    <string name="open_cd_tray">Открыть лоток CD</string>
-    <string name="close_cd_tray">Закрыть лоток CD</string>
-    <string name="menu_analog">Вкл. аналоговый ввод</string>
+    <string name="choose_video_aspect_ratio">Соотношение сторон рендеринга</string>
+    <string name="choose_rbg_resolution">Выбор разрешения RBG (вращаемого фона)</string>
+    <string name="open_cd_tray">Открыть лоток привода</string>
+    <string name="close_cd_tray">Закрыть лоток привода</string>
+    <string name="menu_analog">Включить аналоговый ввод</string>
+    <string name="menu_set_as_gametitle">Скриншот для иконки игры</string>
     <string name="menu_cheat">Чит-коды</string>
     <string name="add_new_code">Добавить новый код</string>
-
+    <string name="str_use_compute_shader">Вычислительный шейдер для RGB</string>
     <string name="enable">Вкл.</string>
     <string name="disable">Откл.</string>
     <string name="edit">Правка</string>
     <string name="delete">Удалить</string>
-    <string name="select_game_directory">Папки загрузки игр</string>
-
+    <string name="select_game_directory">Каталог расположения игр</string>
 
     <string name="sound_curent">Текущий (высокое качество для быстрых устройств)</string>
     <string name="sound_legacy">Устаревший (для медленных устройств)</string>
 
     <string name="res_native">Нативное (разрешение экрана устройства)</string>
+    <string name="res_1080p">1080p</string>
+    <string name="res_720p">720p</string>
     <string name="res_4x">4x</string>
     <string name="res_2x">2x</string>
     <string name="res_original">Оригинальное</string>
+    <string name="ar_original">Оригинальное</string>
+    
+    <string name="res_4p3">4:3</string>
+    <string name="res_16p9">16:9</string>
+    <string name="res_full_screen">Во весь экран</string>
+
 
     <string name="poly_triangle">Триангуляция с коррекцией перспективы</string>
-    <string name="poly_cpu_tess">CPU тесселяция</string>
-    <string name="poly_gpu_tess">GPU тесселяция</string>
-
+    <string name="poly_cpu_tess">CPU-тесселяция</string>
+    <string name="poly_gpu_tess">GPU-тесселяция</string>
     <string name="menu_load">Загрузить</string>
     <string name="menu_delete">Удалить</string>
-    <string name="already_have_been">Если вы уже были пожертвованы, свяжитесь с smiyaxdev@gmail.com</string>
-    <string name="close">Close</string>
+    <string name="title_activity_iso_download">IsoDownload</string>
 
+
+    <string name="download_to">Загрузить в ...</string>
+    <string name="choose_download_to">Загрузить в ...</string>
+
+    <string name="internal">Внутренее хранилище</string>
+    <string name="external">SD-карта</string>
+    <string name="network_error">Ошибка сети.</string>
+    <string name="server_is_not_found">Сервер не найден или недоступен.</string>
+    <string name="server_error">Ошибка сервера.</string>
+    <string name="unable_to_process_file_for_md5">Не удалось определить MD5 файла</string>
+    <string name="downloading_cd_rom">Загрузка CD-ROM</string>
+    <string name="downloading">Загрузка</string>
+    <string name="finished">Загрузка завершена!</string>
+    <string name="failed">Ошибка загрузки</string>
+    <string name="canceled">Загрузка отменена</string>
+    <string name="serching_for_a_server">Поиск сервера...</string>
+    <string name="waiting_for_reading">Ожидание завершения считывания.</string>
+    <string name="checking_file">Проверка файла.</string>
+    <string name="download_file_is_broken">Загруженный файл повреждён.</string>
+    <string name="you_need_wifi_connection">Требуется Wi-Fi-соединение.</string>
+    <string name="free_space">Свободное место</string>
+    <string name="no_enough_free_space">Недостаточно свободного места.</string>
+
+    <string name="extend_internal_memory">Расширение внутренней памяти до 8 Мб</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Привет, чистый фрагмент</string>
+    <string name="this_func_not_yet">Данная функция ещё не добавлена.</string>
+    <string name="memory_manager">Менеджер памяти</string>
+    <string name="have_donated">Я уже поддержал uoYabause (не Yaba Sanshiro)</string>
+    <string name="title_activity_check_payment">Проверка платежа</string>
+    <string name="send_your_order_id">Отправьте ваш номер заказа uoYabause, чтобы отключить рекламу. Уточнить номер заказа можно на http://payments.google.com</string>
+    <string name="order_number_not_found">Такой номер заказа не обнаружен.</string>
+    <string name="order_number_used">Данный номер заказа уже используется.</string>
+    <string name="new_version_available">Доступно обновление Yaba Sanshiro</string>
+
+    <string name="sign_in_cancelled">Вход отменён</string>
+    <string name="no_internet_connection">Отсутствует соединение с Интернет</string>
+    <string name="unknown_error">Неизвестная ошибка</string>
+    <string name="unknown_sign_in_response">Неизвестный запрос на вход</string>
+    <string name="are_you_sure_to_delete">Вы уверены, что хотите удалить</string>
+    <string name="share">Поделиться</string>
+    <string name="unsahre">Не делиться</string>
+    <string name="send">Отправить</string>
+    <string name="issue_report">ОПИСАНИЕ ПРОБЛЕМЫ:</string>
+    <string name="status_report">ТЕКУЩИЙ СТАТУС:</string>
+    <string name="send_warning">Отправить сохранение и скриншот (объём около 2 Мб)</string>
+    <string name="report_message_1">Игра не запускается.</string>
+    <string name="report_message_2">Загружается до титульного экрана, но дальше неиграбельно.</string>
+    <string name="report_message_3">Запускается, но много графических и звуковых багов.</string>
+    <string name="report_message_4">Запускается, но с багами графики и звука.</string>
+    <string name="report_message_5">Идёт практически идеально.</string>
+    <string name="report_message_6">Идёт идеально, игру можно пройти.</string>
+    <string name="accept">Принять</string>
+    <string name="decline">Отклонить</string>
+    <string name="sign_out">Выйти</string>
+    <string name="sign_in">Войти</string>
+    <string name="siginin_message">
+        Вход в аккаунт позволит Вам:\n
+        * Хранить резервные копии сохранений в облаке\n
+        * Делиться чит-кодами с другими пользователями\n\n
+        Данные функции являются экспериментальными и могут быть изменены или удалены без уведомления.
+    </string>
+    <string name="agree">Согласен</string>
+    <string name="do_you_want_to_sign_in">Выполнить вход?</string>
+    <string name="never_ask_me_again">Больше не спрашивать</string>
+    <string name="deleting_file">Удаление файла</string>
+    <string name="sure_delete">Вы действительно хотите удалить файл?</string>
+    <string name="copy_to_cloud">Скопировать в облако</string>
+    <string name="copy_to_external">Скопировать во внешнюю память</string>
+    <string name="copy_to_internal">Скопировать во внутреннюю память</string>
+    <string name="activate">Активировать</string>
+    <string name="rate">Оценить</string>
+
+    <string name="str_rotate_screen">Поворот на 90 градусов</string>
+    <string name="title_activity_game_select_phone">GameSelectActivityPhone</string>
+
+    <string name="drawer_open">drawer_open</string>
+    <string name="drawer_close">drawer_close</string>
+    <string name="title_activity_startup">StartupActivity</string>
+    <string name="foce_android_tv_mode">Форсировать режим Android TV</string>
+    <string name="game_select_screen">Выбор экрана игры</string>
+    <string name="scsp_sync">Число синхронизаций SCSP за кадр (1 - 255)</string>
+    <string name="need_to_accept">Для работы приложения необходимо подтвердить запрос на предоставление прав. Пожалуйста, перезапустите.</string>
+
+    <string name="cpu_sync_per_line">Приоритет эмуляции</string>
+    <string name="sel_cpu_sync_per_line"></string>
+    <string name="speed">Скорость</string>
+    <string name="accuracy">Точность</string>
+
+    <string name="time_synchronization_mode">Режим синхронизации звука</string>
+    <string name="choose_time_synchronization_mode">Выбор режима синхронизации звука</string>
+    <string name="cpu_time">Время CPU (синхронизировать с временем эмулируемого CPU. Обеспечивает точную эмуляцию звука, если устройство достаточно быстрое.)</string>
+    <string name="real_time">Реальное время (синхронизировать с рельным временем. Звук не искажается даже для небыстрых устройств)</string>
+    <string name="privacy_policy">Политика конфиденциальности</string>
+    <string name="information">Информация</string>
+    <string name="already_have_been">Если вы уже поддержали, свяжитесь с smiyaxdev@gmail.com</string>
+    <string name="close">Закрыть</string>
+    <string name="show_fps">Показывать FPS</string>
+    <string name="enable_frame_skip">Включить пропуск кадров</string>
+    <string name="game_setting">Настройки игры</string>
+    <string name="welcome">
+        <![CDATA[
+        # Приветствуем!\n\n
+
+        Для запуска игр SEGA Saturn следуйте инструкциям.\n\n
+
+        1. Снимите образы с игровых дисков с помощью DiscImageChef или схожего ПО. [Полезные ссылки](http://wiki.redump.org/index.php?title=Useful_Links.)\n
+        2. Скопируйте файлы образов в каталог **\"%1$s\"** во внутренней памяти устройства.\n
+        3. Вызовите меню и нажмите \"Обновить список игр\". Будет загружен список игр.\n
+        4. Выберите запись для запуска.\n
+        5. Приятной игры!\n
+        \n
+        Для получения дополнительной информации посетите наш [сайт](https://www.uoyabause.org/static_pages/guide).\n
+        ]]>
+    </string>
+    <string name="delete_confirm_title">ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ</string>
+    <string name="not_available">НЕДОСТУПНО!</string>
+    <string name="only_pro_version">Данная функция доступна только для версии Pro</string>
+    <string name="got_it">Понятно!</string>
+    <string name="enter_pinin">Введите данный PIN на вашем устройстве</string>
+    <string name="sign_in_to_other_devices">Вход на других устройствах</string>
+    <string name="hide_status_bar_and_navigation_bar">Скрыть строку состояния и кнопки навигации</string>
 </resources>
+	
