@@ -36,6 +36,8 @@ scudspregs_struct * ScuDsp;
 static int incFlg[4] = { 0 };
 static void ScuTestInterruptMask(void);
 
+void step_dsp_dma(scudspregs_struct *sc);
+
 //#define DSPLOG
 
 #ifdef DSPLOG
@@ -49,9 +51,14 @@ int ScuInit(void) {
    if ((ScuRegs = (Scu *) calloc(1, sizeof(Scu))) == NULL)
       return -1;
 
+   memset(&ScuRegs->dma0, 0, sizeof(ScuRegs->dma0));
+   memset(&ScuRegs->dma1, 0, sizeof(ScuRegs->dma1));
+   memset(&ScuRegs->dma2, 0, sizeof(ScuRegs->dma2));
+   
    if ((ScuDsp = (scudspregs_struct *) calloc(1, sizeof(scudspregs_struct))) == NULL)
       return -1;
 
+   
    return 0;
 }
 
@@ -65,6 +72,7 @@ void ScuDeInit(void) {
    if (ScuDsp)
       free(ScuDsp);
    ScuDsp = NULL;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -104,6 +112,11 @@ void ScuReset(void) {
 
    memset((void *)ScuRegs->interrupts, 0, sizeof(scuinterrupt_struct) * 30);
    ScuRegs->NumberOfInterrupts = 0;
+
+   memset(&ScuRegs->dma0, 0, sizeof(ScuRegs->dma0));
+   memset(&ScuRegs->dma1, 0, sizeof(ScuRegs->dma1));
+   memset(&ScuRegs->dma2, 0, sizeof(ScuRegs->dma2));
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -129,32 +142,32 @@ static void DoDMAFill(u32 ReadAddress,
          if (constant_source) {
             u32 val;
             if (ReadAddress & 2) {  // Avoid misaligned access
-               val = DMAMappedMemoryReadWord(NULL, ReadAddress) << 16
-                   | DMAMappedMemoryReadWord(NULL, ReadAddress+2);
+               val = DMAMappedMemoryReadWord(NULL, ReadAddress, NULL) << 16
+                   | DMAMappedMemoryReadWord(NULL, ReadAddress+2, NULL);
             } else {
-               val = DMAMappedMemoryReadLong(NULL, ReadAddress);
+               val = DMAMappedMemoryReadLong(NULL, ReadAddress, NULL);
             }
             while (counter < (TransferSize&~3)) {
-               DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)(val >> 16));
+               DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)(val >> 16), NULL);
                WriteAddress += WriteAdd;
-               DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)val);
+               DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)val, NULL);
                WriteAddress += WriteAdd;
                counter += 4;
             }
             int off=0;
             while (counter < (TransferSize&~1) ) {
-               if (off == 0) DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)(val >> 16));
-               else DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)val);
+               if (off == 0) DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)(val >> 16), NULL);
+               else DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)val, NULL);
                off = (off+1)%2;
                WriteAddress += WriteAdd;
                counter+=2;
             }
          } else {
             while (counter < (TransferSize&~3)) {
-               u32 tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
-               DMAMappedMemoryWriteWord(NULL, WriteAddress, (u16)(tmp >> 16));
+               u32 tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL);
+               DMAMappedMemoryWriteWord(NULL, WriteAddress, (u16)(tmp >> 16), NULL);
                WriteAddress += WriteAdd;
-               DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)tmp);
+               DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)tmp, NULL);
                WriteAddress += WriteAdd;
                counter += 4;
             }
@@ -162,10 +175,10 @@ static void DoDMAFill(u32 ReadAddress,
             while (counter < TransferSize ) {
                u32 tmp = 0;
                if (off == 0) {
-                 tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
+                 tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL);
 
                }
-               DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, (u8)(tmp >> ((4-off)*8)));
+               DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, (u8)(tmp >> ((4-off)*8)), NULL);
                off = (off+1)%4;
                if ((off % 2) == 0)WriteAddress += WriteAdd;
                counter++;
@@ -175,9 +188,9 @@ static void DoDMAFill(u32 ReadAddress,
       else {
          // Fill in 32-bit units (always aligned).
          if (constant_source) {
-            u32 val = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
+            u32 val = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL);
             while (counter < (TransferSize&~3)) {
-               DMAMappedMemoryWriteLong(NULL, WriteAddress&0x1FFFFFFF, val);
+               DMAMappedMemoryWriteLong(NULL, WriteAddress&0x1FFFFFFF, val, NULL);
                WriteAddress += WriteAdd;
                counter += 4;
             }
@@ -185,16 +198,16 @@ static void DoDMAFill(u32 ReadAddress,
            while (counter < TransferSize ) {
              u32 tmp = 0;
              if (off == 0) {
-               tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
+               tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL);
              }
-             DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, (u16)(tmp >> ((4-off)*8)));
+             DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, (u16)(tmp >> ((4-off)*8)), NULL);
              off = (off+1)%4;
              counter++;
            }
          } else {
            while (counter < (TransferSize&~3)) {
              DMAMappedMemoryWriteLong(NULL, WriteAddress&0x1FFFFFFF,
-                                     DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF));
+                                     DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL), NULL);
              WriteAddress += WriteAdd;
              counter += 4;
            }
@@ -202,9 +215,9 @@ static void DoDMAFill(u32 ReadAddress,
            while (counter < TransferSize ) {
              u32 tmp = 0;
              if (off == 0) {
-               tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF);
+               tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL);
              }
-             DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, (u16)(tmp >> ((4-off)*8)));
+             DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, (u16)(tmp >> ((4-off)*8)), NULL);
              off = (off+1)%4;
              counter++;
            }
@@ -234,32 +247,32 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
       if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
           && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
          while (counter < (TransferSize&(~0x1))) {
-            DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadWord(NULL, ReadAddress&0x1FFFFFFF));
+            DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadWord(NULL, ReadAddress&0x1FFFFFFF, NULL), NULL);
             WriteAddress += WriteAdd;
             ReadAddress += 2;
             counter += 2;
          }
          if (counter < TransferSize) {
-            DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadByte(NULL, ReadAddress&0x1FFFFFFF));
+            DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadByte(NULL, ReadAddress&0x1FFFFFFF, NULL), NULL);
             counter += 1;
          }
       }
       else if (((ReadAddress & 0x1FFFFFFF) >= 0x5A00000 && (ReadAddress & 0x1FFFFFFF) < 0x5FF0000)) {
         while (counter < (TransferSize&(~0x1))) {
-          u16 tmp = DMAMappedMemoryReadWord(NULL, ReadAddress&0x1FFFFFFF);
-          DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, tmp);
+          u16 tmp = DMAMappedMemoryReadWord(NULL, ReadAddress&0x1FFFFFFF, NULL);
+          DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, tmp, NULL);
           WriteAddress += (WriteAdd>>1);
           ReadAddress += 2;
           counter += 2;
         }
         if (counter < TransferSize) {
-           DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadByte(NULL, ReadAddress&0x1FFFFFFF));
+           DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadByte(NULL, ReadAddress&0x1FFFFFFF, NULL), NULL);
            counter += 1;
         }
       }
       else {
          while (counter < (TransferSize&(~0x3))) {
-            DMAMappedMemoryWriteLong(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF));
+            DMAMappedMemoryWriteLong(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL), NULL);
             ReadAddress += 4;
             WriteAddress += WriteAdd;
             counter += 4;
@@ -315,9 +328,9 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
       // Indirect DMA
 
       for (;;) {
-         u32 ThisTransferSize = DMAMappedMemoryReadLong(NULL, dmainfo->WriteAddress);
-         u32 ThisWriteAddress = DMAMappedMemoryReadLong(NULL, dmainfo->WriteAddress+4);
-         u32 ThisReadAddress  = DMAMappedMemoryReadLong(NULL, dmainfo->WriteAddress+8);
+         u32 ThisTransferSize = DMAMappedMemoryReadLong(NULL, dmainfo->WriteAddress, NULL);
+         u32 ThisWriteAddress = DMAMappedMemoryReadLong(NULL, dmainfo->WriteAddress+4, NULL);
+         u32 ThisReadAddress  = DMAMappedMemoryReadLong(NULL, dmainfo->WriteAddress+8, NULL);
 
          //LOG("SCU Indirect DMA: src %08x, dst %08x, size = %08x %x\n", ThisReadAddress, ThisWriteAddress, ThisTransferSize, dmainfo->WriteAddress+4);
          DoDMA(ThisReadAddress & 0x7FFFFFFF, ReadAdd, ThisWriteAddress,
@@ -410,6 +423,12 @@ static u32 readgensrc(u8 num)
 {
    if( num <= 7  ){
      incFlg[(num & 0x3)] |= ((num >> 2) & 0x01);
+     // Finish Previous DMA operation
+     if (ScuDsp->dsp_dma_wait > 0) {
+       ScuDsp->dsp_dma_wait = 0;
+       step_dsp_dma(ScuDsp);
+     }
+     //LOG("readgensrc from [%d][%d]= %08X", (num & 0x3), ScuDsp->CT[(num & 0x3)] & 0x3F, ScuDsp->MD[(num & 0x3)][ScuDsp->CT[(num & 0x3)] & 0x3F]);
      return ScuDsp->MD[(num & 0x3)][ScuDsp->CT[(num & 0x3)]&0x3F];
    }else{
      if (num == 0x9)  // ALL
@@ -457,7 +476,15 @@ static u32 readgensrc(u8 num)
 
 static void writed1busdest(u8 num, u32 val)
 {
-   switch(num) {
+  //LOG("writed1busdest [%d][%d] = %08X",num, ScuDsp->CT[0] & 0x3F, val);
+
+  // Finish Previous DMA operation
+  if (ScuDsp->dsp_dma_wait > 0) {
+    ScuDsp->dsp_dma_wait = 0;
+    step_dsp_dma(ScuDsp);
+  }
+
+   switch(num) { 
       case 0x0:
           ScuDsp->MD[0][ScuDsp->CT[0]&0x3F] = val;
           incFlg[0] = 1;
@@ -516,7 +543,13 @@ static void writed1busdest(u8 num, u32 val)
 
 static void writeloadimdest(u8 num, u32 val)
 {
-   switch(num) {
+  // Finish Previous DMA operation
+  if (ScuDsp->dsp_dma_wait > 0) {
+    ScuDsp->dsp_dma_wait = 0;
+    step_dsp_dma(ScuDsp);
+  }
+
+   switch(num) { 
       case 0x0: // MC0
         ScuDsp->MD[0][ScuDsp->CT[0] & 0x3F] = val;
           incFlg[0] = 1;
@@ -566,43 +599,47 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
 {
     u32 imm = ((inst & 0xFF));
     u8  sel = ((inst >> 8) & 0x03);
+    u8  addr = sc->CT[sel];
     u32 i;
 
     const u32 mode = (inst >> 15) & 0x7;
     const u32 add = (1 << (mode & 0x2)) &~1;
 
-  //LOG("DSP DMA01 read addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), imm, add );
+  //LOG("DSP DMA01 read addr=%08X cnt= %d add = %d\n", (sc->RA0M << 2), imm, add );
 
   // is A-Bus?
-  u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
+  u32 abus_check = ((sc->RA0M << 2) & 0x0FF00000);
   if (abus_check >= 0x02000000 && abus_check < 0x05900000){
     for (i = 0; i < imm; i++)
     {
-      sc->MD[sel][sc->CT[sel] & 0x3F] = DMAMappedMemoryReadLong(NULL, (sc->RA0 << 2));
-      //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0 << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F] );
+      sc->MD[sel][sc->CT[sel] & 0x3F] = DMAMappedMemoryReadLong(NULL, (sc->RA0M << 2), NULL);
+      //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0M << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F] );
       sc->CT[sel]++;
       sc->CT[sel] &= 0x3F;
-      sc->RA0 += (add >> 2);
+      sc->RA0M += (add >> 2);
     }
   }
   else{
     for (i = 0; i < imm ; i++)
     {
-      sc->MD[sel][sc->CT[sel] & 0x3F] = DMAMappedMemoryReadLong(NULL, (sc->RA0 << 2));
-      //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0 << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F]);
+      sc->MD[sel][sc->CT[sel] & 0x3F] = DMAMappedMemoryReadLong(NULL, (sc->RA0M << 2), NULL);
+      //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0M << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F]);
       sc->CT[sel]++;
       sc->CT[sel] &= 0x3F;
-      sc->RA0 += (add >> 2);
+      sc->RA0M += (add >> 2);
     }
   }
 
     sc->ProgControlPort.part.T0 = 0;
+    sc->RA0 = sc->RA0M;
 }
+
+extern u8 * HighWram;
 
 void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
 
   int i;
-  u32 Adr = (sc->WA0 << 2) & 0x0FFFFFFF;
+  u32 Adr = (sc->WA0M << 2) & 0x0FFFFFFF;
 
   // A-BUS?
   if (Adr >= 0x02000000 && Adr < 0x05A00000){
@@ -612,10 +649,10 @@ void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
     for (i = 0; i < count; i++)
     {
       u32 Val = sc->MD[sel][sc->CT[sel] & 0x3F];
-      Adr = (sc->WA0 << 2);
-      DMAMappedMemoryWriteLong(NULL, Adr, Val);
+      Adr = (sc->WA0M << 2);
+      DMAMappedMemoryWriteLong(NULL, Adr, Val, NULL);
       sc->CT[sel]++;
-      sc->WA0 += add;
+      sc->WA0M += add;
       sc->CT[sel] &= 0x3F;
     }
   }
@@ -628,13 +665,13 @@ void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
       for (i = 0; i < count; i++)
       {
         u32 Val = sc->MD[sel][sc->CT[sel] & 0x3F];
-        DMAMappedMemoryWriteWord(NULL, Adr, (Val>>16));
-        DMAMappedMemoryWriteWord(NULL, Adr+2, Val);
+        DMAMappedMemoryWriteWord(NULL, Adr, (Val>>16), NULL);
+        DMAMappedMemoryWriteWord(NULL, Adr+2, Val, NULL);
         sc->CT[sel]++;
         sc->CT[sel] &= 0x3F;
         Adr += (add << 2);
       }
-      sc->WA0 = sc->WA0 + ((add*count));
+      sc->WA0M = sc->WA0M + ((add*count));
     }
   // CPU-BUS
     else{
@@ -645,11 +682,11 @@ void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
         for (i = 0; i < count; i++)
         {
           u32 Val = sc->MD[sel][sc->CT[sel] & 0x3F];
-          Adr = (sc->WA0 << 2);
-          DMAMappedMemoryWriteLong(NULL, Adr, Val);
+          Adr = (sc->WA0M << 2);
+          DMAMappedMemoryWriteLong(NULL, 0x46000000|Adr, Val, NULL);
           sc->CT[sel]++;
           sc->CT[sel] &= 0x3F;
-          sc->WA0 += 1;
+          sc->WA0M += 1;
         }
       }
       else
@@ -657,16 +694,17 @@ void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
         for (i = 0; i < count; i++)
         {
           u32 Val = sc->MD[sel][sc->CT[sel] & 0x3F];
-          Adr = (sc->WA0 << 2);
-          DMAMappedMemoryWriteLong(NULL, Adr, Val);
+          Adr = (sc->WA0M << 2);
+          DMAMappedMemoryWriteLong(NULL, 0x46000000|Adr, Val, NULL);
           sc->CT[sel]++;
           sc->CT[sel] &= 0x3F;
-          sc->WA0 += (add >> 1);
+          sc->WA0M += (add >> 1);
         }
       }
 
     }
 
+    sc->WA0 = sc->WA0M;
     sc->ProgControlPort.part.T0 = 0;
 
 }
@@ -689,27 +727,15 @@ void dsp_dma02(scudspregs_struct *sc, u32 inst)
     case 7: add = 64; break;
     }
 
-  //LOG("DSP DMA02 write addr=%08X cnt= %d add = %d\n", (sc->WA0 << 2), imm, add);
+  //LOG("DSP DMA02 write addr=%08X cnt= %d add = %d\n", (sc->WA0M << 2), imm, add);
   dsp_dma_write_d0bus(sc, sel, add, imm);
 }
 
 void dsp_dma03(scudspregs_struct *sc, u32 inst)
 {
-  u32 Counter = 0;
+  u32 Counter = sc->dsp_dma_size;
   u32 i;
   int sel;
-
-  switch ((inst & 0x7))
-  {
-  case 0x00: Counter = sc->MD[0][sc->CT[0] & 0x3F]; break;
-  case 0x01: Counter = sc->MD[1][sc->CT[1] & 0x3F]; break;
-  case 0x02: Counter = sc->MD[2][sc->CT[2] & 0x3F]; break;
-  case 0x03: Counter = sc->MD[3][sc->CT[3] & 0x3F]; break;
-  case 0x04: Counter = sc->MD[0][sc->CT[0] & 0x3F]; ScuDsp->CT[0]++; ScuDsp->CT[0] &= 0x3F; break;
-  case 0x05: Counter = sc->MD[1][sc->CT[1] & 0x3F]; ScuDsp->CT[1]++; ScuDsp->CT[1] &= 0x3F; break;
-  case 0x06: Counter = sc->MD[2][sc->CT[2] & 0x3F]; ScuDsp->CT[2]++; ScuDsp->CT[2] &= 0x3F; break;
-  case 0x07: Counter = sc->MD[3][sc->CT[3] & 0x3F]; ScuDsp->CT[3]++; ScuDsp->CT[3] &= 0x3F; break;
-  }
 
   sel = (inst >> 8) & 0x7;
   int index = 0;
@@ -717,24 +743,24 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
   const u32 mode = (inst >> 15) & 0x7;
   const u32 add = (1 << (mode & 0x2)) &~1;
 
-  //LOG("DSP DMA03 read addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), Counter, add);
+  //LOG("DSP DMA03 read addr=%08X cnt= %d add = %d\n", (sc->RA0M << 2), Counter, add);
 
-  u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
+  u32 abus_check = ((sc->RA0M << 2) & 0x0FF00000);
   if (abus_check >= 0x02000000 && abus_check < 0x05900000){
     for (i = 0; i < Counter; i++)
     {
       if (sel == 0x04){
-        sc->ProgramRam[index] = DMAMappedMemoryReadLong(NULL, (sc->RA0 << 2));
+        sc->ProgramRam[index] = DMAMappedMemoryReadLong(NULL, (sc->RA0M << 2), NULL);
         //LOG("read from %08X to P[%d] val %08X", (sc->RA0 << 2), index, sc->ProgramRam[index]);
         index++;
       }
       else{
-        sc->MD[sel][sc->CT[sel]&0x3F] = DMAMappedMemoryReadLong(NULL, (sc->RA0 << 2));
+        sc->MD[sel][sc->CT[sel]&0x3F] = DMAMappedMemoryReadLong(NULL, (sc->RA0M << 2), NULL);
         //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0 << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F]);
         sc->CT[sel]++;
         sc->CT[sel] &= 0x3F;
       }
-      sc->RA0 += (add >> 2);
+      sc->RA0M += (add >> 2);
 
     }
   }
@@ -743,17 +769,19 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
     {
 
       if (sel == 0x04){
-        sc->ProgramRam[index] = DMAMappedMemoryReadLong(NULL, (sc->RA0 << 2));
+        sc->ProgramRam[index] = DMAMappedMemoryReadLong(NULL, (sc->RA0M << 2), NULL);
         //LOG("read from %08X to P[%d] val %08X", (sc->RA0 << 2), index, sc->ProgramRam[index]);
         index++;
       }else{
-        sc->MD[sel][sc->CT[sel]&0x3F] = DMAMappedMemoryReadLong(NULL, (sc->RA0 << 2));
+        sc->MD[sel][sc->CT[sel]&0x3F] = DMAMappedMemoryReadLong(NULL, (sc->RA0M << 2), NULL);
         //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0 << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F]);
         sc->CT[sel]++;
         sc->CT[sel] &= 0x3F;
       }
-      sc->RA0 += (add >> 2);
+      sc->RA0M += (add >> 2);
     }
+
+    sc->RA0 = sc->RA0M;
   }
 
 
@@ -766,7 +794,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
         for (i = 0; i < Counter; i++)
         {
             u32 Adr = (sc->RA0 << 2);
-            sc->ProgramRam[i] = DMAMappedMemoryReadLong(Adr);
+            sc->ProgramRam[i] = DMAMappedMemoryReadLong(Adr, NULL);
             sc->RA0 += incl;
         }
     }
@@ -777,7 +805,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
         {
             u32 Adr = (sc->RA0 << 2);
 
-            sc->MD[DestinationId][sc->CT[DestinationId]] = DMAMappedMemoryReadLong(Adr);
+            sc->MD[DestinationId][sc->CT[DestinationId]] = DMAMappedMemoryReadLong(Adr, NULL);
             sc->CT[DestinationId]++;
             sc->CT[DestinationId] &= 0x3F;
             sc->RA0 += incl;
@@ -789,22 +817,11 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
 
 void dsp_dma04(scudspregs_struct *sc, u32 inst)
 {
-    u32 Counter = 0;
+    u32 Counter = sc->dsp_dma_size;
     u32 add = 0;
     u32 sel = ((inst >> 8) & 0x03);
 
-    switch ((inst & 0x7))
-    {
-    case 0x00: Counter = sc->MD[0][sc->CT[0] & 0x3F]; break;
-    case 0x01: Counter = sc->MD[1][sc->CT[1] & 0x3F]; break;
-    case 0x02: Counter = sc->MD[2][sc->CT[2] & 0x3F]; break;
-    case 0x03: Counter = sc->MD[3][sc->CT[3] & 0x3F]; break;
-    case 0x04: Counter = sc->MD[0][sc->CT[0] & 0x3F]; ScuDsp->CT[0]++; ScuDsp->CT[0] &= 0x3F; break;
-    case 0x05: Counter = sc->MD[1][sc->CT[1] & 0x3F]; ScuDsp->CT[1]++; ScuDsp->CT[1] &= 0x3F; break;
-    case 0x06: Counter = sc->MD[2][sc->CT[2] & 0x3F]; ScuDsp->CT[2]++; ScuDsp->CT[2] &= 0x3F; break;
-    case 0x07: Counter = sc->MD[3][sc->CT[3] & 0x3F]; ScuDsp->CT[3]++; ScuDsp->CT[3] &= 0x3F; break;
-    }
-
+  
     switch (((inst >> 15) & 0x07))
     {
     case 0: add = 0; break;
@@ -825,21 +842,21 @@ void dsp_dma04(scudspregs_struct *sc, u32 inst)
 
 void dsp_dma05(scudspregs_struct *sc, u32 inst)
 {
-    u32 saveRa0 = sc->RA0;
+    u32 saveRa0 = sc->RA0M;
     dsp_dma01(sc, inst);
     sc->RA0 = saveRa0;
 }
 
 void dsp_dma06(scudspregs_struct *sc, u32 inst)
 {
-    u32 saveWa0 = sc->WA0;
+    u32 saveWa0 = sc->WA0M;
     dsp_dma02(sc, inst);
     sc->WA0 = saveWa0;
 }
 
 void dsp_dma07(scudspregs_struct *sc, u32 inst)
 {
-    u32 saveRa0 = sc->RA0;
+    u32 saveRa0 = sc->RA0M;
     dsp_dma03(sc, inst);
     sc->RA0 = saveRa0;
 
@@ -847,10 +864,58 @@ void dsp_dma07(scudspregs_struct *sc, u32 inst)
 
 void dsp_dma08(scudspregs_struct *sc, u32 inst)
 {
-    u32 saveWa0 = sc->WA0;
+    u32 saveWa0 = sc->WA0M;
     dsp_dma04(sc, inst);
     sc->WA0 = saveWa0;
 }
+
+
+void step_dsp_dma(scudspregs_struct *sc) {
+
+  if (sc->ProgControlPort.part.T0 == 0) return;
+
+  sc->dsp_dma_wait--;
+  if (sc->dsp_dma_wait > 0) return;
+
+  if (((sc->dsp_dma_instruction >> 10) & 0x1F) == 0x00)
+  {
+    dsp_dma01(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 10) & 0x1F) == 0x04)
+  {
+    dsp_dma02(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 11) & 0x0F) == 0x04)
+  {
+    dsp_dma03(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 10) & 0x1F) == 0x0C)
+  {
+    dsp_dma04(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 11) & 0x0F) == 0x08)
+  {
+    dsp_dma05(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 10) & 0x1F) == 0x14)
+  {
+    dsp_dma06(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 11) & 0x0F) == 0x0C)
+  {
+    dsp_dma07(ScuDsp, sc->dsp_dma_instruction);
+  }
+  else if (((sc->dsp_dma_instruction >> 10) & 0x1F) == 0x1C)
+  {
+    dsp_dma08(ScuDsp, sc->dsp_dma_instruction);
+  }
+
+  sc->ProgControlPort.part.T0 = 0;
+  sc->dsp_dma_instruction = 0;
+  sc->dsp_dma_wait = 0;
+
+}
+
 
 INLINE void ScuTimer1Exec( u32 timing ) {
   if (ScuRegs->timer1_counter > 0) {
@@ -864,6 +929,297 @@ INLINE void ScuTimer1Exec( u32 timing ) {
   }
 }
 
+void ScuSetAddValue(scudmainfo_struct * dmainfo) {
+
+  if (dmainfo->AddValue & 0x100)
+    dmainfo->ReadAdd = 4;
+  else
+    dmainfo->ReadAdd = 0;
+
+  switch (dmainfo->AddValue & 0x7) {
+  case 0x0:
+    dmainfo->WriteAdd = 0;
+    break;
+  case 0x1:
+    dmainfo->WriteAdd = 2;
+    break;
+  case 0x2:
+    dmainfo->WriteAdd = 4;
+    break;
+  case 0x3:
+    dmainfo->WriteAdd = 8;
+    break;
+  case 0x4:
+    dmainfo->WriteAdd = 16;
+    break;
+  case 0x5:
+    dmainfo->WriteAdd = 32;
+    break;
+  case 0x6:
+    dmainfo->WriteAdd = 64;
+    break;
+  case 0x7:
+    dmainfo->WriteAdd = 128;
+    break;
+  default:
+    dmainfo->WriteAdd = 0;
+    break;
+  }
+  if (dmainfo->ModeAddressUpdate & 0x1000000) {
+    dmainfo->InDirectAdress = dmainfo->WriteAddress;
+    dmainfo->TransferNumber = DMAMappedMemoryReadLong(NULL, dmainfo->InDirectAdress, NULL);
+    dmainfo->WriteAddress = DMAMappedMemoryReadLong(NULL, dmainfo->InDirectAdress + 4, NULL);
+    dmainfo->ReadAddress = DMAMappedMemoryReadLong(NULL, dmainfo->InDirectAdress + 8, NULL);
+    dmainfo->InDirectAdress += 0xC;
+  }
+  else {
+
+    if (dmainfo->mode > 0) {
+      dmainfo->TransferNumber &= 0xFFF;
+      if (dmainfo->TransferNumber == 0)
+        dmainfo->TransferNumber = 0x1000;
+    }
+    else {
+      if (dmainfo->TransferNumber == 0)
+        dmainfo->TransferNumber = 0x100000;
+    }
+  }
+
+  LOG("DoDMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n",
+    dmainfo->ReadAddress, dmainfo->WriteAddress, dmainfo->TransferNumber,
+    dmainfo->ReadAdd, dmainfo->WriteAdd, yabsys.frame_count, yabsys.LineCount);
+
+}
+
+void SucDmaExec(scudmainfo_struct * dma, int * time ) {
+  //LOG("DoDMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n",
+  //  dma->ReadAddress, dma->WriteAddress, dma->TransferNumber, dma->ReadAdd, dma->WriteAdd, yabsys.frame_count, yabsys.LineCount);
+  u32 cycle = 0;
+  if (dma->ReadAdd == 0) {
+    // DMA fill
+    // Is it a constant source or a register whose value can change from
+    // read to read?
+    int constant_source = ((dma->ReadAddress & 0x1FF00000) == 0x00200000)
+      || ((dma->ReadAddress & 0x1E000000) == 0x06000000)
+      || ((dma->ReadAddress & 0x1FF00000) == 0x05A00000)
+      || ((dma->ReadAddress & 0x1DF00000) == 0x05C00000);
+
+    if ((dma->WriteAddress & 0x1FFFFFFF) >= 0x5A00000
+      && (dma->WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
+      // Fill a 32-bit value in 16-bit units.  We have to be careful to
+      // avoid misaligned 32-bit accesses, because some hardware (e.g.
+      // PSP) crashes on such accesses.
+      if (constant_source) {
+        u32 val;
+        if (dma->ReadAddress & 2) {  // Avoid misaligned access
+          val = DMAMappedMemoryReadWord(NULL, (dma->ReadAddress&0x0FFFFFFF) , NULL) << 16
+            | DMAMappedMemoryReadWord(NULL, (dma->ReadAddress&0x0FFFFFFF) + 2, NULL);
+        }
+        else {
+          val = DMAMappedMemoryReadLong(NULL, (dma->ReadAddress & 0x0FFFFFFF), NULL);
+        }
+
+        u32 start = dma->WriteAddress;
+        while ( *time > 0 ) {
+          *time -= 1;
+          DMAMappedMemoryWriteWord(NULL, dma->WriteAddress, (u16)(val >> 16), &cycle);
+          dma->WriteAddress += dma->WriteAdd;
+          DMAMappedMemoryWriteWord(NULL, dma->WriteAddress, (u16)val, &cycle);
+          dma->WriteAddress += dma->WriteAdd;
+          dma->TransferNumber -= 4;
+          if (dma->TransferNumber <= 0 ) {
+            SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+            return;
+          }
+        }
+        SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+      }
+      else {
+        u32 start = dma->WriteAddress;
+        while ( *time > 0) {
+          *time -= 1;
+          u32 tmp = DMAMappedMemoryReadLong(NULL, (dma->ReadAddress & 0x0FFFFFFF), &cycle);
+          DMAMappedMemoryWriteWord(NULL, dma->WriteAddress, (u16)(tmp >> 16), &cycle);
+          dma->WriteAddress += dma->WriteAdd;
+          DMAMappedMemoryWriteWord(NULL, dma->WriteAddress, (u16)tmp, &cycle);
+          dma->WriteAddress += dma->WriteAdd;
+          dma->ReadAddress += dma->ReadAdd;
+          dma->TransferNumber -= 4;
+          if (dma->TransferNumber <= 0) {
+            SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+            return;
+          }
+        }
+        SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+      }
+    }
+    else {
+      // Fill in 32-bit units (always aligned).
+      u32 start = dma->WriteAddress;
+      if (constant_source) {
+        u32 val = DMAMappedMemoryReadLong(NULL, (dma->ReadAddress & 0x0FFFFFFF), &cycle);
+        while ( *time > 0) {
+          *time -= 1;
+          DMAMappedMemoryWriteLong(NULL, dma->WriteAddress, val, &cycle);
+          dma->ReadAddress += dma->ReadAdd;
+          dma->WriteAddress += dma->WriteAdd;
+          dma->TransferNumber -= 4;
+          if (dma->TransferNumber <= 0) {
+            SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+            return;
+          }
+        }
+      }
+      else {
+        while (*time > 0) {
+          *time -= 1;
+          u32 val = DMAMappedMemoryReadLong(NULL, (dma->ReadAddress & 0x0FFFFFFF), &cycle);
+          DMAMappedMemoryWriteLong(NULL, dma->WriteAddress, val, &cycle);
+          dma->ReadAddress += dma->ReadAdd;
+          dma->WriteAddress += dma->WriteAdd;
+          dma->TransferNumber -= 4;
+          if (dma->TransferNumber <= 0) {
+            SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+            return;
+          }
+        }
+      }
+      // Inform the SH-2 core in case it was a write to main RAM.
+      SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+    }
+
+  }
+
+  else {
+    // DMA copy
+    // Access to B-BUS?
+    if (((dma->WriteAddress & 0x1FFFFFFF) >= 0x5A00000 && (dma->WriteAddress & 0x1FFFFFFF) < 0x5FF0000)) {
+      // Copy in 16-bit units, avoiding misaligned accesses.
+      u32 counter = 0;
+      u32 start = dma->WriteAddress;
+      while (*time > 0) {
+        *time -= 1;
+        u16 tmp = DMAMappedMemoryReadWord(NULL, (dma->ReadAddress & 0x0FFFFFFF), &cycle);
+        DMAMappedMemoryWriteWord(NULL, dma->WriteAddress, tmp, &cycle);
+        dma->WriteAddress += dma->WriteAdd;
+        dma->ReadAddress += 2;
+        dma->TransferNumber -= 2;
+        if (dma->TransferNumber <= 0) {
+          SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+          return;
+        }
+      }
+      SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+    }
+    else if (((dma->ReadAddress & 0x1FFFFFFF) >= 0x5A00000 && (dma->ReadAddress & 0x1FFFFFFF) < 0x5FF0000)) {
+      u32 start = dma->WriteAddress;
+      while ( *time > 0) {
+        *time -= 1;
+        u16 tmp = DMAMappedMemoryReadWord(NULL, (dma->ReadAddress & 0x0FFFFFFF), &cycle);
+        DMAMappedMemoryWriteWord(NULL, dma->WriteAddress, tmp, &cycle);
+        dma->WriteAddress += (dma->WriteAdd >> 1);
+        dma->ReadAddress += 2;
+        dma->TransferNumber -= 2;
+        if (dma->TransferNumber <= 0) {
+          SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+          return;
+        }
+      }
+      SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+    }
+    else {
+      u32 counter = 0;
+      u32 start = dma->WriteAddress;
+      while (*time > 0) {
+        *time -= 1;
+        u32 val = DMAMappedMemoryReadLong(NULL, (dma->ReadAddress & 0x0FFFFFFF), &cycle);
+        DMAMappedMemoryWriteLong(NULL, dma->WriteAddress, val , &cycle);
+        dma->ReadAddress += 4;
+        dma->WriteAddress += dma->WriteAdd;
+        dma->TransferNumber -= 4;
+        if (dma->TransferNumber <= 0) {
+          SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+          return;
+        }
+      }
+      /* Inform the SH-2 core in case it was a write to main RAM */
+      SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+    }
+
+  }  // Fill / copy
+
+
+}
+
+
+void SucDmaCheck(scudmainfo_struct * dma, int time) {
+  int atime = time;
+  if (dma->TransferNumber > 0) {
+    if (dma->ModeAddressUpdate & 0x1000000) {
+      while (atime > 0) {
+        SucDmaExec(dma, &atime);
+        if (dma->TransferNumber <= 0) {
+          if (dma->ReadAddress & 0x80000000) {
+            switch (dma->mode) {
+            case 0:
+              //LOG("DMA0 Finished!");
+              ScuSendLevel0DMAEnd();
+              break;
+            case 1:
+              //LOG("DMA1 Finished!");
+              ScuSendLevel1DMAEnd();
+              break;
+            case 2:
+              //LOG("DMA2 Finished!");
+              ScuSendLevel2DMAEnd();
+              break;
+            }
+            dma->TransferNumber = 0;
+            return;
+          }
+          else {
+            dma->TransferNumber = DMAMappedMemoryReadLong(NULL, dma->InDirectAdress, NULL);
+            dma->WriteAddress = DMAMappedMemoryReadLong(NULL, dma->InDirectAdress + 4, NULL);
+            dma->ReadAddress = DMAMappedMemoryReadLong(NULL, dma->InDirectAdress + 8, NULL);
+            dma->InDirectAdress += 0xC;
+          }
+        }
+      }
+
+    }
+    else {
+      SucDmaExec(dma, &atime);
+      if (dma->TransferNumber <= 0) {
+        switch (dma->mode) {
+        case 0:
+          //LOG("DMA0 Finished!");
+          ScuSendLevel0DMAEnd();
+          break;
+        case 1:
+          //LOG("DMA1 Finished!");
+          ScuSendLevel1DMAEnd();
+          break;
+        case 2:
+          //LOG("DMA2 Finished!");
+          ScuSendLevel2DMAEnd();
+          break;
+        }
+      }
+    }
+  }
+  return;
+}
+
+
+void ScuDmaProc(Scu * scu, int time) {
+#if OLD_DMA
+  return;
+#endif
+  SucDmaCheck(&scu->dma0, time);
+  SucDmaCheck(&scu->dma1, time);
+  SucDmaCheck(&scu->dma2, time);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 void ScuExec(u32 timing) {
   // ScuTestInterruptMask();
@@ -872,12 +1228,13 @@ void ScuExec(u32 timing) {
        ScuTimer1Exec(timing);
      }
      else {
-       if (yabsys.LineCount == ScuRegs->T0C) {
+       if (yabsys.LineCount == ScuRegs->T0C || ScuRegs->T0C > 500 ) {
          ScuTimer1Exec(timing);
        }
      }
    }
 
+#if OLD_DMA
    if (ScuRegs->dma0_time > 0) {
      //ScuRegs->dma0_time -= (timing << 4); // ToDo: memory clock
      //if (ScuRegs->dma0_time < 0) {
@@ -901,7 +1258,9 @@ void ScuExec(u32 timing) {
      ScuRegs->dma2_time = 0;
      //}
    }
-
+#else
+  ScuDmaProc(ScuRegs, (int)timing<<4);
+#endif
 
    // is dsp executing?
    if (ScuDsp->ProgControlPort.part.EX) {
@@ -918,8 +1277,13 @@ void ScuExec(u32 timing) {
        fprintf(slogp, "*********************************************\n");
      }
 #endif
-      while (timing > 0) {
+     s32 dsp_counter = (s32)timing;
+      while (dsp_counter > 0) {
          u32 instruction;
+
+         if (ScuDsp->ProgControlPort.part.T0 != 0) {
+           step_dsp_dma(ScuDsp);
+         }
 
          instruction = ScuDsp->ProgramRam[ScuDsp->PC];
          //LOG("scu: dsp %08X @ %08X", instruction, ScuDsp->PC);
@@ -1022,29 +1386,29 @@ void ScuExec(u32 timing) {
                //   ScuDsp->ProgControlPort.part.V = 0;
                break;
             case 0x5: // SUB
-               ScuDsp->ALU.part.L = (s32)ScuDsp->AC.part.L - (s32)ScuDsp->P.part.L;
+            {
+              u64 ans = (u64)ScuDsp->AC.part.L - (u32)ScuDsp->P.part.L;
 
-               if (ScuDsp->ALU.part.L == 0)
-                  ScuDsp->ProgControlPort.part.Z = 1;
-               else
-                  ScuDsp->ProgControlPort.part.Z = 0;
+              ScuDsp->ProgControlPort.part.C = ((ans >> 32) & 0x01);
 
-               if ((s64)ScuDsp->ALU.part.L < 0)
-                  ScuDsp->ProgControlPort.part.S = 1;
-               else
-                  ScuDsp->ProgControlPort.part.S = 0;
+              ScuDsp->ALU.part.L = ans;
 
-               //0x00000001 - 0xFFFFFFFF will set the carry bit, needs to be unsigned math
-               if ((((u64)(u32)ScuDsp->AC.part.L - (u64)(u32)ScuDsp->P.part.L)) & 0x100000000)
-                  ScuDsp->ProgControlPort.part.C = 1;
-               else
-                  ScuDsp->ProgControlPort.part.C = 0;
+              if (ScuDsp->ALU.part.L == 0)
+                ScuDsp->ProgControlPort.part.Z = 1;
+              else
+                ScuDsp->ProgControlPort.part.Z = 0;
+
+              if ((s64)ScuDsp->ALU.part.L < 0)
+                ScuDsp->ProgControlPort.part.S = 1;
+              else
+                ScuDsp->ProgControlPort.part.S = 0;
 
 
 //               if (ScuDsp->ALU.part.L ??) // set overflow flag
 //                  ScuDsp->ProgControlPort.part.V = 1;
 //               else
 //                  ScuDsp->ProgControlPort.part.V = 0;
+		}
                break;
             case 0x6: // AD2
               ScuDsp->ALU.all = (s64)ScuDsp->AC.all +(s64)ScuDsp->P.all;
@@ -1239,7 +1603,7 @@ void ScuExec(u32 timing) {
                            writeloadimdest((instruction >> 26) & 0xF, (instruction & 0x7FFFF) | ((instruction & 0x40000) ? 0xFFF80000 : 0x00000000));
                         break;
                      case 0x03: // MVI Imm,[d]NZS
-                        if (!ScuDsp->ProgControlPort.part.Z || !ScuDsp->ProgControlPort.part.S)
+                        if ( ScuDsp->ProgControlPort.part.Z == 0 && ScuDsp->ProgControlPort.part.S == 0)
                            writeloadimdest((instruction >> 26) & 0xF, (instruction & 0x7FFFF) | ((instruction & 0x40000) ? 0xFFF80000 : 0x00000000));
                         break;
                      case 0x04: // MVI Imm,[d]NC
@@ -1286,39 +1650,49 @@ void ScuExec(u32 timing) {
                switch((instruction >> 28) & 0xF) {
                  case 0x0C: // DMA Commands
                  {
-                   if (((instruction >> 10) & 0x1F) == 0x00/*0x08*/)
-                   {
-                       dsp_dma01(ScuDsp, instruction);
+                   // Finish Previous DMA operation
+                   if (ScuDsp->dsp_dma_wait > 0) {
+                     ScuDsp->dsp_dma_wait = 0;
+                     step_dsp_dma(ScuDsp);
                    }
-                   else if (((instruction >> 10) & 0x1F) == 0x04)
+
+                   ScuDsp->dsp_dma_instruction = instruction;
+                   ScuDsp->ProgControlPort.part.T0 = 1;
+
+                   int Counter = 0;
+                   if ( ((instruction >> 10) & 0x1F) == 0x00 || 
+                        ((instruction >> 10) & 0x1F) == 0x04  || 
+                        ((instruction >> 11) & 0x0F) == 0x08 || 
+                        ((instruction >> 10) & 0x1F) == 0x14 )
                    {
-                       dsp_dma02(ScuDsp, instruction);
+                      Counter = instruction & 0xFF;
                    }
-                   else if (((instruction >> 11) & 0x0F) == 0x04)
+                   else if (
+                     ((instruction >> 11) & 0x0F) == 0x04 || 
+                     ((instruction >> 10) & 0x1F) == 0x0C || 
+                     ((instruction >> 11) & 0x0F) == 0x0C || 
+                     ((instruction >> 10) & 0x1F) == 0x1C)
                    {
-                       dsp_dma03(ScuDsp, instruction);
+                     switch ((instruction & 0x7))
+                     {
+                     case 0x00: Counter = ScuDsp->MD[0][ScuDsp->CT[0] & 0x3F]; break;
+                     case 0x01: Counter = ScuDsp->MD[1][ScuDsp->CT[1] & 0x3F]; break;
+                     case 0x02: Counter = ScuDsp->MD[2][ScuDsp->CT[2] & 0x3F]; break;
+                     case 0x03: Counter = ScuDsp->MD[3][ScuDsp->CT[3] & 0x3F]; break;
+                     case 0x04: Counter = ScuDsp->MD[0][ScuDsp->CT[0] & 0x3F]; ScuDsp->CT[0]++; ScuDsp->CT[0] &= 0x3F; break;
+                     case 0x05: Counter = ScuDsp->MD[1][ScuDsp->CT[1] & 0x3F]; ScuDsp->CT[1]++; ScuDsp->CT[1] &= 0x3F; break;
+                     case 0x06: Counter = ScuDsp->MD[2][ScuDsp->CT[2] & 0x3F]; ScuDsp->CT[2]++; ScuDsp->CT[2] &= 0x3F; break;
+                     case 0x07: Counter = ScuDsp->MD[3][ScuDsp->CT[3] & 0x3F]; ScuDsp->CT[3]++; ScuDsp->CT[3] &= 0x3F; break;
+                     }
+
                    }
-                   else if (((instruction >> 10) & 0x1F) == 0x0C)
-                   {
-                       dsp_dma04(ScuDsp, instruction);
-                   }
-                   else if (((instruction >> 11) & 0x0F) == 0x08)
-                   {
-                       dsp_dma05(ScuDsp, instruction);
-                   }
-                   else if (((instruction >> 10) & 0x1F) == 0x14)
-                   {
-                       dsp_dma06(ScuDsp, instruction);
-                   }
-                   else if (((instruction >> 11) & 0x0F) == 0x0C)
-                   {
-                       dsp_dma07(ScuDsp, instruction);
-                   }
-                   else if (((instruction >> 10) & 0x1F) == 0x1C)
-                   {
-                       dsp_dma08(ScuDsp, instruction);
-                   }
-                     break;
+
+                   ScuDsp->dsp_dma_size = Counter;
+                   ScuDsp->dsp_dma_wait = 2; // DMA operation will be start when this count is zero
+                   ScuDsp->WA0M = ScuDsp->WA0;
+                   ScuDsp->RA0M = ScuDsp->RA0;
+                   //LOG("Start DSP DMA RA=%08X WA=%08X inst=%08X count=%d wait = %d", ScuDsp->RA0M, ScuDsp->WA0M, ScuDsp->dsp_dma_instruction, Counter, ScuDsp->dsp_dma_wait );
+                   break;
                   }
                   case 0x0D: // Jump Commands
                      switch ((instruction >> 19) & 0x7F) {
@@ -1330,23 +1704,23 @@ void ScuExec(u32 timing) {
                            if (!ScuDsp->ProgControlPort.part.Z)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0;
+                              ScuDsp->delayed = 0; 
                            }
                            break;
                         case 0x42: // JMP NS, Imm
                            if (!ScuDsp->ProgControlPort.part.S)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0;
+                              ScuDsp->delayed = 0; 
                            }
 
                            //LOG("scu\t: JMP NS: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x43: // JMP NZS, Imm
-                           if (!ScuDsp->ProgControlPort.part.Z || !ScuDsp->ProgControlPort.part.S)
+                           if ( ScuDsp->ProgControlPort.part.Z==0 && ScuDsp->ProgControlPort.part.S == 0)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0;
+                              ScuDsp->delayed = 0; 
                            }
 
                            //LOG("scu\t: JMP NZS: Z = %d, S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
@@ -1355,14 +1729,14 @@ void ScuExec(u32 timing) {
                            if (!ScuDsp->ProgControlPort.part.C)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0;
+                              ScuDsp->delayed = 0; 
                            }
                            break;
                         case 0x48: // JMP NT0, Imm
                            if (!ScuDsp->ProgControlPort.part.T0)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0;
+                              ScuDsp->delayed = 0; 
                            }
 
                            //LOG("scu\t: JMP NT0: T0 = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.T0, (unsigned int)ScuDsp->jmpaddr);
@@ -1371,14 +1745,14 @@ void ScuExec(u32 timing) {
                            if (ScuDsp->ProgControlPort.part.Z)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0;
+                              ScuDsp->delayed = 0; 
                            }
                            break;
                         case 0x62: // JMP S, Imm
                            if (ScuDsp->ProgControlPort.part.S)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0;
+                              ScuDsp->delayed = 0; 
                            }
 
                            //LOG("scu\t: JMP S: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
@@ -1387,7 +1761,7 @@ void ScuExec(u32 timing) {
                            if (ScuDsp->ProgControlPort.part.Z || ScuDsp->ProgControlPort.part.S)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0;
+                              ScuDsp->delayed = 0; 
                            }
 
                            //LOG("scu\t: JMP ZS: Z = %d, S = %d, jmpaddr = %08X\n", ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
@@ -1396,14 +1770,14 @@ void ScuExec(u32 timing) {
                            if (ScuDsp->ProgControlPort.part.C)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0;
+                              ScuDsp->delayed = 0; 
                            }
                            break;
                         case 0x68: // JMP T0,Imm
                            if (ScuDsp->ProgControlPort.part.T0)
                            {
                               ScuDsp->jmpaddr = instruction & 0xFF;
-                              ScuDsp->delayed = 0;
+                              ScuDsp->delayed = 0; 
                            }
                            break;
                         default:
@@ -1445,7 +1819,7 @@ void ScuExec(u32 timing) {
 
                      LOG("dsp has ended\n");
                      ScuDsp->ProgControlPort.part.P = ScuDsp->PC+1;
-                     timing = 1;
+                     dsp_counter = 1;
                      break;
                   default: break;
                }
@@ -1472,12 +1846,12 @@ void ScuExec(u32 timing) {
             {
                ScuDsp->PC = (unsigned char)ScuDsp->jmpaddr;
                ScuDsp->jmpaddr = 0xFFFFFFFF;
+               dsp_counter += 1; // hold clock
             }
             else
                ScuDsp->delayed = 1;
          }
-
-         timing--;
+         dsp_counter--;
       }
    }
 }
@@ -2286,16 +2660,21 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u8* mem, u32 addr, u32 val) {
       case 0x10:
       if ((val & 0x1) && ((ScuRegs->D0MD&0x7)==0x7) )
          {
-            scudmainfo_struct dmainfo;
-
-            dmainfo.mode = 0;
-            dmainfo.ReadAddress = ScuRegs->D0R;
-            dmainfo.WriteAddress = ScuRegs->D0W;
-            dmainfo.TransferNumber = ScuRegs->D0C;
-            dmainfo.AddValue = ScuRegs->D0AD;
-            dmainfo.ModeAddressUpdate = ScuRegs->D0MD;
-
-            ScuDMA(&dmainfo);
+            if (ScuRegs->dma0.TransferNumber != 0) {
+              ScuDmaProc(ScuRegs, 0x7FFFFFFF);
+            }
+            ScuRegs->dma0.mode = 0;
+            ScuRegs->dma0.ReadAddress = ScuRegs->D0R;
+            ScuRegs->dma0.WriteAddress = ScuRegs->D0W;
+            ScuRegs->dma0.TransferNumber = ScuRegs->D0C;
+            ScuRegs->dma0.AddValue = ScuRegs->D0AD;
+            ScuRegs->dma0.ModeAddressUpdate = ScuRegs->D0MD;
+#if OLD_DMA
+            ScuDMA(&ScuRegs->dma0);
+#else
+            ScuSetAddValue(&ScuRegs->dma0);
+            ScuDmaProc(ScuRegs, 128);
+#endif
          }
          ScuRegs->D0EN = val;
          break;
@@ -2317,16 +2696,24 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u8* mem, u32 addr, u32 val) {
       case 0x30:
       if ((val & 0x1) && ((ScuRegs->D1MD&0x07) == 0x7))
          {
-            scudmainfo_struct dmainfo;
+            if (ScuRegs->dma1.TransferNumber != 0) {
+              ScuDmaProc(ScuRegs, 0x7FFFFFFF);
+            }
 
-            dmainfo.mode = 1;
-            dmainfo.ReadAddress = ScuRegs->D1R;
-            dmainfo.WriteAddress = ScuRegs->D1W;
-            dmainfo.TransferNumber = ScuRegs->D1C;
-            dmainfo.AddValue = ScuRegs->D1AD;
-            dmainfo.ModeAddressUpdate = ScuRegs->D1MD;
+            ScuRegs->dma1.mode = 1;
+            ScuRegs->dma1.ReadAddress = ScuRegs->D1R;
+            ScuRegs->dma1.WriteAddress = ScuRegs->D1W;
+            ScuRegs->dma1.TransferNumber = ScuRegs->D1C;
+            ScuRegs->dma1.AddValue = ScuRegs->D1AD;
+            ScuRegs->dma1.ModeAddressUpdate = ScuRegs->D1MD;
+#if OLD_DMA
+            ScuDMA(&ScuRegs->dma1);
+#else
+            ScuSetAddValue(&ScuRegs->dma1);
+            ScuDmaProc(ScuRegs,128);
+#endif
+      
 
-            ScuDMA(&dmainfo);
          }
          ScuRegs->D1EN = val;
          break;
@@ -2348,16 +2735,24 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u8* mem, u32 addr, u32 val) {
       case 0x50:
       if ((val & 0x1) && ((ScuRegs->D2MD & 0x7) == 0x7))
          {
-            scudmainfo_struct dmainfo;
 
-            dmainfo.mode = 2;
-            dmainfo.ReadAddress = ScuRegs->D2R;
-            dmainfo.WriteAddress = ScuRegs->D2W;
-            dmainfo.TransferNumber = ScuRegs->D2C;
-            dmainfo.AddValue = ScuRegs->D2AD;
-            dmainfo.ModeAddressUpdate = ScuRegs->D2MD;
+            if (ScuRegs->dma2.TransferNumber != 0) {
+              ScuDmaProc(ScuRegs, 0x7FFFFFFF);
+            }
 
-            ScuDMA(&dmainfo);
+            ScuRegs->dma2.mode = 2;
+            ScuRegs->dma2.ReadAddress = ScuRegs->D2R;
+            ScuRegs->dma2.WriteAddress = ScuRegs->D2W;
+            ScuRegs->dma2.TransferNumber = ScuRegs->D2C;
+            ScuRegs->dma2.AddValue = ScuRegs->D2AD;
+            ScuRegs->dma2.ModeAddressUpdate = ScuRegs->D2MD;
+#if OLD_DMA
+            ScuDMA(&ScuRegs->dma2);
+#else
+            ScuSetAddValue(&ScuRegs->dma2);
+            ScuDmaProc(ScuRegs, 128);
+#endif
+            
          }
          ScuRegs->D2EN = val;
          break;
@@ -2516,36 +2911,58 @@ static INLINE void SetInterrupt(u8 id) {
 static INLINE void ScuChekIntrruptDMA(int id){
 
   if ((ScuRegs->D0EN & 0x100) && (ScuRegs->D0MD & 0x07) == id){
-    scudmainfo_struct dmainfo;
-    dmainfo.mode = 0;
-    dmainfo.ReadAddress = ScuRegs->D0R;
-    dmainfo.WriteAddress = ScuRegs->D0W;
-    dmainfo.TransferNumber = ScuRegs->D0C;
-    dmainfo.AddValue = ScuRegs->D0AD;
-    dmainfo.ModeAddressUpdate = ScuRegs->D0MD;
-    ScuDMA(&dmainfo);
+    if (ScuRegs->dma0.TransferNumber > 0) {
+      ScuDmaProc(ScuRegs, 0x7FFFFFFF);
+    }
+    ScuRegs->dma0.mode = 0;
+    ScuRegs->dma0.ReadAddress = ScuRegs->D0R;
+    ScuRegs->dma0.WriteAddress = ScuRegs->D0W;
+    ScuRegs->dma0.TransferNumber = ScuRegs->D0C;
+    ScuRegs->dma0.AddValue = ScuRegs->D0AD;
+    ScuRegs->dma0.ModeAddressUpdate = ScuRegs->D0MD;
+#if OLD_DMA
+    ScuDMA(&ScuRegs->dma0);
+#else
+    ScuSetAddValue(&ScuRegs->dma0);
+    ScuDmaProc(ScuRegs, 128);
+#endif
     ScuRegs->D0EN = 0;
   }
   if ((ScuRegs->D1EN & 0x100) && (ScuRegs->D1MD & 0x07) == id){
+    if (ScuRegs->dma1.TransferNumber > 0) {
+      ScuDmaProc(ScuRegs, 0x7FFFFFFF);
+    }
     scudmainfo_struct dmainfo;
-    dmainfo.mode = 1;
-    dmainfo.ReadAddress = ScuRegs->D1R;
-    dmainfo.WriteAddress = ScuRegs->D1W;
-    dmainfo.TransferNumber = ScuRegs->D1C;
-    dmainfo.AddValue = ScuRegs->D1AD;
-    dmainfo.ModeAddressUpdate = ScuRegs->D1MD;
-    ScuDMA(&dmainfo);
+    ScuRegs->dma1.mode = 1;
+    ScuRegs->dma1.ReadAddress = ScuRegs->D1R;
+    ScuRegs->dma1.WriteAddress = ScuRegs->D1W;
+    ScuRegs->dma1.TransferNumber = ScuRegs->D1C;
+    ScuRegs->dma1.AddValue = ScuRegs->D1AD;
+    ScuRegs->dma1.ModeAddressUpdate = ScuRegs->D1MD;
+#if OLD_DMA
+    ScuDMA(&ScuRegs->dma1);
+#else
+    ScuSetAddValue(&ScuRegs->dma1);
+    ScuDmaProc(ScuRegs, 128);
+#endif    
     ScuRegs->D1EN = 0;
   }
   if ((ScuRegs->D2EN & 0x100) && (ScuRegs->D2MD & 0x07) == id){
-    scudmainfo_struct dmainfo;
-    dmainfo.mode = 2;
-    dmainfo.ReadAddress = ScuRegs->D2R;
-    dmainfo.WriteAddress = ScuRegs->D2W;
-    dmainfo.TransferNumber = ScuRegs->D2C;
-    dmainfo.AddValue = ScuRegs->D2AD;
-    dmainfo.ModeAddressUpdate = ScuRegs->D2MD;
-    ScuDMA(&dmainfo);
+    if (ScuRegs->dma2.TransferNumber > 0) {
+      ScuDmaProc(ScuRegs, 0x7FFFFFFF);
+    }
+    ScuRegs->dma2.mode = 2;
+    ScuRegs->dma2.ReadAddress = ScuRegs->D2R;
+    ScuRegs->dma2.WriteAddress = ScuRegs->D2W;
+    ScuRegs->dma2.TransferNumber = ScuRegs->D2C;
+    ScuRegs->dma2.AddValue = ScuRegs->D2AD;
+    ScuRegs->dma2.ModeAddressUpdate = ScuRegs->D2MD;
+#if OLD_DMA
+    ScuDMA(&ScuRegs->dma2);
+#else
+    ScuSetAddValue(&ScuRegs->dma2);
+    ScuDmaProc(ScuRegs, 128);
+#endif
     ScuRegs->D2EN = 0;
   }
 }
@@ -2777,7 +3194,7 @@ int ScuSaveState(FILE *fp)
    int offset;
    IOCheck_struct check = { 0, 0 };
 
-   offset = StateWriteHeader(fp, "SCU ", 2);
+   offset = StateWriteHeader(fp, "SCU ", 4);
 
    // Write registers and internal variables
    ywrite(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
@@ -2798,10 +3215,53 @@ int ScuLoadState(FILE *fp, UNUSED int version, int size)
    IOCheck_struct check = { 0, 0 };
 
    // Read registers and internal variables
-   yread(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
+   if (version < 3) {
+     yread(&check, (void *)ScuRegs, sizeof(Scu)-sizeof(scudmainfo_struct)*3, 1, fp);
+     ScuRegs->dma0.TransferNumber = 0;
+     ScuRegs->dma1.TransferNumber = 0;
+     ScuRegs->dma2.TransferNumber = 0;
 
-   // Read DSP area
-   yread(&check, (void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
+     u32 ssize = sizeof(scudspregs_struct)
+       - sizeof(ScuDsp->dsp_dma_instruction)
+       - sizeof(ScuDsp->dsp_dma_wait)
+       - sizeof(ScuDsp->dsp_dma_size)
+       - sizeof(ScuDsp->WA0M)
+       - sizeof(ScuDsp->RA0M)
+       - sizeof(ScuDsp->dmy);
+
+     yread(&check, (void *)ScuDsp, ssize, 1, fp);
+
+     ScuDsp->dsp_dma_instruction = 0;
+     ScuDsp->dsp_dma_wait = 0;
+     ScuDsp->dsp_dma_size = 0;
+     ScuDsp->WA0M = 0;
+     ScuDsp->RA0M = 0;
+   }
+   else if (version == 3) {
+
+     yread(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
+
+     u32 ssize = sizeof(scudspregs_struct)
+       - sizeof(ScuDsp->dsp_dma_instruction)
+       - sizeof(ScuDsp->dsp_dma_wait)
+       - sizeof(ScuDsp->dsp_dma_size)
+       - sizeof(ScuDsp->WA0M)
+       - sizeof(ScuDsp->RA0M)
+       - sizeof(ScuDsp->dmy);
+
+     yread(&check, (void *)ScuDsp, ssize, 1, fp);
+     ScuDsp->dsp_dma_instruction = 0;
+     ScuDsp->dsp_dma_wait = 0;
+     ScuDsp->dsp_dma_size = 0;
+     ScuDsp->WA0M = 0;
+     ScuDsp->RA0M = 0;
+
+   }
+   else {
+     yread(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
+     yread(&check, (void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
+   }
+
 
    if (version >= 2) {
      yread(&check, incFlg, sizeof(int), 4, fp);

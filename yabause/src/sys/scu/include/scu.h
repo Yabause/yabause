@@ -39,6 +39,19 @@ typedef struct
    u32 statusbit;
 } scuinterrupt_struct;
 
+  typedef struct
+  {
+    int mode;
+    u32 ReadAddress;
+    u32 WriteAddress;
+    s32 TransferNumber;
+    u32 AddValue;
+    u32 ModeAddressUpdate;
+    u32 ReadAdd;
+    u32 WriteAdd;
+    u32 InDirectAdress;
+  } scudmainfo_struct;
+
 typedef struct
 {
    /* DMA registers */
@@ -106,6 +119,10 @@ typedef struct
    s32 dma2_time;
 
    s32 ITEdge;
+
+    scudmainfo_struct dma0;
+    scudmainfo_struct dma1;
+    scudmainfo_struct dma2;
 
 } Scu;
 
@@ -243,17 +260,13 @@ typedef struct {
     s64 all;
   } MUL;
 #endif
-} scudspregs_struct;
-
-typedef struct
-{
-   int mode;
-   u32 ReadAddress;
-   u32 WriteAddress;
-   u32 TransferNumber;
-   u32 AddValue;
-   u32 ModeAddressUpdate;
-} scudmainfo_struct;
+    u32 dsp_dma_instruction;
+    s32 dsp_dma_wait;
+    u32 dsp_dma_size;
+    u32 WA0M;
+    u32 RA0M;
+    u32 dmy;
+  } scudspregs_struct;
 
 int ScuInit(void);
 void ScuDeInit(void);
