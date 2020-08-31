@@ -121,113 +121,6 @@ void ScuReset(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void DoDMAFill(u32 ReadAddress,
-                  u32 WriteAddress, unsigned int WriteAdd,
-                  u32 TransferSize)
-{
-      // Is it a constant source or a register whose value can change from
-      // read to read?
-      u32 counter = 0;
-      int constant_source = ((ReadAddress & 0x1FF00000) == 0x00200000)
-                         || ((ReadAddress & 0x1E000000) == 0x06000000)
-                         || ((ReadAddress & 0x1FF00000) == 0x05A00000)
-                         || ((ReadAddress & 0x1DF00000) == 0x05C00000);
-
-     u32 start = WriteAddress&0x1FFFFFFF;
-      if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
-            && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
-         // Fill a 32-bit value in 16-bit units.  We have to be careful to
-         // avoid misaligned 32-bit accesses, because some hardware (e.g.
-         // PSP) crashes on such accesses.
-         if (constant_source) {
-            u32 val;
-            if (ReadAddress & 2) {  // Avoid misaligned access
-               val = DMAMappedMemoryReadWord(NULL, ReadAddress, NULL) << 16
-                   | DMAMappedMemoryReadWord(NULL, ReadAddress+2, NULL);
-            } else {
-               val = DMAMappedMemoryReadLong(NULL, ReadAddress, NULL);
-            }
-            while (counter < (TransferSize&~3)) {
-               DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)(val >> 16), NULL);
-               WriteAddress += WriteAdd;
-               DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)val, NULL);
-               WriteAddress += WriteAdd;
-               counter += 4;
-            }
-            int off=0;
-            while (counter < (TransferSize&~1) ) {
-               if (off == 0) DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)(val >> 16), NULL);
-               else DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)val, NULL);
-               off = (off+1)%2;
-               WriteAddress += WriteAdd;
-               counter+=2;
-            }
-         } else {
-            while (counter < (TransferSize&~3)) {
-               u32 tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL);
-               DMAMappedMemoryWriteWord(NULL, WriteAddress, (u16)(tmp >> 16), NULL);
-               WriteAddress += WriteAdd;
-               DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, (u16)tmp, NULL);
-               WriteAddress += WriteAdd;
-               counter += 4;
-            }
-            int off=0;
-            while (counter < TransferSize ) {
-               u32 tmp = 0;
-               if (off == 0) {
-                 tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL);
-
-               }
-               DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, (u8)(tmp >> ((4-off)*8)), NULL);
-               off = (off+1)%4;
-               if ((off % 2) == 0)WriteAddress += WriteAdd;
-               counter++;
-            }
-         }
-      }
-      else {
-         // Fill in 32-bit units (always aligned).
-         if (constant_source) {
-            u32 val = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL);
-            while (counter < (TransferSize&~3)) {
-               DMAMappedMemoryWriteLong(NULL, WriteAddress&0x1FFFFFFF, val, NULL);
-               WriteAddress += WriteAdd;
-               counter += 4;
-            }
-           int off=0;
-           while (counter < TransferSize ) {
-             u32 tmp = 0;
-             if (off == 0) {
-               tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL);
-             }
-             DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, (u16)(tmp >> ((4-off)*8)), NULL);
-             off = (off+1)%4;
-             counter++;
-           }
-         } else {
-           while (counter < (TransferSize&~3)) {
-             DMAMappedMemoryWriteLong(NULL, WriteAddress&0x1FFFFFFF,
-                                     DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL), NULL);
-             WriteAddress += WriteAdd;
-             counter += 4;
-           }
-           int off=0;
-           while (counter < TransferSize ) {
-             u32 tmp = 0;
-             if (off == 0) {
-               tmp = DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL);
-             }
-             DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, (u16)(tmp >> ((4-off)*8)), NULL);
-             off = (off+1)%4;
-             counter++;
-           }
-         }
-      }
-      // Inform the SH-2 core in case it was a write to main RAM.
-      SH2WriteNotify(NULL, start, (WriteAddress&0x1FFFFFFF) - start);
-  if(counter != TransferSize) printf("DMAFill failed %x %x %x %x\n", counter, TransferSize, ReadAddress, WriteAddress);
-}
-
 //////////////////////////////////////////////////////////////////////////////
 
 static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
@@ -237,49 +130,130 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
   //LOG("DoDMA src=%08X,dst=%08X,size=%d\n", ReadAddress, WriteAddress, TransferSize);
    if (ReadAdd == 0) {
       // DMA fill
-      DoDMAFill(ReadAddress, WriteAddress, WriteAdd, TransferSize);
+      // Is it a constant source or a register whose value can change from
+      // read to read?
+      int constant_source = ((ReadAddress & 0x1FF00000) == 0x00200000)
+                         || ((ReadAddress & 0x1E000000) == 0x06000000)
+                         || ((ReadAddress & 0x1FF00000) == 0x05A00000)
+                         || ((ReadAddress & 0x1DF00000) == 0x05C00000);
+
+      if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
+            && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
+         // Fill a 32-bit value in 16-bit units.  We have to be careful to
+         // avoid misaligned 32-bit accesses, because some hardware (e.g.
+         // PSP) crashes on such accesses.
+         if (constant_source) {
+            u32 counter = 0;
+            u32 val;
+            if (ReadAddress & 2) {  // Avoid misaligned access
+               val = DMAMappedMemoryReadWord(NULL, ReadAddress,NULL) << 16
+                   | DMAMappedMemoryReadWord(NULL, ReadAddress+2, NULL);
+            } else {
+               val = DMAMappedMemoryReadLong(NULL, ReadAddress, NULL);
+            }
+            while (counter < TransferSize) {
+               DMAMappedMemoryWriteWord(NULL, WriteAddress, (u16)(val >> 16), NULL);
+               WriteAddress += WriteAdd;
+               DMAMappedMemoryWriteWord(NULL, WriteAddress, (u16)val, NULL);
+               WriteAddress += WriteAdd;
+               counter += 4;
+            }
+         } else {
+            u32 counter = 0;
+            while (counter < TransferSize) {
+               u32 tmp = DMAMappedMemoryReadLong(NULL, ReadAddress, NULL);
+               DMAMappedMemoryWriteWord(NULL, WriteAddress, (u16)(tmp >> 16), NULL);
+               WriteAddress += WriteAdd;
+               DMAMappedMemoryWriteWord(NULL, WriteAddress, (u16)tmp, NULL);
+               WriteAddress += WriteAdd;
+               ReadAddress += ReadAdd;
+               counter += 4;
+            }
+         }
+      }
+      else {
+         // Fill in 32-bit units (always aligned).
+         u32 start = WriteAddress;
+         if (constant_source) {
+            u32 val = DMAMappedMemoryReadLong(NULL, ReadAddress, NULL);
+            u32 counter = 0;
+            while (counter < TransferSize) {
+               DMAMappedMemoryWriteLong(NULL, WriteAddress, val, NULL);
+               ReadAddress += ReadAdd;
+               WriteAddress += WriteAdd;
+               counter += 4;
+            }
+         } else {
+            u32 counter = 0;
+            while (counter < TransferSize) {
+               DMAMappedMemoryWriteLong(NULL, WriteAddress,
+                                     DMAMappedMemoryReadLong(NULL, ReadAddress, NULL), NULL);
+               ReadAddress += ReadAdd;
+               WriteAddress += WriteAdd;
+               counter += 4;
+            }
+         }
+         // Inform the SH-2 core in case it was a write to main RAM.
+         SH2WriteNotify(NULL, start, WriteAddress - start);
+      }
+
    }
 
    else {
-      u32 counter = 0;
       // DMA copy
-      u32 start = WriteAddress&0x1FFFFFFF;
-      if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
-          && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
-         while (counter < (TransferSize&(~0x1))) {
-            DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadWord(NULL, ReadAddress&0x1FFFFFFF, NULL), NULL);
+      // Access to B-BUS?
+      if ( ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000  && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) ) {
+         // Copy in 16-bit units, avoiding misaligned accesses.
+         u32 counter = 0;
+         if (ReadAddress & 2) {  // Avoid misaligned access
+            u16 tmp = DMAMappedMemoryReadWord(NULL, ReadAddress, NULL);
+            DMAMappedMemoryWriteWord(NULL, WriteAddress, tmp, NULL);
             WriteAddress += WriteAdd;
             ReadAddress += 2;
             counter += 2;
          }
+         if (TransferSize >= 3)
+         {
+            while (counter < TransferSize-2) {
+               u32 tmp = DMAMappedMemoryReadLong(NULL, ReadAddress, NULL);
+               DMAMappedMemoryWriteWord(NULL, WriteAddress, (u16)(tmp >> 16), NULL);
+               WriteAddress += WriteAdd;
+               DMAMappedMemoryWriteWord(NULL, WriteAddress, (u16)tmp, NULL);
+               WriteAddress += WriteAdd;
+               ReadAddress += 4;
+               counter += 4;
+            }
+         }
          if (counter < TransferSize) {
-            DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadByte(NULL, ReadAddress&0x1FFFFFFF, NULL), NULL);
-            counter += 1;
+            u16 tmp = DMAMappedMemoryReadWord(NULL, ReadAddress, NULL);
+            DMAMappedMemoryWriteWord(NULL, WriteAddress, tmp, NULL);
+            WriteAddress += WriteAdd;
+            ReadAddress += 2;
+            counter += 2;
          }
       }
       else if (((ReadAddress & 0x1FFFFFFF) >= 0x5A00000 && (ReadAddress & 0x1FFFFFFF) < 0x5FF0000)) {
-        while (counter < (TransferSize&(~0x1))) {
-          u16 tmp = DMAMappedMemoryReadWord(NULL, ReadAddress&0x1FFFFFFF, NULL);
-          DMAMappedMemoryWriteWord(NULL, WriteAddress&0x1FFFFFFF, tmp, NULL);
+        u32 counter = 0;
+        while (counter < TransferSize) {
+          u16 tmp = DMAMappedMemoryReadWord(NULL, ReadAddress, NULL);
+          DMAMappedMemoryWriteWord(NULL, WriteAddress, tmp, NULL);
           WriteAddress += (WriteAdd>>1);
           ReadAddress += 2;
           counter += 2;
         }
-        if (counter < TransferSize) {
-           DMAMappedMemoryWriteByte(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadByte(NULL, ReadAddress&0x1FFFFFFF, NULL), NULL);
-           counter += 1;
-        }
       }
       else {
-         while (counter < (TransferSize&(~0x3))) {
-            DMAMappedMemoryWriteLong(NULL, WriteAddress&0x1FFFFFFF, DMAMappedMemoryReadLong(NULL, ReadAddress&0x1FFFFFFF, NULL), NULL);
+         u32 counter = 0;
+         u32 start = WriteAddress;
+         while (counter < TransferSize) {
+            DMAMappedMemoryWriteLong(NULL, WriteAddress, DMAMappedMemoryReadLong(NULL, ReadAddress, NULL), NULL);
             ReadAddress += 4;
             WriteAddress += WriteAdd;
             counter += 4;
          }
+         /* Inform the SH-2 core in case it was a write to main RAM */
+         SH2WriteNotify(NULL, start, WriteAddress - start);
       }
-      SH2WriteNotify(NULL, start, (WriteAddress&0x1FFFFFFF) - start);
-     if (counter != TransferSize) printf("DMACopy failed %x %x %x %x\n", counter, TransferSize, ReadAddress&0x1FFFFFFF, WriteAddress&0x1FFFFFFF);
    }  // Fill / copy
 }
 
