@@ -60,15 +60,15 @@
 #include "vidogl.h"
 
 INLINE int getVramCycle(u32 addr) {
-  if (yabsys.LineCount >= yabsys.VBlankLineCount) { 
-    return 2; 
+  if (yabsys.LineCount >= yabsys.VBlankLineCount) {
+    return 2;
   }
   if ((addr & 0x000F0000) < 0x00040000) {
-   // return Vdp2External.cpu_cycle_a;
+   return Vdp2External.cpu_cycle_a;
 	return 0;
   }
   else {
-   // return Vdp2External.cpu_cycle_b;
+   return Vdp2External.cpu_cycle_b;
 	return 0;
   }
   return 2;
@@ -781,8 +781,8 @@ void MappedMemoryInit()
 
 u8 FASTCALL DMAMappedMemoryReadByte(SH2_struct *context, u32 addr, u32 * cycle) {
   u8 ret;
-  if (cycle != NULL) { 
-    //*cycle = getMemCycle(addr); 
+  if (cycle != NULL) {
+    //*cycle = getMemCycle(addr);
     GET_MEM_CYCLE_R
   }
   ret = MappedMemoryReadByte(context, addr);
@@ -876,8 +876,8 @@ LOG("Hunandled Byte R %x\n", addr);
 
 
 u16 FASTCALL DMAMappedMemoryReadWord(SH2_struct *context, u32 addr, u32 *cycle) {
-  if (cycle != NULL) { 
-    //*cycle = getMemCycle(addr); 
+  if (cycle != NULL) {
+    //*cycle = getMemCycle(addr);
     GET_MEM_CYCLE_R
   }
   return MappedMemoryReadWord(context, addr);
@@ -976,8 +976,8 @@ LOG("Hunandled Word R %x\n", addr);
 
 u32 FASTCALL DMAMappedMemoryReadLong(SH2_struct *context, u32 addr, u32 *cycle)
 {
-  if (cycle != NULL) { 
-    //*cycle = getMemCycle(addr); 
+  if (cycle != NULL) {
+    //*cycle = getMemCycle(addr);
     GET_MEM_CYCLE_R
   }
   return MappedMemoryReadLong(context, addr);
@@ -1077,7 +1077,7 @@ LOG("Hunandled SH2 Long R %x %d\n", addr,(addr >> 29));
 
 void FASTCALL DMAMappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val, u32 *cycle)
 {
-  if (cycle != NULL) { 
+  if (cycle != NULL) {
     //*cycle = getMemCycle(addr); ]
     GET_MEM_CYCLE_W
   }
@@ -1187,7 +1187,7 @@ LOG("Hunandled Byte W %x\n", addr);
 
 void FASTCALL DMAMappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val, u32 *cycle)
 {
-  if (cycle != NULL) { 
+  if (cycle != NULL) {
     //*cycle = getMemCycle(addr); ]
     GET_MEM_CYCLE_W
   }
@@ -1299,7 +1299,7 @@ LOG("Hunandled Word W %x\n", addr);
 
 void FASTCALL DMAMappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val, u32 *cycle)
 {
-  if (cycle != NULL) { 
+  if (cycle != NULL) {
     //*cycle = getMemCycle(addr); ]
     GET_MEM_CYCLE_W
   }

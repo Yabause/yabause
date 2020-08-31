@@ -366,6 +366,8 @@ void Vdp2Reset(void) {
    memset(Vdp2External.perline_alpha_b, 0, 270*sizeof(int));
    Vdp2External.perline_alpha = Vdp2External.perline_alpha_a;
    Vdp2External.perline_alpha_draw = Vdp2External.perline_alpha_b;
+   Vdp2External.cpu_cycle_a = 0;
+   Vdp2External.cpu_cycle_b = 0;
 
    nextFrameTime = 0;
 
@@ -383,6 +385,153 @@ static int checkFrameSkip(void) {
   return ret;
 #endif
   return !(yabsys.frame_count % (yabsys.skipframe+1) == 0);
+}
+
+void VDP2genVRamCyclePattern() {
+  int cpu_cycle_a = 0;
+  int cpu_cycle_b = 0;
+  int i = 0;
+
+  Vdp2External.AC_VRAM[0][0] = (Vdp2Regs->CYCA0L >> 12) & 0x0F;
+  Vdp2External.AC_VRAM[0][1] = (Vdp2Regs->CYCA0L >> 8) & 0x0F;
+  Vdp2External.AC_VRAM[0][2] = (Vdp2Regs->CYCA0L >> 4) & 0x0F;
+  Vdp2External.AC_VRAM[0][3] = (Vdp2Regs->CYCA0L >> 0) & 0x0F;
+  Vdp2External.AC_VRAM[0][4] = (Vdp2Regs->CYCA0U >> 12) & 0x0F;
+  Vdp2External.AC_VRAM[0][5] = (Vdp2Regs->CYCA0U >> 8) & 0x0F;
+  Vdp2External.AC_VRAM[0][6] = (Vdp2Regs->CYCA0U >> 4) & 0x0F;
+  Vdp2External.AC_VRAM[0][7] = (Vdp2Regs->CYCA0U >> 0) & 0x0F;
+
+  for (i = 0; i < 8; i++) {
+    if (Vdp2External.AC_VRAM[0][i] >= 0x0E) {
+      cpu_cycle_a++;
+    }
+    else if (Vdp2External.AC_VRAM[0][i] >= 4 && Vdp2External.AC_VRAM[0][i] <= 7) {
+      if ((Vdp2Regs->BGON & (1 << (Vdp2External.AC_VRAM[0][i] - 4))) == 0) {
+        cpu_cycle_a++;
+      }
+    }
+  }
+
+  if (Vdp2Regs->RAMCTL & 0x100) {
+    int fcnt = 0;
+    Vdp2External.AC_VRAM[1][0] = (Vdp2Regs->CYCA1L >> 12) & 0x0F;
+    Vdp2External.AC_VRAM[1][1] = (Vdp2Regs->CYCA1L >> 8) & 0x0F;
+    Vdp2External.AC_VRAM[1][2] = (Vdp2Regs->CYCA1L >> 4) & 0x0F;
+    Vdp2External.AC_VRAM[1][3] = (Vdp2Regs->CYCA1L >> 0) & 0x0F;
+    Vdp2External.AC_VRAM[1][4] = (Vdp2Regs->CYCA1U >> 12) & 0x0F;
+    Vdp2External.AC_VRAM[1][5] = (Vdp2Regs->CYCA1U >> 8) & 0x0F;
+    Vdp2External.AC_VRAM[1][6] = (Vdp2Regs->CYCA1U >> 4) & 0x0F;
+    Vdp2External.AC_VRAM[1][7] = (Vdp2Regs->CYCA1U >> 0) & 0x0F;
+
+    for (i = 0; i < 8; i++) {
+      if (Vdp2External.AC_VRAM[0][i] == 0x0E) {
+        if (Vdp2External.AC_VRAM[1][i] != 0x0E) {
+          cpu_cycle_a--;
+        }
+        else {
+          if (fcnt == 0) {
+            cpu_cycle_a--;
+          }
+        }
+      }
+      if (Vdp2External.AC_VRAM[1][i] == 0x0F) {
+        fcnt++;
+      }
+    }
+    if (fcnt == 0)cpu_cycle_a = 0;
+    if (cpu_cycle_a < 0)cpu_cycle_a = 0;
+  }
+  else {
+    Vdp2External.AC_VRAM[1][0] = Vdp2External.AC_VRAM[0][0];
+    Vdp2External.AC_VRAM[1][1] = Vdp2External.AC_VRAM[0][1];
+    Vdp2External.AC_VRAM[1][2] = Vdp2External.AC_VRAM[0][2];
+    Vdp2External.AC_VRAM[1][3] = Vdp2External.AC_VRAM[0][3];
+    Vdp2External.AC_VRAM[1][4] = Vdp2External.AC_VRAM[0][4];
+    Vdp2External.AC_VRAM[1][5] = Vdp2External.AC_VRAM[0][5];
+    Vdp2External.AC_VRAM[1][6] = Vdp2External.AC_VRAM[0][6];
+    Vdp2External.AC_VRAM[1][7] = Vdp2External.AC_VRAM[0][7];
+  }
+
+  Vdp2External.AC_VRAM[2][0] = (Vdp2Regs->CYCB0L >> 12) & 0x0F;
+  Vdp2External.AC_VRAM[2][1] = (Vdp2Regs->CYCB0L >> 8) & 0x0F;
+  Vdp2External.AC_VRAM[2][2] = (Vdp2Regs->CYCB0L >> 4) & 0x0F;
+  Vdp2External.AC_VRAM[2][3] = (Vdp2Regs->CYCB0L >> 0) & 0x0F;
+  Vdp2External.AC_VRAM[2][4] = (Vdp2Regs->CYCB0U >> 12) & 0x0F;
+  Vdp2External.AC_VRAM[2][5] = (Vdp2Regs->CYCB0U >> 8) & 0x0F;
+  Vdp2External.AC_VRAM[2][6] = (Vdp2Regs->CYCB0U >> 4) & 0x0F;
+  Vdp2External.AC_VRAM[2][7] = (Vdp2Regs->CYCB0U >> 0) & 0x0F;
+
+  for (i = 0; i < 8; i++) {
+    if (Vdp2External.AC_VRAM[2][i] >= 0x0E) {
+      cpu_cycle_b++;
+    }
+    else if (Vdp2External.AC_VRAM[2][i] >= 4 && Vdp2External.AC_VRAM[2][i] <= 7) {
+      if ((Vdp2Regs->BGON & (1 << (Vdp2External.AC_VRAM[2][i] - 4))) == 0) {
+        cpu_cycle_b++;
+      }
+    }
+  }
+
+
+  if (Vdp2Regs->RAMCTL & 0x200) {
+    int fcnt = 0;
+    Vdp2External.AC_VRAM[3][0] = (Vdp2Regs->CYCB1L >> 12) & 0x0F;
+    Vdp2External.AC_VRAM[3][1] = (Vdp2Regs->CYCB1L >> 8) & 0x0F;
+    Vdp2External.AC_VRAM[3][2] = (Vdp2Regs->CYCB1L >> 4) & 0x0F;
+    Vdp2External.AC_VRAM[3][3] = (Vdp2Regs->CYCB1L >> 0) & 0x0F;
+    Vdp2External.AC_VRAM[3][4] = (Vdp2Regs->CYCB1U >> 12) & 0x0F;
+    Vdp2External.AC_VRAM[3][5] = (Vdp2Regs->CYCB1U >> 8) & 0x0F;
+    Vdp2External.AC_VRAM[3][6] = (Vdp2Regs->CYCB1U >> 4) & 0x0F;
+    Vdp2External.AC_VRAM[3][7] = (Vdp2Regs->CYCB1U >> 0) & 0x0F;
+
+    for (i = 0; i < 8; i++) {
+      if (Vdp2External.AC_VRAM[2][i] == 0x0E) {
+        if (Vdp2External.AC_VRAM[3][i] != 0x0E) {
+          cpu_cycle_b--;
+        }
+        else {
+          if (fcnt == 0) {
+            cpu_cycle_b--;
+          }
+        }
+      }
+      if (Vdp2External.AC_VRAM[3][i] == 0x0F) {
+        fcnt++;
+      }
+    }
+    if (fcnt == 0)cpu_cycle_b = 0;
+    if (cpu_cycle_b < 0)cpu_cycle_b = 0;
+  }
+  else {
+    Vdp2External.AC_VRAM[3][0] = Vdp2External.AC_VRAM[2][0];
+    Vdp2External.AC_VRAM[3][1] = Vdp2External.AC_VRAM[2][1];
+    Vdp2External.AC_VRAM[3][2] = Vdp2External.AC_VRAM[2][2];
+    Vdp2External.AC_VRAM[3][3] = Vdp2External.AC_VRAM[2][3];
+    Vdp2External.AC_VRAM[3][4] = Vdp2External.AC_VRAM[2][4];
+    Vdp2External.AC_VRAM[3][5] = Vdp2External.AC_VRAM[2][5];
+    Vdp2External.AC_VRAM[3][6] = Vdp2External.AC_VRAM[2][6];
+    Vdp2External.AC_VRAM[3][7] = Vdp2External.AC_VRAM[2][7];
+  }
+
+  if (cpu_cycle_a == 0) {
+    Vdp2External.cpu_cycle_a = 200;
+  }
+  else if (Vdp2External.cpu_cycle_a == 1) {
+    Vdp2External.cpu_cycle_a = 24;
+  }
+  else {
+    Vdp2External.cpu_cycle_a = 2;
+  }
+
+  if (cpu_cycle_b == 0) {
+    Vdp2External.cpu_cycle_b = 200;
+  }
+  else if (Vdp2External.cpu_cycle_a == 1) {
+    Vdp2External.cpu_cycle_b = 24;
+  }
+  else {
+    Vdp2External.cpu_cycle_b = 2;
+  }
 }
 
 void resetFrameSkip(void) {
@@ -498,6 +647,10 @@ void Vdp2HBlankOUT(void) {
 
       Vdp2External.perline_alpha[yabsys.LineCount] |= 0x40;
     }
+  }
+
+  if (yabsys.LineCount == 1) {
+    VDP2genVRamCyclePattern();
   }
 }
 
