@@ -585,6 +585,7 @@ void Vdp2HBlankIN(void) {
   }
 }
 
+extern int vdp1_clock;
 void Vdp2HBlankOUT(void) {
   int i;
   updateVdp2ColorRam(yabsys.LineCount);
@@ -651,6 +652,11 @@ void Vdp2HBlankOUT(void) {
 
   if (yabsys.LineCount == 1) {
     VDP2genVRamCyclePattern();
+    Vdp2External.frame_render_flg = 0;
+  }
+  if (Vdp2External.frame_render_flg == 0 && vdp1_clock>0 ){ // Delay if vdp1 ram was written
+    Vdp2External.frame_render_flg = 1;
+//Faire un delai pour vdp1 (45 lignes)
   }
 }
 

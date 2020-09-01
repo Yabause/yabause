@@ -74,6 +74,7 @@ typedef struct {
    int current_frame;
    int updateVdp1Ram;
    int checkEDSR;
+   int status;
 } Vdp1External_struct;
 
 extern Vdp1External_struct Vdp1External;
@@ -187,6 +188,11 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs);
 
 extern Vdp1 * Vdp1Regs;
+
+enum VDP1STATUS {
+  VDP1_STATUS_IDLE = 0,
+  VDP1_STATUS_RUNNING
+};
 
 int Vdp1Init(void);
 void Vdp1DeInit(void);
