@@ -2578,7 +2578,8 @@ int updateGameList(const char* file, int *nbGames){
       if (GameList[i].blobs[j].type == BIOS_BLOB) {
         isBiosFound |= fileFound[i][j];
       } else {
-        isBlobFound &= fileFound[i][j];
+        if (GameList[i].blobs[j].type != EEPROM_BLOB)
+          isBlobFound &= fileFound[i][j];
       }
       j++;
     }
@@ -2682,7 +2683,8 @@ int loadGame(int gameId){
     if (availableGames[gameId].entry->blobs[i].type == BIOS_BLOB) {
       isBiosFound |= fileFound[gameId][i];
     } else {
-      isBlobFound &= fileFound[gameId][i];
+      if (availableGames[gameId].entry->blobs[i].type != EEPROM_BLOB)
+        isBlobFound &= fileFound[gameId][i];
     }
     i++;
   }
