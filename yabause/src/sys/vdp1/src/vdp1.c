@@ -1137,8 +1137,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       } else {
         yabsys.vdp1cycles += 16;
       }
-
-      vdp1_clock -= yabsys.vdp1cycles;
+      vdp1_clock -= 70;
 
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
 	  if (regs->EDSR & 0x02){
