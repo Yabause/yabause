@@ -2506,7 +2506,7 @@ int recordCallback(JZFile *zip, int idx, JZFileHeader *header, char *filename, v
 
     LOGSTV("%s\n", filename);
 #ifdef __LIBRETRO__
-    char *last = strrchr(info->filename, path_default_slash_c());
+    char *last = strrchr(info->filename, PATH_DEFAULT_SLASH_C());
 #else
     char *last = strrchr(info->filename, '/');
 #endif

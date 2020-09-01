@@ -57,11 +57,10 @@ struct config_file
    struct config_entry_list *entries;
    struct config_entry_list *tail;
    struct config_entry_list *last;
+   struct config_include_list *includes;
    unsigned include_depth;
    bool guaranteed_no_duplicates;
    bool modified;
-
-   struct config_include_list *includes;
 };
 
 typedef struct config_file config_file_t;
@@ -89,19 +88,26 @@ config_file_t *config_file_new(const char *path);
 
 config_file_t *config_file_new_alloc(void);
 
+void config_file_initialize(struct config_file *conf);
+
 /* Loads a config file. Returns NULL if file doesn't exist.
  * NULL path will create an empty config file.
  * Includes cb callbacks to run custom code during config file processing.*/
 config_file_t *config_file_new_with_callback(const char *path, config_file_cb_t *cb);
 
-/* Load a config file from a string. */
-config_file_t *config_file_new_from_string(const char *from_string,
+/* Load a config file from a string.
+ * > WARNING: This will modify 'from_string'.
+ *   Pass a copy of source string if original
+ *   contents must be preserved */
+config_file_t *config_file_new_from_string(char *from_string,
       const char *path);
 
 config_file_t *config_file_new_from_path_to_string(const char *path);
 
 /* Frees config file. */
 void config_file_free(config_file_t *conf);
+
+bool config_file_deinitialize(config_file_t *conf);
 
 /* Loads a new config, and appends its data to conf.
  * The key-value pairs of the new config file takes priority over the old. */
@@ -112,7 +118,17 @@ bool config_append_file(config_file_t *conf, const char *path);
 
 bool config_entry_exists(config_file_t *conf, const char *entry);
 
-struct config_entry_list;
+struct config_entry_list
+{
+   char *key;
+   char *value;
+   struct config_entry_list *next;
+   /* If we got this from an #include,
+    * do not allow overwrite. */
+   bool readonly;
+};
+
+
 struct config_file_entry
 {
    const char *key;
@@ -120,6 +136,9 @@ struct config_file_entry
    /* Used intentionally. Opaque here. */
    const struct config_entry_list *next;
 };
+
+struct config_entry_list *config_get_entry(
+      const config_file_t *conf, const char *key);
 
 bool config_get_entry_list_head(config_file_t *conf, struct config_file_entry *entry);
 bool config_get_entry_list_next(struct config_file_entry *entry);

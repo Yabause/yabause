@@ -39,7 +39,7 @@
 
 yabauseinit_struct yinit;
 
-static char slash = path_default_slash_c();
+static char slash = PATH_DEFAULT_SLASH_C();
 
 static char g_roms_dir[PATH_MAX];
 static char g_save_dir[PATH_MAX];
@@ -1420,7 +1420,7 @@ static void extract_directory(char *buf, const char *path, size_t size)
    strncpy(buf, path, size - 1);
    buf[size - 1] = '\0';
 
-   char *base = strrchr(buf, path_default_slash_c());
+   char *base = strrchr(buf, slash);
 
    if (base)
       *base = '\0';
@@ -1637,7 +1637,10 @@ static bool read_m3u(const char *file)
 
       if (line[0] != '\0')
       {
-         snprintf(disk_paths[disk_total], sizeof(disk_paths[disk_total]), "%s%c%s", g_roms_dir, slash, line);
+         if (path_is_absolute(line))
+            snprintf(disk_paths[disk_total], sizeof(disk_paths[disk_total]), "%s", line);
+         else
+            snprintf(disk_paths[disk_total], sizeof(disk_paths[disk_total]), "%s%c%s", g_roms_dir, slash, line);
          fill_short_pathname_representation(disk_labels[disk_total], disk_paths[disk_total], sizeof(disk_labels[disk_total]));
          disk_total++;
       }

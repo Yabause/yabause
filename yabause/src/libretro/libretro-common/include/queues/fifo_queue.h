@@ -29,6 +29,7 @@
 
 #include <retro_common_api.h>
 #include <retro_inline.h>
+#include <boolean.h>
 
 RETRO_BEGIN_DECLS
 
@@ -54,24 +55,11 @@ void fifo_write(fifo_buffer_t *buffer, const void *in_buf, size_t size);
 
 void fifo_read(fifo_buffer_t *buffer, void *in_buf, size_t size);
 
-static INLINE void fifo_free(fifo_buffer_t *buffer)
-{
-   if (!buffer)
-      return;
+void fifo_free(fifo_buffer_t *buffer);
 
-   free(buffer->buffer);
-   free(buffer);
-}
+#define FIFO_READ_AVAIL(buffer) (((buffer)->end + (((buffer)->end < (buffer)->first) ? (buffer)->size : 0)) - (buffer)->first)
 
-static INLINE size_t fifo_read_avail(fifo_buffer_t *buffer)
-{
-   return (buffer->end + ((buffer->end < buffer->first) ? buffer->size : 0)) - buffer->first;
-}
-
-static INLINE size_t fifo_write_avail(fifo_buffer_t *buffer)
-{
-   return (buffer->size - 1) - ((buffer->end + ((buffer->end < buffer->first) ? buffer->size : 0)) - buffer->first);
-}
+#define FIFO_WRITE_AVAIL(buffer) (((buffer)->size - 1) - (((buffer)->end + (((buffer)->end < (buffer)->first) ? (buffer)->size : 0)) - (buffer)->first))
 
 RETRO_END_DECLS
 

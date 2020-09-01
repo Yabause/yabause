@@ -149,6 +149,8 @@ SOURCES_C := \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
 	$(LIBRETRO_COMM_DIR)/streams/file_stream.c \
+	$(LIBRETRO_COMM_DIR)/time/rtime.c \
+	$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
 	$(LIBCHDR_DIR)/src/chd.c \
 	$(LIBCHDR_DIR)/src/bitstream.c \
 	$(LIBCHDR_DIR)/src/huffman.c \
