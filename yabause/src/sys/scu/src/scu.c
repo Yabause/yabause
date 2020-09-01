@@ -768,7 +768,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
         for (i = 0; i < Counter; i++)
         {
             u32 Adr = (sc->RA0 << 2);
-            sc->ProgramRam[i] = DMAMappedMemoryReadLong(Adr, NULL);
+            sc->ProgramRam[i] = DMAMappedMemoryReadLong(NULL, Adr, NULL);
             sc->RA0 += incl;
         }
     }
@@ -779,7 +779,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
         {
             u32 Adr = (sc->RA0 << 2);
 
-            sc->MD[DestinationId][sc->CT[DestinationId]] = DMAMappedMemoryReadLong(Adr, NULL);
+            sc->MD[DestinationId][sc->CT[DestinationId]] = DMAMappedMemoryReadLong(NULL, Adr, NULL);
             sc->CT[DestinationId]++;
             sc->CT[DestinationId] &= 0x3F;
             sc->RA0 += incl;
@@ -1669,6 +1669,9 @@ void ScuExec(u32 timing) {
                    break;
                   }
                   case 0x0D: // Jump Commands
+                    if (ScuDsp->jmpaddr != 0xffffffff) {
+                      break;
+                    }
                      switch ((instruction >> 19) & 0x7F) {
                         case 0x00: // JMP Imm
                            ScuDsp->jmpaddr = instruction & 0xFF;
@@ -2492,8 +2495,12 @@ u32 FASTCALL ScuReadLong(SH2_struct *sh, u8* mem, u32 addr) {
          return ScuRegs->D2W;
       case 0x48:
          return ScuRegs->D2C;
-      case 0x7C:
-         return ScuRegs->DSTA;
+      case 0x7C: {
+        if (ScuRegs->dma0.TransferNumber > 0) { ScuRegs->DSTA |= 0x10; }else{ ScuRegs->DSTA &= ~0x10;  }
+        if (ScuRegs->dma1.TransferNumber > 0) { ScuRegs->DSTA |= 0x100; }else{ ScuRegs->DSTA &= ~0x100;  }
+        if (ScuRegs->dma2.TransferNumber > 0) { ScuRegs->DSTA |= 0x1000; }else{ ScuRegs->DSTA &= ~0x1000; }
+        return ScuRegs->DSTA;
+      }
       case 0x80: // DSP Program Control Port
          return (ScuDsp->ProgControlPort.all & 0x00FD00FF);
       case 0x8C: // DSP Data Ram Data Port
