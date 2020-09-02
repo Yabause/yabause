@@ -281,7 +281,7 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
     case 1:
 			for(int h=0; h < cmd->h; h++) {
 				endcnt = 0;
-				for(int w=0; w < cmd->w/2; w++)
+				for(int w=0; w < MAX(1, cmd->w/2); w++)
 				{
 					u32 addr1, addr2;
 					dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);

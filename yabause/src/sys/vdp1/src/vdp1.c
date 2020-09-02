@@ -593,18 +593,18 @@ static int Vdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
     return -1;
   }
 
-  if (cmd->CMDSIZE == 0) {
-    yabsys.vdp1cycles += 70;
-    return -1; // BAD Command
-  }
   cmd->w = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
   cmd->h = cmd->CMDSIZE & 0xFF;
   if ((cmd->w == 0) || (cmd->h == 0)) {
     yabsys.vdp1cycles += 70;
     ret = 0;
   }
-  if (cmd->w == 0) cmd->w = 1;
-  if (cmd->h == 0) cmd->h = 1;
+  if (cmd->w == 0) {
+    cmd->w = 1;
+  }
+  if (cmd->h == 0) {
+    cmd->h = 1;
+  }
   cmd->flip = (cmd->CMDCTRL & 0x30) >> 4;
   cmd->priority = 0;
 
@@ -711,11 +711,6 @@ static int Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
     // damaged data
     yabsys.vdp1cycles += 70;
     return -1;
-  }
-
-  if (cmd->CMDSIZE == 0) {
-    yabsys.vdp1cycles += 70;
-    return -1; // BAD Command
   }
 
   cmd->w = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
