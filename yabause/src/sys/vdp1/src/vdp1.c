@@ -747,7 +747,6 @@ static int Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
 
   int area = abs((cmd->CMDXA*cmd->CMDYB - cmd->CMDXB*cmd->CMDYA) + (cmd->CMDXB*cmd->CMDYC - cmd->CMDXC*cmd->CMDYB) + (cmd->CMDXC*cmd->CMDYD - cmd->CMDXD*cmd->CMDYC) + (cmd->CMDXD*cmd->CMDYA - cmd->CMDXA *cmd->CMDYD))/2;
   yabsys.vdp1cycles+= MIN(1000, 70 + (area*3));
-  printf("Cycle %d (%d %d) (%d, %d , %d, %d) (%d)\n", yabsys.vdp1cycles ,cmd->w ,cmd->h, cmd->CMDXA, cmd->CMDXB, cmd->CMDXD, cmd->CMDXC,area );
 
   memset(cmd->G, 0, sizeof(float)*16);
   if ((cmd->CMDPMOD & 4))
