@@ -26,8 +26,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#if GCC_VERSION < 9
 #include <experimental/filesystem>
-namespace fs = std::experimental::filesystem ;
+namespace fs = std::experimental::filesystem;
+#else
+#include <filesystem>
+namespace fs = std::filesystem;
+#endif
 
 #include <sys/resource.h>
 #include <errno.h>
@@ -603,7 +608,7 @@ int main(int argc, char** argv)
         usleep( 16*1000 );
       }
     }else{
-      //printf("\033[%d;%dH Frmae = %d \n", 0, 0, frame_cont);
+      //printf("Frmae = %d \n", 0, 0, frame_cont);
       //frame_cont++;
       YabauseExec(); // exec one frame
     }
@@ -755,4 +760,45 @@ FINISH:
     if(bufRGB) free(bufRGB);
     if(row_pointers) free(row_pointers);
     return rtn;
+}
+
+extern "C" {
+
+  int YabauseThread_IsUseBios() {
+    //if( s_biospath == NULL){
+    //    return 1;
+    //}
+    return 0;
+
+  }
+
+  const char * YabauseThread_getBackupPath() {
+    //return s_buppath;
+    return NULL;
+  }
+
+  void YabauseThread_setUseBios(int use) {
+
+
+  }
+
+  char tmpbakcup[256];
+  void YabauseThread_setBackupPath( const char * buf) {
+      //strcpy(tmpbakcup,buf);
+      //s_buppath = tmpbakcup;
+  }
+
+  void YabauseThread_resetPlaymode() {
+      //if( s_playrecord_path != NULL ){
+      //    free(s_playrecord_path);
+      //    s_playrecord_path = NULL;
+      //}
+      //s_buppath = GetMemoryPath();
+  }
+
+  void YabauseThread_coldBoot() {
+    //YabauseDeInit();
+    //YabauseInit();
+    //YabauseReset();
+  }
 }

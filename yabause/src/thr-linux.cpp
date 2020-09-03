@@ -56,8 +56,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <sys/types.h>
 
 
+#if GCC_VERSION < 9
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#else
 #include <filesystem>
 namespace fs = std::filesystem;
+#endif
 
 #ifdef ARCH_IS_MACOSX
 pid_t gettid(void)
