@@ -388,6 +388,13 @@ void SH2DynShowSttaics(SH2_struct * master, SH2_struct * slave ){
 //********************************************************************
 // MemoyAcess from DynarecCPU
 //********************************************************************
+
+#if defined(__JETSON__) || defined(__N2__) || defined(__XU4__) || defined(__RP64__)
+#pragma GCC push_options
+#pragma GCC optimize ("O1")
+#endif
+
+
 void memSetByte(u32 addr , u8 data )
 {
   dynaLock();
@@ -601,6 +608,11 @@ u32 memGetLong(u32 addr)
   dynaFree();
   return val;
 }
+
+#if defined(__JETSON__) || defined(__N2__) || defined(__XU4__) || defined(__RP64__)
+#pragma GCC pop_options
+#endif
+
 
 void SH2DynOnFrame(SH2_struct *context) {
   DynarecSh2 *pctx = (DynarecSh2*)context->ext;
