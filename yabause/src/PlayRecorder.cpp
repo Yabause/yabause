@@ -93,8 +93,8 @@ PlayRecorder * PlayRecorder::instance = NULL;
     }
  }
 
-#include <filesystem>
 #ifdef _WINDOWS
+#include <filesystem>
 namespace fs = experimental::filesystem;
 extern "C" int YabMakeCleanDir(const char * dirname) {
   fs::remove_all(dirname);
@@ -104,7 +104,11 @@ extern "C" int YabMakeCleanDir(const char * dirname) {
   }
   return 0;
 }
+#elif GCC_VERSION < 9
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 #else
+#include <filesystem>
 namespace fs = std::filesystem;
 #endif
 
