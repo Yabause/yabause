@@ -35,14 +35,13 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
-import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import java.io.File
+import org.devmiyax.yabasanshiro.BuildConfig
+import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.GameInfo
 import org.uoyabause.android.phone.GameItemAdapter.GameViewHolder
-import org.uoyabause.uranus.BuildConfig
-import org.uoyabause.uranus.R
-import java.io.File
 
 class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
     RecyclerView.Adapter<GameViewHolder>() {

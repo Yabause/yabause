@@ -21,12 +21,11 @@
 package org.uoyabause.android;
 
 import android.app.Dialog;
-import android.app.DialogFragment;
+import 	androidx.fragment.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.util.TypedValue;
@@ -36,16 +35,14 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.Fragment;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 
 public class InputSettingFragment extends DialogFragment
     implements DialogInterface.OnKeyListener, View.OnGenericMotionListener, View.OnClickListener
@@ -295,7 +292,7 @@ public class InputSettingFragment extends DialogFragment
       }
 
       // jsonファイル出力
-      File file = new File(Environment.getExternalStorageDirectory() + "/" + "yabause/" + save_filename + ".json");
+      File file = new File(YabauseStorage.getStorage().getRootPath(),save_filename + ".json");
       FileWriter filewriter;
 
       filewriter = new FileWriter(file);

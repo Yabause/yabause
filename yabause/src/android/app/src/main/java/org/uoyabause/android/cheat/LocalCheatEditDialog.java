@@ -33,7 +33,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 public class LocalCheatEditDialog extends DialogFragment {
 

@@ -22,7 +22,6 @@ package org.uoyabause.android;
 import android.app.Activity;
 import android.content.Context;
 import android.preference.DialogPreference;
-import androidx.annotation.NonNull;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,7 +33,7 @@ import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 
 import org.uoyabause.android.tv.GameSelectFragment;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -108,7 +107,6 @@ public class GameDirectoriesDialogPreference extends DialogPreference implements
     private YabauseSettings _context = null;
     DirectoryListAdapter adapter;
     ListView listView;
-   // File currentRootDirectory = Environment.getExternalStorageDirectory();
 
     //public GameDirectoriesDialogPreference(Context context) {
     //    super(context);
@@ -154,21 +152,24 @@ public class GameDirectoriesDialogPreference extends DialogPreference implements
     }
 
     @Override
-    protected void onBindDialogView(View view){
+    protected void onBindDialogView(View view) {
+        super.onBindDialogView(view);
         ArrayList<String> list;
         list = new ArrayList<String>();
-        String data = getPersistedString ("err");
-        if( data.equals("err")){
+        String data = getPersistedString("err");
+        if (data.equals("err")) {
+            //YabauseStorage yb = YabauseStorage.storage;
+            //list.add(yb.getGamePath());
             YabauseStorage yb = YabauseStorage.getStorage();
             list.add(yb.getGamePath());
-        }else {
+        } else {
             String[] paths = data.split(";", 0);
-            for( int i=0; i<paths.length; i++ ){
+            for (int i = 0; i < paths.length; i++) {
                 list.add(paths[i]);
             }
         }
 
-        listView = (ListView)view.findViewById(R.id.listView);
+        listView = (ListView) view.findViewById(R.id.listView);
         adapter = new DirectoryListAdapter(_context);
         adapter.setDirectorytList(list);
         listView.setAdapter(adapter);

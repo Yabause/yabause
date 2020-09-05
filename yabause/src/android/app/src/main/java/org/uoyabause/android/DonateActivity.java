@@ -56,7 +56,7 @@ import android.widget.Toast;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 
 import org.json.JSONObject;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 import org.uoyabause.util.IabHelper;
 import org.uoyabause.util.IabResult;
 import org.uoyabause.util.Inventory;

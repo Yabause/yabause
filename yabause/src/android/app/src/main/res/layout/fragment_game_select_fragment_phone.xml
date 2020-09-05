@@ -76,11 +76,12 @@
 
         </androidx.viewpager.widget.ViewPager>
 
-<!--
-        <include layout="@layout/content_game_select_activity_phone" />
--->
-
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <include
+        android:id="@+id/llProgressBar"
+        android:visibility="gone"
+        layout="@layout/layout_progress_bar_with_text"/>
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"

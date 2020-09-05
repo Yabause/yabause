@@ -37,7 +37,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 import static java.lang.Thread.sleep;
 

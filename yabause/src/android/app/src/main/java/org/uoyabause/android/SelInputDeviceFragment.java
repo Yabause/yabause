@@ -21,19 +21,17 @@
 package org.uoyabause.android;
 
 import android.app.Dialog;
-import android.app.DialogFragment;
+import 	androidx.fragment.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.hardware.input.InputManager;
 import android.os.Bundle;
-import android.preference.ListPreference;
-import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
-import android.preference.PreferenceScreen;
 
-import org.uoyabause.uranus.R;
+import androidx.preference.PreferenceManager;
+
+import org.devmiyax.yabasanshiro.R;
 
 import java.util.ArrayList;
 import java.util.List;

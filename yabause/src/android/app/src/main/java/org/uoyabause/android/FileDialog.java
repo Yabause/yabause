@@ -24,6 +24,7 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -175,9 +176,11 @@ public class FileDialog {
         });
     }
 
+
     private void loadFileList(File path) {
         if( path == null || path.isDirectory() == false ){
-            path = new File(Environment.getExternalStorageDirectory(), "yabause");
+            YabauseStorage s = YabauseStorage.getStorage();
+            path = new File(s.getRootPath());
             if (! path.exists()) path.mkdir();
         }
         this.currentPath = path;

@@ -39,7 +39,7 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import org.uoyabause.android.tv.GameSelectActivity;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 import java.util.Map;
 

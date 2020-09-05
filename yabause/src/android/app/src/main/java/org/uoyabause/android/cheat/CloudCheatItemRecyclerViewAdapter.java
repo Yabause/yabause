@@ -33,7 +33,7 @@ import org.uoyabause.android.cheat.CloudCheatItemFragment.OnListFragmentInteract
 
 
 import java.util.List;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link CheatItem} and makes a call to the

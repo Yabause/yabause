@@ -45,10 +45,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 import java.util.ArrayList;
 
+import android.widget.Toast;
 
 /**
  * A fragment representing a list of Items.
@@ -67,7 +68,7 @@ public class LocalCheatItemFragment extends Fragment
     private String mGameCode;
     private String backcode_ = "";
 
-    DatabaseReference database_;
+    DatabaseReference database_ = null;
     View root_view_;
     RecyclerView listview_;
     LocalCheatItemRecyclerViewAdapter adapter_;
@@ -82,7 +83,7 @@ public class LocalCheatItemFragment extends Fragment
     @SuppressWarnings("unused")
     public static LocalCheatItemFragment newInstance( String gameid, int columnCount) {
         LocalCheatItemFragment fragment = new LocalCheatItemFragment();
-        Bundle args = new Bundle();
+        android.os.Bundle args = new Bundle();
         args.putString(ARG_GAME_ID, gameid);
         args.putInt(ARG_COLUMN_COUNT, columnCount);
         fragment.setArguments(args);
@@ -155,9 +156,14 @@ public class LocalCheatItemFragment extends Fragment
         void onListFragmentInteraction(CheatItem item);
     }
 
+    void showErrorMessage(){
+        Toast.makeText(getContext(),"You need to Sign in before use this function",Toast.LENGTH_LONG).show();
+    }
+
     void updateCheatList(){
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() == null) {
+            showErrorMessage();
             return;
         }
         if( listview_== null ){
@@ -168,6 +174,7 @@ public class LocalCheatItemFragment extends Fragment
         String baseurl = "/user-posts/" + auth.getCurrentUser().getUid()  + "/cheat/" + mGameCode;
         database_ =  baseref.child(baseurl);
         if( database_ == null ){
+            showErrorMessage();
             return;
         }
         adapter_ = new LocalCheatItemRecyclerViewAdapter( _items, LocalCheatItemFragment.this);
@@ -292,12 +299,18 @@ public class LocalCheatItemFragment extends Fragment
         LocalCheatEditDialog newFragment = new LocalCheatEditDialog();
         newFragment.setTargetFragment(this,NEW_ITEM);
         newFragment.show(getFragmentManager(), "Cheat");
+
+
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(requestCode == NEW_ITEM) {
             if(resultCode == LocalCheatEditDialog.APPLY) {
+                if( database_ == null ){
+                    showErrorMessage();
+                    return;
+                }
                 String key = database_.push().getKey();
                 String desc = data.getStringExtra( LocalCheatEditDialog.DESC );
                 String code = data.getStringExtra( LocalCheatEditDialog.CODE );
@@ -307,6 +320,10 @@ public class LocalCheatItemFragment extends Fragment
             }
         }else if(requestCode == EDIT_ITEM){
             if(resultCode == LocalCheatEditDialog.APPLY) {
+                if( database_ == null ){
+                    showErrorMessage();
+                    return;
+                }
                 TabCheatFragment frag = getTabCheatFragmentInstance();
                 if( frag != null ){
                     frag.RemoveActiveCheat(backcode_);
@@ -327,8 +344,11 @@ public class LocalCheatItemFragment extends Fragment
                 .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        if( database_ == null ){
+                            showErrorMessage();
+                            return;
+                        }
                         database_.child(cheatitem.key).removeValue();
-
                         if( cheatitem.getSharedKey() != "" ){
                             DatabaseReference baseref  = FirebaseDatabase.getInstance().getReference();
                             String baseurl = "/shared-cheats/" + mGameCode;
@@ -342,10 +362,18 @@ public class LocalCheatItemFragment extends Fragment
     }
 
     public void Remove( int index ) {
+        if( database_ == null ){
+            showErrorMessage();
+            return;
+        }
         database_.child(_items.get(index).key).removeValue();
     }
 
     public void Share(  final CheatItem cheatitem ){
+        if( database_ == null ){
+            showErrorMessage();
+            return;
+        }
 
         if( !cheatitem.getSharedKey().equals("")  ) {
             return;
@@ -364,7 +392,10 @@ public class LocalCheatItemFragment extends Fragment
 
 
     public void UnShare(  final CheatItem cheatitem ){
-
+        if( database_ == null ){
+            showErrorMessage();
+            return;
+        }
         if( cheatitem.getSharedKey().equals("")  ) {
             return;
         }

@@ -19,21 +19,21 @@
 
 package org.uoyabause.android
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.util.Log
-import kotlinx.android.synthetic.main.activity_ad.view.*
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
+import android.util.Log
+import android.widget.Button
 import android.widget.ImageButton
+import androidx.appcompat.app.AppCompatActivity
 
 class AdActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(org.uoyabause.uranus.R.layout.activity_ad)
+        setContentView(org.devmiyax.yabasanshiro.R.layout.activity_ad)
 
-        val button = findViewById<ImageButton>(org.uoyabause.uranus.R.id.got_to_store_button)
+        val button = findViewById<ImageButton>(org.devmiyax.yabasanshiro.R.id.got_to_store_button)
         button.setOnClickListener {
             Log.v("aaa", "clicked")
             val url = "https://play.google.com/store/apps/details?id=org.uoyabause.uranus.pro"
@@ -42,9 +42,9 @@ class AdActivity : AppCompatActivity() {
             intent.setPackage("com.android.vending")
             startActivity(intent)
         }
-    }
 
-    fun onClockClose(v: android.view.View) {
-        finish()
+        findViewById<Button>(org.devmiyax.yabasanshiro.R.id.close)?.setOnClickListener {
+            finish()
+        }
     }
 }

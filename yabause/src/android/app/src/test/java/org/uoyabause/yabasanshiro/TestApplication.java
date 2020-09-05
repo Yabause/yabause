@@ -1,4 +1,4 @@
-package org.uoyabause.uranus;
+package org.devmiyax.yabasanshiro;
 
 /*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
@@ -21,7 +21,6 @@ package org.uoyabause.uranus;
 
 import android.app.Application;
 
-import com.activeandroid.ActiveAndroid;
 import com.activeandroid.Configuration;
 
 import  org.uoyabause.android.GameInfo;

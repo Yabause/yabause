@@ -47,7 +47,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
@@ -85,7 +85,7 @@ public class GameList extends ListActivity implements FileSelectedListener
             //intent.setType("file/*");
             //startActivityForResult(intent, CHOSE_FILE_CODE);
     		
-    		File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
+    		File yabroot = new File(YabauseStorage.getStorage().getRootPath());
     		
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
             String  last_dir = sharedPref.getString("pref_last_dir", yabroot.getPath());

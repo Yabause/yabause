@@ -20,17 +20,15 @@ import io.reactivex.ObservableEmitter
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
-import io.reactivex.internal.util.HalfSerializer.onError
-import io.reactivex.internal.util.HalfSerializer.onNext
 import io.reactivex.observers.DisposableSingleObserver
 import io.reactivex.schedulers.Schedulers
+import java.util.concurrent.TimeUnit
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import org.devmiyax.yabasanshiro.R
 import org.json.JSONObject
-import org.uoyabause.uranus.R
-import java.util.concurrent.TimeUnit
 
 class ShowPinInFragment : DialogFragment() {
 

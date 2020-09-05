@@ -33,7 +33,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 /**
  * Created by i77553 on 2017/10/27.

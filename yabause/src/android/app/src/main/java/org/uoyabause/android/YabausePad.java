@@ -49,12 +49,12 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.AttributeSet;
 
 import java.util.HashMap;
 
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 class PadButton {
     protected RectF rect;
@@ -317,7 +317,7 @@ public class YabausePad extends View implements OnTouchListener {
       SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
       base_scale = sharedPref.getFloat("pref_pad_scale", 0.75f);
       ypos = sharedPref.getFloat("pref_pad_pos", 0.1f);
-      _transparent = sharedPref.getFloat("pref_pad_trans",1.0f);
+      _transparent = sharedPref.getFloat("pref_pad_trans",0.7f);
       //setPadScale( width_, height_ );
       this.requestLayout();
       this.invalidate();
@@ -330,7 +330,7 @@ public class YabausePad extends View implements OnTouchListener {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         base_scale= sharedPref.getFloat("pref_pad_scale", 0.75f);
         ypos = sharedPref.getFloat("pref_pad_pos", 0.1f);
-        _transparent = sharedPref.getFloat("pref_pad_trans",1.0f);
+        _transparent = sharedPref.getFloat("pref_pad_trans",0.7f);
 
         buttons = new PadButton[PadEvent.BUTTON_LAST];
         buttons[PadEvent.BUTTON_UP]    = new DPadButton();

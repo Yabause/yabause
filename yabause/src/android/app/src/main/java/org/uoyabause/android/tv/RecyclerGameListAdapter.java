@@ -28,7 +28,7 @@ import android.widget.TextView;
 import com.activeandroid.query.Select;
 
 import org.uoyabause.android.GameInfo;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 import org.uoyabause.android.YabauseStorage;
 
 import java.util.List;

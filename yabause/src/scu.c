@@ -1481,15 +1481,16 @@ void ScuExec(u32 timing) {
                break;
             case 0x5: // SUB
             {
-              u64 ans = (u64)ScuDsp->AC.part.L - (u32)ScuDsp->P.part.L;
+              //u64 ans = (u64)ScuDsp->AC.part.L - (u32)ScuDsp->P.part.L;
+              ScuDsp->ALU.part.L = (s32)ScuDsp->AC.part.L - (s32)ScuDsp->P.part.L;
 #ifdef DSPLOG
               if (slogp) {
                 fprintf(slogp, "%02X: %" PRId64 " - %d = %" PRId64 " \n", ScuDsp->PC, (u64)ScuDsp->AC.part.L, (u32)ScuDsp->P.part.L, ans);
               }
 #endif
-              ScuDsp->ProgControlPort.part.C = ((ans >> 32) & 0x01);
+              //ScuDsp->ProgControlPort.part.C = ((ans >> 32) & 0x01);
 
-              ScuDsp->ALU.part.L = ans;
+              //ScuDsp->ALU.part.L = ans;
 
               if (ScuDsp->ALU.part.L == 0)
                 ScuDsp->ProgControlPort.part.Z = 1;
@@ -1500,6 +1501,12 @@ void ScuExec(u32 timing) {
                 ScuDsp->ProgControlPort.part.S = 1;
               else
                 ScuDsp->ProgControlPort.part.S = 0;
+
+              //0x00000001 - 0xFFFFFFFF will set the carry bit, needs to be unsigned math
+              if ((((u64)(u32)ScuDsp->AC.part.L - (u64)(u32)ScuDsp->P.part.L)) & 0x100000000)
+                ScuDsp->ProgControlPort.part.C = 1;
+              else
+                ScuDsp->ProgControlPort.part.C = 0;
 
               //0x00000001 - 0xFFFFFFFF will set the carry bit, needs to be unsigned math
               //if ((((u64)(u32)ScuDsp->AC.part.L - (u64)(u32)ScuDsp->P.part.L)) & 0x100000000)

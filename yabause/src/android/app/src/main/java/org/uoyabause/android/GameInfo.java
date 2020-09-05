@@ -28,11 +28,10 @@ import com.activeandroid.annotation.Table;
 import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.uoyabause.uranus.BuildConfig;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.BuildConfig;
+import org.devmiyax.yabasanshiro.R;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -44,14 +43,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
 import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -431,7 +427,7 @@ public class GameInfo extends Model {
             encoded_product_id = encoded_product_id.replace("-","%2D");
             encoded_product_id = encoded_product_id.replace(" ","%20");
             String urlstr = "https://www.uoyabause.org/api/games/" + encoded_product_id +"/getstatus";
-            Context ctx = YabauseApplication.getAppContext();
+            Context ctx = YabauseApplication.Companion.getAppContext();
             String user = ctx.getString(R.string.basic_user);
             String password = ctx.getString(R.string.basic_password);
 
@@ -493,7 +489,7 @@ public class GameInfo extends Model {
                                 .authenticator(new okhttp3.Authenticator() {
                                     @Override
                                     public Request authenticate(Route route, Response response) {
-                                        Context ctx = YabauseApplication.getAppContext();
+                                        Context ctx = YabauseApplication.Companion.getAppContext();
                                         //if (responseCount(response) >= 3) {
                                         //    return null; // If we've failed 3 times, give up. - in real life, never give up!!
                                         //}

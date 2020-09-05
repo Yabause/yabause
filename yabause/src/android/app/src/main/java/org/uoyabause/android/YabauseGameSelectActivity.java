@@ -25,12 +25,12 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.uoyabause.android.tv.RecyclerGameListAdapter;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 public class YabauseGameSelectActivity extends Activity {
     private RecyclerView mRecyclerView;

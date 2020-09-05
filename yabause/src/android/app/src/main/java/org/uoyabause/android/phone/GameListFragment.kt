@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import org.uoyabause.uranus.R
+import org.devmiyax.yabasanshiro.R
 
 /*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 

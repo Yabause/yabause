@@ -35,7 +35,7 @@ import android.view.ViewGroup;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 import org.uoyabause.android.YabauseRunnable;
 
 import java.util.ArrayList;
