@@ -279,9 +279,10 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 	switch ((cmd->CMDPMOD >> 3) & 0x7) {
     case 0:
     case 1:
-			for(int h=0; h < cmd->h; h++) {
+			for(int h=0; h < MAX(1, cmd->h); h++) {
 				endcnt = 0;
-				for(int w=0; w < MAX(1, cmd->w/2); w++)
+				int width = (cmd->w==0)?1:cmd->w/2;
+				for(int w=0; w < width; w++)
 				{
 					u32 addr1, addr2;
 					dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
@@ -325,9 +326,9 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 	    case 2:
 	    case 3:
 	    case 4:
-				for(int h=0; h < cmd->h; h++) {
+				for(int h=0; h < MAX(1, cmd->h); h++) {
 					endcnt = 0;
-					for(int w = 0; w < cmd->w; w++)
+					for(int w = 0; w < MAX(1, cmd->w); w++)
 					{
 						dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
 						if (!END && (endcnt >= 2)) {
@@ -481,6 +482,8 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
         || (blky + (tex_height/NB_COARSE_RAST_Y)) < miny*_Ygl->vdp1hratio
         || blky > maxy*_Ygl->vdp1hratio)
 			  || (clipcmd!=0)) {
+					if (cmd->w == 0) cmd->w = 1;
+					if (cmd->h == 0) cmd->h = 1;
 					memcpy(&cmdVdp1[(i+j*NB_COARSE_RAST_X)*QUEUE_SIZE + nbCmd[i+j*NB_COARSE_RAST_X]], cmd, sizeof(vdp1cmd_struct));
           nbCmd[i+j*NB_COARSE_RAST_X]++;
 					if (clipcmd == 0) hasDrawingCmd[i+j*NB_COARSE_RAST_X] = 1;

@@ -546,8 +546,6 @@ static int Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
     yabsys.vdp1cycles += 70;
     ret = 0;
   }
-  if (cmd->w == 0) cmd->w = 1;
-  if (cmd->h == 0) cmd->h = 1;
 
   cmd->flip = (cmd->CMDCTRL & 0x30) >> 4;
   cmd->priority = 0;
@@ -557,12 +555,12 @@ static int Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   cmd->CMDXA += regs->localX;
   cmd->CMDYA += regs->localY;
 
-  cmd->CMDXB = cmd->CMDXA + cmd->w - 1;
+  cmd->CMDXB = cmd->CMDXA + MAX(1,cmd->w) - 1;
   cmd->CMDYB = cmd->CMDYA;
-  cmd->CMDXC = cmd->CMDXA + cmd->w - 1;
-  cmd->CMDYC = cmd->CMDYA + cmd->h -1;
+  cmd->CMDXC = cmd->CMDXA + MAX(1,cmd->w) - 1;
+  cmd->CMDYC = cmd->CMDYA + MAX(1,cmd->h) -1;
   cmd->CMDXD = cmd->CMDXA;
-  cmd->CMDYD = cmd->CMDYA + cmd->h - 1;
+  cmd->CMDYD = cmd->CMDYA + MAX(1,cmd->h) - 1;
 
   int area = abs((cmd->CMDXA*cmd->CMDYB - cmd->CMDXB*cmd->CMDYA) + (cmd->CMDXB*cmd->CMDYC - cmd->CMDXC*cmd->CMDYB) + (cmd->CMDXC*cmd->CMDYD - cmd->CMDXD*cmd->CMDYC) + (cmd->CMDXD*cmd->CMDYA - cmd->CMDXA *cmd->CMDYD))/2;
   yabsys.vdp1cycles+= MIN(1000, 70 + (area));
@@ -601,12 +599,7 @@ static int Vdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
     yabsys.vdp1cycles += 70;
     ret = 0;
   }
-  if (cmd->w == 0) {
-    cmd->w = 1;
-  }
-  if (cmd->h == 0) {
-    cmd->h = 1;
-  }
+
   cmd->flip = (cmd->CMDCTRL & 0x30) >> 4;
   cmd->priority = 0;
 
@@ -722,8 +715,7 @@ static int Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
     yabsys.vdp1cycles += 70;
     ret = 0;
   }
-  if (cmd->w == 0) cmd->w = 1;
-  if (cmd->h == 0) cmd->h = 1;
+
   cmd->flip = (cmd->CMDCTRL & 0x30) >> 4;
   cmd->priority = 0;
 
@@ -901,7 +893,7 @@ static void setupSpriteLimit(vdp1cmdctrl_struct *ctrl){
   {
     // 4 bpp Bank mode
     ctrl->start_addr = cmd->CMDSRCA * 8;
-    ctrl->end_addr = ctrl->start_addr + cmd->h*cmd->w/2;
+    ctrl->end_addr = ctrl->start_addr + MAX(1,cmd->h)*MAX(1,cmd->w)/2;
     break;
   }
   case 1:
@@ -910,13 +902,13 @@ static void setupSpriteLimit(vdp1cmdctrl_struct *ctrl){
     u32 colorLut = cmd->CMDCOLR * 8;
     u32 charAddr = cmd->CMDSRCA * 8;
     ctrl->start_addr = cmd->CMDSRCA * 8;
-    ctrl->end_addr = ctrl->start_addr + cmd->h*cmd->w/2;
+    ctrl->end_addr = ctrl->start_addr + MAX(1,cmd->h)*MAX(1,cmd->w)/2;
 
-    for (int i = 0; i < cmd->h; i++)
+    for (int i = 0; i < MAX(1,cmd->h); i++)
     {
       u16 j;
       j = 0;
-      while (j < cmd->w/2)
+      while (j < MAX(1,cmd->w)/2)
       {
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         int lutaddr = (dot >> 4) * 2 + colorLut;
@@ -934,7 +926,7 @@ static void setupSpriteLimit(vdp1cmdctrl_struct *ctrl){
   {
     // 8 bpp(64 color) Bank mode
     ctrl->start_addr = cmd->CMDSRCA * 8;
-    ctrl->end_addr = ctrl->start_addr + cmd->h*cmd->w;
+    ctrl->end_addr = ctrl->start_addr + MAX(1,cmd->h)*MAX(1,cmd->w);
     break;
   }
   case 5:
@@ -942,7 +934,7 @@ static void setupSpriteLimit(vdp1cmdctrl_struct *ctrl){
     // 16 bpp Bank mode
     // 8 bpp(64 color) Bank mode
     ctrl->start_addr = cmd->CMDSRCA * 8;
-    ctrl->end_addr = ctrl->start_addr + cmd->h*cmd->w*2;
+    ctrl->end_addr = ctrl->start_addr + MAX(1,cmd->h)*MAX(1,cmd->w)*2;
     break;
   }
   default:
