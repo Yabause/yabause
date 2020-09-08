@@ -86,6 +86,7 @@ INCLUDE_DIRS := $(CORE_DIR) \
 	$(SOURCE_DIR)/tools/junzip \
 	$(SOURCE_DIR)/ctrl/include \
 	$(SOURCE_DIR)/ctrl/threads \
+	$(SOURCE_DIR)/ctrl/threads/linux \
 	$(LIBRETRO_COMM_DIR)/include \
 	$(SOURCE_DIR)/core/m68k/musashi \
 	$(LIBCHDR_DIR)/src \
