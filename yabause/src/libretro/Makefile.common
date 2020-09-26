@@ -13,15 +13,12 @@ endif
 
 FLAGS += -D__LIBRETRO__ -DHAVE_LIBGL -DVERSION=\"2.1.4\" -DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL \
 	-DNO_CLI -DHAVE_BUILTIN_BSWAP16=1 -DHAVE_BUILTIN_BSWAP32=1 -DHAVE_C99_VARIADIC_MACROS=1 -DHAVE_FLOORF=1 \
-	-DHAVE_GETTIMEOFDAY=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES \
-	-DVDP1RAM_CS_ASYNC=1 -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1 -DNO_VIDCORE_SOFT  -DDYNAREC_KRONOS=1
+	-DHAVE_GETTIMEOFDAY=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES -DHAVE_GLSYM_PRIVATE \
+	-DVDP1RAM_CS_ASYNC=1 -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1 -DNO_VIDCORE_SOFT -DDYNAREC_KRONOS=1
 
 ifeq ($(FORCE_GLES), 1)
-	FLAGS += -D_OGLES3_
+	FLAGS += -D_OGLES3_ -DHAVE_OPENGLES -DHAVE_OPENGLES3
 	LDFLAGS += -lGLESv2
-	ifeq ($(FORCE_GLEW), 0)
-		FLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES3
-	endif
 else
 	FLAGS += -D_OGL3_
 endif
@@ -44,12 +41,6 @@ ifeq ($(UNROLL_LOOPS), 1)
 	ifeq (,$(findstring msvc,$(platform)))
 		FLAGS += -funroll-loops
 	endif
-endif
-
-ifeq ($(FORCE_GLEW), 1)
-	FLAGS += -DGLEW_STATIC -D_USEGLEW_ -DGLEW_NO_GLU
-else
-	FLAGS += -DHAVE_GLSYM_PRIVATE
 endif
 
 ifeq ($(HAVE_SYS_PARAM_H), 1)
@@ -195,31 +186,24 @@ ifeq ($(ARCH_IS_WINDOWS), 1)
 	SOURCES_C += $(FLAC_DIR)/src/libFLAC/windows_unicode_filenames.c
 endif
 
-ifeq ($(FORCE_GLEW), 1)
-	SOURCES_C += $(SOURCE_DIR)/tools/gllibs/glew/glew.c
-	INCLUDE_DIRS += $(SOURCE_DIR)/tools/gllibs/include
+SOURCES_C += $(LIBRETRO_COMM_DIR)/glsm/glsm.c \
+	$(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
+	$(CORE_DIR)/glsym_private.c
+ifeq ($(FORCE_GLES), 1)
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es3.c
 else
-	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsm/glsm.c \
-		$(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
-		$(CORE_DIR)/glsym_private.c
-	ifeq ($(FORCE_GLES), 1)
-		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es3.c
-	else
-		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
-	endif
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
 endif
 
 SOURCES_CXX := $(SOURCE_DIR)/core/video/opengl/common/src/rbg_compute.cpp \
 	$(SOURCE_DIR)/core/m68k/Counter.cpp
 
-#MUSASHI
-	SOURCES_C += $(SOURCE_DIR)/core/m68k/musashi/m68kcpu.c \
+SOURCES_C += $(SOURCE_DIR)/core/m68k/musashi/m68kcpu.c \
 	$(SOURCE_DIR)/core/m68k/musashi/m68kops.c \
 	$(SOURCE_DIR)/core/m68k/musashi/m68kopnz.c \
 	$(SOURCE_DIR)/core/m68k/musashi/m68kopac.c \
 	$(SOURCE_DIR)/core/m68k/musashi/m68kopdm.c \
 	$(SOURCE_DIR)/core/m68k/m68kmusashi.c
-#MUSASHI END
 
 ifeq ($(USE_RTHREADS), 1)
 	SOURCES_C += $(SOURCE_DIR)/ctrl/threads/thr-rthreads.c \

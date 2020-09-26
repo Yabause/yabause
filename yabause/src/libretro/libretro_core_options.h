@@ -78,24 +78,11 @@ struct retro_core_option_definition option_defs_us[] = {
    },
 #if !defined(_OGLES3_)
    {
-      "kronos_opengl_version",
-      "OpenGL version",
-      "Select the highest OpenGL version compatible with your hardware. Requires a restart.",
-      {
-         { "3.3", "OpenGL 3.3 (minimum version)" },
-         { "4.2", "OpenGL 4.2 (add support for gpu tesselation)" },
-         { "4.3", "OpenGL 4.3 (add support for compute shaders)" },
-         { "4.5", "OpenGL 4.5 (fix texture issues on some specific games)" },
-         { NULL, NULL},
-      },
-      "3.3"
-   },
-   {
       "kronos_videocoretype",
       "Video renderer",
       "Change the renderer. Requires a restart.",
       {
-         { "opengl", "OpenGL (requires OpenGL 3.3+)" },
+         { "opengl", "OpenGL (requires OpenGL 4.2+)" },
          { "opengl_cs", "OpenGL CS (requires OpenGL 4.3+)" },
          { NULL, NULL},
       },

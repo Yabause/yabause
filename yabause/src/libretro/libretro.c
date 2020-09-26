@@ -63,9 +63,6 @@ static bool hle_bios_force = false;
 static int addon_cart_type = CART_NONE;
 static int mesh_mode = ORIGINAL_MESH;
 static int banding_mode = ORIGINAL_BANDING;
-#if !defined(_OGLES3_)
-static int opengl_version = 330;
-#endif
 
 static int g_vidcoretype = VIDCORE_OGL;
 static int g_sh2coretype = 8;
@@ -114,11 +111,7 @@ static retro_input_state_t input_state_cb;
 static retro_environment_t environ_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 
-#if defined(_USEGLEW_)
-static struct retro_hw_render_callback hw_render;
-#else
 extern struct retro_hw_render_callback hw_render;
-#endif
 
 void retro_set_environment(retro_environment_t cb)
 {
@@ -784,16 +777,12 @@ static int first_ctx_reset = 1;
 
 int YuiUseOGLOnThisThread()
 {
-#if !defined(_USEGLEW_)
   return glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
-#endif
 }
 
 int YuiRevokeOGLOnThisThread()
 {
-#if !defined(_USEGLEW_)
   return glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
-#endif
 }
 
 int YuiGetFB(void)
@@ -831,10 +820,8 @@ void YuiEndOfFrame(void)
 
 static void context_reset(void)
 {
-#if !defined(_USEGLEW_)
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_RESET, NULL);
    glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
-#endif
    if (first_ctx_reset == 1)
    {
       first_ctx_reset = 0;
@@ -859,106 +846,58 @@ static void context_destroy(void)
 {
    VIDCore->DeInit();
    rendering_started = false;
-#if !defined(_USEGLEW_)
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_DESTROY, NULL);
-#endif
 }
 
-static bool init_gl_context(u32 preferred)
+static bool try_init_context(u32 context_type)
 {
-#if defined(_USEGLEW_)
-   hw_render.context_reset = context_reset;
-   hw_render.context_destroy = context_destroy;
-   hw_render.depth = true;
-   hw_render.bottom_left_origin = true;
-#if defined(_OGLES3_)
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES_VERSION;
-   hw_render.version_major = 3;
-   hw_render.version_minor = 1;
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
-      return false;
-#else
-   hw_render.context_type = preferred;
-   // see below
-   if (preferred == RETRO_HW_CONTEXT_OPENGL_CORE)
-   {
-      switch (opengl_version)
-      {
-         case 330:
-            hw_render.version_major = 3;
-            hw_render.version_minor = 3;
-            break;
-         case 420:
-            hw_render.version_major = 4;
-            hw_render.version_minor = 2;
-            break;
-         case 430:
-            hw_render.version_major = 4;
-            hw_render.version_minor = 3;
-            break;
-         case 450:
-            hw_render.version_major = 4;
-            hw_render.version_minor = 5;
-            break;
-      }
-   }
-   else
-   {
-       hw_render.version_major = 3;
-       hw_render.version_minor = 0;
-   }
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
-       return false;
-#endif
-#else
    glsm_ctx_params_t params = {0};
    params.context_reset = context_reset;
    params.context_destroy = context_destroy;
    params.environ_cb = environ_cb;
    params.stencil = true;
-#if defined(_OGLES3_)
-   params.context_type = RETRO_HW_CONTEXT_OPENGLES_VERSION;
-   params.major = 3;
-   params.minor = 1;
-   if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-      return false;
-#else
-   params.context_type = preferred;
-   // 2020-05-25 - i identified 2 issues with RA's gl context's versioning :
-   // - any value above 3.0 won't provide a valid context, while the GLSM_CTL_STATE_CONTEXT_INIT call returned true...
-   // - the only way to overwrite previously set version with zero values is to set them directly in hw_render, otherwise they are ignored (see glsm_state_ctx_init logic)
-   if (preferred == RETRO_HW_CONTEXT_OPENGL_CORE)
+   params.context_type = context_type;
+   switch (context_type)
    {
-      switch (opengl_version)
-      {
-         case 330:
-            params.major = 3;
-            params.minor = 3;
-            break;
-         case 420:
-            params.major = 4;
-            params.minor = 2;
-            break;
-         case 430:
-            params.major = 4;
-            params.minor = 3;
-            break;
-         case 450:
-            params.major = 4;
-            params.minor = 5;
-            break;
-      }
+      case RETRO_HW_CONTEXT_OPENGL_CORE:
+         // minimum requirements to run is opengl 4.2 (RA will try to use highest version available anyway)
+         // 3.3 wouldn't crash but has too many glitches
+         params.major = 4;
+         params.minor = 2;
+         if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+            return true;
+         break;
+      case RETRO_HW_CONTEXT_OPENGL:
+         // when using RETRO_HW_CONTEXT_OPENGL you can't set version above 3.0 (RA will try to use highest version available anyway)
+         // also, the only way to overwrite previously set version with zero values is to set them directly in hw_render, otherwise they are ignored (see glsm_state_ctx_init logic)
+         hw_render.version_major = 3;
+         hw_render.version_minor = 0;
+         if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+         {
+            // shared context is also required when using "gl" video driver
+            environ_cb(RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT, NULL);
+            return true;
+         }
+         break;
    }
-   else
-   {
-       hw_render.version_major = 3;
-       hw_render.version_minor = 0;
-   }
-   if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-      return false;
-#endif
-#endif
-   return true;
+   return false;
+}
+
+static bool init_hw_context()
+{
+   u32 preferred_context;
+   bool found_context = false;
+   if (!environ_cb(RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, &preferred_context))
+      preferred_context = RETRO_HW_CONTEXT_DUMMY;
+   // try requesting the right context for current driver
+   if (preferred_context == RETRO_HW_CONTEXT_OPENGL || preferred_context == RETRO_HW_CONTEXT_OPENGL_CORE)
+      found_context = try_init_context(preferred_context);
+   // if not found, try requesting every compatible context
+   if (!found_context)
+      found_context = try_init_context(RETRO_HW_CONTEXT_OPENGL_CORE);
+   if (!found_context)
+      found_context = try_init_context(RETRO_HW_CONTEXT_OPENGL);
+   return found_context;
 }
 
 /************************************
@@ -1035,20 +974,6 @@ void check_variables(void)
    }
 
 #if !defined(_OGLES3_)
-   var.key = "kronos_opengl_version";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "3.3") == 0)
-         opengl_version = 330;
-      else if (strcmp(var.value, "4.2") == 0)
-         opengl_version = 420;
-      else if (strcmp(var.value, "4.3") == 0)
-         opengl_version = 430;
-      else if (strcmp(var.value, "4.5") == 0)
-         opengl_version = 450;
-   }
-
    var.key = "kronos_videocoretype";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1699,33 +1624,8 @@ bool retro_load_game_common()
    if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
       return false;
 
-   // get current video driver
-   u32 preferred;
-   if (!environ_cb(RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, &preferred))
-      preferred = RETRO_HW_CONTEXT_DUMMY;
-   bool found_hw_context = false;
-   if (preferred == RETRO_HW_CONTEXT_OPENGL || preferred == RETRO_HW_CONTEXT_OPENGL_CORE)
-   {
-      // try requesting the right context for current driver
-      found_hw_context = init_gl_context(preferred);
-   }
-   else if (preferred == RETRO_HW_CONTEXT_VULKAN)
-   {
-      // if vulkan is the current driver, we probably prefer glcore over gl so that the same slang shaders can be used
-      // in the future, when a vulkan video renderer will be available, we'll need to intialize it here
-      found_hw_context = init_gl_context(RETRO_HW_CONTEXT_OPENGL_CORE);
-      
-   }
-   else
-   {
-      // try every context as fallback if current driver wasn't found
-      found_hw_context = init_gl_context(RETRO_HW_CONTEXT_OPENGL_CORE);
-      if (!found_hw_context)
-         found_hw_context = init_gl_context(RETRO_HW_CONTEXT_OPENGL);
-   }
-
-   // if no compatible context was found at all, give up
-   if (!found_hw_context)
+   // if no compatible context is found, give up
+   if (!init_hw_context())
       return false;
 
    yinit.vidcoretype             = g_vidcoretype;
