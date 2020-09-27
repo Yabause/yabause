@@ -516,9 +516,11 @@ static const GLchar Yglprg_vdp2_common_start[] =
 
 "vec3 getRGB(int colindex) {\n"
 " vec3 ret;\n"
-" ret.r = float(((colindex & 0x1F)) & 0x1F)/31.0;\n"
-" ret.g = float(((colindex & 0x3E0) >> 5) & 0x1F)/31.0;\n"
-" ret.b = float(((colindex & 0x7C00) >> 10) & 0x1F)/31.0;\n"
+" ret.r = float((((colindex & 0x1F)) & 0x1F)<<3)/255.0;\n"
+" ret.g = float((((colindex & 0x3E0) >> 5) & 0x1F)<<3)/255.0;\n"
+" ret.b = float((((colindex & 0x7C00) >> 10) & 0x1F)<<3)/255.0;\n"
+ " return ret;\n"
+
 " return ret;\n"
 "}\n"
 
