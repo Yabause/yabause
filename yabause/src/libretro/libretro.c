@@ -867,6 +867,8 @@ static bool try_init_context(u32 context_type)
          if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
             return true;
          break;
+#if 0
+      // keeping this around, just in case it might be useful someday
       case RETRO_HW_CONTEXT_OPENGL:
          // when using RETRO_HW_CONTEXT_OPENGL you can't set version above 3.0 (RA will try to use highest version available anyway)
          // also, the only way to overwrite previously set version with zero values is to set them directly in hw_render, otherwise they are ignored (see glsm_state_ctx_init logic)
@@ -879,6 +881,7 @@ static bool try_init_context(u32 context_type)
             return true;
          }
          break;
+#endif
    }
    return false;
 }
@@ -889,14 +892,11 @@ static bool init_hw_context()
    bool found_context = false;
    if (!environ_cb(RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, &preferred_context))
       preferred_context = RETRO_HW_CONTEXT_DUMMY;
-   // try requesting the right context for current driver
-   if (preferred_context == RETRO_HW_CONTEXT_OPENGL || preferred_context == RETRO_HW_CONTEXT_OPENGL_CORE)
-      found_context = try_init_context(preferred_context);
-   // if not found, try requesting every compatible context
-   if (!found_context)
+   // always requests a gl core context, because mesa will always fail giving a gl compat context above 3.0
+   if (preferred_context == RETRO_HW_CONTEXT_OPENGL || preferred_context == RETRO_HW_CONTEXT_OPENGL_CORE || preferred_context == RETRO_HW_CONTEXT_DUMMY)
       found_context = try_init_context(RETRO_HW_CONTEXT_OPENGL_CORE);
    if (!found_context)
-      found_context = try_init_context(RETRO_HW_CONTEXT_OPENGL);
+      log_cb(RETRO_LOG_ERROR, "Failed retrieving a glcore 4.2 context, make sure your GPU has the minimum requirements and RetroArch is set properly\n");
    return found_context;
 }
 
