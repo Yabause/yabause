@@ -36,7 +36,7 @@ class AdActivity : AppCompatActivity() {
         val button = findViewById<ImageButton>(org.devmiyax.yabasanshiro.R.id.got_to_store_button)
         button.setOnClickListener {
             Log.v("aaa", "clicked")
-            val url = "https://play.google.com/store/apps/details?id=org.uoyabause.uranus.pro"
+            val url = "https://play.google.com/store/apps/details?id=org.devmiyax.yabasanshioro2.pro"
             val intent = Intent(Intent.ACTION_VIEW)
             intent.data = Uri.parse(url)
             intent.setPackage("com.android.vending")
