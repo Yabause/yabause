@@ -656,11 +656,7 @@ public class YabauseSettings extends PreferenceActivity
         plyaer2_input_device.setEntryValues(input_entryValues_p2);
         plyaer2_input_device.setSummary(plyaer2_input_device.getEntry());
 
-<<<<<<< HEAD
-
-=======
 /*
->>>>>>> 169c6d25d... Yaba Sanshiro 2
         InputSettingPreference inputsetting= (InputSettingPreference)findPreference("pref_player2_inputdef_file");
         if( inputsetting != null ){
             try {
@@ -793,10 +789,5 @@ public class YabauseSettings extends PreferenceActivity
     public void onDestroy() {
         super.onDestroy();
 
-<<<<<<< HEAD
-    }
-
-=======
         }
->>>>>>> 169c6d25d... Yaba Sanshiro 2
 }
