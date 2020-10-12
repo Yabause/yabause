@@ -34,26 +34,17 @@ package org.uoyabause.android.tv;
 
 import android.app.UiModeManager;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
-import androidx.appcompat.app.AppCompatActivity;
 
 import android.view.InputDevice;
 import android.view.KeyEvent;
 
 import org.uoyabause.android.phone.GameSelectFragmentPhone;
-import org.uoyabause.uranus.R;
-
-import androidx.tvprovider.media.tv.Channel;
-import androidx.tvprovider.media.tv.TvContractCompat;
-import androidx.tvprovider.media.tv.ChannelLogoUtils;
-import androidx.tvprovider.media.tv.PreviewProgram;
-import androidx.tvprovider.media.tv.WatchNextProgram;
+import org.devmiyax.yabasanshiro.R;
 
 import static androidx.tvprovider.media.tv.ChannelLogoUtils.storeChannelLogo;
 

@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -16,7 +17,7 @@ import io.reactivex.ObservableEmitter
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
-import org.uoyabause.uranus.R
+import org.devmiyax.yabasanshiro.R
 
 fun setupInGamePreferences(context: Context, gameCode: String?) {
     if (gameCode == null) {
@@ -134,7 +135,7 @@ class InGamePreference(val gamecode: String) : PreferenceFragmentCompat() {
         savedInstanceState: Bundle?
     ): View? {
         val view = super.onCreateView(inflater, container, savedInstanceState)
-        view?.setBackgroundColor(resources.getColor(R.color.default_background))
+        view?.setBackgroundColor(ContextCompat.getColor(activityContext, R.color.default_background))
         return view
     }
 

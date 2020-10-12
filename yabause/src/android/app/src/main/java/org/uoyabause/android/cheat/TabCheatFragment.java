@@ -32,7 +32,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import org.uoyabause.android.Yabause;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -46,13 +46,13 @@ import com.google.firebase.database.IgnoreExtraProperties
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
+import org.devmiyax.yabasanshiro.BuildConfig
+import org.devmiyax.yabasanshiro.R
 import org.json.JSONException
 import org.json.JSONObject
 import org.uoyabause.android.AuthFragment
 import org.uoyabause.android.YabauseRunnable
 import org.uoyabause.android.backup.BackupItemFragment.OnListFragmentInteractionListener
-import org.uoyabause.uranus.BuildConfig
-import org.uoyabause.uranus.R
 
 internal class BackupDevice {
     @JvmField

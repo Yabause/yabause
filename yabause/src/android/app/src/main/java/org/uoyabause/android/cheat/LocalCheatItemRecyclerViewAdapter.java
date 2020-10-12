@@ -33,7 +33,7 @@ import android.widget.TextView;
 
 
 import java.util.List;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 
 public class LocalCheatItemRecyclerViewAdapter extends RecyclerView.Adapter<LocalCheatItemRecyclerViewAdapter.ViewHolder> {

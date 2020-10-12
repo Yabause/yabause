@@ -101,10 +101,10 @@ class BasicInputDevice {
     public void loadSettings( String setting_filename ) {
         try {
 
-            File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
+            File yabroot = new File(YabauseStorage.getStorage().getRootPath());
             if (!yabroot.exists()) yabroot.mkdir();
 
-            InputStream inputStream = new FileInputStream(Environment.getExternalStorageDirectory() + "/" + "yabause/" + setting_filename);
+            InputStream inputStream = new FileInputStream(YabauseStorage.getStorage().getRootPath() + setting_filename);
             int size = inputStream.available();
             byte[] buffer = new byte[size];
             inputStream.read(buffer);

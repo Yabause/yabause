@@ -46,6 +46,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.input.InputManager;
@@ -58,8 +59,11 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
-import android.preference.PreferenceManager;
+
+import androidx.preference.DialogPreference;
+import androidx.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -71,8 +75,9 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.app.Dialog;
 
+import org.devmiyax.yabasanshiro.R;
 import org.uoyabause.android.tv.GameSelectFragment;
-import org.uoyabause.uranus.R;
+
 
 public class YabauseSettings extends PreferenceActivity
     implements SharedPreferences.OnSharedPreferenceChangeListener, Preference.OnPreferenceClickListener, InputManager.InputDeviceListener {
@@ -285,10 +290,10 @@ public class YabauseSettings extends PreferenceActivity
             download.setSummary(download.getEntry());
         }
 
-        InputSettingPreference inputsetting1 = (InputSettingPreference)findPreference("pref_inputdef_file");
-        inputsetting1.setPlayerAndFilename(0,"keymap");
-        InputSettingPreference inputsetting2 = (InputSettingPreference)findPreference("pref_player2_inputdef_file");
-        inputsetting2.setPlayerAndFilename(1,"keymap_player2");
+    	//InputSettingPreference inputsetting1 = (InputSettingPreference)findPreference("pref_inputdef_file");
+        //inputsetting1.setPlayerAndFilename(0,"keymap");
+    	//InputSettingPreference inputsetting2 = (InputSettingPreference)findPreference("pref_player2_inputdef_file");
+        //inputsetting2.setPlayerAndFilename(1,"keymap_player2");
 
 
         Resources res = getResources();
@@ -452,7 +457,7 @@ public class YabauseSettings extends PreferenceActivity
                 return true;
             }
         });
-
+/*
         Preference select_image = findPreference("select_image");
         select_image.setOnPreferenceClickListener(new OnPreferenceClickListener() {
             @Override
@@ -467,7 +472,7 @@ public class YabauseSettings extends PreferenceActivity
                 return true;
             }
         });
-
+*/
         ListPreference soundengine_setting = (ListPreference) getPreferenceManager().findPreference("pref_sound_engine");
         soundengine_setting.setSummary(soundengine_setting.getEntry());
 
@@ -549,13 +554,14 @@ public class YabauseSettings extends PreferenceActivity
 
     protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
         super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
-
+/*
         if (resultCode == RESULT_OK) {
             Uri selectedImage = imageReturnedIntent.getData();
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
             String s = getRealPathFromURI(selectedImage);
             sp.edit().putString("select_image", s).commit();
         }
+ */
     }
 
     private void SyncInputDevice(){
@@ -593,6 +599,7 @@ public class YabauseSettings extends PreferenceActivity
         plyaer1_input_device.setEntryValues(input_entryValues);
         plyaer1_input_device.setSummary(plyaer1_input_device.getEntry());
 
+/*
         InputSettingPreference inputsetting= (InputSettingPreference)findPreference("pref_inputdef_file");
         PreferenceScreen onscreen_pad = (PreferenceScreen) findPreference("on_screen_pad");
         if( inputsetting != null ){
@@ -612,6 +619,7 @@ public class YabauseSettings extends PreferenceActivity
                 e.printStackTrace();
             }
         }
+ */
     }
 
     private void SyncInputDeviceForPlayer2(){
@@ -648,7 +656,7 @@ public class YabauseSettings extends PreferenceActivity
         plyaer2_input_device.setEntryValues(input_entryValues_p2);
         plyaer2_input_device.setSummary(plyaer2_input_device.getEntry());
 
-
+/*
         InputSettingPreference inputsetting= (InputSettingPreference)findPreference("pref_player2_inputdef_file");
         if( inputsetting != null ){
             try {
@@ -664,6 +672,7 @@ public class YabauseSettings extends PreferenceActivity
                 e.printStackTrace();
             }
         }
+ */
     }
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
@@ -780,6 +789,5 @@ public class YabauseSettings extends PreferenceActivity
     public void onDestroy() {
         super.onDestroy();
 
-    }
-
+        }
 }

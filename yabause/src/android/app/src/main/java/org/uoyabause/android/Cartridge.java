@@ -81,8 +81,7 @@ public class Cartridge {
             case CART_ROM16MBIT:
                 return "rom16.ram";
         }
-
-        return null;
+        return "dram32.ram";
     }
 
     static public int getTypeCount() {

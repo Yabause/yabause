@@ -46,9 +46,8 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.view.View;
 import android.os.Bundle;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
-import org.uoyabause.android.GameList;
 public class Home extends Activity
 {
     private static final String TAG = "Yabause";

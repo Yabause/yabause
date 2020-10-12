@@ -26,9 +26,8 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+
 import android.text.util.Linkify;
 import android.util.Log;
 import android.view.View;
@@ -36,7 +35,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import org.json.JSONObject;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;

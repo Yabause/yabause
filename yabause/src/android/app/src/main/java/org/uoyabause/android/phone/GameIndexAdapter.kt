@@ -23,8 +23,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.phone.GameIndexAdapter.GameIndexViewHolder
-import org.uoyabause.uranus.R
 
 class GameIndexAdapter(var index_title_: String) :
     RecyclerView.Adapter<GameIndexViewHolder>() {

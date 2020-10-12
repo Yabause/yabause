@@ -43,7 +43,7 @@ import android.util.Log;
 
 import org.json.JSONObject;
 import org.uoyabause.android.GameInfo;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 import org.uoyabause.android.Yabause;
 
 import java.io.BufferedInputStream;

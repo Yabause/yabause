@@ -60,13 +60,11 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
 import androidx.leanback.app.BackgroundManager;
-import androidx.leanback.app.BrowseFragment;
 import androidx.leanback.app.BrowseSupportFragment;
 import androidx.leanback.widget.ArrayObjectAdapter;
 import androidx.leanback.widget.HeaderItem;
@@ -91,20 +89,19 @@ import android.widget.Toast;
 import com.activeandroid.query.Select;
 
 import org.uoyabause.android.AdActivity;
-import org.uoyabause.android.DonateActivity;
 import org.uoyabause.android.FileDialog;
 import org.uoyabause.android.GameInfo;
 import org.uoyabause.android.GameSelectPresenter;
+import org.uoyabause.android.SettingsActivity;
 import org.uoyabause.android.ShowPinInFragment;
 import org.uoyabause.android.download.IsoDownload;
-import org.uoyabause.android.phone.GameSelectFragmentPhone;
-import org.uoyabause.uranus.BuildConfig;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.BuildConfig;
+import org.devmiyax.yabasanshiro.R;
 import org.uoyabause.android.Yabause;
 import org.uoyabause.android.YabauseApplication;
 import org.uoyabause.android.YabauseSettings;
 import org.uoyabause.android.YabauseStorage;
-import org.uoyabause.uranus.StartupActivity;
+import org.devmiyax.yabasanshiro.StartupActivity;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -649,7 +646,7 @@ public class GameSelectFragment extends BrowseSupportFragment
     private void updateBackGraound() {
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String image_path = sp.getString("select_image", "err");
+        String image_path = "err"; //sp.getString("select_image", "err");
         if (image_path.equals("err")) {
             mDefaultBackground = null; //getResources().getDrawable(R.drawable.saturn);
             mBackgroundManager.setDrawable(mDefaultBackground);
@@ -852,11 +849,11 @@ public class GameSelectFragment extends BrowseSupportFragment
                     //DownloadDialog newFragment = new DownloadDialog();
                     //newFragment.show(ft, "dialog");
                 } else if (((String) item).indexOf(getString(R.string.setting)) >= 0) {
-                    Intent intent = new Intent(getActivity(), YabauseSettings.class);
+                    Intent intent = new Intent(getActivity(), SettingsActivity.class);
                     startActivityForResult(intent, SETTING_ACTIVITY);
                 } else if (((String) item).indexOf(getString(R.string.load_game)) >= 0) {
 
-                    File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
+                    File yabroot = new File(YabauseStorage.getStorage().getRootPath());
                     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
                     String last_dir = sharedPref.getString("pref_last_dir", yabroot.getPath());
                     FileDialog fd = new FileDialog(getActivity(), last_dir);

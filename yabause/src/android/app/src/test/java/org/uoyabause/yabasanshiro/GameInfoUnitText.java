@@ -1,4 +1,4 @@
-package org.uoyabause.uranus;
+package org.devmiyax.yabasanshiro;
 
 /*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
@@ -18,10 +18,6 @@ package org.uoyabause.uranus;
     along with YabaSanshiro; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-
-import org.uoyabause.uranus.BuildConfig;
-import org.uoyabause.uranus.TestApplication;
-import org.uoyabause.android.GameInfo;
 
 import org.junit.Before;
 import org.junit.Test;

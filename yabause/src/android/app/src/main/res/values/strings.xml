@@ -306,5 +306,26 @@
     <string name="enter_pinin">Enter this PIN to your device</string>
     <string name="sign_in_to_other_devices">Sign in to other devices</string>
     <string name="hide_status_bar_and_navigation_bar">Hide Status bar and Navigation bar</string>
+    <string name="title_activity_yaba_snashiro_settings">YabaSnashiroSettingsActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="do_you_want_to_install">Do you want to install?</string>
+    <string name="only_chd_is_supported_for_load_game">Only CHD is supported for direct open</string>
+    <string name="install_game_message">If you install, you can play from this game list directly. But it costs </string>
+    <string name="install_game_message_after">MBytes.</string>
+
 </resources>
 	

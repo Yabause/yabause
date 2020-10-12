@@ -20,13 +20,18 @@
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/game_select_screen">
+<!--
         <org.uoyabause.android.GameDirectoriesDialogPreference
             android:key="pref_game_directory"
             android:title="@string/select_game_directory"
-            android:summary="" />
+            android:summary=""
+            android:defaultValue="" />
+-->
+<!--
         <Preference
             android:key="select_image"
             android:title="@string/select_bk_image" />
+-->
         <CheckBoxPreference
             android:key="pref_force_androidtv_mode"
             android:title="@string/foce_android_tv_mode"
@@ -53,7 +58,9 @@
         <ListPreference
             android:key="pref_cart"
             android:title="@string/cartridge"
-            android:dialogTitle="@string/choose_cartridge" />
+            android:dialogTitle="@string/choose_cartridge"
+            android:defaultValue="7"
+            />
 
         <CheckBoxPreference
             android:key="pref_extend_internal_memory"
@@ -165,12 +172,12 @@
               android:title="@string/input_device"
               android:dialogTitle="@string/choose_input_device"
               android:defaultValue="65535" />        
-      
+
         <org.uoyabause.android.InputSettingPreference
-            android:key="pref_inputdef_file"
+            android:key="pref_player1_inputdef_file"
             android:title="@string/input_device_setting"
             android:summary="" />
-        
+
         <PreferenceScreen 
             android:summary=""
             android:title="@string/onscrenn_pad_setting"
@@ -187,12 +194,12 @@
               android:title="@string/input_device"
               android:dialogTitle="@string/choose_input_device"
               android:defaultValue="65535" />        
-      
+
         <org.uoyabause.android.InputSettingPreference
             android:key="pref_player2_inputdef_file"
             android:title="@string/input_device_setting"
             android:summary="" />
-                
+
     </PreferenceCategory>    
 
     
@@ -216,12 +223,12 @@
             android:dialogTitle="@string/choose_time_synchronization_mode"
             android:entries="@array/entries_scsp_time_synchronization_mode"
             android:entryValues="@array/entryvalues_scsp_time_synchronization_mode"
-            android:defaultValue="1" />
+            android:defaultValue="0" />
 
         <EditTextPreference
             android:key="pref_scsp_sync_per_frame"
             android:inputType="number"
-            android:defaultValue="1"
+            android:defaultValue="4"
             android:summary=""
             android:title="Scsp synchronization count per a frame(1 - 255)" />
 

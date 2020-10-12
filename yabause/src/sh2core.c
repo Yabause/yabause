@@ -2199,11 +2199,15 @@ int DMAProc(int cycles) {
 #else
 int DMAProc( int cycles ){
 
+
    if (CurrentSH2->onchip.DMAOR & 0x6)
       return 0;
+
    
    if ( ((CurrentSH2->onchip.CHCR0 & 0x3)==0x01)  && ((CurrentSH2->onchip.CHCR1 & 0x3)==0x01) ) { // both channel wants DMA
       if (CurrentSH2->onchip.DMAOR & 0x8) { // round robin priority
+
+        if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
 
         DMATransferCycles(&CurrentSH2->dma_ch0, cycles);
         DMATransferCycles(&CurrentSH2->dma_ch1, cycles);
@@ -2212,17 +2216,22 @@ int DMAProc( int cycles ){
       else { // channel 0 > channel 1 priority
 
          if( (CurrentSH2->onchip.CHCR0 & 0x03) == 0x01 ){
+           if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
            DMATransferCycles(&CurrentSH2->dma_ch0, cycles);
          }else if( (CurrentSH2->onchip.CHCR1 &0x03) == 0x01 ) {
+           if ((CurrentSH2->onchip.CHCR1 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
            DMATransferCycles(&CurrentSH2->dma_ch1, cycles);
          }
       }
    }
    else { // only one channel wants DMA
 	   if (((CurrentSH2->onchip.CHCR0 & 0x3) == 0x01)) { // DMA for channel 0
+
+       if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles <<= 1;  } //Dual Chanel
        DMATransferCycles(&CurrentSH2->dma_ch0, cycles);
        return 0;
       }else if (((CurrentSH2->onchip.CHCR1 & 0x3) == 0x01)) { // DMA for channel 1
+        if ((CurrentSH2->onchip.CHCR1 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
          DMATransferCycles(&CurrentSH2->dma_ch1, cycles);
          return 0;
       }
@@ -2331,7 +2340,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
    u32 i = 0;
    int count;
 
-   //LOG("sh2 dma src=%08X,dst=%08X,%d type:%d cycle:%d\n", *SAR, *DAR, *TCR, ((*CHCR & 0x0C00) >> 10), cycles);
+   //LOG("sh2 dma src=%08X,dst=%08X,%d type:%d cycle:%d\n", *dmac->SAR, *dmac->DAR, *dmac->TCR, ((*dmac->CHCR & 0x0C00) >> 10), cycles);
 
    if (!(*dmac->CHCR & 0x2)) { // TE is not set
       int srcInc;

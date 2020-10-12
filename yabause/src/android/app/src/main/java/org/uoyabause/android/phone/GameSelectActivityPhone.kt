@@ -32,8 +32,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import net.nend.android.NendAdListener
 import net.nend.android.NendAdView
-import org.uoyabause.uranus.BuildConfig
-import org.uoyabause.uranus.R
+import org.devmiyax.yabasanshiro.BuildConfig
+import org.devmiyax.yabasanshiro.R
 
 class GameSelectActivityPhone : AppCompatActivity(), NendAdListener {
     lateinit var frg_: GameSelectFragmentPhone

@@ -34,34 +34,15 @@
     along with YabaSanshiro; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+package org.uoyabause.android
 
+import android.content.Context
+import android.util.AttributeSet
+import android.view.SurfaceHolder
+import android.view.SurfaceView
 
-package org.uoyabause.android;
-
-import java.lang.Runnable;
-
-import javax.microedition.khronos.egl.EGL10;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLContext;
-import javax.microedition.khronos.egl.EGLDisplay;
-import javax.microedition.khronos.egl.EGLSurface;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceHolder.Callback;
-import android.view.SurfaceView;
-import android.view.View;
-import android.view.View.OnKeyListener;
-
-public class YabauseView extends SurfaceView implements Callback {
-    private static String TAG = "YabauseView";
-    private static final boolean DEBUG = false;
-/*
+class YabauseView : SurfaceView, SurfaceHolder.Callback {
+    /*
     private int axisX = 0;
     private int axisY = 0;
 
@@ -69,54 +50,42 @@ public class YabauseView extends SurfaceView implements Callback {
     public int[] pointerX = new int[256];
     public int[] pointerY = new int[256];
 */
-    Context _context;
-    
-    public YabauseView(Context context, AttributeSet attrs) {
-        super(context,attrs);
-        _context = context;
-        init(false, 0, 0);
+    var _context: Context
+
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        _context = context
+        init(false, 0, 0)
     }
 
-    public YabauseView(Context context) {
-        super(context);
-        _context = context;
-        init(false, 0, 0);
+    constructor(context: Context) : super(context) {
+        _context = context
+        init(false, 0, 0)
     }
 
-    public YabauseView(Context context, boolean translucent, int depth, int stencil) {
-        super(context);
-        _context = context;
-        init(translucent, depth, stencil);
+    constructor(context: Context, translucent: Boolean, depth: Int, stencil: Int) : super(context) {
+        _context = context
+        init(translucent, depth, stencil)
     }
 
-    private void init(boolean translucent, int depth, int stencil) {
-       getHolder().addCallback(this);
-       //getHolder().setType(SurfaceHolder.SURFACE_TYPE_GPU);
-     
+    private fun init(translucent: Boolean, depth: Int, stencil: Int) {
+        holder.addCallback(this)
+        // getHolder().setType(SurfaceHolder.SURFACE_TYPE_GPU);
     }
 
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-      YabauseRunnable.lockGL();
-      YabauseRunnable.initViewport(holder.getSurface(),width, height);
-      YabauseRunnable.unlockGL();
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        YabauseRunnable.lockGL()
+        YabauseRunnable.initViewport(holder.surface, width, height)
+        YabauseRunnable.unlockGL()
     }
 
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        YabauseRunnable.lockGL();
-        YabauseRunnable.initViewport(null,0,0);
-        YabauseRunnable.unlockGL();
-
-    }
-/*
+    override fun surfaceCreated(holder: SurfaceHolder) {}
+    override fun surfaceDestroyed(holder: SurfaceHolder) {
+        YabauseRunnable.lockGL()
+        YabauseRunnable.initViewport(null, 0, 0)
+        YabauseRunnable.unlockGL()
+    } /*
     @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-    	/*
+    	/ *
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(_context);
         boolean keep_aspectrate = sharedPref.getBoolean("pref_keepaspectrate", false);
 
@@ -133,7 +102,7 @@ public class YabauseView extends SurfaceView implements Callback {
             }
             float saturnratio = (float) saturnw / saturnh;
 	        float revratio = (float) saturnh / saturnw;
-	
+
 	        if (specratio > saturnratio) {
 	            setMeasuredDimension((int) (spech * saturnratio), spech);
 	        } else {
@@ -144,4 +113,9 @@ public class YabauseView extends SurfaceView implements Callback {
         }
     }
 */
+
+    companion object {
+        private const val TAG = "YabauseView"
+        private const val DEBUG = false
+    }
 }

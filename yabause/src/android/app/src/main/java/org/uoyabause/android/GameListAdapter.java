@@ -47,8 +47,7 @@ import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
-import org.uoyabause.android.YabauseStorage;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 class GameListAdapter implements ListAdapter {
     private YabauseStorage storage;

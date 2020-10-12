@@ -18,7 +18,7 @@
 */
 
 
-package org.uoyabause.uranus;
+package org.devmiyax.yabasanshiro;
 
 import android.app.UiModeManager;
 import android.app.job.JobInfo;
@@ -32,11 +32,10 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
 import android.util.Log;
 import android.widget.Toast;
@@ -50,6 +49,7 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 
+import org.devmiyax.yabasanshiro.R;
 import org.json.JSONObject;
 import org.uoyabause.android.CheckPSerivce;
 import org.uoyabause.android.DonateActivity;

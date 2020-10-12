@@ -35,8 +35,8 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 
 import org.json.JSONObject;
-import org.uoyabause.uranus.BuildConfig;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.BuildConfig;
+import org.devmiyax.yabasanshiro.R;
 import org.uoyabause.util.IabHelper;
 import org.uoyabause.util.IabResult;
 import org.uoyabause.util.Purchase;
@@ -46,11 +46,6 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Authenticator;
