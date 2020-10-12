@@ -20,13 +20,13 @@
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/game_select_screen">
-<!--
+
         <org.uoyabause.android.GameDirectoriesDialogPreference
             android:key="pref_game_directory"
             android:title="@string/select_game_directory"
             android:summary=""
             android:defaultValue="" />
--->
+
 <!--
         <Preference
             android:key="select_image"

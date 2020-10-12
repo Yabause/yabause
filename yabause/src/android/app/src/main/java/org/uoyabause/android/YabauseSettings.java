@@ -243,7 +243,9 @@ public class YabauseSettings extends PreferenceActivity
             myCheckbox.setOnPreferenceChangeListener(myCheckboxListener);
         }
 
-        GameDirectoriesDialogPreference dires = (GameDirectoriesDialogPreference)findPreference("pref_game_directory");
+        //GameDirectoriesDialogPreference dires = (GameDirectoriesDialogPreference)findPreference("pref_game_directory");
+
+        GameDirectoriesDialogPreference dires = null;
         if(dires != null)
             dires.setActivity(this);
 /*

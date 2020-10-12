@@ -10,6 +10,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.content.pm.PackageManager
 import android.hardware.input.InputManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.DialogFragment
 import androidx.preference.EditTextPreference
@@ -18,10 +19,10 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
-import java.util.ArrayList
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.YabauseStorage.Companion.storage
 import org.uoyabause.android.tv.GameSelectFragment
+import java.util.ArrayList
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -52,7 +53,8 @@ class SettingsActivity : AppCompatActivity() {
 
     class SettingsFragment : PreferenceFragmentCompat(),
         InputManager.InputDeviceListener,
-        OnSharedPreferenceChangeListener {
+        OnSharedPreferenceChangeListener,
+        GameDirectoriesDialogPreference.DirListChangeListener {
         private val DIALOG_FRAGMENT_TAG = "CustomPreference"
         var inputManager: InputManager? = null
         var dirlist_status = false
@@ -273,6 +275,26 @@ class SettingsActivity : AppCompatActivity() {
             val f: DialogFragment?
             if (preference is InputSettingPreference) {
                 f = InputSettingPreferenceFragment.newInstance(preference.getKey())
+            }else if (preference is GameDirectoriesDialogPreference) {
+
+                preference.setDirListChangeListener(this)
+
+                // Above version 10
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    var dir = YabauseStorage.storage.gamePath
+                    if ( YabauseStorage.storage.hasExternalSD() ){
+                        dir += "\n" + YabauseStorage.storage.externalGamePath
+                    }
+
+                    Toast.makeText(requireActivity(),
+                        "Android 10 device only supports \n $dir",
+                        Toast.LENGTH_LONG).show()
+                    return
+                    
+                } else {
+                    f = GameDirectoriesDialogFragment.newInstance(preference.getKey())
+                }
+
             } else {
                 f = null
             }
@@ -280,9 +302,8 @@ class SettingsActivity : AppCompatActivity() {
             if (f != null) {
                 f.setTargetFragment(this, 0)
                 f.show(requireActivity().supportFragmentManager, DIALOG_FRAGMENT_TAG)
-            } else {
-                super.onDisplayPreferenceDialog(preference)
             }
+
         }
 
         private fun syncInputDevice(player: String) {
@@ -383,6 +404,14 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
+        override fun onChangeDir(isChange: Boolean?) {
+            dirlist_status = isChange!!
+            if (dirlist_status == true) {
+                if (restart_level <= 0) restart_level = 1
+                updateResultCode()
+            }
+        }
+
         fun updateResultCode() {
             val resultIntent = Intent()
             if (restart_level == 1) {
@@ -396,4 +425,5 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
     }
+
 }
