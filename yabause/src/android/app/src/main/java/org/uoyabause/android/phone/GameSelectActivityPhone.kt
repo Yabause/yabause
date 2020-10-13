@@ -30,13 +30,19 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import net.nend.android.NendAdListener
 import net.nend.android.NendAdView
+//import net.nend.android.NendAdView
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 
-class GameSelectActivityPhone : AppCompatActivity(), NendAdListener {
+class GameSelectActivityPhone : AppCompatActivity() {
     lateinit var frg_: GameSelectFragmentPhone
+    lateinit var adView: AdView
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -67,6 +73,27 @@ class GameSelectActivityPhone : AppCompatActivity(), NendAdListener {
             val hasDonated = prefs.getBoolean("donated", false)
             if (hasDonated == false) {
                 try {
+                    MobileAds.initialize(this, getString(R.string.ad_app_id))
+                    adView = AdView(this)
+                    adView.adUnitId = this.getString(R.string.banner_ad_unit_id)
+                    adView.adSize = AdSize.BANNER
+                    val adRequest = AdRequest.Builder().build()
+
+                    val params = FrameLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    params.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                    frame.addView(adView, params)
+                    adView.bringToFront()
+                    adView.invalidate()
+                    ViewCompat.setTranslationZ(adView, 90f)
+                    adView.loadAd(adRequest)
+                }catch (e : Exception ){
+                }
+            }
+
+/*
                     val nendAdView = NendAdView(
                         this,
                         getString(R.string.nend_spoid).toInt(),
@@ -86,6 +113,7 @@ class GameSelectActivityPhone : AppCompatActivity(), NendAdListener {
                 } catch (e: Exception) {
                 }
             }
+ */
         }
         /*
         GameSelectFragmentPhone frg = new GameSelectFragmentPhone();
@@ -120,33 +148,11 @@ class GameSelectActivityPhone : AppCompatActivity(), NendAdListener {
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onFailedToReceiveAd(nendAdView: NendAdView) { // Toast.makeText(getApplicationContext(), "onFailedToReceiveAd", Toast.LENGTH_LONG).show();
-        val nendError = nendAdView.nendError
-        when (nendError) {
-            NendAdView.NendError.INVALID_RESPONSE_TYPE -> {
-            }
-            NendAdView.NendError.FAILED_AD_DOWNLOAD -> {
-            }
-            NendAdView.NendError.FAILED_AD_REQUEST -> {
-            }
-            NendAdView.NendError.AD_SIZE_TOO_LARGE -> {
-            }
-            NendAdView.NendError.AD_SIZE_DIFFERENCES -> {
-            }
-        }
-        Log.e("nend", nendError.message)
+    override fun onPause() {
+        super.onPause()
+        adView.destroy()
     }
 
-    override fun onReceiveAd(nendAdView: NendAdView) { // Toast.makeText(getApplicationContext(), "onReceiveAd", Toast.LENGTH_LONG).show();
-        nendAdView.bringToFront()
-        nendAdView.invalidate()
-    }
-
-    override fun onClick(nendAdView: NendAdView) { // Toast.makeText(getApplicationContext(), "onClick", Toast.LENGTH_LONG).show();
-    }
-
-    override fun onDismissScreen(nendAdView: NendAdView) { // Toast.makeText(getApplicationContext(), "onDismissScreen", Toast.LENGTH_LONG).show();
-    }
 
     companion object {
         const val CONTENT_VIEW_ID = 10101010

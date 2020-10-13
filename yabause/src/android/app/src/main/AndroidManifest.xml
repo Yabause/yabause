@@ -157,6 +157,10 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:theme="@android:style/Theme.Translucent" />
 
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/ad_app_id"/>
+
         <service android:name="org.uoyabause.android.Notification">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

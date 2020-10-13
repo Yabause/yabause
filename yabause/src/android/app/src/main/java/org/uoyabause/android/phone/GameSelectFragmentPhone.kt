@@ -185,7 +185,7 @@ class GameSelectFragmentPhone : Fragment(),
     val DOWNLOAD_ACTIVITY = 0x03
     val AD_ACTIVITY = 0x04
     private var mDrawerLayout: DrawerLayout? = null
-    private var mInterstitialAd: InterstitialAd? = null
+    //private var mInterstitialAd: InterstitialAd? = null
     private var mTracker: Tracker? = null
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
     var isfisrtupdate = true
@@ -642,15 +642,15 @@ class GameSelectFragmentPhone : Fragment(),
                         val uiModeManager =
                             activity?.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
                         if (uiModeManager.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION) {
-                            if (mInterstitialAd!!.isLoaded) {
-                                mInterstitialAd!!.show()
-                            } else {
+                            //if (mInterstitialAd!!.isLoaded) {
+                            //    mInterstitialAd!!.show()
+                            //} else {
                                 val intent = Intent(
                                     activity,
                                     AdActivity::class.java
                                 )
                                 startActivityForResult(intent, AD_ACTIVITY)
-                            }
+                            //}
                         } else {
                             val intent =
                                 Intent(activity, AdActivity::class.java)
@@ -736,7 +736,8 @@ class GameSelectFragmentPhone : Fragment(),
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(activity)
         val application = activity.application as YabauseApplication
         mTracker = application.defaultTracker
-        MobileAds.initialize(activity.applicationContext, getString(R.string.ad_app_id))
+/*
+        MobileAds.initialize(requireActivity(), getString(R.string.ad_app_id))
         mInterstitialAd = InterstitialAd(activity)
         mInterstitialAd!!.adUnitId = getString(R.string.banner_ad_unit_id)
         requestNewInterstitial()
@@ -745,7 +746,7 @@ class GameSelectFragmentPhone : Fragment(),
                 requestNewInterstitial()
             }
         }
-
+*/
         val toolbar =
             rootview_.findViewById<View>(R.id.toolbar) as Toolbar
         toolbar.setLogo(R.mipmap.ic_launcher)
@@ -1101,7 +1102,7 @@ class GameSelectFragmentPhone : Fragment(),
         val adRequest =
             AdRequest.Builder() // .addTestDevice("YOUR_DEVICE_HASH")
                 .build()
-        mInterstitialAd!!.loadAd(adRequest)
+        //mInterstitialAd!!.loadAd(adRequest)
     }
 
     private var isBackGroundComplete = false
