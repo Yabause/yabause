@@ -893,7 +893,7 @@ static bool init_hw_context()
    if (!environ_cb(RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, &preferred_context))
       preferred_context = RETRO_HW_CONTEXT_DUMMY;
    // always requests a gl core context, because mesa will always fail giving a gl compat context above 3.0
-   if (preferred_context == RETRO_HW_CONTEXT_OPENGL || preferred_context == RETRO_HW_CONTEXT_OPENGL_CORE || preferred_context == RETRO_HW_CONTEXT_DUMMY)
+   //if (preferred_context == RETRO_HW_CONTEXT_OPENGL || preferred_context == RETRO_HW_CONTEXT_OPENGL_CORE || preferred_context == RETRO_HW_CONTEXT_DUMMY)
       found_context = try_init_context(RETRO_HW_CONTEXT_OPENGL_CORE);
    if (!found_context)
       log_cb(RETRO_LOG_ERROR, "Failed retrieving a glcore 4.2 context, make sure your GPU has the minimum requirements and RetroArch is set properly\n");
