@@ -42,7 +42,7 @@ import org.devmiyax.yabasanshiro.R
 
 class GameSelectActivityPhone : AppCompatActivity() {
     lateinit var frg_: GameSelectFragmentPhone
-    lateinit var adView: AdView
+    var adView: AdView? = null
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -75,8 +75,8 @@ class GameSelectActivityPhone : AppCompatActivity() {
                 try {
                     MobileAds.initialize(this, getString(R.string.ad_app_id))
                     adView = AdView(this)
-                    adView.adUnitId = this.getString(R.string.banner_ad_unit_id)
-                    adView.adSize = AdSize.BANNER
+                    adView!!.adUnitId = this.getString(R.string.banner_ad_unit_id)
+                    adView!!.adSize = AdSize.BANNER
                     val adRequest = AdRequest.Builder().build()
 
                     val params = FrameLayout.LayoutParams(
@@ -85,10 +85,10 @@ class GameSelectActivityPhone : AppCompatActivity() {
                     )
                     params.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
                     frame.addView(adView, params)
-                    adView.bringToFront()
-                    adView.invalidate()
-                    ViewCompat.setTranslationZ(adView, 90f)
-                    adView.loadAd(adRequest)
+                    adView!!.bringToFront()
+                    adView!!.invalidate()
+                    ViewCompat.setTranslationZ(adView!!, 90f)
+                    adView!!.loadAd(adRequest)
                 }catch (e : Exception ){
                 }
             }
@@ -150,7 +150,7 @@ class GameSelectActivityPhone : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        adView.destroy()
+        adView?.destroy()
     }
 
 

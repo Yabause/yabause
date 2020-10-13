@@ -443,6 +443,7 @@ class GameSelectFragmentPhone : Fragment(),
         }
         if (apath == "") {
             Toast.makeText(requireContext(), "Fail to open $uristring", Toast.LENGTH_LONG).show()
+            mParcelFileDescriptor?.close()
             return
         }
 
