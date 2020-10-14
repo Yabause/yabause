@@ -141,7 +141,7 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       "kronos_resolution_mode",
-      "Internal Resolution",
+      "Resolution",
       "Modify rendering resolution. Requires a restart.",
       {
          { "original", NULL },
@@ -149,9 +149,21 @@ struct retro_core_option_definition option_defs_us[] = {
          { "720p", NULL },
          { "1080p", NULL },
          { "4k", NULL },
+         { "8k", NULL },
          { NULL, NULL},
       },
       "original"
+   },
+   {
+      "kronos_force_downsampling",
+      "Downsampling",
+      "Downsample to original hardware resolution, will also replace meshed transparency by real transparency to avoid gfx issues",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
    },
    {
       "kronos_polygon_mode",

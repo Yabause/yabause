@@ -64,13 +64,23 @@ static int addon_cart_type = CART_NONE;
 static int mesh_mode = ORIGINAL_MESH;
 static int banding_mode = ORIGINAL_BANDING;
 
+typedef enum
+{
+    N_RES_NO = 0,
+    N_RES_4k = 1,
+    N_RES_8k = 2,
+} NATIVE_RESOLUTION_MODE;
+
 static int g_vidcoretype = VIDCORE_OGL;
 static int g_sh2coretype = 8;
 static int g_skipframe = 0;
 static int g_videoformattype = -1;
-static int resolution_mode = 1;
+static int resolution_mode = RES_ORIGINAL;
+static int native_resolution_mode = N_RES_NO;
 static int polygon_mode = PERSPECTIVE_CORRECTION;
 static int initial_resolution_mode = 0;
+static int initial_native_resolution_mode = N_RES_NO;
+static int force_downsampling = 0;
 static int numthreads = 4;
 static int use_beetle_saves = 0;
 static int use_cs = COMPUTE_RBG_OFF;
@@ -839,6 +849,8 @@ static void context_reset(void)
    game_width = _Ygl->width;
    game_height = _Ygl->height;
    set_variable_visibility();
+   // Resolution is now known, let's tell retroarch to refresh geometry
+   resolution_need_update = true;
    rendering_started = true;
 }
 
@@ -1042,15 +1054,33 @@ void check_variables(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "original") == 0)
-         resolution_mode = 1;
+         resolution_mode = RES_ORIGINAL;
       else if (strcmp(var.value, "480p") == 0)
-         resolution_mode = 2;
+         resolution_mode = RES_480p;
       else if (strcmp(var.value, "720p") == 0)
-         resolution_mode = 4;
+         resolution_mode = RES_720p;
       else if (strcmp(var.value, "1080p") == 0)
-         resolution_mode = 8;
+         resolution_mode = RES_1080p;
       else if (strcmp(var.value, "4k") == 0)
-         resolution_mode = 16;
+      {
+         resolution_mode = RES_NATIVE;
+         native_resolution_mode = N_RES_4k;
+      }
+      else if (strcmp(var.value, "8k") == 0)
+      {
+         resolution_mode = RES_NATIVE;
+         native_resolution_mode = N_RES_8k;
+      }
+   }
+
+   var.key = "kronos_force_downsampling";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         force_downsampling = 0;
+      else if (strcmp(var.value, "enabled") == 0)
+         force_downsampling = 1;
    }
 
    var.key = "kronos_polygon_mode";
@@ -1216,6 +1246,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
       // Get the initial resolution mode at start
       // It will be the resolution_mode limit until the core is restarted
       initial_resolution_mode = resolution_mode;
+      initial_native_resolution_mode = native_resolution_mode;
       switch(resolution_mode)
       {
          case RES_ORIGINAL:
@@ -1232,16 +1263,28 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
             window_height = 1080;
             break;
          case RES_NATIVE:
-            window_width = 3840;
-            window_height = 2160;
+            switch (native_resolution_mode)
+            {
+               case N_RES_4k:
+                  window_width = 3840;
+                  window_height = 2160;
+                  break;
+               case N_RES_8k:
+                  window_width = 7680;
+                  window_height = 4320;
+                  break;
+            }
             break;
       }
    }
 
+   int base_width = (force_downsampling && rendering_started ? _Ygl->rwidth : game_width);
+   int base_height = (force_downsampling && rendering_started ? _Ygl->rheight : game_height);
+
    info->timing.fps            = (retro_get_region() == RETRO_REGION_NTSC ? 60.0f : 50.0f);
    info->timing.sample_rate    = SAMPLERATE;
-   info->geometry.base_width   = game_width;
-   info->geometry.base_height  = game_height;
+   info->geometry.base_width   = base_width;
+   info->geometry.base_height  = base_height;
    info->geometry.max_width    = window_width;
    info->geometry.max_height   = window_height;
    info->geometry.aspect_ratio = (retro_get_region() == RETRO_REGION_NTSC) ? 4.0 / 3.0 : 5.0 / 4.0;
@@ -1647,7 +1690,7 @@ bool retro_load_game_common()
    yinit.stretch                 = 2; //Always ask Kronos core to return a integer scaling
    yinit.extend_backup           = 0;
    yinit.buppath                 = bup_path;
-   yinit.meshmode                = mesh_mode;
+   yinit.meshmode                = (force_downsampling ? IMPROVED_MESH : mesh_mode); // we want improved mesh with downsampling, otherwise it'll cause gfx glitches
    yinit.bandingmode             = banding_mode;
    yinit.use_cs                  = use_cs;
    yinit.wireframe_mode          = wireframe_mode;
@@ -1844,21 +1887,27 @@ void retro_run(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
    {
       int prev_resolution_mode = resolution_mode;
+      int prev_force_downsampling = force_downsampling;
       int prev_multitap[2] = {multitap[0],multitap[1]};
       check_variables();
       // If resolution_mode > initial_resolution_mode, we'll need a restart to reallocate the max size for buffer
       if (resolution_mode > initial_resolution_mode)
       {
-         log_cb(RETRO_LOG_INFO, "Restart the core for the new resolution\n", resolution_mode);
+         log_cb(RETRO_LOG_INFO, "Restart the core for the new resolution\n");
          resolution_mode = initial_resolution_mode;
       }
-      resolution_need_update = (prev_resolution_mode != resolution_mode);
+      if (native_resolution_mode > initial_native_resolution_mode)
+      {
+         log_cb(RETRO_LOG_INFO, "Restart the core for the new resolution\n");
+         native_resolution_mode = initial_native_resolution_mode;
+      }
+      resolution_need_update = (prev_resolution_mode != resolution_mode || prev_force_downsampling != force_downsampling);
       if (prev_resolution_mode != resolution_mode)
          VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
       if(PERCore && (prev_multitap[0] != multitap[0] || prev_multitap[1] != multitap[1]))
          PERCore->Init();
       VIDCore->SetSettingValue(VDP_SETTING_POLYGON_MODE, polygon_mode);
-      VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, mesh_mode);
+      VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, (force_downsampling ? IMPROVED_MESH : mesh_mode)); // we want improved mesh with downsampling, otherwise it'll cause gfx glitches
       VIDCore->SetSettingValue(VDP_SETTING_BANDING_MODE, banding_mode);
       VIDCore->SetSettingValue(VDP_SETTING_COMPUTE_SHADER, use_cs);
       VIDCore->SetSettingValue(VDP_SETTING_WIREFRAME, wireframe_mode);
