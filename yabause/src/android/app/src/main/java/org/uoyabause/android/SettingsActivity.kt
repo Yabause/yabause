@@ -302,8 +302,9 @@ class SettingsActivity : AppCompatActivity() {
             if (f != null) {
                 f.setTargetFragment(this, 0)
                 f.show(requireActivity().supportFragmentManager, DIALOG_FRAGMENT_TAG)
+            }else{
+                super.onDisplayPreferenceDialog(preference)
             }
-
         }
 
         private fun syncInputDevice(player: String) {
