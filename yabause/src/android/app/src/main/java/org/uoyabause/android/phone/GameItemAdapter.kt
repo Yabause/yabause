@@ -18,9 +18,6 @@
 */
 package org.uoyabause.android.phone
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.view.ContextMenu
@@ -38,7 +35,6 @@ import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import java.io.File
-import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.GameInfo
 import org.uoyabause.android.phone.GameItemAdapter.GameViewHolder
@@ -198,7 +194,6 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
                                 }
                                 .show()
                     }
-                }
                 else -> {
                     Log.d("textext", "Unknown value (value = $it.itemId)")
                 }

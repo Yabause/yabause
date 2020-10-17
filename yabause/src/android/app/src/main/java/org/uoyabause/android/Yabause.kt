@@ -82,7 +82,6 @@ import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
 import com.google.android.gms.tasks.OnFailureListener
@@ -104,7 +103,6 @@ import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -167,6 +165,15 @@ class Yabause : AppCompatActivity(),
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var progressBar: View
     private lateinit var progressMessage: TextView
+
+    fun showWaitDialog(message: String) {
+        progressMessage.text = message
+        progressBar.visibility = View.VISIBLE
+    }
+
+    fun dismissWaitDialog() {
+        progressBar.visibility = View.GONE
+    }
 
     fun showDialog() {
         progressMessage.text = "Sending..."
@@ -316,20 +323,21 @@ class Yabause : AppCompatActivity(),
             val uri = Uri.parse(uriString)
             var apath = ""
             try {
-                mParcelFileDescriptor = contentResolver.openFileDescriptor(uri, "r")
-                if (mParcelFileDescriptor != null) {
-                    val fd: Int? = mParcelFileDescriptor?.getFd()
-                    if (fd != null) {
-                        apath = "/proc/self/fd/$fd"
+                    mParcelFileDescriptor = contentResolver.openFileDescriptor(uri, "r")
+                    if (mParcelFileDescriptor != null) {
+                        val fd: Int? = mParcelFileDescriptor?.getFd()
+                        if (fd != null) {
+                            apath = "/proc/self/fd/$fd"
+                        }
                     }
-                }
-            } catch (fne: FileNotFoundException) {
-                apath = ""
+            } catch (e: Exception) {
+                    Toast.makeText(this@Yabause, "Fail to open $uri with ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                    return
             }
 
             if (apath == "") {
-                Toast.makeText(this, "Fail to open $apath", Toast.LENGTH_LONG).show()
-                return
+                    Toast.makeText(this@Yabause, "Fail to open $apath", Toast.LENGTH_LONG).show()
+                    return
             }
             gamePath = apath
         }

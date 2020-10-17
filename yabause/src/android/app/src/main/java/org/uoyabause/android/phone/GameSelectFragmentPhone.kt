@@ -55,10 +55,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
 import com.activeandroid.query.Select
 import com.bumptech.glide.Glide
-import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.InterstitialAd
-import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.analytics.HitBuilders.EventBuilder
 import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
@@ -75,6 +72,10 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.util.Calendar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.cattaka.android.adaptertoolbox.thirdparty.MergeRecyclerAdapter
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
@@ -185,7 +186,7 @@ class GameSelectFragmentPhone : Fragment(),
     val DOWNLOAD_ACTIVITY = 0x03
     val AD_ACTIVITY = 0x04
     private var mDrawerLayout: DrawerLayout? = null
-    //private var mInterstitialAd: InterstitialAd? = null
+    // private var mInterstitialAd: InterstitialAd? = null
     private var mTracker: Tracker? = null
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
     var isfisrtupdate = true
@@ -416,128 +417,137 @@ class GameSelectFragmentPhone : Fragment(),
         tabpage_adapter.notifyDataSetChanged()
     }
 
+    val scope = CoroutineScope(Dispatchers.Default)
     fun openGameFileDirect(uri: Uri) {
-
-        var mParcelFileDescriptor: ParcelFileDescriptor? = null
-
-        val uristring = uri.toString().toLowerCase()
-/*
-        if (uristring.endsWith("chd") == false) {
-            Toast.makeText(requireContext(),
-                "Only CHD is supported for direct open",
-                Toast.LENGTH_LONG).show()
-            return
-        }
-*/
-        var apath = ""
-        try {
-            mParcelFileDescriptor = requireActivity()!!.contentResolver.openFileDescriptor(uri, "r")
-            if (mParcelFileDescriptor != null) {
-                val fd: Int? = mParcelFileDescriptor?.getFd()
-                if (fd != null) {
-                    apath = "/proc/self/fd/$fd"
-                }
+        scope.launch {
+            withContext(Dispatchers.Main) {
+                showDialog("Opening ...")
             }
-        } catch (fne: FileNotFoundException) {
-            apath = ""
-        }
-        if (apath == "") {
-            Toast.makeText(requireContext(), "Fail to open $uristring", Toast.LENGTH_LONG).show()
-            mParcelFileDescriptor?.close()
-            return
-        }
 
-        var gameinfo: GameInfo? = null
-        gameinfo = GameInfo.genGameInfoFromCHD(apath)
-        if (gameinfo != null) {
+            var mParcelFileDescriptor: ParcelFileDescriptor? = null
+            val uristring = uri.toString().toLowerCase()
+            var apath = ""
+            try {
+                mParcelFileDescriptor =
+                    requireActivity()!!.contentResolver.openFileDescriptor(uri, "r")
+                if (mParcelFileDescriptor != null) {
+                    val fd: Int? = mParcelFileDescriptor?.getFd()
+                    if (fd != null) {
+                        apath = "/proc/self/fd/$fd"
+                    }
+                }
+            } catch (fne: FileNotFoundException) {
+                apath = ""
+            }
+            if (apath == "") {
+                Toast.makeText(requireContext(), "Fail to open $uristring", Toast.LENGTH_LONG)
+                    .show()
+                mParcelFileDescriptor?.close()
+                withContext(Dispatchers.Main) {
+                    dismissDialog()
+                }
+                return@launch
+            }
 
-            val bundle = Bundle()
-            bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
-            bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
-            mFirebaseAnalytics!!.logEvent(
-                "yab_start_game", bundle
-            )
-            mParcelFileDescriptor!!.close()
-            val intent = Intent(activity, Yabause::class.java)
-            intent.putExtra("org.uoyabause.android.FileNameUri", uri.toString())
-            intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number)
-            startActivity(intent)
-        } else {
-            Toast.makeText(requireContext(), "Fail to open $apath", Toast.LENGTH_LONG).show()
-            mParcelFileDescriptor?.close()
+            var gameinfo: GameInfo? = null
+            gameinfo = GameInfo.genGameInfoFromCHD(apath)
+            if (gameinfo != null) {
+
+                val bundle = Bundle()
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
+                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
+                mFirebaseAnalytics!!.logEvent(
+                    "yab_start_game", bundle
+                )
+                mParcelFileDescriptor!!.close()
+                val intent = Intent(activity, Yabause::class.java)
+                intent.putExtra("org.uoyabause.android.FileNameUri", uri.toString())
+                intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number)
+                startActivityForResult(intent, YABAUSE_ACTIVITY)
+            } else {
+                Toast.makeText(requireContext(), "Fail to open $apath", Toast.LENGTH_LONG).show()
+                mParcelFileDescriptor?.close()
+            }
+            withContext(Dispatchers.Main) {
+                dismissDialog()
+            }
         }
     }
 
     fun installGameFile(uri: Uri) {
-
-        var mParcelFileDescriptor: ParcelFileDescriptor? = null
-
-        val uristring = uri.toString().toLowerCase()
-/*
-        if (uristring.endsWith("chd") == false) {
-            Toast.makeText(requireContext(),
-                "Only CHD is supported for direct open",
-                Toast.LENGTH_LONG).show()
-            return
-        }
-*/
-        var apath = ""
-        try {
-            mParcelFileDescriptor = requireActivity()!!.contentResolver.openFileDescriptor(uri, "r")
-            if (mParcelFileDescriptor != null) {
-                val fd: Int? = mParcelFileDescriptor?.getFd()
-                if (fd != null) {
-                    apath = "/proc/self/fd/$fd"
-                }
+        scope.launch {
+            withContext(Dispatchers.Main) {
+                showDialog("Installing ...")
             }
-        } catch (fne: FileNotFoundException) {
-            apath = ""
-        }
-        if (apath == "") {
-            Toast.makeText(requireContext(), "Fail to open $uristring", Toast.LENGTH_LONG).show()
-            return
-        }
+            try {
+                var gameinfo: GameInfo? = null
 
-        var gameinfo: GameInfo? = null
-        gameinfo = GameInfo.genGameInfoFromCHD(apath)
-        if (gameinfo != null) {
+                var mParcelFileDescriptor: ParcelFileDescriptor? = null
 
-            val bundle = Bundle()
-            bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
-            bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
-            mFirebaseAnalytics!!.logEvent(
-                "yab_start_game", bundle
-            )
-            mParcelFileDescriptor!!.close()
-        } else {
-            Toast.makeText(requireContext(), "Fail to open $apath", Toast.LENGTH_LONG).show()
-            mParcelFileDescriptor?.close()
-            return
-        }
+                val uristring = uri.toString().toLowerCase()
+                var apath = ""
+                try {
+                    mParcelFileDescriptor = requireActivity()!!.contentResolver.openFileDescriptor(uri, "r")
+                    if (mParcelFileDescriptor != null) {
+                        val fd: Int? = mParcelFileDescriptor?.getFd()
+                        if (fd != null) {
+                            apath = "/proc/self/fd/$fd"
+                        }
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Fail to open $uristring with ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                    withContext(Dispatchers.Main) {
+                        dismissDialog()
+                    }
+                    return@launch
+                }
 
-        try {
-            val fd = File(YabauseStorage.storage.gamePath + "/" + gameinfo.product_number + ".chd")
-            var parcelFileDescriptor =
-                requireActivity().contentResolver.openFileDescriptor(uri, "r")
-            val fileDescriptor: FileDescriptor = parcelFileDescriptor!!.getFileDescriptor()
+                if (apath == "") {
+                    Toast.makeText(requireContext(), "Fail to open $uristring", Toast.LENGTH_LONG).show()
+                    withContext(Dispatchers.Main) {
+                        dismissDialog()
+                    }
+                    return@launch
+                }
 
-            FileInputStream(fileDescriptor).use { inputStream ->
-                FileOutputStream(fd).use { outputStream ->
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                        FileUtils.copy(inputStream, outputStream)
-                    } else {
-                        TODO("VERSION.SDK_INT < Q")
+                gameinfo = GameInfo.genGameInfoFromCHD(apath)
+                if (gameinfo != null) {
+
+                    val bundle = Bundle()
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
+                    mFirebaseAnalytics!!.logEvent(
+                        "yab_start_game", bundle
+                    )
+                    mParcelFileDescriptor!!.close()
+                } else {
+                    Toast.makeText(requireContext(), "Fail to open $apath", Toast.LENGTH_LONG).show()
+                    mParcelFileDescriptor?.close()
+                    return@launch
+                }
+
+                withContext(Dispatchers.Main) {
+                    updateDialogString("Installing ${gameinfo.game_title}")
+                }
+
+                val fd =
+                    File(YabauseStorage.storage.gamePath + "/" + gameinfo.product_number + ".chd")
+                var parcelFileDescriptor =
+                    requireActivity().contentResolver.openFileDescriptor(uri, "r")
+                val fileDescriptor: FileDescriptor = parcelFileDescriptor!!.getFileDescriptor()
+
+                FileInputStream(fileDescriptor).use { inputStream ->
+                    FileOutputStream(fd).use { outputStream ->
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                            FileUtils.copy(inputStream, outputStream)
+                        } else {
+                            TODO("VERSION.SDK_INT < Q")
+                        }
                     }
                 }
             }
-
-            fileSelected(fd)
-        } catch (e: Exception) {
-            Toast.makeText(requireContext(),
-                "Fail to copy " + e.localizedMessage,
-                Toast.LENGTH_LONG).show()
-            return
         }
+        return
     }
 
     override fun onActivityResult(
@@ -572,7 +582,7 @@ class GameSelectFragmentPhone : Fragment(),
                     cursor.close()
 
                     size = size / 1024 / 1024
-                    val message = getString(R.string.install_game_message) + size + getString(R.string.install_game_message_after)
+                    val message = getString(R.string.install_game_message) + " " + size + getString(R.string.install_game_message_after)
 
                     val show = AlertDialog.Builder(requireActivity())
                         .setTitle(getString(R.string.do_you_want_to_install))
@@ -643,15 +653,15 @@ class GameSelectFragmentPhone : Fragment(),
                         val uiModeManager =
                             activity?.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
                         if (uiModeManager.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION) {
-                            //if (mInterstitialAd!!.isLoaded) {
+                            // if (mInterstitialAd!!.isLoaded) {
                             //    mInterstitialAd!!.show()
-                            //} else {
+                            // } else {
                                 val intent = Intent(
                                     activity,
                                     AdActivity::class.java
                                 )
                                 startActivityForResult(intent, AD_ACTIVITY)
-                            //}
+                            // }
                         } else {
                             val intent =
                                 Intent(activity, AdActivity::class.java)
@@ -663,6 +673,8 @@ class GameSelectFragmentPhone : Fragment(),
                         startActivityForResult(intent, AD_ACTIVITY)
                     }
                 }
+            } else {
+                updateRecent()
             }
             else -> {
                 updateRecent()
@@ -714,16 +726,20 @@ class GameSelectFragmentPhone : Fragment(),
         val intent = Intent(activity, Yabause::class.java)
         intent.putExtra("org.uoyabause.android.FileNameEx", apath)
         intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number)
-        startActivity(intent)
+        startActivityForResult(intent, YABAUSE_ACTIVITY)
     }
 
-    fun showDialog() {
-        progress_message.text = "Updating..."
+    fun showDialog(message: String?) {
+        if (message != null) {
+            progress_message.text = message
+        } else {
+            progress_message.text = "Updating..."
+        }
         llProgressBar.visibility = View.VISIBLE
     }
 
     fun updateDialogString(msg: String) {
-        progress_message.text = "Updating... $msg"
+        progress_message.text = msg
     }
 
     fun dismissDialog() {
@@ -848,11 +864,11 @@ class GameSelectFragmentPhone : Fragment(),
             // GithubRepositoryApiCompleteEventEntity eventResult = new GithubRepositoryApiCompleteEventEntity();
             override fun onSubscribe(d: Disposable) {
                 observer = this
-                showDialog()
+                showDialog(null)
             }
 
             override fun onNext(response: String) {
-                updateDialogString(response)
+                updateDialogString("Updating ..." + response)
             }
 
             override fun onError(e: Throwable) {
@@ -1103,7 +1119,7 @@ class GameSelectFragmentPhone : Fragment(),
         val adRequest =
             AdRequest.Builder() // .addTestDevice("YOUR_DEVICE_HASH")
                 .build()
-        //mInterstitialAd!!.loadAd(adRequest)
+        // mInterstitialAd!!.loadAd(adRequest)
     }
 
     private var isBackGroundComplete = false

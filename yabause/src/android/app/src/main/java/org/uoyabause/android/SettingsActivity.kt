@@ -19,10 +19,10 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
+import java.util.ArrayList
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.YabauseStorage.Companion.storage
 import org.uoyabause.android.tv.GameSelectFragment
-import java.util.ArrayList
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -275,14 +275,14 @@ class SettingsActivity : AppCompatActivity() {
             val f: DialogFragment?
             if (preference is InputSettingPreference) {
                 f = InputSettingPreferenceFragment.newInstance(preference.getKey())
-            }else if (preference is GameDirectoriesDialogPreference) {
+            } else if (preference is GameDirectoriesDialogPreference) {
 
                 preference.setDirListChangeListener(this)
 
                 // Above version 10
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                     var dir = YabauseStorage.storage.gamePath
-                    if ( YabauseStorage.storage.hasExternalSD() ){
+                    if (YabauseStorage.storage.hasExternalSD()) {
                         dir += "\n" + YabauseStorage.storage.externalGamePath
                     }
 
@@ -290,11 +290,9 @@ class SettingsActivity : AppCompatActivity() {
                         "Android 10 device only supports \n $dir",
                         Toast.LENGTH_LONG).show()
                     return
-                    
                 } else {
                     f = GameDirectoriesDialogFragment.newInstance(preference.getKey())
                 }
-
             } else {
                 f = null
             }
@@ -302,7 +300,7 @@ class SettingsActivity : AppCompatActivity() {
             if (f != null) {
                 f.setTargetFragment(this, 0)
                 f.show(requireActivity().supportFragmentManager, DIALOG_FRAGMENT_TAG)
-            }else{
+            } else {
                 super.onDisplayPreferenceDialog(preference)
             }
         }
@@ -426,5 +424,4 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
     }
-
 }

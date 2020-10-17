@@ -21,7 +21,6 @@ package org.uoyabause.android.phone
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.MenuItem
 import android.view.Window
@@ -34,9 +33,7 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
-import net.nend.android.NendAdListener
-import net.nend.android.NendAdView
-//import net.nend.android.NendAdView
+// import net.nend.android.NendAdView
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 
@@ -89,7 +86,7 @@ class GameSelectActivityPhone : AppCompatActivity() {
                     adView!!.invalidate()
                     ViewCompat.setTranslationZ(adView!!, 90f)
                     adView!!.loadAd(adRequest)
-                }catch (e : Exception ){
+                } catch (e: Exception) {
                 }
             }
 
@@ -152,7 +149,6 @@ class GameSelectActivityPhone : AppCompatActivity() {
         super.onPause()
         adView?.destroy()
     }
-
 
     companion object {
         const val CONTENT_VIEW_ID = 10101010
