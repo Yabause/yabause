@@ -1711,10 +1711,10 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
 
    // Write header
    if (context->isslave == 0)
-      offset = StateWriteHeader(fp, "MSH2", 1);
+      offset = StateWriteHeader(fp, "MSH2", 2);
    else
    {
-      offset = StateWriteHeader(fp, "SSH2", 1);
+      offset = StateWriteHeader(fp, "SSH2", 2);
       ywrite(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
    }
 
@@ -1767,7 +1767,11 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
    SH2SetRegisters(context, &regs);
 
    // Read onchip registers
-   yread(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
+   if (version < 2) {
+      yread(&check, (void *)&context->onchip, sizeof(Onchip_struct)-sizeof(u32)/*WTCSRM*/, 1, fp);
+   }else {
+     yread(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
+   }
 
    // Read internal variables
    yread(&check, (void *)&context->frc, sizeof(context->frc), 1, fp);
