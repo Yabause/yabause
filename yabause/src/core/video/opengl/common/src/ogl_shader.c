@@ -455,6 +455,7 @@ const GLchar Yglprg_userclip_f[] =
       "precision highp float;                            \n"
       "#endif\n"
       "out vec4 fragColor;            \n"
+      "out vec2 fragMesh; \n"
       "void main()                                         \n"
       "{ \n"
       "  vec4 outColor = vec4( 0.0 );\n";
@@ -744,6 +745,7 @@ const GLchar vdp1drawstart_no_mesh[] = {
   "in vec4 v_texcoord;\n"
   "in vec4 v_vtxcolor; \n"
   "out vec4 fragColor; \n"
+  "out vec2 fragMesh; \n"
   "void main() {\n"
   "  vec4 outColor = vec4(0.0);\n"
   "  if (any(greaterThan(ivec2(gl_FragCoord.x, sysClip.z - gl_FragCoord.y), sysClip.xy))) discard;\n"
@@ -931,11 +933,12 @@ const GLchar* vdp1drawmode[15]= {
 //ENd of shaders
 const GLchar vdp1drawend_no_mesh[] = {
   "  fragColor.rgba = outColor;\n"
+  "  fragMesh.rg = vec2(0.0);\n"
   "}\n"
 };
 const GLchar vdp1drawend_mesh[] = {
   "  fragColor.rgba = outColor;\n"
-  "  fragMesh.rg = meshColor.rg;\n"
+  "  fragMesh.rg = meshColor.ba;\n"
   "}\n"
 };
 
