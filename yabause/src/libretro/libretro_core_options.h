@@ -156,8 +156,8 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       "kronos_force_downsampling",
-      "Downsampling",
-      "Downsample to original hardware resolution, will also replace meshed transparency by real transparency to avoid gfx issues",
+      "Output to original resolution",
+      "Useful when using resolution higher than your screen's, will also replace meshed transparency by real transparency to avoid moiré effect",
       {
          { "disabled", NULL },
          { "enabled", NULL },
