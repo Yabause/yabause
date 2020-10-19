@@ -2890,7 +2890,7 @@ static void YglUpdateVDP1FB(void) {
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex);
     glTexSubImage2D(GL_TEXTURE_2D,0,0,0,512, 256,GL_RGBA, GL_UNSIGNED_BYTE,write_fb);
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-    glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe*2]);
+    glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
     glViewport(0,0, _Ygl->vdp1width, _Ygl->vdp1height);
     YglBlitVDP1(_Ygl->vdp1AccessTex, 512, 256, 1);
     // clean up
