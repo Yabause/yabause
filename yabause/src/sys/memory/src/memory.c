@@ -1920,6 +1920,7 @@ int YabLoadStateStream(FILE *fp)
 
    if (strncmp(id, "YSS", 3) != 0)
    {
+      YuiMsg("Save file is not a YSS\n");
       return -2;
    }
 
@@ -1942,6 +1943,7 @@ int YabLoadStateStream(FILE *fp)
       default:
          /* we're trying to open a save state using a future version
           * of the YSS format, that won't work, sorry :) */
+        YuiMsg("Save file is not supported. Might be a future version.\n");
          return -3;
          break;
    }
@@ -1975,6 +1977,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "CART", version);
       return -3;
    }
    CartLoadState(fp, version, chunksize);
@@ -1983,6 +1986,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "CS2", version);
       return -3;
    }
    Cs2LoadState(fp, version, chunksize);
@@ -1991,6 +1995,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "MSH2", version);
       return -3;
    }
    SH2LoadState(MSH2, fp, version, chunksize);
@@ -1999,6 +2004,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "SSH2", version);
       return -3;
    }
    SH2LoadState(SSH2, fp, version, chunksize);
@@ -2007,6 +2013,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "SCSP", version);
       return -3;
    }
    SoundLoadState(fp, version, chunksize);
@@ -2015,6 +2022,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "SCU", version);
       return -3;
    }
    ScuLoadState(fp, version, chunksize);
@@ -2023,6 +2031,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "SMPC", version);
       return -3;
    }
    SmpcLoadState(fp, version, chunksize);
@@ -2031,6 +2040,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "VDP1", version);
       return -3;
    }
    Vdp1LoadState(fp, version, chunksize);
@@ -2039,6 +2049,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "VDP2", version);
       return -3;
    }
    Vdp2LoadState(fp, version, chunksize);
@@ -2047,6 +2058,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "OTHR", version);
       return -3;
    }
    // Other data
