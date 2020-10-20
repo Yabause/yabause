@@ -938,7 +938,7 @@ const GLchar vdp1drawend_no_mesh[] = {
 };
 const GLchar vdp1drawend_mesh[] = {
   "  fragColor.rgba = outColor;\n"
-  "  fragMesh.rg = meshColor.ba;\n"
+  "  fragMesh.rg = meshColor;\n"
   "}\n"
 };
 
