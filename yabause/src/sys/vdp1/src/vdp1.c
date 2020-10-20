@@ -991,10 +991,24 @@ static int getVdp1CyclesPerLine(void)
   return clock/(fps*yabsys.MaxLineCount);
 }
 
+static u32 returnAddr = 0xffffffff;
+static vdp1cmd_struct * usrClipCmd = NULL;
+static vdp1cmd_struct * sysClipCmd = NULL;
+static vdp1cmd_struct * localCoordCmd = NULL;
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   int cylesPerLine  = getVdp1CyclesPerLine();
+  if (Vdp1External.status == VDP1_STATUS_IDLE) {
+    returnAddr = 0xffffffff;
+    if (usrClipCmd != NULL) free(usrClipCmd);
+    if (sysClipCmd != NULL) free(sysClipCmd);
+    if (localCoordCmd != NULL) free(localCoordCmd);
+    usrClipCmd = NULL;
+    sysClipCmd = NULL;
+    localCoordCmd = NULL;
+  }
+
    Vdp1External.status = VDP1_STATUS_RUNNING;
    if (regs->addr > 0x7FFFF) {
       Vdp1External.status = VDP1_STATUS_IDLE;
@@ -1004,10 +1018,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
-   vdp1cmd_struct * usrClipCmd = NULL;
-   vdp1cmd_struct * sysClipCmd = NULL;
-   vdp1cmd_struct * localCoordCmd = NULL;
-   u32 returnAddr = 0xffffffff;
+
    Vdp1External.updateVdp1Ram = 0;
    vdp1Ram_update_start = 0x80000;
    vdp1Ram_update_end = 0x0;
