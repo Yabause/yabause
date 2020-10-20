@@ -324,8 +324,11 @@
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
     <string name="do_you_want_to_install">Do you want to install?</string>
     <string name="only_chd_is_supported_for_load_game">Only CHD is supported for direct open</string>
-    <string name="install_game_message">If you install, you can play from this game list directly. But it costs </string>
-    <string name="install_game_message_after">MBytes.</string>
+    <string name="install_game_message">If you install, you can play from this game list directly. It takes up  </string>
+    <string name="install_game_message_after">MB of storage space.</string>
+
+    <string name="menu_acp">Action Replay Code</string>
+    <string name="updating">Updating...</string>
 
 </resources>
 	

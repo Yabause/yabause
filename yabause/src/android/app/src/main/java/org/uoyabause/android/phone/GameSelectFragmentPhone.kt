@@ -29,6 +29,7 @@ import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
+import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import android.os.FileUtils
 import android.os.ParcelFileDescriptor
@@ -37,6 +38,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
@@ -51,11 +53,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
 import com.activeandroid.query.Select
 import com.bumptech.glide.Glide
-import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.analytics.HitBuilders.EventBuilder
 import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
@@ -71,12 +71,14 @@ import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import java.io.IOException
+import java.nio.channels.FileChannel
 import java.util.Calendar
+import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.cattaka.android.adaptertoolbox.thirdparty.MergeRecyclerAdapter
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.devmiyax.yabasanshiro.StartupActivity
@@ -95,31 +97,13 @@ import org.uoyabause.android.tv.GameSelectFragment
 
 internal class GameListPage(val pageTitle: String, var gameList: GameItemAdapter)
 
-internal class GameViewPagerAdapter(var fm: FragmentManager?) :
-    FragmentStatePagerAdapter(fm!!) {
+internal class GameViewPagerAdapter(fm: FragmentManager?) :
+    FragmentStatePagerAdapter(fm!!, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
 
-    var gameListPageFragments: MutableList<Fragment>? = null
-    var gameListPages_: MutableList<GameListPage>? = null
+    private var gameListPageFragments: MutableList<Fragment>? = null
+    private var gameListPages: MutableList<GameListPage>? = null
 
     fun setGameList(gameListPages: MutableList<GameListPage>?) {
-/*
-        val fragments = fm?.fragments
-        if (fragments != null) {
-            val ft = fm?.beginTransaction()
-            for (f in fragments) {
-                if (f is GameListFragment) {
-                    ft?.remove(f)
-                }
-            }
-            ft?.commitNow()
-        }
-*/
-        // gameListPageFragments?.clear()
-        // gameListPages_?.clear()
-        // this.notifyDataSetChanged()
-
-        // gameListPageFragments?.clear()
-        // this.notifyDataSetChanged()
 
         var position = 0
         if (gameListPages != null) {
@@ -135,7 +119,7 @@ internal class GameViewPagerAdapter(var fm: FragmentManager?) :
                 position += 1
             }
         }
-        gameListPages_ = gameListPages
+        this.gameListPages = gameListPages
         this.notifyDataSetChanged()
     }
 
@@ -144,11 +128,11 @@ internal class GameViewPagerAdapter(var fm: FragmentManager?) :
     }
 
     override fun getCount(): Int {
-        return gameListPages_?.size ?: return 0
+        return gameListPages?.size ?: return 0
     }
 
     override fun getPageTitle(position: Int): CharSequence? {
-        return gameListPages_!![position].pageTitle
+        return gameListPages!![position].pageTitle
     }
 
     override fun destroyItem(container: ViewGroup, position: Int, `object`: Any) {
@@ -156,52 +140,34 @@ internal class GameViewPagerAdapter(var fm: FragmentManager?) :
     }
 
     override fun getItemPosition(xobj: Any): Int {
-
-        // val target = xobj as Fragment
-        // if (gameListPageFragments?.contains(target) == true) {
-        //    return POSITION_UNCHANGED
-        // }
-
-/*
-        for ((i, myobj) in gameListPageFragments!!.withIndex()) {
-            if (xobj == myobj) {
-                return i
-            }
-        }
-*/
         return POSITION_NONE
     }
 }
 
 class GameSelectFragmentPhone : Fragment(),
-        GameItemAdapter.OnItemClickListener,
-        NavigationView.OnNavigationItemSelectedListener,
-        FileSelectedListener,
-        GameSelectPresenterListener {
-    var refresh_level = 0
-    var mStringsHeaderAdapter: GameIndexAdapter? = null
-    lateinit var presenter_: GameSelectPresenter
-    val SETTING_ACTIVITY = 0x01
-    val YABAUSE_ACTIVITY = 0x02
-    val DOWNLOAD_ACTIVITY = 0x03
-    val AD_ACTIVITY = 0x04
-    private var mDrawerLayout: DrawerLayout? = null
-    // private var mInterstitialAd: InterstitialAd? = null
-    private var mTracker: Tracker? = null
-    private var mFirebaseAnalytics: FirebaseAnalytics? = null
-    var isfisrtupdate = true
-    var mNavigationView: NavigationView? = null
-    private lateinit var tabpage_adapter: GameViewPagerAdapter
+    GameItemAdapter.OnItemClickListener,
+    NavigationView.OnNavigationItemSelectedListener,
+    FileSelectedListener,
+    GameSelectPresenterListener {
+    lateinit var presenter: GameSelectPresenter
+    private var observer: Observer<*>? = null
+    private val scope = CoroutineScope(Dispatchers.IO)
+    private var refreshLevel = 0
+    private var drawerLayout: DrawerLayout? = null
+    private var tracker: Tracker? = null
+    private var firebaseAnalytics: FirebaseAnalytics? = null
+    private var isfisrtupdate = true
+    private var navigationView: NavigationView? = null
+    private lateinit var tabpageAdapter: GameViewPagerAdapter
 
-    lateinit var rootview_: View
-    lateinit var mDrawerToggle: ActionBarDrawerToggle
-    lateinit var mMergeRecyclerAdapter: MergeRecyclerAdapter<RecyclerView.Adapter<*>?>
-    lateinit var layoutManager: RecyclerView.LayoutManager
-    lateinit var tablayout_: TabLayout
-    lateinit var llProgressBar: View
-    lateinit var progress_message: TextView
+    private lateinit var rootview: View
+    private lateinit var drawerToggle: ActionBarDrawerToggle
+    private lateinit var tabLayout: TabLayout
+    private lateinit var progressBar: View
+    private lateinit var progressMessage: TextView
+    private var isBackGroundComplete = false
 
-    var alphabet = arrayOf(
+    private val alphabet = arrayOf(
         "A",
         "B",
         "C",
@@ -229,15 +195,12 @@ class GameSelectFragmentPhone : Fragment(),
         "Y",
         "Z"
     )
-    val TAG = "GameSelectFragmentPhone"
-    private var mListener: OnFragmentInteractionListener? =
-        null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         instance = this
-        presenter_ = GameSelectPresenter(this as Fragment, this)
-        tabpage_adapter = GameViewPagerAdapter(this@GameSelectFragmentPhone.childFragmentManager)
+        presenter = GameSelectPresenter(this as Fragment, this)
+        tabpageAdapter = GameViewPagerAdapter(this@GameSelectFragmentPhone.childFragmentManager)
     }
 
     override fun onCreateView(
@@ -245,78 +208,50 @@ class GameSelectFragmentPhone : Fragment(),
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        rootview_ = inflater.inflate(R.layout.fragment_game_select_fragment_phone, container, false)
-        llProgressBar = rootview_.findViewById(R.id.llProgressBar)
-        llProgressBar.visibility = View.GONE
-        progress_message = rootview_.findViewById(R.id.pbText)
-        return rootview_
+        rootview = inflater.inflate(R.layout.fragment_game_select_fragment_phone, container, false)
+        progressBar = rootview.findViewById(R.id.llProgressBar)
+        progressBar.visibility = View.GONE
+        progressMessage = rootview.findViewById(R.id.pbText)
+        return rootview
     }
-
-    fun onButtonPressed(uri: Uri?) {
-        if (mListener != null) {
-            mListener!!.onFragmentInteraction(uri)
-        }
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        if (context is OnFragmentInteractionListener) {
-            mListener =
-                context
-        } else { //            throw new RuntimeException(context.toString()
-//                    + " must implement OnFragmentInteractionListener");
-        }
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        mListener = null
-    }
-
-    interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        fun onFragmentInteraction(uri: Uri?)
-    }
-
-    val READ_REQUEST_CODE = 0xFFE0
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        mDrawerLayout!!.closeDrawers()
-        val id = item.itemId
-        when (id) {
+        drawerLayout!!.closeDrawers()
+        when (item.itemId) {
             R.id.menu_item_setting -> {
                 val intent = Intent(activity, SettingsActivity::class.java)
                 startActivityForResult(intent, SETTING_ACTIVITY)
             }
             R.id.menu_item_load_game -> {
-
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-                    intent.addCategory(Intent.CATEGORY_OPENABLE)
-                    intent.type = "*/*"
-                    startActivityForResult(intent, READ_REQUEST_CODE)
+                if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
+                    if (YabauseApplication.checkDonated(requireActivity()) == 0) {
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                        intent.addCategory(Intent.CATEGORY_OPENABLE)
+                        intent.type = "*/*"
+                        startActivityForResult(intent, READ_REQUEST_CODE)
+                    }
                 } else {
                     val sharedPref =
                         PreferenceManager.getDefaultSharedPreferences(activity)
-                    val last_dir =
+                    val lastDir =
                         sharedPref.getString("pref_last_dir", YabauseStorage.storage.gamePath)
                     val fd =
-                        FileDialog(activity, last_dir)
+                        FileDialog(activity, lastDir)
                     fd.addFileListener(this)
                     fd.showDialog()
                 }
             }
             R.id.menu_item_update_game_db -> {
-                refresh_level = 3
+                refreshLevel = 3
                 if (checkStoragePermission() == 0) {
                     updateGameList()
                 }
             }
-            R.id.menu_item_login -> if (item.title == getString(R.string.sign_out) == true) {
-                presenter_.signOut()
+            R.id.menu_item_login -> if (item.title == getString(R.string.sign_out)) {
+                presenter.signOut()
                 item.setTitle(R.string.sign_in)
             } else {
-                presenter_.signIn()
+                presenter.signIn()
             }
             R.id.menu_privacy_policy -> {
                 val uri =
@@ -325,13 +260,13 @@ class GameSelectFragmentPhone : Fragment(),
                 startActivity(i)
             }
             R.id.menu_item_login_to_other -> {
-                ShowPinInFragment.newInstance(presenter_).show(childFragmentManager, "sample")
+                ShowPinInFragment.newInstance(presenter).show(childFragmentManager, "sample")
             }
         }
         return false
     }
 
-    fun checkStoragePermission(): Int {
+    private fun checkStoragePermission(): Int {
         if (Build.VERSION.SDK_INT >= 23) { // Verify that all required contact permissions have been granted.
             if (ActivityCompat.checkSelfPermission(
                     requireActivity().applicationContext,
@@ -359,8 +294,8 @@ class GameSelectFragmentPhone : Fragment(),
         return 0
     }
 
-    fun verifyPermissions(grantResults: IntArray): Boolean { // At least one result must be checked.
-        if (grantResults.size < 1) {
+    private fun verifyPermissions(grantResults: IntArray): Boolean { // At least one result must be checked.
+        if (grantResults.isEmpty()) {
             return false
         }
         // Verify that each required permission has been granted, otherwise return false.
@@ -379,7 +314,7 @@ class GameSelectFragmentPhone : Fragment(),
     ) {
         if (requestCode == REQUEST_STORAGE) {
             Log.i(TAG, "Received response for contact permissions request.")
-            if (verifyPermissions(grantResults) == true) {
+            if (verifyPermissions(grantResults)) {
                 updateGameList()
             } else {
                 showRestartMessage()
@@ -391,11 +326,11 @@ class GameSelectFragmentPhone : Fragment(),
 
     private fun showSnackbar(id: Int) {
         Snackbar
-            .make(rootview_.rootView, getString(id), Snackbar.LENGTH_SHORT)
+            .make(rootview.rootView, getString(id), Snackbar.LENGTH_SHORT)
             .show()
     }
 
-    fun updateRecent() {
+    private fun updateRecent() {
         gameListPages?.forEach { it ->
             if (it.pageTitle == "recent") {
                 var rlist: MutableList<GameInfo?>? = null
@@ -406,32 +341,32 @@ class GameSelectFragmentPhone : Fragment(),
                         .limit(5)
                         .execute<GameInfo?>()
                 } catch (e: Exception) {
-                    Log.d(TAG, e.localizedMessage)
+                    Log.d(TAG, e.localizedMessage!!)
                 }
-                val resent_adapter = GameItemAdapter(rlist)
-                resent_adapter.setOnItemClickListener(this)
-                it.gameList = resent_adapter
+                val resentAdapter = GameItemAdapter(rlist)
+                resentAdapter.setOnItemClickListener(this)
+                it.gameList = resentAdapter
             }
         }
-        tabpage_adapter.setGameList(gameListPages)
-        tabpage_adapter.notifyDataSetChanged()
+        tabpageAdapter.setGameList(gameListPages)
+        tabpageAdapter.notifyDataSetChanged()
     }
 
-    val scope = CoroutineScope(Dispatchers.Default)
-    fun openGameFileDirect(uri: Uri) {
+    @Suppress("BlockingMethodInNonBlockingContext")
+    private fun openGameFileDirect(uri: Uri) {
         scope.launch {
             withContext(Dispatchers.Main) {
                 showDialog("Opening ...")
             }
 
-            var mParcelFileDescriptor: ParcelFileDescriptor? = null
-            val uristring = uri.toString().toLowerCase()
+            var parcelFileDescriptor: ParcelFileDescriptor? = null
+            val uriString = uri.toString().toLowerCase(Locale.ROOT)
             var apath = ""
             try {
-                mParcelFileDescriptor =
-                    requireActivity()!!.contentResolver.openFileDescriptor(uri, "r")
-                if (mParcelFileDescriptor != null) {
-                    val fd: Int? = mParcelFileDescriptor?.getFd()
+                parcelFileDescriptor =
+                    requireActivity().contentResolver.openFileDescriptor(uri, "r")
+                if (parcelFileDescriptor != null) {
+                    val fd: Int? = parcelFileDescriptor.fd
                     if (fd != null) {
                         apath = "/proc/self/fd/$fd"
                     }
@@ -440,33 +375,32 @@ class GameSelectFragmentPhone : Fragment(),
                 apath = ""
             }
             if (apath == "") {
-                Toast.makeText(requireContext(), "Fail to open $uristring", Toast.LENGTH_LONG)
+                Toast.makeText(requireContext(), "Fail to open $uriString", Toast.LENGTH_LONG)
                     .show()
-                mParcelFileDescriptor?.close()
+                parcelFileDescriptor?.close()
                 withContext(Dispatchers.Main) {
                     dismissDialog()
                 }
                 return@launch
             }
 
-            var gameinfo: GameInfo? = null
-            gameinfo = GameInfo.genGameInfoFromCHD(apath)
+            val gameinfo = GameInfo.genGameInfoFromCHD(apath)
             if (gameinfo != null) {
 
                 val bundle = Bundle()
                 bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
                 bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
-                mFirebaseAnalytics!!.logEvent(
+                firebaseAnalytics!!.logEvent(
                     "yab_start_game", bundle
                 )
-                mParcelFileDescriptor!!.close()
+                parcelFileDescriptor!!.close()
                 val intent = Intent(activity, Yabause::class.java)
                 intent.putExtra("org.uoyabause.android.FileNameUri", uri.toString())
                 intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number)
                 startActivityForResult(intent, YABAUSE_ACTIVITY)
             } else {
                 Toast.makeText(requireContext(), "Fail to open $apath", Toast.LENGTH_LONG).show()
-                mParcelFileDescriptor?.close()
+                parcelFileDescriptor?.close()
             }
             withContext(Dispatchers.Main) {
                 dismissDialog()
@@ -474,28 +408,43 @@ class GameSelectFragmentPhone : Fragment(),
         }
     }
 
+    @Throws(IOException::class)
+    fun copyFileO(sourceFile: FileInputStream, destFile: FileOutputStream) {
+        var source: FileChannel? = null
+        var destination: FileChannel? = null
+        try {
+            source = sourceFile.channel
+            destination = destFile.channel
+            destination.transferFrom(source, 0, source.size())
+        } finally {
+            source?.close()
+            destination?.close()
+        }
+    }
+
+    @Suppress("BlockingMethodInNonBlockingContext")
     fun installGameFile(uri: Uri) {
         scope.launch {
             withContext(Dispatchers.Main) {
                 showDialog("Installing ...")
             }
             try {
-                var gameinfo: GameInfo? = null
-
-                var mParcelFileDescriptor: ParcelFileDescriptor? = null
-
-                val uristring = uri.toString().toLowerCase()
+                val parcelFileDescriptor1: ParcelFileDescriptor?
+                val uriString = uri.toString().toLowerCase(Locale.ROOT)
                 var apath = ""
                 try {
-                    mParcelFileDescriptor = requireActivity()!!.contentResolver.openFileDescriptor(uri, "r")
-                    if (mParcelFileDescriptor != null) {
-                        val fd: Int? = mParcelFileDescriptor?.getFd()
+                    parcelFileDescriptor1 =
+                        requireActivity().contentResolver.openFileDescriptor(uri, "r")
+                    if (parcelFileDescriptor1 != null) {
+                        val fd: Int? = parcelFileDescriptor1.fd
                         if (fd != null) {
                             apath = "/proc/self/fd/$fd"
                         }
                     }
                 } catch (e: Exception) {
-                    Toast.makeText(requireContext(), "Fail to open $uristring with ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(),
+                        "Fail to open $uriString with ${e.localizedMessage}",
+                        Toast.LENGTH_LONG).show()
                     withContext(Dispatchers.Main) {
                         dismissDialog()
                     }
@@ -503,26 +452,28 @@ class GameSelectFragmentPhone : Fragment(),
                 }
 
                 if (apath == "") {
-                    Toast.makeText(requireContext(), "Fail to open $uristring", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "Fail to open $uriString", Toast.LENGTH_LONG)
+                        .show()
                     withContext(Dispatchers.Main) {
                         dismissDialog()
                     }
                     return@launch
                 }
 
-                gameinfo = GameInfo.genGameInfoFromCHD(apath)
+                val gameinfo = GameInfo.genGameInfoFromCHD(apath)
                 if (gameinfo != null) {
 
                     val bundle = Bundle()
                     bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
                     bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
-                    mFirebaseAnalytics!!.logEvent(
+                    firebaseAnalytics!!.logEvent(
                         "yab_start_game", bundle
                     )
-                    mParcelFileDescriptor!!.close()
+                    parcelFileDescriptor1!!.close()
                 } else {
-                    Toast.makeText(requireContext(), "Fail to open $apath", Toast.LENGTH_LONG).show()
-                    mParcelFileDescriptor?.close()
+                    Toast.makeText(requireContext(), "Fail to open $apath", Toast.LENGTH_LONG)
+                        .show()
+                    parcelFileDescriptor1?.close()
                     return@launch
                 }
 
@@ -532,19 +483,33 @@ class GameSelectFragmentPhone : Fragment(),
 
                 val fd =
                     File(YabauseStorage.storage.gamePath + "/" + gameinfo.product_number + ".chd")
-                var parcelFileDescriptor =
+                val parcelFileDescriptor =
                     requireActivity().contentResolver.openFileDescriptor(uri, "r")
-                val fileDescriptor: FileDescriptor = parcelFileDescriptor!!.getFileDescriptor()
-
+                val fileDescriptor: FileDescriptor = parcelFileDescriptor!!.fileDescriptor
                 FileInputStream(fileDescriptor).use { inputStream ->
                     FileOutputStream(fd).use { outputStream ->
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
                             FileUtils.copy(inputStream, outputStream)
                         } else {
-                            TODO("VERSION.SDK_INT < Q")
+                            copyFileO(inputStream, outputStream)
                         }
+                        inputStream.close()
+                        outputStream.close()
                     }
                 }
+<<<<<<< HEAD
+=======
+                fileSelected(fd)
+                parcelFileDescriptor.close()
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(),
+                    "Fail to copy " + e.localizedMessage,
+                    Toast.LENGTH_LONG).show()
+            } finally {
+                withContext(Dispatchers.Main) {
+                    dismissDialog()
+                }
+>>>>>>> 29e927a26... clean up
             }
         }
         return
@@ -561,12 +526,12 @@ class GameSelectFragmentPhone : Fragment(),
             // The document selected by the user won't be returned in the intent.
             // Instead, a URI to that document will be contained in the return intent
             // provided to this method as a parameter.  Pull that uri using "resultData.getData()"
-            var uri: Uri? = null
             if (data != null) {
-                uri = data.data
+                val uri = data.data
                 if (uri != null) {
                     Log.i(TAG, "Uri: $uri")
 
+<<<<<<< HEAD
                     if (!uri.toString().toLowerCase().endsWith("chd")) {
                         Toast.makeText(requireContext(),
                             getString(R.string.only_chd_is_supported_for_load_game),
@@ -574,22 +539,36 @@ class GameSelectFragmentPhone : Fragment(),
                         return
                     }
 
+=======
+>>>>>>> 29e927a26... clean up
                     val cursor: Cursor? = requireActivity().contentResolver.query(uri,
                         null, null, null, null)
 
                     cursor!!.moveToFirst()
+<<<<<<< HEAD
+=======
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    val path = cursor.getString(nameIndex)
+                    if (!path.toLowerCase(Locale.ROOT).endsWith("chd")) {
+                        Toast.makeText(requireContext(),
+                            getString(R.string.only_chd_is_supported_for_load_game),
+                            Toast.LENGTH_LONG).show()
+                        return
+                    }
+>>>>>>> 29e927a26... clean up
                     var size: Long = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE))
                     cursor.close()
 
                     size = size / 1024 / 1024
-                    val message = getString(R.string.install_game_message) + " " + size + getString(R.string.install_game_message_after)
+                    val message =
+                        getString(R.string.install_game_message) + " " + size + getString(R.string.install_game_message_after)
 
-                    val show = AlertDialog.Builder(requireActivity())
+                    AlertDialog.Builder(requireActivity())
                         .setTitle(getString(R.string.do_you_want_to_install))
                         // .setMessage("If you install, you can play from this game list directly. But it costs ${size} MBytes")
                         .setMessage(message)
-                        .setPositiveButton(R.string.yes) { dialog, which -> installGameFile(uri) }
-                        .setNegativeButton(R.string.no) { dialog, which -> openGameFileDirect(uri) }
+                        .setPositiveButton(R.string.yes) { _, _ -> installGameFile(uri) }
+                        .setNegativeButton(R.string.no) { _, _ -> openGameFileDirect(uri) }
                         .setCancelable(true)
                         .show()
                 }
@@ -599,22 +578,22 @@ class GameSelectFragmentPhone : Fragment(),
 
         when (requestCode) {
             GameSelectPresenter.RC_SIGN_IN -> {
-                presenter_.onSignIn(resultCode, data)
-                if (presenter_.currentUserName != null) {
-                    val m = mNavigationView!!.menu
-                    val mi_login = m.findItem(R.id.menu_item_login)
-                    mi_login.setTitle(R.string.sign_out)
+                presenter.onSignIn(resultCode, data)
+                if (presenter.currentUserName != null) {
+                    val m = navigationView!!.menu
+                    val miLogin = m.findItem(R.id.menu_item_login)
+                    miLogin.setTitle(R.string.sign_out)
                 }
             }
             DOWNLOAD_ACTIVITY -> {
                 if (resultCode == 0) {
-                    refresh_level = 3
+                    refreshLevel = 3
                     if (checkStoragePermission() == 0) {
                         updateGameList()
                     }
                 }
                 if (resultCode == GameSelectFragment.GAMELIST_NEED_TO_UPDATED) {
-                    refresh_level = 3
+                    refreshLevel = 3
                     if (checkStoragePermission() == 0) {
                         updateGameList()
                     }
@@ -623,11 +602,10 @@ class GameSelectFragmentPhone : Fragment(),
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                     startActivity(intent)
                     activity?.finish()
-                } else {
                 }
             }
             SETTING_ACTIVITY -> if (resultCode == GameSelectFragment.GAMELIST_NEED_TO_UPDATED) {
-                refresh_level = 3
+                refreshLevel = 3
                 if (checkStoragePermission() == 0) {
                     updateGameList()
                 }
@@ -636,7 +614,6 @@ class GameSelectFragmentPhone : Fragment(),
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(intent)
                 activity?.finish()
-            } else {
             }
             AD_ACTIVITY -> {
                 updateRecent()
@@ -656,11 +633,11 @@ class GameSelectFragmentPhone : Fragment(),
                             // if (mInterstitialAd!!.isLoaded) {
                             //    mInterstitialAd!!.show()
                             // } else {
-                                val intent = Intent(
-                                    activity,
-                                    AdActivity::class.java
-                                )
-                                startActivityForResult(intent, AD_ACTIVITY)
+                            val intent = Intent(
+                                activity,
+                                AdActivity::class.java
+                            )
+                            startActivityForResult(intent, AD_ACTIVITY)
                             // }
                         } else {
                             val intent =
@@ -683,12 +660,10 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     override fun fileSelected(file: File?) {
-        val apath: String
         if (file == null) { // canceled
             return
         }
-        apath = file.absolutePath
-        val storage = YabauseStorage.storage
+        val apath: String = file.absolutePath
         // save last selected dir
         val sharedPref =
             PreferenceManager.getDefaultSharedPreferences(activity)
@@ -720,7 +695,7 @@ class GameSelectFragmentPhone : Fragment(),
         val bundle = Bundle()
         bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
         bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
-        mFirebaseAnalytics!!.logEvent(
+        firebaseAnalytics!!.logEvent(
             "yab_start_game", bundle
         )
         val intent = Intent(activity, Yabause::class.java)
@@ -731,28 +706,28 @@ class GameSelectFragmentPhone : Fragment(),
 
     fun showDialog(message: String?) {
         if (message != null) {
-            progress_message.text = message
+            progressMessage.text = message
         } else {
-            progress_message.text = "Updating..."
+            progressMessage.text = getString(R.string.updating)
         }
-        llProgressBar.visibility = View.VISIBLE
+        progressBar.visibility = VISIBLE
     }
 
     fun updateDialogString(msg: String) {
-        progress_message.text = msg
+        progressMessage.text = msg
     }
 
     fun dismissDialog() {
-        llProgressBar.visibility = View.GONE
+        progressBar.visibility = View.GONE
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         val activity = activity as AppCompatActivity
         // Log.i(TAG, "onCreate");
         super.onActivityCreated(savedInstanceState)
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(activity)
+        firebaseAnalytics = FirebaseAnalytics.getInstance(activity)
         val application = activity.application as YabauseApplication
-        mTracker = application.defaultTracker
+        tracker = application.defaultTracker
 /*
         MobileAds.initialize(requireActivity(), getString(R.string.ad_app_id))
         mInterstitialAd = InterstitialAd(activity)
@@ -765,47 +740,39 @@ class GameSelectFragmentPhone : Fragment(),
         }
 */
         val toolbar =
-            rootview_.findViewById<View>(R.id.toolbar) as Toolbar
+            rootview.findViewById<View>(R.id.toolbar) as Toolbar
         toolbar.setLogo(R.mipmap.ic_launcher)
         toolbar.title = getString(R.string.app_name)
         toolbar.subtitle = getVersionName(activity)
         activity.setSupportActionBar(toolbar)
-        tablayout_ = rootview_.findViewById(R.id.tab_game_index)
-        tablayout_.removeAllTabs()
+        tabLayout = rootview.findViewById(R.id.tab_game_index)
+        tabLayout.removeAllTabs()
 
-        mDrawerLayout =
-            rootview_.findViewById<View>(R.id.drawer_layout_game_select) as DrawerLayout
-        mDrawerToggle = object : ActionBarDrawerToggle(
+        drawerLayout =
+            rootview.findViewById<View>(R.id.drawer_layout_game_select) as DrawerLayout
+        drawerToggle = object : ActionBarDrawerToggle(
             getActivity(), /* host Activity */
-            mDrawerLayout, /* DrawerLayout object */
+            drawerLayout, /* DrawerLayout object */
             R.string.drawer_open, /* "open drawer" description */
             R.string.drawer_close /* "close drawer" description */
         ) {
-            /** Called when a drawer has settled in a completely closed state.  */
-            override fun onDrawerClosed(view: View) {
-                super.onDrawerClosed(view)
-                // activity.getSupportActionBar().setTitle("aaa");
-            }
 
-            override fun onDrawerStateChanged(newState: Int) {}
-            /** Called when a drawer has settled in a completely open state.  */
             override fun onDrawerOpened(drawerView: View) {
                 super.onDrawerOpened(drawerView)
                 // activity.getSupportActionBar().setTitle("bbb");
-                val tx =
-                    rootview_!!.findViewById<View>(R.id.menu_title) as TextView
-                val uname = presenter_!!.currentUserName
+                val tx = rootview.findViewById<TextView?>(R.id.menu_title)
+                val uname = presenter.currentUserName
                 if (tx != null && uname != null) {
                     tx.text = uname
                 } else {
                     tx.text = ""
                 }
                 val iv =
-                    rootview_!!.findViewById<View>(R.id.navi_header_image) as ImageView
-                val PhotoUri = presenter_!!.currentUserPhoto
-                if (iv != null && PhotoUri != null) {
+                    rootview.findViewById<ImageView?>(R.id.navi_header_image)
+                val uri = presenter.currentUserPhoto
+                if (iv != null && uri != null) {
                     Glide.with(drawerView.context)
-                        .load(PhotoUri)
+                        .load(uri)
                         .into(iv)
                 } else {
                     iv.setImageResource(R.mipmap.ic_launcher)
@@ -813,24 +780,24 @@ class GameSelectFragmentPhone : Fragment(),
             }
         }
         // Set the drawer toggle as the DrawerListener
-        mDrawerLayout!!.setDrawerListener(mDrawerToggle)
+        drawerLayout!!.addDrawerListener(drawerToggle)
         activity.supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         activity.supportActionBar!!.setHomeButtonEnabled(true)
-        mDrawerToggle.syncState()
-        mNavigationView =
-            rootview_.findViewById<View>(R.id.nav_view) as NavigationView
-        if (mNavigationView != null) {
-            mNavigationView!!.setNavigationItemSelectedListener(this)
+        drawerToggle.syncState()
+        navigationView =
+            rootview.findViewById<View>(R.id.nav_view) as NavigationView
+        if (navigationView != null) {
+            navigationView!!.setNavigationItemSelectedListener(this)
         }
 
-        if (presenter_.currentUserName != null) {
-            val m = mNavigationView!!.menu
-            val mi_login = m.findItem(R.id.menu_item_login)
-            mi_login.setTitle(R.string.sign_out)
+        if (presenter.currentUserName != null) {
+            val m = navigationView!!.menu
+            val miLogin = m.findItem(R.id.menu_item_login)
+            miLogin.setTitle(R.string.sign_out)
         } else {
-            val m = mNavigationView!!.menu
-            val mi_login = m.findItem(R.id.menu_item_login)
-            mi_login.setTitle(R.string.sign_in)
+            val m = navigationView!!.menu
+            val miLogin = m.findItem(R.id.menu_item_login)
+            miLogin.setTitle(R.string.sign_in)
         }
         // updateGameList();
         if (checkStoragePermission() == 0) {
@@ -844,20 +811,19 @@ class GameSelectFragmentPhone : Fragment(),
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        mDrawerToggle.onConfigurationChanged(newConfig)
+        drawerToggle.onConfigurationChanged(newConfig)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean { // Pass the event to ActionBarDrawerToggle, if it returns
 // true, then it has handled the app icon touch event
-        return if (mDrawerToggle.onOptionsItemSelected(item)) {
+        return if (drawerToggle.onOptionsItemSelected(item)) {
             true
         } else super.onOptionsItemSelected(
             item
         )
     }
 
-    private var observer: Observer<*>? = null
-    fun updateGameList() {
+    private fun updateGameList() {
         if (observer != null) return
         isBackGroundComplete = false
         val tmpObserver = object : Observer<String> {
@@ -868,7 +834,7 @@ class GameSelectFragmentPhone : Fragment(),
             }
 
             override fun onNext(response: String) {
-                updateDialogString("Updating ..." + response)
+                updateDialogString("${getString(R.string.updating)} $response")
             }
 
             override fun onError(e: Throwable) {
@@ -885,50 +851,51 @@ class GameSelectFragmentPhone : Fragment(),
                 }
 
                 loadRows()
-                val viewPager = rootview_.findViewById(R.id.view_pager_game_index) as? ViewPager
+                val viewPager = rootview.findViewById(R.id.view_pager_game_index) as? ViewPager
                 // viewPager!!.setSaveFromParentEnabled(false)
                 // viewPager!!.removeAllViews()
-                tabpage_adapter.setGameList(gameListPages)
-                viewPager!!.adapter = tabpage_adapter
+                tabpageAdapter.setGameList(gameListPages)
+                viewPager!!.adapter = tabpageAdapter
                 // tablayout_.removeAllTabs()
-                tablayout_.setupWithViewPager(viewPager)
+                tabLayout.setupWithViewPager(viewPager)
 
                 dismissDialog()
                 if (isfisrtupdate) {
                     isfisrtupdate = false
-                    if (this@GameSelectFragmentPhone.activity?.intent!!.getBooleanExtra(
+                    if (this@GameSelectFragmentPhone.requireActivity().intent!!.getBooleanExtra(
                             "showPin",
                             false
-                        )) {
-                        ShowPinInFragment.newInstance(presenter_).show(
+                        )
+                    ) {
+                        ShowPinInFragment.newInstance(presenter).show(
                             childFragmentManager,
                             "sample"
                         )
                     } else {
-                        presenter_.checkSignIn()
+                        presenter.checkSignIn()
                     }
                 }
                 viewPager.adapter!!.notifyDataSetChanged()
                 observer = null
             }
         }
-        presenter_.updateGameList(refresh_level, tmpObserver)
-        refresh_level = 0
+        presenter.updateGameList(refreshLevel, tmpObserver)
+        refreshLevel = 0
     }
 
     private fun showRestartMessage() { // need_to_accept
-        val viewMessage = rootview_.findViewById(R.id.empty_message) as TextView
-        val viewPager = rootview_.findViewById(R.id.view_pager_game_index) as? ViewPager
-        viewMessage?.visibility = View.VISIBLE
+        val viewMessage = rootview.findViewById<TextView?>(R.id.empty_message)
+        val viewPager = rootview.findViewById<ViewPager?>(R.id.view_pager_game_index)
+        viewMessage?.visibility = VISIBLE
         viewPager?.visibility = View.GONE
 
-        val welcomeMessage = getResources().getString(R.string.need_to_accept)
+        val welcomeMessage = resources.getString(R.string.need_to_accept)
         viewMessage.text = welcomeMessage
     }
 
     internal var gameListPages: MutableList<GameListPage>? = null
 
-    public fun getGameItemAdapter(index: String): GameItemAdapter? {
+    fun getGameItemAdapter(index: String): GameItemAdapter? {
 
         if (gameListPages == null) {
             loadRows()
@@ -936,7 +903,7 @@ class GameSelectFragmentPhone : Fragment(),
 
         if (gameListPages != null) {
             for (page in this.gameListPages!!) {
-                if (page.pageTitle.equals(index)) {
+                if (page.pageTitle == index) {
                     return page.gameList
                 }
             }
@@ -944,24 +911,25 @@ class GameSelectFragmentPhone : Fragment(),
         return null
     }
 
+    @SuppressLint("StringFormatInvalid")
     private fun loadRows() {
 
         // -----------------------------------------------------------------
         // Recent Play Game
         try {
             val checklist = Select()
-                    .from(GameInfo::class.java)
-                    .limit(1)
-                    .execute<GameInfo?>()
+                .from(GameInfo::class.java)
+                .limit(1)
+                .execute<GameInfo?>()
             if (checklist.size == 0) {
 
-                val viewMessage = rootview_.findViewById(R.id.empty_message) as TextView
-                val viewPager = rootview_.findViewById(R.id.view_pager_game_index) as? ViewPager
-                viewMessage?.visibility = View.VISIBLE
-                viewPager?.visibility = View.GONE
+                val viewMessage = rootview.findViewById<TextView?>(R.id.empty_message)
+                val viewPager = rootview.findViewById<ViewPager?>(R.id.view_pager_game_index)
+                viewMessage!!.visibility = VISIBLE
+                viewPager!!.visibility = View.GONE
 
                 val markwon = Markwon.create(this.activity as Context)
-                val welcomeMessage = getResources().getString(
+                val welcomeMessage = resources.getString(
                     R.string.welcome,
                     YabauseStorage.storage.gamePath
                 )
@@ -970,13 +938,13 @@ class GameSelectFragmentPhone : Fragment(),
                 return
             }
         } catch (e: Exception) {
-            Log.d(TAG, e.localizedMessage)
+            Log.d(TAG, e.localizedMessage!!)
         }
 
-        val viewMessage = rootview_.findViewById(R.id.empty_message) as? View
-        val viewPager = rootview_.findViewById(R.id.view_pager_game_index) as? ViewPager
+        val viewMessage = rootview.findViewById(R.id.empty_message) as? View
+        val viewPager = rootview.findViewById(R.id.view_pager_game_index) as? ViewPager
         viewMessage?.visibility = View.GONE
-        viewPager?.visibility = View.VISIBLE
+        viewPager?.visibility = VISIBLE
 
         // -----------------------------------------------------------------
         // Recent Play Game
@@ -988,15 +956,15 @@ class GameSelectFragmentPhone : Fragment(),
                 .limit(5)
                 .execute<GameInfo?>()
         } catch (e: Exception) {
-            Log.d(TAG, e.localizedMessage)
+            Log.d(TAG, e.localizedMessage!!)
         }
-        val resent_adapter = GameItemAdapter(rlist)
+        val resentAdapter = GameItemAdapter(rlist)
 
         gameListPages = mutableListOf()
 
-        val resent_page = GameListPage("recent", resent_adapter)
-        resent_adapter.setOnItemClickListener(this)
-        gameListPages!!.add(resent_page)
+        val resentPage = GameListPage("recent", resentAdapter)
+        resentAdapter.setOnItemClickListener(this)
+        gameListPages!!.add(resentPage)
 
         // -----------------------------------------------------------------
         //
@@ -1007,20 +975,18 @@ class GameSelectFragmentPhone : Fragment(),
                 .orderBy("game_title ASC")
                 .execute()
         } catch (e: Exception) {
-            Log.d(TAG, e.localizedMessage)
+//            Log.d(TAG, "${e.localizedMessage}")
         }
-        var hit: Boolean
-        var i: Int
-        i = 0
+        var i = 0
         while (i < alphabet.size) {
-            hit = false
-            val alphaindexed_list: MutableList<GameInfo?>? =
+            var hit = false
+            val alphabetedList: MutableList<GameInfo?>? =
                 ArrayList()
             val it = list!!.iterator()
             while (it.hasNext()) {
                 val game = it.next()
-                if (game.game_title.toUpperCase().indexOf(alphabet[i]) == 0) {
-                    alphaindexed_list!!.add(game)
+                if (game.game_title.toUpperCase(Locale.ROOT).indexOf(alphabet[i]) == 0) {
+                    alphabetedList!!.add(game)
                     Log.d(
                         "GameSelect",
                         alphabet[i] + ":" + game.game_title
@@ -1030,25 +996,25 @@ class GameSelectFragmentPhone : Fragment(),
                 }
             }
             if (hit) {
-                val pageAdapter = GameItemAdapter(alphaindexed_list)
+                val pageAdapter = GameItemAdapter(alphabetedList)
                 pageAdapter.setOnItemClickListener(this)
-                var a_page = GameListPage(alphabet[i], pageAdapter)
-                gameListPages!!.add(a_page)
+                val aPage = GameListPage(alphabet[i], pageAdapter)
+                gameListPages!!.add(aPage)
             }
             i++
         }
-        val others_list: MutableList<GameInfo?>? = ArrayList()
+        val othersList: MutableList<GameInfo?>? = ArrayList()
         val it: Iterator<GameInfo> = list!!.iterator()
         while (it.hasNext()) {
             val game = it.next()
             Log.d("GameSelect", "Others:" + game.game_title)
-            others_list!!.add(game)
+            othersList!!.add(game)
         }
 
-        if (others_list!!.size > 0) {
-            val otherAdapter = GameItemAdapter(others_list)
+        if (othersList!!.size > 0) {
+            val otherAdapter = GameItemAdapter(othersList)
             otherAdapter.setOnItemClickListener(this)
-            var otherPage = GameListPage("OTHERS", otherAdapter)
+            val otherPage = GameListPage("OTHERS", otherAdapter)
             gameListPages!!.add(otherPage)
         }
     }
@@ -1057,8 +1023,8 @@ class GameSelectFragmentPhone : Fragment(),
         val c = Calendar.getInstance()
         item?.lastplay_date = c.time
         item?.save()
-        if (mTracker != null) {
-            mTracker!!.send(
+        if (tracker != null) {
+            tracker!!.send(
                 EventBuilder()
                     .setCategory("Action")
                     .setAction(item?.game_title)
@@ -1068,7 +1034,7 @@ class GameSelectFragmentPhone : Fragment(),
         val bundle = Bundle()
         bundle.putString(FirebaseAnalytics.Param.ITEM_ID, item?.product_number)
         bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, item?.game_title)
-        mFirebaseAnalytics!!.logEvent(
+        firebaseAnalytics!!.logEvent(
             "yab_start_game", bundle
         )
         val intent = Intent(activity, Yabause::class.java)
@@ -1091,11 +1057,11 @@ class GameSelectFragmentPhone : Fragment(),
 
                 val index = gameListPages!!.indexOfFirst { it.pageTitle == title.toString() }
                 if (index != -1) {
-                    tablayout_.removeTabAt(index)
+                    tabLayout.removeTabAt(index)
                 }
 
-                val removeAll = gameListPages!!.removeAll { it.pageTitle == title.toString() }
-                tabpage_adapter.notifyDataSetChanged()
+                gameListPages!!.removeAll { it.pageTitle == title.toString() }
+                tabpageAdapter.notifyDataSetChanged()
             }
         }
 
@@ -1106,28 +1072,19 @@ class GameSelectFragmentPhone : Fragment(),
 
                 val index = gameListPages!!.indexOfFirst { it.pageTitle == "OTHERS" }
                 if (index != -1) {
-                    tablayout_.removeTabAt(index)
+                    tabLayout.removeTabAt(index)
                 }
 
-                val removeAll = gameListPages!!.removeAll { it.pageTitle == "OTHERS" }
-                tabpage_adapter.notifyDataSetChanged()
+                gameListPages!!.removeAll { it.pageTitle == "OTHERS" }
+                tabpageAdapter.notifyDataSetChanged()
             }
         }
     }
 
-    private fun requestNewInterstitial() {
-        val adRequest =
-            AdRequest.Builder() // .addTestDevice("YOUR_DEVICE_HASH")
-                .build()
-        // mInterstitialAd!!.loadAd(adRequest)
-    }
-
-    private var isBackGroundComplete = false
-
     override fun onResume() {
         super.onResume()
-        if (mTracker != null) { // mTracker.setScreenName(TAG);
-            mTracker!!.send(ScreenViewBuilder().build())
+        if (tracker != null) { // mTracker.setScreenName(TAG);
+            tracker!!.send(ScreenViewBuilder().build())
         }
         isFront = true
         if (isBackGroundComplete) {
@@ -1152,20 +1109,24 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     companion object {
-        private val adapter: RecyclerView.Adapter<*>? = null
-        private var recyclerView: RecyclerView? = null
-        private val data: ArrayList<GameInfo>? = null
+        private const val TAG = "GameSelectFragmentPhone"
+        private const val SETTING_ACTIVITY = 0x01
+        private const val YABAUSE_ACTIVITY = 0x02
+        private const val DOWNLOAD_ACTIVITY = 0x03
+        private const val AD_ACTIVITY = 0x04
+        private const val READ_REQUEST_CODE = 0xFFE0
+
         private var instance: GameSelectFragmentPhone? = null
+
         @JvmField
         var myOnClickListener: View.OnClickListener? = null
-        private const val RC_SIGN_IN = 123
         private const val REQUEST_STORAGE = 1
         private val PERMISSIONS_STORAGE = arrayOf(
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
 
-        fun newInstance(param1: String?, param2: String?): GameSelectFragmentPhone {
+        fun newInstance(): GameSelectFragmentPhone {
             val fragment = GameSelectFragmentPhone()
             val args = Bundle()
             fragment.arguments = args

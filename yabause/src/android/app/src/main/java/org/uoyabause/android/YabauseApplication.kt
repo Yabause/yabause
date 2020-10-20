@@ -21,6 +21,7 @@ package org.uoyabause.android
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
@@ -76,6 +77,18 @@ class YabauseApplication : MultiDexApplication() {
     companion object {
         lateinit var appContext: Context
             private set
+
+        fun isPro(): Boolean {
+            val prefs: SharedPreferences? = appContext.getSharedPreferences("private", Context.MODE_PRIVATE)
+            var hasDonated = false
+            if (prefs != null) {
+                hasDonated = prefs.getBoolean("donated", false)
+            }
+            if (BuildConfig.BUILD_TYPE == "pro" || hasDonated) {
+                return true
+            }
+            return false
+        }
 
         fun checkDonated(ctx: Context): Int {
             if (BuildConfig.BUILD_TYPE != "pro") {
