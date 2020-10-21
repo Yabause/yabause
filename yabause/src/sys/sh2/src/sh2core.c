@@ -382,7 +382,7 @@ u8 FASTCALL OnchipReadByte(SH2_struct *context, u32 addr) {
       case 0x068:
          return context->onchip.VCRD >> 8;
       case 0x080:
-         return context->onchip.WTCSR & 0x18;
+         return context->onchip.WTCSR; // & 0x18;
       case 0x081:
          return context->onchip.WTCNT;
       case 0x092:
