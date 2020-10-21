@@ -698,7 +698,7 @@ void Cs2Reset(void) {
   Cs2Area->blockfreespace = MAX_BLOCKS;
 
   // initialize TOC
-  memset(Cs2Area->TOC, 0xFF, sizeof(Cs2Area->TOC));
+ // memset(Cs2Area->TOC, 0xFF, sizeof(Cs2Area->TOC));
 
   // clear filesystem stuff
   Cs2Area->curdirsect = 0;
