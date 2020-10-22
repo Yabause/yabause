@@ -4730,7 +4730,9 @@ static void FASTCALL
 c68k_byte_write (const u32 adr, u32 data)
 {
   if (adr < 0x100000){
-    SoundRamWriteByte(NULL, SoundRam, adr, data);
+	 if (adr < 0x80000) {
+	    SoundRamWriteByte(NULL, SoundRam, adr, data);
+	}
   }
   else{
     scsp_w_b(NULL, NULL, adr, data);
@@ -4745,7 +4747,9 @@ c68k_word_read (const u32 adr)
 {
   u32 rtn = 0;
   if (adr < 0x100000) {
-    rtn = SoundRamReadWord(NULL, SoundRam, adr);
+	if (adr < 0x80000) {
+	    rtn = SoundRamReadWord(NULL, SoundRam, adr);
+	}
   }
   else
     rtn = scsp_r_w(NULL, NULL, adr);
@@ -4758,7 +4762,9 @@ static void FASTCALL
 c68k_word_write (const u32 adr, u32 data)
 {
   if (adr < 0x100000){
-    SoundRamWriteWord(NULL, SoundRam, adr, data);
+	if (adr < 0x80000) {
+	    SoundRamWriteWord(NULL, SoundRam, adr, data);
+	}
   }
   else{
     scsp_w_w(NULL, NULL, adr, data);
@@ -4851,13 +4857,13 @@ void SyncSh2And68k(SH2_struct *context){
 u16 FASTCALL
 SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 {
-  addr &= 0x7FFFF;
+  addr &= 0xFFFFF;
   u16 val = 0;
 
   if (scsp.mem4b == 0)
     addr &= 0x1FFFF;
-  // else if (addr > 0x7FFFF)
-  //   return 0xFFFF;
+  else if (addr > 0x7FFFF)
+    return 0xFFFF;
 
   //SCSPLOG("SoundRamReadLong %08X:%08X time=%d", addr, val, MSH2->cycles);
   if (context != NULL) SyncSh2And68k(context);
@@ -4873,13 +4879,13 @@ SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 void FASTCALL
 SoundRamWriteWord (SH2_struct *context, u8* mem, u32 addr, u16 val)
 {
-  addr &= 0x7FFFF;
+  addr &= 0xFFFFF;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x1FFFF;
-  // else if (addr > 0x7FFFF)
-  //   return;
+  else if (addr > 0x7FFFF)
+    return;
 
   //SCSPLOG("SoundRamWriteWord %08X:%04X", addr, val);
   T2WriteWord (mem, addr, val);
@@ -4891,18 +4897,18 @@ SoundRamWriteWord (SH2_struct *context, u8* mem, u32 addr, u16 val)
 u32 FASTCALL
 SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
 {
-  addr &= 0x7FFFF;
+  addr &= 0xFFFFF;
   u32 val;
   u32 pre_cycle = m68kcycle;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x1FFFF;
-  // else if (addr > 0x7FFFF) {
-  //   val = 0xFFFFFFFF;
-  //   if (context != NULL) SyncSh2And68k(context);
-  //   return val;
-  // }
+  else if (addr > 0x7FFFF) {
+     val = 0xFFFFFFFF;
+     if (context != NULL) SyncSh2And68k(context);
+     return val;
+  }
 
   //SCSPLOG("SoundRamReadLong %08X:%08X time=%d PC=%08X", addr, val, MSH2->cycles, MSH2->regs.PC);
   if (context != NULL) SyncSh2And68k(context);
@@ -4918,14 +4924,14 @@ SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
 void FASTCALL
 SoundRamWriteLong (SH2_struct *context, u8* mem, u32 addr, u32 val)
 {
-  addr &= 0x7FFFF;
+  addr &= 0xFFFFF;
   //u32 pre_cycle = m68kcycle;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x1FFFF;
-  // else if (addr > 0x7FFFF)
-  //   return;
+  else if (addr > 0x7FFFF)
+    return;
 
   //SCSPLOG("SoundRamWriteLong %08X:%08X", addr, val);
   T2WriteLong (mem, addr, val);
@@ -5048,6 +5054,7 @@ ScspChangeSoundCore (int coreid)
 void
 ScspDeInit (void)
 {
+  ScspUnMuteAudio(1);
   scsp_mute_flags = 0;
   thread_running = 0;
 #if defined(ASYNC_SCSP)
@@ -5397,7 +5404,7 @@ void ScspAsynMainCpu( void * p ){
   now = 0;
   before = 0;
   while (thread_running){
-    while (g_scsp_lock) { YabThreadUSleep(1); }
+    while (g_scsp_lock) { YabThreadUSleep(1000); }
     u64 m68k_done_counter = 0;
     u64 m68k_integer_part = 0;
     u64 m68k_cycle = 0;
@@ -5667,6 +5674,8 @@ ScspMuteAudio (int flags)
   scsp_mute_flags |= flags;
   if (SNDCore && scsp_mute_flags)
     SNDCore->MuteAudio ();
+
+  g_scsp_lock = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5677,6 +5686,8 @@ ScspUnMuteAudio (int flags)
   scsp_mute_flags &= ~flags;
   if (SNDCore && (scsp_mute_flags == 0))
     SNDCore->UnMuteAudio ();
+
+  g_scsp_lock = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
