@@ -306,6 +306,11 @@ void Vdp1Reset(void) {
    VDP1_MASK = 0xFFFF;
    VIDCore->Vdp1Reset();
    vdp1_clock = 0;
+   
+
+   for (int i = 0; i < 0x80000; i += 2) {
+     T1WriteWord(Vdp1Ram, i, 0x8000);
+   }
 }
 
 int VideoSetSetting( int type, int value )
