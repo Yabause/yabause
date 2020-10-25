@@ -1416,7 +1416,7 @@ Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 void
 Java_org_uoyabause_android_YabauseRunnable_reset( JNIEnv* env )
 {
-    yprintf("sending MSG_OPEN_TRAY");
+    yprintf("sending MSG_RESET");
     pthread_mutex_lock(&g_mtxGlLock);
     g_msg = MSG_RESET;
     pthread_mutex_unlock(&g_mtxGlLock);    
