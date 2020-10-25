@@ -32,7 +32,7 @@ int main( int argc, char** argv )
 	// create application
 	QApplication app( argc, argv );
 	// init application
-	app.setApplicationName( QString( "Yaba Sanshiro v%1" ).arg( VERSION ) );
+	app.setApplicationName( QString( "Yaba Sanshiro 2 v%1" ).arg( VERSION ) );
 	// init settings
 	Settings::setIniInformations();
 #ifdef HAVE_LIBMINI18N
