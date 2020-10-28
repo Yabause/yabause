@@ -325,6 +325,8 @@ void VIDCSVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_fram
 
 void VIDCSVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
+  regs->localX = 0;
+  regs->localY = 0;
   if (
     (regs->userclipX1 == cmd->CMDXA) &&
     (regs->userclipY1 == cmd->CMDYA) &&

@@ -4305,6 +4305,8 @@ void VIDOGLVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
   regs->userclipY1 = cmd->CMDYA;
   regs->userclipX2 = cmd->CMDXC+1;
   regs->userclipY2 = cmd->CMDYC+1;
+  regs->localX = 0;
+  regs->localY = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
