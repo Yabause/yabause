@@ -4301,10 +4301,17 @@ void VIDOGLVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_fra
 
 void VIDOGLVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
+  if (  (cmd->CMDXC+1 > regs->systemclipX2)
+    && (cmd->CMDYC+1 > regs->systemclipY2)
+  ) {
+    regs->localX = 0;
+    regs->localY = 0;
+  }
   regs->userclipX1 = cmd->CMDXA;
   regs->userclipY1 = cmd->CMDYA;
   regs->userclipX2 = cmd->CMDXC+1;
   regs->userclipY2 = cmd->CMDYC+1;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
