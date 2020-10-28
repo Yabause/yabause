@@ -13,6 +13,7 @@ enum
   WRITE,
   READ,
   CLEAR,
+  CLEAR_MESH,
   NB_PRG
 };
 

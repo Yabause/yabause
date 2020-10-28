@@ -92,6 +92,23 @@ SHADER_VERSION_COMPUTE
 "  imageStore(outMesh, texel, vec4(0.0));\n"
 "}\n";
 
+static const char vdp1_clear_mesh_f[] =
+SHADER_VERSION_COMPUTE
+"#ifdef GL_ES\n"
+"precision highp float;\n"
+"#endif\n"
+"layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
+"layout(rg8, binding = 0) writeonly uniform image2D outMesh0;\n"
+"layout(rg8, binding = 1) writeonly uniform image2D outMesh1;\n"
+"void main()\n"
+"{\n"
+"  ivec2 size = imageSize(outMesh0);\n"
+"  ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
+"  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
+"  imageStore(outMesh0, texel, vec4(0.0));\n"
+"  imageStore(outMesh1, texel, vec4(0.0));\n"
+"}\n";
+
 #define COLINDEX(A) \
 "int col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
 
