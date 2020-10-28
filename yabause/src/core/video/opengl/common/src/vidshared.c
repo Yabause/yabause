@@ -403,7 +403,7 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
           break;
         }
 
-        if (perdot != 1){
+        if (perdot == 0){
           parameter->deltaKAx = 0.0f;
         }
         else{
