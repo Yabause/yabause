@@ -580,7 +580,7 @@ SHADER_VERSION_COMPUTE
 "    texcoord = uv;\n"
 "    gouraudcoord = texcoord;\n"
 "    if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"    if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
+"    if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y - 1.0f/float(pixcmd.h);\n" //invert vertically
 "    if (pixcmd.type <= "Stringify(LINE)") {\n"
 "      newColor = extractPolygonColor(pixcmd);\n"
 "    } else if (pixcmd.type <= "Stringify(QUAD)") {\n"
