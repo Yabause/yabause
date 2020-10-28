@@ -50,7 +50,11 @@ Vdp1External_struct Vdp1External;
 vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
 int nbCmdToProcess = 0;
 
-int vdp1_clock = 0;;
+int vdp1_clock = 0;
+
+static int CmdListDrawn = 0;
+static int CmdListLimit = 0x80000;
+
 
 static int needVdp1draw = 0;
 static void Vdp1NoDraw(void);
@@ -93,6 +97,9 @@ u32 FASTCALL Vdp1RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
 
 void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
    addr &= 0x7FFFF;
+   if (CmdListLimit >= addr) {
+     CmdListDrawn = 0;
+   }
    Vdp1External.updateVdp1Ram = 1;
    if( Vdp1External.status == VDP1_STATUS_RUNNING) vdp1_clock -= 1;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
@@ -104,6 +111,9 @@ void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 
 void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    addr &= 0x7FFFF;
+   if (CmdListLimit >= addr) {
+     CmdListDrawn = 0;
+   }
    Vdp1External.updateVdp1Ram = 1;
    if( Vdp1External.status == VDP1_STATUS_RUNNING) vdp1_clock -= 2;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
@@ -115,6 +125,9 @@ void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) 
 
 void FASTCALL Vdp1RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
    addr &= 0x7FFFF;
+   if (CmdListLimit >= addr) {
+     CmdListDrawn = 0;
+   }
    Vdp1External.updateVdp1Ram = 1;
    if( Vdp1External.status == VDP1_STATUS_RUNNING) vdp1_clock -= 4;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
@@ -306,7 +319,7 @@ void Vdp1Reset(void) {
    VDP1_MASK = 0xFFFF;
    VIDCore->Vdp1Reset();
    vdp1_clock = 0;
-   
+
 
    for (int i = 0; i < 0x80000; i += 2) {
      T1WriteWord(Vdp1Ram, i, 0x8000);
@@ -1004,6 +1017,9 @@ static vdp1cmd_struct * localCoordCmd = NULL;
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   int cylesPerLine  = getVdp1CyclesPerLine();
+
+  if (CmdListDrawn != 0) return; //The command list has already been drawn for the current frame
+
   if (Vdp1External.status == VDP1_STATUS_IDLE) {
     returnAddr = 0xffffffff;
     if (usrClipCmd != NULL) free(usrClipCmd);
@@ -1019,7 +1035,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       Vdp1External.status = VDP1_STATUS_IDLE;
       return; // address error
     }
-
 
    u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
@@ -1137,6 +1152,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	    Vdp1External.status = VDP1_STATUS_IDLE;
             regs->EDSR |= 2;
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
+            CmdListDrawn = 1;
+            CmdListLimit = (regs->addr & 0x7FFFF);
             return;
          }
       } else {
@@ -1150,6 +1167,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 		  checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
 		    Vdp1External.status = VDP1_STATUS_IDLE;
 		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
+      CmdListDrawn = 1;
+      CmdListLimit = (regs->addr & 0x7FFFF);
 		  return;
 	  }
 
@@ -1163,6 +1182,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          // Badd adress. it causes infinity loop
          if (regs->addr == 0) {
            Vdp1External.status = VDP1_STATUS_IDLE;
+           CmdListDrawn = 1;
+           CmdListLimit = (regs->addr & 0x7FFFF);
            return;
          }
          break;
@@ -1174,6 +1195,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          // Badd adress. it causes infinity loop
          if (regs->addr == 0) {
            Vdp1External.status = VDP1_STATUS_IDLE;
+           CmdListDrawn = 1;
+           CmdListLimit = (regs->addr & 0x7FFFF);
            return;
          }
          break;
@@ -1187,6 +1210,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          // Badd adress. it causes infinity loop
          if (regs->addr == 0) {
            Vdp1External.status = VDP1_STATUS_IDLE;
+           CmdListDrawn = 1;
+           CmdListLimit = (regs->addr & 0x7FFFF);
            return;
          }
          break;
@@ -1202,6 +1227,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    if (command & 0x8000) {
         LOG("VDP1: Command Finished! count = %d @ %08X", command_count, regs->addr);
         Vdp1External.status = VDP1_STATUS_IDLE;
+        CmdListDrawn = 1;
+        CmdListLimit = (regs->addr & 0x7FFFF);
    }
    checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
 }
@@ -2160,10 +2187,12 @@ static void startField(void) {
       int id = 0;
       if (_Ygl != NULL) id = _Ygl->readframe;
       VIDCore->Vdp1EraseWrite(id);
+      CmdListDrawn = 0;
       Vdp1External.manualerase = 0;
     }
 
     VIDCore->Vdp1FrameChange();
+    CmdListDrawn = 0;
     FRAMELOG("Change readframe %d to %d (%d)\n", _Ygl->drawframe, _Ygl->readframe, yabsys.LineCount);
     Vdp1External.current_frame = !Vdp1External.current_frame;
     Vdp1Regs->LOPR = Vdp1Regs->COPR;
@@ -2262,6 +2291,7 @@ void Vdp1VBlankOUT(void)
   if (needVBlankErase()) {
     int id = 0;
     if (_Ygl != NULL) id = _Ygl->readframe;
+    CmdListDrawn = 0;
     VIDCore->Vdp1EraseWrite(id);
   }
 }
