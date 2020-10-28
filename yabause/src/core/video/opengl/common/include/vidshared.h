@@ -156,7 +156,6 @@ typedef struct
    int draww;
    int drawh;
    int rotatenum;
-   int rotatemode;
    int mosaicxmask;
    int mosaicymask;
    int islinescroll;

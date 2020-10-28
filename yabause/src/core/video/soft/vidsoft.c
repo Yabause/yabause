@@ -1541,7 +1541,6 @@ static void Vdp2DrawNBG0(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct
       }
 
       info.rotatenum = 1;
-      info.rotatemode = 0;
       info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
    }
    else if (regs->BGON & 0x1)
@@ -1928,13 +1927,11 @@ static void Vdp2DrawRBG0(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct
       case 0:
          // Parameter A
          info.rotatenum = 0;
-         info.rotatemode = 0;
          info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
          break;
       case 1:
          // Parameter B
          info.rotatenum = 1;
-         info.rotatemode = 0;
          info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
          break;
       case 2:
@@ -1943,7 +1940,6 @@ static void Vdp2DrawRBG0(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct
          // Parameter A+B switched via rotation parameter window
       default:
          info.rotatenum = 0;
-         info.rotatemode = 1 + (regs->RPMD & 0x1);
          info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
          break;
    }
