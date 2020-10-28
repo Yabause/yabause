@@ -1030,6 +1030,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    Vdp1External.checkEDSR = 0;
 
    nbCmdToProcess = 0;
+   yabsys.vdp1cycles = 0;
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
      int ret;
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
@@ -1041,7 +1042,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
            //No more clock cycle, wait next line
            return;
          }
-         yabsys.vdp1cycles = 0;
          switch (command & 0x000F) {
          case 0: // normal sprite draw
             ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
@@ -1143,6 +1143,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
         yabsys.vdp1cycles += 16;
       }
       vdp1_clock -= yabsys.vdp1cycles;
+      yabsys.vdp1cycles = 0;
 
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
 	  if (regs->EDSR & 0x02){
