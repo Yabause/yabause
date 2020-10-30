@@ -539,6 +539,8 @@ void vdp1_clear(int id, float *col) {
 
 void vdp1_write() {
 	int progId = WRITE;
+	float wratio = 1.0f/_Ygl->vdp1wratio;
+	float hratio = 1.0f/_Ygl->vdp1hratio;
 	if (prg_vdp1[progId] == 0) {
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
 	}
@@ -546,7 +548,7 @@ void vdp1_write() {
 
 	glBindImageTexture(0, compute_tex[_Ygl->drawframe], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vdp1access_);
-	glUniform2f(2, 1.0f/_Ygl->vdp1wratio, 1.0/_Ygl->vdp1hratio);
+	glUniform2f(2, wratio, hratio);
 
 	glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 	glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
