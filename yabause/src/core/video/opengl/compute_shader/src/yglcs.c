@@ -96,12 +96,6 @@ void YglCSFinsihDraw(void) {
 void YglCSRenderVDP1(void) {
   FRAMELOG("YglCSRenderVDP1: drawframe =%d %d\n", _Ygl->drawframe, yabsys.LineCount);
   vdp1_compute();
-
-#ifdef TEST_FB_RW
-  vdp1_read();
-  vdp1_write();
-#endif
-
 }
 
 void YglFrameChangeCSVDP1(){
