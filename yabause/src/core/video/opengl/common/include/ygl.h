@@ -297,7 +297,7 @@ void YglCheckFBSwitch(int sync);
 
 #define VDP2_CC_NONE 0x00
 
-#define BLIT_TEXTURE_NB_PROG (16*2*4*14*5)
+#define BLIT_TEXTURE_NB_PROG (16*2*4*14*5*4)
 
 enum
 {

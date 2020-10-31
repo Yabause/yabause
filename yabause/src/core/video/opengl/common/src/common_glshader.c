@@ -17,12 +17,37 @@ static const GLchar Yglprg_vdp2_sprite_palette_rgb[] =
 " return ((index & 0x8000)!=0);\n"
 "}\n";
 
+static const GLchar Yglprg_vdp2_sprite_getCode_16[] =
+"int getCode(vec2 col) {\n"
+"//Sprite Type 16 bit - FB 16bit\n"
+" return (int(col.x*255.0) | (int(col.y*255.0) << 8));\n"
+"}\n";
+
+static const GLchar Yglprg_vdp2_sprite_getCode_8[] =
+"int getCode(vec2 col) {\n"
+"//Sprite Type 8 bit - FB 8bit\n"
+" return int(col.x*255.0);\n"
+"}\n";
+
+static const GLchar Yglprg_vdp2_sprite_getCode_16_8[] =
+"int getCode(vec2 col) {\n"
+"//Sprite Type 16 bit - FB 8 bit\n"
+" return (int(col.x*255.0) | 0xFF00);\n"
+"}\n";
+
+static const GLchar Yglprg_vdp2_sprite_getCode_8_16[] =
+"int getCode(vec2 col) {\n"
+"//Srite Type 8 bit - FB 16bit\n"
+" return int(col.x*255.0);\n"
+"}\n";
+
+
 static const GLchar Yglprg_vdp2_sprite_type_0[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -44,7 +69,7 @@ static const GLchar Yglprg_vdp2_sprite_type_1[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -66,7 +91,7 @@ static const GLchar Yglprg_vdp2_sprite_type_2[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -95,7 +120,7 @@ static const GLchar Yglprg_vdp2_sprite_type_3[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -124,7 +149,7 @@ static const GLchar Yglprg_vdp2_sprite_type_4[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -153,7 +178,7 @@ static const GLchar Yglprg_vdp2_sprite_type_5[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -182,7 +207,7 @@ static const GLchar Yglprg_vdp2_sprite_type_6[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -211,7 +236,7 @@ static const GLchar Yglprg_vdp2_sprite_type_7[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -243,7 +268,7 @@ static const GLchar Yglprg_vdp2_sprite_type_8[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0);\n"
+"  ret.code = getCode(col);\n"
 "  ret.prio = (ret.code >> 7) & 0x1;\n"
 "  ret.code = ret.code & 0x7F;\n"
 "  ret.normalShadow = (ret.code == 0x7E);\n"
@@ -257,7 +282,7 @@ static const GLchar Yglprg_vdp2_sprite_type_9[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0);\n"
+"  ret.code = getCode(col);\n"
 "  ret.prio = (ret.code >> 7) & 0x1;\n"
 "  ret.cc = (ret.code >> 6) & 0x1;\n"
 "  ret.code = ret.code & 0x3F;\n"
@@ -272,7 +297,7 @@ static const GLchar Yglprg_vdp2_sprite_type_A[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0);\n"
+"  ret.code = getCode(col);\n"
 "  ret.prio = (ret.code >> 6) & 0x3;\n"
 "  ret.code = ret.code & 0x3F;\n"
 "  ret.normalShadow = (ret.code == 0x3E);\n"
@@ -286,7 +311,7 @@ static const GLchar Yglprg_vdp2_sprite_type_B[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0);\n"
+"  ret.code = getCode(col);\n"
 "  ret.cc = (ret.code >> 6) & 0x3;\n"
 "  ret.code = ret.code & 0x3F;\n"
 "  ret.normalShadow = (ret.code == 0x3E);\n"
@@ -300,7 +325,7 @@ static const GLchar Yglprg_vdp2_sprite_type_C[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0);\n"
+"  ret.code = getCode(col);\n"
 "  ret.prio = (ret.code >> 7) & 0x1;\n"
 "  ret.code = ret.code & 0xFF;\n"
 "  ret.normalShadow = (ret.code == 0xFE);\n"
@@ -314,7 +339,7 @@ static const GLchar Yglprg_vdp2_sprite_type_D[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0);\n"
+"  ret.code = getCode(col);\n"
 "  ret.prio = (ret.code >> 7) & 0x1;\n"
 "  ret.cc = (ret.code >> 6) & 0x1;\n"
 "  ret.code = ret.code & 0xFF;\n"
@@ -329,7 +354,7 @@ static const GLchar Yglprg_vdp2_sprite_type_E[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0);\n"
+"  ret.code = getCode(col);\n"
 "  ret.prio = (ret.code >> 6) & 0x3;\n"
 "  ret.code = ret.code & 0xFF;\n"
 "  ret.normalShadow = (ret.code == 0xFE);\n"
@@ -343,7 +368,7 @@ static const GLchar Yglprg_vdp2_sprite_type_F[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0);\n"
+"  ret.code = getCode(col);\n"
 "  ret.cc = (ret.code >> 6) & 0x3;\n"
 "  ret.code = ret.code & 0xFF;\n"
 "  ret.normalShadow = (ret.code == 0xFE);\n"
@@ -1651,6 +1676,14 @@ const GLchar * vdp2blit_palette_mode_f[2]= {
   Yglprg_vdp2_sprite_palette_only,
   Yglprg_vdp2_sprite_palette_rgb
 };
+
+const GLchar * vdp2blit_sprite_code_f[4] = {
+  Yglprg_vdp2_sprite_getCode_16,
+  Yglprg_vdp2_sprite_getCode_16_8,
+  Yglprg_vdp2_sprite_getCode_8_16,
+  Yglprg_vdp2_sprite_getCode_8,
+};
+
 const GLchar * vdp2blit_srite_type_f[16] = {
   Yglprg_vdp2_sprite_type_0,
   Yglprg_vdp2_sprite_type_1,
@@ -1700,7 +1733,7 @@ const GLchar * Yglprg_vdp2_common_part_screen[14] = {
   Yglprg_vdp2_prio_part_fb_on_6,
 };
 
-const GLchar * pYglprg_vdp2_blit_f[BLIT_TEXTURE_NB_PROG][17];
+const GLchar * pYglprg_vdp2_blit_f[BLIT_TEXTURE_NB_PROG][18];
 
 void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* end, const GLchar* final) {
   int m_start = 0;
@@ -1715,30 +1748,34 @@ void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* 
             //14 screens configuration
             for (int i = 0; i<5; i++) {
               // Sprite color calculation condition are separated by 1
-            int index = 5*(14*(16*(2*j+k)+l)+m)+i;
+              for (int n = 0; n<4; n++) {
+                //4 possibilities betwwen vdp2 and vdp1 FB width mode
+              int index = 4*(5*(14*(16*(2*j+k)+l)+m)+i)+n;
 
-            LOG_SHADER("index = %d (%d %d %d %d %d)\n", index, j, k, l, m, i);
-            #ifndef FORCE_VDP2_DIVERSITY
-            if (getCSUsage() == 0) pYglprg_vdp2_blit_f[index][0] = start[6];
-            else
-            #endif
-            pYglprg_vdp2_blit_f[index][0] = start[m%7];
-            pYglprg_vdp2_blit_f[index][1] = Yglprg_vdp2_common_start;
-            pYglprg_vdp2_blit_f[index][2] = vdp2blit_palette_mode_f[k];
-            pYglprg_vdp2_blit_f[index][3] = vdp2blit_srite_type_f[l];
-            pYglprg_vdp2_blit_f[index][4] = draw;
-            pYglprg_vdp2_blit_f[index][5] = Yglprg_vdp2_common_draw;
-            pYglprg_vdp2_blit_f[index][6] = Yglprg_color_condition_f[i];
-            pYglprg_vdp2_blit_f[index][7] = Yglprg_color_mode_f[j];
-            pYglprg_vdp2_blit_f[index][8] = Yglprg_vdp2_drawfb_cram_eiploge_f;
-            pYglprg_vdp2_blit_f[index][9] = vdp2blit_filter_f;
-            pYglprg_vdp2_blit_f[index][10] = Yglprg_vdp2_common_part;
-            pYglprg_vdp2_blit_f[index][11] = Yglprg_vdp2_common_part_screen[m];
-            pYglprg_vdp2_blit_f[index][12] = Yglprg_vdp2_common_end[m];
-            pYglprg_vdp2_blit_f[index][13] = end;
-            pYglprg_vdp2_blit_f[index][14] = Yglprg_vdp2_common_final[m];
-            pYglprg_vdp2_blit_f[index][15] = final;
-            pYglprg_vdp2_blit_f[index][16] =  NULL;
+              LOG_SHADER("index = %d (%d %d %d %d %d)\n", index, j, k, l, m, i);
+              #ifndef FORCE_VDP2_DIVERSITY
+              if (getCSUsage() == 0) pYglprg_vdp2_blit_f[index][0] = start[6];
+              else
+              #endif
+              pYglprg_vdp2_blit_f[index][0] = start[m%7];
+              pYglprg_vdp2_blit_f[index][1] = Yglprg_vdp2_common_start;
+              pYglprg_vdp2_blit_f[index][2] = vdp2blit_palette_mode_f[k];
+              pYglprg_vdp2_blit_f[index][3] = vdp2blit_sprite_code_f[n];
+              pYglprg_vdp2_blit_f[index][4] = vdp2blit_srite_type_f[l];
+              pYglprg_vdp2_blit_f[index][5] = draw;
+              pYglprg_vdp2_blit_f[index][6] = Yglprg_vdp2_common_draw;
+              pYglprg_vdp2_blit_f[index][7] = Yglprg_color_condition_f[i];
+              pYglprg_vdp2_blit_f[index][8] = Yglprg_color_mode_f[j];
+              pYglprg_vdp2_blit_f[index][9] = Yglprg_vdp2_drawfb_cram_eiploge_f;
+              pYglprg_vdp2_blit_f[index][10] = vdp2blit_filter_f;
+              pYglprg_vdp2_blit_f[index][11] = Yglprg_vdp2_common_part;
+              pYglprg_vdp2_blit_f[index][12] = Yglprg_vdp2_common_part_screen[m];
+              pYglprg_vdp2_blit_f[index][13] = Yglprg_vdp2_common_end[m];
+              pYglprg_vdp2_blit_f[index][14] = end;
+              pYglprg_vdp2_blit_f[index][15] = Yglprg_vdp2_common_final[m];
+              pYglprg_vdp2_blit_f[index][16] = final;
+              pYglprg_vdp2_blit_f[index][17] =  NULL;
+            }
           }
         }
       }
@@ -1868,6 +1905,7 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
 int setupVDP2Prog(Vdp2* varVdp2Regs, int nb_screen, int CS) {
   int pgid = PG_VDP2_DRAWFRAMEBUFF_NONE;
   int condition = 0;
+  int fb_mode = 0;
   int mode = getSpriteRenderMode(varVdp2Regs) - NONE; // 4x
   const int SPCCN = ((varVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
   const int CCRTMD = ((varVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
@@ -1886,9 +1924,18 @@ int setupVDP2Prog(Vdp2* varVdp2Regs, int nb_screen, int CS) {
     screen_nb += 7;
   }
 
-  pgid += 5*(14*(16*(2*mode+colormode)+spritetype)+screen_nb)+condition;
+  if (spritetype > 0x7) {
+    //VDP2 use FB as 8 bits
+    fb_mode +=2;
+  }
+  if ((Vdp1Regs->TVMR & 0x1) == 1) {
+    //VDP1 use FB as 8 bits
+    fb_mode +=1;
+  }
 
-  LOG_SHADER("get = %d (%d %d %d %d %d)\n", pgid-PG_VDP2_DRAWFRAMEBUFF_NONE, mode, colormode, spritetype, screen_nb, condition);
+  pgid += 4*(5*(14*(16*(2*mode+colormode)+spritetype)+screen_nb)+condition)+fb_mode;
+
+  LOG_SHADER("get = %d (%d %d %d %d %d %d)\n", pgid-PG_VDP2_DRAWFRAMEBUFF_NONE, mode, colormode, spritetype, screen_nb, condition, fb_mode);
 
   if (_prgid[pgid] == 0) {
    if (YglInitDrawFrameBufferShaders(pgid, CS) != 0) {
@@ -1934,9 +1981,9 @@ void compileVDP2Prog(int id, const GLchar **v, int CS){
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START [%d]--\n", arrayid);
   LOG_SHADER("%d %d %d\n", id, PG_VDP2_DRAWFRAMEBUFF_NONE, id-PG_VDP2_DRAWFRAMEBUFF_NONE);
   if (CS == 0) {
-    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 16, NULL, NULL, NULL) != 0) { YuiMsg("Error init prog %d\n",id); abort(); }
+    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 17, NULL, NULL, NULL) != 0) { YuiMsg("Error init prog %d\n",id); abort(); }
   } else {
-    if (createCSProgram(id, 16, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0) { YuiMsg("Error init prog %d\n",id); abort(); }
+    if (createCSProgram(id, 17, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0) { YuiMsg("Error init prog %d\n",id); abort(); }
   }
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --DONE [%d]--\n", arrayid);
 }
