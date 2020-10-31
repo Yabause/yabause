@@ -1,3 +1,4 @@
+# coding: UTF-8
 #------------------------------------------------------------------------------
 # Automated Test framework for Yaba Sanshrio.
 # デグレチェックの自動化
@@ -72,7 +73,7 @@ class TestCase:
     print(proc.stdout)
     while True:
       time.sleep(1)
-      proc = subprocess.run("adb shell pidof "+exename, shell=True, stdout=PIPE, stderr=PIPE, text=True)
+      proc = subprocess.run("adb shell pidof "+exename+":emulationmain", shell=True, stdout=PIPE, stderr=PIPE, text=True)
       if proc.stdout == "":
         break
     self.time = time.time() - start
@@ -85,7 +86,10 @@ class TestCase:
       shutil.rmtree(p)
     p.mkdir()
 
-    copycommand = "adb shell ls /mnt/sdcard/yabause/record/" + self.id +"out/* | grep 'png' | tr '\r' ' ' | xargs -n1 -I {} adb pull {} ./" + idpath + "out/"
+    copycommand = 'adb shell ls /mnt/sdcard/yabause/record/' + self.id + 'out/*'
+    copycommand += ' | grep \'png\' | tr \'\\r\' \' \' | xargs -n1 -I {} adb pull {} ' 
+    copycommand += './' + idpath + 'out/'
+    print(copycommand)
     proc = subprocess.run(copycommand , shell=True, stdout=PIPE, stderr=PIPE, text=True)
 
 
