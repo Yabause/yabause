@@ -74,15 +74,16 @@ void YglEraseWriteCSVDP1(int id) {
 
   color = Vdp1Regs->EWDR;
 
+  col[0] = (color & 0xFF) / 255.0f;
+  col[1] = ((color >> 8) & 0xFF) / 255.0f;
+
   if (color != 0x0) {
     _Ygl->vdp1On[id] = 1;
-    if ((Vdp1Regs->TVMR & 0x1) == 1){
+    if (((Vdp1Regs->TVMR & 0x1) == 1) && (col[0] != col[1])){
       YuiMsg("Unsupported clear process\n\tin 8 bits upper part of EWDR is for even coordinates and lower part for odd coordinates\n");
     }
   }
 
-  col[0] = (color & 0xFF) / 255.0f;
-  col[1] = ((color >> 8) & 0xFF) / 255.0f;
 
   FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", id);
   vdp1_clear(id, col);
