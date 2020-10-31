@@ -2534,6 +2534,13 @@ void YglEraseWriteVDP1(int id) {
 
   _Ygl->vdp1On[id] = 0;
 
+  if (color != 0x0) {
+    // _Ygl->vdp1On[id] = 1;
+    if ((Vdp1Regs->TVMR & 0x1) == 1){
+      YuiMsg("Unsupported clear process\n\tin 8 bits upper part of EWDR is for even coordinates and lower part for odd coordinates\n");
+    }
+  }
+
   col[0] = (color & 0xFF) / 255.0f;
   col[1] = ((color >> 8) & 0xFF) / 255.0f;
 
