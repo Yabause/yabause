@@ -17,6 +17,7 @@ matrix:
             - libqt5multimedia5
             - libqt5opengl5-dev
             - libsdl2-dev
+            - libmini18n-dev
 
 env:
   global:
