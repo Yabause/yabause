@@ -3252,7 +3252,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   int prioscreens[6] = {0};
   int modescreens[7] = {0};
   int useLineColorOffset[6] = {0};
-  int isRGB[6] = {0};
+  int isRGB[7] = {0};
   int isBlur[7] = {0};
   int isPerline[8] = {0};
   int isShadow[7] = {0};

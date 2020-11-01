@@ -1794,7 +1794,7 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
     if (isBlur[i] != 0) isBlur_val |= 1<<i;
   }
 
-  for(int i=0; i<6; i++) {
+  for(int i=0; i<7; i++) {
     if (isRGB[i] != 0) isRGB_val |= 1<<i;
     if (isShadow[i] != 0) isShadow_val |= 1<<i;
   }
