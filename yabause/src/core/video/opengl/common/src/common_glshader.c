@@ -1205,7 +1205,7 @@ for (int i = 7; i>0; i--) { \n \
             if (FBNormalShadow) {\n \
 //Normal shadow is always a transparent shadow. It does not have to be processed \n \
 //As a top image. But the shadow process shall be processed \n \
-              processShadow = true;\n \
+              processShadow = ((((isShadow>>7)&0x1)!= 0));\n \
               continue;\n \
             }\n \
             if (FBMSBShadow) {\n \

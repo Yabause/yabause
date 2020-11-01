@@ -3071,6 +3071,10 @@ int setupShadow(Vdp2 *varVdp2Regs, int layer) {
         return ((varVdp2Regs->SDCTL >> 4)&0x1);
     break;
     case SPRITE:
+        return ((varVdp2Regs->SDCTL >> 8)&0x1);
+    break;
+    case 7:
+        //Back shadow
         return ((varVdp2Regs->SDCTL >> 5)&0x1);
     break;
     default:
@@ -3252,10 +3256,10 @@ void YglRender(Vdp2 *varVdp2Regs) {
   int prioscreens[6] = {0};
   int modescreens[7] = {0};
   int useLineColorOffset[6] = {0};
-  int isRGB[6] = {0};
+  int isRGB[8] = {0};
   int isBlur[7] = {0};
   int isPerline[8] = {0};
-  int isShadow[7] = {0};
+  int isShadow[8] = {0};
   glDisable(GL_BLEND);
   int id = 0;
 
@@ -3319,7 +3323,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
   }
 #endif
 
-  isShadow[6] = setupShadow(varVdp2Regs, SPRITE); //Use sprite index for background suuport
+  isShadow[7] = setupShadow(varVdp2Regs, SPRITE);
+  isShadow[6] = setupShadow(varVdp2Regs, SPRITE+1);
 
   glViewport(0, 0, _Ygl->width, _Ygl->height);
   glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
