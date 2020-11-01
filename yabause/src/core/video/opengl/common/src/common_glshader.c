@@ -1181,12 +1181,14 @@ for (int i = 7; i>0; i--) { \n \
   if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n \
     int hasColor = 1;\n \
     while (hasColor != 0) {\n \
+      float alpha = 1.0; \n \
       Col prio = getPriorityColor(i, hasColor);\n \
       hasColor = hasColor+1;\n \
       if (prio.mode != 0) { \n \
         if (foundColor1 == 0) { \n \
           prio.mode = (prio.mode & 0x7); \n \
           if (prio.isSprite == 0) {\n \
+            if (processShadow && prio.normalShadow) alpha = 0.5; \n \
             if ((FBMesh == 1) && (i <= FBMeshPrio)) {\n \
               mesh = 1;\n \
               meshCol = FBShadow.rgb;\n \
@@ -1205,7 +1207,7 @@ for (int i = 7; i>0; i--) { \n \
             if (FBNormalShadow) {\n \
 //Normal shadow is always a transparent shadow. It does not have to be processed \n \
 //As a top image. But the shadow process shall be processed \n \
-              processShadow = (use_trans_shadow != 0);\n \
+              processShadow = true;\n \
               continue;\n \
             }\n \
             if (FBMSBShadow) {\n \
@@ -1240,6 +1242,7 @@ for (int i = 7; i>0; i--) { \n \
             foundColor2 = 1; \n \
           }\n \
           colortop = prio.Color; \n \
+          colortop.rgb *= alpha; \n \
           modetop = prio.mode&0x7; \n \
           isRGBtop = prio.isRGB; \n \
           alphatop = prio.Color.a; \n \
@@ -1256,7 +1259,6 @@ for (int i = 7; i>0; i--) { \n \
             //le mesh mode deconne dans steep slope \n \
           }\n \
         } else if (foundColor2 == 0) { \n \
-          // A revoir du coup \n \
           if (prio.isSprite == 1) {\n \
             if (FBNormalShadow) {\n \
                  //shadow are transparent and not computed when on lower priority \n \
@@ -1267,13 +1269,16 @@ for (int i = 7; i>0; i--) { \n \
                 continue;\n \
               }\n \
             }\n \
-          }\n \
+          } else { \n \
+            if (processShadow && prio.normalShadow) alpha = 0.5; \n \
+          } \n \
           colorthird = colorsecond;\n \
           alphathird = alphasecond;\n \
           modethird = modesecond;\n \
           isRGBthird = isRGBsecond;\n \
           modesecond = prio.mode&0x7; \n \
           colorsecond = prio.Color; \n \
+          colorsecond.rgb *= alpha; \n \
           alphasecond = prio.Color.a; \n \
           isRGBsecond = prio.isRGB; \n \
           foundColor2 = 1; \n \
@@ -1296,12 +1301,15 @@ for (int i = 7; i>0; i--) { \n \
                 continue;\n \
               }\n \
             }\n \
-          }\n \
+          } else { \n \
+            if (processShadow && prio.normalShadow) alpha = 0.5; \n \
+          } \n \
           colorfourth = colorthird;\n \
           alphafourth = alphathird;\n \
           isRGBfourth = isRGBthird;\n \
           modethird= prio.mode&0x7;\n \
           colorthird = prio.Color;\n \
+          colorthird.rgb *= alpha; \n \
           alphathird = prio.Color.a;\n \
           isRGBthird = prio.isRGB;\n \
           foundColor3 = 1;\n \
@@ -1493,9 +1501,6 @@ if (!inCCWindow()) {\n \
 if (mesh == 1) finalColor.rgb = finalColor.rgb * 0.5 + meshCol.rgb * 0.5;\n \
 finalColor.rgb = clamp(finalColor.rgb+offset_color, vec3(0.0), vec3(1.0));\n \
 "
-#define COMPUTE_SHADOW "\
-if (processShadow) finalColor.rgb = finalColor.rgb * 0.5;\n \
-"
 static const GLchar Yglprg_vdp2_common_final_fbon_6[]=
 COMMON_FINAL_START
 COMMON_FINAL_FB
@@ -1510,7 +1515,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 
 static const GLchar Yglprg_vdp2_common_final_fbon_5[]=
@@ -1526,7 +1530,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 static const GLchar Yglprg_vdp2_common_final_fbon_4[]=
 COMMON_FINAL_START
@@ -1540,7 +1543,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 static const GLchar Yglprg_vdp2_common_final_fbon_3[]=
 COMMON_FINAL_START
@@ -1553,7 +1555,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 static const GLchar Yglprg_vdp2_common_final_fbon_2[]=
 COMMON_FINAL_START
@@ -1565,7 +1566,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 static const GLchar Yglprg_vdp2_common_final_fbon_1[]=
 COMMON_FINAL_START
@@ -1576,7 +1576,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 static const GLchar Yglprg_vdp2_common_final_fbon_0[]=
 COMMON_FINAL_START
@@ -1586,7 +1585,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 
 static const GLchar Yglprg_vdp2_common_final_fboff_0[]=
