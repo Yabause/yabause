@@ -19,6 +19,7 @@ matrix:
 
 env:
   global:
+    - MAKEFLAGS="-j 16"
 
 language: cpp
 
