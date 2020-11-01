@@ -43,7 +43,7 @@ before_deploy:
   - git checkout -b travis_releases
   - cd ..
   - mkdir releases
-  - cp build/src/port/qt/kronos releases/kronos-$(CUR_GIT)
+  - cp build/src/port/qt/kronos releases/kronos
   - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
   - git tag $TRAVIS_TAG
 
@@ -51,7 +51,7 @@ deploy:
   provider: releases
   api_key: 
     secure: 163c3762b26786dd145de85248d93d5d36c786c7
-  file: releases/kronos-$(CUR_GIT)
+  file: releases/kronos
   skip_cleanup: true
   on:
     tags: true
