@@ -343,8 +343,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
     win_op_draw |= _Ygl->Win_op[i]<<i;
   }
 
-  isShadow[7] = setupShadow(varVdp2Regs, SPRITE);
-  isShadow[6] = setupShadow(varVdp2Regs, SPRITE+1);
+  isShadow[6] = setupShadow(varVdp2Regs, SPRITE); //Use sprite index for background suuport
 
   glViewport(0, 0, _Ygl->width, _Ygl->height);
   glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
