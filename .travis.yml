@@ -36,11 +36,8 @@ script:
 
 before_deploy:
   # Set up git user name and tag this commit
-  - CUR_GIT=$(git log -1 --pretty=format:"%h")
-  - CUR_GIT_TXT=$(git log -1 --pretty=format:"%s")
   - git config --local user.name "Francois CARON"
   - git config --local user.email "francois.caron.perso@gmail.com"
-  - git checkout -b travis_releases
   - cd ..
   - mkdir releases
   - cp build/src/port/qt/kronos releases/kronos
