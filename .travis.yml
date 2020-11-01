@@ -16,6 +16,7 @@ matrix:
             - qt5-default
             - libqt5multimedia5
             - libqt5opengl5-dev
+            - libsdl2-dev
 
 env:
   global:
