@@ -1469,7 +1469,14 @@ if (!inCCWindow()) {\n \
       }\n \
     } \n \
   } else { \n \
-    secondImage.rgb = vec3(colorsecond.rgb); \n \
+    // To be uncommented when we will have a CC issue in RAM_Mode 1 \n \
+    // //Table 12.1 p 236 Color calculation function when in the high resolution mode or special monitor mode \n \
+    // // when the TV screen mode is the high resolution mode or Exclusive monitor mode, the color RAM mode and second image color format hav limitations. \n \
+    // if ((ram_mode == 0) || (isRGBsecond == 1)){ \n \
+      secondImage.rgb = vec3(colorsecond.rgb); \n \
+    // } else { \n \
+    //   modetop = 1; \n \
+    // } \n \
   } \n \
 "
 
