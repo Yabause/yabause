@@ -31,18 +31,28 @@ before_install:
   - cd build
 
 script:
-  - cmake  ..
+  - cmake ..
   - make
 
-after_success:
+before_deploy:
+  # Set up git user name and tag this commit
   - CUR_GIT=$(git log -1 --pretty=format:"%h")
   - CUR_GIT_TXT=$(git log -1 --pretty=format:"%s")
-  - git config --global user.email "travis@travis-ci.org"
-  - git config --global user.name "Travis CI"
+  - git config --local user.name "Francois CARON"
+  - git config --local user.email "francois.caron.perso@gmail.com"
   - git checkout -b travis_releases
   - cd ..
   - mkdir releases
   - cp build/src/port/qt/kronos releases/kronos-$(CUR_GIT)
-  - git add releases/kronos-$(CUR_GIT)
-  - git commit --message "Travis build $TRAVIS_BUILD_NUMBER - $(CUR_GIT_TXT)"
-  - git push --quiet --set-upstream origin travis_releases
+  - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
+  - git tag $TRAVIS_TAG
+
+deploy:
+  provider: releases
+  api_key: 
+    secure: 163c3762b26786dd145de85248d93d5d36c786c7
+  file: releases/kronos-$(CUR_GIT)
+  skip_cleanup: true
+  on:
+    tags: true
+
