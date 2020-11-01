@@ -13,7 +13,8 @@ matrix:
          update: true
          packages:
             - cmake
-            - libqt5multimedia
+            - qt5-default
+            - libqt5multimedia5
 
 env:
   global:
