@@ -14,7 +14,6 @@ matrix:
          packages:
             - cmake
             - libqt5multimedia
-            addons:
 
 env:
   global:
