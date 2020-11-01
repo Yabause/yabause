@@ -1208,6 +1208,7 @@ for (int i = 7; i>0; i--) { \n \
 //Normal shadow is always a transparent shadow. It does not have to be processed \n \
 //As a top image. But the shadow process shall be processed \n \
               processShadow = true;\n \
+              if (((isShadow>>6)&0x1)!= 0) colorback.rgb *= 0.5; \n \
               continue;\n \
             }\n \
             if (FBMSBShadow) {\n \
@@ -1217,8 +1218,10 @@ for (int i = 7; i>0; i--) { \n \
               if (tmp.code == 0) {\n \
 //In case of a code of zero and if the transparent shadow code is enabled, then we do not process as a top image \n \
                   processShadow = (use_trans_shadow != 0);\n \
+                  if (processShadow && (((isShadow>>6)&0x1)!= 0)) colorback.rgb *= 0.5; \n \
                   continue;\n \
                 }\n \
+                if (((isShadow>>6)&0x1)!= 0) colorback.rgb *= 0.5; \n \
             }\n \
           }\n \
           if (prio.lncl == 0) { \n \
