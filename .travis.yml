@@ -46,4 +46,3 @@ after_success:
   - git add releases/kronos-$(CUR_GIT)
   - git commit --message "Travis build: $TRAVIS_BUILD_NUMBER : $(CUR_GIT_TXT)"
   - git push --quiet --set-upstream origin travis_releases
-}
