@@ -15,6 +15,7 @@ matrix:
             - cmake
             - qt5-default
             - libqt5multimedia5
+            - libqt5opengl5-dev
 
 env:
   global:
