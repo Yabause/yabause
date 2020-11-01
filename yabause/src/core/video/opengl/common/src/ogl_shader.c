@@ -834,6 +834,7 @@ const GLchar msb[] = {
   "  vec4 currentColor = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
   "  currentColor.g = float(int(currentColor.g * 255.0)|0x80)/255.0;\n"
   "  fragColor = currentColor;\n"
+  "  fragMesh.rg = vec2(0.0);\n"
   "  return;\n"
 };
 
