@@ -1222,6 +1222,7 @@ for (int i = 7; i>0; i--) { \n \
                   continue;\n \
                 }\n \
                 if (((isShadow>>6)&0x1)!= 0) colorback.rgb *= 0.5; \n \
+                prio.Color.rgb *= 0.5; \n \
             }\n \
           }\n \
           if (prio.lncl == 0) { \n \
