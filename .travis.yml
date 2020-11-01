@@ -33,3 +33,17 @@ before_install:
 script:
   - cmake  ..
   - make
+
+after_success:
+  - CUR_GIT=$(git log -1 --pretty=format:"%h")
+  - CUR_GIT_TXT=$(git log -1 --pretty=format:"%s")
+  - git config --global user.email "travis@travis-ci.org"
+  - git config --global user.name "Travis CI"
+  - git checkout -b travis_releases
+  - cd ..
+  - mkdir releases
+  - cp build/src/port/qt/kronos releases/kronos-$(CUR_GIT)
+  - git add releases/kronos-$(CUR_GIT)
+  - git commit --message "Travis build: $TRAVIS_BUILD_NUMBER : $(CUR_GIT_TXT)"
+  - git push --quiet --set-upstream origin travis_releases
+}
