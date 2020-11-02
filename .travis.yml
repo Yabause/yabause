@@ -3,7 +3,7 @@ matrix:
 
     # linux gcc
     - os: linux
-      dist: bionic
+      dist: focal
       sudo: required
       compiler: gcc
       env:
@@ -36,9 +36,13 @@ before_install:
 script:
   - cmake ..
   - make
+  - make DESTDIR=../install install
 
 before_deploy:
   # Set up git user name and tag this commit
+  - cd ../install/
+  - zip -r ../kronos_ubuntu.zip .
+  - cd ..
   - git config --local user.name "Francois CARON"
   - git config --local user.email "francois.caron.perso@gmail.com"
 
@@ -46,7 +50,7 @@ deploy:
   provider: releases
   api_key: 
     secure: "fd1OmbeotEF8vNRR9/87boQg6Zlj1AWhxIVhEPCHYSfo+82JMQQUIi1KY9JyyN1zbB2LMTW2vK7phy/i87tMoaF2y8Wt5R6Aa5CBr3ahNvpSCUsnJwEEujTKctn6ZwulVYNalPUUVpfiuJnr3Y2MIYV+h/sKqcPsgKkxUyNJ+2qtiKQwgmKRmJpfXTyhEqGDDvy2ji/V+b5mIPRXVh+JmMDw8q35/An+mJY36S6acBjfdt302T1Zd5hGmjXS//JpdpdsD7pocyqSxv/IBrUu0N4R+xRb3/3O5r12t8nlbV2FNNr/LzC2j8pCm2FvjLr8ECD9c2Ue8RCRWH2fjQttMwbe3eNMb3Fu5VclpZLb+i5Xfk5nXD17qfVBUFxyUnHXGl0YehftNpwppSRPPkZLtVjeYeLm2yCA1ztAYPVqbivygxOj5PFJzOwfPcpDTJ67KfkzeiTeD19A8rQGbkBVk7jKXgA7TegAzuSzHeL0noI5fks4wG8TJrq3GdExwdek0fau9KVgB0ZVfmoz/VEhpdJMVf0awmKbh82oZ3wTOwUtqpVLBcV7QaKuKcnTa3SLB8RCz6aW+VWAXAJzHoHu7pNFpxkY1Z/JBY2vERKE9sIA6/FpqY+ZJ7cs6nYhioYAyrdLlIGa+QJ5zALW0cPLqSZBpCbrm2PmXhwIEY2yymc="
-  file: "src/port/qt/kronos"
+  file: "kronos_ubuntu.zip"
   skip_cleanup: true
   on:
     tags: true
