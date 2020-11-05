@@ -19,13 +19,12 @@ if(WIN32)
     add_definitions(-DHAVE_UTF16=1)
 endif()
 
-include(CheckFunctionExists)
 check_function_exists(wcsdup HAVE_WCSDUP)
 if (HAVE_WCSDUP)
     add_definitions(-DHAVE_WCSDUP=1)
 endif ()
 
-try_compile(HAVE_WCS_POINTERS ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}/cmake/check_wcs_functions.c)
+try_compile(HAVE_WCS_POINTERS ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}/src/tools/mini18n/cmake/check_wcs_functions.c)
 
 add_library(mini18n-shared SHARED ${mini18n_SOURCES})
 set_target_properties(mini18n-shared PROPERTIES OUTPUT_NAME mini18n SOVERSION 1 VERSION 1.0.1)

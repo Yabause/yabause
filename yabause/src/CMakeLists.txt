@@ -147,8 +147,21 @@ set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} chdr-static)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tools/libchdr/deps/zlib-1.2.11)
 set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlibstatic)
 
-include_directories(tools/nanovg)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tools/nanovg)
 set(kronos_SOURCES ${kronos_SOURCES} tools/nanovg/nanovg.c)
+
+add_subdirectory(tools/mini18n/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tools/mini18n/src)
+set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} mini18n-static)
+
+# mini18n
+include_directories("tools/mini18n/src")
+add_definitions(-DHAVE_LIBMINI18N=1)
+if (UNIX)
+	add_definitions(-DYTSDIR=\"${CMAKE_INSTALL_PREFIX}/share/${YAB_PACKAGE}/yts\")
+elseif (WIN32)
+	add_definitions(-DYTSDIR=\"trans\")
+endif()
 
 #-------------------------------------------------------
 
@@ -457,26 +470,6 @@ endif (YAB_WANT_OPENAL)
 
 # OpenSL (Android)
 option(YAB_WANT_OPENSL "use OpenSL sound core (for Android port)" ON)
-
-# mini18n
-find_path(MINI18N_INCLUDE_DIR mini18n.h)
-find_library(MINI18N_LIBRARY mini18n)
-if (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI18N_LIBRARY STREQUAL "MINI18N_LIBRARY-NOTFOUND")
-	message(STATUS "MINI18N supported")
-	set(MINI18N_FOUND TRUE)
-	include_directories(${MINI18N_INCLUDE_DIR})
-	add_definitions(-DHAVE_LIBMINI18N=1)
-	set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${MINI18N_LIBRARY})
-endif (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI18N_LIBRARY STREQUAL "MINI18N_LIBRARY-NOTFOUND")
-
-if (MINI18N_FOUND)
-	if (UNIX)
-		add_definitions(-DYTSDIR=\"${CMAKE_INSTALL_PREFIX}/share/${YAB_PACKAGE}/yts\")
-	elseif (WIN32)
-		add_definitions(-DYTSDIR=\"trans\")
-	endif()
-endif()
-
 
 # Visual Studio
 if (MSVC)
