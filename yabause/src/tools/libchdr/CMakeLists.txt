@@ -2,128 +2,140 @@ cmake_minimum_required(VERSION 3.1)
 
 project(chdr C)
 
-set(CHDR_VERSION_MAJOR 0)
-set(CHDR_VERSION_MINOR 1)
-
-option(BUILD_SHARED_LIBS "Build libchdr also as a shared library" ON)
-option(WITH_SYSTEM_FLAC "Use system provided FLAC library" OFF)
-option(WITH_SYSTEM_ZLIB "Use system provided zlib library" OFF)
-
-if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -fPIC -O3 -flto")
-endif()
-
-include(FindPkgConfig)
-
-if (NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/usr/local")
-endif()
-if (NOT DEFINED CMAKE_INSTALL_LIBDIR)
-  set(CMAKE_INSTALL_LIBDIR "lib")
-endif()
-if (NOT DEFINED CMAKE_INSTALL_INCLUDEDIR)
-  set(CMAKE_INSTALL_INCLUDEDIR "include")
-endif()
-
-# Detect processor type.
-if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64" OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "amd64")
-  set(CPU_ARCH "x64")
-elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "AMD64")
-  # MSVC x86/x64
-  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(CPU_ARCH "x64")
-  else()
-    set(CPU_ARCH "x86")
-  endif()
-elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86" OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i386" OR
-       ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
-  set(CPU_ARCH "x86")
-elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64")
-  set(CPU_ARCH "aarch64")
-elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm" OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armv7-a")
-  set(CPU_ARCH "arm")
-else()
-  message(FATAL_ERROR "Unknown system processor: " ${CMAKE_SYSTEM_PROCESSOR})
-endif()
-
 #--------------------------------------------------
-# dependencies
+# static libs
 #--------------------------------------------------
 
+# crypto
+set(CRYPTO_SOURCES
+  deps/crypto/md5.c
+  deps/crypto/sha1.c)
+
+add_library(crypto-static STATIC ${CRYPTO_SOURCES})
+list(APPEND CHDR_INCLUDES deps/crypto)
+list(APPEND CHDR_LIBS crypto-static)
 
 # flac
-if (WITH_SYSTEM_FLAC)
-  pkg_check_modules(FLAC REQUIRED flac)
-  list(APPEND PLATFORM_INCLUDES ${FLAC_INCLUDE_DIRS})
-  list(APPEND PLATFORM_LIBS ${FLAC_LIBRARIES})
-else()
-  add_subdirectory(deps/flac-1.3.3 EXCLUDE_FROM_ALL)
-  list(APPEND CHDR_LIBS FLAC)
-  list(APPEND CHDR_INCLUDES FLAC)
+set(FLAC_SOURCES
+  deps/flac-1.3.2/src/libFLAC/bitmath.c
+  deps/flac-1.3.2/src/libFLAC/bitreader.c
+  #deps/flac-1.3.2/src/libFLAC/bitwriter.c
+  deps/flac-1.3.2/src/libFLAC/cpu.c
+  deps/flac-1.3.2/src/libFLAC/crc.c
+  deps/flac-1.3.2/src/libFLAC/fixed.c
+  deps/flac-1.3.2/src/libFLAC/fixed_intrin_sse2.c
+  deps/flac-1.3.2/src/libFLAC/fixed_intrin_ssse3.c
+  deps/flac-1.3.2/src/libFLAC/float.c
+  deps/flac-1.3.2/src/libFLAC/format.c
+  deps/flac-1.3.2/src/libFLAC/lpc.c
+  deps/flac-1.3.2/src/libFLAC/lpc_intrin_avx2.c
+  deps/flac-1.3.2/src/libFLAC/lpc_intrin_sse2.c
+  deps/flac-1.3.2/src/libFLAC/lpc_intrin_sse41.c
+  deps/flac-1.3.2/src/libFLAC/lpc_intrin_sse.c
+  deps/flac-1.3.2/src/libFLAC/md5.c
+  deps/flac-1.3.2/src/libFLAC/memory.c
+  deps/flac-1.3.2/src/libFLAC/metadata_iterators.c
+  deps/flac-1.3.2/src/libFLAC/metadata_object.c
+  #deps/flac-1.3.2/src/libFLAC/ogg_decoder_aspect.c
+  #deps/flac-1.3.2/src/libFLAC/ogg_encoder_aspect.c
+  #deps/flac-1.3.2/src/libFLAC/ogg_helper.c
+  #deps/flac-1.3.2/src/libFLAC/ogg_mapping.c
+  deps/flac-1.3.2/src/libFLAC/stream_decoder.c
+  #deps/flac-1.3.2/src/libFLAC/stream_encoder.c
+  #deps/flac-1.3.2/src/libFLAC/stream_encoder_framing.c
+  #deps/flac-1.3.2/src/libFLAC/stream_encoder_intrin_avx2.c
+  #deps/flac-1.3.2/src/libFLAC/stream_encoder_intrin_sse2.c
+  #deps/flac-1.3.2/src/libFLAC/stream_encoder_intrin_ssse3.c
+  deps/flac-1.3.2/src/libFLAC/window.c)
+if(WIN32)
+  list(APPEND FLAC_SOURCES deps/flac-1.3.2/src/libFLAC/windows_unicode_filenames.c)
 endif()
+
+if(APPLE OR UNIX)
+  list(APPEND FLAC_DEFS HAVE_SYS_PARAM_H)
+endif()
+
+add_library(flac-static STATIC ${FLAC_SOURCES})
+target_include_directories(flac-static PUBLIC deps/flac-1.3.2/include deps/flac-1.3.2/src/libFLAC/include)
+target_compile_definitions(flac-static PRIVATE PACKAGE_VERSION="1.3.2" FLAC__HAS_OGG=0 FLAC__NO_DLL HAVE_LROUND HAVE_STDINT_H HAVE_STDLIB_H ${FLAC_DEFS})
+list(APPEND CHDR_INCLUDES deps/flac-1.3.2/src/libFLAC/include)
+list(APPEND CHDR_DEFS FLAC__NO_DLL)
+list(APPEND CHDR_LIBS flac-static)
 
 # lzma
-add_subdirectory(deps/lzma-19.00 EXCLUDE_FROM_ALL)
-  list(APPEND CHDR_LIBS lzma)
-  list(APPEND CHDR_INCLUDES lzma)
+set(LZMA_SOURCES
+  #deps/lzma-16.04/C/7zAlloc.c
+  #deps/lzma-16.04/C/7zArcIn.c
+  #deps/lzma-16.04/C/7zBuf2.c
+  #deps/lzma-16.04/C/7zBuf.c
+  #deps/lzma-16.04/C/7zCrc.c
+  #deps/lzma-16.04/C/7zCrcOpt.c
+  #deps/lzma-16.04/C/7zDec.c
+  #deps/lzma-16.04/C/7zFile.c
+  #deps/lzma-16.04/C/7zStream.c
+  #deps/lzma-16.04/C/Aes.c
+  #deps/lzma-16.04/C/AesOpt.c
+  deps/lzma-16.04/C/Alloc.c
+  #deps/lzma-16.04/C/Bcj2.c
+  #deps/lzma-16.04/C/Bcj2Enc.c
+  deps/lzma-16.04/C/Bra86.c
+  deps/lzma-16.04/C/Bra.c
+  deps/lzma-16.04/C/BraIA64.c
+  deps/lzma-16.04/C/CpuArch.c
+  deps/lzma-16.04/C/Delta.c
+  #deps/lzma-16.04/C/DllSecur.c
+  deps/lzma-16.04/C/LzFind.c
+  #deps/lzma-16.04/C/LzFindMt.c
+  #deps/lzma-16.04/C/Lzma2Dec.c
+  #deps/lzma-16.04/C/Lzma2Enc.c
+  deps/lzma-16.04/C/Lzma86Dec.c
+  deps/lzma-16.04/C/Lzma86Enc.c
+  deps/lzma-16.04/C/LzmaDec.c
+  deps/lzma-16.04/C/LzmaEnc.c
+  deps/lzma-16.04/C/LzmaLib.c
+  #deps/lzma-16.04/C/MtCoder.c
+  #deps/lzma-16.04/C/Ppmd7.c
+  #deps/lzma-16.04/C/Ppmd7Dec.c
+  #deps/lzma-16.04/C/Ppmd7Enc.c
+  #deps/lzma-16.04/C/Sha256.c
+  deps/lzma-16.04/C/Sort.c
+  #deps/lzma-16.04/C/Threads.c
+  #deps/lzma-16.04/C/Xz.c
+  #deps/lzma-16.04/C/XzCrc64.c
+  #deps/lzma-16.04/C/XzCrc64Opt.c
+  #deps/lzma-16.04/C/XzDec.c
+  #deps/lzma-16.04/C/XzEnc.c
+  #deps/lzma-16.04/C/XzIn.c
+				)
+
+add_library(lzma-static STATIC ${LZMA_SOURCES})
+target_compile_options(lzma-static PRIVATE -D_7ZIP_ST)
+list(APPEND CHDR_INCLUDES deps/lzma-16.04/C)
+list(APPEND CHDR_LIBS lzma-static)
 
 # zlib
-if (WITH_SYSTEM_ZLIB)
-  pkg_check_modules(ZLIB REQUIRED zlib)
-  list(APPEND PLATFORM_INCLUDES ${ZLIB_INCLUDE_DIRS})
-  list(APPEND PLATFORM_LIBS ${ZLIB_LIBRARIES})
-else()
-  add_subdirectory(deps/zlib-1.2.11 EXCLUDE_FROM_ALL)
-  list(APPEND CHDR_LIBS zlib)
-  list(APPEND CHDR_INCLUDES zlib)
-endif()
+add_subdirectory(deps/zlib-1.2.11 EXCLUDE_FROM_ALL)
+list(APPEND CHDR_INCLUDES deps/zlib-1.2.11 ${CMAKE_CURRENT_BINARY_DIR}/deps/zlib-1.2.11)
+list(APPEND CHDR_LIBS zlibstatic)
 
 #--------------------------------------------------
 # chdr
 #--------------------------------------------------
 
 set(CHDR_SOURCES
-  src/libchdr_bitstream.c
-  src/libchdr_cdrom.c
-  src/libchdr_chd.c
-  src/libchdr_flac.c
-  src/libchdr_huffman.c
-)
-
-list(APPEND CHDR_INCLUDES include ${CMAKE_CURRENT_BINARY_DIR}/include)
+  src/bitstream.c
+  src/bitstream.h
+  src/cdrom.c
+  src/cdrom.h
+  src/chd.c
+  src/chd.h
+  src/coretypes.h
+  src/flac.c
+  src/flac.h
+  src/huffman.c
+  src/huffman.h)
 
 add_library(chdr-static STATIC ${CHDR_SOURCES})
-target_include_directories(chdr-static PRIVATE ${CHDR_INCLUDES} ${PLATFORM_INCLUDES})
+target_include_directories(chdr-static PRIVATE ${CHDR_INCLUDES})
 target_compile_definitions(chdr-static PRIVATE ${CHDR_DEFS})
-target_link_libraries(chdr-static ${CHDR_LIBS} ${PLATFORM_LIBS})
-
-if (BUILD_SHARED_LIBS)
-  set(LIBS ${PLATFORM_LIBS})
-  list(TRANSFORM LIBS PREPEND "-l")
-  list(JOIN LIBS " " LIBS)
-  set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-  set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
-
-  add_library(chdr SHARED ${CHDR_SOURCES})
-  target_include_directories(chdr PRIVATE ${CHDR_INCLUDES} ${PLATFORM_INCLUDES})
-  target_compile_definitions(chdr PRIVATE ${CHDR_DEFS})
-  target_link_libraries(chdr ${CHDR_LIBS} ${PLATFORM_LIBS})
-  target_link_options(chdr PRIVATE -Wl,--version-script ${CMAKE_SOURCE_DIR}/src/link.T -Wl,--no-undefined)
-
-  set_target_properties(chdr PROPERTIES PUBLIC_HEADER "include/libchdr/bitstream.h;include/libchdr/cdrom.h;include/libchdr/chd.h;include/libchdr/coretypes.h;include/libchdr/flac.h;include/libchdr/huffman.h")
-  set_target_properties(chdr PROPERTIES VERSION "${CHDR_VERSION_MAJOR}.${CHDR_VERSION_MINOR}")
-
-  if (CMAKE_BUILD_TYPE MATCHES Release)
-    #add_custom_command(TARGET chdr POST_BUILD COMMAND ${CMAKE_STRIP} libchdr.so)
-  endif (CMAKE_BUILD_TYPE MATCHES Release)
-
-  install(TARGETS chdr
-    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/libchdr"
-  )
-
-  configure_file(pkg-config.pc.in ${CMAKE_BINARY_DIR}/libchdr.pc @ONLY)
-  install(FILES ${CMAKE_BINARY_DIR}/libchdr.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-endif()
-
+target_link_libraries(chdr-static ${CHDR_LIBS})
