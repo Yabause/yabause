@@ -5,7 +5,7 @@ project(chdr C)
 set(CHDR_VERSION_MAJOR 0)
 set(CHDR_VERSION_MINOR 1)
 
-option(BUILD_SHARED_LIBS "Build libchdr also as a shared library" OFF)
+option(BUILD_SHARED_LIBS "Build libchdr also as a shared library" ON)
 option(WITH_SYSTEM_FLAC "Use system provided FLAC library" OFF)
 option(WITH_SYSTEM_ZLIB "Use system provided zlib library" OFF)
 
