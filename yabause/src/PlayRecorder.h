@@ -54,6 +54,8 @@ private:
   string fnameback_test;
 
   string basedir;
+
+  int screenshot_per_frame = 60*10;
   
 public:
   enum eStatus {

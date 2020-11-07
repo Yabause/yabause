@@ -255,6 +255,11 @@ int PlayRecorder::proc(u32 framecount) {
 
   if (mode_ == RECORDING) {
     PerKeyRecord(framecount, record_);
+
+    if( current_frame % screenshot_per_frame == 0 ) {
+      take_screenshot = true;
+    }
+
     if (take_screenshot) {
       take_screenshot = false;
       std::string fname;
