@@ -123,7 +123,7 @@ import org.uoyabause.android.FileDialog.FileSelectedListener
 import org.uoyabause.android.InputSettingFragment.InputSettingListener
 import org.uoyabause.android.PadManager.ShowMenuListener
 import org.uoyabause.android.PadTestFragment.PadTestListener
-import org.uoyabause.android.StateListFragment.checkMaxFileCount
+import org.uoyabause.android.StateListFragment.Companion.checkMaxFileCount
 import org.uoyabause.android.backup.TabBackupFragment
 
 internal enum class TrayState {

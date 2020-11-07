@@ -22,6 +22,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
@@ -79,7 +80,8 @@ class YabauseApplication : MultiDexApplication() {
             private set
 
         fun isPro(): Boolean {
-            val prefs: SharedPreferences? = appContext.getSharedPreferences("private", Context.MODE_PRIVATE)
+            val prefs: SharedPreferences? = appContext.getSharedPreferences("private",
+                Context.MODE_PRIVATE)
             var hasDonated = false
             if (prefs != null) {
                 hasDonated = prefs.getBoolean("donated", false)
@@ -114,6 +116,18 @@ class YabauseApplication : MultiDexApplication() {
                 }
             }
             return 0
+        }
+
+        fun getVersionName(context: Context): String? {
+            val pm = context.packageManager
+            var versionName = ""
+            try {
+                val packageInfo = pm.getPackageInfo(context.packageName, 0)
+                versionName = packageInfo.versionName
+            } catch (e: PackageManager.NameNotFoundException) {
+                e.printStackTrace()
+            }
+            return versionName
         }
     }
 }
