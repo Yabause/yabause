@@ -2710,11 +2710,11 @@ scsp_set_b (u32 a, u8 d)
       return;
 
     case 0x02: // RBL(high bit)
-      scsp.rbl = (scsp.rbl & 1) + ((d & 1) << 1);
+      scsp.rbl = (scsp.rbl & 1) | ((d & 1) << 1);
       return;
 
     case 0x03: // RBL(low bit)/RBP
-      scsp.rbl = (scsp.rbl & 2) + ((d >> 7) & 1);
+      scsp.rbl = (scsp.rbl & 2) | ((d >> 7) & 1);
       scsp.rbp = (d & 0x7F);
       return;
 
@@ -2728,29 +2728,29 @@ scsp_set_b (u32 a, u8 d)
       return;
 
     case 0x12: // DMEAL(high byte)
-      scsp.dmea = (scsp.dmea & 0x700FE) + (d << 8);
+      scsp.dmea = (scsp.dmea & 0x700FE) | (d << 8);
       return;
 
     case 0x13: // DMEAL(low byte)
-      scsp.dmea = (scsp.dmea & 0x7FF00) + (d & 0xFE);
+      scsp.dmea = (scsp.dmea & 0x7FF00) | (d & 0xFE);
       return;
 
     case 0x14: // DMEAH(high byte)
-      scsp.dmea = (scsp.dmea & 0xFFFE) + ((d & 0x70) << 12);
-      scsp.drga = (scsp.drga & 0xFE) + ((d & 0xF) << 8);
+      scsp.dmea = (scsp.dmea & 0xFFFE) | ((d & 0x70) << 12);
+      scsp.drga = (scsp.drga & 0xFE) | ((d & 0xF) << 8);
       return;
 
     case 0x15: // DMEAH(low byte)
-      scsp.drga = (scsp.drga & 0xF00) + (d & 0xFE);
+      scsp.drga = (scsp.drga & 0xF00) | (d & 0xFE);
       return;
 
     case 0x16: // DGATE/DDIR/DEXE/DTLG(upper 4 bits)
-      scsp.dmlen = (scsp.dmlen & 0xFE) + ((d & 0xF) << 8);
+      scsp.dmlen = (scsp.dmlen & 0xFE) | ((d & 0xF) << 8);
       if ((scsp.dmfl = d & 0xF0) & 0x10) scsp_dma ();
       return;
 
     case 0x17: // DTLG(lower byte)
-      scsp.dmlen = (scsp.dmlen & 0xF00) + (d & 0xFE);
+      scsp.dmlen = (scsp.dmlen & 0xF00) | (d & 0xFE);
       return;
 
     case 0x18: // TACTL
@@ -2780,14 +2780,14 @@ scsp_set_b (u32 a, u8 d)
     case 0x1E: // SCIEB(high byte)
     {
       int i;
-      scsp.scieb = (scsp.scieb & 0xFF) + (d << 8);
+      scsp.scieb = (scsp.scieb & 0xFF) | (d << 8);
       scsp_check_interrupt();
       return;
     }
     case 0x1F: // SCIEB(low byte)
     {
       int i;
-      scsp.scieb = (scsp.scieb & 0x700) + d;
+      scsp.scieb = (scsp.scieb & 0x700) | d;
       scsp_check_interrupt();
       return;
     }
@@ -2821,11 +2821,11 @@ scsp_set_b (u32 a, u8 d)
       return;
 
     case 0x2A: // MCIEB(high byte)
-      scsp.mcieb = (scsp.mcieb & 0xFF) + (d << 8);
+      scsp.mcieb = (scsp.mcieb & 0xFF) | (d << 8);
       return;
 
     case 0x2B: // MCIEB(low byte)
-      scsp.mcieb = (scsp.mcieb & 0x700) + d;
+      scsp.mcieb = (scsp.mcieb & 0x700) | d;
       return;
 
     case 0x2D: // MCIPD(low byte)
@@ -2889,11 +2889,11 @@ scsp_set_w (u32 a, u16 d)
       return;
 
     case 0x12: // DMEAL
-      scsp.dmea = (scsp.dmea & 0x70000) + (d & 0xFFFE);
+      scsp.dmea = (scsp.dmea & 0x70000) | (d & 0xFFFE);
       return;
 
     case 0x14: // DMEAH/DRGA
-      scsp.dmea = (scsp.dmea & 0xFFFE) + ((d & 0x7000) << 4);
+      scsp.dmea = (scsp.dmea & 0xFFFE) | ((d & 0x7000) << 4);
       scsp.drga = d & 0xFFE;
       return;
 
