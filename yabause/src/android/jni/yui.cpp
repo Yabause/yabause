@@ -1422,12 +1422,34 @@ Java_org_uoyabause_android_YabauseRunnable_reset( JNIEnv* env )
     pthread_mutex_unlock(&g_mtxGlLock);    
 }
 
+class Command{
+public:    
+    Command( int press, int pad ){
+        this->press = press;
+        this->pad = pad;
+    }
+    int press;
+    int pad;
+};
+
+typedef vector<Command> vecCommand;
+
+vecCommand commands;
+
 void
 Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
 {
-    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) return;
+    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::RECORDING ) {
+        Command a(1,MAKE_PAD(player,key));
+        commands.push_back(a);
+        return;
+    }else if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) {
+        return;
+    }
+   
 	//yprintf("press: %d,%d",player,key);
     PerKeyDown(MAKE_PAD(player,key));
+
 }
 
 void
@@ -1442,8 +1464,13 @@ Java_org_uoyabause_android_YabauseRunnable_axis( JNIEnv* env, jobject obj, jint 
 void
 Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key, jint player )
 {
-	//yprintf("release: %d,%d",player,key);
-    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) return;  
+    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::RECORDING ) {
+        Command a(0,MAKE_PAD(player,key));
+        commands.push_back(a);    
+        return;
+    }else if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) {
+        return;
+    }
     PerKeyUp(MAKE_PAD(player,key));
 }
 
@@ -1799,6 +1826,16 @@ void renderLoop()
     while (renderingEnabled != 0) {
 
         if (g_Display && pause == 0 && g_window != NULL) {
+            if( commands.size() > 0 ){
+                for( int i=0; i< commands.size(); i++ ){
+                    if( commands[i].press == 0 ){
+                        PerKeyUp(commands[i].pad);
+                    }else{
+                        PerKeyDown(commands[i].pad);
+                    }
+                }
+                commands.clear();
+            }
            YabauseExec();
         }
 
