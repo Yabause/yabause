@@ -76,6 +76,8 @@ char s_savepath[256] ="\0";
 
 extern "C" {
 static char biospath[256] = "/home/pigaming/RetroPie/BIOS/saturn/bios.bin";
+static char strgsyslangeid[256] = "english";
+static int syslanguageid = 0;
 static char cdpath[256] = ""; ///home/pigaming/RetroPie/roms/saturn/nights.cue";
 //static char cdpath[256] = "/home/pigaming/RetroPie/roms/saturn/gd.cue";
 //static char cdpath[256] = "/home/pigaming/RetroPie/roms/saturn/Virtua Fighter Kids (1996)(Sega)(JP).ccd";
@@ -83,6 +85,11 @@ static char buppath[256] = "./back.bin";
 static char mpegpath[256] = "\0";
 static char cartpath[256] = "\0";
 static bool menu_show = false;
+
+char* toLower(char* s) {
+  for(char *p=s; *p; p++) *p=tolower(*p);
+  return s;
+}
 
 #define LOG printf
 
@@ -226,6 +233,7 @@ int yabauseinit()
   yinit.cdcoretype = CDCORE_ISO;
   yinit.carttype = CART_DRAM32MBIT;
   yinit.regionid = 0;
+  yinit.syslanguageid = syslanguageid;
   if( g_emulated_bios ){
     yinit.biospath = NULL;
   }else{
@@ -302,6 +310,7 @@ int main(int argc, char** argv)
     if( all_args[0] == "-h" || all_args[0] == "--h" ){
       printf("Usage:\n");
       printf("  -b STRING  --bios STRING                 bios file\n");
+      printf("  -l STRING  --language STRING             english, deutsch, french, spanish,\n                                           italian, japanese\n");
       printf("  -i STRING  --iso STRING                  iso/cue file\n");
       printf("  -r NUMBER  --resolution_mode NUMBER      0 .. Native, 1 .. 4x, 2 .. 2x, 3 .. Original\n");
       printf("  -a         --keep_aspect_rate\n");
@@ -317,6 +326,15 @@ int main(int argc, char** argv)
 		if(( x == "-b" || x == "--bios") && (i+1<all_args.size() ) ) {
       g_emulated_bios = 0;
       strncpy(biospath, all_args[i+1].c_str(), 256);
+    }
+	  	else if(( x == "-l" || x == "--language") && (i+1<all_args.size() ) ) {
+      strncpy(strgsyslangeid, all_args[i+1].c_str(), 256);
+	  if (toLower(strgsyslangeid) == "english") { syslanguageid = 0; }
+	  if (toLower(strgsyslangeid) == "deutsch") { syslanguageid = 1; }
+	  if (toLower(strgsyslangeid) == "french") { syslanguageid = 2; }
+	  if (toLower(strgsyslangeid) == "spanish") { syslanguageid = 3; }
+	  if (toLower(strgsyslangeid) == "italian") { syslanguageid = 4; }
+	  if (toLower(strgsyslangeid) == "japanese") { syslanguageid = 5; }
     }
 		else if(( x == "-i" || x == "--iso") && (i+1<all_args.size() ) ) {
       strncpy(cdpath, all_args[i+1].c_str(), 256);
