@@ -129,6 +129,7 @@ void YuiInit() {
 	yinit.cdcoretype = CDCORE_DEFAULT;
 	yinit.carttype = 0;
 	yinit.regionid = REGION_EUROPE;
+	yinit.languageid = 0;
 	yinit.biospath = NULL;
 	yinit.cdpath = NULL;
 	yinit.buppath = NULL;
