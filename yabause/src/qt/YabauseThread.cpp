@@ -449,6 +449,21 @@ void YabauseThread::reloadSettings()
 			case 'L': mYabauseConf.regionid = 0xD; break;
 		}
 	}
+	const QString r1 = vs->value( "General/SystemLanguageID", mYabauseConf.syslanguageid ).toString();
+	if ( r1.isEmpty() || r1 == "0" )
+		mYabauseConf.syslanguageid = 0;
+	else
+	{
+		switch ( r1[0].toLatin1() )
+		{
+			case '0': mYabauseConf.syslanguageid = 0; break;
+			case '1': mYabauseConf.syslanguageid = 1; break;
+			case '2': mYabauseConf.syslanguageid = 2; break;
+			case '3': mYabauseConf.syslanguageid = 3; break;
+			case '4': mYabauseConf.syslanguageid = 4; break;
+			case '5': mYabauseConf.syslanguageid = 5; break;
+		}
+	}
 	if (vs->value("General/EnableEmulatedBios", false).toBool())
 		mYabauseConf.biospath = strdup( "" );
 	else
@@ -531,6 +546,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.cdcoretype = QtYabause::defaultCDCore().id;
 	mYabauseConf.carttype = CART_NONE;
 	mYabauseConf.regionid = 0;
+	mYabauseConf.syslanguageid = 0;
 	mYabauseConf.biospath = 0;
 	mYabauseConf.cdpath = 0;
 	mYabauseConf.mpegpath = 0;
