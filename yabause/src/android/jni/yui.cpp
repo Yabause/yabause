@@ -1254,6 +1254,7 @@ int YabauseInit(){
     yinit.cdcoretype = CDCORE_ISO;
     yinit.carttype = GetCartridgeType();
     yinit.regionid = 0;
+    yinit.syslanguageid = 0;
 
     yinit.biospath = s_biospath;
     yinit.cdpath = s_cdpath;
