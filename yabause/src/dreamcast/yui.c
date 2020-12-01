@@ -87,6 +87,7 @@ int YuiInit(int sh2core)   {
     yinit.cdcoretype = CDCORE_ARCH;
     yinit.carttype = CART_NONE;
     yinit.regionid = REGION_AUTODETECT;
+    yinit.syslanguageid = 0;
     yinit.biospath = emulate_bios ? NULL : bios;
     yinit.cdpath = NULL;
     yinit.buppath = NULL;
