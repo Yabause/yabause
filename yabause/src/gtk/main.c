@@ -131,6 +131,11 @@ GtkWidget * yui;
 GKeyFile * keyfile;
 yabauseinit_struct yinit;
 
+char* toLower(char* s) {
+  for(char *p=s; *p; p++) *p=tolower(*p);
+  return s;
+}
+
 static int yui_main(gpointer data) {
 	PERCore->HandleEvents();
 	return TRUE;
