@@ -142,6 +142,11 @@ static char stvbiospath[256] = "\0";
 
 yabauseinit_struct yinit;
 
+char* toLower(char* s) {
+  for(char *p=s; *p; p++) *p=tolower(*p);
+  return s;
+}
+
 void YuiMsg(const char *format, ...) {
   va_list arglist;
   va_start( arglist, format );
@@ -196,6 +201,7 @@ void YuiInit() {
 	yinit.cdcoretype = CDCORE_DEFAULT;
 	yinit.carttype = CART_DRAM32MBIT;
 	yinit.regionid = REGION_EUROPE;
+	yinit.languageid = 0;
 	yinit.biospath = NULL;
 	yinit.cdpath = NULL;
 	yinit.buppath = "./bup.ram";
@@ -265,6 +271,24 @@ int main(int argc, char *argv[]) {
       } else if (strstr(argv[i], "--bios=")) {
         strncpy(biospath, argv[i] + strlen("--bios="), 256);
         yinit.biospath = biospath;
+      }
+      //set System Language
+      if (0 == strcmp(argv[i], "-l") && argv[i + 1]) {
+        strncpy(strsyslangeid, argv[i + 1], 256);
+        if (toLower(strsyslangeid) == "english") { yinit.languageid = 0; }
+        if (toLower(strsyslangeid) == "deutsch") { yinit.languageid = 1; }
+        if (toLower(strsyslangeid) == "french") { yinit.languageid = 2; }
+        if (toLower(strsyslangeid) == "spanish") { yinit.languageid = 3; }
+        if (toLower(strsyslangeid) == "italian") { yinit.languageid = 4; }
+        if (toLower(strsyslangeid) == "japanese") { yinit.languageid = 5; }
+      } else if (strstr(argv[i], "--language=")) {
+        strncpy(strsyslangeid, argv[i] + strlen("--language="), 256);
+        if (toLower(strsyslangeid) == "english") { yinit.languageid = 0; }
+        if (toLower(strsyslangeid) == "deutsch") { yinit.languageid = 1; }
+        if (toLower(strsyslangeid) == "french") { yinit.languageid = 2; }
+        if (toLower(strsyslangeid) == "spanish") { yinit.languageid = 3; }
+        if (toLower(strsyslangeid) == "italian") { yinit.languageid = 4; }
+        if (toLower(strsyslangeid) == "japanese") { yinit.languageid = 5; }
       }
       //set iso
       else if (0 == strcmp(argv[i], "-i") && argv[i + 1]) {
