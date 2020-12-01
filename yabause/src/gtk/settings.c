@@ -80,6 +80,16 @@ YuiRangeItem * osdcores = NULL;
 YuiRangeItem * sndcores = NULL;
 YuiRangeItem * percores = NULL;
 
+YuiRangeItem syslanguage[] = {
+	{ "0" , "English" },
+	{ "1" , "Deutsch" },
+	{ "2" , "French" },
+	{ "3" , "Spanish" },
+	{ "4" , "Italian" },
+	{ "5" , "Japanese" },
+	{ 0, 0 }
+};
+
 YuiRangeItem regions[] = {
 	{ "Auto" , "Auto-detect" },
 	{ "J" , "Japan (NTSC)" },
@@ -325,6 +335,9 @@ GtkWidget* create_dialog1(void) {
   box = yui_page_add(YUI_PAGE(general), _("Save States"));
   gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "StatePath", YUI_FILE_ENTRY_BROWSE | YUI_FILE_ENTRY_DIRECTORY, NULL));
   
+  box = yui_page_add(YUI_PAGE(general), _("System Language"));
+  gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "SystemLanguageID", syslanguage));
+	
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), general, gtk_label_new (_("General")));
   gtk_widget_show_all(general);
 
