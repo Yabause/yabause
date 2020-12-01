@@ -36,6 +36,7 @@ typedef struct
    int cdcoretype;
    int carttype;
    u8 regionid;
+   int syslanguageid;
    const char *biospath;
    const char *cdpath;
    const char *ssfpath;
