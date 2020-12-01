@@ -256,6 +256,7 @@ static void FlipToggle(NSMenuItem *item) {
         yinit.cdcoretype = cdcore;
         yinit.carttype = [prefs cartType];
         yinit.regionid = [prefs region];
+        yinit.syslanguageid = [prefs system language];
         yinit.biospath = ([bios length] > 0 && ![prefs emulateBios]) ?
             [bios UTF8String] : NULL;
         yinit.cdpath = fn;
