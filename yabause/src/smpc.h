@@ -59,6 +59,8 @@ typedef struct
 
 typedef struct {
    u8 dotsel; // 0 -> 320 | 1 -> 352
+   int syslanguageid;
+   int syslngid;
    u8 mshnmi;
    u8 sndres;
    u8 cdres;
@@ -81,7 +83,7 @@ typedef struct {
 
 extern SmpcInternal * SmpcInternalVars;
 
-int SmpcInit(u8 regionid, int clocksync, u32 basetime);
+int SmpcInit(u8 regionid, int syslanguageid, int clocksync, u32 basetime);
 void SmpcDeInit(void);
 void SmpcRecheckRegion(void);
 void SmpcReset(void);
