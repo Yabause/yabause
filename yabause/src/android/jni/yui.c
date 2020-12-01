@@ -498,6 +498,7 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     yinit.cdcoretype = CDCORE_ISO;
     yinit.carttype = GetCartridgeType();
     yinit.regionid = 0;
+    yinit.syslanguageid = 0;
     yinit.biospath = GetBiosPath();
     yinit.cdpath = GetGamePath();
     yinit.buppath = GetMemoryPath();
