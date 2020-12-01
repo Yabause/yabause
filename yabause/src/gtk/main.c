@@ -134,6 +134,11 @@ GtkWidget * yui;
 GKeyFile * keyfile;
 yabauseinit_struct yinit;
 
+char* toLower(char* s) {
+  for(char *p=s; *p; p++) *p=tolower(*p);
+  return s;
+}
+
 static int yui_main(gpointer data) {
 	PERCore->HandleEvents();
 	return TRUE;
@@ -161,6 +166,7 @@ static void yui_settings_init(void) {
 	yinit.carttype = CART_NONE;
 	yinit.regionid = 0;
 	yinit.biospath = biospath;
+	yinit.syslanguageid = 0;
 	yinit.cdpath = cdpath;
 	yinit.buppath = buppath;
 	yinit.mpegpath = mpegpath;
@@ -225,6 +231,28 @@ static gboolean yui_settings_load(void) {
 		Cs2ChangeCDCore(yinit.cdcoretype, yinit.cdpath);
 	}
 
+	/* SystemLanguageID */
+	{
+		char * syslang = g_key_file_get_value(keyfile, "General", "SystemLanguageID", 0);
+		tmp = yinit.syslanguageid;
+		if ((syslang == 0) || !strcmp(syslang, "0")) {
+			yinit.syslanguageid = 0;
+		} else {
+			switch(syslang[0]) {
+				case '0': yinit.syslanguageid = 0; break;
+				case '1': yinit.syslanguageid = 1; break;
+				case '2': yinit.syslanguageid = 2; break;
+				case '3': yinit.syslanguageid = 3; break;
+				case '4': yinit.syslanguageid = 4; break;
+				case '5': yinit.syslanguageid = 5; break;
+			}
+		}
+
+		if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.syslanguageid)) {
+			mustRestart = TRUE;
+		}
+	}
+	
 	/* region */
 	{
 		char * region = g_key_file_get_value(keyfile, "General", "Region", 0);
@@ -493,6 +521,24 @@ int main(int argc, char *argv[]) {
             g_strlcpy(biospath, argv[i] + strlen("--bios="), 256);
             yinit.biospath = biospath;
 	 }
+         //set System Language
+         if (0 == strcmp(argv[i], "-l") && argv[i + 1]) {
+            g_strlcpy(strsyslangeid, argv[i + 1], 256);
+            if (toLower(strsyslangeid) == "english") { yinit.syslanguageid = 0; }
+            if (toLower(strsyslangeid) == "deutsch") { yinit.syslanguageid = 1; }
+            if (toLower(strsyslangeid) == "french") { yinit.syslanguageid = 2; }
+            if (toLower(strsyslangeid) == "spanish") { yinit.syslanguageid = 3; }
+            if (toLower(strsyslangeid) == "italian") { yinit.syslanguageid = 4; }
+            if (toLower(strsyslangeid) == "japanese") { yinit.syslanguageid = 5; }
+	 } else if (strstr(argv[i], "--language=")) {
+            g_strlcpy(strsyslangeid, argv[i] + strlen("--language="), 256);
+            if (toLower(strsyslangeid) == "english") { yinit.syslanguageid = 0; }
+            if (toLower(strsyslangeid) == "deutsch") { yinit.syslanguageid = 1; }
+            if (toLower(strsyslangeid) == "french") { yinit.syslanguageid = 2; }
+            if (toLower(strsyslangeid) == "spanish") { yinit.syslanguageid = 3; }
+            if (toLower(strsyslangeid) == "italian") { yinit.syslanguageid = 4; }
+            if (toLower(strsyslangeid) == "japanese") { yinit.syslanguageid = 5; }
+	 }   
          //set iso
          else if (0 == strcmp(argv[i], "-i") && argv[i + 1]) {
             g_strlcpy(cdpath, argv[i + 1], 256);
