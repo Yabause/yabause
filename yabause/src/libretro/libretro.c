@@ -41,6 +41,7 @@ static char g_system_dir[PATH_MAX];
 static char full_path[PATH_MAX];
 static char bios_path[PATH_MAX];
 static char bup_path[PATH_MAX];
+static int system_language = 0;
 
 static int game_width  = 320;
 static int game_height = 240;
@@ -89,6 +90,11 @@ static retro_input_state_t input_state_cb;
 static retro_environment_t environ_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 
+char* toLower(char* s) {
+  for(char *p=s; *p; p++) *p=tolower(*p);
+  return s;
+}
+
 #if defined(_USEGLEW_)
 static struct retro_hw_render_callback hw_render;
 #else
@@ -101,6 +107,7 @@ void retro_set_environment(retro_environment_t cb)
       { "yabasanshiro_force_hle_bios", "Force HLE BIOS (restart, deprecated, debug only); disabled|enabled" },
       { "yabasanshiro_frameskip", "Auto-frameskip (prevent fast-forwarding); enabled|disabled" },
       { "yabasanshiro_addon_cart", "Addon Cartridge (restart); 4M_extended_ram|1M_extended_ram" },
+      { "yabasanshiro_system_language", "english, deutsch, french, spanish, italian, japanese" },
       { "yabasanshiro_multitap_port1", "6Player Adaptor on Port 1; disabled|enabled" },
       { "yabasanshiro_multitap_port2", "6Player Adaptor on Port 2; disabled|enabled" },
 #ifdef DYNAREC_DEVMIYAX
@@ -750,6 +757,24 @@ void check_variables(void)
          addon_cart_type = CART_DRAM32MBIT;
    }
 
+   var.key = "yabasanshiro_system_language";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+      if (strcmp(toLower(var.value), "english") == 0)
+         system_language = 0;
+      else if (strcmp(toLower(var.value), "deutsch") == 0)
+         system_language = 1;
+      else if (strcmp(toLower(var.value), "french") == 0)
+         system_language = 2;
+      else if (strcmp(toLower(var.value), "spanish") == 0)
+         system_language = 3;
+      else if (strcmp(toLower(var.value), "italian") == 0)
+         system_language = 4;
+      else if (strcmp(toLower(var.value), "japanese") == 0)
+         system_language = 5;
+   }
+ 
    var.key = "yabasanshiro_multitap_port1";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1253,6 +1278,7 @@ bool retro_load_game(const struct retro_game_info *info)
    yinit.cdcoretype       = CDCORE_ISO;
    yinit.cdpath           = full_path;
    yinit.biospath         = (hle_bios_force ? NULL : bios_path);
+   yinit.syslanguageid = system_language;
    yinit.carttype         = addon_cart_type;
    yinit.cartpath         = "\0";
 
