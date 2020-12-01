@@ -538,7 +538,7 @@ int main(int argc, char *argv[]) {
             if (toLower(strsyslangeid) == "spanish") { yinit.syslanguageid = 3; }
             if (toLower(strsyslangeid) == "italian") { yinit.syslanguageid = 4; }
             if (toLower(strsyslangeid) == "japanese") { yinit.syslanguageid = 5; }
-	 }   
+	 }
          //set iso
          else if (0 == strcmp(argv[i], "-i") && argv[i + 1]) {
             g_strlcpy(cdpath, argv[i + 1], 256);
