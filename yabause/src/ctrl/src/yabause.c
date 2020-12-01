@@ -119,6 +119,7 @@ void print_usage(const char *program_name) {
           "Usage: %s [OPTIONS]...\n", program_name);
    printf("   -h         --help                 Print help and exit\n");
    printf("   -b STRING  --bios=STRING          bios file\n");
+   printf("   -l STRING  --language=STRING      english, deutsch, french, spanish,\n                                     italian, japanese\n");
    printf("   -i STRING  --iso=STRING           iso/cue file\n");
    printf("   -c STRING  --cdrom=STRING         cdrom path\n");
    printf("   -ns        --nosound              turn sound off\n");
