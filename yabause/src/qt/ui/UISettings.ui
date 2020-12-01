@@ -138,7 +138,7 @@
          </property>
         </widget>
        </item>
-       <item row="13" column="0" colspan="2">
+       <item row="11" column="0" colspan="2">
         <widget class="QComboBox" name="cbSysLanguageID"/>
        </item>
        <item row="12" column="0" colspan="2">
@@ -211,7 +211,7 @@
          </property>
         </widget>
        </item>
-       <item row="11" column="0" colspan="2">
+       <item row="13" column="0" colspan="2">
         <widget class="QComboBox" name="cbTranslation"/>
        </item>
        <item row="20" column="0">
