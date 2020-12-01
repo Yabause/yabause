@@ -124,6 +124,7 @@ void print_usage(const char *program_name) {
           "Usage: %s [OPTIONS]...\n", program_name);
    printf("   -h         --help                 Print help and exit\n");
    printf("   -b STRING  --bios=STRING          bios file\n");
+   printf("   -l STRING  --language=STRING      english, deutsch, french, spanish,\n                                     italian, japanese\n");
    printf("   -i STRING  --iso=STRING           iso/cue file\n");
    printf("   -c STRING  --cdrom=STRING         cdrom path\n");
    printf("   -ns        --nosound              turn sound off\n");
@@ -312,7 +313,7 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   if (SmpcInit(init->regionid, init->clocksync, init->basetime) != 0)
+   if (SmpcInit(init->regionid, init->syslanguageid, init->clocksync, init->basetime) != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("SMPC"));
       return -1;
