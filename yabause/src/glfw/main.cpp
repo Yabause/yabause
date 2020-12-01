@@ -230,6 +230,7 @@ int yabauseinit()
   yinit.cdcoretype = CDCORE_ISO;
   yinit.carttype = CART_NONE;
   yinit.regionid = 0;
+  yinit.syslanguageid = 0;
   yinit.biospath = biospath;
   yinit.cdpath = cdpath;
   yinit.buppath = buppath;
