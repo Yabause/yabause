@@ -144,6 +144,8 @@ static int fullscreen = 0;
 static int lowres_mode = 0;
 
 static char biospath[256] = "\0";
+static char strgsyslangeid[256] = "english";
+static int syslanguageid = 0;
 static char cdpath[256] = "\0";
 
 GLFWwindow* g_window = NULL;
@@ -151,6 +153,10 @@ GLFWwindow* g_offscreen_context;
 
 yabauseinit_struct yinit ={};
 
+char* toLower(char* s) {
+  for(char *p=s; *p; p++) *p=tolower(*p);
+  return s;
+}
 void YuiErrorMsg(const char * string) {
     fprintf(stderr, "%s\n\r", string);
 }
@@ -227,6 +233,7 @@ void YuiInit() {
 	yinit.cdcoretype = CDCORE_DEFAULT;
 	yinit.carttype = CART_DRAM32MBIT;
 	yinit.regionid = REGION_EUROPE;
+	yinit.syslanguageid = syslanguageid;
 	yinit.biospath = NULL;
 	yinit.cdpath = NULL;
 	yinit.buppath = NULL;
@@ -319,6 +326,24 @@ int main(int argc, char *argv[]) {
       } else if (strstr(argv[i], "--bios=")) {
         strncpy(biospath, argv[i] + strlen("--bios="), 256);
         yinit.biospath = biospath;
+      }
+      //set System Language
+      if (0 == strcmp(argv[i], "-l") && argv[i + 1]) {
+        strncpy(strgsyslangeid, argv[i + 1], 256);
+        if (toLower(strgsyslangeid) == "english") { yinit.syslanguageid = 0; }
+        if (toLower(strgsyslangeid) == "deutsch") { yinit.syslanguageid = 1; }
+        if (toLower(strgsyslangeid) == "french") { yinit.syslanguageid = 2; }
+        if (toLower(strgsyslangeid) == "spanish") { yinit.syslanguageid = 3; }
+        if (toLower(strgsyslangeid) == "italian") { yinit.syslanguageid = 4; }
+        if (toLower(strgsyslangeid) == "japanese") { yinit.syslanguageid = 5; }
+      } else if (strstr(argv[i], "--language=")) {
+        strncpy(strgsyslangeid, argv[i] + strlen("--language="), 256);
+        if (toLower(strgsyslangeid) == "english") { yinit.syslanguageid = 0; }
+        if (toLower(strgsyslangeid) == "deutsch") { yinit.syslanguageid = 1; }
+        if (toLower(strgsyslangeid) == "french") { yinit.syslanguageid = 2; }
+        if (toLower(strgsyslangeid) == "spanish") { yinit.syslanguageid = 3; }
+        if (toLower(strgsyslangeid) == "italian") { yinit.syslanguageid = 4; }
+        if (toLower(strgsyslangeid) == "japanese") { yinit.syslanguageid = 5; }
       }
       //set iso
       else if (0 == strcmp(argv[i], "-i") && argv[i + 1]) {
