@@ -159,6 +159,7 @@ int start_emulation( int originx, int originy, int width, int height ){
     yinit.sndcoretype = SNDCORE_AL; //SNDCORE_DEFAULT;
     yinit.cdcoretype = CDCORE_ISO;
     yinit.regionid = 0;
+    yinit.syslanguageid = 0;
 
     yinit.biospath = s_biospath;
     yinit.cdpath = s_cdpath;
