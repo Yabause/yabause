@@ -549,6 +549,7 @@ namespace game_testing
       yinit.cdcoretype = CDCORE_ISO;
       yinit.carttype = CART_NONE;
       yinit.regionid = REGION_AUTODETECT;
+      yinit.syslanguageid = 0;
       yinit.biospath = emulate_bios ? NULL : bios;
       yinit.cdpath = full_path.c_str();
       yinit.buppath = NULL;
@@ -796,6 +797,7 @@ namespace yabauseut
       yinit.cdcoretype = CDCORE_DUMMY;
       yinit.carttype = CART_NONE;
       yinit.regionid = REGION_AUTODETECT;
+      yinit.syslanguageid = 0;
       yinit.biospath = emulate_bios ? NULL : bios;
       yinit.cdpath = NULL;
       yinit.buppath = NULL;
