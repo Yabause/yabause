@@ -55,6 +55,14 @@ struct Item
 
 typedef QList<Item> Items;
 
+const Items mSysLanguageID = Items()
+	<< Item( "0", "English" )
+	<< Item( "1", "Deutsch" )
+	<< Item( "2", "French" )
+	<< Item( "3", "Spanish" )
+	<< Item( "4", "Italian" )
+	<< Item( "5", "Japanese" );
+
 const Items mRegions = Items()
   << Item( "E", "Europe (PAL)" )
 	<< Item( "U", "North America (NTSC)" )
@@ -528,6 +536,10 @@ void UISettings::loadCores()
 	foreach ( const Item& it, mRegions )
 		cbRegion->addItem( QtYabause::translate( it.Name ), it.id );
 
+	// System Language
+	foreach ( const Item& it, mSysLanguageID  )
+		cbSysLanguageID ->addItem( QtYabause::translate( it.Name ), it.id );
+	
 	// SH2 Interpreters
 	for ( int i = 0; SH2CoreList[i] != NULL; i++ )
 		cbSH2Interpreter->addItem( QtYabause::translate( SH2CoreList[i]->Name ), SH2CoreList[i]->id );
@@ -602,6 +614,7 @@ void UISettings::loadSettings()
 		cbCdDrive->setCurrentIndex(leCdRom->text().isEmpty() ? 0 : cbCdDrive->findText(leCdRom->text()));
 
 	leSaveStates->setText( s->value( "General/SaveStates", getDataDirPath() ).toString() );
+	cbSysLanguageID->setCurrentIndex( cbSysLanguageID->findData( s->value( "General/SystemLanguageID", mSysLanguageID.at( 0 ).id ).toString() ) );
 #ifdef HAVE_LIBMINI18N
 	int i;
 	if ((i=cbTranslation->findData(s->value( "General/Translation" ).toString())) != -1)
@@ -698,6 +711,7 @@ void UISettings::saveSettings()
 	else
 		s->setValue( "General/CdRomISO", leCdRom->text() );
 	s->setValue( "General/SaveStates", leSaveStates->text() );
+	s->setValue( "General/SystemLanguageID", cbSysLanguageID->itemData( cbSysLanguageID->currentIndex() ).toString() );
 #ifdef HAVE_LIBMINI18N
 	s->setValue( "General/Translation", cbTranslation->itemData(cbTranslation->currentIndex()).toString() );
 #endif
