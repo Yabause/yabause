@@ -541,6 +541,7 @@ void UIYabause::on_aFileSettings_triggered()
          newhash["Advanced/68kCore"] != hash["Advanced/68kCore"] ||
 			newhash["General/CdRom"]!=hash["General/CdRom"] ||
 			newhash["General/CdRomISO"]!=hash["General/CdRomISO"] ||
+		        newhash["General/SystemLanguageID"]!=hash["General/SystemLanguageID"] ||
 			newhash["General/ClockSync"]!=hash["General/ClockSync"] ||
 			newhash["General/FixedBaseTime"]!=hash["General/FixedBaseTime"]
 		)
