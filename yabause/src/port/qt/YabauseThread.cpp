@@ -367,6 +367,21 @@ void YabauseThread::reloadSettings()
 			default : mYabauseConf.stv_favorite_region = 1; break;
 		}
 	}
+	const QString r1 = vs->value( "General/SystemLanguageID", mYabauseConf.languageid ).toString();
+	if ( r1.isEmpty() || r1 == "" )
+		mYabauseConf.languageid = 0;
+	else
+	{
+		switch ( r1[0].toLatin1() )
+		{
+			case '0': mYabauseConf.languageid = 0; break;
+			case '1': mYabauseConf.languageid = 1; break;
+			case '2': mYabauseConf.languageid = 2; break;
+			case '3': mYabauseConf.languageid = 3; break;
+			case '4': mYabauseConf.languageid = 4; break;
+			case '5': mYabauseConf.languageid = 5; break;
+		}
+	}
 	if (vs->value("General/EnableEmulatedBios", false).toBool())
 		mYabauseConf.biospath = strdup( "" );
 	else
@@ -445,6 +460,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.cdcoretype = QtYabause::defaultCDCore().id;
 	mYabauseConf.carttype = CART_NONE;
 	mYabauseConf.regionid = 0;
+	mYabauseConf.languageid = 0;
 	mYabauseConf.biospath = 0;
 	mYabauseConf.cdpath = 0;
 	mYabauseConf.buppath = 0;
