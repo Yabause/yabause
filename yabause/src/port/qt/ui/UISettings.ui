@@ -117,6 +117,25 @@
         </widget>
        </item>
        <item row="10" column="0" colspan="2">
+	<widget class="QLabel" name="lSysLanguageID">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>System Language</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="0" colspan="2">
+        <widget class="QComboBox" name="cbSysLanguageID"/>
+       </item>
+       <item row="12" column="0" colspan="2">
         <widget class="QLabel" name="lTranslation">
          <property name="font">
           <font>
@@ -186,7 +205,7 @@
          </property>
         </widget>
        </item>
-       <item row="11" column="0" colspan="2">
+       <item row="13" column="0" colspan="2">
         <widget class="QComboBox" name="cbTranslation"/>
        </item>
        <item row="20" column="0">
