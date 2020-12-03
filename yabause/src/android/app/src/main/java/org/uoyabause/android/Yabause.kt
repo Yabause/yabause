@@ -54,6 +54,7 @@ import android.os.Process.killProcess
 import android.os.Process.myPid
 import android.util.Log
 import android.view.KeyEvent
+import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
@@ -84,6 +85,12 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.games.Games
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.material.navigation.NavigationView
@@ -99,19 +106,6 @@ import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.InputStream
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.Arrays
-import java.util.Date
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
@@ -125,6 +119,22 @@ import org.uoyabause.android.PadManager.ShowMenuListener
 import org.uoyabause.android.PadTestFragment.PadTestListener
 import org.uoyabause.android.StateListFragment.Companion.checkMaxFileCount
 import org.uoyabause.android.backup.TabBackupFragment
+import org.uoyabause.android.game.BaseGame
+import org.uoyabause.android.game.GameUiEvent
+import org.uoyabause.android.game.SonicR
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Arrays
+import java.util.Date
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 internal enum class TrayState {
     OPEN,
@@ -138,7 +148,10 @@ class Yabause : AppCompatActivity(),
         PadTestListener,
         InputSettingListener,
         InputManager.InputDeviceListener,
-        ShowMenuListener {
+        ShowMenuListener,
+    GameUiEvent {
+
+    private var googleSignInClient: GoogleSignInClient? = null
 
     var biosPath: String? = null
         private set
@@ -148,6 +161,8 @@ class Yabause : AppCompatActivity(),
         private set
     var videoInterface = 0
         private set
+
+    var currentGame: BaseGame? = null
 
     private var waitingResult = false
     private var tracker: Tracker? = null
@@ -165,6 +180,8 @@ class Yabause : AppCompatActivity(),
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var progressBar: View
     private lateinit var progressMessage: TextView
+
+    private val MENU_ID_LEADERBOARD = 0x8123
 
     fun showWaitDialog(message: String) {
         progressMessage.text = message
@@ -221,6 +238,11 @@ class Yabause : AppCompatActivity(),
      */
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        googleSignInClient = GoogleSignIn.getClient(this,
+            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).build())
+
+
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(this@Yabause)
         val lock_landscape = sharedPref.getBoolean("pref_landscape", false)
         requestedOrientation = if (lock_landscape == true) {
@@ -331,7 +353,9 @@ class Yabause : AppCompatActivity(),
                         }
                     }
             } catch (e: Exception) {
-                    Toast.makeText(this@Yabause, "Fail to open $uri with ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@Yabause,
+                        "Fail to open $uri with ${e.localizedMessage}",
+                        Toast.LENGTH_LONG).show()
                     return
             }
 
@@ -375,9 +399,38 @@ class Yabause : AppCompatActivity(),
         testCase = intent.getStringExtra("TestCase")
 //        PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
         audio = YabauseAudio(this)
+        currentGame = null
         if (this.gameCode != null) {
             readPreferences(this.gameCode)
+            if( this.gameCode == "GS-9170" ){
+                var c = SonicR()
+                c.uievent = this
+                var menu = navigationView.menu
+                var submenu = menu.addSubMenu(Menu.NONE,MENU_ID_LEADERBOARD,Menu.NONE,"Leader Board")
+                c.leaderBoards?.forEach{
+                    var lmenu = submenu.add(it.title)
+                    lmenu.setIcon(R.drawable.baseline_list_24)
+                    lmenu.setOnMenuItemClickListener { item ->
+                        waitingResult = true
+                        Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                            .getLeaderboardIntent(it!!.id)
+                            .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
+                                startActivityForResult(intent,
+                                    MENU_ID_LEADERBOARD)
+                            })
+                        true
+                    }
+                }
+                currentGame = c
+            }
         }
+
+        if(currentGame != null ){
+            YabauseRunnable.enableBackupWriteHook();
+        }else{
+            navigationView.menu.removeItem(MENU_ID_LEADERBOARD)
+        }
+
         padManager = PadManager.getPadManager()
         padManager.loadSettings()
         padManager.setShowMenulistener(this)
@@ -406,6 +459,24 @@ class Yabause : AppCompatActivity(),
         yabauseThread = YabauseRunnable(this)
     }
 
+    private fun isSignedIn(): Boolean {
+        return GoogleSignIn.getLastSignedInAccount(this) != null
+    }
+
+    private fun signInSilently() {
+        Log.d(TAG, "signInSilently()")
+        googleSignInClient?.silentSignIn()?.addOnCompleteListener(this,
+            OnCompleteListener<GoogleSignInAccount?> { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG,
+                        "signInSilently(): success")
+                    //onConnected(task.result)
+                } else {
+                    Log.d(TAG, "signInSilently(): failure",
+                        task.exception)
+                }
+            })
+    }
     @Suppress("DEPRECATION")
     fun updateViewLayout(orientation: Int) {
         window.statusBarColor = ContextCompat.getColor(this, R.color.black)
@@ -579,6 +650,20 @@ class Yabause : AppCompatActivity(),
             FirebaseAnalytics.Event.SELECT_CONTENT, bundle
         )
         when (id) {
+/*
+            R.id.leaderboard -> {
+
+                if( currentGame != null ) {
+                    Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                        .getLeaderboardIntent(currentGame!!.leaderBoardId)
+                        .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
+                            startActivityForResult(intent,
+                                3)
+                        })
+                }
+            }
+
+ */
             R.id.reset -> YabauseRunnable.reset()
             R.id.report -> startReport()
             R.id.gametitle -> {
@@ -1007,6 +1092,7 @@ class Yabause : AppCompatActivity(),
 
     public override fun onResume() {
         super.onResume()
+        signInSilently()
         if (tracker != null) {
             tracker!!.setScreenName(TAG)
             tracker!!.send(ScreenViewBuilder().build())
@@ -1235,6 +1321,10 @@ class Yabause : AppCompatActivity(),
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
+            MENU_ID_LEADERBOARD -> {
+                waitingResult = false
+                toggleMenu()
+            }
             0x01 -> {
                 waitingResult = false
                 toggleMenu()
@@ -1734,5 +1824,30 @@ class Yabause : AppCompatActivity(),
         updateInputDevice()
         waitingResult = false
         toggleMenu()
+    }
+
+    fun onBackupWrite(before: ByteArray, after: ByteArray){
+        Log.d(this.javaClass.name, "onBackupWrite ${before.size} ")
+        currentGame?.onBackUpUpdated(before, after)
+    }
+
+    override fun onNewRecord(leaderBoardId: String) {
+        runOnUiThread {
+
+            var snackbar = Snackbar.make(this.drawerLayout,
+                "Congratulations for the New Record!",
+                Snackbar.LENGTH_LONG)
+            snackbar.setAction("Check Leader board"
+            ) { view: View? ->
+                Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                    .getLeaderboardIntent(leaderBoardId)
+                    .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
+                        startActivityForResult(intent,
+                            3)
+                    })
+            }
+            snackbar.show()
+
+        }
     }
 }

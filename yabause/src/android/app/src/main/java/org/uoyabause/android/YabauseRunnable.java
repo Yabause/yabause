@@ -80,6 +80,8 @@ public class YabauseRunnable implements Runnable
     public static native int copy( int target_device, int file_index );
     public static native byte[] getGameinfoFromChd( String path );
 
+    public static native int enableBackupWriteHook();
+
     private boolean inited;
     private boolean paused;
 

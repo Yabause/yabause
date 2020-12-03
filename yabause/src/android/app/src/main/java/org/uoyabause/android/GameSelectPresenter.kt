@@ -25,6 +25,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.CheckBox
@@ -37,6 +38,11 @@ import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.AuthUI.IdpConfig.GoogleBuilder
 import com.firebase.ui.auth.ErrorCodes
 import com.firebase.ui.auth.IdpResponse
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -50,15 +56,16 @@ import io.reactivex.SingleOnSubscribe
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.observers.DisposableSingleObserver
 import io.reactivex.schedulers.Schedulers
-import java.io.File
-import java.util.Arrays
-import java.util.Calendar
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.YabauseStorage.Companion.storage
+import java.io.File
+import java.util.Arrays
+import java.util.Calendar
 
 class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListener) {
     private val mFirebaseAnalytics: FirebaseAnalytics
+    private var mGoogleSignInClient: GoogleSignInClient? = null
     private val TAG = "GameSelectPresenter"
 
     interface GameSelectPresenterListener {
@@ -160,12 +167,43 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
                 // finish();
                 // listener_.onUpdateGameList();
             }
+
+        if( GoogleSignIn.getLastSignedInAccount(target_.requireActivity()) != null ) {
+            mGoogleSignInClient?.signOut()?.addOnCompleteListener(target_.requireActivity(),
+                OnCompleteListener<Void?> { task ->
+                    val successful = task.isSuccessful
+                    Log.d(TAG,
+                        "signOut(): " + if (successful) "success" else "failed")
+                })
+        }
+    }
+
+    fun onGameIdSignIn(resultCode: Int, intent: Intent?){
+        if (resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(intent)
+            try {
+                val account = task.getResult(ApiException::class.java)
+            } catch (apiException: ApiException) {
+                var message = apiException.message
+                if (message == null || message.isEmpty()) {
+                    message = "Fail to login" //target_.getString(R.string.signin_other_error)
+                }
+                AlertDialog.Builder(target_.requireActivity())
+                    .setMessage(message)
+                    .setNeutralButton(android.R.string.ok, null)
+                    .show()
+            }
+        }
     }
 
     fun onSignIn(resultCode: Int, data: Intent?) {
         val response = IdpResponse.fromResultIntent(data)
         // Successfully signed in
         if (resultCode == Activity.RESULT_OK) {
+
+            val bundle = Bundle()
+            mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, bundle)
+
             response!!.idpToken
             val token = response.idpToken
             // listener_.onUpdateGameList();
@@ -214,6 +252,14 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
                 auth_emitter_!!.onSuccess(currentUser)
                 auth_emitter_ = null
             }
+
+            mGoogleSignInClient = GoogleSignIn.getClient(target_.requireActivity(),
+                GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).build())
+            if( mGoogleSignInClient != null ) {
+                target_.startActivityForResult(mGoogleSignInClient!!.getSignInIntent(),
+                    RC_GAME_SIGN_IN)
+            }
+
             return
         } else {
             if (auth_emitter_ != null) {
@@ -377,6 +423,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
 
     companion object {
         const val RC_SIGN_IN = 123
+        const val RC_GAME_SIGN_IN = 124
     }
 
     init {

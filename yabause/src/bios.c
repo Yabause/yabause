@@ -73,6 +73,17 @@ static u32 scumasklist[0x20] = {
 u32 interruptlist[2][0x80];
 
 static void FASTCALL BiosBUPRead(SH2_struct * sh);
+
+
+typedef void(*ON_BACKUP_WRITE_CALLBACK)(char * before, char * after, int size);
+
+static ON_BACKUP_WRITE_CALLBACK Bios_onBackupWrite = NULL;
+
+void BiosSetOnBackupWrite( ON_BACKUP_WRITE_CALLBACK cbk ) {
+  Bios_onBackupWrite = cbk;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 void BiosInit(void)
@@ -1045,6 +1056,29 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
 
    LOG("BiosBUPWrite from %08X size %08X", sh->regs.R[6], datasize);
 
+   if (Bios_onBackupWrite != NULL) {
+     u32 tmpblockswritten = blockswritten;
+     char * before = (char*)malloc(datasize);
+     char * after = (char*)malloc(datasize);
+
+     u32 before_addr = workaddr;
+     u32 after_addr = sh->regs.R[6];
+
+     for (int i = 0; i < datasize; i++) {
+       before[i] = MappedMemoryReadByte(before_addr, NULL);
+       after[i] = MappedMemoryReadByte(after_addr, NULL);
+
+       after_addr++;
+       before_addr += 2;
+       if (((before_addr - 1) & ((blocksize << 1) - 1)) == 0) {
+         tmpblockswritten++;
+         before_addr = addr + (blocktbl[tmpblockswritten] * blocksize * 2) + 9;
+       }
+     }
+     Bios_onBackupWrite(before, after, datasize);
+     free(before);
+     free(after);
+   }
 
    // Lastly, write the actual save data
    //FILE * fp = fopen("writecheck.bin", "wb");

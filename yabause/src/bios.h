@@ -80,6 +80,10 @@ int BiosBUPImport( u32 device, saveinfo_struct * saveinfo, const char * buf, int
 int BiosBUPExport(u32 device, const char *savename, char ** buf, int * bufsize );
 int BiosBUPStatusMem( int device, devicestatus_struct * status );
 
+typedef void(*ON_BACKUP_WRITE_CALLBACK)(char * before, char * after, int size);
+void BiosSetOnBackupWrite(ON_BACKUP_WRITE_CALLBACK cbk);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -437,6 +437,70 @@ int GetPlayer2Device(){
     return env->CallIntMethod( yabause, getPlayer2InputDevice);
 }
 
+
+void onBackupWrite( char * before, char * after, int size ){
+	
+    __android_log_print(ANDROID_LOG_INFO, "yabause", "onBackupWrite is called");
+
+    jclass yclass;
+    jmethodID jniOnBackupWrite;
+    JNIEnv * env;
+
+    if(yvm->AttachCurrentThread(&env,NULL) != JNI_OK){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to AttachCurrentThread");
+        return;
+    }
+
+/*
+    if (yvm->GetEnv( (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to GetEnv");
+
+        return;
+    }
+*/
+    jbyteArray jniBefore = env->NewByteArray(size);
+    if( jniBefore == NULL ){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to NewByteArray for before");
+        return;
+    }
+
+    jbyte * dst = env->GetByteArrayElements(jniBefore, NULL);
+    for(int i = 0; i < size; i++){
+        dst[i] = before[i];
+    }
+    env->ReleaseByteArrayElements(jniBefore,dst,0);
+
+    jbyteArray jniAfter = env->NewByteArray(size);
+    if( jniAfter == NULL ){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to NewByteArray for after");
+        return;
+    }
+
+    dst = env->GetByteArrayElements(jniAfter, NULL);
+    for(int i = 0; i < size; i++){
+        dst[i] = after[i];
+    }
+    env->ReleaseByteArrayElements(jniAfter,dst,0);
+ 
+    yclass = env->GetObjectClass( yabause);
+    jniOnBackupWrite = env->GetMethodID( yclass, "onBackupWrite", "([B[B)V");
+    if( jniOnBackupWrite == NULL ){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to GetMethodID for onBackupWrite");
+        return;
+    }
+    env->CallVoidMethod( yabause, jniOnBackupWrite, jniBefore, jniAfter);
+
+    if(yvm->DetachCurrentThread() != JNI_OK){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to DetachCurrentThread");
+        return;
+    }
+
+    return;
+}
+
+
+
 extern "C" void YuiErrorMsg(const char *string)
 {
 	//YUI_LOG("YuiErrorMsg %s",string);
@@ -686,6 +750,13 @@ extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_init
     
    return 0;
 }
+
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_enableBackupWriteHook(){
+    BiosSetOnBackupWrite(onBackupWrite);
+    return 0;
+}
+
+
 
 extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_lockGL()
 {

@@ -886,6 +886,9 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
+            GameSelectPresenter.RC_GAME_SIGN_IN -> {
+                presenter_!!.onGameIdSignIn(resultCode, data)
+            }
             GameSelectPresenter.RC_SIGN_IN -> {
                 presenter_!!.onSignIn(resultCode, data)
             }
