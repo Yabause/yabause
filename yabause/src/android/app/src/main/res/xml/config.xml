@@ -3,11 +3,31 @@
 <defaultsMap>
     <entry>
         <key>keycode</key>
-        <value>QAj83eec0</value>
+        <value>1</value>
     </entry>
     <entry>
         <key>keycode2</key>
-        <value>zzjr0uj23n</value>
+        <value>1</value>
+    </entry>
+    <entry>
+        <key>leaderboard_sonicr_1</key>
+        <value>1</value>
+    </entry>
+    <entry>
+        <key>leaderboard_sonicr_2</key>
+        <value>1</value>
+    </entry>
+    <entry>
+        <key>leaderboard_sonicr_3</key>
+        <value>1</value>
+    </entry>
+    <entry>
+        <key>leaderboard_sonicr_4</key>
+        <value>1</value>
+    </entry>
+    <entry>
+        <key>leaderboard_sonicr_5</key>
+        <value>1</value>
     </entry>
 </defaultsMap>
     <!-- END xml_defaults -->
