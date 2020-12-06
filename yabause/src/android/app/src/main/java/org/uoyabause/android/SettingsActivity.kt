@@ -137,7 +137,7 @@ class SettingsActivity : AppCompatActivity() {
                 val cartvalues: MutableList<CharSequence> = ArrayList()
 
                 for (carttype in 0 until Cartridge.typeCount) {
-                    cartlabels.add( Cartridge.getName(carttype) )
+                    cartlabels.add(Cartridge.getName(carttype))
                     cartvalues.add(Integer.toString(carttype))
                 }
 

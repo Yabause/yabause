@@ -56,12 +56,12 @@ import io.reactivex.SingleOnSubscribe
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.observers.DisposableSingleObserver
 import io.reactivex.schedulers.Schedulers
-import org.devmiyax.yabasanshiro.BuildConfig
-import org.devmiyax.yabasanshiro.R
-import org.uoyabause.android.YabauseStorage.Companion.storage
 import java.io.File
 import java.util.Arrays
 import java.util.Calendar
+import org.devmiyax.yabasanshiro.BuildConfig
+import org.devmiyax.yabasanshiro.R
+import org.uoyabause.android.YabauseStorage.Companion.storage
 
 class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListener) {
     private val mFirebaseAnalytics: FirebaseAnalytics
@@ -168,7 +168,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
                 // listener_.onUpdateGameList();
             }
 
-        if( GoogleSignIn.getLastSignedInAccount(target_.requireActivity()) != null ) {
+        if (GoogleSignIn.getLastSignedInAccount(target_.requireActivity()) != null) {
             mGoogleSignInClient?.signOut()?.addOnCompleteListener(target_.requireActivity(),
                 OnCompleteListener<Void?> { task ->
                     val successful = task.isSuccessful
@@ -178,7 +178,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
         }
     }
 
-    fun onGameIdSignIn(resultCode: Int, intent: Intent?){
+    fun onGameIdSignIn(resultCode: Int, intent: Intent?) {
         if (resultCode == Activity.RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(intent)
             try {
@@ -186,7 +186,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
             } catch (apiException: ApiException) {
                 var message = apiException.message
                 if (message == null || message.isEmpty()) {
-                    message = "Fail to login" //target_.getString(R.string.signin_other_error)
+                    message = "Fail to login" // target_.getString(R.string.signin_other_error)
                 }
                 AlertDialog.Builder(target_.requireActivity())
                     .setMessage(message)
@@ -255,7 +255,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
 
             mGoogleSignInClient = GoogleSignIn.getClient(target_.requireActivity(),
                 GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).build())
-            if( mGoogleSignInClient != null ) {
+            if (mGoogleSignInClient != null) {
                 target_.startActivityForResult(mGoogleSignInClient!!.getSignInIntent(),
                     RC_GAME_SIGN_IN)
             }

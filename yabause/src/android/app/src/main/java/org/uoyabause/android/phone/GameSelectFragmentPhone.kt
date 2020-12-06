@@ -75,10 +75,12 @@ import java.io.IOException
 import java.nio.channels.FileChannel
 import java.util.Calendar
 import java.util.Locale
+import java.util.zip.ZipFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.devmiyax.yabasanshiro.StartupActivity
@@ -212,6 +214,22 @@ class GameSelectFragmentPhone : Fragment(),
         progressBar = rootview.findViewById(R.id.llProgressBar)
         progressBar.visibility = View.GONE
         progressMessage = rootview.findViewById(R.id.pbText)
+
+        val fab: View = rootview.findViewById(R.id.fab)
+        if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
+            fab.setOnClickListener { view ->
+
+                if (YabauseApplication.checkDonated(requireActivity()) == 0) {
+                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                    intent.addCategory(Intent.CATEGORY_OPENABLE)
+                    intent.type = "*/*"
+                    startActivityForResult(intent, READ_REQUEST_CODE)
+                }
+            }
+        } else {
+            fab.visibility = View.GONE
+        }
+
         return rootview
     }
 
@@ -422,6 +440,131 @@ class GameSelectFragmentPhone : Fragment(),
         }
     }
 
+    fun installZipGameFile(uri: Uri, path: String) {
+        scope.launch {
+            withContext(Dispatchers.Main) {
+                showDialog("Installing ...")
+            }
+            var zipFileName = ""
+            try {
+
+                val f = File(path)
+                zipFileName = YabauseStorage.storage.gamePath + "/" + f.name
+                val fd = File(zipFileName)
+                val parcelFileDescriptor =
+                    requireActivity().contentResolver.openFileDescriptor(uri, "r")
+                val fileDescriptor: FileDescriptor = parcelFileDescriptor!!.fileDescriptor
+                FileInputStream(fileDescriptor).use { inputStream ->
+                    FileOutputStream(fd).use { outputStream ->
+                        if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
+                            FileUtils.copy(inputStream, outputStream)
+                        } else {
+                            copyFileO(inputStream, outputStream)
+                        }
+                        inputStream.close()
+                        outputStream.close()
+                    }
+                }
+                parcelFileDescriptor.close()
+
+                var targetFileName = ""
+
+                withContext(Dispatchers.Main) {
+                    updateDialogString("Extracting ${fd.name}")
+                }
+
+                if (zipFileName.toLowerCase().endsWith("zip")) {
+
+                    ZipFile(zipFileName).use { zip ->
+                        zip.entries().asSequence().forEach { entry ->
+
+                            if (entry.name.toLowerCase(Locale.ROOT).endsWith("ccd") ||
+                                entry.name.toLowerCase(Locale.ROOT).endsWith("cue") ||
+                                entry.name.toLowerCase(Locale.ROOT).endsWith("mds")
+                            ) {
+                                targetFileName = YabauseStorage.storage.gamePath + "/" + entry.name
+                            }
+                            zip.getInputStream(entry).use { input ->
+                                if (entry.isDirectory) {
+                                    val unzipdir =
+                                        File(YabauseStorage.storage.gamePath + "/" + entry.name)
+                                    if (!unzipdir.exists()) {
+                                        unzipdir.mkdirs()
+                                    } else {
+                                        unzipdir.delete()
+                                        unzipdir.mkdirs()
+                                    }
+                                } else {
+                                    File(YabauseStorage.storage.gamePath + "/" + entry.name).outputStream()
+                                        .use { output ->
+                                            input.copyTo(output)
+                                        }
+                                }
+                            }
+                        }
+                    }
+                } else if (zipFileName.toLowerCase().endsWith("7z")) {
+                    SevenZFile(File(zipFileName)).use { sz ->
+                        sz.entries.asSequence().forEach { entry ->
+                            if (entry.name.toLowerCase(Locale.ROOT).endsWith("ccd") ||
+                                entry.name.toLowerCase(Locale.ROOT).endsWith("cue") ||
+                                entry.name.toLowerCase(Locale.ROOT).endsWith("mds")
+                            ) {
+                                targetFileName = YabauseStorage.storage.gamePath + "/" + entry.name
+                            }
+
+                            if (entry.isDirectory) {
+                                val unzipdir =
+                                    File(YabauseStorage.storage.gamePath + "/" + entry.name)
+                                if (!unzipdir.exists()) {
+                                    unzipdir.mkdirs()
+                                } else {
+                                    unzipdir.delete()
+                                    unzipdir.mkdirs()
+                                }
+                            } else {
+                                sz.getInputStream(entry).use { input ->
+                                    File(YabauseStorage.storage.gamePath + "/" + entry.name).outputStream()
+                                        .use { output ->
+                                            input.copyTo(output)
+                                        }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (targetFileName != "") {
+                    withContext(Dispatchers.Main) {
+                        fileSelected(File(targetFileName))
+                    }
+                } else {
+                    Toast.makeText(requireContext(),
+                        "ISO image is not found!!",
+                        Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(),
+                    "Fail to copy " + e.localizedMessage,
+                    Toast.LENGTH_LONG).show()
+            } catch (e: IOException) {
+                Toast.makeText(requireContext(),
+                    "Fail to copy " + e.localizedMessage,
+                    Toast.LENGTH_LONG).show()
+            } finally {
+
+                val fd = File(zipFileName)
+                if (fd.isFile && fd.exists()) {
+                    fd.delete()
+                }
+
+                withContext(Dispatchers.Main) {
+                    dismissDialog()
+                }
+            }
+        }
+    }
+
     @Suppress("BlockingMethodInNonBlockingContext")
     fun installGameFile(uri: Uri) {
         scope.launch {
@@ -497,7 +640,9 @@ class GameSelectFragmentPhone : Fragment(),
                         outputStream.close()
                     }
                 }
-                fileSelected(fd)
+                withContext(Dispatchers.Main) {
+                    fileSelected(fd)
+                }
                 parcelFileDescriptor.close()
             } catch (e: Exception) {
                 Toast.makeText(requireContext(),
@@ -534,27 +679,30 @@ class GameSelectFragmentPhone : Fragment(),
                     cursor!!.moveToFirst()
                     val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     val path = cursor.getString(nameIndex)
-                    if (!path.toLowerCase(Locale.ROOT).endsWith("chd")) {
+                    if (path.toLowerCase(Locale.ROOT).endsWith("chd")) {
+                        var size: Long = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE))
+                        cursor.close()
+
+                        size = size / 1024 / 1024
+                        val message =
+                            getString(R.string.install_game_message) + " " + size + getString(R.string.install_game_message_after)
+
+                        AlertDialog.Builder(requireActivity())
+                            .setTitle(getString(R.string.do_you_want_to_install))
+                            // .setMessage("If you install, you can play from this game list directly. But it costs ${size} MBytes")
+                            .setMessage(message)
+                            .setPositiveButton(R.string.yes) { _, _ -> installGameFile(uri) }
+                            .setNegativeButton(R.string.no) { _, _ -> openGameFileDirect(uri) }
+                            .setCancelable(true)
+                            .show()
+                    } else if (path.toLowerCase().endsWith("zip") || path.toLowerCase().endsWith("7z")) {
+                        installZipGameFile(uri, path)
+                    } else {
                         Toast.makeText(requireContext(),
                             getString(R.string.only_chd_is_supported_for_load_game),
                             Toast.LENGTH_LONG).show()
-                        return
                     }
-                    var size: Long = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE))
-                    cursor.close()
-
-                    size = size / 1024 / 1024
-                    val message =
-                        getString(R.string.install_game_message) + " " + size + getString(R.string.install_game_message_after)
-
-                    AlertDialog.Builder(requireActivity())
-                        .setTitle(getString(R.string.do_you_want_to_install))
-                        // .setMessage("If you install, you can play from this game list directly. But it costs ${size} MBytes")
-                        .setMessage(message)
-                        .setPositiveButton(R.string.yes) { _, _ -> installGameFile(uri) }
-                        .setNegativeButton(R.string.no) { _, _ -> openGameFileDirect(uri) }
-                        .setCancelable(true)
-                        .show()
+                    return
                 }
             }
             return
@@ -669,23 +817,28 @@ class GameSelectFragmentPhone : Fragment(),
             }
         }
         if (gameinfo != null) {
-            gameinfo.updateState()
-            val c = Calendar.getInstance()
-            gameinfo.lastplay_date = c.time
-            gameinfo.save()
+            scope.launch {
+                gameinfo.updateState()
+                val c = Calendar.getInstance()
+                gameinfo.lastplay_date = c.time
+                gameinfo.save()
+                withContext(Dispatchers.Main) {
+                    loadRows()
+                    val bundle = Bundle()
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
+                    firebaseAnalytics!!.logEvent(
+                        "yab_start_game", bundle
+                    )
+                    val intent = Intent(activity, Yabause::class.java)
+                    intent.putExtra("org.uoyabause.android.FileNameEx", apath)
+                    intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number)
+                    startActivityForResult(intent, YABAUSE_ACTIVITY)
+                }
+            }
         } else {
             return
         }
-        val bundle = Bundle()
-        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
-        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
-        firebaseAnalytics!!.logEvent(
-            "yab_start_game", bundle
-        )
-        val intent = Intent(activity, Yabause::class.java)
-        intent.putExtra("org.uoyabause.android.FileNameEx", apath)
-        intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number)
-        startActivityForResult(intent, YABAUSE_ACTIVITY)
     }
 
     fun showDialog(message: String?) {

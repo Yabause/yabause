@@ -14,10 +14,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.request.RequestOptions
-import org.devmiyax.yabasanshiro.R
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.ArrayList
+import org.devmiyax.yabasanshiro.R
 
 class StateItemAdapter : RecyclerView.Adapter<StateItemAdapter.ViewHolder>(), View.OnClickListener {
     private val _yabause: Yabause? = null
@@ -46,12 +46,12 @@ class StateItemAdapter : RecyclerView.Adapter<StateItemAdapter.ViewHolder>(), Vi
         val textView: TextView
         val imageView: ImageView
 
-        //public Toolbar getToolBar() {
+        // public Toolbar getToolBar() {
         val cardView: CardView
 
         //    return toolbar;
-        //}
-        //private final Toolbar toolbar;
+        // }
+        // private final Toolbar toolbar;
         init {
             v.isClickable = true
             textView = v.findViewById<View>(R.id.textView) as TextView
@@ -115,14 +115,14 @@ class StateItemAdapter : RecyclerView.Adapter<StateItemAdapter.ViewHolder>(), Vi
         Log.d(TAG, "Element $position set.")
         viewHolder.textView.text = SimpleDateFormat(DATE_PATTERN).format(
             _state_items!![position]._savedate)
-        //viewHolder.getToolBar().setTitle(new SimpleDateFormat(DATE_PATTERN).format(_state_items.get(position)._savedate));
+        // viewHolder.getToolBar().setTitle(new SimpleDateFormat(DATE_PATTERN).format(_state_items.get(position)._savedate));
         val cx = viewHolder.imageView.context
         Glide.with(cx)
             .load(File(_state_items!![position]._image_filename))
             .apply(RequestOptions().transforms(CenterCrop()))
             .into(viewHolder.imageView)
 
-        //.override(dp2px(cx,220),dp2px(cx,220)*3/4)
+        // .override(dp2px(cx,220),dp2px(cx,220)*3/4)
         if (selectpos == position) {
             viewHolder.cardView.setBackgroundColor(cx.resources.getColor(R.color.selected_background))
             viewHolder.cardView.isSelected = true

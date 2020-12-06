@@ -28,12 +28,12 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import org.devmiyax.yabasanshiro.R
 import java.io.File
 import java.util.ArrayList
 import java.util.Collections
 import java.util.Comparator
 import java.util.Date
+import org.devmiyax.yabasanshiro.R
 
 class StateItem {
     @JvmField
@@ -76,7 +76,7 @@ internal class StateItemInvComparator : Comparator<StateItem> {
 class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View.OnKeyListener {
     protected var mRecyclerView: RecyclerView? = null
     protected var mLayoutManager: RecyclerView.LayoutManager? = null
-    lateinit protected var emptyView: View
+    protected lateinit var emptyView: View
     protected var mAdapter: StateItemAdapter? = null
     var _state_items: ArrayList<StateItem>? = null
     var mHelper: ItemTouchHelper? = null
@@ -106,9 +106,9 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
                         _state_items!!.add(item)
                     }
                 }
-                //System.out.println("File " + listOfFiles[i].getName());
+                // System.out.println("File " + listOfFiles[i].getName());
             } else if (listOfFiles[i].isDirectory) {
-                //System.out.println("Directory " + listOfFiles[i].getName());
+                // System.out.println("Directory " + listOfFiles[i].getName());
             }
         }
         if (_state_items!!.size > 1) {
@@ -117,7 +117,8 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val rootView = inflater.inflate(R.layout.state_list_frag, container, false)
@@ -171,9 +172,9 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder
             ): Int {
-//ここでドラッグ動作、Swipe動作を指定します
-//ドラッグさせたくないとか、Swipeさせたくない場合はここで分岐してアクションを指定しないことでドラッグできない行などを指定できます
-//ドラッグは長押しで自動的に開始されます
+// ここでドラッグ動作、Swipe動作を指定します
+// ドラッグさせたくないとか、Swipeさせたくない場合はここで分岐してアクションを指定しないことでドラッグできない行などを指定できます
+// ドラッグは長押しで自動的に開始されます
                 return makeFlag(ItemTouchHelper.ACTION_STATE_IDLE,
                     ItemTouchHelper.RIGHT) or makeFlag(ItemTouchHelper.ACTION_STATE_SWIPE,
                     ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) or
@@ -181,28 +182,28 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
                             ItemTouchHelper.DOWN or ItemTouchHelper.UP)
             }
 
-            //ドラッグで場所を移動した際の処理を記述します
+            // ドラッグで場所を移動した際の処理を記述します
             override fun onMove(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder,
                 viewHolder1: RecyclerView.ViewHolder
             ): Boolean {
-                //((StateItemAdapter) recyclerView.getAdapter()).move(viewHolder.getAdapterPosition(), viewHolder1.getAdapterPosition());
+                // ((StateItemAdapter) recyclerView.getAdapter()).move(viewHolder.getAdapterPosition(), viewHolder1.getAdapterPosition());
                 return true
             }
 
-            //選択ステータスが変更された場合の処理を指定します
-            //この例ではAdapterView内のcontainerViewを表示にしています
-            //containerViewには背景色を指定しており、ドラッグが開始された際に見やすくなるようにしています
+            // 選択ステータスが変更された場合の処理を指定します
+            // この例ではAdapterView内のcontainerViewを表示にしています
+            // containerViewには背景色を指定しており、ドラッグが開始された際に見やすくなるようにしています
             override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
                 super.onSelectedChanged(viewHolder, actionState)
 
-                //if (actionState == ItemTouchHelper.ACTION_STATE_DRAG)
+                // if (actionState == ItemTouchHelper.ACTION_STATE_DRAG)
                 //   ((StateItemAdapter.holder) viewHolder).container.setVisibility(View.VISIBLE);
             }
 
-            //選択が終わった時（Dragが終わった時など）の処理を指定します
-            //今回はアイテムをDropした際にcontainerViewを非表示にして通常表示に戻しています
+            // 選択が終わった時（Dragが終わった時など）の処理を指定します
+            // 今回はアイテムをDropした際にcontainerViewを非表示にして通常表示に戻しています
             override fun clearView(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder
@@ -211,7 +212,7 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
                 // ((StateItemAdapter.holder) viewHolder).container.setVisibility(View.GONE);
             }
 
-            //Swipeされた際の処理です。
+            // Swipeされた際の処理です。
             //
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, i: Int) {
                 (mRecyclerView!!.adapter as StateItemAdapter?)!!.remove(viewHolder.adapterPosition)
@@ -349,6 +350,4 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
             }
         }
     }
-
-
 }
