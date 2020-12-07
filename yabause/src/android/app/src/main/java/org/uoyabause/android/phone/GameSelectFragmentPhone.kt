@@ -217,7 +217,7 @@ class GameSelectFragmentPhone : Fragment(),
 
         val fab: View = rootview.findViewById(R.id.fab)
         if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
-            fab.setOnClickListener { view ->
+            fab.setOnClickListener { _ ->
 
                 if (YabauseApplication.checkDonated(requireActivity()) == 0) {
                     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
