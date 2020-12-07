@@ -93,6 +93,9 @@ class YabauseApplication : MultiDexApplication() {
         }
 
         fun checkDonated(ctx: Context): Int {
+            if (BuildConfig.BUILD_TYPE == "debug") {
+                return 0
+            }
             if (BuildConfig.BUILD_TYPE != "pro") {
                 val prefs = ctx.getSharedPreferences("private", MODE_PRIVATE)
                 val hasDonated = prefs.getBoolean("donated", false)

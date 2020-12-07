@@ -401,7 +401,7 @@ class Yabause : AppCompatActivity(),
         currentGame = null
         if (this.gameCode != null) {
             readPreferences(this.gameCode)
-            if (this.gameCode == "GS-9170") {
+            if (this.gameCode == "GS-9170" || this.gameCode == "MK-81800") {
                 var c = SonicR()
                 c.uievent = this
                 var menu = navigationView.menu
