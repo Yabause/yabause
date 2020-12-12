@@ -4,8 +4,7 @@
 # Build step
 # 1) mkdir build
 # 2) cd build
-# 3) cmake ../yabause -DCMAKE_TOOLCHAIN_FILE=../yabause/src/ios/iOS.cmake \
-# :q:
+# 3) cmake ../yabause -DGIT_EXECUTABLE=/usr/bin/git -DSH2_DYNAREC=OFF -DYAB_WANT_DYNAREC_DEVMIYAX=OFF -DCMAKE_TOOLCHAIN_FILE=../yabause/src/ios/iOS.cmake -DIOS_PLATFORM=OS -DYAB_PORTS=ios
 # 4) make
 # 5) open yabause/src/ios/ios/uoyabause/uoyabause.xcodeproj
 # 6) >

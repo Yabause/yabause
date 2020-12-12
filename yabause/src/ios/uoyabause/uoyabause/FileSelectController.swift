@@ -15,15 +15,18 @@ class FileSelectController :UITableViewController {
     var file_list: [String] = [""]
     var selected_file_path: String = ""
     
-    
+   
     //required init?(coder aDecoder: NSCoder) {
     //    fatalError("init(coder:) has not been implemented")
     //}
     
     
     override func viewDidLoad(){
-            super.viewDidLoad()
-        
+        super.viewDidLoad()
+        updateDoc()
+    }
+    
+    func updateDoc(){
         file_list.removeAll()
         let manager = FileManager.default
         let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
@@ -40,6 +43,7 @@ class FileSelectController :UITableViewController {
                     
                 }
             }
+            tableView.reloadData()
         }catch{
         }
     }

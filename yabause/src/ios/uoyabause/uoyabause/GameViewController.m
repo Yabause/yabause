@@ -19,6 +19,7 @@
 #import "KeyMapper.h"
 #import "SidebarViewController.h"
 #import "GLView.h"
+#import "iOSCoreAudio.h"
 
 /** @defgroup pad Pad
  *
@@ -441,6 +442,137 @@ int GetPlayer2Device(){
     }
 }
 
+- (void)pressesBegan:(NSSet<UIPress *> *)presses
+           withEvent:(UIPressesEvent *)event
+{
+    int handleEvent = 0;
+    for( UIPress * press in presses ){
+        if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputLeftArrow] ){
+            PerKeyDown(BUTTON_LEFT);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputRightArrow] ){
+            PerKeyDown(BUTTON_RIGHT);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputUpArrow] ){
+            PerKeyDown(BUTTON_UP);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputDownArrow] ){
+            PerKeyDown(BUTTON_DOWN);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"\r"] ){
+            PerKeyDown(BUTTON_START);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"z"] ){
+            PerKeyDown(BUTTON_A);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"x"] ){
+            PerKeyDown(BUTTON_B);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"c"] ){
+            PerKeyDown(BUTTON_C);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"a"] ){
+            PerKeyDown(BUTTON_X);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"s"] ){
+            PerKeyDown(BUTTON_Y);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"d"] ){
+            PerKeyDown(BUTTON_Z);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"q"] ){
+            PerKeyDown(BUTTON_LEFT_TRIGGER);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"e"] ){
+            PerKeyDown(BUTTON_RIGHT_TRIGGER);
+            handleEvent++;
+        }
+    }
+    
+    if( handleEvent == 0){
+        [super pressesBegan:presses withEvent:event];
+    }
+}
+
+- (void)pressesEnded:(NSSet<UIPress *> *)presses
+           withEvent:(UIPressesEvent *)event
+{
+    int handleEvent = 0;
+    for( UIPress * press in presses ){
+        if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputLeftArrow] ){
+            PerKeyUp(BUTTON_LEFT);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputRightArrow] ){
+            PerKeyUp(BUTTON_RIGHT);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputUpArrow] ){
+            PerKeyUp(BUTTON_UP);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputDownArrow] ){
+            PerKeyUp(BUTTON_DOWN);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"\r"] ){
+            PerKeyUp(BUTTON_START);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"z"] ){
+            PerKeyUp(BUTTON_A);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"x"] ){
+            PerKeyUp(BUTTON_B);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"c"] ){
+            PerKeyUp(BUTTON_C);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"a"] ){
+            PerKeyUp(BUTTON_X);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"s"] ){
+            PerKeyUp(BUTTON_Y);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"d"] ){
+            PerKeyUp(BUTTON_Z);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"q"] ){
+            PerKeyUp(BUTTON_LEFT_TRIGGER);
+            handleEvent++;
+        }
+        else if( [press.key.charactersIgnoringModifiers isEqualToString:@"e"] ){
+            PerKeyUp(BUTTON_RIGHT_TRIGGER);
+            handleEvent++;
+        }
+
+    }
+    
+    if( handleEvent == 0){
+        [super pressesEnded
+         :presses withEvent:event];
+    }
+}
+
+
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
     //NSSet *allTouches = [event allTouches];
@@ -678,8 +810,26 @@ int GetPlayer2Device(){
     if( [GCController controllers].count >= 1 ){
         self.controller = [GCController controllers][0];
         if (self.controller.gamepad) {
+
+            [self.controller.extendedGamepad.buttonHome setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+                mfiButtonHandler(MFI_BUTTON_HOME, pressed);
+            }];
+
+            [self.controller.extendedGamepad.buttonMenu setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+                mfiButtonHandler(MFI_BUTTON_MENU, pressed);
+                GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
+                if ( revealViewController && pressed)
+                {
+                    [revealViewController revealToggle:(0)];
+                }
+            }];
+
+            [self.controller.extendedGamepad.buttonOptions setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+                mfiButtonHandler(MFI_BUTTON_OPTION, pressed);
+            }];
+
             
-            [self.controller.gamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+            [self.controller.extendedGamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 mfiButtonHandler(MFI_BUTTON_A, pressed);
             }];
             
@@ -699,43 +849,44 @@ int GetPlayer2Device(){
                 mfiButtonHandler(MFI_BUTTON_RT, pressed);
             }];
             
-            [self.controller.gamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+            [self.controller.extendedGamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 mfiButtonHandler(MFI_BUTTON_X, pressed);
             }];
-            [self.controller.gamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+            [self.controller.extendedGamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 mfiButtonHandler(MFI_BUTTON_Y, pressed);
             }];
-            [self.controller.gamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+            [self.controller.extendedGamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 mfiButtonHandler(MFI_BUTTON_B, pressed);
             }];
-            [self.controller.gamepad.dpad.up setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+            [self.controller.extendedGamepad.dpad.up setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 if(pressed){
                     PerKeyDown(SaturnKeyUp);
                 }else{
                     PerKeyUp(SaturnKeyUp);
                 }
             }];
-            [self.controller.gamepad.dpad.down setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+            [self.controller.extendedGamepad.dpad.down setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 if(pressed){
                     PerKeyDown(SaturnKeyDown);
                 }else{
                     PerKeyUp(SaturnKeyDown);
                 }
             }];
-            [self.controller.gamepad.dpad.left setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+            [self.controller.extendedGamepad.dpad.left setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 if(pressed){
                     PerKeyDown(SaturnKeyLeft);
                 }else{
                     PerKeyUp(SaturnKeyLeft);
                 }
             }];
-            [self.controller.gamepad.dpad.right setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+            [self.controller.extendedGamepad.dpad.right setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 if(pressed){
                     PerKeyDown(SaturnKeyRight);
                 }else{
                     PerKeyUp(SaturnKeyRight);
                 }
             }];
+            /*
             [self.controller.extendedGamepad.rightThumbstick setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue) {
                 if(yValue >= 0.5 || yValue <= -0.5 ){
                     PerKeyDown(SaturnKeyStart);
@@ -743,6 +894,7 @@ int GetPlayer2Device(){
                     PerKeyUp(SaturnKeyStart);
                 }
             }];
+            */
         }
     }
     
@@ -752,6 +904,13 @@ int GetPlayer2Device(){
     return [[GCController controllers] count] > 0;
 }
 
+- (IBAction)onMenu:(id)sender {
+    GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
+    if ( revealViewController )
+    {
+        [revealViewController revealToggle:(0)];
+    }
+}
 
 - (void)viewDidAppear:(BOOL)animated
 {
@@ -770,6 +929,8 @@ int GetPlayer2Device(){
 - (void)patientlyDiscoverController {
     
     [GCController startWirelessControllerDiscoveryWithCompletionHandler:nil];
+    
+    int count = [[GCController controllers] count];
     
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(foundController)
@@ -835,7 +996,7 @@ int GetPlayer2Device(){
     [self loadSettings];
     
     if( _landscape == YES ){
-        [[UIDevice currentDevice] setValue:@(UIInterfaceOrientationLandscapeLeft) forKey:@"orientation"];
+        [[UIDevice currentDevice] setValue:@(UIInterfaceOrientationLandscapeRight) forKey:@"orientation"];
         [UINavigationController attemptRotationToDeviceOrientation];
     }
     
@@ -846,8 +1007,15 @@ int GetPlayer2Device(){
     GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
     if ( revealViewController )
     {
-        //[self.sidebarButton setTarget: self.revealViewController];
-        //SWRevealViewControllerSetSegue        [self.sidebarButton setAction: @selector( revealToggle: )];
+//        [_menu_button setTarget: self.revealViewController];
+  //      [_menu_button setAction: @selector( revealToggle: )];
+        //[_menu_button addTarget:revealViewController action:@selector(revealToggle:)  ];
+        //[_menu_button addTarget:<#(nullable id)#> action:<#(nonnull SEL)#> forControlEvents:<#(UIControlEvents)#> ];
+//        UIButton * rbutton = [[UIButton alloc] target:revealViewController action:@selector(revealToggle:) ];
+        
+        //UIBarButtonItem *revealButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"reveal-icon.png"]
+        //    style:UIBarButtonItemStylePlain target:revealViewController action:@selector(revealToggle:)];
+        
         [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
         self.selected_file = revealViewController.selected_file;
     }
@@ -922,6 +1090,8 @@ int GetPlayer2Device(){
     
     //[self.view  addSubview:self.myGLKView];
     // Configure the audio session
+    
+#if 0
     AVAudioSession *sessionInstance = [AVAudioSession sharedInstance];
     NSError *error;
     
@@ -950,7 +1120,8 @@ int GetPlayer2Device(){
     // activate the audio session
     success = [sessionInstance setActive:YES error:&error];
     if (!success) NSLog(@"Error setting session active! %@\n", [error localizedDescription]);
-
+#endif
+    iOSCoreAudioInit();
    
     
     //self.preferredFramesPerSecond =120;
@@ -1043,7 +1214,9 @@ int GetPlayer2Device(){
 
 
 - (void)dealloc
-{    
+{
+    iOSCoreAudioShutdown();
+    
     [self tearDownGL];
     
     if ([EAGLContext currentContext] == self.context) {
@@ -1087,6 +1260,7 @@ int GetPlayer2Device(){
     printf("viewport(%f,%f)\n",[view frame].size.width,[view frame].size.height);
 
     CGRect newFrame = self.view.frame;
+    /*
     if( _aspect_rate ){
         int specw = self.view.frame.size.width;
         int spech = self.view.frame.size.height;
@@ -1113,14 +1287,15 @@ int GetPlayer2Device(){
             newFrame.origin.y = spech - newFrame.size.height;
         }
     }
+    */
 
     
     if( self._isFirst == YES){
-        start_emulation(newFrame.origin.x*scale, newFrame.origin.y*scale, newFrame.size.width*scale,newFrame.size.height*scale);
+        start_emulation(0, 0, newFrame.size.width*scale,newFrame.size.height*scale);
         self._isFirst = NO;
         [view startAnimation];
     }else{
-        resize_screen(newFrame.origin.x*scale, newFrame.origin.y*scale, newFrame.size.width*scale,newFrame.size.height*scale);
+        resize_screen(0, 0, newFrame.size.width*scale,newFrame.size.height*scale);
     }
     self._return = YES;
     

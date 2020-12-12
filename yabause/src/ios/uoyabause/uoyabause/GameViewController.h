@@ -40,6 +40,7 @@
 @property (weak, nonatomic) IBOutlet UIView *x_button;
 @property (weak, nonatomic) IBOutlet UIView *y_button;
 @property (weak, nonatomic) IBOutlet UIView *z_button;
+@property (weak, nonatomic) IBOutlet UIButton *menu_button;
 
 - (void)saveState;
 - (void)loadState;

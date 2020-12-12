@@ -578,7 +578,7 @@ extern SH2Interface_struct SH2DynDebug;
 void FASTCALL SH2OnFrame(SH2_struct *context);
 
 void SH2RemoveInterrupt(SH2_struct *context, u8 vector, u8 level);
-
+void SH2HandleInterrupts(SH2_struct *context);
 
 void FASTCALL SH2OnFrame(SH2_struct *context);
 

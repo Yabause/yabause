@@ -3,8 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>ADMOB_KEY_FULLSCREEN</key>
-	<string>ca-app-pub-3940256099942544/4411468910</string>
+	<string>ca-app-pub-1</string>
 	<key>ADMOB_KEY</key>
-	<string>ca-app-pub-3940256099942544/2934735716</string>
+	<string>ca-app-pub-1</string>
 </dict>
 </plist>

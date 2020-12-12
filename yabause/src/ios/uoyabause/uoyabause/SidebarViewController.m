@@ -45,7 +45,7 @@
     self.banner.adUnitID = keyval;
     self.banner.rootViewController = self;
     GADRequest *request = [GADRequest request];
-    request.testDevices = @[@"2077ef9a63d2b398840261c8221a0c9b"];
+    //request.testDevices = @[@"2077ef9a63d2b398840261c8221a0c9b"];
     [self.banner loadRequest:request];
    
     NSString* keyval_in = [dic objectForKey:@"ADMOB_KEY_FULLSCREEN"];
