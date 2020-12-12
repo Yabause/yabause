@@ -497,8 +497,6 @@ class GameSelectFragmentPhone : Fragment(),
                         outputStream.close()
                     }
                 }
-<<<<<<< HEAD
-=======
                 fileSelected(fd)
                 parcelFileDescriptor.close()
             } catch (e: Exception) {
@@ -509,7 +507,6 @@ class GameSelectFragmentPhone : Fragment(),
                 withContext(Dispatchers.Main) {
                     dismissDialog()
                 }
->>>>>>> 29e927a26... clean up
             }
         }
         return
@@ -531,22 +528,10 @@ class GameSelectFragmentPhone : Fragment(),
                 if (uri != null) {
                     Log.i(TAG, "Uri: $uri")
 
-<<<<<<< HEAD
-                    if (!uri.toString().toLowerCase().endsWith("chd")) {
-                        Toast.makeText(requireContext(),
-                            getString(R.string.only_chd_is_supported_for_load_game),
-                            Toast.LENGTH_LONG).show()
-                        return
-                    }
-
-=======
->>>>>>> 29e927a26... clean up
                     val cursor: Cursor? = requireActivity().contentResolver.query(uri,
                         null, null, null, null)
 
                     cursor!!.moveToFirst()
-<<<<<<< HEAD
-=======
                     val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     val path = cursor.getString(nameIndex)
                     if (!path.toLowerCase(Locale.ROOT).endsWith("chd")) {
@@ -555,7 +540,6 @@ class GameSelectFragmentPhone : Fragment(),
                             Toast.LENGTH_LONG).show()
                         return
                     }
->>>>>>> 29e927a26... clean up
                     var size: Long = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE))
                     cursor.close()
 
