@@ -134,7 +134,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
                 if (null != mListener) {
                     mListener!!.onItemClick(position, dataSet?.get(position), null)
                 }
-        }
+            }
         }
 
         holder.menuButton.setOnClickListener(View.OnClickListener {
@@ -156,6 +156,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
         popup.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener {
             when (it.itemId) {
                 R.id.delete -> {
+/*
                     val prefs = view.context.getSharedPreferences("private", Context.MODE_PRIVATE)
                     val hasDonated = prefs.getBoolean("donated", false)
 
@@ -173,27 +174,29 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
                                 }
                                 .show()
                     } else {
-                        Log.d("textext", "R.id.delete is selected")
-                        AlertDialog.Builder(view.context)
-                                .setTitle(R.string.delete_confirm_title)
-                                .setMessage(R.string.delete_confirm)
-                                .setPositiveButton(R.string.ok) { dialog, which ->
 
-                                    var game_info = dataSet?.get(position)!!
+ */
+                    Log.d("textext", "R.id.delete is selected")
+                    AlertDialog.Builder(view.context)
+                        .setTitle(R.string.delete_confirm_title)
+                        .setMessage(R.string.delete_confirm)
+                        .setPositiveButton(R.string.ok) { dialog, which ->
 
-                                    dataSet?.removeAt(position)
+                            var game_info = dataSet?.get(position)!!
 
-                                    if (game_info != null) {
-                                        mListener?.onGameRemoved(game_info)
-                                        game_info.removeInstance()
-                                    }
+                            dataSet?.removeAt(position)
 
-                                    notifyItemRemoved(position)
-                                }
-                                .setNegativeButton(R.string.no) { dialog, which ->
-                                }
-                                .show()
-                    }
+                            if (game_info != null) {
+                                mListener?.onGameRemoved(game_info)
+                                game_info.removeInstance()
+                            }
+
+                            notifyItemRemoved(position)
+                        }
+                        .setNegativeButton(R.string.no) { dialog, which ->
+                        }
+                        .show()
+                }
                 else -> {
                     Log.d("textext", "Unknown value (value = $it.itemId)")
                 }

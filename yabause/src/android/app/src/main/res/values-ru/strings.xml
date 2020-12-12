@@ -3,7 +3,7 @@
     <string name="menu_exit">Выход</string>
     <string name="menu_reset">Сброс</string>
     <string name="menu_save_state">Сохранить</string>
-    <strin name="menu_load_state">Загрузить</string>
+    <string name="menu_load_state">Загрузить</string>
     <string name="menu_save_state_cloud">Сохранить в облако</string>
     <string name="menu_load_state_cloud">Загрузить из облака</string>
     <string name="load_game">Загрузить игру</string>
@@ -37,7 +37,7 @@
     <string name="donate_message">
         Поддержите разработку!\n\n
 	Вы можете поддержать оригинальных разработчиков, сделав пожертвование на официальном сайте http://yabause.org.
-	Вы также можете оказать поддержку Yaba Sanshiro, нажав кнопку 'Поддержать', чтобы ускорить работу по повышению точности эмуляции, поддержке новых геймпадов и устройств.
+	Вы также можете оказать поддержку Yaba Sanshiro, нажав кнопку Поддержать, чтобы ускорить работу по повышению точности эмуляции, поддержке новых геймпадов и устройств.
 	Это сообщение и реклама не будут отображаться, если вы поддержите проект.
     </string>
     <string name="thank_you">Спасибо за поддержку!</string>
