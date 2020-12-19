@@ -127,7 +127,7 @@ class AsyncReportV2(
             if (reportContents._message != null) {
                 reportJson.put("message", reportContents._message)
             }
-            reportJson.put("emulator_version", Home.getVersionName(mainActivity))
+            reportJson.put("emulator_version", YabauseApplication.getVersionName(mainActivity))
             reportJson.put("device", Build.MODEL)
             reportJson.put("user_id", 1)
             reportJson.put("device_id", device_id)

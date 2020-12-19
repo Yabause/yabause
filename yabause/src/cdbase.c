@@ -59,6 +59,7 @@ static int LoadCHD(const char *chd_filename, FILE *iso_file);
 static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer);
 static int LoadBinCueMultiFile(const char *cuefilename, FILE *iso_file);
 static int LoadBinCue(const char *cuefilename, FILE *iso_file);
+int checkCHD(const char *filename );
 
 // Remove this for now, execution on windows fails because of it
 // #include "streams/file_stream_transforms.h"
@@ -67,6 +68,35 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file);
 #define stricmp strcasecmp
 #endif
 #endif
+
+#if defined(ANDROID)
+// Android 11 does not allow access file directory
+#include <unistd.h> // for dup()
+FILE* idiocy_fopen_fd(const char* fname, const char * mode) {
+  if (strstr(fname, "/proc/self/fd/") == fname) {
+    int fd = atoi(fname + 14);
+    if (fd != 0) {
+      // Why dup(fd) below: if we called fdopen() on the
+      // original fd value, and the native code closes
+      // and tries re-open that file, the second fdopen(fd)
+      // would fail, return NULL - after closing the
+      // original fd received from Android, it's no longer valid.
+      FILE *fp = fdopen(dup(fd), mode);
+      // Why rewind(fp): if the native code closes and
+      // opens again the file, the file read/write position
+      // would not change, because with dup(fd) it's still
+      // the same file...
+      rewind(fp);
+      return fp;
+    }
+  }
+  return fopen(fname, mode);
+}
+
+#define fopen idiocy_fopen_fd
+
+#endif
+
 
 #ifndef HAVE_WFOPEN
 static char * wcsdupstr(const wchar_t * path)
@@ -986,7 +1016,7 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
                else
                   wcscpy(filename, img_filename);
 
-#if defined(NX)
+#if defined(NX) || defined(IOS)
                fp = fopen(filename, L"rb");
 #else
                fp = _wfopen(filename, L"rb");

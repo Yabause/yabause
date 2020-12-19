@@ -10,6 +10,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.content.pm.PackageManager
 import android.hardware.input.InputManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.DialogFragment
 import androidx.preference.EditTextPreference
@@ -31,7 +32,7 @@ class SettingsActivity : AppCompatActivity() {
             val builder = AlertDialog.Builder(requireActivity())
             val res = resources
             builder.setMessage(res.getString(R.string.msg_opengl_not_supported))
-                .setPositiveButton("OK") { dialog, id ->
+                .setPositiveButton("OK") { _, _ ->
                     // FIRE ZE MISSILES!
                 }
 
@@ -52,7 +53,8 @@ class SettingsActivity : AppCompatActivity() {
 
     class SettingsFragment : PreferenceFragmentCompat(),
         InputManager.InputDeviceListener,
-        OnSharedPreferenceChangeListener {
+        OnSharedPreferenceChangeListener,
+        GameDirectoriesDialogPreference.DirListChangeListener {
         private val DIALOG_FRAGMENT_TAG = "CustomPreference"
         var inputManager: InputManager? = null
         var dirlist_status = false
@@ -134,7 +136,7 @@ class SettingsActivity : AppCompatActivity() {
                 val cartlabels: MutableList<CharSequence> = ArrayList()
                 val cartvalues: MutableList<CharSequence> = ArrayList()
 
-                for (carttype in 0 until Cartridge.getTypeCount()) {
+                for (carttype in 0 until Cartridge.typeCount) {
                     cartlabels.add(Cartridge.getName(carttype))
                     cartvalues.add(Integer.toString(carttype))
                 }
@@ -149,7 +151,7 @@ class SettingsActivity : AppCompatActivity() {
                 preferenceManager.findPreference("pref_cpu") as ListPreference?
             cpu_setting!!.summary = cpu_setting.entry
             val abi = System.getProperty("os.arch")
-            if (abi.contains("64")) {
+            if (abi?.contains("64") == true) {
                 val cpu_labels: MutableList<CharSequence> = ArrayList()
                 val cpu_values: MutableList<CharSequence> = ArrayList()
                 cpu_labels.add(res.getString(R.string.new_dynrec_cpu_interface))
@@ -254,25 +256,43 @@ class SettingsActivity : AppCompatActivity() {
 
             val resolution_setting =
                 preferenceManager.findPreference("pref_resolution") as ListPreference?
-            resolution_setting!!.summary = resolution_setting!!.entry
+            resolution_setting!!.summary = resolution_setting.entry
 
             val aspect_setting =
                 preferenceManager.findPreference("pref_aspect_rate") as ListPreference?
-            aspect_setting!!.summary = aspect_setting!!.entry
+            aspect_setting!!.summary = aspect_setting.entry
 
             val rbg_resolution_setting =
                 preferenceManager.findPreference("pref_rbg_resolution") as ListPreference?
-            rbg_resolution_setting!!.summary = rbg_resolution_setting!!.entry
+            rbg_resolution_setting!!.summary = rbg_resolution_setting.entry
 
             val scsp_time_sync_setting =
                 preferenceManager.findPreference("scsp_time_sync_mode") as ListPreference?
-            scsp_time_sync_setting!!.summary = scsp_time_sync_setting!!.entry
+            scsp_time_sync_setting!!.summary = scsp_time_sync_setting.entry
         }
 
         override fun onDisplayPreferenceDialog(preference: Preference) {
             val f: DialogFragment?
             if (preference is InputSettingPreference) {
                 f = InputSettingPreferenceFragment.newInstance(preference.getKey())
+            } else if (preference is GameDirectoriesDialogPreference) {
+
+                preference.setDirListChangeListener(this)
+
+                // Above version 10
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    var dir = YabauseStorage.storage.gamePath
+                    if (YabauseStorage.storage.hasExternalSD()) {
+                        dir += "\n" + YabauseStorage.storage.externalGamePath
+                    }
+
+                    Toast.makeText(requireActivity(),
+                        "Android 10 device only supports \n $dir",
+                        Toast.LENGTH_LONG).show()
+                    return
+                } else {
+                    f = GameDirectoriesDialogFragment.newInstance(preference.getKey())
+                }
             } else {
                 f = null
             }
@@ -379,6 +399,14 @@ class SettingsActivity : AppCompatActivity() {
 
             if (key == "pref_force_androidtv_mode") {
                 if (restart_level <= 1) restart_level = 2
+                updateResultCode()
+            }
+        }
+
+        override fun onChangeDir(isChange: Boolean?) {
+            dirlist_status = isChange!!
+            if (dirlist_status == true) {
+                if (restart_level <= 0) restart_level = 1
                 updateResultCode()
             }
         }

@@ -194,10 +194,10 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
       }
 #endif
 #ifdef ANDROID
-      static FILE * dfp = NULL;
-      if (dfp == NULL){
-        dfp = fopen("/mnt/sdcard/debug.txt", "w");
-      }
+//      static FILE * dfp = NULL;
+//      if (dfp == NULL){
+//       dfp = fopen("/mnt/sdcard/debug.txt", "w");
+//      }
 #endif
       //i = sprintf(strtmp, "%s (%s:%ld): ", d->name, file, (long)line);
       i += vsprintf(strtmp + i, format, l);
@@ -207,8 +207,9 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
         //d->output.callback(strtmp);
         OSDAddLogString(strtmp);
 #if defined(ANDROID) 
-        fprintf(dfp, "%s\n",strtmp);
-        fflush(dfp);
+        yprintf("%s",strtmp);
+//        fprintf(dfp, "%s\n",strtmp);
+ //       fflush(dfp);
 #endif
 #if defined(_WINDOWS)
         fprintf(dfp, "%s\n",strtmp);

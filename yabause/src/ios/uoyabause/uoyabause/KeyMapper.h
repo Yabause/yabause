@@ -21,6 +21,9 @@ typedef NS_ENUM(NSInteger, KeyMapMappableButton) {
     MFI_DPAD_DOWN,
     MFI_DPAD_LEFT,
     MFI_DPAD_RIGHT,
+    MFI_BUTTON_HOME,
+    MFI_BUTTON_MENU,
+    MFI_BUTTON_OPTION
 };
 
 @interface KeyMapper : NSObject<NSCopying>

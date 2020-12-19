@@ -14,6 +14,7 @@ extern "C"{
 #include "debug.h"
 #include "osdcore_ios.h"
 #include "sndal.h"
+#include "sndCoreAudio.h"
 }
 
 #include <OpenGLES/ES3/gl.h>
@@ -99,6 +100,7 @@ CDInterface *CDCoreList[] = {
 SoundInterface_struct *SNDCoreList[] = {
     &SNDDummy,
     &SNDAL,
+    &SNDCoreAudio,
     NULL
 };
 
@@ -156,7 +158,7 @@ int start_emulation( int originx, int originy, int width, int height ){
     yinit.percoretype = PERCORE_DUMMY;
     yinit.sh2coretype = SH2CORE_DEFAULT;
     yinit.vidcoretype = VIDCORE_OGL;
-    yinit.sndcoretype = SNDCORE_AL; //SNDCORE_DEFAULT;
+    yinit.sndcoretype = SNDCORE_COREAUDIO; 
     yinit.cdcoretype = CDCORE_ISO;
     yinit.regionid = 0;
 
@@ -235,7 +237,7 @@ int start_emulation( int originx, int originy, int width, int height ){
 	   {
 		  if (VIDCoreList[i]->id == s_vidcoretype)
 		  {
-			 VIDCoreList[i]->Resize(originx,originy,width,height,0);
+			 VIDCoreList[i]->Resize(originx,originy,width,height,1,0);
 			 break;
 		  }
 	   }
@@ -255,7 +257,7 @@ int start_emulation( int originx, int originy, int width, int height ){
         {
             if (VIDCoreList[i]->id == s_vidcoretype)
             {
-                VIDCoreList[i]->Resize(x,y,width,height,0);
+                VIDCoreList[i]->Resize(x,y,width,height,1,0);
                 break;
             }
         }
@@ -314,11 +316,53 @@ int start_emulation( int originx, int originy, int width, int height ){
         return 0;
     }
 
-    
-
     int enterBackGround(){
         YabFlushBackups();
         return 0;
     }
     
+}
+
+
+extern "C" {
+
+  int YabauseThread_IsUseBios() {
+    return 0;
+
+  }
+
+  const char * YabauseThread_getBackupPath() {
+    return "";
+  }
+
+  void YabauseThread_setUseBios(int use) {
+
+  }
+
+  char tmpbakcup[256];
+  void YabauseThread_setBackupPath( const char * buf) {
+  }
+
+  void YabauseThread_resetPlaymode() {
+  }
+
+  void YabauseThread_coldBoot() {
+  }
+
+  void glMemoryBarrier( int a ){
+
+  }
+
+  void RBGGenerator_init(int width, int height) {
+  }
+  void RBGGenerator_resize(int width, int height) {
+  }
+  void RBGGenerator_update(void * rbg ) {
+  }
+  GLuint RBGGenerator_getTexture( int id ) {
+      return 0;
+  }
+  void RBGGenerator_onFinish() {
+  }
+
 }

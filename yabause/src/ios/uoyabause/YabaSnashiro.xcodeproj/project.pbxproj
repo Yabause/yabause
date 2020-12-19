@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2E2E650D500362BD39966316 /* Pods_uoyabauseUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8576A34B5AB321AF90CD3CF9 /* Pods_uoyabauseUITests.framework */; };
 		592FA568C31514C157C8C8DF /* Pods_YabaSnashiroUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A3953C38AF483C1F1F5E89 /* Pods_YabaSnashiroUITests.framework */; };
 		6048E9F865F471B405FC8E1E /* Pods_YabaSnashiroTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AFB002D17E54BEC336A1DFE /* Pods_YabaSnashiroTests.framework */; };
 		6290C255003441A8128FE03D /* Pods_YabaSnashiro.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C8BA1D770E151F00A6BA938B /* Pods_YabaSnashiro.framework */; };
@@ -40,7 +39,6 @@
 		644232B91C6580000050611E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 644232B71C6580000050611E /* LaunchScreen.storyboard */; };
 		644232C41C6580010050611E /* uoyabauseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232C31C6580010050611E /* uoyabauseTests.m */; };
 		644232CF1C6580010050611E /* uoyabauseUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232CE1C6580010050611E /* uoyabauseUITests.m */; };
-		645EA6C21D95647200A7A5D8 /* libz.1.1.3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 645EA6C11D95647200A7A5D8 /* libz.1.1.3.tbd */; };
 		645EA6C61D975B3D00A7A5D8 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 645EA6C51D975B3D00A7A5D8 /* SettingsViewController.swift */; };
 		646C87B51C66DDD20091B3B6 /* libyabause_ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 646C87B41C66DDD20091B3B6 /* libyabause_ios.a */; };
 		648926691D719E9500D92D58 /* FileSelectController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648926681D719E9500D92D58 /* FileSelectController.swift */; };
@@ -52,7 +50,11 @@
 		6DB2092E2097DB5D00C9CC4B /* PadButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 6DB2092D2097DB5D00C9CC4B /* PadButton.m */; };
 		921C9D6E1E108E1F009065E6 /* KeyMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 921C9D6D1E108E1F009065E6 /* KeyMapper.m */; };
 		921C9D721E1628B5009065E6 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 921C9D711E1628B4009065E6 /* QuartzCore.framework */; };
-		A9A09038CE42F043D36CB033 /* Pods_uoyabauseTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 06D1ECCE10B74C210FE0691E /* Pods_uoyabauseTests.framework */; };
+		944F55AB257B0F47005D4814 /* libchdr-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55AA257B0F33005D4814 /* libchdr-static.a */; };
+		944F55B0257B1216005D4814 /* libflac-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55AF257B1206005D4814 /* libflac-static.a */; };
+		944F55B5257B1238005D4814 /* liblzma-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55B4257B122E005D4814 /* liblzma-static.a */; };
+		944F55BA257B1573005D4814 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55B9257B1573005D4814 /* GameController.framework */; };
+		94CB9D8F2581C6BE00C8E3EC /* iOSCoreAudio.m in Sources */ = {isa = PBXBuildFile; fileRef = 94CB9D8E2581C6BE00C8E3EC /* iOSCoreAudio.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,7 +75,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		06D1ECCE10B74C210FE0691E /* Pods_uoyabauseTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_uoyabauseTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		20115D1C6B2FC0F24C85EE33 /* Pods-YabaSnashiroUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiroUITests.release.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiroUITests/Pods-YabaSnashiroUITests.release.xcconfig"; sourceTree = "<group>"; };
 		3AFB002D17E54BEC336A1DFE /* Pods_YabaSnashiroTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_YabaSnashiroTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CE09E5047FB606A37FDCB1C /* Pods-uoyabauseTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabauseTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabauseTests/Pods-uoyabauseTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -119,7 +120,6 @@
 		644232CA1C6580010050611E /* YabaSnashiroUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YabaSnashiroUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		644232CE1C6580010050611E /* uoyabauseUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = uoyabauseUITests.m; sourceTree = "<group>"; };
 		644232D01C6580010050611E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		645EA6C11D95647200A7A5D8 /* libz.1.1.3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.1.1.3.tbd; path = usr/lib/libz.1.1.3.tbd; sourceTree = SDKROOT; };
 		645EA6C51D975B3D00A7A5D8 /* SettingsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		646C87B41C66DDD20091B3B6 /* libyabause_ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libyabause_ios.a; sourceTree = "<group>"; };
 		648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uoyabause-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -138,11 +138,17 @@
 		782A38C51C8F726D479DADEF /* Pods-YabaSnashiroTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiroTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiroTests/Pods-YabaSnashiroTests.release.xcconfig"; sourceTree = "<group>"; };
 		8118FC0A4919DED802B09AEF /* Pods_uoyabause.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_uoyabause.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		838B0540FBC7F0B9BB97B8C4 /* Pods-YabaSnashiro.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiro.debug.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiro/Pods-YabaSnashiro.debug.xcconfig"; sourceTree = "<group>"; };
-		8576A34B5AB321AF90CD3CF9 /* Pods_uoyabauseUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_uoyabauseUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		921C9D6C1E108E1E009065E6 /* KeyMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KeyMapper.h; sourceTree = "<group>"; };
 		921C9D6D1E108E1F009065E6 /* KeyMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KeyMapper.m; sourceTree = "<group>"; };
 		921C9D6F1E109021009065E6 /* SaturnControllerKeys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SaturnControllerKeys.h; sourceTree = "<group>"; };
 		921C9D711E1628B4009065E6 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		944F55AA257B0F33005D4814 /* libchdr-static.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libchdr-static.a"; sourceTree = "<group>"; };
+		944F55AF257B1206005D4814 /* libflac-static.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libflac-static.a"; sourceTree = "<group>"; };
+		944F55B4257B122E005D4814 /* liblzma-static.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "liblzma-static.a"; sourceTree = "<group>"; };
+		944F55B9257B1573005D4814 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
+		94C6524A257B3E7500CA7E50 /* YabaSnashiro.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YabaSnashiro.entitlements; sourceTree = "<group>"; };
+		94CB9D8E2581C6BE00C8E3EC /* iOSCoreAudio.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSCoreAudio.m; sourceTree = "<group>"; };
+		94CB9D932581C71900C8E3EC /* iOSCoreAudio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iOSCoreAudio.h; sourceTree = "<group>"; };
 		9B185CBB7D967968C3447782 /* Pods-YabaSnashiroTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiroTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiroTests/Pods-YabaSnashiroTests.debug.xcconfig"; sourceTree = "<group>"; };
 		9EFEF6EB5806EAC705E55B7D /* Pods-uoyabause.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabause.release.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabause/Pods-uoyabause.release.xcconfig"; sourceTree = "<group>"; };
 		A8146B869F23239E27223063 /* Pods-uoyabauseTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabauseTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabauseTests/Pods-uoyabauseTests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -161,19 +167,22 @@
 			files = (
 				6DB2092B2097088D00C9CC4B /* nanopb.framework in Frameworks */,
 				921C9D721E1628B5009065E6 /* QuartzCore.framework in Frameworks */,
-				645EA6C21D95647200A7A5D8 /* libz.1.1.3.tbd in Frameworks */,
+				944F55BA257B1573005D4814 /* GameController.framework in Frameworks */,
+				944F55B0257B1216005D4814 /* libflac-static.a in Frameworks */,
 				64228EF71D8886AE00588323 /* MobileCoreServices.framework in Frameworks */,
 				64228EF51D88868300588323 /* CoreGraphics.framework in Frameworks */,
 				64228EF31D88866300588323 /* CoreTelephony.framework in Frameworks */,
 				64228EF11D88864200588323 /* AudioToolbox.framework in Frameworks */,
 				64228EEF1D8885F800588323 /* CoreMotion.framework in Frameworks */,
 				64228EED1D8885F200588323 /* CoreBluetooth.framework in Frameworks */,
+				944F55B5257B1238005D4814 /* liblzma-static.a in Frameworks */,
 				64228EEB1D88850B00588323 /* MessageUI.framework in Frameworks */,
 				64228EE91D8884D700588323 /* SafariServices.framework in Frameworks */,
 				64228EE51D88845400588323 /* EventKit.framework in Frameworks */,
 				64228EE31D88844000588323 /* EventKitUI.framework in Frameworks */,
 				64228EE11D88840000588323 /* AdSupport.framework in Frameworks */,
 				64228EDF1D8883C400588323 /* MediaPlayer.framework in Frameworks */,
+				944F55AB257B0F47005D4814 /* libchdr-static.a in Frameworks */,
 				64228ED91D8882D200588323 /* SystemConfiguration.framework in Frameworks */,
 				64228ED71D88817300588323 /* GoogleMobileAds.framework in Frameworks */,
 				640323881C67575B00DA91D8 /* OpenAL.framework in Frameworks */,
@@ -186,7 +195,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A9A09038CE42F043D36CB033 /* Pods_uoyabauseTests.framework in Frameworks */,
 				6048E9F865F471B405FC8E1E /* Pods_YabaSnashiroTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -195,7 +203,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2E2E650D500362BD39966316 /* Pods_uoyabauseUITests.framework in Frameworks */,
 				592FA568C31514C157C8C8DF /* Pods_YabaSnashiroUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -206,7 +213,7 @@
 		644232991C6580000050611E = {
 			isa = PBXGroup;
 			children = (
-				645EA6C11D95647200A7A5D8 /* libz.1.1.3.tbd */,
+				94C6524A257B3E7500CA7E50 /* YabaSnashiro.entitlements */,
 				64228EF61D8886AE00588323 /* MobileCoreServices.framework */,
 				64228EF41D88868300588323 /* CoreGraphics.framework */,
 				64228EF21D88866300588323 /* CoreTelephony.framework */,
@@ -274,6 +281,8 @@
 				6DB209242095D1F200C9CC4B /* GLView.m */,
 				6DB2092C2097DB5D00C9CC4B /* PadButton.h */,
 				6DB2092D2097DB5D00C9CC4B /* PadButton.m */,
+				94CB9D8E2581C6BE00C8E3EC /* iOSCoreAudio.m */,
+				94CB9D932581C71900C8E3EC /* iOSCoreAudio.h */,
 			);
 			path = uoyabause;
 			sourceTree = "<group>";
@@ -320,12 +329,14 @@
 		921C9D701E1628B4009065E6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				944F55B9257B1573005D4814 /* GameController.framework */,
+				944F55B4257B122E005D4814 /* liblzma-static.a */,
+				944F55AF257B1206005D4814 /* libflac-static.a */,
+				944F55AA257B0F33005D4814 /* libchdr-static.a */,
 				6DB2092A2097088D00C9CC4B /* nanopb.framework */,
 				6DB209282097088800C9CC4B /* GoogleToolboxForMac.framework */,
 				921C9D711E1628B4009065E6 /* QuartzCore.framework */,
 				8118FC0A4919DED802B09AEF /* Pods_uoyabause.framework */,
-				06D1ECCE10B74C210FE0691E /* Pods_uoyabauseTests.framework */,
-				8576A34B5AB321AF90CD3CF9 /* Pods_uoyabauseUITests.framework */,
 				C8BA1D770E151F00A6BA938B /* Pods_YabaSnashiro.framework */,
 				3AFB002D17E54BEC336A1DFE /* Pods_YabaSnashiroTests.framework */,
 				C6A3953C38AF483C1F1F5E89 /* Pods_YabaSnashiroUITests.framework */,
@@ -364,6 +375,7 @@
 				6442329F1C6580000050611E /* Frameworks */,
 				644232A01C6580000050611E /* Resources */,
 				1746BD14040A0685479ADCEF /* [CP] Embed Pods Frameworks */,
+				94CB9D9725824B6100C8E3EC /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -424,8 +436,9 @@
 				TargetAttributes = {
 					644232A11C6580000050611E = {
 						CreatedOnToolsVersion = 7.2.1;
-						DevelopmentTeam = 8EMBASFBPT;
+						DevelopmentTeam = AAAAAAAAAA;
 						LastSwiftMigration = 0800;
+						ProvisioningStyle = Manual;
 					};
 					644232BE1C6580010050611E = {
 						CreatedOnToolsVersion = 7.2.1;
@@ -442,6 +455,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
@@ -496,19 +510,46 @@
 			files = (
 			);
 			inputPaths = (
-				"${SRCROOT}/Pods/Target Support Files/Pods-YabaSnashiro/Pods-YabaSnashiro-frameworks.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-YabaSnashiro/Pods-YabaSnashiro-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCoreDiagnostics/FirebaseCoreDiagnostics.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseInstallations/FirebaseInstallations.framework",
+				"${BUILT_PRODUCTS_DIR}/GoogleDataTransport/GoogleDataTransport.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
+				"${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework",
 				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreDiagnostics.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseInstallations.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleDataTransport.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FBLPromises.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-YabaSnashiro/Pods-YabaSnashiro-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YabaSnashiro/Pods-YabaSnashiro-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		94CB9D9725824B6100C8E3EC /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n APP_PATH=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"\n\nfind \"$APP_PATH\" -name '*.framework' -type d | while read -r FRAMEWORK\ndo\nFRAMEWORK_EXECUTABLE_NAME=$(defaults read \"$FRAMEWORK/Info.plist\" CFBundleExecutable)\nFRAMEWORK_EXECUTABLE_PATH=\"$FRAMEWORK/$FRAMEWORK_EXECUTABLE_NAME\"\necho \"Executable is $FRAMEWORK_EXECUTABLE_PATH\"\necho $(lipo -info \"$FRAMEWORK_EXECUTABLE_PATH\")\n\nFRAMEWORK_TMP_PATH=\"$FRAMEWORK_EXECUTABLE_PATH-tmp\"\n\ncase \"${TARGET_BUILD_DIR}\" in\n*\"iphonesimulator\")\n    echo \"No need to remove archs\"\n    ;;\n*)\n    if $(lipo \"$FRAMEWORK_EXECUTABLE_PATH\" -verify_arch \"i386\") ; then\n    lipo -output \"$FRAMEWORK_TMP_PATH\" -remove \"i386\" \"$FRAMEWORK_EXECUTABLE_PATH\"\n    echo \"i386 architecture removed\"\n    rm \"$FRAMEWORK_EXECUTABLE_PATH\"\n    mv \"$FRAMEWORK_TMP_PATH\" \"$FRAMEWORK_EXECUTABLE_PATH\"\n    fi\n    if $(lipo \"$FRAMEWORK_EXECUTABLE_PATH\" -verify_arch \"x86_64\") ; then\n    lipo -output \"$FRAMEWORK_TMP_PATH\" -remove \"x86_64\" \"$FRAMEWORK_EXECUTABLE_PATH\"\n    echo \"x86_64 architecture removed\"\n    rm \"$FRAMEWORK_EXECUTABLE_PATH\"\n    mv \"$FRAMEWORK_TMP_PATH\" \"$FRAMEWORK_EXECUTABLE_PATH\"\n    fi\n    ;;\nesac\n\necho \"Completed for executable $FRAMEWORK_EXECUTABLE_PATH\"\necho $(lipo -info \"$FRAMEWORK_EXECUTABLE_PATH\")\n\ndone\n";
 		};
 		A87F9C65EEE5D1D0889ABB00 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -582,6 +623,7 @@
 				644232A71C6580000050611E /* main.m in Sources */,
 				64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */,
 				921C9D6E1E108E1F009065E6 /* KeyMapper.m in Sources */,
+				94CB9D8F2581C6BE00C8E3EC /* iOSCoreAudio.m in Sources */,
 				64BC4F011D8084420071689C /* SWRevealViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -724,25 +766,29 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 838B0540FBC7F0B9BB97B8C4 /* Pods-YabaSnashiro.debug.xcconfig */;
 			buildSettings = {
-				ARCHS = arm64;
+				ARCHS = "$(ARCHS_STANDARD)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_ENTITLEMENTS = YabaSnashiro.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEVELOPMENT_TEAM = 8EMBASFBPT;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 4;
+				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
 				INFOPLIST_FILE = uoyabause/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Debug",
 					"$(PROJECT_DIR)",
 				);
+				MARKETING_VERSION = 2.1.2.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -771,8 +817,6 @@
 					"\"FirebaseCore\"",
 					"-framework",
 					"\"FirebaseCoreDiagnostics\"",
-					"-framework",
-					"\"FirebaseInstanceID\"",
 					"-framework",
 					"\"GoogleMobileAds\"",
 					"-framework",
@@ -832,8 +876,6 @@
 					"\"FirebaseCore\"",
 					"-framework",
 					"\"FirebaseCoreDiagnostics\"",
-					"-framework",
-					"\"FirebaseInstanceID\"",
 					"-framework",
 					"\"GLKit\"",
 					"-framework",
@@ -866,12 +908,14 @@
 					"\"WebKit\"",
 					"$(inherited)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = org.devMiyax.yabasanshiro;
+				PRODUCT_BUNDLE_IDENTIFIER = org.devMiyax.yabasanshiro2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = yabasanshiro2;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "uoyabause/uoyabause-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
 			};
@@ -881,25 +925,29 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = CE0A948D22A1A8E0A2DA1D98 /* Pods-YabaSnashiro.release.xcconfig */;
 			buildSettings = {
-				ARCHS = arm64;
+				ARCHS = "$(ARCHS_STANDARD)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_ENTITLEMENTS = YabaSnashiro.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEVELOPMENT_TEAM = 8EMBASFBPT;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 4;
+				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
 				INFOPLIST_FILE = uoyabause/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Debug",
 					"$(PROJECT_DIR)",
 				);
+				MARKETING_VERSION = 2.1.2.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -928,8 +976,6 @@
 					"\"FirebaseCore\"",
 					"-framework",
 					"\"FirebaseCoreDiagnostics\"",
-					"-framework",
-					"\"FirebaseInstanceID\"",
 					"-framework",
 					"\"GoogleMobileAds\"",
 					"-framework",
@@ -965,11 +1011,13 @@
 					"-ObjC",
 					"$(OTHER_LDFLAGS)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = org.devMiyax.yabasanshiro;
+				PRODUCT_BUNDLE_IDENTIFIER = org.devMiyax.yabasanshiro2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = yabasanshiro2;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "uoyabause/uoyabause-Bridging-Header.h";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
 			};

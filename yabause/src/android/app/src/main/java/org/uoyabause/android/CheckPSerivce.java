@@ -586,7 +586,7 @@ public class CheckPSerivce extends JobService {
 
         @Override
         protected Boolean doInBackground(Void... voids) {
-            CheckDonated();
+            //CheckDonated();
             return true;
         }
     }

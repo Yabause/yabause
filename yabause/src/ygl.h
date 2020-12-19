@@ -677,6 +677,12 @@ typedef struct {
   float rotate_mval_v;
 } RBGDrawInfo;
 
+void RBGGenerator_init(int width, int height); 
+void RBGGenerator_resize(int width, int height); 
+void RBGGenerator_update(RBGDrawInfo * rbg );
+GLuint RBGGenerator_getTexture( int id ) ;
+void RBGGenerator_onFinish();
+
 int YglGLInit(int, int);
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
@@ -849,6 +855,7 @@ int YglDrawBackScreen(float w, float h);
 
 u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
 
+void YglRebuildGramebuffer();
 
 #endif // YGL_H
 

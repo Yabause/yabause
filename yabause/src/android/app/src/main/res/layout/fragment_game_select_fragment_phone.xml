@@ -76,7 +76,18 @@
 
         </androidx.viewpager.widget.ViewPager>
 
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|bottom"
+            android:src="@drawable/baseline_add_24"
+            android:contentDescription="@string/add_a_game"
+            android:layout_margin="16dp" />
+
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+
 
     <include
         android:id="@+id/llProgressBar"

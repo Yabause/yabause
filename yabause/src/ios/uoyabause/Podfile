@@ -5,8 +5,8 @@ target 'YabaSnashiro' do
   # Comment the next line if you're not using Swift and don't want to use dynamic frameworks
   use_frameworks!
   pod 'Firebase/Core'
-  pod 'Firebase/AdMob'
-
+  #pod 'Firebase/AdMob'
+  pod 'Google-Mobile-Ads-SDK'
   # Pods for uoyabause
 
   target 'YabaSnashiroTests' do

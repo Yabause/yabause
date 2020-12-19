@@ -285,9 +285,10 @@ void YabThreadFreeMutex( YabMutex * mtx ){
 
 void YabThreadSetCurrentThreadAffinityMask(int mask)
 {
-#if defined(__XU4__)
+#if defined(__XU4__) || defined(IOS)
 	return;
 #endif
+
 #if !defined(ANDROID) // it needs more than android-21
     int err, syscallres;
 #ifdef SYS_gettid
@@ -309,6 +310,7 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
 //	CPU_SET(mask+4, &my_set);
 //    sched_setaffinity(pid,sizeof(my_set), &my_set);
 #endif
+
 }
 
 #include <sys/syscall.h>
@@ -337,7 +339,9 @@ int YabThreadGetCurrentThreadAffinityMask()
 }
 
 int YabMakeCleanDir( const char * dirname ){
-#if defined(ANDROID)
+#if defined(IOS)
+  return 0;
+#elif defined(ANDROID)
   std::string cmd;
   cmd = "exec rm -r " + std::string(dirname) + "/*";
   system(cmd.c_str());
@@ -353,7 +357,9 @@ int YabMakeCleanDir( const char * dirname ){
 }
 
 int YabCopyFile( const char * src, const char * dst) {
-#if defined(ANDROID)
+#if defined(IOS)
+  return 0;
+#elif defined(ANDROID)
   std::string cmd;
   cmd = "exec cp -f " + std::string(src) + " " + std::string(dst);
   system(cmd.c_str());

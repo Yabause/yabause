@@ -691,7 +691,7 @@ int YabauseEmulate(void) {
       }
    }
 
-   DoMovie();
+   //DoMovie();
 
    #if defined(SH2_DYNAREC)
    if(SH2Core->id==2) {
@@ -1352,8 +1352,11 @@ int YabauseQuickLoadGame(void)
    return 0;
 }
 
-// non standard function
+#if !defined(IOS)
 #include <malloc.h>
+#endif
+
+// non standard function
 char* strdup_ (const char* s)
 {
   size_t slen = strlen(s);

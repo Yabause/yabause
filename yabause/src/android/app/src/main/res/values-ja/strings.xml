@@ -256,4 +256,8 @@
     <string name="hide_status_bar_and_navigation_bar">ステータスバーとナビゲーションバーを隠す</string>
     <string name="sign_in_to_other_devices">ほかのデバイスにログインする</string>
 
+    <string name="install_game_message">インストールするとこのメニュー画面から直接起動できるようになりますが、 ストレージを</string>
+    <string name="install_game_message_after">MB使用します。</string>
+
+
 </resources>

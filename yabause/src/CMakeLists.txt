@@ -56,7 +56,7 @@ set(yabause_SOURCES
 	vdp1.cpp vdp2.cpp vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c
 	Counter.cpp
-	ygl_texture.cpp
+	#ygl_texture.cpp
 	BackupManager.cpp
 	jsoncpp.cpp
 	PlayRecorder.cpp
@@ -105,18 +105,22 @@ add_definitions(-DYAB_PORT_OSD)
 add_definitions(-D_OGLES3_)
 add_definitions(-DYAB_ASYNC_RENDERING)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -isysroot ${CMAKE_OSX_SYSROOT}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -fno-aligned-allocation -isysroot ${CMAKE_OSX_SYSROOT}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -fno-aligned-allocation -isysroot ${CMAKE_OSX_SYSROOT}")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fobjc-abi-version=2 -fobjc-arc -isysroot ${CMAKE_OSX_SYSROOT}")
 IF (${SIMULATOR})
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mios-simulator-version-min=6.0")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mios-simulator-version-min=11.0")
 ENDIF()
 set(yabause_SOURCES
 ${yabause_SOURCES}
 yglcache.c
 ygles.c
 yglshaderes.c )
+
+set(yabause_SOURCES ${yabause_SOURCES} SNDCoreAudio.c)
+set(yabause_HEADERS ${yabause_HEADERS} SNDCoreAudio.h)
+
 endif (IOS)
 
 include_directories(nanovg)
@@ -129,7 +133,11 @@ if (WEB_INTERFACE)
 	add_subdirectory(webinterface)
 endif()
 
-
+if (IOS)
+	# iOS can't use compute shader
+else ()
+	set(yabause_SOURCES ${yabause_SOURCES} ygl_texture.cpp)
+endif ()
 
 option(YAB_WANT_SH2_CACHE "Enable Sh2 cache emulation" OFF)
 if (YAB_WANT_SH2_CACHE)
@@ -809,6 +817,9 @@ endif()
 
 # Yabause Arch
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	add_definitions(-DARCH_IS_MACOSX=1)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.cpp /*thr-dummy.c*/ )
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
 	add_definitions(-DARCH_IS_MACOSX=1)
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.cpp /*thr-dummy.c*/ )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")

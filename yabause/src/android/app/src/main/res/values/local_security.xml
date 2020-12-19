@@ -38,7 +38,6 @@
     <string name="url_getLoginPinIn" translatable="false" >"https://localhost:3000/getLoginPinIn"</string>
     <string name="url_getTokenAndDelete" translatable="false" >"https://localhost:3000/getTokenAndDelete"</string>
 
-    <!--
-    <string name="check_order_url" translatable="false">http://192.168.0.8:3000</string>
-    -->
+    <string name="game_id" translatable="false" >123456</string>
+
 </resources>

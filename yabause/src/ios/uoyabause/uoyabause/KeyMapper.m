@@ -39,6 +39,8 @@
                [NSNumber numberWithInteger:MFI_BUTTON_RT] : [NSNumber numberWithInteger:SaturnKeyZ],
                [NSNumber numberWithInteger:MFI_BUTTON_LS] : [NSNumber numberWithInteger:SaturnKeyLeftTrigger],
                [NSNumber numberWithInteger:MFI_BUTTON_RS] : [NSNumber numberWithInteger:SaturnKeyRightTrigger],
+               [NSNumber numberWithInteger:MFI_BUTTON_HOME] : [NSNumber numberWithInteger:SaturnKeyStart],
+               
                } mutableCopy];
 }
 
@@ -86,6 +88,15 @@
 
 +(NSString*) controlToDisplayName:(KeyMapMappableButton)button {
     switch (button) {
+        case MFI_BUTTON_HOME:
+            return @"H";
+            break;
+        case MFI_BUTTON_OPTION:
+            return @"H";
+            break;
+        case MFI_BUTTON_MENU:
+            return @"M";
+            break;
         case MFI_BUTTON_A:
             return @"A";
             break;

@@ -907,22 +907,28 @@ void Vdp2HBlankOUT(void) {
     if (YaGetQueueSize(vdp1_rcv_evqueue) != 0) {
       FRAMELOG("YaGetQueueSizeYaGetQueueSize !=0  %d", YaGetQueueSize(vdp1_rcv_evqueue));
     }
+
+    FRAMELOG("YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT)");
     YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT);
     YabThreadYield();
     //YabThreadUSleep(10000);
 
   }
   if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
-      FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
-      YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
-      YabClearEventQueue(vdp1_rcv_evqueue);
-      FRAMELOG("**WAIT END**");
-      FrameProfileAdd("DirectDraw sync");
       if (Vdp1External.status == VDP1_STATUS_IDLE) {
+        FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
+        YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
+        YabClearEventQueue(vdp1_rcv_evqueue);
+        FRAMELOG("**WAIT END**");
+        FrameProfileAdd("DirectDraw sync");        
         ScuSendDrawEnd();
         FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
         yabsys.wait_line_count = -1;
         Vdp1Regs->EDSR |= 2;
+      } else {
+        yabsys.wait_line_count += 10;
+        yabsys.wait_line_count %= yabsys.VBlankLineCount;
+        FRAMELOG("Vdp1Draw wait at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
       }
   }
 #else

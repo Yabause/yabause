@@ -437,6 +437,70 @@ int GetPlayer2Device(){
     return env->CallIntMethod( yabause, getPlayer2InputDevice);
 }
 
+
+void onBackupWrite( char * before, char * after, int size ){
+	
+    __android_log_print(ANDROID_LOG_INFO, "yabause", "onBackupWrite is called");
+
+    jclass yclass;
+    jmethodID jniOnBackupWrite;
+    JNIEnv * env;
+
+    if(yvm->AttachCurrentThread(&env,NULL) != JNI_OK){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to AttachCurrentThread");
+        return;
+    }
+
+/*
+    if (yvm->GetEnv( (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to GetEnv");
+
+        return;
+    }
+*/
+    jbyteArray jniBefore = env->NewByteArray(size);
+    if( jniBefore == NULL ){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to NewByteArray for before");
+        return;
+    }
+
+    jbyte * dst = env->GetByteArrayElements(jniBefore, NULL);
+    for(int i = 0; i < size; i++){
+        dst[i] = before[i];
+    }
+    env->ReleaseByteArrayElements(jniBefore,dst,0);
+
+    jbyteArray jniAfter = env->NewByteArray(size);
+    if( jniAfter == NULL ){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to NewByteArray for after");
+        return;
+    }
+
+    dst = env->GetByteArrayElements(jniAfter, NULL);
+    for(int i = 0; i < size; i++){
+        dst[i] = after[i];
+    }
+    env->ReleaseByteArrayElements(jniAfter,dst,0);
+ 
+    yclass = env->GetObjectClass( yabause);
+    jniOnBackupWrite = env->GetMethodID( yclass, "onBackupWrite", "([B[B)V");
+    if( jniOnBackupWrite == NULL ){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to GetMethodID for onBackupWrite");
+        return;
+    }
+    env->CallVoidMethod( yabause, jniOnBackupWrite, jniBefore, jniAfter);
+
+    if(yvm->DetachCurrentThread() != JNI_OK){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to DetachCurrentThread");
+        return;
+    }
+
+    return;
+}
+
+
+
 extern "C" void YuiErrorMsg(const char *string)
 {
 	//YUI_LOG("YuiErrorMsg %s",string);
@@ -686,6 +750,13 @@ extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_init
     
    return 0;
 }
+
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_enableBackupWriteHook(){
+    BiosSetOnBackupWrite(onBackupWrite);
+    return 0;
+}
+
+
 
 extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_lockGL()
 {
@@ -1416,18 +1487,40 @@ Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 void
 Java_org_uoyabause_android_YabauseRunnable_reset( JNIEnv* env )
 {
-    yprintf("sending MSG_OPEN_TRAY");
+    yprintf("sending MSG_RESET");
     pthread_mutex_lock(&g_mtxGlLock);
     g_msg = MSG_RESET;
     pthread_mutex_unlock(&g_mtxGlLock);    
 }
 
+class Command{
+public:    
+    Command( int press, int pad ){
+        this->press = press;
+        this->pad = pad;
+    }
+    int press;
+    int pad;
+};
+
+typedef vector<Command> vecCommand;
+
+vecCommand commands;
+
 void
 Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
 {
-    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) return;
+    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::RECORDING ) {
+        Command a(1,MAKE_PAD(player,key));
+        commands.push_back(a);
+        return;
+    }else if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) {
+        return;
+    }
+   
 	//yprintf("press: %d,%d",player,key);
     PerKeyDown(MAKE_PAD(player,key));
+
 }
 
 void
@@ -1442,8 +1535,13 @@ Java_org_uoyabause_android_YabauseRunnable_axis( JNIEnv* env, jobject obj, jint 
 void
 Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key, jint player )
 {
-	//yprintf("release: %d,%d",player,key);
-    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) return;  
+    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::RECORDING ) {
+        Command a(0,MAKE_PAD(player,key));
+        commands.push_back(a);    
+        return;
+    }else if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) {
+        return;
+    }
     PerKeyUp(MAKE_PAD(player,key));
 }
 
@@ -1799,6 +1897,16 @@ void renderLoop()
     while (renderingEnabled != 0) {
 
         if (g_Display && pause == 0 && g_window != NULL) {
+            if( commands.size() > 0 ){
+                for( int i=0; i< commands.size(); i++ ){
+                    if( commands[i].press == 0 ){
+                        PerKeyUp(commands[i].pad);
+                    }else{
+                        PerKeyDown(commands[i].pad);
+                    }
+                }
+                commands.clear();
+            }
            YabauseExec();
         }
 

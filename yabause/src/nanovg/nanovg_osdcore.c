@@ -297,10 +297,21 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int 
   int maxlen = 0;
   int i = 0;
 
-  if (message->type != OSDMSG_FPS) return;
-
   VIDCore->GetGlSize(&vidwidth, &vidheight);
+  
+
+  if (message->type == OSDMSG_FPS) {
+    LeftX = 8;
+  }
+  else if (message->type == OSDMSG_RECORD) {
+    LeftX = vidwidth - 8;
+  }
+  else {
+    return;
+  }
+
   Width = vidwidth - 2 * LeftX;
+
 
   switch (message->type) {
   case OSDMSG_STATUS:
@@ -314,36 +325,49 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int 
 
   nvgBeginFrame(vg, vidwidth, vidheight, 1.0f);
 
-  nvgBeginPath(vg);
-  nvgRect(vg, 0, 0, 320+8, 32);
-  nvgFillColor(vg, nvgRGBA(0, 0, 0, 128));
-  nvgFill(vg);
-
 
   nvgFontSize(vg, fontsize);
   nvgFontFace(vg, "sans");
-  nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
+  
+  if (message->type == OSDMSG_FPS) {
 
-  nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-
-  nvgText(vg, LeftX, TxtY, message->message, NULL);
-  TxtY += fontsize;
-#if 1
-  fontsize = 16;
-  nvgFontSize(vg, fontsize);
-  int linecnt = (vidheight - TxtY) / fontsize;
-  int start_point = current_log_history_index - linecnt;
-  if (start_point < 0) {
-    start_point = MAX_LOG_HISTORY + start_point;
-  }
-  for (i = 0; i < linecnt; i++) {
-    nvgText(vg, LeftX, TxtY, log_histroy[start_point], NULL);
-    start_point++;
-    start_point %= MAX_LOG_HISTORY;
+    nvgBeginPath(vg);
+    nvgRect(vg, 0, 0, 320 + 8, 32);
+    nvgFillColor(vg, nvgRGBA(8, 8, 8, 128));
+    nvgFill(vg);
+    
+    nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
+    nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+    nvgText(vg, LeftX, TxtY, message->message, NULL);
     TxtY += fontsize;
+    fontsize = 16;
+    nvgFontSize(vg, fontsize);
+    int linecnt = (vidheight - TxtY) / fontsize;
+    int start_point = current_log_history_index - linecnt;
+    if (start_point < 0) {
+      start_point = MAX_LOG_HISTORY + start_point;
+    }
+    for (i = 0; i < linecnt; i++) {
+      nvgText(vg, LeftX, TxtY, log_histroy[start_point], NULL);
+      start_point++;
+      start_point %= MAX_LOG_HISTORY;
+      TxtY += fontsize;
+    }
+    ProfileDrawGraph();
   }
-#endif
-  ProfileDrawGraph();
+
+  if (message->type == OSDMSG_RECORD) {
+
+    nvgBeginPath(vg);
+    nvgRect(vg, LeftX - (strlen(message->message)*(fontsize/2)), 0, 320 + 8, 32);
+    nvgFillColor(vg, nvgRGBA(8, 8, 8, 128));
+    nvgFill(vg);
+
+    nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
+    nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
+    nvgText(vg, LeftX, TxtY, message->message, NULL);
+  }
+
   nvgEndFrame(vg);
 
 }

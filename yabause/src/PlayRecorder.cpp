@@ -249,21 +249,31 @@ int PlayRecorder::startPlay( const char * recorddir, bool clodboot, yabauseinit_
   return 0;
 }
 
+#include "osdcore.h"
+
 int PlayRecorder::proc(u32 framecount) {
 
   current_frame = framecount;
 
   if (mode_ == RECORDING) {
+    framecount += 2;
+    OSDPushMessage(OSDMSG_RECORD, 1, "%d: %08X", framecount, (PORTDATA1.data[0] << 24) | (PORTDATA1.data[1] << 16) | (PORTDATA1.data[2] << 8) | PORTDATA1.data[3]);
     PerKeyRecord(framecount, record_);
+
+    if( framecount % screenshot_per_frame == 0 ) {
+      take_screenshot = true;
+    }
+
     if (take_screenshot) {
       take_screenshot = false;
       std::string fname;
       ostringstream ss;
-      ss << dirname_ << "/" << current_frame << ".png";
+      ss << dirname_ << "/" << framecount << ".png";
       fname = ss.str();
       f_takeScreenshot(fname.c_str());
-      record_["screenshots"].append(current_frame);
+      record_["screenshots"].append(framecount);
     }
+
     return 0;
   }
 
@@ -274,17 +284,51 @@ int PlayRecorder::proc(u32 framecount) {
 
     if (index_ >= record_["records"].size()) {
       mode_ = IDLE;
+
+      Json::Value item;
+
+#if RECORD_CHECK
+      item["port1"] = Json::Value(Json::arrayValue);
+      for (int i = 0; i < PORTDATA1.size; i++) {
+        item["port1"].append(PORTDATA1.data[i]);
+      }
+
+      item["port2"] = Json::Value(Json::arrayValue);
+      for (int i = 0; i < PORTDATA2.size; i++) {
+        item["port2"].append(PORTDATA2.data[i]);
+      }
+      item["frame"] = current_frame;
+      record_check["records"].append(item);
+
+      ofstream record_file;
+      string fname = dirname_ + "/record_check.json";
+      record_file.open(fname);
+      using namespace Json;
+      StreamWriterBuilder builder;
+      builder["commentStyle"] = "None";
+      builder["indentation"] = "   ";  // or whatever you like
+      std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+      writer->write(record_, &record_file);
+      record_file << std::endl;  // add lf and flush
+      record_file.close();
+#endif
+
       printf("Test is finished\n");
       exit(0);
       return -1; // Finish
     }
 
-    if (framecount == record_["records"][index_]["frame"].asUInt()) {
+    if ( (framecount) == record_["records"][index_]["frame"].asUInt()) {
       PerKeyPlay(record_["records"][index_]);
+#if RECORD_CHECK
+      PerKeyRecord(framecount, record_check);
+#endif
       index_++;
      }
 
-    if (framecount == record_["screenshots"][scindex_].asUInt()) {
+    OSDPushMessage(OSDMSG_RECORD, 1, "%d: %08X", framecount, (PORTDATA1.data[0] << 24) | (PORTDATA1.data[1] << 16) | (PORTDATA1.data[2] << 8) | PORTDATA1.data[3]);
+
+    if ( (framecount) == record_["screenshots"][scindex_].asUInt()) {
       if( f_takeScreenshot ){
         std::string fname;
         ostringstream ss;
@@ -295,6 +339,7 @@ int PlayRecorder::proc(u32 framecount) {
       } 
       scindex_++;
     }
+
 
   }
   return 0;
@@ -337,6 +382,11 @@ void PlayRecorder::PerKeyRecord(u32 frame, Json::Value & recordArray) {
 }
 
 void PlayRecorder::PerKeyPlay(Json::Value & item) {
+
+    for (int i = 0; i < 8; i++) {
+      PORTDATA1.data[i] = 0;
+    }
+
     for (int i = 0; i < item["port1"].size(); i++) {
       PORTDATA1.data[i] = (u8)item["port1"][i].asUInt();
     }
