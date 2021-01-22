@@ -49,6 +49,9 @@ else ifneq ($(findstring Darwin,$(shell uname -a)),)
 	ifeq ($(shell uname -p),powerpc)
 		arch = ppc
 	endif
+	ifeq ($(shell uname -p),arm)
+		arch = arm64
+	endif
 else ifneq ($(findstring MINGW,$(shell uname -a)),)
 	system_platform = win
 endif
@@ -118,15 +121,22 @@ else ifneq (,$(findstring linux-portable,$(platform)))
 else ifneq (,$(findstring osx,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.dylib
 	fpic := -fPIC
+	MACSOSVER = $(shell sw_vers -productVersion | cut -d. -f 1)
 	OSXVER = $(shell sw_vers -productVersion | cut -d. -f 2)
-	OSX_GT_MOJAVE = $(shell (( $(OSXVER) >= 14)) && echo "YES")
-ifneq ($(OSX_GT_MOJAVE),YES)
+	OSX_LT_MOJAVE = $(shell (( $(MACSOSVER) < 11)) && (( $(OSXVER) < 14)) && echo "YES")
+ifeq ($(OSX_LT_MOJAVE),YES)
 	#this breaks compiling on Mac OS Mojave
 	fpic += -mmacosx-version-min=10.1
 endif
 	SHARED := -dynamiclib
 ifeq ($(arch),ppc)
 	ENDIANNESS_DEFINES := -DWORDS_BIGENDIAN -DMSB_FIRST -D__ppc__
+	HAVE_SSE = 0
+endif
+ifeq ($(arch),arm64)
+	CC_AS =  perl ./libretro/gas-preprocessor.pl $(CC)
+	CC = clang -arch arm64
+	CXX = clang++ -arch arm64
 	HAVE_SSE = 0
 endif
 	#DYNAREC = 2
