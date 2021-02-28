@@ -80,7 +80,7 @@
     <string name="dynrec_cpu_interface">旧动态重编译器 (快速但不准确)</string>
     <string name="software_cpu_interface">解释器 (慢但更准确)</string>
 
-    <string name="opengl_video_interface">OpenGL 视频接口</string>
+    <string name="opengl_video_interface">OpenGL</string>
     <string name="software_video_interface">软件视频接口</string>
     <string name="onscreen_pad">虚拟按键</string>
     <string name="select_from_other_directory">从其他目录中选择。</string>
@@ -136,7 +136,6 @@
     <string name="open_cd_tray">打开 CD 盘</string>
     <string name="close_cd_tray">关闭 CD 盘</string>
     <string name="menu_analog">启用 Analog 控制</string>
-    <string name="menu_cheat">金手指</string>
     <string name="add_new_code">添加新代码</string>
 
     <string name="enable">启用</string>
@@ -160,6 +159,12 @@
     <string name="menu_delete">删除</string>
     <string name="already_have_been">" 如果您已经捐赠，请联系smiyaxdev@gmail.com"</string>
     <string name="close">Close</string>
+
+
+    <string name="siginin_message">
+    登录后即可将保存的数据和状态数据备份到云中，并在设备之间共享。\n
+    但是，这些功能是实验性的，因此它们无法按预期工作，规格可能会更改或终止，恕不另行通知。
+    </string>
 
 </resources>
 	

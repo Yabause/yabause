@@ -22,17 +22,17 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/cheat_activate"
+        android:id="@+id/acp_activate"
         android:title="@string/activate"
         />
 
     <item
-        android:id="@+id/cheat_edit"
+        android:id="@+id/acp_edit"
         android:title="@string/edit"
         />
 
     <item
-        android:id="@+id/cheat_share"
+        android:id="@+id/acp_share"
         android:title="@string/share"
         />
 

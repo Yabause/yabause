@@ -231,7 +231,7 @@ public class CloudCheatItemFragment extends AuthFragment implements CloudCheatIt
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
-                    case R.id.cheat_activate:
+                    case R.id.acp_activate:
                         cheatitem.setEnable( !cheatitem.getEnable() );
                         TabCheatFragment frag = getTabCheatFragmentInstance();
                         if( frag != null ){
@@ -243,7 +243,7 @@ public class CloudCheatItemFragment extends AuthFragment implements CloudCheatIt
                         }
                         adapter_.notifyDataSetChanged();
                         break;
-                    case R.id.cheat_rate:
+                    case R.id.acp_rate:
                        starItem(cheatitem);
                        break;
 

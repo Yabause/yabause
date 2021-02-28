@@ -39,6 +39,7 @@ set( SOURCES
  jni/jsoncpp.cpp
  jni/ChdFileInfo.cpp
  jni/ChdFileInfo.h
+ ../vulkan/Window_android.cpp
 )
 
 
@@ -60,13 +61,10 @@ set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/app/src/main/jniLibs/${ANDROID_N
 #include(AndroidNdkGdb)
 #android_ndk_gdb_enable()
 
-link_directories( ${LIBCHDR_LIB_DIR} ${LIBPNG_LIB_DIR} ${LIBZ_LIB_DIR} ${link_directories} )
+link_directories( ${LIBCHDR_LIB_DIR} ${LIBPNG_LIB_DIR} ${LIBZ_LIB_DIR} ${SHADERC_LIBRARY_DIR} ${link_directories})
 
 add_library(${LIBRARY_NAME} SHARED ${SOURCES}  )
 #android_ndk_gdb_debuggable(${LIBRARY_NAME})
-add_dependencies(${LIBRARY_NAME} libchdr)
-add_dependencies(${LIBRARY_NAME} png)
-
 
 include_directories( 
 	${YABAUSE_INCLUDE_DIR} 
@@ -79,9 +77,12 @@ target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES}
 	${LIBCHDR_LIBRARIES}	
 	png16
 	${ZLIB_LIBRARY_RELEASE}
+	${VULKAN_LIBRARIES}
 	#${zlib_STATIC_LIBRARIES}
 	#    ${PROJECT_SOURCE_DIR}/debuglib/libNvidia_gfx_debugger_stub.a
 )
  
+add_dependencies(${LIBRARY_NAME} libchdr)
+add_dependencies(${LIBRARY_NAME} png)
 
 

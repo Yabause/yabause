@@ -13,6 +13,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.DialogFragment
+import androidx.preference.CheckBoxPreference
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
@@ -191,6 +192,13 @@ class SettingsActivity : AppCompatActivity() {
 
             video_labels.add(res.getString(R.string.software_video_interface))
             video_values.add("2")
+
+
+            if( requireActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL) ) {
+                video_labels.add(res.getString(R.string.vulkan_video_interface))
+                video_values.add("4")
+            }
+
             video_cart!!.entries = video_labels.toTypedArray()
             video_cart.entryValues = video_values.toTypedArray()
             video_cart.summary = video_cart.entry
@@ -215,13 +223,27 @@ class SettingsActivity : AppCompatActivity() {
             val polygon_setting =
                 preferenceManager.findPreference("pref_polygon_generation") as ListPreference?
             polygon_setting!!.summary = polygon_setting.entry
-            polygon_setting.isEnabled = video_cart.value == "1"
+            polygon_setting.isEnabled = (video_cart.value == "1" || video_cart.value == "4" )
 
             if (deviceSupportsAEP == false) {
                 polygon_setting.entries =
-                    arrayOf("Triangles using perspective correction", "CPU Tessellation")
-                polygon_setting.entryValues = arrayOf("0", "1")
+                    arrayOf("Triangles using perspective correction")
+                polygon_setting.entryValues = arrayOf("0")
             }
+
+            val r_setting =
+                preferenceManager.findPreference("pref_use_compute_shader") as CheckBoxPreference?
+            if(video_cart.value == "4" ){
+                r_setting?.isEnabled = false;
+                r_setting?.isChecked = true;
+            }else if(video_cart.value == "1" ){
+                r_setting?.isEnabled = true;
+            }else{
+                r_setting?.isEnabled = false;
+                r_setting?.isChecked = false;
+            }
+
+
 
             val onscreen_pad =
                 findPreference("on_screen_pad") as PreferenceScreen?
@@ -252,7 +274,7 @@ class SettingsActivity : AppCompatActivity() {
 */
             val soundengine_setting =
                 preferenceManager.findPreference("pref_sound_engine") as ListPreference?
-            soundengine_setting!!.summary = soundengine_setting!!.entry
+            soundengine_setting!!.summary = soundengine_setting.entry
 
             val resolution_setting =
                 preferenceManager.findPreference("pref_resolution") as ListPreference?
@@ -362,7 +384,20 @@ class SettingsActivity : AppCompatActivity() {
                     val polygon_setting =
                         preferenceManager.findPreference("pref_polygon_generation") as ListPreference?
                     polygon_setting!!.summary = polygon_setting.entry
-                    polygon_setting.isEnabled = pref.value == "1"
+                    polygon_setting.isEnabled = (pref.value == "1" || pref.value == "4" )
+
+                    val r_setting =
+                        preferenceManager.findPreference("pref_use_compute_shader") as CheckBoxPreference?
+                    if(pref.value == "4" ){
+                        r_setting?.isEnabled = false;
+                        r_setting?.isChecked = true;
+                    }else if(pref.value == "1" ){
+                        r_setting?.isEnabled = true;
+                    }else{
+                        r_setting?.isEnabled = false;
+                        r_setting?.isChecked = false;
+                    }
+
                 }
             } else if (key == "pref_player1_inputdevice") {
                 val pref = findPreference(key) as ListPreference?

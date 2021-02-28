@@ -116,6 +116,8 @@ typedef struct
    void(*Sync)();
    void (*GetNativeResolution)(int *width, int *height, int * interlace);
    void(*Vdp2DispOff)(void);
+   void(*OnUpdateColorRamWord)(u32 addr);
+   void (*GetScreenshot)(void ** outbuf, int * width, int * height);
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;

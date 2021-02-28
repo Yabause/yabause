@@ -43,12 +43,10 @@
     </string-array>
     <string-array name="entries_polygon_generation_type" translatable="false">
         <item>@string/poly_triangle</item>
-        <item>@string/poly_cpu_tess</item>
         <item>@string/poly_gpu_tess</item>
     </string-array>
     <string-array name="entryvalues_polygon_generation_type" translatable="false">
         <item>0</item>
-        <item>1</item>
         <item>2</item>
     </string-array>
 

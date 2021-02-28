@@ -106,7 +106,7 @@ class YabauseApplication : MultiDexApplication() {
                     builder.setPositiveButton(R.string.got_it
                     ) { _, _ ->
                         val url =
-                            "https://play.google.com/store/apps/details?id=org.uoyabause.uranus.pro"
+                            "https://play.google.com/store/apps/details?id=org.devmiyax.yabasanshioro2.pro"
                         val intent = Intent(Intent.ACTION_VIEW)
                         intent.data = Uri.parse(url)
                         intent.setPackage("com.android.vending")

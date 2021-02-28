@@ -106,7 +106,8 @@ void VIDSoftSync(){};
 void VIDSoftVdp2DispOff(void);void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * sprite_window_mask, u8* vdp1_front_framebuffer, u8 * vdp2_ram, Vdp1* vdp1_regs, Vdp2* vdp2_lines, u8*color_ram);
 void VIDSoftGetNativeResolution(int *width, int *height, int*interlace);
 void VIDSoftVdp2DispOff(void);void VIDSoftVdp2DispOff(void);
-
+void VIDSoftOnUpdateColorRamWord(u32 addr) {}
+void VIDSoftVulkanGetScreenshot(void ** outbuf, int * width, int * height) { return; }
 VideoInterface_struct VIDSoft = {
 VIDCORE_SOFT,
 "Software Video Interface",
@@ -142,7 +143,9 @@ VIDSoftGetGlSize,
 VIDSoftSetSettingValueMode,
 VIDSoftSync,
 VIDSoftGetNativeResolution,
-VIDSoftVdp2DispOff
+VIDSoftVdp2DispOff,
+VIDSoftOnUpdateColorRamWord,
+VIDSoftVulkanGetScreenshot
 };
 
 pixel_t *dispbuffer=NULL;

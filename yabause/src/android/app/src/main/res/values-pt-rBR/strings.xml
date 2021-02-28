@@ -87,12 +87,17 @@
          4. Toque no título do jogo que você deseja jogar. \n
          5. Aproveite! \n
          \n
-         Para mais detalhes, consulte nosso [website] (https://www.uoyabause.org/static_pages/guide).\n
+         Para mais detalhes, consulte nosso this [Youtube video](https://www.youtube.com/watch?v=Ch6_KhhAg10).\n
         ]]>
     </string>
     <string name="delete_confirm_title">EXCLUIR CONFIRMAR</string>
     <string name="not_available">NÃO DISPONÍVEL!</string>
     <string name="only_pro_version">Esta função está disponível apenas para a versão pro</string>
     <string name="got_it">Entendi!</string>
+
+    <string name="siginin_message">
+        O login permite fazer backup de dados salvos e dados de estado na nuvem e compartilhá-los entre dispositivos.\n
+        No entanto, essas funções são experimentais, por isso não funcionam como esperado, as especificações podem ser alteradas ou encerradas sem aviso prévio.
+    </string>
 
 </resources>

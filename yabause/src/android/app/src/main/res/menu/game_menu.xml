@@ -36,10 +36,11 @@
 
 <!--
     <item
-        android:id="@+id/menu_item_cheat"
+        android:id="@+id/menu_item_acp"
         android:icon="@drawable/ic_lock_black_24dp"
-        android:title="@string/menu_cheat" />
+        android:title="@string/menu_acp" />
 -->
+
     <group
         android:id="@+id/menu_other" >
 

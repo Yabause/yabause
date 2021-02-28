@@ -596,7 +596,7 @@ class BackupItemFragment : AuthFragment(),
                                     val snackbar = Snackbar.make(v, "You have reached the max slot count. to expand slot count, get pro version.", Snackbar.LENGTH_LONG)
                                     snackbar.setAction("OK!", object : View.OnClickListener {
                                         override fun onClick(v: View?) {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=org.uoyabause.uranus.pro"))
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=org.devmiyax.yabasanshioro2.pro"))
                                             startActivity(intent)
                                         }
                                     })
