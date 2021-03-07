@@ -344,6 +344,9 @@ int YabauseInit(yabauseinit_struct *init)
    if (init->frameskip)
       EnableAutoFrameSkip();
 
+   VDP2SetFrameLimit(init->framelimit);
+
+
 #ifdef YAB_PORT_OSD
    OSDChangeCore(init->osdcoretype);
 #else
@@ -1006,7 +1009,7 @@ void YabauseSetVideoFormat(int type) {
    yabsys.tickfreq = 1000;
 #endif
    yabsys.OneFrameTime =
-      type ? (yabsys.tickfreq / 50) : (yabsys.tickfreq * 1001 / 60000);
+      type ? (yabsys.tickfreq / 50) : (yabsys.tickfreq * 10000 / 600000);
    Vdp2Regs->TVSTAT = Vdp2Regs->TVSTAT | (type & 0x1);
    ScspChangeVideoFormat(type);
    YabauseChangeTiming(yabsys.CurSH2FreqType);

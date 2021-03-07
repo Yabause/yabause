@@ -93,6 +93,16 @@ static u64 syncticks = 0;       // CPU time sync for real time.
 static int vdp_proc_running = 0;
 YabMutex * vrammutex = NULL;
 int g_frame_count = 0;
+static int framestoskip = 0;
+static int framesskipped = 0;
+static int skipnextframe = 0;
+static int previous_skipped = 0;
+static u64 curticks = 0;
+static u64 diffticks = 0;
+static u32 framecount = 0;
+static s64 onesecondticks = 0;
+static int enableFrameLimit = 1;
+static int frameLimitShift = 0;
 
 //#define LOG yprintf
 #define PROFILE_RENDERING 0
@@ -687,6 +697,72 @@ void VDP2genVRamCyclePattern() {
   }
 }
 
+// 0 .. 60Hz, 1 .. no limit, 2 .. 2x(120Hz)
+void VDP2SetFrameLimit(int mode) {
+  switch (mode) {
+  case 0:
+    enableFrameLimit = 1;
+    frameLimitShift = 0; // 60Hz
+    break;
+  case 1:
+    enableFrameLimit = 0;
+    frameLimitShift = 0;
+    break;
+  case 2:
+    enableFrameLimit = 1;
+    frameLimitShift = 1; // 120Hz
+    break;
+  default:
+    enableFrameLimit = 1;
+    frameLimitShift = 0;
+    break;
+  }
+}
+
+void frameSkipAndLimit() {
+  if (FrameAdvanceVariable == 0 && (autoframeskipenab || enableFrameLimit) )
+  {
+    const u32 fps = (yabsys.IsPal ? 50 : 60) << frameLimitShift ;
+    framecount++;
+    curticks = YabauseGetTicks();
+    if (framecount > fps)
+    {
+      onesecondticks -= yabsys.tickfreq;
+      if (onesecondticks > (s64)( (yabsys.OneFrameTime>>frameLimitShift)  * 4)) {
+        onesecondticks = 0;
+      }
+      framecount = 1;
+      lastticks = (curticks - (yabsys.OneFrameTime>>frameLimitShift) );
+    }
+
+    u64 targetTime = ( (yabsys.OneFrameTime>>frameLimitShift)  * (u64)framecount);
+    if (framecount == fps) {
+      targetTime = yabsys.tickfreq; // 1sec
+    }
+
+    diffticks = curticks - lastticks;
+
+    if (autoframeskipenab && (onesecondticks + diffticks) > targetTime )
+    {
+      // Skip the next frame
+      skipnextframe = 1;
+
+      // How many frames should we skip?
+      framestoskip = 1;
+
+    }
+    
+    if ( enableFrameLimit && (onesecondticks + diffticks) < targetTime)
+    {
+      YabNanosleep(targetTime - (onesecondticks + diffticks));
+    }
+
+    onesecondticks += diffticks;
+    lastticks = curticks;
+  }
+
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 void vdp2VBlankIN(void) {
@@ -699,6 +775,7 @@ void vdp2VBlankIN(void) {
    //if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
    VIDCore->Vdp2DrawEnd();
+   frameSkipAndLimit();
    VIDCore->Sync();
    Vdp2Regs->TVSTAT |= 0x0008;
 
@@ -746,6 +823,7 @@ void Vdp2VBlankIN(void) {
    //if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
    VIDCore->Vdp2DrawEnd();
+   frameSkipAndLimit();
    VIDCore->Sync();
    Vdp2Regs->TVSTAT |= 0x0008;
 
@@ -1082,14 +1160,6 @@ void vdp2ReqRestore() {
 
 //////////////////////////////////////////////////////////////////////////////
 void vdp2VBlankOUT(void) {
-  static int framestoskip = 0;
-  static int framesskipped = 0;
-  static int skipnextframe = 0;
-  static int previous_skipped = 0;
-  static u64 curticks = 0;
-  static u64 diffticks = 0;
-  static u32 framecount = 0;
-  static u64 onesecondticks = 0;
   static VideoInterface_struct * saved = NULL;
   int isrender = 0;
 #if PROFILE_RENDERING
@@ -1256,53 +1326,6 @@ void vdp2VBlankOUT(void) {
       framesskipped++;
    }
 
-   // Do Frame Skip/Frame Limiting/Speed Throttling here
-   if (throttlespeed)
-   {
-      // Should really depend on how fast we're rendering the frames
-      if (framestoskip < 1)
-         framestoskip = 6;
-   }
-   //when in frame advance, disable frame skipping
-   else if (autoframeskipenab && FrameAdvanceVariable == 0)
-   {
-      framecount++;
-
-      if (framecount > (yabsys.IsPal ? 50 : 60))
-      {
-         framecount = 1;
-         onesecondticks = 0;
-      }
-
-      curticks = YabauseGetTicks();
-      diffticks = curticks-lastticks;
-
-      if ((onesecondticks+diffticks) > ((yabsys.OneFrameTime * (u64)framecount) + (yabsys.OneFrameTime / 2)) &&
-          framesskipped < 9)
-      {
-         // Skip the next frame
-         skipnextframe = 1;
-
-         // How many frames should we skip?
-         framestoskip = 1;
-      }else if ((onesecondticks+diffticks) < ((yabsys.OneFrameTime * (u64)framecount) - (yabsys.OneFrameTime / 2)))
-      {
-#if 0
-         // Check to see if we need to limit speed at all
-         for (;;)
-         {
-            curticks = YabauseGetTicks();
-            diffticks = curticks-lastticks;
-            if ((onesecondticks+diffticks) >= (yabsys.OneFrameTime * (u64)framecount))
-               break;
-         }
-#endif
-         YabNanosleep( (yabsys.OneFrameTime * (u64)framecount) - (onesecondticks + diffticks) );
-      }
-
-      onesecondticks += diffticks;
-      lastticks = curticks;
-   }
 #endif
    VdpUnLockVram();
 #if PROFILE_RENDERING

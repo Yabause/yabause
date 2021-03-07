@@ -95,7 +95,7 @@ int g_EnagleFPS = 0;
 int g_resolution_mode = 0;
 int g_keep_aspect_rate = 0;
 int g_scsp_sync = 1;
-int g_frame_skip = 0;
+int g_frame_skip = 1;
 int g_emulated_bios = 1;
 char * playdataPath = NULL;
 
@@ -221,6 +221,7 @@ int yabauseinit()
   yinit.cartpath = cartpath;
   yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
   yinit.frameskip = g_frame_skip;
+  yinit.framelimit = 0;
   yinit.usethreads = 0;
   yinit.skip_load = 0;
   yinit.video_filter_type = 0;
@@ -409,7 +410,6 @@ int main( int argc, char *argv[] )
 
   while (r.Run()) {
     // CPU logic calculations
-
     ++frame_counter;
     if (last_time + std::chrono::seconds(1) < timer.now()) {
       last_time = timer.now();
@@ -417,7 +417,6 @@ int main( int argc, char *argv[] )
       frame_counter = 0;
       std::cout << "FPS: " << fps << std::endl;
     }
-
     YabauseExec(); // exec one frame
 
   }
