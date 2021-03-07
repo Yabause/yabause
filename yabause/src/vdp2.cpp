@@ -703,6 +703,9 @@ void VDP2SetFrameLimit(int mode) {
   case 0:
     enableFrameLimit = 1;
     frameLimitShift = 0; // 60Hz
+    framecount = 0;
+    onesecondticks = 0;
+    lastticks = YabauseGetTicks();
     break;
   case 1:
     enableFrameLimit = 0;
@@ -711,16 +714,22 @@ void VDP2SetFrameLimit(int mode) {
   case 2:
     enableFrameLimit = 1;
     frameLimitShift = 1; // 120Hz
+    framecount = 0;
+    onesecondticks = 0;
+    lastticks = YabauseGetTicks();
     break;
   default:
     enableFrameLimit = 1;
     frameLimitShift = 0;
+    framecount = 0;
+    onesecondticks = 0;
+    lastticks = YabauseGetTicks();
     break;
   }
 }
 
 void frameSkipAndLimit() {
-  if (FrameAdvanceVariable == 0 && (autoframeskipenab || enableFrameLimit) )
+  if (FrameAdvanceVariable == 0 && enableFrameLimit )
   {
     const u32 fps = (yabsys.IsPal ? 50 : 60) << frameLimitShift ;
     framecount++;
@@ -742,7 +751,7 @@ void frameSkipAndLimit() {
 
     diffticks = curticks - lastticks;
 
-    if (autoframeskipenab && (onesecondticks + diffticks) > targetTime )
+    if ( autoframeskipenab && (onesecondticks + diffticks) > targetTime )
     {
       // Skip the next frame
       skipnextframe = 1;
@@ -752,7 +761,7 @@ void frameSkipAndLimit() {
 
     }
     
-    if ( enableFrameLimit && (onesecondticks + diffticks) < targetTime)
+    if ( (onesecondticks + diffticks) < targetTime)
     {
       YabNanosleep(targetTime - (onesecondticks + diffticks));
     }

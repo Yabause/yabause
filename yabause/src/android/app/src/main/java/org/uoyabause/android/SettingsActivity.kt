@@ -291,6 +291,13 @@ class SettingsActivity : AppCompatActivity() {
             val scsp_time_sync_setting =
                 preferenceManager.findPreference("scsp_time_sync_mode") as ListPreference?
             scsp_time_sync_setting!!.summary = scsp_time_sync_setting.entry
+
+
+            val frameLimitSetting =
+                preferenceManager.findPreference("pref_frameLimit") as ListPreference?
+            frameLimitSetting!!.summary = frameLimitSetting.entry
+
+
         }
 
         override fun onDisplayPreferenceDialog(preference: Preference) {
@@ -374,7 +381,11 @@ class SettingsActivity : AppCompatActivity() {
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
 
-            if (key == "pref_bios" || key == "scsp_time_sync_mode" || key == "pref_cart" || key == "pref_video" || key == "pref_cpu" || key == "pref_filter" || key == "pref_polygon_generation" || key == "pref_sound_engine" || key == "pref_resolution" || key == "pref_rbg_resolution" || key == "pref_cpu_sync_per_line" || key == "pref_aspect_rate") {
+            if (key == "pref_bios" || key == "scsp_time_sync_mode" || key == "pref_cart" || key == "pref_video"
+                || key == "pref_cpu" || key == "pref_filter" || key == "pref_polygon_generation"
+                || key == "pref_sound_engine" || key == "pref_resolution" || key == "pref_rbg_resolution"
+                || key == "pref_cpu_sync_per_line" || key == "pref_aspect_rate" || key == "pref_frameLimit"
+            ) {
                 val pref = findPreference(key) as ListPreference?
                 pref!!.summary = pref.entry
                 if (key == "pref_video") {
@@ -397,7 +408,6 @@ class SettingsActivity : AppCompatActivity() {
                         r_setting?.isEnabled = false;
                         r_setting?.isChecked = false;
                     }
-
                 }
             } else if (key == "pref_player1_inputdevice") {
                 val pref = findPreference(key) as ListPreference?

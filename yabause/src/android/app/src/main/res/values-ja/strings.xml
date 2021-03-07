@@ -256,6 +256,10 @@
 
     <string name="install_game_message">インストールするとこのメニュー画面から直接起動できるようになりますが、 ストレージを</string>
     <string name="install_game_message_after">MB使用します。</string>
+    <string name="frameLimit">速度制限</string>
+    <string name="frameLimitDouble">倍速</string>
+    <string name="frameLimitNormal">等速</string>
+    <string name="frameLimitUnLimited">制限なし</string>
 
 
 </resources>

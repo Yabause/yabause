@@ -126,6 +126,7 @@ static int g_scsp_sync_count = 1;
 static int g_cpu_sync_shift = 1;
 static int g_scsp_sync_time_mode = 1;
 static int g_aspect_rate_mode = 0;
+int frameLimitMode = 0;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -851,6 +852,13 @@ extern "C"  JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_tog
     return 0;
 }
 
+extern "C"  JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_setFrameLimitMode( JNIEnv* env, jobject obj, int mode  )
+{
+    frameLimitMode = mode;
+    VDP2SetFrameLimit(mode);
+    return 0;
+}
+
 #ifdef _ANDROID_2_2_
 int initEGLFunc()
 {
@@ -1364,6 +1372,7 @@ int YabauseInit(){
     yinit.mpegpath = mpegpath;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.frameskip = 0;
+    yinit.framelimit = ::frameLimitMode;
     yinit.usethreads = 0;
     yinit.skip_load = 0;
     yinit.video_filter_type = g_VideoFilter;

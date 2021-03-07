@@ -1036,6 +1036,11 @@ class Yabause : AppCompatActivity(),
                         val rbg_resolution_setting: Int? =
                             gamePreference.getString("pref_rbg_resolution", "0")?.toInt()!!
                         YabauseRunnable.setRbgResolutionMode(rbg_resolution_setting!!)
+
+                        val frameLimitMode: Int? =
+                            gamePreference.getString("pref_frameLimit", "0")?.toInt()!!
+                        YabauseRunnable.setFrameLimitMode(frameLimitMode!!)
+
                         YabauseRunnable.unlockGL()
 
                         // Recreate Yabause View
@@ -1546,6 +1551,10 @@ class Yabause : AppCompatActivity(),
         val rbg_resolution_setting: Int? =
             gamePreference.getString("pref_rbg_resolution", "0")?.toInt()
         YabauseRunnable.setRbgResolutionMode(rbg_resolution_setting!!)
+
+        val frameLimitMode: Int? =
+            gamePreference.getString("pref_frameLimit", "0")?.toInt()!!
+        YabauseRunnable.setFrameLimitMode(frameLimitMode!!)
 
         // -------------------------------------------------------------------------------------
         // Load common setting

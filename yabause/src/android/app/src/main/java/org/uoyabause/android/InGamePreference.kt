@@ -56,6 +56,16 @@ fun setupInGamePreferences(context: Context, gameCode: String?) {
         editor.apply()
     }
 
+    if (!gamePreference.contains("pref_frameLimit")) {
+        val editor = gamePreference.edit()
+        editor.putString(
+            "pref_frameLimit",
+            defaultPreference.getString("pref_frameLimit", "0")
+        )
+        editor.apply()
+    }
+
+
     if (!gamePreference.contains("pref_resolution")) {
         val editor = gamePreference.edit()
         editor.putString("pref_resolution", defaultPreference.getString("pref_resolution", "0"))
@@ -115,6 +125,7 @@ class InGamePreference(val gamecode: String) : PreferenceFragmentCompat() {
         showSummary(findPreference<ListPreference?>("pref_resolution")!!)
         showSummary(findPreference<ListPreference?>("pref_rbg_resolution")!!)
         showSummary(findPreference<ListPreference?>("pref_aspect_rate")!!)
+        showSummary(findPreference<ListPreference?>("pref_frameLimit")!!)
     }
 
     override fun onAttach(context: Context) {

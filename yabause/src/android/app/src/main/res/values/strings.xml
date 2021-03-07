@@ -328,6 +328,11 @@
     <string name="menu_acp">Action Replay Code</string>
     <string name="updating">Updating...</string>
     <string name="add_a_game">Add a game</string>
+    <string name="frameLimit">Speed Limit</string>
+    <string name="chooseFrameLimit">Choose frame limit mode</string>
+    <string name="frameLimitNormal">Normal</string>
+    <string name="frameLimitDouble">Double</string>
+    <string name="frameLimitUnLimited">No Limit</string>
 
 </resources>
 	
