@@ -203,7 +203,7 @@ int Ygl_cleanupVdp1CommonParam(void * p){
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_normal_v[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
 #else
       "#version 330 \n"
 #endif
@@ -220,7 +220,7 @@ const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
 
 const GLchar Yglprg_normal_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;                            \n"
 #else
 "#version 330 \n"
@@ -283,7 +283,7 @@ int Ygl_cleanupNormal(void * p)
 
 const GLchar Yglprg_normal_cram_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;\n"
 "precision highp int;\n"
 #else
@@ -305,7 +305,7 @@ const GLchar Yglprg_normal_cram_f[] =
 
 const GLchar Yglprg_normal_cram_special_priority_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;\n"
 "precision highp int;\n"
 #else
@@ -394,7 +394,7 @@ int Ygl_uniformNormalCramSpecialPriority(void * p)
 
 const GLchar Yglprg_normal_cram_special_priority_colf_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;\n"
 "precision highp int;\n"
 #else
@@ -453,7 +453,7 @@ int Ygl_uniformNormalCramSPC(void * p)
 
 const GLchar Yglprg_normal_cram_addcol_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;\n"
 "precision highp int;\n"
 #else
@@ -537,7 +537,7 @@ void Ygl_setNormalshader(YglProgram * prg) {
 
 const GLchar Yglprg_rgb_cram_line_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;\n"
 "precision highp int;\n"
 #else
@@ -929,7 +929,7 @@ int Ygl_cleanupNormal_blur(void * p)
 
 const GLchar Yglprg_DestinationAlpha_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;                                  \n"
 #else
 "#version 330 \n"
@@ -961,7 +961,7 @@ const GLchar Yglprg_DestinationAlpha_f[] =
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_window_v[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
 #else
       "#version 330 \n"
 #endif
@@ -975,7 +975,7 @@ const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
 
 const GLchar Yglprg_window_f[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
       "precision highp float;                            \n"
 #else
       "#version 330 \n"
@@ -1013,7 +1013,7 @@ int Ygl_cleanupWindow(void * p )
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_normal_v[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
 #else
       "#version 330 \n"
 #endif
@@ -1033,7 +1033,7 @@ const GLchar * pYglprg_vdp1_normal_v[] = {Yglprg_vdp1_normal_v, NULL};
 
 const GLchar Yglprg_vpd1_normal_f[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
       "precision highp float;                            \n"
 #else
       "#version 330 \n"
@@ -1213,7 +1213,7 @@ static YglVdp1CommonParam id_gt = { 0 };
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_v[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 #else
 "#version 330 \n"
 #endif
@@ -1235,7 +1235,7 @@ const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, 
 
 const GLchar Yglprg_vdp1_gouraudshading_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;                                                 \n"
 #else
 "#version 330 \n"
@@ -1258,7 +1258,7 @@ const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, 
 
 const GLchar Yglprg_vdp1_gouraudshading_spd_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;                                                 \n"
 #else
 "#version 330 \n"
@@ -1286,7 +1286,7 @@ static YglVdp1CommonParam id_spd_g = { 0 };
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
 #else
       "#version 330 \n"
 #endif
@@ -1308,7 +1308,7 @@ const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_
 
 const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
       "precision highp float;                                                                     \n"
 #else
       "#version 330 \n"
@@ -1351,7 +1351,7 @@ static YglVdp1CommonParam id_ght_tess = { 0 };
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_halftrans_v[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
 #else
       "#version 330 \n"
 #endif
@@ -1374,7 +1374,7 @@ const GLchar * pYglprg_vdp1_halftrans_v[] = {Yglprg_vdp1_halftrans_v, NULL};
 
 const GLchar Yglprg_vdp1_halftrans_f[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
       "precision highp float;                                                                     \n"
 #else
       "#version 330 \n"
@@ -1412,7 +1412,7 @@ static YglVdp1CommonParam hf_tess = {0};
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_mesh_v[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 #else
 "#version 330 \n"
 #endif
@@ -1435,7 +1435,7 @@ const GLchar * pYglprg_vdp1_mesh_v[] = { Yglprg_vdp1_mesh_v, NULL };
 #if 1
 const GLchar Yglprg_vdp1_mesh_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;                                                                     \n"
 #else
 "#version 330 \n"
@@ -1468,7 +1468,7 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 #else
 const GLchar Yglprg_vdp1_mesh_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;                                                                     \n"
 #else
 "#version 330 \n"
@@ -1514,7 +1514,7 @@ static YglVdp1CommonParam mesh_tess = { 0 };
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_half_luminance_v[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
 #else
       "#version 330 \n"
 #endif
@@ -1534,7 +1534,7 @@ const GLchar * pYglprg_vdp1_half_luminance_v[] = {Yglprg_vdp1_half_luminance_v, 
 
 const GLchar Yglprg_vpd1_half_luminance_f[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
       "precision highp float;                            \n"
 #else
       "#version 330 \n"
@@ -1564,7 +1564,7 @@ static YglVdp1CommonParam half_luminance = { 0 };
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_shadow_v[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 #else
 "#version 330 \n"
 #endif
@@ -1587,7 +1587,7 @@ const GLchar * pYglprg_vdp1_shadow_v[] = { Yglprg_vdp1_shadow_v, NULL };
 
 const GLchar Yglprg_vdp1_shadow_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;\n"
 #else
 "#version 330 \n"
@@ -1727,7 +1727,7 @@ DrawFrameBufferUniform g_draw_framebuffer_uniforms[MAX_FRAME_BUFFER_UNIFORM];
 
 const GLchar Yglprg_vdp1_drawfb_v[] =
 #if defined(_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
 #else
       "#version 330 \n"
 #endif
@@ -1743,7 +1743,7 @@ const GLchar * pYglprg_vdp2_drawfb_v[] = {Yglprg_vdp1_drawfb_v, NULL};
 
 const GLchar Yglprg_vdp2_drawfb_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
 #else
@@ -1844,7 +1844,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_vulkan_f[] =
 
 const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
 #else
@@ -2073,7 +2073,7 @@ const GLchar Yglprg_vdp2_drawfb_hblank_vulkan_f[] =
 
 const GLchar Yglprg_vdp2_drawfb_hblank_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
 #else
@@ -2210,7 +2210,7 @@ const GLchar * pYglprg_vdp2_drawfb_msb_add_hblank_f[]  = { Yglprg_vdp2_drawfb_hb
 
 const GLchar Yglprg_vdp2_drawfb_shadow_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
 #else
@@ -2673,7 +2673,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
 
 const GLchar Yglprg_vdp2_drawfb_addcolor_shadow_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
 #else
@@ -2760,7 +2760,7 @@ const GLchar * pYglprg_linecol_v[] = { Yglprg_normal_v, NULL };
 
 const GLchar Yglprg_linecol_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;\n"
 #else
 "#version 330 \n"
@@ -3741,7 +3741,7 @@ static int clear_prg = -1;
 
 static const char vclear_img[] =
 #if defined (_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 #else
 "#version 330 \n"
 #endif
@@ -3756,7 +3756,7 @@ static const char vclear_img[] =
 
 static const char fclear_img[] =
 #if defined (_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;       \n"
 #else
 "#version 330 \n"
@@ -3886,7 +3886,7 @@ static int u_h = -1;
 
 static const char vblit_img[] =
 #if defined (_OGLES3_)
-      "#version 310 es \n"
+      "#version 300 es \n"
 #else
       "#version 330 \n"
 #endif
@@ -3903,7 +3903,7 @@ static const char vblit_img[] =
 
 static const char fblit_img[] =
 #if defined (_OGLES3_)
-  "#version 310 es \n"
+  "#version 300 es \n"
   "precision highp float;       \n"
 #else
   "#version 330 \n"
@@ -4047,7 +4047,7 @@ static int blit_to_fb_prg = -1;
 
 static const char fblit_img_to_fb[] =
 #if defined (_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;       \n"
 #else
 "#version 330 \n"
@@ -4340,7 +4340,7 @@ hard/vdp2/hon/p12_13.htm
 
 const GLchar blur_blit_v[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 #else
 "#version 330 \n"
 #endif
@@ -4356,7 +4356,7 @@ const GLchar blur_blit_v[] =
 
 const GLchar blur_blit_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;                            \n"
 #else
 "#version 330 \n"
@@ -4508,7 +4508,7 @@ hard/vdp2/hon/p12_13.htm
 
 const GLchar mosaic_blit_v[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 #else
 "#version 330 \n"
 #endif
@@ -4524,7 +4524,7 @@ const GLchar mosaic_blit_v[] =
 
 const GLchar mosaic_blit_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;                            \n"
 #else
 "#version 330 \n"
@@ -4667,7 +4667,7 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matri
 
 const GLchar perlinealpha_blit_v[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 #else
 "#version 330 \n"
 #endif
@@ -4683,7 +4683,7 @@ const GLchar perlinealpha_blit_v[] =
 
 const GLchar perlinealpha_blit_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;                            \n"
 #else
 "#version 330 \n"
@@ -4858,7 +4858,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
 
 const GLchar scanline_filter_v[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 #else
 "#version 330 \n"
 #endif
@@ -4874,7 +4874,7 @@ const GLchar scanline_filter_v[] =
 
 const GLchar scanline_filter_f[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
+"#version 300 es \n"
 "precision highp float;       \n"
 #else
 "#version 330 \n"
