@@ -811,6 +811,7 @@ set( VULKAN_SOURCES
  vulkan/Shared.h
  vulkan/Window.cpp
  vulkan/Window.h
+ nanovg/nanovg_vulkan_osdcore.cpp
 )
 
 include_directories( ${VULKAN_INCLUDE_DIRS} )

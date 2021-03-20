@@ -91,7 +91,7 @@ static char cdpath[256] = "/dat2/iso/dytona/Daytona USA.iso";
 #endif
 
 
-int g_EnagleFPS = 0;
+int g_EnagleFPS = 1;
 int g_resolution_mode = 0;
 int g_keep_aspect_rate = 0;
 int g_scsp_sync = 1;
@@ -163,6 +163,8 @@ VideoInterface_struct *VIDCoreList[] = {
 #include "nanovg/nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
   &OSDDummy,
+  &OSDNnovg,
+  &OSDNnovgVulkan,
   NULL
 };
 #endif
@@ -262,7 +264,8 @@ int yabauseinit()
   g_Keymap[PERPAD_START] = GLFW_KEY_ENTER;
 
   OSDInit(0);
-  OSDChangeCore(OSDCORE_NANOVG);
+  OSDChangeCore(OSDCORE_NANOVG_VULKAN);
+  SetOSDToggle(g_EnagleFPS);
 
   LogStart();
   LogChangeOutput(DEBUG_CALLBACK, NULL);

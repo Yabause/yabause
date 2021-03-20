@@ -239,6 +239,7 @@ NULL
 #include "nanovg/nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
 &OSDNnovg,
+&OSDNnovgVulkan,
 NULL
 };  
 #endif
@@ -537,6 +538,7 @@ extern "C" void YuiSwapBuffers(void)
 {
    if( s_vidcoretype == VIDCORE_VULKAN ){
        VIDVulkan::getInstance()->present();
+       SetOSDToggle(g_EnagleFPS);   
        return;
    }
    if( g_Display == EGL_NO_DISPLAY ){
@@ -1419,7 +1421,7 @@ int YabauseInit(){
 		  }
 	   }
     }else if(s_vidcoretype == VIDCORE_VULKAN ){
-
+        OSDChangeCore(OSDCORE_NANOVG_VULKAN);
         for (i = 0; VIDCoreList[i] != NULL; i++){
 		  if (VIDCoreList[i]->id == s_vidcoretype)
 		  {

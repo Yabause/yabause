@@ -63,6 +63,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 }
 #endif
 
+int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer);
+
 
 VIDVulkan * VIDVulkan::_instance = nullptr;
 
@@ -513,6 +515,8 @@ void VIDVulkan::Vdp2DrawEnd(void)
     render_pass_begin_info.clearValueCount = clear_values.size();
     render_pass_begin_info.pClearValues = clear_values.data();
     vkCmdBeginRenderPass(_command_buffers[fi], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+    NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(), _command_buffers[fi]);
+    OSDDisplayMessages(NULL, 0, 0);
     vkCmdEndRenderPass(_command_buffers[fi]);
 
   }
@@ -540,7 +544,6 @@ void VIDVulkan::Vdp2DrawEnd(void)
     else {
       vkCmdBeginRenderPass(_command_buffers[fi], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
     }
-
 
     auto c = vk::CommandBuffer(_command_buffers[fi]);
     vk::Viewport viewport;
@@ -798,6 +801,11 @@ void VIDVulkan::Vdp2DrawEnd(void)
       fbRender->drawShadow(fixVdp2Regs, _command_buffers[fi], 0, 10);
     }
 
+    if (resolutionMode == RES_NATIVE) {
+      NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(), _command_buffers[fi]);
+      OSDDisplayMessages(NULL, 0, 0);
+    }
+
     vkCmdEndRenderPass(_command_buffers[fi]);
 
     if (resolutionMode != RES_NATIVE) {
@@ -819,6 +827,8 @@ void VIDVulkan::Vdp2DrawEnd(void)
       c.setScissor(0, 1, &scissor);
       vkCmdEndRenderPass(_command_buffers[fi]);
       blitSubRenderTarget(_command_buffers[fi]);
+      NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(), _command_buffers[fi]);
+      OSDDisplayMessages(NULL, 0, 0);
     }
   }
 

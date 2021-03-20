@@ -49,6 +49,7 @@ extern "C" {
 #define OSDCORE_GLUT     1
 #define OSDCORE_SOFT     2
 #define OSDCORE_NANOVG   3
+#define OSDCORE_NANOVG_VULKAN 4
 
 #if defined(HAVE_LIBGL)
 	#define OSDCORE_DEFAULT  OSDCORE_NANOVG
