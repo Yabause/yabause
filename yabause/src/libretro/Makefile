@@ -144,21 +144,30 @@ endif
 	LDFLAGS += -pthread
 	ARCH_IS_MACOSX = 1
 
-LIBRARY_NAME = $(TARGET_NAME)_libretro_ios
-
 else ifneq (,$(findstring ios,$(platform)))
 	# iOS
 	TARGET := $(TARGET_NAME)_libretro_ios.dylib
 	fpic := -fPIC
 	SHARED := -dynamiclib
+        MINVERSION :=
+ifeq ($(IOSSDK),)
+   IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
+endif
 	CC_AS =  perl ./libretro/gas-preprocessor.pl $(CC)
 	ifeq ($(platform), ios-arm64)
-	  CC = clang -arch arm64 -isysroot $(IOSSDK)
-	  CXX = clang++ -arch arm64 -isysroot $(IOSSDK)
+	  CC = cc -arch arm64 -isysroot $(IOSSDK)
+	  CXX = c++ -arch arm64 -isysroot $(IOSSDK)
         else
-	  CC = clang -arch armv7 -isysroot $(IOSSDK)
-	  CXX = clang++ -arch armv7 -isysroot $(IOSSDK)
+	  CC = cc -arch armv7 -isysroot $(IOSSDK)
+	  CXX = c++ -arch armv7 -isysroot $(IOSSDK)
 	endif
+ifeq ($(platform),$(filter $(platform),ios9 ios-arm64))
+        MINVERSION = -miphoneos-version-min=8.0
+else
+        MINVERSION = -miphoneos-version-min=5.0
+endif
+        CFLAGS += $(MINVERSION)
+        CXXFLAGS += $(MINVERSION)
 
 	HAVE_SSE = 0
 
@@ -167,8 +176,14 @@ else ifeq ($(platform), tvos-arm64)
 	TARGET := $(TARGET_NAME)_libretro_tvos.dylib
 	fpic := -fPIC
 	SHARED := -dynamiclib
+ifeq ($(IOSSDK),)
+   IOSSDK := $(shell xcodebuild -version -sdk appletvos Path)
+endif
 	CC_AS =  perl ./libretro/gas-preprocessor.pl $(CC)
 	HAVE_SSE = 0
+
+        CC = cc -arch arm64 -isysroot $(IOSSDK)
+        CXX = c++ -arch arm64 -isysroot $(IOSSDK)
 
 # Classic Platforms ####################
 # Platform affix = classic_<ISA>_<µARCH>
