@@ -8,6 +8,10 @@ if(YAB_USE_QT5)
 	find_package(Qt5 COMPONENTS Widgets QUIET)
 endif()
 
+if (YAB_WANT_VULKAN)
+	include_directories( ${VULKAN_INCLUDE_DIRS} )
+endif()
+
 if(Qt5_FOUND) 
 	message(STATUS "Qt5 Found")
 
@@ -218,6 +222,10 @@ else()
 	set( yabause_qt_SOURCES ${yabause_qt_SOURCES} YabauseSoftGL.cpp )
 endif()
 
+if (YAB_WANT_VULKAN)
+set( yabause_qt_SOURCES ${yabause_qt_SOURCES} ../vulkan/Window_glfw.cpp )
+endif()
+
 if(Qt5_FOUND) 
 	QT5_ADD_RESOURCES( yabause_qt_RCC_RESOURCES ${yabause_qt_RESOURCES} )
 	QT5_WRAP_UI( yabause_qt_UI_FORMS ${yabause_qt_FORMS} )
@@ -298,7 +306,13 @@ if (Qt5_FOUND)
 else()
 	target_link_libraries( yabause-qt ${QT_LIBRARIES} )
 endif()
+
 target_link_libraries( yabause-qt ${FIREBASE_TARGETS} )
+
+if (YAB_WANT_VULKAN)
+target_link_libraries( yabause-qt ${GLFW_LIBRARIES} ${LIBVULKAN} ${SHADERC_LIBRARIES} )
+endif()
+
 yab_port_success(yabause-qt)
 
 # copy need files for running

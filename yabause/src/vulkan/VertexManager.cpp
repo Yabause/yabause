@@ -28,6 +28,10 @@ VertexManager::VertexManager(VIDVulkan * vulkan) {
 
 VertexManager::~VertexManager() {
 
+  for (int i = 0; i < vertexBlocks.size(); i++) {
+    vertexBlocks[i].freeBuffers(vulkan->getDevice());
+  }
+  vertexBlocks.clear();
 }
 
 void VertexManager::init(unsigned int vertexSize, unsigned int indexSize) {

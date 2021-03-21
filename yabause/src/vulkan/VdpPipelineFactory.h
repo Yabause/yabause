@@ -32,6 +32,8 @@ class VertexManager;
 
 class VdpPipelineFactory {
 public:
+  VdpPipelineFactory();
+  ~VdpPipelineFactory();
 
   VdpPipeline * getPipeline(
     YglPipelineId id,

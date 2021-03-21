@@ -104,9 +104,10 @@ public:
     return _renderer->getWindow()->GetVulkanRenderPass();
   }
 
-  VkBuffer getUniformBuffer() {
-    return _uniformBuffer;
-  }
+
+  //VkBuffer getUniformBuffer() {
+  //  return _uniformBuffer;
+  //}
 
   const VkPhysicalDevice getPhysicalDevice() {
     return _renderer->GetVulkanPhysicalDevice();
@@ -132,17 +133,6 @@ public:
     return _command_pool;
   }
 
-
-  /*
-  VkImageView geTextureImageView() {
-    return _textureImageView;
-  }
-
-  VkSampler getTextureSampler() {
-    return _textureSampler;
-  }
-  */
-
   VkShaderModule createShaderModule(const std::vector<char>& code);
 
   VkCommandBuffer beginSingleTimeCommands();
@@ -152,11 +142,6 @@ public:
   bool screenshotSaved;
 
   void getScreenshot(void ** outbuf, int & width, int & height);
-
-  /*
-    void * createTextureImage(int texWidth, int texHeight);
-    void * reallocTextureImage(void * pixels, int texWidth, int texHeight);
-  */
 
   void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
   void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
@@ -175,61 +160,15 @@ protected:
 
   Renderer * _renderer;
 
-  void createGraphicsPipeline();
-  VkShaderModule _vertShaderModule;
-  VkShaderModule _fragShaderModule;
-  VkPipelineLayout _pipelineLayout;
-  VkPipeline _graphicsPipeline;
-
   void createCommandPool();
   VkCommandPool _command_pool = VK_NULL_HANDLE;
   VkSemaphore _render_complete_semaphore = VK_NULL_HANDLE;
   std::vector<VkCommandBuffer> _command_buffers;
   uint32_t _current_frame = 0;
 
-  void createVertexBuffer(const std::vector<Vertex> & vertices);
-  void createIndexBuffer(const std::vector<uint16_t> & indices);
-  VkBuffer _vertexBuffer;
-  VkDeviceMemory _vertexBufferMemory;
-  VkBuffer _indexBuffer;
-  VkDeviceMemory _indexBufferMemory;
-
-  void createUniformBuffer();
-  VkBuffer _uniformBuffer;
-  VkDeviceMemory _uniformBufferMemory;
-
-  void createDescriptorSetLayout();
-  VkDescriptorSetLayout _descriptorSetLayout;
-  void createDescriptorPool();
-  VkDescriptorPool _descriptorPool;
-  void createDescriptorSet();
-  VkDescriptorSet _descriptorSet;
-
   VkImage dstScreenImage = VK_NULL_HANDLE;
   VkDeviceMemory dstImageScreenMemory = VK_NULL_HANDLE;
   unsigned char * dstbuf = nullptr;
-
-  /*
-  void updateTextureImage(int texWidth, int texHeight);
-
-  void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-  void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-  void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-  VkImage _textureImage;
-  VkDeviceMemory _textureImageMemory;
-
-  void createTextureImageView();
-  VkImageView createImageView(VkDevice device, VkImage image, VkFormat format);
-  VkImageView _textureImageView;
-  void createTextureSampler();
-  VkSampler _textureSampler;
-  int texwidth;
-  int texheight;
-
-  VkBuffer stagingBuffer;
-  VkDeviceMemory stagingBufferMemory;
-  void* imageBuffer;
-  */
 
 };
 

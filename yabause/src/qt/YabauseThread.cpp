@@ -26,6 +26,9 @@
 
 #include "../peripheral.h"
 
+#include "vulkan/VIDVulkan.h"
+#include "vulkan/VIDVulkanCInterface.h"
+
 #include <QDateTime>
 #include <QStringList>
 #include <QDebug>
@@ -109,16 +112,102 @@ yabauseinit_struct* YabauseThread::yabauseConf()
 	return &mYabauseConf;
 }
 
+void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+  VIDCore->Resize(0, 0, width, height, 0, 0);
+}
+
+
+bool YabauseThread::IsFullscreen(void)
+{
+  auto wnd = vulkanRenderer->getWindow()->getWindowHandle();
+  return glfwGetWindowMonitor(wnd) != nullptr;
+}
+
+
+void YabauseThread::SetFullScreen(bool fullscreen)
+{
+
+  auto wnd = vulkanRenderer->getWindow()->getWindowHandle();
+  
+  if (IsFullscreen() == fullscreen)
+    return;
+
+  if (fullscreen)
+  {
+    // backup window position and window size
+    glfwGetWindowPos(wnd, &_wndPos[0], &_wndPos[1]);
+    glfwGetWindowSize(wnd, &_wndSize[0], &_wndSize[1]);
+
+    // get resolution of monitor
+    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+    // switch to full screen
+    glfwSetWindowMonitor(wnd, _monitor, 0, 0, mode->width, mode->height, 0);
+  }
+  else
+  {
+    // restore last window size and position
+    glfwSetWindowMonitor(wnd, nullptr, _wndPos[0], _wndPos[1], _wndSize[0], _wndSize[1], 0);
+  }
+
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+  YabauseThread * instance = YabauseThread::getInstance();
+
+  if (action == GLFW_RELEASE) {
+
+    if (key == GLFW_KEY_F4) {
+      if (instance->IsFullscreen()) {
+        instance->SetFullScreen(false);
+      }
+      else {
+        instance->SetFullScreen(true);
+      }
+    }
+
+  }
+  
+
+}
+
 void YabauseThread::initEmulation()
 {
 	reloadSettings();
+
+  VolatileSettings* vs = QtYabause::volatileSettings();
+  int vidcoretype = vs->value("Video/VideoCore", mYabauseConf.vidcoretype).toInt();
+  if (vidcoretype == VIDCORE_VULKAN) {
+    int width = vs->value("Video/WinWidth", 800).toInt();
+    int height = vs->value("Video/WinHeight", 600).toInt();
+
+    vulkanRenderer = new Renderer();
+    auto w = vulkanRenderer->OpenWindow(width, height, "Yaba sanshiro Vulkan", nullptr);
+    VIDVulkan::getInstance()->setRenderer(vulkanRenderer);
+    glfwSetFramebufferSizeCallback(w->getWindowHandle(), framebufferResizeCallback);
+    glfwSetKeyCallback(w->getWindowHandle(), key_callback);
+    _monitor = glfwGetPrimaryMonitor();
+  }
 	mInit = YabauseInit( &mYabauseConf );
 	SetOSDToggle(showFPS);
 }
 
 void YabauseThread::deInitEmulation()
 {
+  VolatileSettings* vs = QtYabause::volatileSettings();
+  int vidcoretype = vs->value("Video/VideoCore", mYabauseConf.vidcoretype).toInt();
+  if (vidcoretype == VIDCORE_VULKAN) {
+    vkQueueWaitIdle(vulkanRenderer->GetVulkanQueue());
+    vkDeviceWaitIdle(vulkanRenderer->GetVulkanDevice());
+  }
 	YabauseDeInit();
+
+  if (vidcoretype == VIDCORE_VULKAN) {
+    vkQueueWaitIdle(vulkanRenderer->GetVulkanQueue());
+    vkDeviceWaitIdle(vulkanRenderer->GetVulkanDevice());
+    delete vulkanRenderer;
+  }
+
 	mInit = -1;
 }
 

@@ -119,6 +119,14 @@ Vdp1Renderer::~Vdp1Renderer() {
   if (dstDeviceImage != VK_NULL_HANDLE) { vkDestroyImage(device, dstDeviceImage, nullptr); }
   if (dstDeviceImageMemory != VK_NULL_HANDLE) { vkFreeMemory(device, dstDeviceImageMemory, nullptr); }
 
+  if (tm) {
+    delete tm;
+    tm = nullptr;
+  }
+  if (vm) {
+    delete vm;
+    vm = nullptr;
+  }
 }
 
 

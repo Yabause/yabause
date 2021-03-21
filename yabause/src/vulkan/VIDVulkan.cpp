@@ -183,14 +183,14 @@ VIDVulkan::VIDVulkan()
   vdp2width = 320;
   vdp2height = 240;
   SetSaturnResolution(vdp2width, vdp2height);
-  crammutex = YabThreadCreateMutex();
+  crammutex = NULL; 
   pipleLineNBG0 = NULL;
   pipleLineNBG1 = NULL;
   pipleLineNBG2 = NULL;
   pipleLineNBG3 = NULL;
   pipleLineRBG0 = NULL;
   frameCount = 0;
-  pipleLineFactory = new VdpPipelineFactory();
+  pipleLineFactory = NULL;
   layers.reserve(10);
 }
 
@@ -220,6 +220,9 @@ int VIDVulkan::init(void)
   if ((rtn = VulkanScene::init()) != 0) {
     return rtn;
   }
+
+  crammutex = YabThreadCreateMutex();
+  pipleLineFactory = new VdpPipelineFactory();
 
   cram.create(this, 2048, 1);
   lineColor.create(this, 512, 9);
@@ -275,19 +278,79 @@ int VIDVulkan::init(void)
 
 void VIDVulkan::deInit(void)
 {
-  delete vdp1;
-  delete windowRenderer;
-  delete rbgGenerator;
-  delete backPiepline;
-  delete pipleLineFactory;
+  if (vdp1 != nullptr) {
+    delete vdp1;
+    vdp1 = nullptr;
+  }
+
+  if (windowRenderer != nullptr) {
+    delete windowRenderer;
+    windowRenderer = nullptr;
+  }
+
+  if (rbgGenerator != nullptr) {
+    delete rbgGenerator;
+    rbgGenerator = nullptr;
+  }
+
+  if (backPiepline != nullptr) {
+    delete backPiepline;
+    backPiepline = nullptr;
+  }
 
   deleteOfscreenPath();
   freeSubRenderTarget();
 
-  delete vm;
-  delete tm;
+  if (vm != nullptr) {
+    delete vm;
+    vm = nullptr;
+  }
+
+  if (tm != nullptr) {
+    delete tm;
+    tm = nullptr;
+  }
+
+  if (crammutex != NULL) {
+    YabThreadFreeMutex(crammutex);
+    crammutex = NULL;
+  }
+
+
+  if (pipleLineNBG0 != NULL) {
+    pipleLineFactory->garbage(pipleLineNBG0);
+    pipleLineNBG0 = NULL;
+  }
+
+  if (pipleLineNBG1 != NULL) {
+    pipleLineFactory->garbage(pipleLineNBG1);
+    pipleLineNBG1 = NULL;
+  }
+  if (pipleLineNBG2 != NULL) {
+    pipleLineFactory->garbage(pipleLineNBG2);
+    pipleLineNBG2 = NULL;
+  }
+  if (pipleLineNBG3 != NULL) {
+    pipleLineFactory->garbage(pipleLineNBG3);
+    pipleLineNBG3 = NULL;
+  }
+
+  if (pipleLineRBG0 != NULL) {
+    pipleLineFactory->garbage(pipleLineRBG0);
+    pipleLineRBG0 = NULL;
+  }
+
+  if (pipleLineFactory != nullptr) {
+    delete pipleLineFactory;
+    pipleLineFactory = nullptr;
+  }
+  ShaderManager::free();
 
   VulkanScene::deInit();
+
+  delete this;
+  _instance = nullptr;
+
 }
 
 void VIDVulkan::resize(int originx, int originy, unsigned int w, unsigned int h, int on, int aspect_rate_mode)

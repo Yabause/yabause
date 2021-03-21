@@ -148,6 +148,8 @@ static int OSDNanovgVInit(void)
 static void OSDNanovgVDeInit(void)
 {
   nvgDeleteVk(vg);
+  vg = NULL;
+
 }
 
 static void OSDNanovgVReset(void)

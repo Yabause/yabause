@@ -471,6 +471,7 @@ void YabFlushBackups(void)
 
 void YabauseDeInit(void) {
    
+  OSDDeInit();
    Vdp2DeInit();
    Vdp1DeInit();
    

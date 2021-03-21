@@ -40,37 +40,33 @@ const int VdpPipeline::bindIdLine = 3;
 const int VdpPipeline::bindIdWindow = 4;
 
 
-class ShaderManager {
-public:
-  static ShaderManager * getInstance() {
-    if (instance == nullptr) {
-      instance = new ShaderManager();
-    }
-    return instance;
-  }
 
-  void setVulkan(VIDVulkan * vulkan) {
-    this->vulkan = vulkan;
-  }
-
-  VkShaderModule getShader(uint32_t id) {
+VkShaderModule ShaderManager::getShader(uint32_t id) {
     auto it = shaders.find(id);
     if (it == shaders.end()) {
       return 0; // not found
     }
-    return it->second;
+  return it->second;
+}
+
+ShaderManager::~ShaderManager() {
+  const VkDevice device = vulkan->getDevice();
+  for (int i = 0; i < shaders.size(); i++) {
+    vkDestroyShaderModule(device, shaders[i], nullptr);
   }
+}
 
 
-  std::string get_shader_header() {
+
+std::string ShaderManager::get_shader_header() {
 #if defined(ANDROID)
     return "#version 310 es\n precision highp float; \n precision highp int;\n #extension GL_ANDROID_extension_pack_es31a : enable \n ";
 #else
     return "#version 450\n";
 #endif
-  }
+}
 
-  VkShaderModule compileShader(uint32_t id, const string & code, int type) {
+VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, int type) {
     const VkDevice device = vulkan->getDevice();
 
     LOGI("%s%d", "compiling: ", id);
@@ -105,18 +101,7 @@ public:
     }
     shaders[id] = shaderModule;
     return shaderModule;
-  }
-
-private:
-  VIDVulkan * vulkan;
-  static ShaderManager * instance;
-  ShaderManager() {
-
-  }
-
-  map<uint32_t, VkShaderModule> shaders;
-
-};
+}
 
 ShaderManager * ShaderManager::instance = nullptr;
 
@@ -243,12 +228,37 @@ VdpPipeline::~VdpPipeline() {
 
   VkDevice device = vulkan->getDevice();
 
-  if (_descriptorPool != 0) vkDestroyDescriptorPool(device, _descriptorPool, nullptr);
-  if (_descriptorSetLayout != 0) vkDestroyDescriptorSetLayout(device, _descriptorSetLayout, nullptr);
-  if (_pipelineLayout != 0) vkDestroyPipelineLayout(device, _pipelineLayout, nullptr);
-  if (_fragShaderModule != 0)vkDestroyShaderModule(device, _fragShaderModule, nullptr);
-  if (_vertShaderModule != 0)vkDestroyShaderModule(device, _vertShaderModule, nullptr);
-  if (_graphicsPipeline != 0)vkDestroyPipeline(device, _graphicsPipeline, nullptr);
+  if (_descriptorPool != VK_NULL_HANDLE) {
+    vkDestroyDescriptorPool(device, _descriptorPool, nullptr);
+    _descriptorPool = VK_NULL_HANDLE;
+  }
+
+  if (_descriptorSetLayout != VK_NULL_HANDLE) {
+    vkDestroyDescriptorSetLayout(device, _descriptorSetLayout, nullptr);
+    _descriptorSetLayout = VK_NULL_HANDLE;
+  }
+
+  if (_pipelineLayout != VK_NULL_HANDLE) {
+    vkDestroyPipelineLayout(device, _pipelineLayout, nullptr);
+    _pipelineLayout = VK_NULL_HANDLE;
+  }
+
+#if 0
+  if (_fragShaderModule != VK_NULL_HANDLE) {
+    vkDestroyShaderModule(device, _fragShaderModule, nullptr);
+    _fragShaderModule = VK_NULL_HANDLE;
+  }
+
+  if (_vertShaderModule != VK_NULL_HANDLE) {
+    vkDestroyShaderModule(device, _vertShaderModule, nullptr);
+    _vertShaderModule = VK_NULL_HANDLE;
+  }
+#endif
+
+  if (_graphicsPipeline != 0) {
+    vkDestroyPipeline(device, _graphicsPipeline, nullptr);
+    _graphicsPipeline = VK_NULL_HANDLE;
+  }
 }
 
 std::string VdpPipeline::get_shader_header() {

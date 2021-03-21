@@ -22,6 +22,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "VdpPipeline.h"
 #include "VIDVulkan.h"
 
+
+VdpPipelineFactory::VdpPipelineFactory() {
+
+}
+
+VdpPipelineFactory::~VdpPipelineFactory() {
+  for (int i = 0; i < garbageCollction.size(); i++) {
+    delete garbageCollction[i];
+  }
+  dicardAllPielines();
+}
+
+
 VdpPipeline * VdpPipelineFactory::getPipeline(
   YglPipelineId id,
   VIDVulkan * vulkan,
@@ -157,6 +170,13 @@ VdpPipeline * VdpPipelineFactory::getPipeline(
 }
 
 void VdpPipelineFactory::garbage(VdpPipeline * p) {
+
+  for (int i = 0; i < garbageCollction.size(); i++) {
+    if (garbageCollction[i] == p) {
+      return;
+    }
+  }
+
   p->indices.clear();
   p->vertices.clear();
   garbageCollction.push_back(p);

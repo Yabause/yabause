@@ -49,6 +49,47 @@ class VertexManager;
 #define MAX_UBO_SIZE (256)
 
 
+class ShaderManager {
+
+public:
+  static ShaderManager * getInstance() {
+    if (instance == nullptr) {
+      instance = new ShaderManager();
+    }
+    return instance;
+  }
+
+  static void free() {
+    if (instance != nullptr) {
+      delete instance;
+    }
+    instance = nullptr;
+  }
+
+  ~ShaderManager();
+
+  void setVulkan(VIDVulkan * vulkan) {
+    this->vulkan = vulkan;
+  }
+
+  VkShaderModule getShader(uint32_t id);
+  std::string get_shader_header();
+  
+
+  VkShaderModule compileShader(uint32_t id, const string & code, int type);
+
+private:
+  VIDVulkan * vulkan;
+  static ShaderManager * instance;
+  ShaderManager() {
+
+  }
+
+  map<uint32_t, VkShaderModule> shaders;
+
+};
+
+
 class VdpPipeline {
 public:
 
