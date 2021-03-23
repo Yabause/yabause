@@ -25,7 +25,11 @@ project(yabause-android)
 
 yab_port_start()
 
-set( LIBRARY_NAME yabause_native )
+#if( YAB_WANT_VULKAN )
+#	set( LIBRARY_NAME yabause_native_vulkan )
+#else()
+	set( LIBRARY_NAME yabause_native )
+#endif()
 
 include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libpng.cmake )
 #include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_zlib.cmake )
@@ -39,9 +43,11 @@ set( SOURCES
  jni/jsoncpp.cpp
  jni/ChdFileInfo.cpp
  jni/ChdFileInfo.h
- ../vulkan/Window_android.cpp
 )
 
+if( YAB_WANT_VULKAN )
+set( SOURCES ${SOURCES} ../vulkan/Window_android.cpp )
+endif()
 
 set (PORT_LIBRARIES
  log

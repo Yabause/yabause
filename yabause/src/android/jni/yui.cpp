@@ -77,11 +77,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "PlayRecorder.h"
 
+#if HAVE_VULKAN
 #include "../vulkan/VIDVulkanCInterface.h"
 #include "../vulkan/VIDVulkan.h"
 #include "../vulkan/Renderer.h"
 #include "../vulkan/Window.h"
-
+#else
+#define VIDCORE_VULKAN 0xFF
+#endif
 
 JavaVM * yvm;
 static jobject yabause = NULL;
@@ -231,7 +234,9 @@ VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
 &VIDSoft,
 &VIDOGL,
+#if HAVE_VULKAN                    
 &CVIDVulkan,
+#endif
 NULL
 };
 
@@ -239,7 +244,9 @@ NULL
 #include "nanovg/nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
 &OSDNnovg,
+#if HAVE_VULKAN     
 &OSDNnovgVulkan,
+#endif
 NULL
 };  
 #endif
@@ -536,11 +543,13 @@ void* threadStartCallback(void *myself);
 
 extern "C" void YuiSwapBuffers(void)
 {
+#if HAVE_VULKAN    
    if( s_vidcoretype == VIDCORE_VULKAN ){
        VIDVulkan::getInstance()->present();
        SetOSDToggle(g_EnagleFPS);   
        return;
    }
+#endif   
    if( g_Display == EGL_NO_DISPLAY ){
       return;
    }
@@ -1941,24 +1950,31 @@ void renderLoop()
 {
     int renderingEnabled = 1;
     int pause = 0;
+
+#if HAVE_VULKAN    
 	Renderer * r = NULL;
+#endif
+   
+    int initResult=0;
 
 	YabThreadSetCurrentThreadAffinityMask(0x00);
 
     while (renderingEnabled != 0) {
 
-        if (g_Display && pause == 0 && g_window != NULL) {
-            if( commands.size() > 0 ){
-                for( int i=0; i< commands.size(); i++ ){
-                    if( commands[i].press == 0 ){
-                        PerKeyUp(commands[i].pad);
-                    }else{
-                        PerKeyDown(commands[i].pad);
+        if( initResult == 0 ){
+            if (g_Display && pause == 0 && g_window != NULL) {
+                if( commands.size() > 0 ){
+                    for( int i=0; i< commands.size(); i++ ){
+                        if( commands[i].press == 0 ){
+                            PerKeyUp(commands[i].pad);
+                        }else{
+                            PerKeyDown(commands[i].pad);
+                        }
                     }
+                    commands.clear();
                 }
-                commands.clear();
+            YabauseExec();
             }
-           YabauseExec();
         }
 
         pthread_mutex_lock(&g_mtxGlLock);        
@@ -1968,11 +1984,13 @@ void renderLoop()
             case MSG_WINDOW_SET:
                 YUI_LOG("MSG_WINDOW_SET");
                 if( s_vidcoretype == VIDCORE_VULKAN ){
+#if HAVE_VULKAN                    
                     if( r == NULL ){
                         r = new Renderer();
                         r->setNativeWindow(g_window);
                         VIDVulkan::getInstance()->setRenderer(r);
                     }
+#endif                    
                     g_Display = (void*)1;
                 }else{
                     if( initEgl( g_window ) != 0 ){
@@ -1981,11 +1999,12 @@ void renderLoop()
                       return;
                     }
                 }
-                YabauseInit();
+                initResult = YabauseInit();
                 break;
             case MSG_WINDOW_CHG:
                 YUI_LOG("MSG_WINDOW_CHG");
                 if( s_vidcoretype == VIDCORE_VULKAN ){
+#if HAVE_VULKAN                                        
                     for (int i = 0; VIDCoreList[i] != NULL; i++)
                     {
                         if (VIDCoreList[i]->id == s_vidcoretype)
@@ -1996,6 +2015,7 @@ void renderLoop()
                             break;
                         }
                     }
+#endif                    
                 }else{
                     if( switchWindow(g_window) != 0 ){
                         destroy();

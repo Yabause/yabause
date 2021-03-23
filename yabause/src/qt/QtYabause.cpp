@@ -160,7 +160,9 @@ QMap<uint, PerAnalog_struct*> mPort2AnalogBits;
 extern "C" 
 {
 	void YuiErrorMsg(const char *string)
-	{ QtYabause::mainWindow()->appendLog( string ); }
+	{ 
+    QtYabause::mainWindow()->appendLog( string ); 
+  }
 	
 	void YuiSwapBuffers()
 	{

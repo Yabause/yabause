@@ -47,8 +47,14 @@ extern int GlHeight;
 extern int GlWidth;
 static GLuint _prgid[PG_MAX] = { 0 };
 
+char * lastShaderError = NULL;
 
-static void Ygl_printShaderError( GLuint shader )
+char * getLastShaderError(){
+  return lastShaderError;
+}
+
+
+static void Ygl_printShaderError(int id,  GLuint shader )
 {
   GLsizei bufSize;
 
@@ -62,6 +68,13 @@ static void Ygl_printShaderError( GLuint shader )
       GLsizei length;
       glGetShaderInfoLog(shader, bufSize, &length, infoLog);
       YGLLOG("Shaderlog:\n%s\n", infoLog);
+
+      char * buf = malloc(length + 32);
+      sprintf(buf, "By shaer error %d:%s", id, infoLog);
+      //YuiErrorMsg(buf);
+
+      lastShaderError = buf;
+ 
       free(infoLog);
     }
   }
@@ -1866,8 +1879,8 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "uniform highp sampler2D s_line; \n"
 "uniform float u_from;\n"
 "uniform float u_to;\n"
-"layout(location = 0) in vec2 v_texcoord;\n"
-"layout(location = 0) out vec4 fragColor;\n"
+"in vec2 v_texcoord;\n"
+"out vec4 fragColor;\n"
 "void main()\n"
 "{\n"
 "  vec2 addr = v_texcoord;\n"
@@ -2917,7 +2930,7 @@ int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fc
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
        YGLLOG( "Compile error in vertex shader. %d\n", id );
-       Ygl_printShaderError(vshader);
+       Ygl_printShaderError(id, vshader);
        _prgid[id] = 0;
        return -1;
     }
@@ -2927,7 +2940,7 @@ int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fc
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
        YGLLOG( "Compile error in fragment shader.%d \n", id);
-       Ygl_printShaderError(fshader);
+       Ygl_printShaderError(id, fshader);
        _prgid[id] = 0;
        return -1;
      }
@@ -2945,7 +2958,7 @@ int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fc
     glGetShaderiv(tcsHandle, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in GL_TESS_CONTROL_SHADER shader.\n");
-      Ygl_printShaderError(tcsHandle);
+      Ygl_printShaderError(id,tcsHandle);
       _prgid[id] = 0;
       return -1;
     }
@@ -2961,7 +2974,7 @@ int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fc
     glGetShaderiv(tesHandle, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in GL_TESS_EVALUATION_SHADER shader.\n");
-      Ygl_printShaderError(tesHandle);
+      Ygl_printShaderError(id,tesHandle);
       _prgid[id] = 0;
       return -1;
     }
@@ -2977,7 +2990,7 @@ int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fc
     glGetShaderiv(gsHandle, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in GL_TESS_EVALUATION_SHADER shader.\n");
-      Ygl_printShaderError(gsHandle);
+      Ygl_printShaderError(id,gsHandle);
       _prgid[id] = 0;
       return -1;
     }
@@ -2988,7 +3001,7 @@ int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fc
     glGetProgramiv(_prgid[id], GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
        YGLLOG("Link error..\n");
-       Ygl_printShaderError(_prgid[id]);
+       Ygl_printShaderError(id,_prgid[id]);
        _prgid[id] = 0;
        return -1;
     }
@@ -3797,7 +3810,7 @@ int YglDrawBackScreen(float w, float h) {
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
+      Ygl_printShaderError(0,vshader);
       clear_prg = -1;
       return -1;
     }
@@ -3806,7 +3819,7 @@ int YglDrawBackScreen(float w, float h) {
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
+      Ygl_printShaderError(0, fshader);
       clear_prg = -1;
       return -1;
     }
@@ -3817,7 +3830,7 @@ int YglDrawBackScreen(float w, float h) {
     glGetProgramiv(clear_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
       YGLLOG("Link error..\n");
-      Ygl_printShaderError(clear_prg);
+      Ygl_printShaderError(0, clear_prg);
       clear_prg = -1;
       return -1;
     }
@@ -3954,7 +3967,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
+      Ygl_printShaderError(0, vshader);
       blit_prg = -1;
       return -1;
     }
@@ -3963,7 +3976,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
+      Ygl_printShaderError(0, fshader);
       blit_prg = -1;
       return -1;
     }
@@ -3974,7 +3987,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     glGetProgramiv(blit_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
       YGLLOG("Link error..\n");
-      Ygl_printShaderError(blit_prg);
+      Ygl_printShaderError(0, blit_prg);
       blit_prg = -1;
       return -1;
     }
@@ -4101,7 +4114,7 @@ int YglWindowFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float 
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
+      Ygl_printShaderError(0, vshader);
       blit_to_fb_prg = -1;
       return -1;
     }
@@ -4110,7 +4123,7 @@ int YglWindowFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float 
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
+      Ygl_printShaderError(0, fshader);
       blit_to_fb_prg = -1;
       return -1;
     }
@@ -4121,7 +4134,7 @@ int YglWindowFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float 
     glGetProgramiv(blit_to_fb_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
       YGLLOG("Link error..\n");
-      Ygl_printShaderError(blit_to_fb_prg);
+      Ygl_printShaderError(0, blit_to_fb_prg);
       blit_to_fb_prg = -1;
       return -1;
     }
@@ -4240,7 +4253,7 @@ int YglBlitFXAA(u32 sourceTexture, float w, float h) {
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
+      Ygl_printShaderError(0, vshader);
       fxaa_prg = -1;
       return -1;
     }
@@ -4250,7 +4263,7 @@ int YglBlitFXAA(u32 sourceTexture, float w, float h) {
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
+      Ygl_printShaderError(0, fshader);
       fxaa_prg = -1;
       return -1;
     }
@@ -4261,7 +4274,7 @@ int YglBlitFXAA(u32 sourceTexture, float w, float h) {
     glGetProgramiv(fxaa_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
       YGLLOG("Link error..\n");
-      Ygl_printShaderError(fxaa_prg);
+      Ygl_printShaderError(0, fxaa_prg);
       fxaa_prg = -1;
       return -1;
     }
@@ -4443,7 +4456,7 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
+      Ygl_printShaderError(0, vshader);
       blur_prg = -1;
       return -1;
     }
@@ -4453,7 +4466,7 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
+      Ygl_printShaderError(0, fshader);
       blur_prg = -1;
       return -1;
     }
@@ -4464,7 +4477,7 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
     glGetProgramiv(blur_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
       YGLLOG("Link error..\n");
-      Ygl_printShaderError(blur_prg);
+      Ygl_printShaderError(0, blur_prg);
       blur_prg = -1;
       return -1;
     }
@@ -4599,7 +4612,7 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matri
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
+      Ygl_printShaderError(0, vshader);
       mosaic_prg = -1;
       return -1;
     }
@@ -4609,7 +4622,7 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matri
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
+      Ygl_printShaderError(0, fshader);
       mosaic_prg = -1;
       return -1;
     }
@@ -4620,7 +4633,7 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matri
     glGetProgramiv(mosaic_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
       YGLLOG("Link error..\n");
-      Ygl_printShaderError(mosaic_prg);
+      Ygl_printShaderError(0, mosaic_prg);
       mosaic_prg = -1;
       return -1;
     }
@@ -4775,7 +4788,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
+      Ygl_printShaderError(0, vshader);
       perlinealpha_prg = -1;
       return -1;
     }
@@ -4785,7 +4798,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
+      Ygl_printShaderError(0, fshader);
       perlinealpha_prg = -1;
       return -1;
     }
@@ -4796,7 +4809,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
     glGetProgramiv(perlinealpha_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
       YGLLOG("Link error..\n");
-      Ygl_printShaderError(perlinealpha_prg);
+      Ygl_printShaderError(0, perlinealpha_prg);
       perlinealpha_prg = -1;
       return -1;
     }
@@ -4935,7 +4948,7 @@ int YglBlitScanlineFilter(u32 sourceTexture, u32 draw_res_v, u32 staturn_res_v) 
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       printf("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
+      Ygl_printShaderError(0, vshader);
       scanline_prg = -1;
       return -1;
     }
@@ -4945,7 +4958,7 @@ int YglBlitScanlineFilter(u32 sourceTexture, u32 draw_res_v, u32 staturn_res_v) 
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       printf("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
+      Ygl_printShaderError(0, fshader);
       scanline_prg = -1;
       return -1;
     }
@@ -4956,7 +4969,7 @@ int YglBlitScanlineFilter(u32 sourceTexture, u32 draw_res_v, u32 staturn_res_v) 
     glGetProgramiv(scanline_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
       printf("Link error..\n");
-      Ygl_printShaderError(scanline_prg);
+      Ygl_printShaderError(0, scanline_prg);
       scanline_prg = -1;
       return -1;
     }

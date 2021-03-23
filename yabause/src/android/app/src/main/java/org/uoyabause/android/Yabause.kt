@@ -106,19 +106,6 @@ import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.InputStream
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.Arrays
-import java.util.Date
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
@@ -135,6 +122,19 @@ import org.uoyabause.android.backup.TabBackupFragment
 import org.uoyabause.android.game.BaseGame
 import org.uoyabause.android.game.GameUiEvent
 import org.uoyabause.android.game.SonicR
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Arrays
+import java.util.Date
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 internal enum class TrayState {
     OPEN,
@@ -405,7 +405,10 @@ class Yabause : AppCompatActivity(),
                 var c = SonicR()
                 c.uievent = this
                 var menu = navigationView.menu
-                var submenu = menu.addSubMenu(Menu.NONE, MENU_ID_LEADERBOARD, Menu.NONE, "Leader Board")
+                var submenu = menu.addSubMenu(Menu.NONE,
+                    MENU_ID_LEADERBOARD,
+                    Menu.NONE,
+                    "Leader Board")
                 c.leaderBoards?.forEach {
                     var lmenu = submenu.add(it.title)
                     lmenu.setIcon(R.drawable.baseline_list_24)
@@ -1498,12 +1501,19 @@ class Yabause : AppCompatActivity(),
         }
     }
 
-    private var errmsg: String? = null
+    //private var errmsg: String? = null
     fun errorMsg(msg: String) {
-        errmsg = msg
+        val errmsg = msg
         Log.d(TAG, "errorMsg $msg")
         runOnUiThread {
-            Snackbar.make(drawerLayout, errmsg!!, Snackbar.LENGTH_SHORT).show()
+
+            AlertDialog.Builder(this)
+                .setTitle("Error!")
+                .setMessage(errmsg)
+                .setPositiveButton(R.string.exit) { _, _ -> finish() }
+                .show()
+
+            //Snackbar.make(drawerLayout, errmsg!!, Snackbar.LENGTH_SHORT).show()
         }
     }
 
@@ -1737,7 +1747,6 @@ class Yabause : AppCompatActivity(),
         const val REPORT_STATE_FAIL_DUPE = -1
         const val REPORT_STATE_FAIL_CONNECTION = -2
         const val REPORT_STATE_FAIL_AUTH = -3
-
         init {
             System.loadLibrary("yabause_native")
         }

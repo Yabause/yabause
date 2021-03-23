@@ -1562,7 +1562,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
   if (YglProgramInit() != 0) {
     YGLDEBUG("Fail to YglProgramInit\n");
-    abort();
+    return -1;
   }
   
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo );
