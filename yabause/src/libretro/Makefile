@@ -134,15 +134,24 @@ ifeq ($(arch),ppc)
 	HAVE_SSE = 0
 endif
 ifeq ($(arch),arm64)
-	CC_AS =  perl ./libretro/gas-preprocessor.pl $(CC)
-	CC = clang -arch arm64
-	CXX = clang++ -arch arm64
 	HAVE_SSE = 0
 endif
 	#DYNAREC = 2
 	FLAGS += -pthread
 	LDFLAGS += -pthread
 	ARCH_IS_MACOSX = 1
+
+   ifeq ($(CROSS_COMPILE),1)
+		TARGET_RULE   = -target $(LIBRETRO_APPLE_PLATFORM) -isysroot $(LIBRETRO_APPLE_ISYSROOT)
+		CFLAGS   += $(TARGET_RULE)
+		CPPFLAGS += $(TARGET_RULE)
+		CXXFLAGS += $(TARGET_RULE)
+		LDFLAGS  += $(TARGET_RULE)
+   endif
+
+	CFLAGS  += $(ARCHFLAGS)
+	CXXFLAGS  += $(ARCHFLAGS)
+	LDFLAGS += $(ARCHFLAGS)
 
 else ifneq (,$(findstring ios,$(platform)))
 	# iOS
