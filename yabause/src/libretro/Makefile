@@ -133,7 +133,7 @@ ifeq ($(arch),ppc)
 	ENDIANNESS_DEFINES := -DWORDS_BIGENDIAN -DMSB_FIRST -D__ppc__
 	HAVE_SSE = 0
 endif
-ifeq ($(arch),arm64)
+ifeq ($(shell uname -p),arm)
 	HAVE_SSE = 0
 endif
 	#DYNAREC = 2
