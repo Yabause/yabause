@@ -142,6 +142,9 @@ endif
 	ARCH_IS_MACOSX = 1
 
    ifeq ($(CROSS_COMPILE),1)
+ifneq (,$(findstring arm64,$(LIBRETRO_APPLE_PLATFORM)))
+	HAVE_SSE = 0
+endif
 		TARGET_RULE   = -target $(LIBRETRO_APPLE_PLATFORM) -isysroot $(LIBRETRO_APPLE_ISYSROOT)
 		CFLAGS   += $(TARGET_RULE)
 		CPPFLAGS += $(TARGET_RULE)
