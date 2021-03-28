@@ -96,11 +96,11 @@
     <string name="video_filter_none">Нет</string>
     <string name="video_filter_fxaa">FXAA</string>
     <string name="video_filter_scanline">Сканлайны (эффект ЭЛТ)</string>
-    <string name="video_filter_bilinear">Билинейный (не работает для рендеринга в нативном разрешении)</string>
+    <string name="video_filter_bilinear">Билинейный (не работает при рендеринге в нативном разрешении)</string>
     <string name="browse_title"><![CDATA[Videos by Your Company]]></string>
     <string name="related_movies">Похожие видео</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
-    <string name="delete_confirm">"Удалить данную запись?"</string>
+    <string name="delete_confirm">"Удалить запись?"</string>
     <string name="error">Ошибка</string>
     <string name="ok">OK</string>
     <string name="cancel">Отмена</string>
@@ -202,14 +202,14 @@
     <string name="waiting_for_reading">Ожидание завершения считывания.</string>
     <string name="checking_file">Проверка файла.</string>
     <string name="download_file_is_broken">Загруженный файл повреждён.</string>
-    <string name="you_need_wifi_connection">Требуется Wi-Fi-соединение.</string>
+    <string name="you_need_wifi_connection">Требуется соединение по Wi-Fi.</string>
     <string name="free_space">Свободное место</string>
     <string name="no_enough_free_space">Недостаточно свободного места.</string>
 
     <string name="extend_internal_memory">Расширение внутренней памяти до 8 Мб</string>
 
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Привет, чистый фрагмент</string>
+    <string name="hello_blank_fragment">Привет, пустой фрагмент</string>
     <string name="this_func_not_yet">Данная функция ещё не добавлена.</string>
     <string name="memory_manager">Менеджер памяти</string>
     <string name="have_donated">Я уже поддержал uoYabause (не Yaba Sanshiro)</string>
@@ -217,7 +217,7 @@
     <string name="send_your_order_id">Отправьте ваш номер заказа uoYabause, чтобы отключить рекламу. Уточнить номер заказа можно на http://payments.google.com</string>
     <string name="order_number_not_found">Такой номер заказа не обнаружен.</string>
     <string name="order_number_used">Данный номер заказа уже используется.</string>
-    <string name="new_version_available">Доступно обновление Yaba Sanshiro</string>
+    <string name="new_version_available">Доступна новая версия Yaba Sanshiro</string>
 
     <string name="sign_in_cancelled">Вход отменён</string>
     <string name="no_internet_connection">Отсутствует соединение с Интернет</string>
@@ -225,7 +225,7 @@
     <string name="unknown_sign_in_response">Неизвестный запрос на вход</string>
     <string name="are_you_sure_to_delete">Вы уверены, что хотите удалить</string>
     <string name="share">Поделиться</string>
-    <string name="unsahre">Не делиться</string>
+    <string name="unsahre">Нет</string>
     <string name="send">Отправить</string>
     <string name="issue_report">ОПИСАНИЕ ПРОБЛЕМЫ:</string>
     <string name="status_report">ТЕКУЩИЙ СТАТУС:</string>
@@ -233,7 +233,7 @@
     <string name="report_message_1">Игра не запускается.</string>
     <string name="report_message_2">Загружается до титульного экрана, но дальше неиграбельно.</string>
     <string name="report_message_3">Запускается, но много графических и звуковых багов.</string>
-    <string name="report_message_4">Запускается, но с багами графики и звука.</string>
+    <string name="report_message_4">Запускается, но с искажениями графики и звука.</string>
     <string name="report_message_5">Идёт практически идеально.</string>
     <string name="report_message_6">Идёт идеально, игру можно пройти.</string>
     <string name="accept">Принять</string>
@@ -275,11 +275,11 @@
 
     <string name="time_synchronization_mode">Режим синхронизации звука</string>
     <string name="choose_time_synchronization_mode">Выбор режима синхронизации звука</string>
-    <string name="cpu_time">Время CPU (синхронизировать с временем эмулируемого CPU. Обеспечивает точную эмуляцию звука, если устройство достаточно быстрое.)</string>
-    <string name="real_time">Реальное время (синхронизировать с рельным временем. Звук не искажается даже для небыстрых устройств)</string>
+    <string name="cpu_time">Время CPU (синхронизировать с временем эмулируемого CPU; обеспечивает точную эмуляцию звука, если устройство достаточно быстрое.)</string>
+    <string name="real_time">Реальное время (синхронизировать с рельным временем; звук не искажается даже для небыстрых устройств.)</string>
     <string name="privacy_policy">Политика конфиденциальности</string>
     <string name="information">Информация</string>
-    <string name="already_have_been">Если вы уже поддержали, свяжитесь с smiyaxdev@gmail.com</string>
+    <string name="already_have_been">Если вы уже поддержали, напишите по адресу smiyaxdev@gmail.com</string>
     <string name="close">Закрыть</string>
     <string name="show_fps">Показывать FPS</string>
     <string name="enable_frame_skip">Включить пропуск кадров</string>
@@ -288,7 +288,7 @@
         <![CDATA[
         # Приветствуем!\n\n
 
-        Для запуска игр SEGA Saturn следуйте инструкциям.\n\n
+        Для запуска игр SEGA Saturn следуйте инструкциям:\n\n
 
         1. Снимите образы с игровых дисков с помощью DiscImageChef или схожего ПО. [Полезные ссылки](http://wiki.redump.org/index.php?title=Useful_Links.)\n
         2. Скопируйте файлы образов в каталог **\"%1$s\"** во внутренней памяти устройства.\n
@@ -296,15 +296,40 @@
         4. Выберите запись для запуска.\n
         5. Приятной игры!\n
         \n
-        Для получения дополнительной информации посетите наш [сайт](https://www.uoyabause.org/static_pages/guide).\n
+        Для дополнительной информации посетите наш [сайт](https://www.uoyabause.org/static_pages/guide).\n
         ]]>
     </string>
     <string name="delete_confirm_title">ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ</string>
     <string name="not_available">НЕДОСТУПНО!</string>
-    <string name="only_pro_version">Данная функция доступна только для версии Pro</string>
-    <string name="got_it">Понятно!</string>
+    <string name="only_pro_version">Данная функция доступна только в версии Pro</string>
+    <string name="got_it">OK!</string>
     <string name="enter_pinin">Введите данный PIN на вашем устройстве</string>
     <string name="sign_in_to_other_devices">Вход на других устройствах</string>
     <string name="hide_status_bar_and_navigation_bar">Скрыть строку состояния и кнопки навигации</string>
+    <string name="title_activity_yaba_snashiro_settings">YabaSnashiroSettingsActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Сообщения</string>
+    <string name="sync_header">Синхронизация</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Подпись</string>
+    <string name="reply_title">Ответ по умолчанию</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Периодически синхронизировать почту</string>
+    <string name="attachment_title">Скачать входящие вложения</string>
+    <string name="attachment_summary_on">Автоматически скачивать вложения для входящих писем
+    </string>
+    <string name="attachment_summary_off">Скачивать вложения только вручную</string>
+    <string name="do_you_want_to_install">Установить?</string>
+    <string name="only_chd_is_supported_for_load_game">Вы можетеYou can choose chd,zip,7z file.</string>
+    <string name="install_game_message">После установки вы сможете загружать игру из плейлиста. Это потребует  </string>
+    <string name="install_game_message_after">Мб внутренней памяти.</string>
+
+    <string name="menu_acp">Код Action Replay</string>
+    <string name="updating">Обновление...</string>
+    <string name="add_a_game">Добавить игру</string>
+
 </resources>
 	
