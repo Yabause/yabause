@@ -727,7 +727,6 @@ void MappedMemoryInit()
      &BupRamMemoryWriteWord,
      &BupRamMemoryWriteLong);
 }
-#endif
 
 #if 0
 #define GET_MEM_CYCLE_W *cycle = 0;
