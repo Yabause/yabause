@@ -43,12 +43,10 @@
     </string-array>
     <string-array name="entries_polygon_generation_type" translatable="false">
         <item>@string/poly_triangle</item>
-        <item>@string/poly_cpu_tess</item>
         <item>@string/poly_gpu_tess</item>
     </string-array>
     <string-array name="entryvalues_polygon_generation_type" translatable="false">
         <item>0</item>
-        <item>1</item>
         <item>2</item>
     </string-array>
 
@@ -146,6 +144,18 @@
     <string-array name="reply_values">
         <item>reply</item>
         <item>reply_all</item>
+    </string-array>
+
+    <string-array name="entriesFrameLimit">
+        <item>@string/frameLimitNormal</item>
+        <item>@string/frameLimitDouble</item>
+        <item>@string/frameLimitUnLimited</item>
+    </string-array>
+
+    <string-array name="entryValuesFrameLimit">
+        <item>0</item>
+        <item>2</item>
+        <item>1</item>
     </string-array>
 
 

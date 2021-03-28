@@ -23,6 +23,11 @@
 #include "Settings.h"
 #include "VolatileSettings.h"
 
+#ifdef HAVE_VULKAN
+#include "vulkan/VIDVulkan.h"
+#include "vulkan/VIDVulkanCInterface.h"
+#endif
+
 #include <QApplication>
 #include <QLabel>
 #include <QGroupBox>
@@ -111,6 +116,9 @@ VideoInterface_struct *VIDCoreList[] = {
 &VIDOGL,
 #endif
 &VIDSoft,
+#ifdef HAVE_VULKAN
+&CVIDVulkan,
+#endif
 NULL
 };
 
@@ -124,6 +132,9 @@ OSD_struct *OSDCoreList[] = {
 &OSDSoft,
 #ifdef HAVE_LIBGL
 &OSDNnovg,
+#endif
+#ifdef HAVE_VULKAN
+&OSDNnovgVulkan,
 #endif
 NULL
 };
@@ -149,12 +160,18 @@ QMap<uint, PerAnalog_struct*> mPort2AnalogBits;
 extern "C" 
 {
 	void YuiErrorMsg(const char *string)
-	{ QtYabause::mainWindow()->appendLog( string ); }
+	{ 
+    QtYabause::mainWindow()->appendLog( string ); 
+  }
 	
 	void YuiSwapBuffers()
-	{ 
-		QtYabause::mainWindow()->swapBuffers(); 
-		}
+	{
+    if (VIDCore->id == VIDCORE_VULKAN) {
+      VIDVulkan::getInstance()->present();
+    }else{
+      QtYabause::mainWindow()->swapBuffers();
+    }
+	}
 
 #if defined(HAVE_DIRECTINPUT) || defined(HAVE_DIRECTSOUND)
    HWND DXGetWindow()

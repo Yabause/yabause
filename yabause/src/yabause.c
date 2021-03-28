@@ -131,6 +131,8 @@ u32 saved_scsp_cycles = 0;//fixed point
 volatile u64 saved_m68k_cycles = 0;//fixed point
 static u32 g_scsp_main_mode = 1;
 
+extern char * getLastShaderError();
+
 //////////////////////////////////////////////////////////////////////////////
 
 #ifndef NO_CLI
@@ -268,7 +270,11 @@ int YabauseInit(yabauseinit_struct *init)
 
    if (VideoInit(init->vidcoretype) != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, _("Video"));
+      if(getLastShaderError() != NULL){
+         YabSetError(YAB_ERR_CANNOTINIT, getLastShaderError() );
+      }else{
+         YabSetError(YAB_ERR_CANNOTINIT, _("Video"));
+      }
       return -1;
    }
 
@@ -343,6 +349,9 @@ int YabauseInit(yabauseinit_struct *init)
 
    if (init->frameskip)
       EnableAutoFrameSkip();
+
+   VDP2SetFrameLimit(init->framelimit);
+
 
 #ifdef YAB_PORT_OSD
    OSDChangeCore(init->osdcoretype);
@@ -468,6 +477,7 @@ void YabFlushBackups(void)
 
 void YabauseDeInit(void) {
    
+  OSDDeInit();
    Vdp2DeInit();
    Vdp1DeInit();
    
@@ -1006,7 +1016,7 @@ void YabauseSetVideoFormat(int type) {
    yabsys.tickfreq = 1000;
 #endif
    yabsys.OneFrameTime =
-      type ? (yabsys.tickfreq / 50) : (yabsys.tickfreq * 1001 / 60000);
+      type ? (yabsys.tickfreq / 50) : (yabsys.tickfreq * 10000 / 600000);
    Vdp2Regs->TVSTAT = Vdp2Regs->TVSTAT | (type & 0x1);
    ScspChangeVideoFormat(type);
    YabauseChangeTiming(yabsys.CurSH2FreqType);

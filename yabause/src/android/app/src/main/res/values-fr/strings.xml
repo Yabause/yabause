@@ -80,7 +80,7 @@
     <string name="dynrec_cpu_interface">Recompileur Dynamique ( rapide mais moins précis )</string>
     <string name="software_cpu_interface">Interprèteur ( lent mais plus précis )</string>
 
-    <string name="opengl_video_interface">Interface Vidéo OpenGL</string>
+    <string name="opengl_video_interface">OpenGL</string>
     <string name="software_video_interface">Interface Vidéo Logiciel</string>
     <string name="onscreen_pad">Contrôles Tactiles</string>
     <string name="select_from_other_directory">Choisir depuis un autre répertoire.</string>
@@ -140,7 +140,7 @@
     <string name="open_cd_tray">Ouvrir le Plateau du CD</string>
     <string name="close_cd_tray">Fermer le Plateau du CD</string>
     <string name="menu_analog">Activer les Contrôles Analogiques</string>
-    <string name="menu_cheat">Cheat</string>
+    <string name="menu_acp">Action Replay Code</string>
     <string name="add_new_code">Ajouter un Nouveau Code</string>
 
     <string name="enable">Activer</string>
@@ -184,7 +184,7 @@
          4. Appuyez sur le titre du jeu auquel vous souhaitez jouer. \n
          5. Profitez-en! \n
          \n
-         Pour plus de détails, consultez notre [site Web] (https://www.uoyabause.org/static_pages/guide).
+         Pour plus de détails, consultez notre this [Youtube video](https://www.youtube.com/watch?v=Ch6_KhhAg10).
         ]]>
     </string>
 
@@ -192,5 +192,9 @@
     <string name="not_available">INDISPONIBLE!</string>
     <string name="only_pro_version">Cette fonction n\'est disponible que pour la version pro</string>
     <string name="got_it">Je l\'ai!</string>
+
+    <string name="siginin_message">
+        La connexion permet de sauvegarder les données de sauvegarde et les données d\'état dans le cloud et de les partager entre les appareils.\n Cependant, ces fonctions sont expérimentales, elles ne fonctionnent donc pas comme prévu, les spécifications peuvent être modifiées ou supprimées sans préavis.
+    </string>
 
 </resources>

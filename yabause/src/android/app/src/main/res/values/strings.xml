@@ -82,8 +82,9 @@
     <string name="dynrec_cpu_interface">Old Dynamic Recompiler(fast but less accurate)</string>
     <string name="software_cpu_interface">Interpreter(slow but more accurate)</string>
 
-    <string name="opengl_video_interface">OpenGL Video Interface</string>
-    <string name="software_video_interface">Software Video Interface</string>
+    <string name="opengl_video_interface">OpenGL</string>
+    <string name="software_video_interface">Software</string>
+    <string name="vulkan_video_interface">Vulkan(Experimental)</string>
     <string name="onscreen_pad">On-Screen Pad</string>
     <string name="select_from_other_directory">Select from other directory.</string>
 
@@ -151,7 +152,6 @@
     <string name="close_cd_tray">Close CD Tray</string>
     <string name="menu_analog">Enable Analog Control</string>
     <string name="menu_set_as_gametitle">Set As Title Icon</string>
-    <string name="menu_cheat">Cheat</string>
     <string name="add_new_code">Add New Code</string>
     <string name="str_use_compute_shader">Use Compute Shader</string>
     <string name="enable">Enable</string>
@@ -241,9 +241,7 @@
     <string name="sign_out">Sign out</string>
     <string name="sign_in">Sign in</string>
     <string name="siginin_message">
-        Signing in will enable the following functions.\n
-        * Back up saved data to the cloud\n
-        * Share cheat code with other users\n\n
+        Signing in enable to backup save data and state data to the cloud and share them between devices.\n
         However, these functions are experimental, so they do not work as expected, specifications may be changed or terminated without prior notice.
     </string>
     <string name="agree">I agree</string>
@@ -296,7 +294,7 @@
         4. Tap the game title you want to play.\n
         5. Enjoy!\n
         \n
-        For more detail checkout our [website](https://www.uoyabause.org/static_pages/guide).\n
+        For more detail checkout this [Youtube video](https://www.youtube.com/watch?v=Ch6_KhhAg10).\n
         ]]>
     </string>
     <string name="delete_confirm_title">DELETE CONFIRM</string>
@@ -330,6 +328,11 @@
     <string name="menu_acp">Action Replay Code</string>
     <string name="updating">Updating...</string>
     <string name="add_a_game">Add a game</string>
+    <string name="frameLimit">Speed Limit</string>
+    <string name="chooseFrameLimit">Choose frame limit mode</string>
+    <string name="frameLimitNormal">Normal</string>
+    <string name="frameLimitDouble">Double</string>
+    <string name="frameLimitUnLimited">No Limit</string>
 
 </resources>
 	

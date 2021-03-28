@@ -1,6 +1,6 @@
 const GLchar Yglprg_fxaa_v[] = 
 #if defined (_OGLES3_)
-"#version 300 es \n"
+"#version 310 es \n"
 #else
 "#version 330 \n"
 #endif
@@ -16,7 +16,7 @@ const GLchar Yglprg_fxaa_v[] =
 
 const GLchar Yglprg_fxaa_f_option_nv[] =
 #if defined (_OGLES3_)
-"#version 300 es \n"
+"#version 310 es \n"
 "#extension GL_ARB_gpu_shader5: enable \n"
 "precision mediump float; \n"
 #else
@@ -30,8 +30,7 @@ const GLchar Yglprg_fxaa_f_option_nv[] =
 
 const GLchar Yglprg_fxaa_f_option_others[] =
 #if defined (_OGLES3_)
-"#version 300 es \n"
-"precision mediump float; \n"
+"#version 310 es \n"
 #else
 "#version 330 \n"
 #endif

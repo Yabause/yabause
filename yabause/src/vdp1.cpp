@@ -343,12 +343,12 @@ extern "C" void Vdp1Reset(void) {
 
    Vdp1Regs->userclipX1 = 0;
    Vdp1Regs->userclipY1 = 0;
-   Vdp1Regs->userclipX2 = 1024;
-   Vdp1Regs->userclipY2 = 1024;
+   Vdp1Regs->userclipX2 = 0;
+   Vdp1Regs->userclipY2 = 0;
    Vdp1Regs->systemclipX1 = 0;
    Vdp1Regs->systemclipY1 = 0;
-   Vdp1Regs->systemclipX2 = 1024;
-   Vdp1Regs->systemclipY2 = 1024;
+   Vdp1Regs->systemclipX2 = 0;
+   Vdp1Regs->systemclipY2 = 0;
 
    // Safe tarminator for Radient silvergun with no bios
    T1WriteWord(Vdp1Ram, 0x40000, 0x8000);
@@ -1674,6 +1674,8 @@ void VIDDummSetFilterMode(int typei,int a ){};
 void VIDDummSync(){};
 void VIDDummyGetNativeResolution(int *width, int * height, int *interlace);
 void VIDDummyVdp2DispOff(void);
+void VIDDummyOnUpdateColorRamWord(u32 addr) {};
+void VIDDummyVulkanGetScreenshot(void ** outbuf, int * width, int * height) { return; }
 
 VideoInterface_struct VIDDummy = {
 	VIDCORE_DUMMY,
@@ -1707,6 +1709,8 @@ VideoInterface_struct VIDDummy = {
 	VIDDummSync,
 	VIDDummyGetNativeResolution,
 	VIDDummyVdp2DispOff,
+  VIDDummyOnUpdateColorRamWord,
+  VIDDummyVulkanGetScreenshot
 };
 
 //////////////////////////////////////////////////////////////////////////////

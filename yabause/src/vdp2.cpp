@@ -59,6 +59,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "vidogl.h"
 #include "vidsoft.h"
 #include <atomic>
+#include "vulkan/VIDVulkanCInterface.h"
 
 u8 * Vdp2Ram;
 u8 * Vdp2ColorRam;
@@ -92,6 +93,16 @@ static u64 syncticks = 0;       // CPU time sync for real time.
 static int vdp_proc_running = 0;
 YabMutex * vrammutex = NULL;
 int g_frame_count = 0;
+static int framestoskip = 0;
+static int framesskipped = 0;
+static int skipnextframe = 0;
+static int previous_skipped = 0;
+static u64 curticks = 0;
+static u64 diffticks = 0;
+static u32 framecount = 0;
+static s64 onesecondticks = 0;
+static int enableFrameLimit = 1;
+static int frameLimitShift = 0;
 
 //#define LOG yprintf
 #define PROFILE_RENDERING 0
@@ -266,20 +277,20 @@ void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
    if (Vdp2Internal.ColorMode == 0 ) {
      if (val != T2ReadWord(Vdp2ColorRam, addr)) {
        T2WriteWord(Vdp2ColorRam, addr, val);
-       YglOnUpdateColorRamWord(addr);
+       VIDCore->OnUpdateColorRamWord(addr);
      }
 
      if (addr < 0x800) {
        if (val != T2ReadWord(Vdp2ColorRam, addr + 0x800)) {
          T2WriteWord(Vdp2ColorRam, addr + 0x800, val);
-         YglOnUpdateColorRamWord(addr + 0x800);
+         VIDCore->OnUpdateColorRamWord(addr + 0x800);
        }
      }
    }
    else {
      if (val != T2ReadWord(Vdp2ColorRam, addr)) {
        T2WriteWord(Vdp2ColorRam, addr, val);
-       YglOnUpdateColorRamWord(addr);
+       VIDCore->OnUpdateColorRamWord(addr);
      }
    }
 }
@@ -294,24 +305,24 @@ void FASTCALL Vdp2ColorRamWriteLong(u32 addr, u32 val) {
 
      const u32 base_addr = addr;
      T2WriteLong(Vdp2ColorRam, base_addr, val);
-     YglOnUpdateColorRamWord(base_addr + 2);
-     YglOnUpdateColorRamWord(base_addr);
+     VIDCore->OnUpdateColorRamWord(base_addr + 2);
+     VIDCore->OnUpdateColorRamWord(base_addr);
 
      if (addr < 0x800) {
        const u32 mirror_addr = base_addr + 0x800;
        T2WriteLong(Vdp2ColorRam, mirror_addr, val);
-       YglOnUpdateColorRamWord(mirror_addr + 2);
-       YglOnUpdateColorRamWord(mirror_addr);
+       VIDCore->OnUpdateColorRamWord(mirror_addr + 2);
+       VIDCore->OnUpdateColorRamWord(mirror_addr);
      }
    }
    else {
      T2WriteLong(Vdp2ColorRam, addr, val);
      if (Vdp2Internal.ColorMode == 2) {
-       YglOnUpdateColorRamWord(addr);
+       VIDCore->OnUpdateColorRamWord(addr);
      }
      else {
-       YglOnUpdateColorRamWord(addr + 2);
-       YglOnUpdateColorRamWord(addr);
+       VIDCore->OnUpdateColorRamWord(addr + 2);
+       VIDCore->OnUpdateColorRamWord(addr);
      }
    }
 
@@ -347,7 +358,7 @@ int Vdp2Init(void) {
 
    memset(Vdp2ColorRam, 0xFF, 0x1000);
    for (int i = 0; i < 0x1000; i += 2) {
-     YglOnUpdateColorRamWord(i);
+     VIDCore->OnUpdateColorRamWord(i);
    }
 
    return 0;
@@ -686,6 +697,81 @@ void VDP2genVRamCyclePattern() {
   }
 }
 
+// 0 .. 60Hz, 1 .. no limit, 2 .. 2x(120Hz)
+void VDP2SetFrameLimit(int mode) {
+  switch (mode) {
+  case 0:
+    enableFrameLimit = 1;
+    frameLimitShift = 0; // 60Hz
+    framecount = 0;
+    onesecondticks = 0;
+    lastticks = YabauseGetTicks();
+    break;
+  case 1:
+    enableFrameLimit = 0;
+    frameLimitShift = 0;
+    break;
+  case 2:
+    enableFrameLimit = 1;
+    frameLimitShift = 1; // 120Hz
+    framecount = 0;
+    onesecondticks = 0;
+    lastticks = YabauseGetTicks();
+    break;
+  default:
+    enableFrameLimit = 1;
+    frameLimitShift = 0;
+    framecount = 0;
+    onesecondticks = 0;
+    lastticks = YabauseGetTicks();
+    break;
+  }
+}
+
+void frameSkipAndLimit() {
+  if (FrameAdvanceVariable == 0 && enableFrameLimit )
+  {
+    const u32 fps = (yabsys.IsPal ? 50 : 60) << frameLimitShift ;
+    framecount++;
+    curticks = YabauseGetTicks();
+    if (framecount > fps)
+    {
+      onesecondticks -= yabsys.tickfreq;
+      if (onesecondticks > (s64)( (yabsys.OneFrameTime>>frameLimitShift)  * 4)) {
+        onesecondticks = 0;
+      }
+      framecount = 1;
+      lastticks = (curticks - (yabsys.OneFrameTime>>frameLimitShift) );
+    }
+
+    u64 targetTime = ( (yabsys.OneFrameTime>>frameLimitShift)  * (u64)framecount);
+    if (framecount == fps) {
+      targetTime = yabsys.tickfreq; // 1sec
+    }
+
+    diffticks = curticks - lastticks;
+
+    if ( autoframeskipenab && (onesecondticks + diffticks) > targetTime )
+    {
+      // Skip the next frame
+      skipnextframe = 1;
+
+      // How many frames should we skip?
+      framestoskip = 1;
+
+    }
+    
+    if ( (onesecondticks + diffticks) < targetTime)
+    {
+      YabNanosleep(targetTime - (onesecondticks + diffticks));
+    }
+
+    onesecondticks += diffticks;
+    lastticks = curticks;
+  }
+
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 void vdp2VBlankIN(void) {
@@ -698,6 +784,7 @@ void vdp2VBlankIN(void) {
    //if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
    VIDCore->Vdp2DrawEnd();
+   frameSkipAndLimit();
    VIDCore->Sync();
    Vdp2Regs->TVSTAT |= 0x0008;
 
@@ -745,6 +832,7 @@ void Vdp2VBlankIN(void) {
    //if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
    VIDCore->Vdp2DrawEnd();
+   frameSkipAndLimit();
    VIDCore->Sync();
    Vdp2Regs->TVSTAT |= 0x0008;
 
@@ -969,6 +1057,7 @@ static void FPSDisplay(void)
 {
   static int fpsframecount = 0;
   static u64 fpsticks;
+  //yprintf("%02d/%02d FPS skip=%d vdp1=%02d", fps, yabsys.IsPal ? 50 : 60, show_skipped_frame, show_vdp1_frame);
 #if 1 // FPS only
    OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS skip=%d vdp1=%02d", fps, yabsys.IsPal ? 50 : 60, show_skipped_frame, show_vdp1_frame);
    //printf("\033[%d;%dH %02d/%02d FPS skip=%d vdp1=%02d \n", 0, 0, fps, yabsys.IsPal ? 50 : 60, show_skipped_frame, show_vdp1_frame);
@@ -1063,7 +1152,7 @@ void restorevram() {
   fclose(fp);
 
   for (int i = 0; i < 0x1000; i += 2) {
-    YglOnUpdateColorRamWord(i);
+    VIDCore->OnUpdateColorRamWord(i);
   }
 }
 
@@ -1080,14 +1169,6 @@ void vdp2ReqRestore() {
 
 //////////////////////////////////////////////////////////////////////////////
 void vdp2VBlankOUT(void) {
-  static int framestoskip = 0;
-  static int framesskipped = 0;
-  static int skipnextframe = 0;
-  static int previous_skipped = 0;
-  static u64 curticks = 0;
-  static u64 diffticks = 0;
-  static u32 framecount = 0;
-  static u64 onesecondticks = 0;
   static VideoInterface_struct * saved = NULL;
   int isrender = 0;
 #if PROFILE_RENDERING
@@ -1142,7 +1223,14 @@ void vdp2VBlankOUT(void) {
     //VIDCore = saved;
     if( saved != NULL ){
 
-      if (VIDCore->id == VIDCORE_OGL) {
+      if (VIDCore->id == VIDCORE_VULKAN) {
+#if defined(HAVE_VULKAN)
+        VIDCore->Vdp2DrawStart = VIDVulkanVdp2DrawStart;
+        VIDCore->Vdp2DrawEnd = VIDVulkanVdp2DrawEnd;
+        VIDCore->Vdp2DrawScreens = VIDVulkanVdp2DrawScreens;
+#endif
+      }
+      else if (VIDCore->id == VIDCORE_OGL) {
         VIDCore->Vdp2DrawStart = VIDOGLVdp2DrawStart;
         VIDCore->Vdp2DrawEnd = VIDOGLVdp2DrawEnd;
         VIDCore->Vdp2DrawScreens = VIDOGLVdp2DrawScreens;
@@ -1224,6 +1312,7 @@ void vdp2VBlankOUT(void) {
   }
 
    FPSDisplay();
+#if 1
    //if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
    //   Vdp1External.manualerase = 1;
 
@@ -1246,50 +1335,7 @@ void vdp2VBlankOUT(void) {
       framesskipped++;
    }
 
-   // Do Frame Skip/Frame Limiting/Speed Throttling here
-   if (throttlespeed)
-   {
-      // Should really depend on how fast we're rendering the frames
-      if (framestoskip < 1)
-         framestoskip = 6;
-   }
-   //when in frame advance, disable frame skipping
-   else if (autoframeskipenab && FrameAdvanceVariable == 0)
-   {
-      framecount++;
-
-      if (framecount > (yabsys.IsPal ? 50 : 60))
-      {
-         framecount = 1;
-         onesecondticks = 0;
-      }
-
-      curticks = YabauseGetTicks();
-      diffticks = curticks-lastticks;
-
-      if ((onesecondticks+diffticks) > ((yabsys.OneFrameTime * (u64)framecount) + (yabsys.OneFrameTime / 2)) &&
-          framesskipped < 9)
-      {
-         // Skip the next frame
-         skipnextframe = 1;
-
-         // How many frames should we skip?
-         framestoskip = 1;
-      }else if ((onesecondticks+diffticks) < ((yabsys.OneFrameTime * (u64)framecount) - (yabsys.OneFrameTime / 2)))
-      {
-         // Check to see if we need to limit speed at all
-         for (;;)
-         {
-            curticks = YabauseGetTicks();
-            diffticks = curticks-lastticks;
-            if ((onesecondticks+diffticks) >= (yabsys.OneFrameTime * (u64)framecount))
-               break;
-         }
-      }
-
-      onesecondticks += diffticks;
-      lastticks = curticks;
-   }
+#endif
    VdpUnLockVram();
 #if PROFILE_RENDERING
    static FILE * framefp = NULL;
@@ -1892,7 +1938,7 @@ void FASTCALL Vdp2WriteWord(u32 addr, u16 val) {
          if (Vdp2Internal.ColorMode != ((val >> 12) & 0x3) ) {
            Vdp2Internal.ColorMode = (val >> 12) & 0x3;
            for (int i = 0; i < 0x1000; i += 2) {
-             YglOnUpdateColorRamWord(i);
+             VIDCore->OnUpdateColorRamWord(i);
            }
          }
          
@@ -2367,7 +2413,7 @@ int Vdp2LoadState(FILE *fp, UNUSED int version, int size)
    //if(VIDCore) VIDCore->Resize(0,0,-1,-1,0,0);
 
    for (int i = 0; i < 0x1000; i += 2) {
-     YglOnUpdateColorRamWord(i);
+     VIDCore->OnUpdateColorRamWord(i);
    }
 
    return size;

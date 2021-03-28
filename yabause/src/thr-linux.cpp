@@ -285,32 +285,31 @@ void YabThreadFreeMutex( YabMutex * mtx ){
 
 void YabThreadSetCurrentThreadAffinityMask(int mask)
 {
-#if defined(__XU4__) || defined(IOS)
+#if defined(__XU4__) || defined(IOS) || defined(__JETSON__)
 	return;
-#endif
-
-#if !defined(ANDROID) // it needs more than android-21
-    int err, syscallres;
-#ifdef SYS_gettid
-    pid_t pid = syscall(SYS_gettid);
 #else
-    pid_t pid = gettid();
-#endif    
-    mask = 1 << mask;
-    syscallres = syscall(__NR_sched_setaffinity, pid, sizeof(mask), &mask);
-    if (syscallres)
-    {
-        err = errno;
-        //LOG("Error in the syscall setaffinity: mask=%d=0x%x err=%d=0x%x", mask, mask, err, err);
-    }
-
-//    cpu_set_t my_set;        /* Define your cpu_set bit mask. */
-//    CPU_ZERO(&my_set);       /* Initialize it all to 0, i.e. no CPUs selected. */
-//    CPU_SET(mask, &my_set);
-//	CPU_SET(mask+4, &my_set);
-//    sched_setaffinity(pid,sizeof(my_set), &my_set);
+	#if !defined(ANDROID) // it needs more than android-21
+	    int err, syscallres;
+		#ifdef SYS_gettid
+		    pid_t pid = syscall(SYS_gettid);
+		#else
+		    pid_t pid = gettid();
+		#endif    
+	    mask = 1 << mask;
+	    syscallres = syscall(__NR_sched_setaffinity, pid, sizeof(mask), &mask);
+	    if (syscallres)
+	    {
+	        err = errno;
+	        //LOG("Error in the syscall setaffinity: mask=%d=0x%x err=%d=0x%x", mask, mask, err, err);
+	    }
+	
+	//    cpu_set_t my_set;        /* Define your cpu_set bit mask. */
+	//    CPU_ZERO(&my_set);       /* Initialize it all to 0, i.e. no CPUs selected. */
+	//    CPU_SET(mask, &my_set);
+	//	CPU_SET(mask+4, &my_set);
+	//    sched_setaffinity(pid,sizeof(my_set), &my_set);
+	#endif
 #endif
-
 }
 
 #include <sys/syscall.h>
@@ -373,6 +372,17 @@ int YabCopyFile( const char * src, const char * dst) {
 }
 
 
+ #include <time.h>
+
+int YabNanosleep(u64 ns) {
+  struct timespec ts;
+  ts.tv_sec = 0;
+  ts.tv_nsec = ns*1000;   
+  nanosleep(&ts,NULL);
+  return 0;
+}
+
 } // extern "C"
 
 //////////////////////////////////////////////////////////////////////////////
+

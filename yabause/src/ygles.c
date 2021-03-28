@@ -38,7 +38,7 @@ extern u8 * Vdp1FrameBuffer[];
 static int rebuild_frame_buffer = 0;
 
 static int YglIsNeedFrameBuffer();
-static int YglCalcTextureQ( float   *pnts,float *q);
+int YglCalcTextureQ( float   *pnts,float *q);
 static void YglRenderDestinationAlpha(void);;
 u32 * YglGetColorRamPointer();
 void YglRenderFrameBufferShadow();
@@ -310,7 +310,7 @@ int FASTCALL YglIntersectionOppsiteEdge(float * a1, float * a2, float * b1, floa
 int YglCalcTextureQ(
    float   *pnts,
    float *q
-)
+)  
 {
    float p1[2],p2[2],p3[2],p4[2],o[2];
    float   q1, q3, q4, qw;
@@ -1562,7 +1562,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
   if (YglProgramInit() != 0) {
     YGLDEBUG("Fail to YglProgramInit\n");
-    abort();
+    return -1;
   }
   
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo );
@@ -4350,7 +4350,7 @@ u32 * YglGetColorRamPointer() {
   return _Ygl->cram_tex_buf;
 }
 
-void YglOnUpdateColorRamWord(u32 addr) {
+void VIDOGLOnUpdateColorRamWord(u32 addr) {
 
   if (_Ygl == NULL) return;
 

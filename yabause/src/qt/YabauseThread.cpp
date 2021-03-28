@@ -26,6 +26,9 @@
 
 #include "../peripheral.h"
 
+#include "vulkan/VIDVulkan.h"
+#include "vulkan/VIDVulkanCInterface.h"
+
 #include <QDateTime>
 #include <QStringList>
 #include <QDebug>
@@ -109,16 +112,102 @@ yabauseinit_struct* YabauseThread::yabauseConf()
 	return &mYabauseConf;
 }
 
+void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+  VIDCore->Resize(0, 0, width, height, 0, 0);
+}
+
+
+bool YabauseThread::IsFullscreen(void)
+{
+  auto wnd = vulkanRenderer->getWindow()->getWindowHandle();
+  return glfwGetWindowMonitor(wnd) != nullptr;
+}
+
+
+void YabauseThread::SetFullScreen(bool fullscreen)
+{
+
+  auto wnd = vulkanRenderer->getWindow()->getWindowHandle();
+  
+  if (IsFullscreen() == fullscreen)
+    return;
+
+  if (fullscreen)
+  {
+    // backup window position and window size
+    glfwGetWindowPos(wnd, &_wndPos[0], &_wndPos[1]);
+    glfwGetWindowSize(wnd, &_wndSize[0], &_wndSize[1]);
+
+    // get resolution of monitor
+    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+    // switch to full screen
+    glfwSetWindowMonitor(wnd, _monitor, 0, 0, mode->width, mode->height, 0);
+  }
+  else
+  {
+    // restore last window size and position
+    glfwSetWindowMonitor(wnd, nullptr, _wndPos[0], _wndPos[1], _wndSize[0], _wndSize[1], 0);
+  }
+
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+  YabauseThread * instance = YabauseThread::getInstance();
+
+  if (action == GLFW_RELEASE) {
+
+    if (key == GLFW_KEY_F4) {
+      if (instance->IsFullscreen()) {
+        instance->SetFullScreen(false);
+      }
+      else {
+        instance->SetFullScreen(true);
+      }
+    }
+
+  }
+  
+
+}
+
 void YabauseThread::initEmulation()
 {
 	reloadSettings();
+
+  VolatileSettings* vs = QtYabause::volatileSettings();
+  int vidcoretype = vs->value("Video/VideoCore", mYabauseConf.vidcoretype).toInt();
+  if (vidcoretype == VIDCORE_VULKAN) {
+    int width = vs->value("Video/WinWidth", 800).toInt();
+    int height = vs->value("Video/WinHeight", 600).toInt();
+
+    vulkanRenderer = new Renderer();
+    auto w = vulkanRenderer->OpenWindow(width, height, "[Yaba Sanshiro Vulkan] F4: Toggle full screen mode ", nullptr);
+    VIDVulkan::getInstance()->setRenderer(vulkanRenderer);
+    glfwSetFramebufferSizeCallback(w->getWindowHandle(), framebufferResizeCallback);
+    glfwSetKeyCallback(w->getWindowHandle(), key_callback);
+    _monitor = glfwGetPrimaryMonitor();
+  }
 	mInit = YabauseInit( &mYabauseConf );
 	SetOSDToggle(showFPS);
 }
 
 void YabauseThread::deInitEmulation()
 {
+  VolatileSettings* vs = QtYabause::volatileSettings();
+  int vidcoretype = vs->value("Video/VideoCore", mYabauseConf.vidcoretype).toInt();
+  if (vidcoretype == VIDCORE_VULKAN) {
+    vkQueueWaitIdle(vulkanRenderer->GetVulkanQueue());
+    vkDeviceWaitIdle(vulkanRenderer->GetVulkanDevice());
+  }
 	YabauseDeInit();
+
+  if (vidcoretype == VIDCORE_VULKAN) {
+    vkQueueWaitIdle(vulkanRenderer->GetVulkanQueue());
+    vkDeviceWaitIdle(vulkanRenderer->GetVulkanDevice());
+    delete vulkanRenderer;
+  }
+
 	mInit = -1;
 }
 
@@ -453,6 +542,8 @@ void YabauseThread::reloadSettings()
 		mYabauseConf.biospath = strdup( "" );
 	else
 		mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
+
+  mYabauseConf.framelimit = vs->value("General/EmulationSpeed", mYabauseConf.framelimit).toInt();
 	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );
    mYabauseConf.ssfpath = strdup(vs->value("General/SSFPath", mYabauseConf.ssfpath).toString().toLatin1().constData());
    mYabauseConf.play_ssf = vs->value("General/PlaySSF", false).toBool();
@@ -471,7 +562,7 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
 	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
    mYabauseConf.use_new_scsp = (int)vs->value("Sound/NewScsp", mYabauseConf.use_new_scsp).toBool();
-	
+
 	mYabauseConf.video_filter_type = vs->value("Video/filter_type", mYabauseConf.video_filter_type).toInt();
 	mYabauseConf.polygon_generation_mode = vs->value("Video/polygon_generation_mode", mYabauseConf.polygon_generation_mode).toInt();
   mYabauseConf.resolution_mode = vs->value("Video/resolution_mode", mYabauseConf.resolution_mode).toInt();
@@ -543,6 +634,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.video_filter_type = 0;
 	mYabauseConf.polygon_generation_mode = 0;
   mYabauseConf.resolution_mode = 0;
+  mYabauseConf.framelimit = 0;
   mYabauseConf.rbg_resolution_mode = 0;
   mYabauseConf.rbg_use_compute_shader = 0;
   mYabauseConf.rotate_screen = 0;

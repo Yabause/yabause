@@ -175,6 +175,7 @@ typedef struct
    int titan_shadow_type;
    int titan_shadow_enabled;
 
+   int cx, cy;
    float coordincx, coordincy;
    void FASTCALL (* PlaneAddr)(void *, int, Vdp2*);
    u32 FASTCALL (*Vdp2ColorRamGetColor)(void *, u32 , int, u8 );
@@ -188,7 +189,7 @@ typedef struct
    int mosaicymask;
    int islinescroll;
    u32 linescrolltbl;
-   u32 lineTexture;
+   u64 lineTexture;
    u32 lineinc;
    vdp2Lineinfo * lineinfo;
    int wctl;
@@ -226,6 +227,10 @@ typedef struct
    u16 char_bank[4];
    u16 pname_bank[4];
 
+   void * pipeline;
+
+   int priorityOffset;
+   
 } vdp2draw_struct;
 
 

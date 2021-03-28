@@ -329,4 +329,27 @@ int YabCopyFile( const char * src, const char * dst) {
   }
 }
 
+/* Windows sleep in 100ns units */
+int YabNanosleep(u64 ns) {
+  /* Declarations */
+  HANDLE timer;	/* Timer handle */
+  LARGE_INTEGER li;	/* Time defintion */
+  /* Create timer */
+  if (!(timer = CreateWaitableTimer(NULL, TRUE, NULL)))
+    return -1;
+  /* Set timer properties */
+  li.QuadPart = -ns;
+  if (!SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE)) {
+    CloseHandle(timer);
+    return -1;
+  }
+  /* Start & wait for timer */
+  WaitForSingleObject(timer, INFINITE);
+  /* Clean resources */
+  CloseHandle(timer);
+  /* Slept without problems */
+  return 0;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>554</height>
+    <height>555</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,40 +24,39 @@
        <string>General</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout1">
-       <item row="21" column="0">
-        <widget class="QCheckBox" name="cbEnableMultiThreading">
-         <property name="text">
-          <string>Enable Multithreading</string>
-         </property>
-        </widget>
+       <item row="11" column="0" colspan="2">
+        <widget class="QComboBox" name="cbTranslation"/>
        </item>
-       <item row="19" column="0">
-        <widget class="QCheckBox" name="cbClockSync">
-         <property name="text">
-          <string>Synchronize Saturn internal clock with set time</string>
-         </property>
-        </widget>
-       </item>
-       <item row="23" column="0">
-        <spacer>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>2</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLineEdit" name="leBios"/>
-       </item>
-       <item row="1" column="1">
-        <widget class="QToolButton" name="tbBios">
+       <item row="9" column="1">
+        <widget class="QToolButton" name="tbSaveStates">
          <property name="text">
           <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <widget class="QToolButton" name="tbCdRom">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="0">
+        <widget class="QLineEdit" name="leSaveStates"/>
+       </item>
+       <item row="8" column="0" colspan="2">
+        <widget class="QLabel" name="lSaveStates">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Save States</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
          </property>
         </widget>
        </item>
@@ -77,44 +76,32 @@
          </property>
         </widget>
        </item>
+       <item row="14" column="0" colspan="2">
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="24" column="0">
+        <widget class="QDateTimeEdit" name="dteBaseTime">
+         <property name="calendarPopup">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0" colspan="2">
+        <widget class="QComboBox" name="cbCdDrive">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
        <item row="5" column="0" colspan="2">
         <widget class="QComboBox" name="cbCdRom"/>
-       </item>
-       <item row="7" column="0">
-        <widget class="QLineEdit" name="leCdRom"/>
-       </item>
-       <item row="7" column="1">
-        <widget class="QToolButton" name="tbCdRom">
-         <property name="text">
-          <string>...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="0" colspan="2">
-        <widget class="QLabel" name="lSaveStates">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Save States</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="0">
-        <widget class="QLineEdit" name="leSaveStates"/>
-       </item>
-       <item row="9" column="1">
-        <widget class="QToolButton" name="tbSaveStates">
-         <property name="text">
-          <string>...</string>
-         </property>
-        </widget>
        </item>
        <item row="10" column="0" colspan="2">
         <widget class="QLabel" name="lTranslation">
@@ -132,31 +119,17 @@
          </property>
         </widget>
        </item>
-       <item row="14" column="0" colspan="2">
-        <widget class="Line" name="line">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="15" column="0" colspan="2">
-        <widget class="QCheckBox" name="cbEnableFrameSkipLimiter">
+       <item row="1" column="1">
+        <widget class="QToolButton" name="tbBios">
          <property name="text">
-          <string>Enable Frame Skip/Limiter</string>
-         </property>
-        </widget>
-       </item>
-       <item row="16" column="0" colspan="2">
-        <widget class="QCheckBox" name="cbShowFPS">
-         <property name="text">
-          <string>Show FPS</string>
+          <string>...</string>
          </property>
         </widget>
        </item>
        <item row="17" column="0" colspan="2">
-        <widget class="QCheckBox" name="cbAutostart">
+        <widget class="QCheckBox" name="cbEnableFrameSkipLimiter">
          <property name="text">
-          <string>Autostart</string>
+          <string>Enable Frame Skip</string>
          </property>
         </widget>
        </item>
@@ -176,35 +149,15 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="0" colspan="2">
-        <widget class="QComboBox" name="cbCdDrive">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="0" colspan="2">
-        <widget class="QComboBox" name="cbTranslation"/>
-       </item>
-       <item row="20" column="0">
-        <widget class="QDateTimeEdit" name="dteBaseTime">
-         <property name="calendarPopup">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="22" column="0">
-        <widget class="QLabel" name="label_2">
+       <item row="23" column="0">
+        <widget class="QCheckBox" name="cbClockSync">
          <property name="text">
-          <string>Number of Threads</string>
+          <string>Synchronize Saturn internal clock with set time</string>
          </property>
         </widget>
        </item>
-       <item row="22" column="1">
-        <widget class="QSpinBox" name="sbNumberOfThreads"/>
+       <item row="7" column="0">
+        <widget class="QLineEdit" name="leCdRom"/>
        </item>
        <item row="2" column="0">
         <widget class="QCheckBox" name="cbEnableBiosEmulation">
@@ -212,6 +165,46 @@
           <string>Enable Bios Emulation</string>
          </property>
         </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLineEdit" name="leBios"/>
+       </item>
+       <item row="25" column="0">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="20" column="0" colspan="2">
+        <widget class="QCheckBox" name="cbShowFPS">
+         <property name="text">
+          <string>Show FPS</string>
+         </property>
+        </widget>
+       </item>
+       <item row="21" column="0" colspan="2">
+        <widget class="QCheckBox" name="cbAutostart">
+         <property name="text">
+          <string>Autostart</string>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="0">
+        <widget class="QLabel" name="label_emulationspeed">
+         <property name="text">
+          <string>Emulation Speed</string>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="0" colspan="2">
+        <widget class="QComboBox" name="cbEmulationSpeed"/>
        </item>
       </layout>
      </widget>
@@ -1066,8 +1059,8 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="bgShowMenubar"/>
-  <buttongroup name="bgShowToolbar"/>
   <buttongroup name="bgShowLogWindow"/>
+  <buttongroup name="bgShowToolbar"/>
+  <buttongroup name="bgShowMenubar"/>
  </buttongroups>
 </ui>

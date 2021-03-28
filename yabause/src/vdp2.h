@@ -446,6 +446,8 @@ void EnableAutoFrameSkip(void);
 void DisableAutoFrameSkip(void);
 void VdpResume(void);
 
+void VDP2SetFrameLimit(int mode);
+
 Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines);
 
 #include "threads.h"

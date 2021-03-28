@@ -25,7 +25,11 @@ project(yabause-android)
 
 yab_port_start()
 
-set( LIBRARY_NAME yabause_native )
+#if( YAB_WANT_VULKAN )
+#	set( LIBRARY_NAME yabause_native_vulkan )
+#else()
+	set( LIBRARY_NAME yabause_native )
+#endif()
 
 include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libpng.cmake )
 #include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_zlib.cmake )
@@ -41,6 +45,9 @@ set( SOURCES
  jni/ChdFileInfo.h
 )
 
+if( YAB_WANT_VULKAN )
+set( SOURCES ${SOURCES} ../vulkan/Window_android.cpp )
+endif()
 
 set (PORT_LIBRARIES
  log
@@ -60,13 +67,10 @@ set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/app/src/main/jniLibs/${ANDROID_N
 #include(AndroidNdkGdb)
 #android_ndk_gdb_enable()
 
-link_directories( ${LIBCHDR_LIB_DIR} ${LIBPNG_LIB_DIR} ${LIBZ_LIB_DIR} ${link_directories} )
+link_directories( ${LIBCHDR_LIB_DIR} ${LIBPNG_LIB_DIR} ${LIBZ_LIB_DIR} ${SHADERC_LIBRARY_DIR} ${link_directories})
 
 add_library(${LIBRARY_NAME} SHARED ${SOURCES}  )
 #android_ndk_gdb_debuggable(${LIBRARY_NAME})
-add_dependencies(${LIBRARY_NAME} libchdr)
-add_dependencies(${LIBRARY_NAME} png)
-
 
 include_directories( 
 	${YABAUSE_INCLUDE_DIR} 
@@ -79,9 +83,12 @@ target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES}
 	${LIBCHDR_LIBRARIES}	
 	png16
 	${ZLIB_LIBRARY_RELEASE}
+	${VULKAN_LIBRARIES}
 	#${zlib_STATIC_LIBRARIES}
 	#    ${PROJECT_SOURCE_DIR}/debuglib/libNvidia_gfx_debugger_stub.a
 )
  
+add_dependencies(${LIBRARY_NAME} libchdr)
+add_dependencies(${LIBRARY_NAME} png)
 
 

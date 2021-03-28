@@ -143,6 +143,8 @@ void VIDOGLSetSettingValueMode(int type, int value);
 void VIDOGLSync();
 void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 void VIDOGLVdp2DispOff(void);
+void VIDOGLOnUpdateColorRamWord(u32 addr);
+void VIDOGLVulkanGetScreenshot(void ** outbuf, int * width, int * height) { return;  }
 
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
@@ -175,7 +177,9 @@ YglGetGlSize,
 VIDOGLSetSettingValueMode,
 VIDOGLSync,
 VIDOGLGetNativeResolution,
-VIDOGLVdp2DispOff
+VIDOGLVdp2DispOff,
+VIDOGLOnUpdateColorRamWord,
+VIDOGLVulkanGetScreenshot
 };
 
 float vdp1wratio = 1;
@@ -1235,7 +1239,7 @@ u32 FASTCALL Vdp2ColorRamGetColorCM2(vdp2draw_struct * info, u32 colorindex, int
   return SAT2YAB2(alpha, tmp1, tmp2);
 }
 
-static int Vdp2SetGetColor(vdp2draw_struct * info)
+int Vdp2SetGetColor(vdp2draw_struct * info)
 {
   switch (Vdp2Internal.ColorMode)
   {
@@ -5172,7 +5176,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     Vdp1ReadTexture(&cmd, &sprite, &texture);
   }
   return;
-      }
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -6533,7 +6537,7 @@ static void Vdp2DrawNBG0(void)
     ReadPlaneSizeR(&paraB, fixVdp2Regs->PLSZ >> 12);
     for (int i = 0; i < 16; i++)
     {
-	  Vdp2ParameterBPlaneAddr(&info, i, fixVdp2Regs);
+	    Vdp2ParameterBPlaneAddr(&info, i, fixVdp2Regs);
       paraB.PlaneAddrv[i] = info.addr;
     }
 

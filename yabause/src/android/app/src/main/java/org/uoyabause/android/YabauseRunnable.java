@@ -82,6 +82,8 @@ public class YabauseRunnable implements Runnable
 
     public static native int enableBackupWriteHook();
 
+    public static native void setFrameLimitMode( int mode );
+
     private boolean inited;
     private boolean paused;
 

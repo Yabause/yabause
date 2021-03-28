@@ -251,7 +251,7 @@ public class LocalCheatItemFragment extends Fragment
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
-                    case R.id.cheat_activate:
+                    case R.id.acp_activate:
                         cheatitem.setEnable( !cheatitem.getEnable() );
                         TabCheatFragment frag = getTabCheatFragmentInstance();
                         if( frag != null ){
@@ -264,14 +264,14 @@ public class LocalCheatItemFragment extends Fragment
 
                         adapter_.notifyDataSetChanged();
                         break;
-                    case R.id.cheat_edit:
+                    case R.id.acp_edit:
                         backcode_ = cheatitem.getCheatCode();
                         LocalCheatEditDialog newFragment = new LocalCheatEditDialog();
                         newFragment.setEditTarget(cheatitem);
                         newFragment.setTargetFragment(LocalCheatItemFragment.this,EDIT_ITEM);
                         newFragment.show(getFragmentManager(), "Cheat");
                         break;
-                    case R.id.cheat_share:
+                    case R.id.acp_share:
                         if( !cheatitem.getSharedKey().equals("")  ){
                             UnShare(cheatitem);
                         }else {

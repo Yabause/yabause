@@ -9,17 +9,10 @@ LIST(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/CMake/Packages
 )
 
-option(YAB_FORCE_GLES20 "force to use OpenGLES 2.0" ON)
-if (YAB_FORCE_GLES20)
-set(GLSystem "OpenGL ES 2.0")
-else(YAB_FORCE_GLES20)
-set(GLSystem "Desktop OpenGL")
-endif(YAB_FORCE_GLES20)
-
 set(YAB_PACKAGE yabause)
 set(YAB_VERSION_MAJOR 1)
-set(YAB_VERSION_MINOR 2)
-set(YAB_VERSION_PATCH 1)
+set(YAB_VERSION_MINOR 3)
+set(YAB_VERSION_PATCH 2)
 set(YAB_VERSION "${YAB_VERSION_MAJOR}.${YAB_VERSION_MINOR}.${YAB_VERSION_PATCH}")
 
 include(GetGitRevisionDescription)
@@ -60,6 +53,19 @@ if (WIN32)
 endif ()
 
 include(CPack)
+
+function(assign_source_group)
+    foreach(_source IN ITEMS ${ARGN})
+        if (IS_ABSOLUTE "${_source}")
+            file(RELATIVE_PATH _source_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${_source}")
+        else()
+            set(_source_rel "${_source}")
+        endif()
+        get_filename_component(_source_path "${_source_rel}" PATH)
+        string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
+        source_group("${_source_path_msvc}" FILES "${_source}")
+    endforeach()
+endfunction(assign_source_group)
 
 add_subdirectory(doc)
 add_subdirectory(l10n)

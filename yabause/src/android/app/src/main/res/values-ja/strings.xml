@@ -99,7 +99,7 @@
     <string name="open_cd_tray">CDのふたを開ける</string>
     <string name="close_cd_tray">CDのふたを閉じる</string>
     <string name="menu_analog">アナログ有効</string>
-    <string name="menu_cheat">チート</string>
+    <string name="menu_acp">Action Replay Code</string>
     <string name="add_new_code">チートコードを追加</string>
     <string name="delete">削除</string>
     <string name="disable">無効化</string>
@@ -165,9 +165,7 @@
     <string name="report_message_5">ほぼ完ぺきに動作する</string>
     <string name="report_message_6">完ぺきに動作してエンディングに到達した</string>
     <string name="siginin_message">
-        サインインすることで以下の機能が有効になります\n
-        *セーブデータをクラウドにバックアップする\n
-        *他のユーザーとのチートコードの共有\n\n
+        サインインすることで、セーブデータとステートデータをクラウドに保存して、異なるデバイスでも共有できるようになります。\n
         しかし,これらの機能は実験的なので期待通り動作しなかったり、事前の予告なしに仕様変更されたり、終了したりすることがあります。
     </string>
     <string name="agree">同意します</string>
@@ -244,7 +242,7 @@
         4. 一覧をタップするとゲームが始まります。\n
         5. 遊ぶ!\n
         \n
-        より詳しい使い方は私たちの[サイト](https://www.uoyabause.org/static_pages/guide)を見てください。\n
+        より詳しい使い方は私たちのthis [Youtube video](https://www.youtube.com/watch?v=Ch6_KhhAg10)を見てください。\n
         ]]>
     </string>
     <string name="delete_confirm_title">削除確認</string>
@@ -258,6 +256,10 @@
 
     <string name="install_game_message">インストールするとこのメニュー画面から直接起動できるようになりますが、 ストレージを</string>
     <string name="install_game_message_after">MB使用します。</string>
+    <string name="frameLimit">速度制限</string>
+    <string name="frameLimitDouble">倍速</string>
+    <string name="frameLimitNormal">等速</string>
+    <string name="frameLimitUnLimited">制限なし</string>
 
 
 </resources>

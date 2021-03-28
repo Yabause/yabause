@@ -15,6 +15,15 @@
         app:title="@string/enable_frame_skip"
         app:defaultValue="true"/>
 
+
+    <ListPreference
+        app:key="pref_frameLimit"
+        app:title="@string/frameLimit"
+        app:dialogTitle="@string/chooseFrameLimit"
+        app:entries="@array/entriesFrameLimit"
+        app:entryValues="@array/entryValuesFrameLimit"
+        app:defaultValue="0" />
+
     <CheckBoxPreference
         app:key="pref_rotate_screen"
         app:title="@string/str_rotate_screen"
