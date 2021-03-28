@@ -182,7 +182,7 @@ void YabauseThread::initEmulation()
     int height = vs->value("Video/WinHeight", 600).toInt();
 
     vulkanRenderer = new Renderer();
-    auto w = vulkanRenderer->OpenWindow(width, height, "Yaba sanshiro Vulkan", nullptr);
+    auto w = vulkanRenderer->OpenWindow(width, height, "[Yaba Sanshiro Vulkan] F4: Toggle full screen mode ", nullptr);
     VIDVulkan::getInstance()->setRenderer(vulkanRenderer);
     glfwSetFramebufferSizeCallback(w->getWindowHandle(), framebufferResizeCallback);
     glfwSetKeyCallback(w->getWindowHandle(), key_callback);
@@ -542,6 +542,8 @@ void YabauseThread::reloadSettings()
 		mYabauseConf.biospath = strdup( "" );
 	else
 		mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
+
+  mYabauseConf.framelimit = vs->value("General/EmulationSpeed", mYabauseConf.framelimit).toInt();
 	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );
    mYabauseConf.ssfpath = strdup(vs->value("General/SSFPath", mYabauseConf.ssfpath).toString().toLatin1().constData());
    mYabauseConf.play_ssf = vs->value("General/PlaySSF", false).toBool();
@@ -560,7 +562,7 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
 	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
    mYabauseConf.use_new_scsp = (int)vs->value("Sound/NewScsp", mYabauseConf.use_new_scsp).toBool();
-	
+
 	mYabauseConf.video_filter_type = vs->value("Video/filter_type", mYabauseConf.video_filter_type).toInt();
 	mYabauseConf.polygon_generation_mode = vs->value("Video/polygon_generation_mode", mYabauseConf.polygon_generation_mode).toInt();
   mYabauseConf.resolution_mode = vs->value("Video/resolution_mode", mYabauseConf.resolution_mode).toInt();
@@ -632,6 +634,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.video_filter_type = 0;
 	mYabauseConf.polygon_generation_mode = 0;
   mYabauseConf.resolution_mode = 0;
+  mYabauseConf.framelimit = 0;
   mYabauseConf.rbg_resolution_mode = 0;
   mYabauseConf.rbg_use_compute_shader = 0;
   mYabauseConf.rotate_screen = 0;

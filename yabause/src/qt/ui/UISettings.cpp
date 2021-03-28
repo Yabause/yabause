@@ -105,6 +105,10 @@ const Items mRbgResolutionMode = Items()
 << Item("3", "1080P")
 << Item("4", "Fit to Emulation Resolution");
 
+const Items mEmulationSpeed = Items()
+<< Item("0", "1x")
+<< Item("2", "2x")
+<< Item("1", "Unlimited");
 
 UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
@@ -341,6 +345,11 @@ void UISettings::loadCores()
 	foreach ( const Item& it, mVideoFormats )
 		cbVideoFormat->addItem( QtYabause::translate( it.Name ), it.id );
 
+  // EmulationSpeed
+  foreach(const Item& it, mEmulationSpeed)
+    cbEmulationSpeed->addItem(QtYabause::translate(it.Name), it.id);
+
+
 	// Video FilterMode
 	foreach(const Item& it, mVideoFilterMode)
 		cbFilterMode->addItem(QtYabause::translate(it.Name), it.id);
@@ -482,6 +491,8 @@ void UISettings::loadSettings()
 	cbShowFPS->setChecked( s->value( "General/ShowFPS" ).toBool() );
 	cbAutostart->setChecked( s->value( "autostart" ).toBool() );
 
+  cbEmulationSpeed->setCurrentIndex(cbEmulationSpeed->findData(s->value("General/EmulationSpeed", mEmulationSpeed.at(0).id).toInt()));
+
 	bool clocksync = s->value( "General/ClockSync" ).toBool();
 	cbClockSync->setChecked( clocksync );	 
 	dteBaseTime->setVisible( clocksync );
@@ -492,9 +503,9 @@ void UISettings::loadSettings()
 	else
 		dteBaseTime->setDateTime( QDateTime(QDate(1998, 1, 1), QTime(12, 0, 0)) );
 
-	int numThreads = QThread::idealThreadCount();	
-	cbEnableMultiThreading->setChecked(s->value( "General/EnableMultiThreading", numThreads <= 1 ? false : true ).toBool());
-	sbNumberOfThreads->setValue(s->value( "General/NumThreads", numThreads < 0 ? 1 : numThreads ).toInt());
+//	int numThreads = QThread::idealThreadCount();	
+//	cbEnableMultiThreading->setChecked(s->value( "General/EnableMultiThreading", numThreads <= 1 ? false : true ).toBool());
+//	sbNumberOfThreads->setValue(s->value( "General/NumThreads", numThreads < 0 ? 1 : numThreads ).toInt());
 
 	// video
 	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore", QtYabause::defaultVIDCore().id ).toInt() ) );
@@ -586,6 +597,8 @@ void UISettings::saveSettings()
 	s->setValue( "General/ShowFPS", cbShowFPS->isChecked() );
 	s->setValue( "autostart", cbAutostart->isChecked() );
 
+  s->setValue("General/EmulationSpeed", cbEmulationSpeed->itemData(cbEmulationSpeed->currentIndex()).toInt());
+
 
 	// video
 	s->setValue( "Video/VideoCore", cbVideoCore->itemData( cbVideoCore->currentIndex() ).toInt() );
@@ -622,8 +635,8 @@ void UISettings::saveSettings()
 	s->setValue( "General/ClockSync", cbClockSync->isChecked() );
 	s->setValue( "General/FixedBaseTime", dteBaseTime->dateTime().toString(Qt::ISODate));
 
-	s->setValue( "General/EnableMultiThreading", cbEnableMultiThreading->isChecked() );
-	s->setValue( "General/NumThreads", sbNumberOfThreads->value());
+//	s->setValue( "General/EnableMultiThreading", cbEnableMultiThreading->isChecked() );
+//	s->setValue( "General/NumThreads", sbNumberOfThreads->value());
   s->setValue("Video/RotateScreen", cbRotateScreen->isChecked());
 
   

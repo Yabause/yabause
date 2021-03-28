@@ -918,6 +918,11 @@ void UIYabause::on_aFileSettings_triggered()
     VideoSetSetting(VDP_SETTING_POLYGON_MODE, newhash["Video/polygon_generation_mode"].toInt());
   }
 
+  if (newhash["General/EmulationSpeed"] != hash["General/EmulationSpeed"]) {
+    VDP2SetFrameLimit(newhash["General/EmulationSpeed"].toInt());
+  }
+
+  
 
 		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] || 
 			newhash["Video/FullscreenHeight"] != hash["Video/FullscreenHeight"] ||
