@@ -35,6 +35,8 @@ public slots: // [1]
     void on_cancel_clicked();
     void onfinish(QNetworkReply *rep);    
 
+    void enableButtons();
+
 private:
     std::thread * tx;
     bool login_cancel;
