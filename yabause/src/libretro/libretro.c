@@ -1201,12 +1201,24 @@ bool retro_load_game(const struct retro_game_info *info)
    if (strcmp(path_get_extension(info->path), "m3u") == 0)
    {
       if (!read_m3u(info->path))
+      {
+         log_cb(RETRO_LOG_ERROR, "Aborting, this m3u file is invalid\n");
          return false;
+      }
+      else if (bios_path[0] != '\0' && does_file_exist(bios_path))
+      {
+         log_cb(RETRO_LOG_ERROR, "Aborting, you don't have a real bios, but it is required for m3u support\n");
+         return false;
+      }
       else
       {
          disk_index = 0;
          // saturn requires real bios to swap discs
-         hle_bios_force = false;
+         if (hle_bios_force)
+         {
+            log_cb(RETRO_LOG_WARN, "Forcing real bios, it is required for m3u support\n");
+            hle_bios_force = false;
+         }
 
          if ((disk_total > 1) && (disk_initial_index > 0) && (disk_initial_index < disk_total))
             if (strcmp(disk_paths[disk_initial_index], disk_initial_path) == 0)
