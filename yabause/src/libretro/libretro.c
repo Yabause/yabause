@@ -1010,6 +1010,20 @@ bool retro_load_game(const struct retro_game_info *info)
    ret = YabauseInit(&yinit);
    YabauseSetDecilineMode(1);
 
+   bool cheevos_supported                  = true;
+   struct retro_memory_map mmaps           = {0};
+   struct retro_memory_descriptor descs[2] =
+   {
+      { RETRO_MEMDESC_SYSTEM_RAM, LowWram,  0, 0x0200000, 0, 0, 0x100000, "LowWram"  },
+      { RETRO_MEMDESC_SYSTEM_RAM, HighWram, 0, 0x6000000, 0, 0, 0x100000, "HighWram" },
+   };
+
+   mmaps.descriptors     = descs;
+   mmaps.num_descriptors = sizeof(descs) / sizeof(*descs);
+
+   environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &mmaps);
+   environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &cheevos_supported);
+
    return !ret;
 }
 
