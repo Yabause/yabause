@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (image.h).
@@ -42,9 +42,9 @@ enum image_process_code
 
 struct texture_image
 {
+   uint32_t *pixels;
    unsigned width;
    unsigned height;
-   uint32_t *pixels;
    bool supports_rgba;
 };
 

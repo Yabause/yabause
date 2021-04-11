@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (features_cpu.c).
@@ -39,12 +39,16 @@
 #include <windows.h>
 #endif
 
-#if defined(__CELLOS_LV2__)
-#ifndef _PPU_INTRINSICS_H
-#include <ppu_intrinsics.h>
+#ifdef __PSL1GHT__
+#include <lv2/systime.h>
 #endif
-#elif defined(_XBOX360)
+
+#if defined(_XBOX360)
 #include <PPCIntrinsics.h>
+#elif !defined(__MACH__) && (defined(__POWERPC__) || defined(__powerpc__) || defined(__ppc__) || defined(__PPC64__) || defined(__powerpc64__))
+#ifndef _PPU_INTRINSICS_H	
+#include <ppu_intrinsics.h>	
+#endif
 #elif defined(_POSIX_MONOTONIC_CLOCK) || defined(ANDROID) || defined(__QNX__) || defined(DJGPP)
 /* POSIX_MONOTONIC_CLOCK is not being defined in Android headers despite support being present. */
 #include <time.h>
@@ -56,7 +60,13 @@
 
 #if defined(PSP)
 #include <pspkernel.h>
+#endif
+
+#if defined(PSP) || defined(__PSL1GHT__)
 #include <sys/time.h>
+#endif
+
+#if defined(PSP)
 #include <psprtc.h>
 #endif
 
@@ -66,14 +76,10 @@
 #endif
 
 #if defined(PS2)
-#include <kernel.h>
-#include <timer.h>
-#include <time.h>
+#include <ps2sdkapi.h>
 #endif
 
-#if defined(__PSL1GHT__)
-#include <sys/time.h>
-#elif defined(__CELLOS_LV2__)
+#if !defined(__PSL1GHT__) && defined(__PS3__)
 #include <sys/sys_time.h>
 #endif
 
@@ -167,7 +173,11 @@ retro_perf_tick_t cpu_features_get_perf_counter(void)
    tv_sec     = (long)((ularge.QuadPart - epoch) / 10000000L);
    tv_usec    = (long)(system_time.wMilliseconds * 1000);
    time_ticks = (1000000 * tv_sec + tv_usec);
-#elif defined(__linux__) || defined(__QNX__) || defined(__MACH__)
+#elif defined(GEKKO)
+   time_ticks = gettime();
+#elif !defined(__MACH__) && (defined(_XBOX360) || defined(__powerpc__) || defined(__ppc__) || defined(__POWERPC__) || defined(__PSL1GHT__) || defined(__PPC64__) || defined(__powerpc64__))
+   time_ticks = __mftb();
+#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(__QNX__) || defined(ANDROID) || defined(__MACH__)
    struct timespec tv = {0};
    if (ra_clock_gettime(CLOCK_MONOTONIC, &tv) == 0)
       time_ticks = (retro_perf_tick_t)tv.tv_sec * 1000000000 +
@@ -181,26 +191,18 @@ retro_perf_tick_t cpu_features_get_perf_counter(void)
    time_ticks = (retro_perf_tick_t)a | ((retro_perf_tick_t)d << 32);
 #elif defined(__ARM_ARCH_6__)
    __asm__ volatile( "mrc p15, 0, %0, c9, c13, 0" : "=r"(time_ticks) );
-#elif defined(__CELLOS_LV2__) || defined(_XBOX360) || defined(__powerpc__) || defined(__ppc__) || defined(__POWERPC__)
-   time_ticks = __mftb();
-#elif defined(GEKKO)
-   time_ticks = gettime();
-#elif defined(PSP)
-   sceRtcGetCurrentTick((uint64_t*)&time_ticks);
-#elif defined(VITA)
-   sceRtcGetCurrentTick((SceRtcTick*)&time_ticks);
+#elif defined(PSP) || defined(VITA)
+   time_ticks = sceKernelGetSystemTimeWide();
 #elif defined(PS2)
-   time_ticks = clock()*294912; // 294,912MHZ / 1000 msecs
+   time_ticks = ps2_clock();
 #elif defined(_3DS)
    time_ticks = svcGetSystemTick();
 #elif defined(WIIU)
    time_ticks = OSGetSystemTime();
-#elif defined(__mips__)
-   struct timeval tv;
-   gettimeofday(&tv,NULL);
-   time_ticks = (1000000 * tv.tv_sec + tv.tv_usec);
 #elif defined(HAVE_LIBNX)
    time_ticks = armGetSystemTick();
+#elif defined(EMSCRIPTEN)
+   time_ticks = emscripten_get_now() * 1000;
 #endif
 
    return time_ticks;
@@ -225,8 +227,10 @@ retro_time_t cpu_features_get_time_usec(void)
 
    if (!QueryPerformanceCounter(&count))
       return 0;
-   return count.QuadPart * 1000000 / freq.QuadPart;
-#elif defined(__CELLOS_LV2__)
+   return (count.QuadPart / freq.QuadPart * 1000000) + (count.QuadPart % freq.QuadPart * 1000000 / freq.QuadPart);
+#elif defined(__PSL1GHT__)
+   return sysGetSystemTime();
+#elif !defined(__PSL1GHT__) && defined(__PS3__)
    return sys_time_get_system_time();
 #elif defined(GEKKO)
    return ticks_to_microsecs(gettime());
@@ -234,7 +238,9 @@ retro_time_t cpu_features_get_time_usec(void)
    return ticks_to_us(OSGetSystemTime());
 #elif defined(SWITCH) || defined(HAVE_LIBNX)
    return (svcGetSystemTick() * 10) / 192;
-#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(__QNX__) || defined(ANDROID) || defined(__MACH__)
+#elif defined(_3DS)
+   return osGetTime() * 1000;
+#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(__QNX__) || defined(ANDROID) || defined(__MACH__) || defined(DJGPP)
    struct timespec tv = {0};
    if (ra_clock_gettime(CLOCK_MONOTONIC, &tv) < 0)
       return 0;
@@ -242,15 +248,9 @@ retro_time_t cpu_features_get_time_usec(void)
 #elif defined(EMSCRIPTEN)
    return emscripten_get_now() * 1000;
 #elif defined(PS2)
-      return clock()*1000;
-#elif defined(__mips__) || defined(DJGPP)
-   struct timeval tv;
-   gettimeofday(&tv,NULL);
-   return (1000000 * tv.tv_sec + tv.tv_usec);
-#elif defined(_3DS)
-   return osGetTime() * 1000;
-#elif defined(VITA)
-   return sceKernelGetProcessTimeWide();
+   return ps2_clock() / PS2_CLOCKS_PER_MSEC * 1000;
+#elif defined(VITA) || defined(PSP)
+   return sceKernelGetSystemTimeWide();
 #else
 #error "Your platform does not have a timer function implemented in cpu_features_get_time_usec(). Cannot continue."
 #endif
@@ -289,7 +289,9 @@ void x86_cpuid(int func, int flags[4])
 #elif defined(_MSC_VER)
    __cpuid(flags, func);
 #else
+#ifndef NDEBUG
    printf("Unknown compiler. Cannot check CPUID with inline assembly.\n");
+#endif
    memset(flags, 0, 4 * sizeof(int));
 #endif
 }
@@ -311,7 +313,9 @@ static uint64_t xgetbv_x86(uint32_t idx)
    /* Intrinsic only works on 2010 SP1 and above. */
    return _xgetbv(idx);
 #else
+#ifndef NDEBUG
    printf("Unknown compiler. Cannot check xgetbv bits.\n");
+#endif
    return 0;
 #endif
 }
@@ -348,12 +352,12 @@ static unsigned char check_arm_cpu_feature(const char* feature)
    if (!fp)
       return 0;
 
-   while (filestream_gets(fp, line, sizeof(line)) != NULL)
+   while (filestream_gets(fp, line, sizeof(line)))
    {
       if (strncmp(line, "Features\t: ", 11))
          continue;
 
-      if (strstr(line + 11, feature) != NULL)
+      if (strstr(line + 11, feature))
          status = 1;
 
       break;
@@ -424,8 +428,7 @@ static void cpulist_parse(CpuList* list, char **buf, ssize_t length)
          q = end;
 
       /* Get first value */
-      p = parse_decimal(p, q, &start_value);
-      if (p == NULL)
+      if (!(p = parse_decimal(p, q, &start_value)))
          return;
 
       end_value = start_value;
@@ -435,8 +438,7 @@ static void cpulist_parse(CpuList* list, char **buf, ssize_t length)
        */
       if (p < q && *p == '-')
       {
-         p = parse_decimal(p+1, q, &end_value);
-         if (p == NULL)
+         if (!(p = parse_decimal(p+1, q, &end_value)))
             return;
       }
 
@@ -444,7 +446,7 @@ static void cpulist_parse(CpuList* list, char **buf, ssize_t length)
       for (val = start_value; val <= end_value; val++)
       {
          if ((unsigned)val < 32)
-            list->mask |= (uint32_t)(1U << val);
+            list->mask |= (uint32_t)(UINT32_C(1) << val);
       }
 
       /* Jump to next item */
@@ -496,6 +498,8 @@ unsigned cpu_features_get_core_amount(void)
    return 1;
 #elif defined(PSP) || defined(PS2)
    return 1;
+#elif defined(__PSL1GHT__) || !defined(__PSL1GHT__) && defined(__PS3__)
+   return 1; /* Only one PPU, SPUs don't really count */
 #elif defined(VITA)
    return 4;
 #elif defined(HAVE_LIBNX) || defined(SWITCH)
@@ -587,31 +591,13 @@ unsigned cpu_features_get_core_amount(void)
  **/
 uint64_t cpu_features_get(void)
 {
-   int flags[4];
-   int vendor_shuffle[3];
-   char vendor[13];
-   size_t len          = 0;
-   uint64_t cpu_flags  = 0;
    uint64_t cpu        = 0;
-   unsigned max_flag   = 0;
 #if defined(CPU_X86) && !defined(__MACH__)
    int vendor_is_intel = 0;
    const int avx_flags = (1 << 27) | (1 << 28);
 #endif
-
-   char buf[sizeof(" MMX MMXEXT SSE SSE2 SSE3 SSSE3 SS4 SSE4.2 AES AVX AVX2 NEON VMX VMX128 VFPU PS")];
-
-   memset(buf, 0, sizeof(buf));
-
-   (void)len;
-   (void)cpu_flags;
-   (void)flags;
-   (void)max_flag;
-   (void)vendor;
-   (void)vendor_shuffle;
-
 #if defined(__MACH__)
-   len     = sizeof(size_t);
+   size_t len          = sizeof(size_t);
    if (sysctlbyname("hw.optional.mmx", NULL, &len, NULL, 0) == 0)
    {
       cpu |= RETRO_SIMD_MMX;
@@ -673,8 +659,11 @@ uint64_t cpu_features_get(void)
    cpu |= RETRO_SIMD_SSE;
    cpu |= RETRO_SIMD_MMXEXT;
 #elif defined(CPU_X86)
-   (void)avx_flags;
-
+   unsigned max_flag   = 0;
+   int flags[4];
+   int vendor_shuffle[3];
+   char vendor[13];
+   uint64_t cpu_flags  = 0;
    x86_cpuid(0, flags);
    vendor_shuffle[0] = flags[1];
    vendor_shuffle[1] = flags[3];
@@ -805,26 +794,6 @@ uint64_t cpu_features_get(void)
 #elif defined(GEKKO)
    cpu |= RETRO_SIMD_PS;
 #endif
-
-   if (cpu & RETRO_SIMD_MMX)    strlcat(buf, " MMX", sizeof(buf));
-   if (cpu & RETRO_SIMD_MMXEXT) strlcat(buf, " MMXEXT", sizeof(buf));
-   if (cpu & RETRO_SIMD_SSE)    strlcat(buf, " SSE", sizeof(buf));
-   if (cpu & RETRO_SIMD_SSE2)   strlcat(buf, " SSE2", sizeof(buf));
-   if (cpu & RETRO_SIMD_SSE3)   strlcat(buf, " SSE3", sizeof(buf));
-   if (cpu & RETRO_SIMD_SSSE3)  strlcat(buf, " SSSE3", sizeof(buf));
-   if (cpu & RETRO_SIMD_SSE4)   strlcat(buf, " SSE4", sizeof(buf));
-   if (cpu & RETRO_SIMD_SSE42)  strlcat(buf, " SSE4.2", sizeof(buf));
-   if (cpu & RETRO_SIMD_AES)    strlcat(buf, " AES", sizeof(buf));
-   if (cpu & RETRO_SIMD_AVX)    strlcat(buf, " AVX", sizeof(buf));
-   if (cpu & RETRO_SIMD_AVX2)   strlcat(buf, " AVX2", sizeof(buf));
-   if (cpu & RETRO_SIMD_NEON)   strlcat(buf, " NEON", sizeof(buf));
-   if (cpu & RETRO_SIMD_VFPV3)  strlcat(buf, " VFPv3", sizeof(buf));
-   if (cpu & RETRO_SIMD_VFPV4)  strlcat(buf, " VFPv4", sizeof(buf));
-   if (cpu & RETRO_SIMD_VMX)    strlcat(buf, " VMX", sizeof(buf));
-   if (cpu & RETRO_SIMD_VMX128) strlcat(buf, " VMX128", sizeof(buf));
-   if (cpu & RETRO_SIMD_VFPU)   strlcat(buf, " VFPU", sizeof(buf));
-   if (cpu & RETRO_SIMD_PS)     strlcat(buf, " PS", sizeof(buf));
-   if (cpu & RETRO_SIMD_ASIMD)  strlcat(buf, " ASIMD", sizeof(buf));
 
    return cpu;
 }

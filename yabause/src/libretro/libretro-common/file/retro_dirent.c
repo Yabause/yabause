@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2019 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (retro_dirent.c).
@@ -31,37 +31,41 @@
 #define VFS_FRONTEND
 #include <vfs/vfs_implementation.h>
 
-static retro_vfs_opendir_t dirent_opendir_cb = NULL;
-static retro_vfs_readdir_t dirent_readdir_cb = NULL;
+/* TODO/FIXME - static globals */
+static retro_vfs_opendir_t dirent_opendir_cb                 = NULL;
+static retro_vfs_readdir_t dirent_readdir_cb                 = NULL;
 static retro_vfs_dirent_get_name_t dirent_dirent_get_name_cb = NULL;
-static retro_vfs_dirent_is_dir_t dirent_dirent_is_dir_cb = NULL;
-static retro_vfs_closedir_t dirent_closedir_cb = NULL;
+static retro_vfs_dirent_is_dir_t dirent_dirent_is_dir_cb     = NULL;
+static retro_vfs_closedir_t dirent_closedir_cb               = NULL;
 
 void dirent_vfs_init(const struct retro_vfs_interface_info* vfs_info)
 {
    const struct retro_vfs_interface* vfs_iface;
 
-   dirent_opendir_cb = NULL;
-   dirent_readdir_cb = NULL;
+   dirent_opendir_cb         = NULL;
+   dirent_readdir_cb         = NULL;
    dirent_dirent_get_name_cb = NULL;
-   dirent_dirent_is_dir_cb = NULL;
-   dirent_closedir_cb = NULL;
+   dirent_dirent_is_dir_cb   = NULL;
+   dirent_closedir_cb        = NULL;
 
-   vfs_iface = vfs_info->iface;
+   vfs_iface                 = vfs_info->iface;
 
-   if (vfs_info->required_interface_version < DIRENT_REQUIRED_VFS_VERSION || !vfs_iface)
+   if (
+         vfs_info->required_interface_version < DIRENT_REQUIRED_VFS_VERSION || 
+         !vfs_iface)
       return;
 
-   dirent_opendir_cb = vfs_iface->opendir;
-   dirent_readdir_cb = vfs_iface->readdir;
+   dirent_opendir_cb         = vfs_iface->opendir;
+   dirent_readdir_cb         = vfs_iface->readdir;
    dirent_dirent_get_name_cb = vfs_iface->dirent_get_name;
-   dirent_dirent_is_dir_cb = vfs_iface->dirent_is_dir;
-   dirent_closedir_cb = vfs_iface->closedir;
+   dirent_dirent_is_dir_cb   = vfs_iface->dirent_is_dir;
+   dirent_closedir_cb        = vfs_iface->closedir;
 }
 
-struct RDIR *retro_opendir_include_hidden(const char *name, bool include_hidden)
+struct RDIR *retro_opendir_include_hidden(
+      const char *name, bool include_hidden)
 {
-   if (dirent_opendir_cb != NULL)
+   if (dirent_opendir_cb)
       return (struct RDIR *)dirent_opendir_cb(name, include_hidden);
    return (struct RDIR *)retro_vfs_opendir_impl(name, include_hidden);
 }
@@ -79,14 +83,14 @@ bool retro_dirent_error(struct RDIR *rdir)
 
 int retro_readdir(struct RDIR *rdir)
 {
-   if (dirent_readdir_cb != NULL)
+   if (dirent_readdir_cb)
       return dirent_readdir_cb((struct retro_vfs_dir_handle *)rdir);
    return retro_vfs_readdir_impl((struct retro_vfs_dir_handle *)rdir);
 }
 
 const char *retro_dirent_get_name(struct RDIR *rdir)
 {
-   if (dirent_dirent_get_name_cb != NULL)
+   if (dirent_dirent_get_name_cb)
       return dirent_dirent_get_name_cb((struct retro_vfs_dir_handle *)rdir);
    return retro_vfs_dirent_get_name_impl((struct retro_vfs_dir_handle *)rdir);
 }
@@ -104,14 +108,14 @@ const char *retro_dirent_get_name(struct RDIR *rdir)
  */
 bool retro_dirent_is_dir(struct RDIR *rdir, const char *unused)
 {
-   if (dirent_dirent_is_dir_cb != NULL)
+   if (dirent_dirent_is_dir_cb)
       return dirent_dirent_is_dir_cb((struct retro_vfs_dir_handle *)rdir);
    return retro_vfs_dirent_is_dir_impl((struct retro_vfs_dir_handle *)rdir);
 }
 
 void retro_closedir(struct RDIR *rdir)
 {
-   if (dirent_closedir_cb != NULL)
+   if (dirent_closedir_cb)
       dirent_closedir_cb((struct retro_vfs_dir_handle *)rdir);
    else
       retro_vfs_closedir_impl((struct retro_vfs_dir_handle *)rdir);

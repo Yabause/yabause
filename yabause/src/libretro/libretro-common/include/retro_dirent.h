@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2019 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (retro_dirent.h).
@@ -25,7 +25,6 @@
 
 #include <libretro.h>
 #include <retro_common_api.h>
-#include <retro_miscellaneous.h>
 
 #include <boolean.h>
 

@@ -1,4 +1,4 @@
-/* Copyright  (C) 2016-2018 The RetroArch team
+/* Copyright  (C) 2016-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (net_natt.c).
@@ -91,10 +91,7 @@ bool natt_new(struct natt_status *status)
    return true;
 }
 
-void natt_free(struct natt_status *status)
-{
-   /* Nothing */
-}
+void natt_free(struct natt_status *status) { }
 
 static bool natt_open_port(struct natt_status *status,
       struct sockaddr *addr, socklen_t addrlen, enum socket_protocol proto)

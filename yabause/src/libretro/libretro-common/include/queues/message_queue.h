@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (message_queue.h).
@@ -26,6 +26,7 @@
 #include <stddef.h>
 
 #include <retro_common_api.h>
+#include <boolean.h>
 
 RETRO_BEGIN_DECLS
 
@@ -42,7 +43,33 @@ enum message_queue_category
    MESSAGE_QUEUE_CATEGORY_SUCCESS
 };
 
-typedef struct msg_queue msg_queue_t;
+typedef struct queue_elem
+{
+   char *msg;
+   char *title;
+   unsigned duration;
+   unsigned prio;
+   enum message_queue_icon icon;
+   enum message_queue_category category;
+} queue_elem_t;
+
+typedef struct msg_queue
+{
+   char *tmp_msg;
+   queue_elem_t **elems;
+   size_t ptr;
+   size_t size;
+} msg_queue_t;
+
+typedef struct
+{
+   unsigned duration;
+   unsigned prio;
+   enum message_queue_icon icon;
+   enum message_queue_category category;
+   char msg[1024];
+   char title[1024];
+} msg_queue_entry_t;
 
 /**
  * msg_queue_new:
@@ -54,6 +81,8 @@ typedef struct msg_queue msg_queue_t;
  * if successful. Has to be freed manually.
  **/
 msg_queue_t *msg_queue_new(size_t size);
+
+bool msg_queue_initialize(msg_queue_t *queue, size_t size);
 
 /**
  * msg_queue_push:
@@ -83,6 +112,28 @@ void msg_queue_push(msg_queue_t *queue, const char *msg,
 const char *msg_queue_pull(msg_queue_t *queue);
 
 /**
+ * msg_queue_extract:
+ * @queue             : pointer to queue object
+ * @queue_entry       : pointer to external queue entry struct
+ *
+ * Removes highest priority message from queue, copying
+ * contents into queue_entry struct.
+ *
+ * Returns: false if no messages in queue, otherwise true
+ **/
+bool msg_queue_extract(msg_queue_t *queue, msg_queue_entry_t *queue_entry);
+
+/**
+ * msg_queue_size:
+ * @queue             : pointer to queue object
+ *
+ * Fetches number of messages in queue.
+ *
+ * Returns: Number of messages in queue.
+ **/
+size_t msg_queue_size(msg_queue_t *queue);
+
+/**
  * msg_queue_clear:
  * @queue             : pointer to queue object
  *
@@ -97,6 +148,8 @@ void msg_queue_clear(msg_queue_t *queue);
  * Frees message queue..
  **/
 void msg_queue_free(msg_queue_t *queue);
+
+bool msg_queue_deinitialize(msg_queue_t *queue);
 
 RETRO_END_DECLS
 

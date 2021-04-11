@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (strcasestr.h).
@@ -24,10 +24,6 @@
 #define __LIBRETRO_SDK_COMPAT_STRCASESTR_H
 
 #include <string.h>
-
-#if defined(PS2)
-#include <compat_ctype.h>
-#endif
 
 #if defined(RARCH_INTERNAL) && defined(HAVE_CONFIG_H)
 #include "../../../config.h"

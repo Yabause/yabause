@@ -928,6 +928,35 @@ void Cs2Reset(void) {
   Cs2Area->mpegstm[1].audchannum = Cs2Area->mpegstm[1].vidchannum = 0x00;
 }
 
+
+void Cs2ForceOpenTray() {
+   if (Cs2Area && Cs2Area->cdi)
+   {
+      Cs2Area->cdi->SetStatus(CDCORE_OPEN);
+      Cs2Reset();
+   }
+};
+
+int Cs2ForceCloseTray( int coreid, const char * cdpath ) {
+   int ret = 0;
+   if (Cs2Area == NULL) return -1;
+   if ((ret = Cs2ChangeCDCore(coreid, cdpath)) != 0)
+      return ret;
+
+   Cs2Reset();
+
+   if (yabsys.emulatebios)
+   {
+      if (YabauseQuickLoadGame() != 0)
+      {
+         YabSetError(YAB_ERR_CANNOTINIT, _("Game"));
+         return -2;
+      }
+   }
+   Cs2Area->cdi->ReadTOC(Cs2Area->TOC);
+   return 0;
+};
+
 //////////////////////////////////////////////////////////////////////////////
 
 /*!

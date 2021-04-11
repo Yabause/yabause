@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (stdstring.c).
@@ -22,9 +22,42 @@
 
 #include <stdint.h>
 #include <ctype.h>
+#include <string.h>
 
 #include <string/stdstring.h>
 #include <encodings/utf.h>
+
+const uint8_t lr_char_props[256] = {
+	/*x0   x1   x2   x3   x4   x5   x6   x7   x8   x9   xA   xB   xC   xD   xE   xF */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x80,0x80,0x00,0x00,0x80,0x00,0x00, /* 0x                  */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* 1x                  */
+	0x80,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* 2x  !"#$%&'()*+,-./ */
+	0x41,0x41,0x41,0x41,0x41,0x41,0x41,0x41,0x41,0x41,0x00,0x00,0x00,0x00,0x00,0x00, /* 3x 0123456789:;<=>? */
+	0x00,0x23,0x23,0x23,0x23,0x23,0x23,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22, /* 4x @ABCDEFGHIJKLMNO */
+	0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x00,0x00,0x00,0x00,0x08, /* 5x PQRSTUVWXYZ[\]^_ */
+	0x00,0x25,0x25,0x25,0x25,0x25,0x25,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24, /* 6x `abcdefghijklmno */
+	0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x00,0x00,0x00,0x00,0x00, /* 7x pqrstuvwxyz{|}~  */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* 8x                  */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* 9x                  */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* Ax                  */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* Bx                  */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* Cx                  */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* Dx                  */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* Ex                  */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* Fx                  */
+};
+
+char *string_init(const char *src)
+{
+   return src ? strdup(src) : NULL;
+}
+
+void string_set(char **string, const char *src)
+{
+   free(*string);
+   *string = string_init(src);
+}
+
 
 char *string_to_upper(char *s)
 {
@@ -107,18 +140,18 @@ char *string_replace_substring(const char *in,
 /* Remove leading whitespaces */
 char *string_trim_whitespace_left(char *const s)
 {
-   if(s && *s)
+   if (s && *s)
    {
       size_t len     = strlen(s);
       char *current  = s;
 
-      while(*current && isspace((unsigned char)*current))
+      while (*current && ISSPACE((unsigned char)*current))
       {
          ++current;
          --len;
       }
 
-      if(s != current)
+      if (s != current)
          memmove(s, current, len + 1);
    }
 
@@ -128,18 +161,18 @@ char *string_trim_whitespace_left(char *const s)
 /* Remove trailing whitespaces */
 char *string_trim_whitespace_right(char *const s)
 {
-   if(s && *s)
+   if (s && *s)
    {
       size_t len     = strlen(s);
       char  *current = s + len - 1;
 
-      while(current != s && isspace((unsigned char)*current))
+      while (current != s && ISSPACE((unsigned char)*current))
       {
          --current;
          --len;
       }
 
-      current[isspace((unsigned char)*current) ? 0 : 1] = '\0';
+      current[ISSPACE((unsigned char)*current) ? 0 : 1] = '\0';
    }
 
    return s;
@@ -190,7 +223,7 @@ char *word_wrap(char* buffer, const char *string, int line_width, bool unicode, 
             buffer[i] = string[i];
             char_len--;
             i++;
-         } while(char_len);
+         } while (char_len);
 
          /* check for newlines embedded in the original input
           * and reset the index */
@@ -248,7 +281,7 @@ char *word_wrap(char* buffer, const char *string, int line_width, bool unicode, 
  *    char *str      = "1,2,3,4,5,6,7,,,10,";
  *    char **str_ptr = &str;
  *    char *token    = NULL;
- *    while((token = string_tokenize(str_ptr, ",")))
+ *    while ((token = string_tokenize(str_ptr, ",")))
  *    {
  *        printf("%s\n", token);
  *        free(token);
@@ -319,20 +352,66 @@ void string_remove_all_chars(char *str, char c)
    *write_ptr = '\0';
 }
 
+/* Replaces every instance of character 'find' in 'str'
+ * with character 'replace' */
+void string_replace_all_chars(char *str, char find, char replace)
+{
+   char *str_ptr = str;
+
+   if (string_is_empty(str))
+      return;
+
+   while ((str_ptr = strchr(str_ptr, find)))
+      *str_ptr++ = replace;
+}
+
 /* Converts string to unsigned integer.
  * Returns 0 if string is invalid  */
-unsigned string_to_unsigned(char *str)
+unsigned string_to_unsigned(const char *str)
 {
-   char *ptr = NULL;
+   const char *ptr = NULL;
 
    if (string_is_empty(str))
       return 0;
 
    for (ptr = str; *ptr != '\0'; ptr++)
    {
-      if (!isdigit(*ptr))
+      if (!ISDIGIT((unsigned char)*ptr))
          return 0;
    }
 
    return (unsigned)strtoul(str, NULL, 10);
+}
+
+/* Converts hexadecimal string to unsigned integer.
+ * Handles optional leading '0x'.
+ * Returns 0 if string is invalid  */
+unsigned string_hex_to_unsigned(const char *str)
+{
+   const char *hex_str = str;
+   const char *ptr     = NULL;
+   size_t len;
+
+   if (string_is_empty(str))
+      return 0;
+
+   /* Remove leading '0x', if required */
+   len = strlen(str);
+
+   if (len >= 2)
+      if ((str[0] == '0') &&
+          ((str[1] == 'x') || (str[1] == 'X')))
+         hex_str = str + 2;
+
+   if (string_is_empty(hex_str))
+      return 0;
+
+   /* Check for valid characters */
+   for (ptr = hex_str; *ptr != '\0'; ptr++)
+   {
+      if (!isxdigit((unsigned char)*ptr))
+         return 0;
+   }
+
+   return (unsigned)strtoul(hex_str, NULL, 16);
 }

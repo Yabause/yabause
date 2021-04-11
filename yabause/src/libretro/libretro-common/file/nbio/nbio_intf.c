@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (nbio_intf.c).
@@ -37,11 +37,29 @@ extern nbio_intf_t nbio_orbis;
 #endif
 extern nbio_intf_t nbio_stdio;
 
+#ifndef _XBOX
+#if defined(_WIN32)
+#if defined(_MSC_VER) && _MSC_VER >= 1500
+
+#ifndef HAVE_MMAP_WIN32
+#define HAVE_MMAP_WIN32
+#endif
+
+#elif !defined(_MSC_VER)
+
+#ifndef HAVE_MMAP_WIN32
+#define HAVE_MMAP_WIN32
+#endif
+#endif
+#endif
+
+#endif
+
 #if defined(_linux__)
 static nbio_intf_t *internal_nbio = &nbio_linux;
 #elif defined(HAVE_MMAP) && defined(BSD)
 static nbio_intf_t *internal_nbio = &nbio_mmap_unix;
-#elif defined(_WIN32) && !defined(_XBOX)
+#elif defined(HAVE_MMAP_WIN32)
 static nbio_intf_t *internal_nbio = &nbio_mmap_win32;
 #elif defined(ORBIS)
 static nbio_intf_t *internal_nbio = &nbio_orbis;

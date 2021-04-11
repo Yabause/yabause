@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (posix_string.h).
@@ -27,10 +27,6 @@
 
 #ifdef _MSC_VER
 #include <compat/msvc.h>
-#endif
-
-#if defined(PS2)
-#include <compat_ctype.h>
 #endif
 
 RETRO_BEGIN_DECLS

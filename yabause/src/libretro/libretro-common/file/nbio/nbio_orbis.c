@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (nbio_orbis.c).
@@ -31,10 +31,11 @@
 
 struct nbio_orbis_t
 {
-   int fd;
    void* data;
    size_t progress;
    size_t len;
+   int fd;
+   unsigned int mode;
    /*
     * possible values:
     * NBIO_READ, NBIO_WRITE - obvious
@@ -42,7 +43,6 @@ struct nbio_orbis_t
     * -2 - the pointer was reallocated since the last operation
     */
    signed char op;
-   unsigned int mode;
 };
 
 static void *nbio_orbis_open(const char * filename, unsigned int mode)

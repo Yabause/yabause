@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (file_list.c).
@@ -28,6 +28,44 @@
 #include <lists/file_list.h>
 #include <string/stdstring.h>
 #include <compat/strcasestr.h>
+
+static bool file_list_deinitialize_internal(file_list_t *list)
+{
+   size_t i;
+   for (i = 0; i < list->size; i++)
+   {
+      file_list_free_userdata(list, i);
+      file_list_free_actiondata(list, i);
+
+      if (list->list[i].path)
+         free(list->list[i].path);
+      list->list[i].path = NULL;
+
+      if (list->list[i].label)
+         free(list->list[i].label);
+      list->list[i].label = NULL;
+
+      if (list->list[i].alt)
+         free(list->list[i].alt);
+      list->list[i].alt = NULL;
+   }
+   if (list->list)
+      free(list->list);
+   list->list = NULL;
+   return true;
+}
+
+bool file_list_initialize(file_list_t *list)
+{
+   if (!list)
+      return false;
+
+   list->list     = NULL;
+   list->capacity = 0;
+   list->size     = 0;
+
+   return true;
+}
 
 bool file_list_reserve(file_list_t *list, size_t nitems)
 {
@@ -78,7 +116,16 @@ bool file_list_insert(file_list_t *list,
    for (i = (unsigned)list->size; i > (int)idx; i--)
    {
       struct item_file *copy = (struct item_file*)
-         calloc(1, sizeof(struct item_file));
+         malloc(sizeof(struct item_file));
+
+      copy->path             = NULL;
+      copy->label            = NULL;
+      copy->alt              = NULL;
+      copy->type             = 0;
+      copy->directory_ptr    = 0;
+      copy->entry_idx        = 0;
+      copy->userdata         = NULL;
+      copy->actiondata       = NULL;
 
       memcpy(copy, &list->list[i-1], sizeof(struct item_file));
 
@@ -146,7 +193,7 @@ size_t file_list_get_size(const file_list_t *list)
 
 size_t file_list_get_directory_ptr(const file_list_t *list)
 {
-   size_t size = file_list_get_size(list);
+   size_t size = list ? list->size : 0;
    return list->list[size].directory_ptr;
 }
 
@@ -173,32 +220,21 @@ void file_list_pop(file_list_t *list, size_t *directory_ptr)
 
 void file_list_free(file_list_t *list)
 {
-   size_t i;
-
    if (!list)
       return;
-
-   for (i = 0; i < list->size; i++)
-   {
-      file_list_free_userdata(list, i);
-      file_list_free_actiondata(list, i);
-
-      if (list->list[i].path)
-         free(list->list[i].path);
-      list->list[i].path = NULL;
-
-      if (list->list[i].label)
-         free(list->list[i].label);
-      list->list[i].label = NULL;
-
-      if (list->list[i].alt)
-         free(list->list[i].alt);
-      list->list[i].alt = NULL;
-   }
-   if (list->list)
-      free(list->list);
-   list->list = NULL;
+   file_list_deinitialize_internal(list);
    free(list);
+}
+
+bool file_list_deinitialize(file_list_t *list)
+{
+   if (!list)
+      return false;
+   if (!file_list_deinitialize_internal(list))
+      return false;
+   list->capacity = 0;
+   list->size     = 0;
+   return true;
 }
 
 void file_list_clear(file_list_t *list)
@@ -263,15 +299,6 @@ void file_list_set_alt_at_offset(file_list_t *list, size_t idx,
 
    if (alt)
       list->list[idx].alt   = strdup(alt);
-}
-
-void file_list_get_alt_at_offset(const file_list_t *list, size_t idx,
-      const char **alt)
-{
-   if (list && alt)
-      *alt = list->list[idx].alt 
-         ? list->list[idx].alt 
-         : list->list[idx].path;
 }
 
 static int file_list_alt_cmp(const void *a_, const void *b_)
@@ -384,7 +411,6 @@ void file_list_get_last(const file_list_t *list,
 bool file_list_search(const file_list_t *list, const char *needle, size_t *idx)
 {
    size_t i;
-   const char *alt = NULL;
    bool ret        = false;
 
    if (!list)
@@ -393,8 +419,10 @@ bool file_list_search(const file_list_t *list, const char *needle, size_t *idx)
    for (i = 0; i < list->size; i++)
    {
       const char *str = NULL;
+      const char *alt = list->list[i].alt 
+            ? list->list[i].alt 
+            : list->list[i].path;
 
-      file_list_get_alt_at_offset(list, i, &alt);
       if (!alt)
       {
          file_list_get_label_at_offset(list, i, &alt);

@@ -1,7 +1,7 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (rhash.c).
+ * The following license statement only applies to this file (lrc_hash.c).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -27,7 +27,7 @@
 #else
 #include <unistd.h>
 #endif
-#include <rhash.h>
+#include <lrc_hash.h>
 #include <retro_miscellaneous.h>
 #include <retro_endianness.h>
 #include <streams/file_stream.h>
@@ -307,7 +307,22 @@ uint32_t crc32_calculate(const uint8_t *data, size_t length)
 /* Define the circular shift macro */
 #define SHA1CircularShift(bits,word) ((((word) << (bits)) & 0xFFFFFFFF) | ((word) >> (32-(bits))))
 
-static void SHA1Reset(SHA1Context *context)
+struct sha1_context
+{
+   unsigned Message_Digest[5]; /* Message Digest (output)          */
+
+   unsigned Length_Low;        /* Message length in bits           */
+   unsigned Length_High;       /* Message length in bits           */
+
+   unsigned char Message_Block[64]; /* 512-bit message blocks      */
+   int Message_Block_Index;    /* Index into message block array   */
+
+   int Computed;               /* Is the digest computed?          */
+   int Corrupted;              /* Is the message digest corruped?  */
+};
+
+
+static void SHA1Reset(struct sha1_context *context)
 {
    if (!context)
       return;
@@ -326,7 +341,7 @@ static void SHA1Reset(SHA1Context *context)
    context->Corrupted  = 0;
 }
 
-static void SHA1ProcessMessageBlock(SHA1Context *context)
+static void SHA1ProcessMessageBlock(struct sha1_context *context)
 {
    const unsigned K[] =            /* Constants defined in SHA-1   */
    {
@@ -341,7 +356,7 @@ static void SHA1ProcessMessageBlock(SHA1Context *context)
    unsigned    A, B, C, D, E;      /* Word buffers                 */
 
    /* Initialize the first 16 words in the array W */
-   for(t = 0; t < 16; t++)
+   for (t = 0; t < 16; t++)
    {
       W[t] = ((unsigned) context->Message_Block[t * 4]) << 24;
       W[t] |= ((unsigned) context->Message_Block[t * 4 + 1]) << 16;
@@ -349,7 +364,7 @@ static void SHA1ProcessMessageBlock(SHA1Context *context)
       W[t] |= ((unsigned) context->Message_Block[t * 4 + 3]);
    }
 
-   for(t = 16; t < 80; t++)
+   for (t = 16; t < 80; t++)
       W[t] = SHA1CircularShift(1,W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16]);
 
    A = context->Message_Digest[0];
@@ -358,7 +373,7 @@ static void SHA1ProcessMessageBlock(SHA1Context *context)
    D = context->Message_Digest[3];
    E = context->Message_Digest[4];
 
-   for(t = 0; t < 20; t++)
+   for (t = 0; t < 20; t++)
    {
       temp  =  SHA1CircularShift(5,A) +
          ((B & C) | ((~B) & D)) + E + W[t] + K[0];
@@ -370,7 +385,7 @@ static void SHA1ProcessMessageBlock(SHA1Context *context)
       A     = temp;
    }
 
-   for(t = 20; t < 40; t++)
+   for (t = 20; t < 40; t++)
    {
       temp  = SHA1CircularShift(5,A) + (B ^ C ^ D) + E + W[t] + K[1];
       temp &= 0xFFFFFFFF;
@@ -381,7 +396,7 @@ static void SHA1ProcessMessageBlock(SHA1Context *context)
       A     = temp;
    }
 
-   for(t = 40; t < 60; t++)
+   for (t = 40; t < 60; t++)
    {
       temp  = SHA1CircularShift(5,A) +
          ((B & C) | (B & D) | (C & D)) + E + W[t] + K[2];
@@ -393,7 +408,7 @@ static void SHA1ProcessMessageBlock(SHA1Context *context)
       A     = temp;
    }
 
-   for(t = 60; t < 80; t++)
+   for (t = 60; t < 80; t++)
    {
       temp = SHA1CircularShift(5,A) + (B ^ C ^ D) + E + W[t] + K[3];
       temp &= 0xFFFFFFFF;
@@ -418,7 +433,7 @@ static void SHA1ProcessMessageBlock(SHA1Context *context)
    context->Message_Block_Index = 0;
 }
 
-static void SHA1PadMessage(SHA1Context *context)
+static void SHA1PadMessage(struct sha1_context *context)
 {
    if (!context)
       return;
@@ -433,13 +448,13 @@ static void SHA1PadMessage(SHA1Context *context)
 
    if (context->Message_Block_Index > 55)
    {
-      while(context->Message_Block_Index < 64)
+      while (context->Message_Block_Index < 64)
          context->Message_Block[context->Message_Block_Index++] = 0;
 
       SHA1ProcessMessageBlock(context);
    }
 
-   while(context->Message_Block_Index < 56)
+   while (context->Message_Block_Index < 56)
       context->Message_Block[context->Message_Block_Index++] = 0;
 
    /*  Store the message length as the last 8 octets */
@@ -455,7 +470,7 @@ static void SHA1PadMessage(SHA1Context *context)
    SHA1ProcessMessageBlock(context);
 }
 
-static int SHA1Result(SHA1Context *context)
+static int SHA1Result(struct sha1_context *context)
 {
    if (context->Corrupted)
       return 0;
@@ -469,7 +484,7 @@ static int SHA1Result(SHA1Context *context)
    return 1;
 }
 
-static void SHA1Input(SHA1Context *context,
+static void SHA1Input(struct sha1_context *context,
       const unsigned char *message_array,
       unsigned length)
 {
@@ -482,7 +497,7 @@ static void SHA1Input(SHA1Context *context,
       return;
    }
 
-   while(length-- && !context->Corrupted)
+   while (length-- && !context->Corrupted)
    {
       context->Message_Block[context->Message_Block_Index++] =
          (*message_array & 0xFF);
@@ -508,7 +523,7 @@ static void SHA1Input(SHA1Context *context,
 
 int sha1_calculate(const char *path, char *result)
 {
-   SHA1Context sha;
+   struct sha1_context sha;
    unsigned char buff[4096];
    int rv    = 1;
    RFILE *fd = filestream_open(path,
@@ -529,7 +544,7 @@ int sha1_calculate(const char *path, char *result)
          goto error;
 
       SHA1Input(&sha, buff, rv);
-   }while(rv);
+   } while (rv);
 
    if (!SHA1Result(&sha))
       goto error;

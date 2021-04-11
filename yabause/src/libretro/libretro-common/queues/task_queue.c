@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (task_queue.c).
@@ -25,6 +25,8 @@
 #include <stdarg.h>
 
 #include <queues/task_queue.h>
+
+#include <features/features_cpu.h>
 
 #ifdef HAVE_THREADS
 #include <rthreads/rthreads.h>
@@ -55,14 +57,24 @@ struct retro_task_impl
    void (*deinit)(void);
 };
 
-static retro_task_queue_msg_t msg_push_bak;
-static task_queue_t tasks_running  = {NULL, NULL};
-static task_queue_t tasks_finished = {NULL, NULL};
+/* TODO/FIXME - static globals */
+static retro_task_queue_msg_t msg_push_bak  = NULL;
+static task_queue_t tasks_running           = {NULL, NULL};
+static task_queue_t tasks_finished          = {NULL, NULL};
 
 static struct retro_task_impl *impl_current = NULL;
 static bool task_threaded_enable            = false;
 
-static uint32_t task_count                  = 0;
+#ifdef HAVE_THREADS
+static slock_t *running_lock                = NULL;
+static slock_t *finished_lock               = NULL;
+static slock_t *property_lock               = NULL;
+static slock_t *queue_lock                  = NULL;
+static scond_t *worker_cond                 = NULL;
+static sthread_t *worker_thread             = NULL;
+static bool worker_continue                 = true; 
+/* use running_lock when touching it */
+#endif
 
 static void task_queue_msg_push(retro_task_t *task,
       unsigned prio, unsigned duration,
@@ -109,14 +121,37 @@ static void task_queue_push_progress(retro_task_t *task)
 
 static void task_queue_put(task_queue_t *queue, retro_task_t *task)
 {
-   task->next = NULL;
+   task->next                   = NULL;
 
    if (queue->front)
-      queue->back->next = task;
-   else
-      queue->front = task;
+   {
+      /* Make sure to insert in order - the queue is 
+       * sorted by 'when' so items that aren't scheduled
+       * to run immediately are at the back of the queue. 
+       * Items with the same 'when' are inserted after
+       * all the other items with the same 'when'. 
+       * This primarily affects items with a 'when' of 0.
+       */
+      if (queue->back)
+      {
+         if (queue->back->when > task->when)
+         {
+            retro_task_t** prev = &queue->front;
+            while (*prev && (*prev)->when <= task->when)
+               prev             = &((*prev)->next);
 
-   queue->back = task;
+            task->next          = *prev;
+            *prev               = task;
+            return;
+         }
+
+         queue->back->next      = task;
+      }
+   }
+   else
+      queue->front              = task;
+
+   queue->back                  = task;
 }
 
 static retro_task_t *task_queue_get(task_queue_t *queue)
@@ -126,7 +161,7 @@ static retro_task_t *task_queue_get(task_queue_t *queue)
    if (task)
    {
       queue->front = task->next;
-      task->next = NULL;
+      task->next   = NULL;
    }
 
    return task;
@@ -135,7 +170,7 @@ static retro_task_t *task_queue_get(task_queue_t *queue)
 static void retro_task_internal_gather(void)
 {
    retro_task_t *task = NULL;
-   while ((task = task_queue_get(&tasks_finished)) != NULL)
+   while ((task = task_queue_get(&tasks_finished)))
    {
       task_queue_push_progress(task);
 
@@ -172,7 +207,7 @@ static void retro_task_regular_gather(void)
    retro_task_t *queue = NULL;
    retro_task_t *next  = NULL;
 
-   while ((task = task_queue_get(&tasks_running)) != NULL)
+   while ((task = task_queue_get(&tasks_running)))
    {
       task->next = queue;
       queue = task;
@@ -181,9 +216,13 @@ static void retro_task_regular_gather(void)
    for (task = queue; task; task = next)
    {
       next = task->next;
-      task->handler(task);
 
-      task_queue_push_progress(task);
+      if (!task->when || task->when < cpu_features_get_time_usec())
+      {
+         task->handler(task);
+
+         task_queue_push_progress(task);
+      }
 
       if (task->finished)
          task_queue_put(&tasks_finished, task);
@@ -196,7 +235,7 @@ static void retro_task_regular_gather(void)
 
 static void retro_task_regular_wait(retro_task_condition_fn_t cond, void* data)
 {
-   while (tasks_running.front && (!cond || cond(data)))
+   while ((tasks_running.front && !tasks_running.front->when) && (!cond || cond(data)))
       retro_task_regular_gather();
 }
 
@@ -208,13 +247,8 @@ static void retro_task_regular_reset(void)
       task->cancelled = true;
 }
 
-static void retro_task_regular_init(void)
-{
-}
-
-static void retro_task_regular_deinit(void)
-{
-}
+static void retro_task_regular_init(void) { }
+static void retro_task_regular_deinit(void) { }
 
 static bool retro_task_regular_find(retro_task_finder_t func, void *user_data)
 {
@@ -242,7 +276,8 @@ static void retro_task_regular_retrieve(task_retriever_data_t *data)
          continue;
 
       /* Create new link */
-      info       = (task_retriever_info_t*)malloc(sizeof(task_retriever_info_t));
+      info       = (task_retriever_info_t*)
+         malloc(sizeof(task_retriever_info_t));
       info->data = malloc(data->element_size);
       info->next = NULL;
 
@@ -287,31 +322,22 @@ static struct retro_task_impl impl_regular = {
 };
 
 #ifdef HAVE_THREADS
-static slock_t *running_lock    = NULL;
-static slock_t *finished_lock   = NULL;
-static slock_t *property_lock   = NULL;
-static slock_t *queue_lock      = NULL;
-static scond_t *worker_cond     = NULL;
-static sthread_t *worker_thread = NULL;
-static bool worker_continue     = true; /* use running_lock when touching it */
 
+/* 'queue_lock' must be held for the duration of this function */
 static void task_queue_remove(task_queue_t *queue, retro_task_t *task)
 {
    retro_task_t     *t = NULL;
    retro_task_t *front = NULL;
 
-   slock_lock(queue_lock);
    front = queue->front;
-   slock_unlock(queue_lock);
 
    /* Remove first element if needed */
    if (task == front)
    {
-      slock_lock(queue_lock);
       queue->front = task->next;
-      slock_unlock(queue_lock);
+      if (queue->back == task) /* if only element, also update back */
+         queue->back = NULL;
       task->next   = NULL;
-
       return;
    }
 
@@ -325,6 +351,13 @@ static void task_queue_remove(task_queue_t *queue, retro_task_t *task)
       {
          t->next    = task->next;
          task->next = NULL;
+
+         /* When removing the tail of the queue, update the tail pointer */
+         if (queue->back == task)
+         {
+            if (queue->back == task)
+               queue->back = t;
+         }
          break;
       }
 
@@ -387,10 +420,9 @@ static void retro_task_threaded_wait(retro_task_condition_fn_t cond, void* data)
       retro_task_threaded_gather();
 
       slock_lock(running_lock);
-      wait = (tasks_running.front != NULL) &&
-             (!cond || cond(data));
+      wait = (tasks_running.front && !tasks_running.front->when);
       slock_unlock(running_lock);
-   } while (wait);
+   } while (wait && (!cond || cond(data)));
 }
 
 static void retro_task_threaded_reset(void)
@@ -407,7 +439,7 @@ static bool retro_task_threaded_find(
       retro_task_finder_t func, void *user_data)
 {
    retro_task_t *task = NULL;
-   bool result = false;
+   bool        result = false;
 
    slock_lock(running_lock);
    for (task = tasks_running.front; task; task = task->next)
@@ -442,7 +474,7 @@ static void threaded_worker(void *userdata)
    for (;;)
    {
       retro_task_t *task  = NULL;
-      bool finished = false;
+      bool       finished = false;
 
       if (!worker_continue)
          break; /* should we keep running until all tasks finished? */
@@ -451,11 +483,23 @@ static void threaded_worker(void *userdata)
 
       /* Get first task to run */
       task = tasks_running.front;
-      if (task == NULL)
+      if (!task)
       {
          scond_wait(worker_cond, running_lock);
          slock_unlock(running_lock);
          continue;
+      }
+
+      if (task->when)
+      {
+         retro_time_t now   = cpu_features_get_time_usec();
+         retro_time_t delay = task->when - now - 500; /* allow half a millisecond for context switching */
+         if (delay > 0)
+         {
+            scond_wait_timeout(worker_cond, running_lock, delay);
+            slock_unlock(running_lock);
+            continue;
+         }
       }
 
       slock_unlock(running_lock);
@@ -466,18 +510,34 @@ static void threaded_worker(void *userdata)
       finished = task->finished;
       slock_unlock(property_lock);
 
-      slock_lock(running_lock);
-      task_queue_remove(&tasks_running, task);
-      slock_unlock(running_lock);
-
       /* Update queue */
       if (!finished)
       {
-         /* Re-add task to running queue */
-         retro_task_threaded_push_running(task);
+         /* Move the task to the back of the queue */
+         /* mimics retro_task_threaded_push_running, 
+          * but also includes a task_queue_remove */
+         slock_lock(running_lock);
+         slock_lock(queue_lock);
+
+         /* do nothing if only item in queue */
+         if (task->next) 
+         {
+            task_queue_remove(&tasks_running, task);
+            task_queue_put(&tasks_running, task);
+            scond_signal(worker_cond);
+         }
+         slock_unlock(queue_lock);
+         slock_unlock(running_lock);
       }
       else
       {
+         /* Remove task from running queue */
+         slock_lock(running_lock);
+         slock_lock(queue_lock);
+         task_queue_remove(&tasks_running, task);
+         slock_unlock(queue_lock);
+         slock_unlock(running_lock);
+
          /* Add task to finished queue */
          slock_lock(finished_lock);
          task_queue_put(&tasks_finished, task);
@@ -488,17 +548,17 @@ static void threaded_worker(void *userdata)
 
 static void retro_task_threaded_init(void)
 {
-   running_lock  = slock_new();
-   finished_lock = slock_new();
-   property_lock = slock_new();
-   queue_lock    = slock_new();
-   worker_cond   = scond_new();
+   running_lock    = slock_new();
+   finished_lock   = slock_new();
+   property_lock   = slock_new();
+   queue_lock      = slock_new();
+   worker_cond     = scond_new();
 
    slock_lock(running_lock);
    worker_continue = true;
    slock_unlock(running_lock);
 
-   worker_thread = sthread_create(threaded_worker, NULL);
+   worker_thread   = sthread_create(threaded_worker, NULL);
 }
 
 static void retro_task_threaded_deinit(void)
@@ -516,12 +576,12 @@ static void retro_task_threaded_deinit(void)
    slock_free(property_lock);
    slock_free(queue_lock);
 
-   worker_thread = NULL;
-   worker_cond   = NULL;
-   running_lock  = NULL;
-   finished_lock = NULL;
-   property_lock = NULL;
-   queue_lock = NULL;
+   worker_thread   = NULL;
+   worker_cond     = NULL;
+   running_lock    = NULL;
+   finished_lock   = NULL;
+   property_lock   = NULL;
+   queue_lock      = NULL;
 }
 
 static struct retro_task_impl impl_threaded = {
@@ -598,7 +658,7 @@ void task_queue_check(void)
 {
 #ifdef HAVE_THREADS
    bool current_threaded = (impl_current == &impl_threaded);
-   bool want_threaded    = task_queue_is_threaded();
+   bool want_threaded    = task_threaded_enable;
 
    if (want_threaded != current_threaded)
       task_queue_deinit();
@@ -616,7 +676,7 @@ bool task_queue_push(retro_task_t *task)
    if (task->type == TASK_TYPE_BLOCKING)
    {
       retro_task_t *running = NULL;
-      bool found = false;
+      bool            found = false;
 
       SLOCK_LOCK(queue_lock);
       running = tasks_running.front;
@@ -669,7 +729,7 @@ void *task_queue_retriever_info_next(task_retriever_info_t **link)
    /* Grab data and move to next link */
    if (*link)
    {
-      data = (*link)->data;
+      data  = (*link)->data;
       *link = (*link)->next;
    }
 
@@ -827,9 +887,32 @@ char* task_get_title(retro_task_t *task)
 
 retro_task_t *task_init(void)
 {
-   retro_task_t *task      = (retro_task_t*)calloc(1, sizeof(*task));
+   /* TODO/FIXME - static local global */
+   static uint32_t task_count = 0;
+   retro_task_t *task         = (retro_task_t*)malloc(sizeof(*task));
 
+   if (!task)
+      return NULL;
+
+   task->handler           = NULL;
+   task->callback          = NULL;
+   task->cleanup           = NULL;
+   task->finished          = false;
+   task->cancelled         = false;
+   task->mute              = false;
+   task->task_data         = NULL;
+   task->user_data         = NULL;
+   task->state             = NULL;
+   task->error             = NULL;
+   task->progress          = 0;
+   task->progress_cb       = NULL;
+   task->title             = NULL;
+   task->type              = TASK_TYPE_NONE;
    task->ident             = task_count++;
+   task->frontend_userdata = NULL;
+   task->alternative_look  = false;
+   task->next              = NULL;
+   task->when              = 0;
 
    return task;
 }
