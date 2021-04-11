@@ -383,4 +383,8 @@ int Cs2LoadState(FILE *, int, int);
 u32 Cs2GetMasterStackAdress(void);
 u32 Cs2GetSlaveStackAdress(void);
 
+// external CD drive command
+void Cs2ForceOpenTray();
+int Cs2ForceCloseTray( int coreid, const char * cdpath );
+
 #endif

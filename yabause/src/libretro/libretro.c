@@ -44,7 +44,6 @@ static char slash = PATH_DEFAULT_SLASH_C();
 static char g_roms_dir[PATH_MAX];
 static char g_save_dir[PATH_MAX_LENGTH];
 static char g_system_dir[PATH_MAX_LENGTH];
-static char full_path[PATH_MAX_LENGTH];
 static char bios_path[PATH_MAX_LENGTH];
 static char bup_path[PATH_MAX_LENGTH];
 
@@ -1171,7 +1170,6 @@ bool retro_load_game(const struct retro_game_info *info)
 
    check_variables();
 
-   snprintf(full_path, sizeof(full_path), "%s", info->path);
    snprintf(bios_path, sizeof(bios_path), "%s%csaturn_bios.bin", g_system_dir, slash);
    if (does_file_exist(bios_path) != 1)
    {
@@ -1213,12 +1211,17 @@ bool retro_load_game(const struct retro_game_info *info)
          if ((disk_total > 1) && (disk_initial_index > 0) && (disk_initial_index < disk_total))
             if (strcmp(disk_paths[disk_initial_index], disk_initial_path) == 0)
                disk_index = disk_initial_index;
-         snprintf(full_path, sizeof(full_path), "%s", disk_paths[disk_index]);
       }
+   }
+   else
+   {
+      snprintf(disk_paths[disk_total], sizeof(disk_paths[disk_total]), "%s", info->path);
+      fill_short_pathname_representation(disk_labels[disk_total], disk_paths[disk_total], sizeof(disk_labels[disk_total]));
+      disk_total++;
    }
 
    yinit.cdcoretype           = CDCORE_ISO;
-   yinit.cdpath               = full_path;
+   yinit.cdpath               = disk_paths[disk_index];
    /* Emulate BIOS */
    yinit.biospath             = (bios_path[0] != '\0' && does_file_exist(bios_path) && !hle_bios_force) ? bios_path : NULL;
    yinit.percoretype          = PERCORE_LIBRETRO;
