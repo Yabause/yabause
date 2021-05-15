@@ -28,6 +28,7 @@ import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.PreferenceCategory
 import net.nend.android.a.g.p
+import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.YabauseStorage.Companion.storage
 import org.uoyabause.android.tv.GameSelectFragment
@@ -90,13 +91,21 @@ class SettingsActivity : AppCompatActivity() {
 
         fun setUpInstall() {
 
-            val preferenceCategory = findPreference("information") as PreferenceCategory?
-            val preference = Preference(preferenceScreen.context)
-            preference.title = "Remaining installation count"
-            val prefs: SharedPreferences = requireActivity().getSharedPreferences("private", MODE_PRIVATE)
-            val count = prefs.getInt("InstallCount", 3)
-            preference.summary = count.toString()
-            preferenceCategory?.addPreference(preference)
+            val prefs: SharedPreferences? = YabauseApplication.appContext.getSharedPreferences("private",  Context.MODE_PRIVATE)
+            var hasDonated = false
+            if (prefs != null) {
+                hasDonated = prefs.getBoolean("donated", false)
+                if (BuildConfig.BUILD_TYPE == "pro" || hasDonated) {
+                    return
+                }
+
+                val preferenceCategory = findPreference("game_select_screen") as PreferenceCategory?
+                val preference = Preference(preferenceScreen.context)
+                preference.title = getString(R.string.remaining_installation_count)
+                val count = prefs?.getInt("InstallCount", 3)
+                preference.summary = count.toString()
+                preferenceCategory?.addPreference(preference)
+            }
 
         }
         override fun onInputDeviceAdded(id: Int) {

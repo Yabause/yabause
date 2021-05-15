@@ -335,6 +335,8 @@
     <string name="frameLimitUnLimited">No Limit</string>
     <string name="pro_version_available">Pro version is available!\n\n * No limit install count\n * Save/Load game state between devices\n * No advertisement\n\n</string>
     <string name="select_install_location">Install Location</string>
+    <string name="remaining_installation_count">Remaining installation count</string>
+    <string name="remaining_installation_count_is">Remaining installation count is </string>
 
 </resources>
 	

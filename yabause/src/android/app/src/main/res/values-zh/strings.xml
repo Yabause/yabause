@@ -166,6 +166,8 @@
     但是，这些功能是实验性的，因此它们无法按预期工作，规格可能会更改或终止，恕不另行通知。
     </string>
     <string name="pro_version_available">专业版可用！\n\n *添加游戏没有限制\n *在设备之间保存/加载游戏状态\n *没有广告\n\n</string>
+    <string name="remaining_installation_count">剩余安装数</string>
+    <string name="remaining_installation_count_is">剩余安装数量为 </string>
 
 </resources>
 	

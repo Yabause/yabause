@@ -744,7 +744,7 @@ class GameSelectFragmentPhone : Fragment(),
                             getString(R.string.install_game_message) + " " + size + getString(R.string.install_game_message_after)
 
                         if(BuildConfig.BUILD_TYPE != "pro"){
-                            message += " You can install " + count + " games."
+                            message += getString(R.string.remaining_installation_count_is) + " " + count + "."
                         }
 
                         AlertDialog.Builder(requireActivity())
@@ -755,7 +755,7 @@ class GameSelectFragmentPhone : Fragment(),
 
 
                                 if( YabauseStorage.storage.hasExternalSD() ) {
-                                    var selectItem: Int? = null
+                                    var selectItem: Int = 0
 
                                     val ctx = YabauseApplication.appContext
                                     val sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx)
@@ -795,7 +795,7 @@ class GameSelectFragmentPhone : Fragment(),
                     } else if (path.toLowerCase().endsWith("zip") || path.toLowerCase().endsWith("7z")) {
 
                         if( YabauseStorage.storage.hasExternalSD() ) {
-                            var selectItem: Int? = null
+                            var selectItem: Int = 0
 
                             val ctx = YabauseApplication.appContext
                             val sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx)

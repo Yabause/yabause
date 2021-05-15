@@ -197,5 +197,7 @@
         La connexion permet de sauvegarder les données de sauvegarde et les données d\'état dans le cloud et de les partager entre les appareils.\n Cependant, ces fonctions sont expérimentales, elles ne fonctionnent donc pas comme prévu, les spécifications peuvent être modifiées ou supprimées sans préavis.
     </string>
     <string name="pro_version_available">La version Pro est disponible!\n\n * Aucune restriction sur laj\'out de jeux\n * Enregistrer / charger l\'état du jeu entre les appareils\n * Aucune publicité\n\n</string>
+    <string name="remaining_installation_count">Remaining installation count</string>
+    <string name="remaining_installation_count_is">Le nombre d’installations restantes est de</string>
 
 </resources>

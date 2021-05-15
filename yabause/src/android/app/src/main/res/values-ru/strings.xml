@@ -331,6 +331,8 @@
     <string name="updating">Обновление...</string>
     <string name="add_a_game">Добавить игру</string>
     <string name="pro_version_available">Доступна версия Pro!\n\n * Нет ограничений на добавление игр\n * Сохранять / загружать состояние игры между устройствами\n * Нет рекламы\n\n</string>
+    <string name="remaining_installation_count">Remaining installation count</string>
+    <string name="remaining_installation_count_is">Remaining installation count is </string>
 
 </resources>
 	
