@@ -119,6 +119,7 @@ import org.uoyabause.android.PadManager.ShowMenuListener
 import org.uoyabause.android.PadTestFragment.PadTestListener
 import org.uoyabause.android.StateListFragment.Companion.checkMaxFileCount
 import org.uoyabause.android.backup.TabBackupFragment
+import org.uoyabause.android.cheat.TabCheatFragment
 import org.uoyabause.android.game.BaseGame
 import org.uoyabause.android.game.GameUiEvent
 import org.uoyabause.android.game.SonicR
@@ -720,7 +721,7 @@ class Yabause : AppCompatActivity(),
                 checkMaxFileCount(save_path + current_gamecode)
             }
             R.id.save_state_cloud -> {
-                if (YabauseApplication.checkDonated(this) == 0) {
+                if (YabauseApplication.checkDonated(this, ) == 0) {
                     waitingResult = true
                     val loginobserver: Observer<FirebaseUser?> = object : Observer<FirebaseUser?> {
                         override fun onSubscribe(d: Disposable) {}
@@ -959,8 +960,8 @@ class Yabause : AppCompatActivity(),
                 editor.apply()
                 toggleMenu()
             }
-/*
-            R.id.menu_item_cheat -> {
+
+            R.id.menu_item_acp -> {
                 waitingResult = true
                 val transaction = supportFragmentManager.beginTransaction()
                 val fragment =
@@ -972,7 +973,7 @@ class Yabause : AppCompatActivity(),
                 transaction.show(fragment)
                 transaction.commit()
             }
- */
+
             R.id.exit -> {
                 YabauseRunnable.deinit()
                 try {

@@ -34,12 +34,12 @@
         android:icon="@drawable/ic_autorenew_black_24dp"
         android:title="@string/menu_reset" />
 
-<!--
+
     <item
         android:id="@+id/menu_item_acp"
         android:icon="@drawable/ic_lock_black_24dp"
         android:title="@string/menu_acp" />
--->
+
 
     <group
         android:id="@+id/menu_other" >

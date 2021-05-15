@@ -19,10 +19,18 @@
 package org.uoyabause.android
 
 import android.os.Environment
+import android.os.StatFs
 import android.util.Log
 import androidx.preference.PreferenceManager
 import com.activeandroid.query.Select
 import io.reactivex.ObservableEmitter
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOCase
+import org.apache.commons.io.filefilter.IOFileFilter
+import org.apache.commons.io.filefilter.SuffixFileFilter
+import org.devmiyax.yabasanshiro.R
+import org.json.JSONArray
+import org.json.JSONException
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -35,13 +43,7 @@ import java.net.PasswordAuthentication
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Arrays
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOCase
-import org.apache.commons.io.filefilter.IOFileFilter
-import org.apache.commons.io.filefilter.SuffixFileFilter
-import org.devmiyax.yabasanshiro.R
-import org.json.JSONArray
-import org.json.JSONException
+
 
 internal class BiosFilter : FilenameFilter {
     override fun accept(dir: File, filename: String): Boolean {
@@ -397,6 +399,17 @@ class YabauseStorage private constructor() {
 */
     }
 
+    fun getInstallDir() : File {
+        val ctx = YabauseApplication.appContext
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val path = sharedPref.getString("pref_install_location","0")
+        if(path=="0" || hasExternalSD() == false ){
+            return games
+        }else {
+            return external!!
+        }
+    }
+
     private object HOLDER {
         val INSTANCE = YabauseStorage()
     }
@@ -409,6 +422,8 @@ class YabauseStorage private constructor() {
         const val REFRESH_LEVEL_STATUS_ONLY = 0
         const val REFRESH_LEVEL_REBUILD = 3
     }
+
+
 
     init {
         var yabroot = File(YabauseApplication.appContext!!.getExternalFilesDir(null), "yabause")
@@ -440,5 +455,72 @@ class YabauseStorage private constructor() {
         if (!screenshots.exists()) screenshots.mkdir()
         record = File(yabroot, "record")
         if (!record.exists()) record.mkdir()
+
+    }
+
+    fun externalMemoryAvailable(): Boolean {
+        return Environment.getExternalStorageState() ==
+                Environment.MEDIA_MOUNTED
+    }
+
+    fun getAvailableInternalMemorySize(): String? {
+        val stat = StatFs(gamePath)
+        val blockSize = stat.blockSizeLong
+        val availableBlocks = stat.availableBlocksLong
+        return formatSize(availableBlocks * blockSize)
+    }
+
+    fun getTotalInternalMemorySize(): String? {
+        val stat = StatFs(gamePath)
+        val blockSize = stat.blockSizeLong
+        val totalBlocks = stat.blockCountLong
+        return formatSize(totalBlocks * blockSize)
+    }
+
+    fun getAvailableExternalMemorySize(): String? {
+        return if (externalMemoryAvailable()) {
+            val stat = StatFs(externalGamePath)
+            val blockSize = stat.blockSizeLong
+            val availableBlocks = stat.availableBlocksLong
+            formatSize(availableBlocks * blockSize)
+        } else {
+            "ERROR"
+        }
+    }
+
+    fun getTotalExternalMemorySize(): String? {
+        return if (externalMemoryAvailable()) {
+            val stat = StatFs(externalGamePath)
+            val blockSize = stat.blockSizeLong
+            val totalBlocks = stat.blockCountLong
+            formatSize(totalBlocks * blockSize)
+        } else {
+            "ERROR"
+        }
+    }
+
+    fun formatSize(size: Long): String? {
+        var size = size
+        var suffix: String? = null
+        if (size >= 1024) {
+            suffix = "KB"
+            size /= 1024
+            if (size >= 1024) {
+                suffix = "MB"
+                size /= 1024
+            }
+            if (size >= 1024) {
+                suffix = "GB"
+                size /= 1024
+            }
+        }
+        val resultBuffer = java.lang.StringBuilder(java.lang.Long.toString(size))
+        var commaOffset = resultBuffer.length - 3
+        while (commaOffset > 0) {
+            resultBuffer.insert(commaOffset, ',')
+            commaOffset -= 3
+        }
+        if (suffix != null) resultBuffer.append(suffix)
+        return resultBuffer.toString()
     }
 }

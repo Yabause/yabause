@@ -27,6 +27,11 @@
             android:summary=""
             android:defaultValue="" />
 
+        <ListPreference
+            android:key="pref_install_location"
+            android:title="@string/select_install_location"
+            android:summary=""
+            android:defaultValue="0" />
 <!--
         <Preference
             android:key="select_image"
@@ -257,7 +262,7 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/information">
+    <PreferenceCategory android:key="information" android:title="@string/information">
         <PreferenceScreen
             android:summary="https://www.uoyabause.org/static_pages/privacy_policy.html"
             android:title="@string/privacy_policy"

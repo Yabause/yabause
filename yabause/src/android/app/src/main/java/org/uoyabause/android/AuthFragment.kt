@@ -16,108 +16,84 @@
     along with YabaSanshiro; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+package org.uoyabause.android
 
-package org.uoyabause.android;
-
-import android.app.Activity;
-import android.content.Intent;
-import androidx.annotation.NonNull;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.fragment.app.Fragment;
-import android.util.Log;
-
-import com.firebase.ui.auth.ErrorCodes;
-import com.firebase.ui.auth.IdpResponse;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-
-import org.devmiyax.yabasanshiro.R;
+import android.app.Activity
+import android.content.Intent
+import android.util.Log
+import androidx.fragment.app.Fragment
+import com.firebase.ui.auth.ErrorCodes
+import com.firebase.ui.auth.IdpResponse
+import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuth.AuthStateListener
+import com.google.firebase.database.FirebaseDatabase
+import org.devmiyax.yabasanshiro.R
 
 /**
  * Created by i77553 on 2017/10/27.
  */
-
-public class AuthFragment extends Fragment implements FirebaseAuth.AuthStateListener {
-
-    private static final int RC_SIGN_IN = 123;
-
-    private void showSnackbar( int id ) {
+open class AuthFragment : Fragment(), AuthStateListener {
+    private fun showSnackbar(id: Int) {
         //Toast.makeText(getActivity(), getString(id), Toast.LENGTH_SHORT).show();
         Snackbar
-                .make(this.getView(), getString(id), Snackbar.LENGTH_SHORT)
-                .show();
+            .make(this.view!!, getString(id), Snackbar.LENGTH_SHORT)
+            .show()
     }
 
-    protected void OnAuthAccepted(){
-
-    }
-
-    @Override
-    public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-        FirebaseUser nuser = firebaseAuth.getCurrentUser();
-
+    protected open fun OnAuthAccepted() {}
+    override fun onAuthStateChanged(firebaseAuth: FirebaseAuth) {
+        val nuser = firebaseAuth.currentUser
         if (nuser != null) {
-            DatabaseReference baseref = FirebaseDatabase.getInstance().getReference();
-            String baseurl = "/user-posts/" + nuser.getUid();
-            if (nuser.getDisplayName() != null)
-                baseref.child(baseurl).child("name").setValue(nuser.getDisplayName());
-            if (nuser.getEmail() != null)
-                baseref.child(baseurl).child("email").setValue(nuser.getEmail());
-            OnAuthAccepted();
-
-            Log.i("login", nuser.getDisplayName());
+            val baseref = FirebaseDatabase.getInstance().reference
+            val baseurl = "/user-posts/" + nuser.uid
+            if (nuser.displayName != null) baseref.child(baseurl).child("name")
+                .setValue(nuser.displayName)
+            if (nuser.email != null) baseref.child(baseurl).child("email").setValue(nuser.email)
+            OnAuthAccepted()
+            Log.i("login", nuser.displayName!!)
         }
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        //Bundle bundle = data.getExtras();
-        switch (requestCode) {
-            case RC_SIGN_IN: {
-
-                IdpResponse response = IdpResponse.fromResultIntent(data);
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            RC_SIGN_IN -> {
+                val response = IdpResponse.fromResultIntent(data)
 
                 // Successfully signed in
-                if (resultCode == Activity.RESULT_OK ) {
-                    response.getIdpToken();
-                    String token = response.getIdpToken();
+                if (resultCode == Activity.RESULT_OK) {
+                    response!!.idpToken
+                    val token = response.idpToken
                     //FirebaseAuth auth = FirebaseAuth.getInstance();
                     //if( auth.getCurrentUser() == null ){
                     //    Log.d("AuthAragment","auth.getCurrentUser() == null");
                     //}
-                    return;
+                    return
                 } else {
                     // Sign in failed
                     if (response == null) {
                         // User pressed back button
-                        showSnackbar(R.string.sign_in_cancelled);
-                        return;
+                        showSnackbar(R.string.sign_in_cancelled)
+                        return
                     }
-
-                    if (response.getError().getErrorCode() == ErrorCodes.NO_NETWORK) {
-                        showSnackbar(R.string.no_internet_connection);
-                        return;
+                    if (response.error!!.errorCode == ErrorCodes.NO_NETWORK) {
+                        showSnackbar(R.string.no_internet_connection)
+                        return
                     }
-
-                    if (response.getError().getErrorCode() == ErrorCodes.UNKNOWN_ERROR) {
-                        showSnackbar(R.string.unknown_error);
-                        return;
+                    if (response.error!!.errorCode == ErrorCodes.UNKNOWN_ERROR) {
+                        showSnackbar(R.string.unknown_error)
+                        return
                     }
                 }
-                showSnackbar(R.string.unknown_sign_in_response);
-
+                showSnackbar(R.string.unknown_sign_in_response)
             }
-            break;
         }
     }
 
-    protected FirebaseAuth  checkAuth(){
-        FirebaseAuth auth = FirebaseAuth.getInstance();
-        return auth;
-/*
+    protected fun checkAuth(): FirebaseAuth {
+        return FirebaseAuth.getInstance()
+        /*
         if (auth.getCurrentUser() == null) {
             auth.addAuthStateListener(this);
 
@@ -138,7 +114,7 @@ public class AuthFragment extends Fragment implements FirebaseAuth.AuthStateList
                             startActivityForResult(
                                     AuthUI.getInstance()
                                             .createSignInIntentBuilder()
-                                            .setProviders( Arrays.asList(/*new AuthUI.IdpConfig.Builder(AuthUI.TWITTER_PROVIDER).build(),
+                                            .setProviders( Arrays.asList(/ *new AuthUI.IdpConfig.Builder(AuthUI.TWITTER_PROVIDER).build(),
                                             new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build(),*
                                                     new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build()))
                                             .build(),
@@ -159,5 +135,7 @@ public class AuthFragment extends Fragment implements FirebaseAuth.AuthStateList
 */
     }
 
-
+    companion object {
+        private const val RC_SIGN_IN = 123
+    }
 }

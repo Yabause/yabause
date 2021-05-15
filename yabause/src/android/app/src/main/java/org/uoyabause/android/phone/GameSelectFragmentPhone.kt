@@ -23,7 +23,9 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.UiModeManager
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.Cursor
@@ -52,6 +54,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
+import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
 import androidx.viewpager.widget.ViewPager
 import com.activeandroid.query.Select
@@ -219,11 +222,21 @@ class GameSelectFragmentPhone : Fragment(),
         if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
             fab.setOnClickListener { _ ->
 
-                if (YabauseApplication.checkDonated(requireActivity()) == 0) {
+                val prefs = requireActivity().getSharedPreferences("private",
+                    MultiDexApplication.MODE_PRIVATE)
+                val InstallCount = prefs.getInt("InstallCount", 3)
+                if( InstallCount > 0){
                     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                     intent.addCategory(Intent.CATEGORY_OPENABLE)
                     intent.type = "*/*"
                     startActivityForResult(intent, READ_REQUEST_CODE)
+                }else {
+                    if (YabauseApplication.checkDonated(requireActivity()) == 0) {
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                        intent.addCategory(Intent.CATEGORY_OPENABLE)
+                        intent.type = "*/*"
+                        startActivityForResult(intent, READ_REQUEST_CODE)
+                    }
                 }
             }
         } else {
@@ -242,12 +255,24 @@ class GameSelectFragmentPhone : Fragment(),
             }
             R.id.menu_item_load_game -> {
                 if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
-                    if (YabauseApplication.checkDonated(requireActivity()) == 0) {
+
+                    val prefs = requireActivity().getSharedPreferences("private",
+                        MultiDexApplication.MODE_PRIVATE)
+                    val InstallCount = prefs.getInt("InstallCount", 3)
+                    if( InstallCount > 0){
                         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                         intent.addCategory(Intent.CATEGORY_OPENABLE)
                         intent.type = "*/*"
                         startActivityForResult(intent, READ_REQUEST_CODE)
+                    }else {
+                        if (YabauseApplication.checkDonated(requireActivity()) == 0) {
+                            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                            intent.addCategory(Intent.CATEGORY_OPENABLE)
+                            intent.type = "*/*"
+                            startActivityForResult(intent, READ_REQUEST_CODE)
+                        }
                     }
+
                 } else {
                     val sharedPref =
                         PreferenceManager.getDefaultSharedPreferences(activity)
@@ -449,7 +474,7 @@ class GameSelectFragmentPhone : Fragment(),
             try {
 
                 val f = File(path)
-                zipFileName = YabauseStorage.storage.gamePath + "/" + f.name
+                zipFileName = YabauseStorage.storage.getInstallDir().absolutePath + "/" + f.name
                 val fd = File(zipFileName)
                 val parcelFileDescriptor =
                     requireActivity().contentResolver.openFileDescriptor(uri, "r")
@@ -482,12 +507,12 @@ class GameSelectFragmentPhone : Fragment(),
                                 entry.name.toLowerCase(Locale.ROOT).endsWith("cue") ||
                                 entry.name.toLowerCase(Locale.ROOT).endsWith("mds")
                             ) {
-                                targetFileName = YabauseStorage.storage.gamePath + "/" + entry.name
+                                targetFileName = YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name
                             }
                             zip.getInputStream(entry).use { input ->
                                 if (entry.isDirectory) {
                                     val unzipdir =
-                                        File(YabauseStorage.storage.gamePath + "/" + entry.name)
+                                        File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name)
                                     if (!unzipdir.exists()) {
                                         unzipdir.mkdirs()
                                     } else {
@@ -495,7 +520,7 @@ class GameSelectFragmentPhone : Fragment(),
                                         unzipdir.mkdirs()
                                     }
                                 } else {
-                                    File(YabauseStorage.storage.gamePath + "/" + entry.name).outputStream()
+                                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name).outputStream()
                                         .use { output ->
                                             input.copyTo(output)
                                         }
@@ -510,12 +535,12 @@ class GameSelectFragmentPhone : Fragment(),
                                 entry.name.toLowerCase(Locale.ROOT).endsWith("cue") ||
                                 entry.name.toLowerCase(Locale.ROOT).endsWith("mds")
                             ) {
-                                targetFileName = YabauseStorage.storage.gamePath + "/" + entry.name
+                                targetFileName = YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name
                             }
 
                             if (entry.isDirectory) {
                                 val unzipdir =
-                                    File(YabauseStorage.storage.gamePath + "/" + entry.name)
+                                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name)
                                 if (!unzipdir.exists()) {
                                     unzipdir.mkdirs()
                                 } else {
@@ -524,7 +549,7 @@ class GameSelectFragmentPhone : Fragment(),
                                 }
                             } else {
                                 sz.getInputStream(entry).use { input ->
-                                    File(YabauseStorage.storage.gamePath + "/" + entry.name).outputStream()
+                                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name).outputStream()
                                         .use { output ->
                                             input.copyTo(output)
                                         }
@@ -536,6 +561,19 @@ class GameSelectFragmentPhone : Fragment(),
 
                 if (targetFileName != "") {
                     withContext(Dispatchers.Main) {
+
+                        val prefs = requireActivity().getSharedPreferences("private",
+                            MultiDexApplication.MODE_PRIVATE)
+                        var InstallCount = prefs.getInt("InstallCount", 3)
+                        InstallCount -= 1
+                        if( InstallCount < 0 ){
+                            InstallCount = 0
+                        }
+                        with( prefs.edit()) {
+                            putInt("InstallCount", InstallCount)
+                            apply()
+                        }
+
                         fileSelected(File(targetFileName))
                     }
                 } else {
@@ -625,7 +663,7 @@ class GameSelectFragmentPhone : Fragment(),
                 }
 
                 val fd =
-                    File(YabauseStorage.storage.gamePath + "/" + gameinfo.product_number + ".chd")
+                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + gameinfo.product_number + ".chd")
                 val parcelFileDescriptor =
                     requireActivity().contentResolver.openFileDescriptor(uri, "r")
                 val fileDescriptor: FileDescriptor = parcelFileDescriptor!!.fileDescriptor
@@ -641,6 +679,19 @@ class GameSelectFragmentPhone : Fragment(),
                     }
                 }
                 withContext(Dispatchers.Main) {
+
+                    val prefs = requireActivity().getSharedPreferences("private",
+                        MultiDexApplication.MODE_PRIVATE)
+                    var InstallCount = prefs.getInt("InstallCount", 3)
+                    InstallCount -= 1
+                    if( InstallCount < 0 ){
+                        InstallCount = 0
+                    }
+                    with( prefs.edit()) {
+                        putInt("InstallCount", InstallCount)
+                        apply()
+                    }
+
                     fileSelected(fd)
                 }
                 parcelFileDescriptor.close()
@@ -684,19 +735,98 @@ class GameSelectFragmentPhone : Fragment(),
                         cursor.close()
 
                         size = size / 1024 / 1024
-                        val message =
+
+                        val prefs: SharedPreferences = requireActivity().getSharedPreferences("private",
+                            AppCompatActivity.MODE_PRIVATE)
+                        val count = prefs.getInt("InstallCount", 3)
+
+                        var message =
                             getString(R.string.install_game_message) + " " + size + getString(R.string.install_game_message_after)
+
+                        if(BuildConfig.BUILD_TYPE != "pro"){
+                            message += " You can install " + count + " games."
+                        }
 
                         AlertDialog.Builder(requireActivity())
                             .setTitle(getString(R.string.do_you_want_to_install))
-                            // .setMessage("If you install, you can play from this game list directly. But it costs ${size} MBytes")
                             .setMessage(message)
-                            .setPositiveButton(R.string.yes) { _, _ -> installGameFile(uri) }
+                            .setTitle(R.string.do_you_want_to_install)
+                            .setPositiveButton(R.string.yes) { _, _ ->
+
+
+                                if( YabauseStorage.storage.hasExternalSD() ) {
+                                    var selectItem: Int? = null
+
+                                    val ctx = YabauseApplication.appContext
+                                    val sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx)
+                                    val path = sharedPref.getString("pref_install_location","0")
+                                    val defaultItem = path?.toInt() ?: 0
+
+                                    var option: Array<String> = arrayOf()
+                                    option += "Internal(" + YabauseStorage.storage.getAvailableInternalMemorySize() +" free)"
+                                    option += "External("+ YabauseStorage.storage.getAvailableExternalMemorySize() +" free)"
+
+                                    AlertDialog.Builder(requireActivity())
+                                        .setTitle("Which Storage?")
+                                        .setSingleChoiceItems(option, defaultItem,
+                                            { dialog, which ->
+                                                selectItem = which
+                                            })
+                                        .setPositiveButton(R.string.ok) { _, _ ->
+
+                                            val editor = sharedPref.edit()
+                                            editor.putString("pref_install_location",selectItem.toString())
+                                            editor.commit()
+
+                                            installGameFile(uri)
+
+                                        }
+                                        .setNegativeButton(R.string.cancel){ _, _ -> }
+                                        .setCancelable(true)
+                                        .show()
+                                }else{
+                                    installGameFile(uri)
+                                }
+
+                             }
                             .setNegativeButton(R.string.no) { _, _ -> openGameFileDirect(uri) }
                             .setCancelable(true)
                             .show()
                     } else if (path.toLowerCase().endsWith("zip") || path.toLowerCase().endsWith("7z")) {
-                        installZipGameFile(uri, path)
+
+                        if( YabauseStorage.storage.hasExternalSD() ) {
+                            var selectItem: Int? = null
+
+                            val ctx = YabauseApplication.appContext
+                            val sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx)
+                            val location = sharedPref.getString("pref_install_location","0")
+                            val defaultItem = location?.toInt() ?: 0
+
+                            var option: Array<String> = arrayOf()
+                            option += "Internal(" + YabauseStorage.storage.getAvailableInternalMemorySize() +" free)"
+                            option += "External("+ YabauseStorage.storage.getAvailableExternalMemorySize() +" free)"
+
+                            AlertDialog.Builder(requireActivity())
+                                .setTitle("Which Storage?")
+                                .setSingleChoiceItems(option, defaultItem,
+                                    { dialog, which ->
+                                        selectItem = which
+                                    })
+                                .setPositiveButton(R.string.ok) { _, _ ->
+
+                                    val editor = sharedPref.edit()
+                                    editor.putString("pref_install_location",selectItem.toString())
+                                    editor.commit()
+                                    installZipGameFile(uri, path)
+
+                                }
+                                .setNegativeButton(R.string.cancel){ _, _ -> }
+                                .setCancelable(true)
+                                .show()
+                        }else{
+                            installZipGameFile(uri, path)
+                        }
+
                     } else {
                         Toast.makeText(requireContext(),
                             getString(R.string.only_chd_is_supported_for_load_game),

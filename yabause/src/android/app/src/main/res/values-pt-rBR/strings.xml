@@ -99,5 +99,6 @@
         O login permite fazer backup de dados salvos e dados de estado na nuvem e compartilhá-los entre dispositivos.\n
         No entanto, essas funções são experimentais, por isso não funcionam como esperado, as especificações podem ser alteradas ou encerradas sem aviso prévio.
     </string>
+    <string name="pro_version_available">A versão Pro está disponível!\n\n * Sem restrições para adicionar jogos\n * Salvar / carregar o estado do jogo entre os dispositivos\n * Sem anúncios\n</string>
 
 </resources>

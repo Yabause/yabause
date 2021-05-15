@@ -9,9 +9,15 @@ import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.content.pm.PackageManager
 import android.hardware.input.InputManager
+import android.os.Build
 import android.os.Bundle
+import android.os.storage.StorageManager
+import android.os.storage.StorageVolume
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat.getExternalFilesDirs
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.fragment.app.DialogFragment
 import androidx.preference.CheckBoxPreference
 import androidx.preference.EditTextPreference
@@ -20,10 +26,13 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
-import java.util.ArrayList
+import androidx.preference.PreferenceCategory
+import net.nend.android.a.g.p
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.YabauseStorage.Companion.storage
 import org.uoyabause.android.tv.GameSelectFragment
+import java.util.ArrayList
+
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -79,6 +88,17 @@ class SettingsActivity : AppCompatActivity() {
             super.onDestroy()
         }
 
+        fun setUpInstall() {
+
+            val preferenceCategory = findPreference("information") as PreferenceCategory?
+            val preference = Preference(preferenceScreen.context)
+            preference.title = "Remaining installation count"
+            val prefs: SharedPreferences = requireActivity().getSharedPreferences("private", MODE_PRIVATE)
+            val count = prefs.getInt("InstallCount", 3)
+            preference.summary = count.toString()
+            preferenceCategory?.addPreference(preference)
+
+        }
         override fun onInputDeviceAdded(id: Int) {
             PadManager.updatePadManager()
             syncInputDevice("player1")
@@ -97,8 +117,69 @@ class SettingsActivity : AppCompatActivity() {
             syncInputDevice("player2")
         }
 
+        @RequiresApi(Build.VERSION_CODES.N)
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.preferences, rootKey)
+
+
+            var dir = findPreference("pref_game_directory") as Preference?
+            if ( dir != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                dir.isVisible = false
+            }
+
+            var installLocation = findPreference("pref_install_location") as ListPreference?
+            if ( installLocation != null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                installLocation.isVisible = false
+            }else{
+
+                val labels: MutableList<CharSequence> = ArrayList()
+                val values: MutableList<CharSequence> = ArrayList()
+
+                val sm = requireActivity().getSystemService(STORAGE_SERVICE) as StorageManager
+                val map: Map<String, String> = when {
+                    Build.VERSION.SDK_INT>= Build.VERSION_CODES.R -> {
+                        // Android 11- (API 30)
+                        sm.storageVolumes.mapNotNull { volume ->
+                            val path = volume.directory?.absolutePath ?: return@mapNotNull null
+                            val label = volume.getDescription(requireActivity()) ?: return@mapNotNull null
+                            path to label
+                        }.toMap()
+                    }
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.N -> {
+                        // Android 7-10 (API 24-29)
+                        val getPath = StorageVolume::class.java.getDeclaredMethod("getPath")
+                        sm.storageVolumes.mapNotNull { volume ->
+                            val path = (getPath.invoke(volume) as String?) ?: return@mapNotNull null
+                            val label = volume.getDescription(requireActivity()) ?: return@mapNotNull null
+                            path to label
+                        }.toMap()
+                    }
+                    else -> {
+                        // Android 4-6 (API 14-23)
+                        val getVolumeList = sm.javaClass.getDeclaredMethod("getVolumeList")
+                        (getVolumeList.invoke(sm) as Array<*>).filterNotNull().mapNotNull { volume ->
+                            val getPath = volume.javaClass.getDeclaredMethod("getPath") ?: return@mapNotNull null
+                            val getLabel = volume.javaClass.getDeclaredMethod("getDescription", Context::class.java)
+                            val path = (getPath.invoke(volume) as String?) ?: return@mapNotNull null
+                            val label = (getLabel.invoke(volume, requireActivity()) as String?) ?: return@mapNotNull null
+                            path to label
+                        }.toMap()
+                    }
+                }
+
+                var index = 0
+                map.forEach() { path,label ->
+                    labels.add(label)
+                    values.add(index.toString())
+                    index++
+                }
+
+                installLocation!!.entries = labels.toTypedArray()
+                installLocation!!.entryValues = values.toTypedArray()
+                installLocation!!.summary = installLocation!!.entry
+
+            }
+
 
             var inputsetting1 = findPreference("pref_player1_inputdef_file") as InputSettingPreference?
             inputsetting1!!.setPlayerAndFilename(0, "keymap")
@@ -298,6 +379,8 @@ class SettingsActivity : AppCompatActivity() {
             frameLimitSetting!!.summary = frameLimitSetting.entry
 
 
+            setUpInstall();
+
         }
 
         override fun onDisplayPreferenceDialog(preference: Preference) {
@@ -468,5 +551,6 @@ class SettingsActivity : AppCompatActivity() {
                 requireActivity().setResult(0, resultIntent)
             }
         }
+
     }
 }

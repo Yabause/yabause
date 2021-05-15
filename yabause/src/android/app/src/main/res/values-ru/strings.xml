@@ -330,6 +330,7 @@
     <string name="menu_acp">Код Action Replay</string>
     <string name="updating">Обновление...</string>
     <string name="add_a_game">Добавить игру</string>
+    <string name="pro_version_available">Доступна версия Pro!\n\n * Нет ограничений на добавление игр\n * Сохранять / загружать состояние игры между устройствами\n * Нет рекламы\n\n</string>
 
 </resources>
 	

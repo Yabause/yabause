@@ -260,6 +260,6 @@
     <string name="frameLimitDouble">倍速</string>
     <string name="frameLimitNormal">等速</string>
     <string name="frameLimitUnLimited">制限なし</string>
-
+    <string name="pro_version_available">プロバージョン\n\n * ゲームの追加に制限なし\n * 状態保存をデバイス間で共有\n * 広告なし\n\n</string>
 
 </resources>

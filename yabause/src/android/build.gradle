@@ -19,11 +19,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
 buildscript { 
-    ext.kotlin_version = '1.4.10'
 
     repositories {
         google()
         jcenter()
+        mavenCentral()
         maven {
             url 'http://fan-adn.github.io/nendSDK-Android-lib/library'
         }
@@ -33,10 +33,10 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.1'
-        classpath 'com.google.gms:google-services:4.3.4'
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.3.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.android.tools.build:gradle:4.2.1'
+        classpath 'com.google.gms:google-services:4.3.5'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.5.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.0"
         classpath "org.jlleitschuh.gradle:ktlint-gradle:9.2.1"
     }
 }

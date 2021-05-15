@@ -276,7 +276,7 @@
     <string name="cpu_time">CPU time (Synchronize to emulated cpu time. If your device is fast enough, Sound emulation is very accurate.)</string>
     <string name="real_time">Real time (Synchronize to real world time. Although your device is not so fast, Sound is not corrupted.)</string>
     <string name="privacy_policy">Privacy Policy</string>
-    <string name="information">Infromation</string>
+    <string name="information">Information</string>
     <string name="already_have_been">If you already have been donated, Please contact smiyaxdev@gmail.com</string>
     <string name="close">Close</string>
     <string name="show_fps">Show FPS</string>
@@ -333,6 +333,8 @@
     <string name="frameLimitNormal">Normal</string>
     <string name="frameLimitDouble">Double</string>
     <string name="frameLimitUnLimited">No Limit</string>
+    <string name="pro_version_available">Pro version is available!\n\n * No limit install count\n * Save/Load game state between devices\n * No advertisement\n\n</string>
+    <string name="select_install_location">Install Location</string>
 
 </resources>
 	
