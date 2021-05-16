@@ -39,7 +39,7 @@
         android:id="@+id/editText_cheat_desc" />
 
     <TextView
-        android:text="Cheat Code"
+        android:text="Action Replay Code"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/textView3" />
