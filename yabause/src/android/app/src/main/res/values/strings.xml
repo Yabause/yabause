@@ -288,7 +288,7 @@
 
         To play SEGA Saturn games, follow this instructions.\n\n
 
-        1. Generate a image file from your game CD-ROM using DiscImageChef or something. Useful tools are listed [here](http://wiki.redump.org/index.php?title=Useful_Links).\n
+        1. Generate an image file from your game CD-ROM using DiscImageChef or something. Useful tools are listed [here](http://wiki.redump.org/index.php?title=Useful_Links).\n
         2. Copy the image files to the directory **\"%1$s\"**  in the smart phone internal storage.\n
         3. Show drawer menu and tap \"Refresh Game List\". Then game list is shown.\n
         4. Tap the game title you want to play.\n
@@ -297,6 +297,22 @@
         For more detail checkout this [Youtube video](https://www.youtube.com/watch?v=Ch6_KhhAg10).\n
         ]]>
     </string>
+
+    <string name="welcome_11">
+        <![CDATA[
+        # Welcome! \n\n
+
+        To play SEGA Saturn games, follow this instructions.\n\n
+
+        1. Generate an image file from your game CD-ROM. You can download our recommended tool from [here](https://www.uoyabause.org/static_pages/download#backupcdrom). Other useful tools are listed [here](http://wiki.redump.org/index.php?title=Useful_Links).\n
+        2. Copy the image files to this device or cloud storage like Google drive. \n
+        3. Tap + button on this screen. \n
+        4. Select the image files you copied. \n
+        5. Enjoy!\n
+        ]]>
+    </string>
+
+
     <string name="delete_confirm_title">DELETE CONFIRM</string>
     <string name="not_available">NOT AVAILABLE!</string>
     <string name="only_pro_version">This function is only available for pro version</string>
@@ -337,6 +353,8 @@
     <string name="select_install_location">Install Location</string>
     <string name="remaining_installation_count">Remaining installation count</string>
     <string name="remaining_installation_count_is">Remaining installation count is </string>
+    <string name="which_storage">Which Storage?</string>
+    <string name="or_place_file_to">Or place game into \"%1$s\" manually.</string>
 
 </resources>
 	

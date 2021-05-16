@@ -90,6 +90,22 @@
          Para mais detalhes, consulte nosso this [Youtube video](https://www.youtube.com/watch?v=Ch6_KhhAg10).\n
         ]]>
     </string>
+
+    <string name="welcome_11">
+        <![CDATA[
+        # Receber! \n\n
+
+        Para jogar os jogos SEGA Saturn, siga estas instruções. \n\n
+
+        1. Gere um arquivo de imagem a partir do CD-ROM do jogo. Você pode baixar nossa ferramenta recomendada [aqui] (https://www.uoyabause.org/static_pages/download#backupcdrom). Outras ferramentas úteis estão listadas [aqui] (http://wiki.redump.org/index.php?title=Useful_Links). \n
+        2. Copie os arquivos de imagem para este dispositivo ou armazenamento em nuvem como o Google Drive. \n
+        3. Toque no botão + nesta tela. \n
+        4. Selecione os arquivos de imagem que você copiou. \n
+        5. Divirta-se! \n
+        ]]>
+    </string>
+
+
     <string name="delete_confirm_title">EXCLUIR CONFIRMAR</string>
     <string name="not_available">NÃO DISPONÍVEL!</string>
     <string name="only_pro_version">Esta função está disponível apenas para a versão pro</string>
@@ -102,5 +118,8 @@
     <string name="pro_version_available">A versão Pro está disponível!\n\n * Sem restrições para adicionar jogos\n * Salvar / carregar o estado do jogo entre os dispositivos\n * Sem anúncios\n</string>
     <string name="remaining_installation_count">Оставшееся количество установок</string>
     <string name="remaining_installation_count_is">Оставшееся количество установок : </string>
+    <string name="do_you_want_to_install">Você quer instalar?</string>
+    <string name="which_storage">Qual armazenamento?</string>
+    <string name="or_place_file_to">Ou coloque o jogo no \"%1$s\" manualmente.</string>
 
 </resources>

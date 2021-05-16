@@ -168,6 +168,23 @@
     <string name="pro_version_available">专业版可用！\n\n *添加游戏没有限制\n *在设备之间保存/加载游戏状态\n *没有广告\n\n</string>
     <string name="remaining_installation_count">剩余安装数</string>
     <string name="remaining_installation_count_is">剩余安装数量为 </string>
+    <string name="do_you_want_to_install">您要安装吗？</string>
+    <string name="which_storage">哪个存储空间？</string>
+    <string name="or_place_file_to">或将游戏手动放入 \"%1$s\" </string>
+
+    <string name="welcome_11">
+        <![CDATA[
+        ＃ 欢迎！ \n\n
+
+        要玩SEGA Saturn游戏，请遵循以下说明 \n\n
+
+        1.从游戏CD-ROM生成图像文件。您可以从[此处]（https://www.uoyabause.org/static_pages/download#backupcdrom）下载我们推荐的工具。其他有用的工具列在[此处]（http://wiki.redump.org/index.php?title=Useful_Links）\n
+        2.将图像文件复制到此设备或Google云端硬盘之类的云存储中。\n
+        3.在此屏幕上点击+按钮。\n
+        4.选择复制的图像文件。\n
+        5.尽情享受！\n
+        ]]>
+    </string>
 
 </resources>
 	

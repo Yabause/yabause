@@ -245,6 +245,21 @@
         より詳しい使い方は私たちのthis [Youtube video](https://www.youtube.com/watch?v=Ch6_KhhAg10)を見てください。\n
         ]]>
     </string>
+
+    <string name="welcome_11">
+        <![CDATA[
+        # ようこそ! \n\n
+
+       以下の手順でセガサターンのゲームを実行します。\n\n
+
+        1. あなたが所有するCD-ROMをファイルにします。 [ここ](https://www.uoyabause.org/static_pages/download#backupcdrom)から私たちの推奨するツールをダウンロードできます。そのほかのツールは[ここ](http://wiki.redump.org/index.php?title=Useful_Links)にリストアップされています\n
+        2. 作成されたファイルをこのデバイスもしくはGoogleDriveなどのクラウドストレージにコピーします。 \n
+        3. この画面の+ボタンをタップします。 \n
+        4. コピーしたファイルを選択します。 \n
+        5. 遊ぶ!\n
+        ]]>
+    </string>
+
     <string name="delete_confirm_title">削除確認</string>
     <string name="not_available">利用できません!</string>
     <string name="only_pro_version">この機能はPro versionのみ使用できます</string>
@@ -263,5 +278,8 @@
     <string name="pro_version_available">プロバージョン\n\n * ゲームインストール数に制限なし\n * 状態保存をデバイス間で共有\n * 広告なし\n\n</string>
     <string name="remaining_installation_count">残インストール可能数</string>
     <string name="remaining_installation_count_is">残インストール可能数: </string>
+    <string name="do_you_want_to_install">インストールしますか?</string>
+    <string name="which_storage">どっちのストレージ？</string>
+    <string name="or_place_file_to">または、ゲームを手動で \"%1$s\" に配置します</string>
 
 </resources>

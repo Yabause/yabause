@@ -476,7 +476,7 @@ class SettingsActivity : AppCompatActivity() {
             if (key == "pref_bios" || key == "scsp_time_sync_mode" || key == "pref_cart" || key == "pref_video"
                 || key == "pref_cpu" || key == "pref_filter" || key == "pref_polygon_generation"
                 || key == "pref_sound_engine" || key == "pref_resolution" || key == "pref_rbg_resolution"
-                || key == "pref_cpu_sync_per_line" || key == "pref_aspect_rate" || key == "pref_frameLimit"
+                || key == "pref_cpu_sync_per_line" || key == "pref_aspect_rate" || key == "pref_frameLimit" || key == "pref_install_location"
             ) {
                 val pref = findPreference(key) as ListPreference?
                 pref!!.summary = pref.entry
@@ -512,6 +512,15 @@ class SettingsActivity : AppCompatActivity() {
                 syncInputDevice("player1")
                 syncInputDevice("player2")
             }
+
+
+            val install =
+                preferenceManager.findPreference("pref_install_location") as ListPreference?
+            if (install != null) {
+                install.summary = install.entry
+            }
+
+
             val download =
                 preferenceManager.findPreference("pref_game_download_directory") as ListPreference?
             if (download != null) {
