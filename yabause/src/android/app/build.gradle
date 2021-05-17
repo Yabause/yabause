@@ -66,8 +66,8 @@ android {
         minSdkVersion 21
         targetSdkVersion 30
         multiDexEnabled true
-        versionCode 16
-        versionName '1.4.0'
+        versionCode 17
+        versionName '1.4.1'
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.pro
@@ -109,6 +109,7 @@ android {
             resValue "string", "app_name", "Yaba Sanshiro 2"
         }
         pro {
+            //debuggable true
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

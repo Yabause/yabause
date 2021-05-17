@@ -90,10 +90,10 @@
             android:value="true" />
         <meta-data
             android:name="AA_DB_NAME"
-            android:value="localgameinfo.db" />
+            android:value="localgameinfo2.db" />
         <meta-data
             android:name="AA_DB_VERSION"
-            android:value="2" />
+            android:value="3" />
         <meta-data
             android:name="AA_MODELS"
             android:value="org.uoyabause.android.GameInfo, org.uoyabause.android.GameStatus, org.uoyabause.android.Cheat" />

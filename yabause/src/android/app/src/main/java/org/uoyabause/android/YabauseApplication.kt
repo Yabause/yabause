@@ -47,7 +47,7 @@ class YabauseApplication : MultiDexApplication() {
         super.onCreate()
         val config = Configuration.Builder(this)
             .setDatabaseName("localgameinfo.db")
-            .setDatabaseVersion(2)
+            .setDatabaseVersion(3)
             .setModelClasses(GameInfo::class.java,
                 GameStatus::class.java,
                 Cheat::class.java)

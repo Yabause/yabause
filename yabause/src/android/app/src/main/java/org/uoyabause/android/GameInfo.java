@@ -113,7 +113,7 @@ public class GameInfo extends Model {
     public Date last_playdate;
 
     @Column(name = "update_at")
-    public Date update_at;
+    public Date update_at = new Date();
 
     @Column(name = "image_url")
     public String image_url ="";
