@@ -49,10 +49,19 @@ void drawLine(uint32_t color, uint32_t* buffer, int width, int height,
  
   for(;;)
   {
-    if ( x0 < 0 || x0 >= width || y0 < 0 || y0 >= height )
-      break;
+    int writeX = x0;
+    int writeY = y0;
+    if ( writeX < 0 )
+      writeX = 0;
+    else if ( writeX >= width )
+      writeX = width - 1;
 
-    buffer[y0 * width + x0] = color;
+    if ( writeY < 0 )
+      writeY = 0;
+    else if ( writeY >= height )
+      writeY = height - 1;
+      
+    buffer[writeY * width + writeX] = color;
     if (x0 == x1 && y0 == y1)
       break;
 

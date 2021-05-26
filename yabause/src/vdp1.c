@@ -1502,7 +1502,8 @@ u8 Vdp1DebugCommandVertices(u32 number, int *x0, int *y0, int *x1, int *y1,
    u16 command;
    vdp1cmd_struct cmd;
    u32 addr;
-   u32 i;
+   s32 i;
+   u8 cmdType;
 
    if ((addr = Vdp1DebugGetCommandNumberAddr(number)) == 0xFFFFFFFF)
       return -1;
@@ -1517,13 +1518,14 @@ u8 Vdp1DebugCommandVertices(u32 number, int *x0, int *y0, int *x1, int *y1,
       return -1;
 
    Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
-   if ((cmd.CMDCTRL & 0x000F) <= 5) 
+   cmdType = cmd.CMDCTRL & 0x000F;
+   if (cmdType <= 5) 
    {
       // Find user local coordinates first
       vdp1cmd_struct tmpCmd;
       s16 coordX = 0;
       s16 coordY = 0;
-      for (i = 0; ; ++i)
+      for (i = number; i >= 0; --i)
       {
         if ((addr = Vdp1DebugGetCommandNumberAddr(i)) == 0xFFFFFFFF)
           break;
@@ -1543,14 +1545,105 @@ u8 Vdp1DebugCommandVertices(u32 number, int *x0, int *y0, int *x1, int *y1,
       // 3: Distorted Sprite *
       // 4: Polygon
       // 5: Polyline
-      *x0 = coordX + cmd.CMDXA;
-      *y0 = coordY + cmd.CMDYA;
-      *x1 = coordX + cmd.CMDXB;
-      *y1 = coordY + cmd.CMDYB;
-      *x2 = coordX + cmd.CMDXC;
-      *y2 = coordY + cmd.CMDYC;
-      *x3 = coordX + cmd.CMDXD;
-      *y3 = coordY + cmd.CMDYD;
+      if (cmdType == 0 || cmdType == 1)
+      {
+        s16 i0, j0;
+        s16 i1, j1;
+        if (cmdType == 0)
+        {
+          i0 = cmd.CMDXA;
+          i1 = i0 + (((cmd.CMDSIZE & 0x3F00) >> 5) & 0xFF);
+          j0 = cmd.CMDYA;
+          j1 = j0 + (cmd.CMDSIZE & 0xFF);
+        }
+        else
+        {
+          switch ((cmd.CMDCTRL >> 8) & 0xF)
+          {
+          default:
+          case 0x0:
+            i0 = cmd.CMDXA;
+            i1 = i0 + cmd.CMDXC;
+            j0 = cmd.CMDYA;
+            j1 = j0 + cmd.CMDYC;
+            break;
+          case 0x5: // Upper-Left
+            i0 = cmd.CMDXA;
+            i1 = i0 + cmd.CMDXB;
+            j0 = cmd.CMDYA;
+            j1 = j0 + cmd.CMDYB;
+            break;
+          case 0x6: // Upper-Center
+            i0 = cmd.CMDXA - cmd.CMDXB / 2;
+            i1 = cmd.CMDXA + cmd.CMDXB / 2;
+            j0 = cmd.CMDYA;
+            j1 = j0 + cmd.CMDYB;
+            break;
+          case 0x7: // Upper-Right
+            i0 = cmd.CMDXA - cmd.CMDXB;
+            i1 = cmd.CMDXA;
+            j0 = cmd.CMDYA;
+            j1 = j0 + cmd.CMDYB;
+            break;
+          case 0x9: // Center-Left
+            i0 = cmd.CMDXA;
+            i1 = cmd.CMDXA + cmd.CMDXB;
+            j0 = cmd.CMDYA - cmd.CMDYB / 2;
+            j1 = cmd.CMDYA + cmd.CMDYB / 2;
+            break;
+          case 0xA: // Center-Center
+            i0 = cmd.CMDXA - cmd.CMDXB / 2;
+            i1 = cmd.CMDXA + cmd.CMDXB / 2;
+            j0 = cmd.CMDYA - cmd.CMDYB / 2;
+            j1 = cmd.CMDYA + cmd.CMDYB / 2;
+            break;
+          case 0xB: // Center-Right
+            i0 = cmd.CMDXA - cmd.CMDXB;
+            i1 = cmd.CMDXA;
+            j0 = cmd.CMDYA - cmd.CMDYB / 2;
+            j1 = cmd.CMDYA + cmd.CMDYB / 2;
+            break;
+          case 0xD: // Lower-Left
+            i0 = cmd.CMDXA;
+            i1 = cmd.CMDXA + cmd.CMDXB;
+            j0 = cmd.CMDYA - cmd.CMDYB;
+            j1 = cmd.CMDYA;
+            break;
+          case 0xE: // Lower-Center
+            i0 = cmd.CMDXA - cmd.CMDXB / 2;
+            i1 = cmd.CMDXA + cmd.CMDXB / 2;
+            j0 = cmd.CMDYA - cmd.CMDYB;
+            j1 = cmd.CMDYA;
+            break;
+          case 0xF: // Lower-Right
+            i0 = cmd.CMDXA - cmd.CMDXB;
+            i1 = cmd.CMDXA;
+            j0 = cmd.CMDYA - cmd.CMDYB;
+            j1 = cmd.CMDYA;
+            break;
+          }
+        }
+
+        *x0 = coordX + i0;
+        *y0 = coordY + j0;
+        *x1 = coordX + i1;
+        *y1 = coordY + j0;
+        *x2 = coordX + i1;
+        *y2 = coordY + j1;
+        *x3 = coordX + i0;
+        *y3 = coordY + j1;
+      }
+      else
+      {
+        *x0 = coordX + cmd.CMDXA;
+        *y0 = coordY + cmd.CMDYA;
+        *x1 = coordX + cmd.CMDXB;
+        *y1 = coordY + cmd.CMDYB;
+        *x2 = coordX + cmd.CMDXC;
+        *y2 = coordY + cmd.CMDYC;
+        *x3 = coordX + cmd.CMDXD;
+        *y3 = coordY + cmd.CMDYD;
+      }
       return 0;
    }
    else 
