@@ -1496,6 +1496,69 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
    return texture;
 }
 
+u8 Vdp1DebugCommandVertices(u32 number, int *x0, int *y0, int *x1, int *y1,
+  int *x2, int *y2, int *x3, int *y3)
+{
+   u16 command;
+   vdp1cmd_struct cmd;
+   u32 addr;
+   u32 i;
+
+   if ((addr = Vdp1DebugGetCommandNumberAddr(number)) == 0xFFFFFFFF)
+      return -1;
+
+   command = T1ReadWord(Vdp1Ram, addr);
+   if (command & 0x8000)
+      // Draw End
+      return -1;
+
+   if (command & 0x4000)
+      // Command Skipped
+      return -1;
+
+   Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
+   if ((cmd.CMDCTRL & 0x000F) <= 5) 
+   {
+      // Find user local coordinates first
+      vdp1cmd_struct tmpCmd;
+      s16 coordX = 0;
+      s16 coordY = 0;
+      for (i = 0; ; ++i)
+      {
+        if ((addr = Vdp1DebugGetCommandNumberAddr(i)) == 0xFFFFFFFF)
+          break;
+      
+        Vdp1ReadCommand(&tmpCmd, addr, Vdp1Ram);
+        if ((tmpCmd.CMDCTRL & 0x000F) != 10)
+          continue;
+
+        coordX = tmpCmd.CMDXA;
+        coordY = tmpCmd.CMDYA;
+        break;
+      }
+
+      // 0: Normal Sprite
+      // 1: Scaled Sprite
+      // 2: Distorted Sprite
+      // 3: Distorted Sprite *
+      // 4: Polygon
+      // 5: Polyline
+      *x0 = coordX + cmd.CMDXA;
+      *y0 = coordY + cmd.CMDYA;
+      *x1 = coordX + cmd.CMDXB;
+      *y1 = coordY + cmd.CMDYB;
+      *x2 = coordX + cmd.CMDXC;
+      *y2 = coordY + cmd.CMDYC;
+      *x3 = coordX + cmd.CMDXD;
+      *y3 = coordY + cmd.CMDYD;
+      return 0;
+   }
+   else 
+   {
+     return -1;
+   }
+}
+
 u8 *Vdp1DebugRawTexture(u32 cmdNumber, int *width, int *height, int *numBytes)
 {
    u16 cmdRaw;

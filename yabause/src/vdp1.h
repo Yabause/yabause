@@ -204,6 +204,8 @@ void Vdp1DebugGetCommandNumberName(u32 number, char *outstring);
 Vdp1CommandType Vdp1DebugGetCommandType(u32 number);
 void Vdp1DebugCommand(u32 number, char *outstring);
 u32 *Vdp1DebugTexture(u32 number, int *w, int *h);
+u8 Vdp1DebugCommandVertices(u32 number, int *x0, int *y0, int *x1, int *y1,
+  int *x2, int *y2, int *x3, int *y3);
 u8 *Vdp1DebugRawTexture(u32 number, int *w, int *h, int *numBytes);
 void ToggleVDP1(void);
 

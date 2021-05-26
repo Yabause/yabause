@@ -36,6 +36,37 @@ struct Vdp1CommandsCount
   size_t scaledSprites;
   size_t lines;
 };
+
+//
+// Bresenham implementation from http://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C
+//
+void drawLine(uint32_t color, uint32_t* buffer, int width, int height,
+  int x0, int y0, int x1, int y1)
+{
+  int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+  int dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  int err = (dx > dy ? dx : -dy) / 2, e2;
+ 
+  for(;;)
+  {
+    buffer[y0 * width + x0] = color;
+    if (x0 == x1 && y0 == y1)
+      break;
+
+    e2 = err;
+    if (e2 > -dx)
+    {
+      err -= dy;
+      x0 += sx;
+    }
+
+    if (e2 < dy)
+    {
+      err += dx;
+      y0 += sy;
+    }
+  }
+}
          
 void Vdp1CountCommands(u32 index, Vdp1CommandsCount& cmdCount) 
 {
@@ -110,45 +141,46 @@ std::string buildInfoLabel(Vdp1CommandsCount& cmdCount)
 } // namespace ''
 
 
-UIDebugVDP1::UIDebugVDP1( QWidget* p )
+UIDebugVDP1::UIDebugVDP1( QWidget* p, QWidget* glWidget )
 	: QDialog( p )
 {
 	// setup dialog
 	setupUi( this );
+  yabauseGL = dynamic_cast<YabauseGL*>(glWidget);
 
-   QGraphicsScene *scene=new QGraphicsScene(this);
-   gvTexture->setScene(scene);
+  QGraphicsScene *scene=new QGraphicsScene(this);
+  gvTexture->setScene(scene);
 
-   lwCommandList->clear();
+  lwCommandList->clear();
 
-   Vdp1CommandsCount cmdCount;
-   memset(&cmdCount, 0, sizeof(Vdp1CommandsCount));
+  Vdp1CommandsCount cmdCount;
+  memset(&cmdCount, 0, sizeof(Vdp1CommandsCount));
 
-   if (Vdp1Ram)
-   {
-      for (int i=0;;i++)
-      {
-         char outstring[256];
+  if (Vdp1Ram)
+  {
+     for (int i=0;;i++)
+     {
+        char outstring[256];
 
-         Vdp1DebugGetCommandNumberName(i, outstring);
-         if (*outstring == '\0')
-            break;
+        Vdp1DebugGetCommandNumberName(i, outstring);
+        if (*outstring == '\0')
+           break;
 
-         Vdp1CountCommands(i, cmdCount);
-         lwCommandList->addItem(QtYabause::translate(outstring));
-      }
-   }
+        Vdp1CountCommands(i, cmdCount);
+        lwCommandList->addItem(QtYabause::translate(outstring));
+     }
+  }
 
-   vdp1texture = NULL;
-   vdp1RawTexture = NULL;
-   vdp1RawNumBytes = 0;
-   vdp1texturew = vdp1textureh = 1;
-   pbSaveBitmap->setEnabled(vdp1texture ? true : false);
-   pbSaveRawSprite->setEnabled(vdp1RawTexture ? true : false);
+  vdp1texture = NULL;
+  vdp1RawTexture = NULL;
+  vdp1RawNumBytes = 0;
+  vdp1texturew = vdp1textureh = 1;
+  pbSaveBitmap->setEnabled(vdp1texture ? true : false);
+  pbSaveRawSprite->setEnabled(vdp1RawTexture ? true : false);
 
-   QString infoLabelText(QString::fromStdString(buildInfoLabel(cmdCount)));
-   lVDP1Info->setText(infoLabelText);
-   lVDP1Info->setToolTip(infoLabelText);
+  QString infoLabelText(QString::fromStdString(buildInfoLabel(cmdCount)));
+  lVDP1Info->setText(infoLabelText);
+  lVDP1Info->setToolTip(infoLabelText);
 
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
@@ -194,6 +226,33 @@ void UIDebugVDP1::on_lwCommandList_itemSelectionChanged ()
    scene->setSceneRect(scene->itemsBoundingRect());
    gvTexture->fitInView(scene->sceneRect());
    gvTexture->invalidateScene();
+
+   // Paint overlay if possible
+   if (yabauseGL != nullptr)
+   {
+     int width, height, interlace;
+     VIDCore->GetNativeResolution(&width, &height, &interlace);
+
+     auto overlayPair = yabauseGL->getOverlayPausedImage();
+     QMutexLocker lock(overlayPair.second);
+     
+     uint32_t* pauseImage = overlayPair.first;
+     memset( pauseImage, 0, width * height * sizeof(uint32_t) );
+
+     int x0, y0, x1, y1, x2, y2, x3, y3;
+     if (Vdp1DebugCommandVertices(cursel, &x0, &y0, &x1, &y1, &x2, &y2, &x3, &y3) == 0)
+     {
+       const uint32_t color = 0xff0000dd;
+       drawLine(color, pauseImage, width, height, x0, y0, x1, y1);
+       drawLine(color, pauseImage, width, height, x1, y1, x2, y2);
+       drawLine(color, pauseImage, width, height, x2, y2, x3, y3);
+       drawLine(color, pauseImage, width, height, x3, y3, x0, y0);
+
+       lock.unlock();
+       yabauseGL->repaint();
+       yabauseGL->updatePausedView(yabauseGL->size());
+     }
+   }
 }
 
 void UIDebugVDP1::on_pbSaveBitmap_clicked ()

@@ -1,3 +1,9 @@
+0.9.15 -> 0.9.16
+ general:
+  - Fixed reading cdblock data transfer register as a word
+ qt:
+  - Keep last rendered image when paused
+  - vdp1 draw commands now highlight on framebuffer
 0.9.14 -> 0.9.15
  general:
   - Added CCD (CloneCD) file format support (CyberWarriorX)

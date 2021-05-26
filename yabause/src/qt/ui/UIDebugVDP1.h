@@ -21,15 +21,17 @@
 
 #include "ui_UIDebugVDP1.h"
 #include "../QtYabause.h"
+#include "YabauseGL.h"
 
 class UIDebugVDP1 : public QDialog, public Ui::UIDebugVDP1
 {
 	Q_OBJECT
 public:
-	UIDebugVDP1( QWidget* parent = 0 );
+	UIDebugVDP1( QWidget* parent, QWidget* glWidget );
 	~UIDebugVDP1();
 
 protected:
+	 YabauseGL* yabauseGL;
    u32 *vdp1texture;
    u8 *vdp1RawTexture;
    int vdp1RawNumBytes;
