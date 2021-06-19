@@ -61,13 +61,14 @@
         <TextView
             android:id="@+id/empty_message"
             android:layout_width="match_parent"
-            android:layout_height="303dp"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
             android:gravity="center_vertical"
-            android:text="@string/welcome"
-            app:layout_anchor="@+id/view_pager_game_index"
-            app:layout_anchorGravity="center" />
+            app:layout_anchorGravity="bottom"
+            android:layout_gravity="bottom"
+            app:layout_anchor="@+id/tab_game_index"
+            android:text="@string/welcome" />
 
         <androidx.viewpager.widget.ViewPager
             android:id="@+id/view_pager_game_index"

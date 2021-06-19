@@ -664,9 +664,13 @@ class GameSelectFragmentPhone : Fragment(),
                 }
                 parcelFileDescriptor.close()
             } catch (e: Exception) {
-                Toast.makeText(requireContext(),
-                    "Fail to copy " + e.localizedMessage,
-                    Toast.LENGTH_LONG).show()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(),
+                        "Fail to copy " + e.localizedMessage,
+                        Toast.LENGTH_LONG).show()
+                }
+
             } finally {
                 withContext(Dispatchers.Main) {
                     dismissDialog()
@@ -1155,9 +1159,19 @@ class GameSelectFragmentPhone : Fragment(),
                 val markwon = Markwon.create(this.activity as Context)
 
                 if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
+                    //val welcomeMessage = resources.getString(
+                    //    R.string.welcome_11
+                    //)
+
+                    val packagename = requireActivity().getPackageName()
+
+
                     val welcomeMessage = resources.getString(
-                        R.string.welcome_11
+                        R.string.welcome_11,
+                        "Android/data/" + packagename + "/files/yabause/games",
+                        "Android/data/" + packagename + "/files",
                     )
+
                     markwon.setMarkdown(viewMessage, welcomeMessage)
 
                 }else {

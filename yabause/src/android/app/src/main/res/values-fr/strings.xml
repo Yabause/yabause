@@ -190,15 +190,23 @@
 
     <string name="welcome_11">
         <![CDATA[
-    # Bienvenue! \n\n
+        # Bienvenue! \n\n
 
-    Pour jouer aux jeux SEGA Saturn, suivez ces instructions. \n\n
+        Pour jouer aux jeux SEGA Saturn, vous avez trois options.\n\n
 
-    1. Générez un fichier image à partir du CD-ROM de votre jeu. Vous pouvez télécharger notre outil recommandé depuis [ici] (https://www.uoyabause.org/static_pages/download#backupcdrom). D\'autres outils utiles sont répertoriés [ici] (http://wiki.redump.org/index.php?title=Useful_Links). \n
-    2. Copiez les fichiers image sur cet appareil ou sur un stockage cloud comme Google Drive. \n
-    3. Appuyez sur le bouton + sur cet écran. \n
-    4. Sélectionnez les fichiers image que vous avez copiés. \n
-    5. Amusez-vous bien! \n
+        ## 1. Copiez les jeux directement sur cet appareil Android.\n
+
+        copiez vos images ios dans **\"%1$s\"**.\n
+
+        ## 2. Copiez sur une carte SD externe.\n
+
+        copiez vos images ios dans **\"%2$s\"** sur une carte SD.\n
+
+        ## 3. Appuyez sur le bouton +\n
+
+        Si vous avez déjà des fichiers d\'images iso CHD ou zippés. Appuyez simplement sur le bouton + et sélectionnez le fichier.\n\n
+
+        Plus de détails sont décrits sur notre site Web [ici] (https://www.uoyabause.org/static_pages/guide).\n
         ]]>
     </string>
 

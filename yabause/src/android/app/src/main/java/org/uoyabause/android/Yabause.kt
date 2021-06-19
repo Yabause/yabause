@@ -168,7 +168,7 @@ class Yabause : AppCompatActivity(),
     private var waitingResult = false
     private var tracker: Tracker? = null
     private var trayState: TrayState = TrayState.CLOSE
-    private var adView: AdView? = null
+    //private var adView: AdView? = null
     private var firebaseAnalytics: FirebaseAnalytics? = null
     private var inputManager: InputManager? = null
     private val returnCodeSignIn = 0x8010
@@ -439,6 +439,7 @@ class Yabause : AppCompatActivity(),
         padManager.setShowMenulistener(this)
         waitingResult = false
         val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+/*
         if (uiModeManager.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION && BuildConfig.BUILD_TYPE != "pro") {
             val prefs = getSharedPreferences("private", Context.MODE_PRIVATE)
             val hasDonated = prefs.getBoolean("donated", false)
@@ -459,6 +460,7 @@ class Yabause : AppCompatActivity(),
         } else {
             adView = null
         }
+ */
         yabauseThread = YabauseRunnable(this)
     }
 
@@ -1473,7 +1475,7 @@ class Yabause : AppCompatActivity(),
                 val name = YabauseRunnable.getGameTitle()
                 tx.text = name
             }
-
+/*
             if (BuildConfig.BUILD_TYPE != "pro") {
                 val prefs = getSharedPreferences("private", Context.MODE_PRIVATE)
                 val hasDonated = prefs.getBoolean("donated", false)
@@ -1498,6 +1500,7 @@ class Yabause : AppCompatActivity(),
                     }
                 }
             }
+ */
             drawerLayout.openDrawer(GravityCompat.START)
         }
     }

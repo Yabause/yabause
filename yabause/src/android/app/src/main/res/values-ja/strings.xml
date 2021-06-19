@@ -248,15 +248,23 @@
 
     <string name="welcome_11">
         <![CDATA[
-        # ようこそ! \n\n
+        # ようこそ！ \n\n
 
-       以下の手順でセガサターンのゲームを実行します。\n\n
+        セガサターンのゲームをプレイするには3つの方法があります\n\n
 
-        1. あなたが所有するCD-ROMをファイルにします。 [ここ](https://www.uoyabause.org/static_pages/download#backupcdrom)から私たちの推奨するツールをダウンロードできます。そのほかのツールは[ここ](http://wiki.redump.org/index.php?title=Useful_Links)にリストアップされています\n
-        2. 作成されたファイルをこのデバイスもしくはGoogleDriveなどのクラウドストレージにコピーします。 \n
-        3. この画面の+ボタンをタップします。 \n
-        4. コピーしたファイルを選択します。 \n
-        5. 遊ぶ!\n
+        ## 1. ゲームをこのAndroidデバイスに直接コピー\n
+
+        iOSイメージを **\"%1$s\"** にコピーします\n
+
+        ## 2. 外部SDカードにコピー\n
+
+        iOSイメージをSDカードの **\"%2$s\"** にコピーします\n
+
+        ## 3. +ボタンをタップ\n
+
+        すでにCHDまたはzip圧縮したISOイメージファイルがある場合,+ボタンをタップしてファイルを選択します。\n\n
+
+        詳細については、当社の [Webサイト](https://www.uoyabause.org/static_pages/guide)を参照してください。\n
         ]]>
     </string>
 

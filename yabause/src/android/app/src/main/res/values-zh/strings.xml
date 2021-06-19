@@ -174,15 +174,23 @@
 
     <string name="welcome_11">
         <![CDATA[
-        ＃ 欢迎！ \n\n
+        # 欢迎！ \n\n
 
-        要玩SEGA Saturn游戏，请遵循以下说明 \n\n
+        要玩 SEGA Saturn 游戏，您有三种选择。\n\n
 
-        1.从游戏CD-ROM生成图像文件。您可以从[此处]（https://www.uoyabause.org/static_pages/download#backupcdrom）下载我们推荐的工具。其他有用的工具列在[此处]（http://wiki.redump.org/index.php?title=Useful_Links）\n
-        2.将图像文件复制到此设备或Google云端硬盘之类的云存储中。\n
-        3.在此屏幕上点击+按钮。\n
-        4.选择复制的图像文件。\n
-        5.尽情享受！\n
+        ## 1. 直接将游戏复制到此 Android 设备。\n
+
+        将您的 ios 图像复制到 **\"%1$s\"**。\n
+
+        ## 2. 复制到外部 SD 卡。\n
+
+        将您的 ios 图像复制到 SD 卡上的 **\"%2$s\"**。\n
+
+        ## 3. 点击 + 按钮\n
+
+        如果您已经有 CHD 或压缩的 iso 图像文件。只需点按 + 按钮并选择文件。\n\n
+
+        我们的网站 [此处](https://www.uoyabause.org/static_pages/guide) 中描述了更多详细信息。\n
         ]]>
     </string>
 
