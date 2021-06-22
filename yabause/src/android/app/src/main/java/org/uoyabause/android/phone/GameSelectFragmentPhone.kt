@@ -555,18 +555,28 @@ class GameSelectFragmentPhone : Fragment(),
                         fileSelected(File(targetFileName))
                     }
                 } else {
-                    Toast.makeText(requireContext(),
-                        "ISO image is not found!!",
-                        Toast.LENGTH_LONG).show()
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(),
+                            "ISO image is not found!!",
+                            Toast.LENGTH_LONG).show()
+                    }
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(),
-                    "Fail to copy " + e.localizedMessage,
-                    Toast.LENGTH_LONG).show()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(),
+                        "Fail to copy " + e.localizedMessage,
+                        Toast.LENGTH_LONG).show()
+                }
             } catch (e: IOException) {
-                Toast.makeText(requireContext(),
-                    "Fail to copy " + e.localizedMessage,
-                    Toast.LENGTH_LONG).show()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(),
+                        "Fail to copy " + e.localizedMessage,
+                        Toast.LENGTH_LONG).show()
+                }
+
             } finally {
 
                 val fd = File(zipFileName)
