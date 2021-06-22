@@ -27,6 +27,7 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import com.google.android.gms.ads.AdRequest
@@ -47,6 +48,7 @@ class GameSelectActivityPhone : AppCompatActivity() {
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
         window.setStatusBarColor(getResources().getColor(R.color.colorPrimaryDark))
+        window.setNavigationBarColor(getResources().getColor(R.color.black_opaque))
 
         val frame = FrameLayout(this)
         frame.id = CONTENT_VIEW_ID

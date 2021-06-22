@@ -285,6 +285,7 @@ class Yabause : AppCompatActivity(),
             }
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        window.setNavigationBarColor(getResources().getColor(R.color.black_opaque))
         drawerLayout = findViewById<View>(R.id.drawer_layout) as DrawerLayout
         updateViewLayout(resources.configuration.orientation)
         var navigationView = findViewById<View>(R.id.nav_view) as NavigationView
