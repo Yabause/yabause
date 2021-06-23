@@ -333,7 +333,6 @@
     <string name="pro_version_available">Доступна версия Pro!\n\n * Нет ограничений на добавление игр\n * Сохранять / загружать состояние игры между устройствами\n * Нет рекламы\n\n</string>
     <string name="remaining_installation_count">Remaining installation count</string>
     <string name="remaining_installation_count_is">Remaining installation count is </string>
-    <string name="do_you_want_to_install">Вы хотите установить?</string>
     <string name="which_storage">Какое хранилище?</string>
     <string name="or_place_file_to">Или поместите игру в \"%1$s\" вручную.</string>
 
