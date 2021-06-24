@@ -13,6 +13,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.storage.StorageManager
 import android.os.storage.StorageVolume
+import android.text.InputType
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -382,6 +383,12 @@ class SettingsActivity : AppCompatActivity() {
                 preferenceManager.findPreference("scsp_time_sync_mode") as ListPreference?
             scsp_time_sync_setting!!.summary = scsp_time_sync_setting.entry
 
+            val scsp_sync_time =
+                preferenceManager.findPreference("pref_scsp_sync_per_frame") as EditTextPreference?
+            scsp_sync_time?.setOnBindEditTextListener {
+                it.inputType = InputType.TYPE_CLASS_NUMBER
+            }
+
 
             val frameLimitSetting =
                 preferenceManager.findPreference("pref_frameLimit") as ListPreference?
@@ -389,6 +396,8 @@ class SettingsActivity : AppCompatActivity() {
 
 
             setUpInstall();
+
+
 
         }
 
@@ -530,17 +539,24 @@ class SettingsActivity : AppCompatActivity() {
             if (key == "pref_scsp_sync_per_frame") {
                 val ep = findPreference(key) as EditTextPreference?
                 val sval = ep!!.text
-                var `val` = sval.toInt()
-                if (`val` <= 0) {
-                    `val` = 1
-                    val sp = PreferenceManager.getDefaultSharedPreferences(requireActivity())
-                    sp.edit().putString("pref_scsp_sync_per_frame", `val`.toString()).commit()
-                } else if (`val` > 255) {
-                    `val` = 255
-                    val sp = PreferenceManager.getDefaultSharedPreferences(requireActivity())
-                    sp.edit().putString("pref_scsp_sync_per_frame", `val`.toString()).commit()
+
+                var synccount = 0
+                try {
+                    synccount = sval.toInt()
+                } catch( e: Exception ){
+
                 }
-                ep.summary = `val`.toString()
+
+                if (synccount <= 0) {
+                    synccount = 1
+                    val sp = PreferenceManager.getDefaultSharedPreferences(requireActivity())
+                    sp.edit().putString("pref_scsp_sync_per_frame", synccount.toString()).commit()
+                } else if (synccount > 255) {
+                    synccount = 255
+                    val sp = PreferenceManager.getDefaultSharedPreferences(requireActivity())
+                    sp.edit().putString("pref_scsp_sync_per_frame", synccount.toString()).commit()
+                }
+                ep.summary = synccount.toString()
             }
 
             if (key == "pref_force_androidtv_mode") {

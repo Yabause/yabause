@@ -242,7 +242,6 @@
 
         <EditTextPreference
             android:key="pref_scsp_sync_per_frame"
-            android:inputType="number"
             android:defaultValue="4"
             android:summary=""
             android:title="Scsp synchronization count per a frame(1 - 255)" />
