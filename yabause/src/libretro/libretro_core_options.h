@@ -40,8 +40,8 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       "yabause_force_hle_bios",
-      "Force HLE BIOS",
-      "Use at your own risk, it's causing more issues than it solves. Requires a restart.",
+      "Force HLE BIOS (Restart Required)",
+      "Use at your own risk, it's causing more issues than it solves.",
       {
          { "disabled", NULL },
          { "enabled", NULL },
@@ -51,8 +51,8 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       "yabause_addon_cartridge",
-      "Addon Cartridge",
-      "Select the addon cartridge. Requires a restart.",
+      "Addon Cartridge (Restart Required)",
+      "Select the addon cartridge.",
       {
          { "none", NULL },
          { "1M_ram", NULL },
@@ -86,8 +86,8 @@ struct retro_core_option_definition option_defs_us[] = {
 #ifdef HAVE_THREADS
    {
       "yabause_numthreads",
-      "Number of Threads",
-      "Depending on your CPU, changing this value can help with performances. Requires a restart.",
+      "Number of Threads (Restart Required)",
+      "Depending on your CPU, changing this value can help with performances.",
       {
          { "1", NULL },
          { "2", NULL },
@@ -108,6 +108,84 @@ struct retro_core_option_definition option_defs_us[] = {
 /* RETRO_LANGUAGE_FRENCH */
 
 /* RETRO_LANGUAGE_SPANISH */
+
+
+struct retro_core_option_definition option_defs_es[] = {
+   {
+      "yabause_frameskip",
+      "Omisión de fotogramas",
+      "Activa la omisión de fotogramas. Debería mejorar el rendimiento.",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      "yabause_force_hle_bios",
+      "Forzar BIOS HLE (es necesario reiniciar)",
+      "Utiliza esta opción por tu cuenta y riesgo, ya que produce más problemas de los que resuelve.",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      "yabause_addon_cartridge",
+      "Cartucho de expansión (es necesario reiniciar)",
+      "Selecciona el cartucho de ampliación.",
+      {
+         { "none", NULL },
+         { "1M_ram", "RAM de 1 MB" },
+         { "4M_ram", "RAM de 4 MB" },
+         { NULL, NULL},
+      },
+      "none"
+   },
+   {
+      "yabause_multitap_port1",
+      "Adaptador para seis jugadores en el puerto 1",
+      "Activar un multitap en el puerto 1.",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      "yabause_multitap_port2",
+      "Adaptador para seis jugadores en el puerto 2",
+      "Activar un multitap en el puerto 2.",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+#ifdef HAVE_THREADS
+   {
+      "yabause_numthreads",
+      "Número de hilos (es necesario reiniciar)",
+      "Este valor puede mejorar el rendimiento en función de tu CPU.",
+      {
+         { "1", NULL },
+         { "2", NULL },
+         { "4", NULL },
+         { "8", NULL },
+         { "16", NULL },
+         { "32", NULL },
+         { NULL, NULL},
+      },
+      "4"
+   },
+#endif
+   { NULL, NULL, NULL, {{0}}, NULL },
+};
 
 /* RETRO_LANGUAGE_GERMAN */
 
@@ -153,8 +231,8 @@ struct retro_core_option_definition option_defs_tr[] = {
    },
    {
       "yabause_force_hle_bios",
-      "HLE BIOS'u zorla",
-      "Kendi sorumluluğunuzda kullanın, çözdüğünden daha fazla soruna neden oluyor. Yeniden başlatma gerektirir.",
+      "HLE BIOS'u zorla (Yeniden Başlatılmalı)",
+      "Kendi sorumluluğunuzda kullanın, çözdüğünden daha fazla soruna neden oluyor.",
       {
          { "disabled", NULL },
          { "enabled", NULL },
@@ -164,8 +242,8 @@ struct retro_core_option_definition option_defs_tr[] = {
    },
    {
       "yabause_addon_cartridge",
-      "Kartuş Eklentisi",
-      "Ek kartuşu seçin. Yeniden başlatma gerektirir.",
+      "Kartuş Eklentisi (Yeniden Başlatılmalı)",
+      "Ek kartuşu seçin.",
       {
          { "none", NULL },
          { "1M_ram", NULL },
@@ -199,8 +277,8 @@ struct retro_core_option_definition option_defs_tr[] = {
 #ifdef HAVE_THREADS
    {
       "yabause_numthreads",
-      "İş Parçacığı Sayısı",
-      "CPU'nuza bağlı olarak, bu değeri değiştirmek performansa yardımcı olabilir. Yeniden başlatma gerektirir.",
+      "İş Parçacığı Sayısı (Yeniden Başlatılmalı)",
+      "CPU'nuza bağlı olarak, bu değeri değiştirmek performansa yardımcı olabilir.",
       {
          { "1", NULL },
          { "2", NULL },
@@ -226,7 +304,7 @@ struct retro_core_option_definition *option_defs_intl[RETRO_LANGUAGE_LAST] = {
    option_defs_us, /* RETRO_LANGUAGE_ENGLISH */
    NULL,           /* RETRO_LANGUAGE_JAPANESE */
    NULL,           /* RETRO_LANGUAGE_FRENCH */
-   NULL,           /* RETRO_LANGUAGE_SPANISH */
+   option_defs_es, /* RETRO_LANGUAGE_SPANISH */
    NULL,           /* RETRO_LANGUAGE_GERMAN */
    NULL,           /* RETRO_LANGUAGE_ITALIAN */
    NULL,           /* RETRO_LANGUAGE_DUTCH */
