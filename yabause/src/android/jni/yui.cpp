@@ -42,7 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <unistd.h>
 
 #include <jni.h>
-#include <android/native_window.h> // requires ndk r5 or newer
+#include <android/native_window.h>     // requires ndk r5 or newer
 #include <android/native_window_jni.h> // requires ndk r5 or newer
 #include <android/bitmap.h>
 #include <android/log.h>
@@ -86,9 +86,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define VIDCORE_VULKAN 0xFF
 #endif
 
-JavaVM * yvm;
+JavaVM *yvm;
 static jobject yabause = NULL;
-
 
 static char mpegpath[256] = "\0";
 static char cartpath[256] = "\0";
@@ -100,19 +99,19 @@ EGLSurface g_Surface = EGL_NO_SURFACE;
 EGLContext g_Context = EGL_NO_CONTEXT;
 EGLContext g_Context_Sub = EGL_NO_CONTEXT;
 EGLSurface g_Pbuffer = EGL_NO_SURFACE;
-EGLConfig  g_Config = 0;
+EGLConfig g_Config = 0;
 ANativeWindow *g_window = 0;
 GLuint g_FrameBuffer = 0;
 GLuint g_VertexBuffer = 0;
-GLuint programObject  = 0;
-GLuint positionLoc    = 0;
-GLuint texCoordLoc    = 0;
-GLuint samplerLoc     = 0;
+GLuint programObject = 0;
+GLuint positionLoc = 0;
+GLuint texCoordLoc = 0;
+GLuint samplerLoc = 0;
 int g_buf_width = -1;
 int g_buf_height = -1;
-int g_major_version=0;
-int g_minor_version=0;
-int g_minorminor_version=0;
+int g_major_version = 0;
+int g_minor_version = 0;
+int g_minorminor_version = 0;
 int g_pad_mode = 0;
 int g_pad2_mode = 0;
 int g_EnagleFPS = 0;
@@ -136,33 +135,32 @@ pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t g_mtxFuncSync = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t g_cndFuncSync = PTHREAD_COND_INITIALIZER;
 
-
-float vertices [] = {
-   -1.0f, 1.0f, 0, 0,
-   1.0f, 1.0f, 0, 0,
-   1.0f, -1.0f, 0, 0,
-   -1.0f,-1.0f, 0, 0
-};
+float vertices[] = {
+    -1.0f, 1.0f, 0, 0,
+    1.0f, 1.0f, 0, 0,
+    1.0f, -1.0f, 0, 0,
+    -1.0f, -1.0f, 0, 0};
 
 // Setting Infomation From
-const char * s_biospath = NULL;
-const char * s_cdpath = NULL;
-const char * s_buppath = NULL;
-const char * s_cartpath = NULL;
-char * s_playrecord_path = NULL;
-char * s_playdatadir = NULL;
+const char *s_biospath = NULL;
+const char *s_cdpath = NULL;
+const char *s_buppath = NULL;
+const char *s_cartpath = NULL;
+char *s_playrecord_path = NULL;
+char *s_playdatadir = NULL;
 int s_carttype;
-char s_savepath[256] ="\0";
+char s_savepath[256] = "\0";
 int s_vidcoretype = VIDCORE_OGL;
 int s_player2Enable = -1;
 
 int surface_width = 0;
 int surface_height = 0;
 
-#define MAKE_PAD(a,b) ((a<<24)|(b))
+#define MAKE_PAD(a, b) ((a << 24) | (b))
 void update_pad_mode();
 
-enum RenderThreadMessage {
+enum RenderThreadMessage
+{
     MSG_NONE = 0,
     MSG_WINDOW_SET,
     MSG_WINDOW_CHG,
@@ -184,136 +182,132 @@ enum RenderThreadMessage {
 volatile int g_msg = MSG_NONE;
 pthread_t _threadId;
 
-M68K_struct * M68KCoreList[] = {
-&M68KDummy,
+M68K_struct *M68KCoreList[] = {
+    &M68KDummy,
 #ifdef HAVE_C68K
-&M68KC68K,
+    &M68KC68K,
 #endif
 #ifdef HAVE_Q68
-&M68KQ68,
+    &M68KQ68,
 #endif
 #ifdef HAVE_MUSASHI
-&M68KMusashi,
+    &M68KMusashi,
 #endif
-NULL
-};
+    NULL};
 
 SH2Interface_struct *SH2CoreList[] = {
-&SH2Interpreter,
-&SH2DebugInterpreter,
+    &SH2Interpreter,
+    &SH2DebugInterpreter,
 #ifdef SH2_DYNAREC
-&SH2Dynarec,
+    &SH2Dynarec,
 #endif
 #ifdef DYNAREC_DEVMIYAX
-&SH2Dyn,
+    &SH2Dyn,
 #endif
-NULL
-};
+    NULL};
 
 PerInterface_struct *PERCoreList[] = {
-&PERDummy,
-NULL
-};
+    &PERDummy,
+    NULL};
 
 CDInterface *CDCoreList[] = {
-&DummyCD,
-&ISOCD,
-NULL
-};
+    &DummyCD,
+    &ISOCD,
+    &WebApiCD,
+    NULL};
 
 SoundInterface_struct *SNDCoreList[] = {
-&SNDDummy,
+    &SNDDummy,
 //&SNDAudioTrack,
 #ifdef HAVE_OPENSL
-&SNDOpenSL,
+    &SNDOpenSL,
 #endif
-NULL
-};
+    NULL};
 
 VideoInterface_struct *VIDCoreList[] = {
-&VIDDummy,
-&VIDSoft,
-&VIDOGL,
-#if HAVE_VULKAN                    
-&CVIDVulkan,
+    &VIDDummy,
+    &VIDSoft,
+    &VIDOGL,
+#if HAVE_VULKAN
+    &CVIDVulkan,
 #endif
-NULL
-};
+    NULL};
 
 #ifdef YAB_PORT_OSD
 #include "nanovg/nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
-&OSDNnovg,
-#if HAVE_VULKAN     
-&OSDNnovgVulkan,
+    &OSDNnovg,
+#if HAVE_VULKAN
+    &OSDNnovgVulkan,
 #endif
-NULL
-};  
+    NULL};
 #endif
 
 void YuidrawSoftwareBuffer();
-int saveScreenshot( const char * filename );
-void saveScreenshotV( const char * filename );
-GLuint LoadShader ( GLenum type, const char *shaderSrc );
-int destroy() ;
+int saveScreenshot(const char *filename);
+void saveScreenshotV(const char *filename);
+GLuint LoadShader(GLenum type, const char *shaderSrc);
+int destroy();
 
-#define  LOG_TAG    "yabause"
+#define LOG_TAG "yabause"
 
 /* Override printf for debug*/
-int yprintf( const char * fmt, ... )
+int yprintf(const char *fmt, ...)
 {
     int result = 0;
-   va_list ap;
-   va_start(ap, fmt);
-   result = __android_log_vprint(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ap);
-   va_end(ap);
-   return result;
+    va_list ap;
+    va_start(ap, fmt);
+    result = __android_log_vprint(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ap);
+    va_end(ap);
+    return result;
 }
 
-int printf( const char * fmt, ... )
+int printf(const char *fmt, ...)
 {
     int result = 0;
-   va_list ap;
-   va_start(ap, fmt);
-   result = __android_log_vprint(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ap);
-   va_end(ap);
-   return result;
+    va_list ap;
+    va_start(ap, fmt);
+    result = __android_log_vprint(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ap);
+    va_end(ap);
+    return result;
 }
 
-class ScreenRecorder{
+class ScreenRecorder
+{
 public:
-    void setScreenshotCallback( PlayRecorder * p ){
+    void setScreenshotCallback(PlayRecorder *p)
+    {
         using std::placeholders::_1;
-        p->f_takeScreenshot = std::bind(&ScreenRecorder::takeScreenshot,this,_1);
+        p->f_takeScreenshot = std::bind(&ScreenRecorder::takeScreenshot, this, _1);
     }
-    void takeScreenshot( const char * fname ){
+    void takeScreenshot(const char *fname)
+    {
         ::saveScreenshot(fname);
     }
 };
 
 ScreenRecorder gsc;
 
-
-
 #define YUI_LOG yprintf
 //#define YUI_LOG
 
-const char * GetBiosPath()
+const char *GetBiosPath()
 {
     jclass yclass;
     jmethodID getBiosPath;
     jstring message;
     jboolean dummy;
-    JNIEnv * env;
-    const char * rtn;
+    JNIEnv *env;
+    const char *rtn;
 
-    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    if (yvm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
         return NULL;
     }
 
     yclass = env->GetObjectClass(yabause);
     getBiosPath = env->GetMethodID(yclass, "getBiosPath", "()Ljava/lang/String;");
-    message = (jstring)env->CallObjectMethod(yabause,getBiosPath);
+    message = (jstring)env->CallObjectMethod(yabause, getBiosPath);
     if (env->GetStringLength(message) == 0)
         rtn = NULL;
     else
@@ -321,23 +315,26 @@ const char * GetBiosPath()
     return rtn;
 }
 
-char * GetPlayDataDir() {
+char *GetPlayDataDir()
+{
     jclass yclass;
     jmethodID mid;
     jstring message;
     jboolean dummy;
-    JNIEnv * env;
-    const char * buf;
-    char * rtn;
+    JNIEnv *env;
+    const char *buf;
+    char *rtn;
 
-    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    if (yvm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
         return NULL;
     }
 
     yclass = env->GetObjectClass(yabause);
     mid = env->GetMethodID(yclass, "getTestPath", "()Ljava/lang/String;");
-    message = (jstring)env->CallObjectMethod(yabause,mid);
-    if( message == NULL ){
+    message = (jstring)env->CallObjectMethod(yabause, mid);
+    if (message == NULL)
+    {
         return NULL;
     }
     if (env->GetStringLength(message) == 0)
@@ -345,46 +342,49 @@ char * GetPlayDataDir() {
     else
         buf = env->GetStringUTFChars(message, &dummy);
 
-    if( buf != NULL){
-        rtn = (char *)malloc( strlen(buf) + 1 );
-        strcpy(rtn,buf);
+    if (buf != NULL)
+    {
+        rtn = (char *)malloc(strlen(buf) + 1);
+        strcpy(rtn, buf);
         env->ReleaseStringUTFChars(message, buf);
     }
     return rtn;
 }
 
-const char * GetGamePath()
+const char *GetGamePath()
 {
     jclass yclass;
     jmethodID getGamePath;
     jstring message;
     jboolean dummy;
-    JNIEnv * env;
-    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    JNIEnv *env;
+    if (yvm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
         return NULL;
     }
 
     yclass = env->GetObjectClass(yabause);
     getGamePath = env->GetMethodID(yclass, "getGamePath", "()Ljava/lang/String;");
     message = (jstring)env->CallObjectMethod(yabause, getGamePath);
-    if (env->GetStringLength( message) == 0)
+    if (env->GetStringLength(message) == 0)
         return NULL;
     else
         return env->GetStringUTFChars(message, &dummy);
 }
 
-const char * GetMemoryPath()
+const char *GetMemoryPath()
 {
     jclass yclass;
     jmethodID getMemoryPath;
     jstring message;
     jboolean dummy;
-    JNIEnv * env;
-    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    JNIEnv *env;
+    if (yvm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
         return NULL;
     }
 
-    yclass = env->GetObjectClass( yabause);
+    yclass = env->GetObjectClass(yabause);
     getMemoryPath = env->GetMethodID(yclass, "getMemoryPath", "()Ljava/lang/String;");
     message = (jstring)env->CallObjectMethod(yabause, getMemoryPath);
     if (env->GetStringLength(message) == 0)
@@ -397,8 +397,9 @@ int GetCartridgeType()
 {
     jclass yclass;
     jmethodID getCartridgeType;
-    JNIEnv * env;
-    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    JNIEnv *env;
+    if (yvm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
         return -1;
     }
 
@@ -411,8 +412,9 @@ int GetVideoInterface()
 {
     jclass yclass;
     jmethodID getVideoInterface;
-    JNIEnv * env;
-    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    JNIEnv *env;
+    if (yvm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
         return -1;
     }
 
@@ -421,14 +423,15 @@ int GetVideoInterface()
     return (int)env->CallIntMethod(yabause, getVideoInterface);
 }
 
-const char * GetCartridgePath()
+const char *GetCartridgePath()
 {
     jclass yclass;
     jmethodID getCartridgePath;
     jstring message;
     jboolean dummy;
-    JNIEnv * env;
-    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    JNIEnv *env;
+    if (yvm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
         return NULL;
     }
 
@@ -441,35 +444,38 @@ const char * GetCartridgePath()
         return env->GetStringUTFChars(message, &dummy);
 }
 
-int GetPlayer2Device(){
-	
+int GetPlayer2Device()
+{
+
     jclass yclass;
     jmethodID getPlayer2InputDevice;
-    JNIEnv * env;
-    if (yvm->GetEnv( (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+    JNIEnv *env;
+    if (yvm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
         return -1;
     }
 
-    yclass = env->GetObjectClass( yabause);
-    getPlayer2InputDevice = env->GetMethodID( yclass, "getPlayer2InputDevice", "()I");
-    return env->CallIntMethod( yabause, getPlayer2InputDevice);
+    yclass = env->GetObjectClass(yabause);
+    getPlayer2InputDevice = env->GetMethodID(yclass, "getPlayer2InputDevice", "()I");
+    return env->CallIntMethod(yabause, getPlayer2InputDevice);
 }
 
+void onBackupWrite(char *before, char *after, int size)
+{
 
-void onBackupWrite( char * before, char * after, int size ){
-	
     __android_log_print(ANDROID_LOG_INFO, "yabause", "onBackupWrite is called");
 
     jclass yclass;
     jmethodID jniOnBackupWrite;
-    JNIEnv * env;
+    JNIEnv *env;
 
-    if(yvm->AttachCurrentThread(&env,NULL) != JNI_OK){
+    if (yvm->AttachCurrentThread(&env, NULL) != JNI_OK)
+    {
         __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to AttachCurrentThread");
         return;
     }
 
-/*
+    /*
     if (yvm->GetEnv( (void**) &env, JNI_VERSION_1_6) != JNI_OK){
 
         __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to GetEnv");
@@ -478,38 +484,44 @@ void onBackupWrite( char * before, char * after, int size ){
     }
 */
     jbyteArray jniBefore = env->NewByteArray(size);
-    if( jniBefore == NULL ){
+    if (jniBefore == NULL)
+    {
         __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to NewByteArray for before");
         return;
     }
 
-    jbyte * dst = env->GetByteArrayElements(jniBefore, NULL);
-    for(int i = 0; i < size; i++){
+    jbyte *dst = env->GetByteArrayElements(jniBefore, NULL);
+    for (int i = 0; i < size; i++)
+    {
         dst[i] = before[i];
     }
-    env->ReleaseByteArrayElements(jniBefore,dst,0);
+    env->ReleaseByteArrayElements(jniBefore, dst, 0);
 
     jbyteArray jniAfter = env->NewByteArray(size);
-    if( jniAfter == NULL ){
+    if (jniAfter == NULL)
+    {
         __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to NewByteArray for after");
         return;
     }
 
     dst = env->GetByteArrayElements(jniAfter, NULL);
-    for(int i = 0; i < size; i++){
+    for (int i = 0; i < size; i++)
+    {
         dst[i] = after[i];
     }
-    env->ReleaseByteArrayElements(jniAfter,dst,0);
- 
-    yclass = env->GetObjectClass( yabause);
-    jniOnBackupWrite = env->GetMethodID( yclass, "onBackupWrite", "([B[B)V");
-    if( jniOnBackupWrite == NULL ){
+    env->ReleaseByteArrayElements(jniAfter, dst, 0);
+
+    yclass = env->GetObjectClass(yabause);
+    jniOnBackupWrite = env->GetMethodID(yclass, "onBackupWrite", "([B[B)V");
+    if (jniOnBackupWrite == NULL)
+    {
         __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to GetMethodID for onBackupWrite");
         return;
     }
-    env->CallVoidMethod( yabause, jniOnBackupWrite, jniBefore, jniAfter);
+    env->CallVoidMethod(yabause, jniOnBackupWrite, jniBefore, jniAfter);
 
-    if(yvm->DetachCurrentThread() != JNI_OK){
+    if (yvm->DetachCurrentThread() != JNI_OK)
+    {
         __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to DetachCurrentThread");
         return;
     }
@@ -517,298 +529,306 @@ void onBackupWrite( char * before, char * after, int size ){
     return;
 }
 
-
-
 extern "C" void YuiErrorMsg(const char *string)
 {
-	//YUI_LOG("YuiErrorMsg %s",string);
-	
+    //YUI_LOG("YuiErrorMsg %s",string);
+
     jclass yclass;
     jmethodID errorMsg;
     jstring message;
-    JNIEnv * env;
+    JNIEnv *env;
 
-	yvm->AttachCurrentThread( &env, NULL);	
+    yvm->AttachCurrentThread(&env, NULL);
 
-	YUI_LOG("YuiErrorMsg2 %s",string);
-	
-    yclass = env->GetObjectClass( yabause);
-    errorMsg = env->GetMethodID( yclass, "errorMsg", "(Ljava/lang/String;)V");
-    message = env->NewStringUTF( string);
-    env->CallVoidMethod( yabause, errorMsg, message);
-	yvm->DetachCurrentThread();
+    YUI_LOG("YuiErrorMsg2 %s", string);
+
+    yclass = env->GetObjectClass(yabause);
+    errorMsg = env->GetMethodID(yclass, "errorMsg", "(Ljava/lang/String;)V");
+    message = env->NewStringUTF(string);
+    env->CallVoidMethod(yabause, errorMsg, message);
+    yvm->DetachCurrentThread();
 }
 
-void* threadStartCallback(void *myself);
+void *threadStartCallback(void *myself);
 
 extern "C" void YuiSwapBuffers(void)
 {
-#if HAVE_VULKAN    
-   if( s_vidcoretype == VIDCORE_VULKAN ){
-       VIDVulkan::getInstance()->present();
-       SetOSDToggle(g_EnagleFPS);   
-       return;
-   }
-#endif   
-   if( g_Display == EGL_NO_DISPLAY ){
-      return;
-   }
-   if( s_vidcoretype == VIDCORE_SOFT ){
-       YuidrawSoftwareBuffer();
-   }
-   eglSwapBuffers(g_Display,g_Surface);
-   SetOSDToggle(g_EnagleFPS);   
+#if HAVE_VULKAN
+    if (s_vidcoretype == VIDCORE_VULKAN)
+    {
+        VIDVulkan::getInstance()->present();
+        SetOSDToggle(g_EnagleFPS);
+        return;
+    }
+#endif
+    if (g_Display == EGL_NO_DISPLAY)
+    {
+        return;
+    }
+    if (s_vidcoretype == VIDCORE_SOFT)
+    {
+        YuidrawSoftwareBuffer();
+    }
+    eglSwapBuffers(g_Display, g_Surface);
+    SetOSDToggle(g_EnagleFPS);
 }
 
-GLuint LoadShader ( GLenum type, const char *shaderSrc )
+GLuint LoadShader(GLenum type, const char *shaderSrc)
 {
-   GLuint shader;
-   GLint compiled;
+    GLuint shader;
+    GLint compiled;
 
-   // Create the shader object
-   shader = glCreateShader ( type );
+    // Create the shader object
+    shader = glCreateShader(type);
 
-   if ( shader == 0 )
-    return 0;
+    if (shader == 0)
+        return 0;
 
-   // Load the shader source
-   glShaderSource ( shader, 1, &shaderSrc, NULL );
+    // Load the shader source
+    glShaderSource(shader, 1, &shaderSrc, NULL);
 
-   // Compile the shader
-   glCompileShader ( shader );
+    // Compile the shader
+    glCompileShader(shader);
 
-   // Check the compile status
-   glGetShaderiv ( shader, GL_COMPILE_STATUS, &compiled );
+    // Check the compile status
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
 
-   if ( !compiled )
-   {
-      GLint infoLen = 0;
+    if (!compiled)
+    {
+        GLint infoLen = 0;
 
-      glGetShaderiv ( shader, GL_INFO_LOG_LENGTH, &infoLen );
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
 
-      if ( infoLen > 1 )
-      {
-         char* infoLog = (char*)malloc (sizeof(char) * infoLen );
-         glGetShaderInfoLog ( shader, infoLen, NULL, infoLog );
-         YUI_LOG ( "Error compiling shader:\n%s\n", infoLog );
-         free ( infoLog );
-      }
+        if (infoLen > 1)
+        {
+            char *infoLog = (char *)malloc(sizeof(char) * infoLen);
+            glGetShaderInfoLog(shader, infoLen, NULL, infoLog);
+            YUI_LOG("Error compiling shader:\n%s\n", infoLog);
+            free(infoLog);
+        }
 
-      glDeleteShader ( shader );
-      return 0;
-   }
+        glDeleteShader(shader);
+        return 0;
+    }
 
-   return shader;
-
+    return shader;
 }
 
 int YuiInitProgramForSoftwareRendering()
 {
-   GLbyte vShaderStr[] =
-      "attribute vec4 a_position;   \n"
-      "attribute vec2 a_texCoord;   \n"
-      "varying vec2 v_texCoord;     \n"
-      "void main()                  \n"
-      "{                            \n"
-      "   gl_Position = a_position; \n"
-      "   v_texCoord = a_texCoord;  \n"
-      "}                            \n";
+    GLbyte vShaderStr[] =
+        "attribute vec4 a_position;   \n"
+        "attribute vec2 a_texCoord;   \n"
+        "varying vec2 v_texCoord;     \n"
+        "void main()                  \n"
+        "{                            \n"
+        "   gl_Position = a_position; \n"
+        "   v_texCoord = a_texCoord;  \n"
+        "}                            \n";
 
-   GLbyte fShaderStr[] =
-      "precision mediump float;                            \n"
-      "varying vec2 v_texCoord;                            \n"
-      "uniform sampler2D s_texture;                        \n"
-      "void main()                                         \n"
-      "{                                                   \n"
-      "  gl_FragColor = texture2D( s_texture, v_texCoord );\n"
-      "}                                                   \n";
+    GLbyte fShaderStr[] =
+        "precision mediump float;                            \n"
+        "varying vec2 v_texCoord;                            \n"
+        "uniform sampler2D s_texture;                        \n"
+        "void main()                                         \n"
+        "{                                                   \n"
+        "  gl_FragColor = texture2D( s_texture, v_texCoord );\n"
+        "}                                                   \n";
 
-   GLuint vertexShader;
-   GLuint fragmentShader;
-   GLint linked;
+    GLuint vertexShader;
+    GLuint fragmentShader;
+    GLint linked;
 
-   // Load the vertex/fragment shaders
-   vertexShader = LoadShader ( GL_VERTEX_SHADER, (char*)vShaderStr );
-   fragmentShader = LoadShader ( GL_FRAGMENT_SHADER, (char*)fShaderStr );
+    // Load the vertex/fragment shaders
+    vertexShader = LoadShader(GL_VERTEX_SHADER, (char *)vShaderStr);
+    fragmentShader = LoadShader(GL_FRAGMENT_SHADER, (char *)fShaderStr);
 
-   // Create the program object
-   programObject = glCreateProgram ( );
+    // Create the program object
+    programObject = glCreateProgram();
 
-   if ( programObject == 0 )
-      return 0;
+    if (programObject == 0)
+        return 0;
 
-   glAttachShader ( programObject, vertexShader );
-   glAttachShader ( programObject, fragmentShader );
+    glAttachShader(programObject, vertexShader);
+    glAttachShader(programObject, fragmentShader);
 
-   // Link the program
-   glLinkProgram ( programObject );
+    // Link the program
+    glLinkProgram(programObject);
 
-   // Check the link status
-   glGetProgramiv ( programObject, GL_LINK_STATUS, &linked );
+    // Check the link status
+    glGetProgramiv(programObject, GL_LINK_STATUS, &linked);
 
-   if ( !linked )
-   {
-      GLint infoLen = 0;
+    if (!linked)
+    {
+        GLint infoLen = 0;
 
-      glGetProgramiv ( programObject, GL_INFO_LOG_LENGTH, &infoLen );
+        glGetProgramiv(programObject, GL_INFO_LOG_LENGTH, &infoLen);
 
-      if ( infoLen > 1 )
-      {
-        char* infoLog = (char*)malloc (sizeof(char) * infoLen );
-        glGetProgramInfoLog ( programObject, infoLen, NULL, infoLog );
-        YUI_LOG ( "Error linking program:\n%s\n", infoLog );
-        free ( infoLog );
-         return GL_FALSE;
-      }
+        if (infoLen > 1)
+        {
+            char *infoLog = (char *)malloc(sizeof(char) * infoLen);
+            glGetProgramInfoLog(programObject, infoLen, NULL, infoLog);
+            YUI_LOG("Error linking program:\n%s\n", infoLog);
+            free(infoLog);
+            return GL_FALSE;
+        }
 
-      glDeleteProgram ( programObject );
-      return GL_FALSE;
-   }
+        glDeleteProgram(programObject);
+        return GL_FALSE;
+    }
 
+    // Get the attribute locations
+    positionLoc = glGetAttribLocation(programObject, "a_position");
+    texCoordLoc = glGetAttribLocation(programObject, "a_texCoord");
 
-   // Get the attribute locations
-   positionLoc = glGetAttribLocation ( programObject, "a_position" );
-   texCoordLoc = glGetAttribLocation ( programObject, "a_texCoord" );
+    // Get the sampler location
+    samplerLoc = glGetUniformLocation(programObject, "s_texture");
 
-   // Get the sampler location
-   samplerLoc = glGetUniformLocation ( programObject, "s_texture" );
+    glUseProgram(programObject);
 
-   glUseProgram(programObject);
-
-
-   return GL_TRUE;
+    return GL_TRUE;
 }
 
-void YuidrawSoftwareBuffer() {
+void YuidrawSoftwareBuffer()
+{
 
     int buf_width, buf_height;
     int error;
 
-    glClearColor( 0.0f,0.0f,0.0f,1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    if( g_FrameBuffer == 0 )
+    if (g_FrameBuffer == 0)
     {
-       glGenTextures(1,&g_FrameBuffer);
-       glActiveTexture ( GL_TEXTURE0 );
-       glBindTexture(GL_TEXTURE_2D, g_FrameBuffer);
-       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-       glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-       glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-       error = glGetError();
-       if( error != GL_NO_ERROR )
-       {
-          YUI_LOG("g_FrameBuffer gl error %04X", error );
-          return;
-       }
-    }else{
-       glBindTexture(GL_TEXTURE_2D, g_FrameBuffer);
+        glGenTextures(1, &g_FrameBuffer);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, g_FrameBuffer);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        error = glGetError();
+        if (error != GL_NO_ERROR)
+        {
+            YUI_LOG("g_FrameBuffer gl error %04X", error);
+            return;
+        }
+    }
+    else
+    {
+        glBindTexture(GL_TEXTURE_2D, g_FrameBuffer);
     }
 
     VIDCore->GetGlSize(&buf_width, &buf_height);
-    glTexSubImage2D(GL_TEXTURE_2D, 0,0,0,buf_width,buf_height,GL_RGBA,GL_UNSIGNED_BYTE,dispbuffer);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, buf_width, buf_height, GL_RGBA, GL_UNSIGNED_BYTE, dispbuffer);
 
-
-    if( g_VertexBuffer == 0 )
+    if (g_VertexBuffer == 0)
     {
-       glGenBuffers(1, &g_VertexBuffer);
-       glBindBuffer(GL_ARRAY_BUFFER, g_VertexBuffer);
-       glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),vertices,GL_STATIC_DRAW);
-       error = glGetError();
-       if( error != GL_NO_ERROR )
-       {
-          YUI_LOG("g_VertexBuffer gl error %04X", error );
-          return;
-       }
-    }else{
-       glBindBuffer(GL_ARRAY_BUFFER, g_VertexBuffer);
+        glGenBuffers(1, &g_VertexBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, g_VertexBuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        error = glGetError();
+        if (error != GL_NO_ERROR)
+        {
+            YUI_LOG("g_VertexBuffer gl error %04X", error);
+            return;
+        }
+    }
+    else
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, g_VertexBuffer);
     }
 
-   if( buf_width != g_buf_width ||  buf_height != g_buf_height )
-   {
-      vertices[6]=vertices[10]=(float)buf_width/1024.f;
-      vertices[11]=vertices[15]=(float)buf_height/1024.f;
-      glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),vertices,GL_STATIC_DRAW);
-      glVertexAttribPointer ( positionLoc, 2, GL_FLOAT,  GL_FALSE, 4 * sizeof(GLfloat), 0 );
-      glVertexAttribPointer ( texCoordLoc, 2, GL_FLOAT,  GL_FALSE, 4 * sizeof(GLfloat), (void*)(sizeof(float)*2) );
-      glEnableVertexAttribArray ( positionLoc );
-      glEnableVertexAttribArray ( texCoordLoc );
-      g_buf_width  = buf_width;
-      g_buf_height = buf_height;
-      error = glGetError();
-      if( error != GL_NO_ERROR )
-      {
-         YUI_LOG("gl error %d", error );
-         return;
-      }
-   }else{
-      glBindBuffer(GL_ARRAY_BUFFER, g_VertexBuffer);
-   }
+    if (buf_width != g_buf_width || buf_height != g_buf_height)
+    {
+        vertices[6] = vertices[10] = (float)buf_width / 1024.f;
+        vertices[11] = vertices[15] = (float)buf_height / 1024.f;
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
+        glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void *)(sizeof(float) * 2));
+        glEnableVertexAttribArray(positionLoc);
+        glEnableVertexAttribArray(texCoordLoc);
+        g_buf_width = buf_width;
+        g_buf_height = buf_height;
+        error = glGetError();
+        if (error != GL_NO_ERROR)
+        {
+            YUI_LOG("gl error %d", error);
+            return;
+        }
+    }
+    else
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, g_VertexBuffer);
+    }
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-
-extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_initViewport( JNIEnv* jenv, jobject obj, jobject surface, int width, int height)
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_initViewport(JNIEnv *jenv, jobject obj, jobject surface, int width, int height)
 {
-    if (surface != 0) {
-        
-        if( g_Surface == EGL_NO_SURFACE ){
+    if (surface != 0)
+    {
+
+        if (g_Surface == EGL_NO_SURFACE)
+        {
             g_window = ANativeWindow_fromSurface(jenv, surface);
             surface_width = width;
             surface_height = height;
-            YUI_LOG("Got window %08X %d,%d", g_window, width,height );
-            g_msg = MSG_WINDOW_SET;   
-            g_Surface = (EGLSurface)1;      
-        }else{
-            if( g_window != ANativeWindow_fromSurface(jenv, surface) ){
+            YUI_LOG("Got window %08X %d,%d", g_window, width, height);
+            g_msg = MSG_WINDOW_SET;
+            g_Surface = (EGLSurface)1;
+        }
+        else
+        {
+            if (g_window != ANativeWindow_fromSurface(jenv, surface))
+            {
                 g_window = ANativeWindow_fromSurface(jenv, surface);
             }
-            YUI_LOG("Chg window %08X %d,%d ", g_window, g_msg,width,height);
+            YUI_LOG("Chg window %08X %d,%d ", g_window, g_msg, width, height);
             surface_width = width;
             surface_height = height;
             g_msg = MSG_WINDOW_CHG;
             //YUI_LOG("Got window ignore %p %d,%d", g_window, g_msg,width,height );
         }
-    } else {
+    }
+    else
+    {
         YUI_LOG("Releasing window");
         ANativeWindow_release(g_window);
         g_window = NULL;
     }
-    
-   return 0;
+
+    return 0;
 }
 
-extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_enableBackupWriteHook(){
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_enableBackupWriteHook()
+{
     BiosSetOnBackupWrite(onBackupWrite);
     return 0;
 }
 
-
-
 extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_lockGL()
 {
-   pthread_mutex_lock(&g_mtxGlLock);
-   return 0;
+    pthread_mutex_lock(&g_mtxGlLock);
+    return 0;
 }
 
 extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_unlockGL()
 {
-   pthread_mutex_unlock(&g_mtxGlLock);
-   return 0;
+    pthread_mutex_unlock(&g_mtxGlLock);
+    return 0;
 }
 
-extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleShowFps( JNIEnv* env )
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleShowFps(JNIEnv *env)
 {
-    printf("%s","Java_org_uoyabause_android_YabauseRunnable_toggleShowFps");
-   ToggleFPS();
-   return 0;
+    printf("%s", "Java_org_uoyabause_android_YabauseRunnable_toggleShowFps");
+    ToggleFPS();
+    return 0;
 }
 
-
-extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_pause( JNIEnv* env )
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_pause(JNIEnv *env)
 {
     pthread_mutex_lock(&g_mtxGlLock);
     g_msg = MSG_PAUSE;
@@ -816,7 +836,7 @@ extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_paus
     return 0;
 }
 
-extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_resume( JNIEnv* env )
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_resume(JNIEnv *env)
 {
     pthread_mutex_lock(&g_mtxGlLock);
     g_msg = MSG_RESUME;
@@ -824,7 +844,7 @@ extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_resu
     return 0;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_openTray( JNIEnv* env )
+extern "C" JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_openTray(JNIEnv *env)
 {
     yprintf("sending MSG_OPEN_TRAY");
     pthread_mutex_lock(&g_mtxGlLock);
@@ -832,38 +852,37 @@ extern "C" JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_ope
     pthread_mutex_unlock(&g_mtxGlLock);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_closeTray( JNIEnv* env )
+extern "C" JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_closeTray(JNIEnv *env)
 {
     yprintf("sending MSG_CLOSE_TRAY");
-    s_cdpath = GetGamePath();    
+    s_cdpath = GetGamePath();
     pthread_mutex_lock(&g_mtxGlLock);
-    yprintf("new cd is %s",s_cdpath);    
+    yprintf("new cd is %s", s_cdpath);
     g_msg = MSG_CLOSE_TRAY;
     pthread_mutex_unlock(&g_mtxGlLock);
 }
 
-
-extern "C" JNIEXPORT jstring  JNICALL Java_org_uoyabause_android_YabauseRunnable_getCurrentGameCode( JNIEnv* env)
+extern "C" JNIEXPORT jstring JNICALL Java_org_uoyabause_android_YabauseRunnable_getCurrentGameCode(JNIEnv *env)
 {
-    return (jstring)env->NewStringUTF((const char*)Cs2GetCurrentGmaecode());
+    return (jstring)env->NewStringUTF((const char *)Cs2GetCurrentGmaecode());
 }
 
 static int enableautofskip = 0;
-extern "C"  JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleFrameSkip( JNIEnv* env )
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleFrameSkip(JNIEnv *env)
 {
     enableautofskip = 1 - enableautofskip;
 
-     printf("%s:%d","Java_org_uoyabause_android_YabauseRunnable_toggleFrameSkip",enableautofskip);
+    printf("%s:%d", "Java_org_uoyabause_android_YabauseRunnable_toggleFrameSkip", enableautofskip);
 
     if (enableautofskip)
-       EnableAutoFrameSkip();
+        EnableAutoFrameSkip();
     else
-       DisableAutoFrameSkip();
-    
+        DisableAutoFrameSkip();
+
     return 0;
 }
 
-extern "C"  JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_setFrameLimitMode( JNIEnv* env, jobject obj, int mode  )
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_setFrameLimitMode(JNIEnv *env, jobject obj, int mode)
 {
     frameLimitMode = mode;
     VDP2SetFrameLimit(mode);
@@ -873,206 +892,250 @@ extern "C"  JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_set
 #ifdef _ANDROID_2_2_
 int initEGLFunc()
 {
-   void * handle;
-   char *error;
+    void *handle;
+    char *error;
 
-   handle = dlopen("libEGL.so",RTLD_LAZY);
-   if( handle == NULL )
-   {
-      YUI_LOG(dlerror());
-      return -1;
-   }
+    handle = dlopen("libEGL.so", RTLD_LAZY);
+    if (handle == NULL)
+    {
+        YUI_LOG(dlerror());
+        return -1;
+    }
 
-   eglGetCurrentDisplay = dlsym(handle, "eglGetCurrentDisplay");
-   if( eglGetCurrentDisplay == NULL){ YUI_LOG(dlerror()); return -1; }
+    eglGetCurrentDisplay = dlsym(handle, "eglGetCurrentDisplay");
+    if (eglGetCurrentDisplay == NULL)
+    {
+        YUI_LOG(dlerror());
+        return -1;
+    }
 
-   eglGetCurrentSurface = dlsym(handle, "eglGetCurrentSurface");
-   if( eglGetCurrentSurface == NULL){ YUI_LOG(dlerror()); return -1; }
+    eglGetCurrentSurface = dlsym(handle, "eglGetCurrentSurface");
+    if (eglGetCurrentSurface == NULL)
+    {
+        YUI_LOG(dlerror());
+        return -1;
+    }
 
-   eglGetCurrentContext = dlsym(handle, "eglGetCurrentContext");
-   if( eglGetCurrentContext == NULL){ YUI_LOG(dlerror()); return -1; }
+    eglGetCurrentContext = dlsym(handle, "eglGetCurrentContext");
+    if (eglGetCurrentContext == NULL)
+    {
+        YUI_LOG(dlerror());
+        return -1;
+    }
 
-   eglQuerySurface      = dlsym(handle, "eglQuerySurface");
-   if( eglQuerySurface == NULL){ YUI_LOG(dlerror()); return -1; }
+    eglQuerySurface = dlsym(handle, "eglQuerySurface");
+    if (eglQuerySurface == NULL)
+    {
+        YUI_LOG(dlerror());
+        return -1;
+    }
 
-   eglSwapInterval      = dlsym(handle, "eglSwapInterval");
-   if( eglSwapInterval == NULL){ YUI_LOG(dlerror()); return -1; }
+    eglSwapInterval = dlsym(handle, "eglSwapInterval");
+    if (eglSwapInterval == NULL)
+    {
+        YUI_LOG(dlerror());
+        return -1;
+    }
 
-   eglMakeCurrent       = dlsym(handle, "eglMakeCurrent");
-   if( eglMakeCurrent == NULL){ YUI_LOG(dlerror()); return -1; }
+    eglMakeCurrent = dlsym(handle, "eglMakeCurrent");
+    if (eglMakeCurrent == NULL)
+    {
+        YUI_LOG(dlerror());
+        return -1;
+    }
 
-   eglSwapBuffers       = dlsym(handle, "eglSwapBuffers");
-   if( eglSwapBuffers == NULL){ YUI_LOG(dlerror()); return -1; }
+    eglSwapBuffers = dlsym(handle, "eglSwapBuffers");
+    if (eglSwapBuffers == NULL)
+    {
+        YUI_LOG(dlerror());
+        return -1;
+    }
 
-   eglQueryString       = dlsym(handle, "eglQueryString");
-   if( eglQueryString == NULL){ YUI_LOG(dlerror()); return -1; }
+    eglQueryString = dlsym(handle, "eglQueryString");
+    if (eglQueryString == NULL)
+    {
+        YUI_LOG(dlerror());
+        return -1;
+    }
 
-   eglGetError          = dlsym(handle, "eglGetError");
-   if( eglGetError == NULL){ YUI_LOG(dlerror()); return -1; }
+    eglGetError = dlsym(handle, "eglGetError");
+    if (eglGetError == NULL)
+    {
+        YUI_LOG(dlerror());
+        return -1;
+    }
 
-   return 0;
+    return 0;
 }
 #else
 int initEGLFunc()
 {
-   return 0;
+    return 0;
 }
 #endif
 
-extern "C" jint Java_org_uoyabause_android_YabauseRunnable_record( JNIEnv* env, jobject thiz, jstring  path ){
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_record(JNIEnv *env, jobject thiz, jstring path)
+{
 
     jboolean dummy;
     const char *cpath = env->GetStringUTFChars(path, &dummy);
 
     pthread_mutex_lock(&g_mtxGlLock);
-    if( s_playrecord_path != NULL ){
+    if (s_playrecord_path != NULL)
+    {
         free(s_playrecord_path);
     }
-    s_playrecord_path = (char*)malloc( strlen(cpath)+1 );
-    strcpy(s_playrecord_path,cpath);
-    g_msg =MSG_RECORD;
+    s_playrecord_path = (char *)malloc(strlen(cpath) + 1);
+    strcpy(s_playrecord_path, cpath);
+    g_msg = MSG_RECORD;
     pthread_mutex_unlock(&g_mtxGlLock);
 
     env->ReleaseStringUTFChars(path, cpath);
 
-    pthread_mutex_lock(&g_mtxFuncSync); 
-    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_lock(&g_mtxFuncSync);
+    pthread_cond_wait(&g_cndFuncSync, &g_mtxFuncSync);
     pthread_mutex_unlock(&g_mtxFuncSync);
 
     return 0;
 }
 
-extern "C" jint Java_org_uoyabause_android_YabauseRunnable_getRecordingStatus( JNIEnv* env, jobject thiz ){
-   return PlayRecorder::getInstance()->getStatus();
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_getRecordingStatus(JNIEnv *env, jobject thiz)
+{
+    return PlayRecorder::getInstance()->getStatus();
 }
 
-
-extern "C" jint Java_org_uoyabause_android_YabauseRunnable_play( JNIEnv* env, jobject thiz, jstring  path ){
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_play(JNIEnv *env, jobject thiz, jstring path)
+{
 
     jboolean dummy;
     const char *cpath = env->GetStringUTFChars(path, &dummy);
 
     pthread_mutex_lock(&g_mtxGlLock);
-    if( s_playdatadir != NULL ){
+    if (s_playdatadir != NULL)
+    {
         free(s_playdatadir);
     }
-    s_playdatadir = (char*)malloc( strlen(cpath)+1 );
-    strcpy(s_playdatadir,cpath);
-    g_msg =MSG_PLAY;
+    s_playdatadir = (char *)malloc(strlen(cpath) + 1);
+    strcpy(s_playdatadir, cpath);
+    g_msg = MSG_PLAY;
     pthread_mutex_unlock(&g_mtxGlLock);
 
     env->ReleaseStringUTFChars(path, cpath);
 
-    pthread_mutex_lock(&g_mtxFuncSync); 
-    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_lock(&g_mtxFuncSync);
+    pthread_cond_wait(&g_cndFuncSync, &g_mtxFuncSync);
     pthread_mutex_unlock(&g_mtxFuncSync);
 
     return 0;
 }
 
-
-
-
-extern "C" jstring Java_org_uoyabause_android_YabauseRunnable_savestate_1compress( JNIEnv* env, jobject thiz, jstring  path ){
+extern "C" jstring Java_org_uoyabause_android_YabauseRunnable_savestate_1compress(JNIEnv *env, jobject thiz, jstring path)
+{
 
     jboolean dummy;
-    if( cdip == NULL ) return NULL;
+    if (cdip == NULL)
+        return NULL;
     const char *cpath = env->GetStringUTFChars(path, &dummy);
 
     pthread_mutex_lock(&g_mtxGlLock);
-    strcpy(s_savepath,cpath);
-    g_msg =MSG_SAVE_STATE_COMPRESSED;
+    strcpy(s_savepath, cpath);
+    g_msg = MSG_SAVE_STATE_COMPRESSED;
     pthread_mutex_unlock(&g_mtxGlLock);
 
     env->ReleaseStringUTFChars(path, cpath);
 
-    pthread_mutex_lock(&g_mtxFuncSync); 
-    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_lock(&g_mtxFuncSync);
+    pthread_cond_wait(&g_cndFuncSync, &g_mtxFuncSync);
     pthread_mutex_unlock(&g_mtxFuncSync);
 
-    return env->NewStringUTF((const char*)last_state_filename);
+    return env->NewStringUTF((const char *)last_state_filename);
 }
 
-extern "C" jint Java_org_uoyabause_android_YabauseRunnable_loadstate_1compress( JNIEnv* env, jobject thiz, jstring  path ){
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_loadstate_1compress(JNIEnv *env, jobject thiz, jstring path)
+{
 
     jboolean dummy;
     const char *cpath = env->GetStringUTFChars(path, &dummy);
 
     pthread_mutex_lock(&g_mtxGlLock);
-    strcpy(s_savepath,cpath);
-    g_msg =MSG_LOAD_STATE_COMPRESSED;
+    strcpy(s_savepath, cpath);
+    g_msg = MSG_LOAD_STATE_COMPRESSED;
     pthread_mutex_unlock(&g_mtxGlLock);
 
     env->ReleaseStringUTFChars(path, cpath);
 
-    pthread_mutex_lock(&g_mtxFuncSync); 
-    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
-    pthread_mutex_unlock(&g_mtxFuncSync);
-
-    return 0;
-}
-
-extern "C" jstring Java_org_uoyabause_android_YabauseRunnable_savestate( JNIEnv* env, jobject thiz, jstring  path ){
-
-    jboolean dummy;
-    if( cdip == NULL ) return NULL;
-    const char *cpath = env->GetStringUTFChars(path, &dummy);
-
-    pthread_mutex_lock(&g_mtxGlLock);
-    strcpy(s_savepath,cpath);
-    g_msg =MSG_SAVE_STATE;
-    pthread_mutex_unlock(&g_mtxGlLock);
-
-    env->ReleaseStringUTFChars(path, cpath);
-
-    pthread_mutex_lock(&g_mtxFuncSync); 
-    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
-    pthread_mutex_unlock(&g_mtxFuncSync);
-
-    return env->NewStringUTF((const char*)last_state_filename);
-}
-
-extern "C" jint Java_org_uoyabause_android_YabauseRunnable_loadstate( JNIEnv* env, jobject thiz, jstring  path ){
-
-    jboolean dummy;
-    const char *cpath = env->GetStringUTFChars(path, &dummy);
-
-    pthread_mutex_lock(&g_mtxGlLock);
-    strcpy(s_savepath,cpath);
-    g_msg =MSG_LOAD_STATE;
-    pthread_mutex_unlock(&g_mtxGlLock);
-
-    env->ReleaseStringUTFChars(path, cpath);
-
-    pthread_mutex_lock(&g_mtxFuncSync); 
-    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_lock(&g_mtxFuncSync);
+    pthread_cond_wait(&g_cndFuncSync, &g_mtxFuncSync);
     pthread_mutex_unlock(&g_mtxFuncSync);
 
     return 0;
 }
 
-extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject thiz, jstring filename )
+extern "C" jstring Java_org_uoyabause_android_YabauseRunnable_savestate(JNIEnv *env, jobject thiz, jstring path)
+{
+
+    jboolean dummy;
+    if (cdip == NULL)
+        return NULL;
+    const char *cpath = env->GetStringUTFChars(path, &dummy);
+
+    pthread_mutex_lock(&g_mtxGlLock);
+    strcpy(s_savepath, cpath);
+    g_msg = MSG_SAVE_STATE;
+    pthread_mutex_unlock(&g_mtxGlLock);
+
+    env->ReleaseStringUTFChars(path, cpath);
+
+    pthread_mutex_lock(&g_mtxFuncSync);
+    pthread_cond_wait(&g_cndFuncSync, &g_mtxFuncSync);
+    pthread_mutex_unlock(&g_mtxFuncSync);
+
+    return env->NewStringUTF((const char *)last_state_filename);
+}
+
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_loadstate(JNIEnv *env, jobject thiz, jstring path)
+{
+
+    jboolean dummy;
+    const char *cpath = env->GetStringUTFChars(path, &dummy);
+
+    pthread_mutex_lock(&g_mtxGlLock);
+    strcpy(s_savepath, cpath);
+    g_msg = MSG_LOAD_STATE;
+    pthread_mutex_unlock(&g_mtxGlLock);
+
+    env->ReleaseStringUTFChars(path, cpath);
+
+    pthread_mutex_lock(&g_mtxFuncSync);
+    pthread_cond_wait(&g_cndFuncSync, &g_mtxFuncSync);
+    pthread_mutex_unlock(&g_mtxFuncSync);
+
+    return 0;
+}
+
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_screenshot(JNIEnv *env, jobject thiz, jstring filename)
 {
     jboolean dummy;
     const char *cpath = env->GetStringUTFChars(filename, &dummy);
     pthread_mutex_lock(&g_mtxGlLock);
-    strcpy(screenShotFilename,cpath);
+    strcpy(screenShotFilename, cpath);
     g_msg = MSG_SCREENSHOT;
     pthread_mutex_unlock(&g_mtxGlLock);
     env->ReleaseStringUTFChars(filename, cpath);
 
-    pthread_mutex_lock(&g_mtxFuncSync); 
+    pthread_mutex_lock(&g_mtxFuncSync);
     s_status = -1;
-    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_cond_wait(&g_cndFuncSync, &g_mtxFuncSync);
     pthread_mutex_unlock(&g_mtxFuncSync);
     return s_status;
 }
 
-extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab )
+extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, jobject obj, jobject yab)
 {
-    int res=0;
+    int res = 0;
 
-    if( initEGLFunc() == -1 ) return -1;
+    if (initEGLFunc() == -1)
+        return -1;
 
     yabause = env->NewGlobalRef(yab);
 
@@ -1081,126 +1144,133 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jo
     s_buppath = GetMemoryPath();
     s_cartpath = GetCartridgePath();
     s_vidcoretype = GetVideoInterface();
-    s_carttype =  GetCartridgeType();
-	s_player2Enable = GetPlayer2Device();
+    s_carttype = GetCartridgeType();
+    s_player2Enable = GetPlayer2Device();
     s_playdatadir = GetPlayDataDir();
-	
-	YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
-    
+
+    YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
+
     OSDInit(0);
 
-    pthread_create(&_threadId, 0, threadStartCallback, NULL );
+    pthread_create(&_threadId, 0, threadStartCallback, NULL);
 
     return res;
 }
 
-extern "C" int YuiRevokeOGLOnThisThread(){
-     
-     if( s_vidcoretype == VIDCORE_VULKAN ){
-         return 0;
-     }
+extern "C" int YuiRevokeOGLOnThisThread()
+{
+
+    if (s_vidcoretype == VIDCORE_VULKAN)
+    {
+        return 0;
+    }
 
 #if defined(YAB_ASYNC_RENDERING)
-    if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
+    if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub))
+    {
         YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
-        
+
         // retry three times
         usleep(10000);
-         if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
-			 YUI_LOG("eglMakeCurrent() returned error %X 2", eglGetError());
-             usleep(10000);
-             if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
-				 YUI_LOG("eglMakeCurrent() returned error %X 3", eglGetError());
-                 usleep(10000);
-                 if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
-					 YUI_LOG("eglMakeCurrent() returned error %X 4", eglGetError());
-						usleep(10000);
-						if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
-							YUI_LOG("eglMakeCurrent() returned error %X 5", eglGetError());
-							return -1;
-						}
-
-                 }
-             }
-             
-         }
-    }	
-#endif
-    glDisable(GL_SCISSOR_TEST);
-    glClearColor( 0.0f, 0.0f,0.0f,1.0f);
-    glClear( GL_COLOR_BUFFER_BIT );
-    return 0;
-}
-
-extern "C" int YuiUseOGLOnThisThread(){
-
-     if( s_vidcoretype == VIDCORE_VULKAN ){
-         return 0;
-     }
-
-#if defined(YAB_ASYNC_RENDERING)
-    if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
-        YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
-        
-        // retry three times
-        usleep(10000);
-         if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
-			 YUI_LOG("eglMakeCurrent() returned error %X 2", eglGetError());
-             usleep(10000);
-             if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
-				 YUI_LOG("eglMakeCurrent() returned error %X 3", eglGetError());
-                 usleep(10000);
-                 if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
-					 YUI_LOG("eglMakeCurrent() returned error %X 4", eglGetError());
-						usleep(10000);
-						if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
-							YUI_LOG("eglMakeCurrent() returned error %X 5", eglGetError());
-							return -1;
-						}
-
-                 }
-             }
-             
-         }
+        if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub))
+        {
+            YUI_LOG("eglMakeCurrent() returned error %X 2", eglGetError());
+            usleep(10000);
+            if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub))
+            {
+                YUI_LOG("eglMakeCurrent() returned error %X 3", eglGetError());
+                usleep(10000);
+                if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub))
+                {
+                    YUI_LOG("eglMakeCurrent() returned error %X 4", eglGetError());
+                    usleep(10000);
+                    if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub))
+                    {
+                        YUI_LOG("eglMakeCurrent() returned error %X 5", eglGetError());
+                        return -1;
+                    }
+                }
+            }
+        }
     }
 #endif
     glDisable(GL_SCISSOR_TEST);
-    glClearColor( 0.0f, 0.0f,0.0f,1.0f);
-    glClear( GL_COLOR_BUFFER_BIT );
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    return 0;
+}
+
+extern "C" int YuiUseOGLOnThisThread()
+{
+
+    if (s_vidcoretype == VIDCORE_VULKAN)
+    {
+        return 0;
+    }
+
+#if defined(YAB_ASYNC_RENDERING)
+    if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context))
+    {
+        YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
+
+        // retry three times
+        usleep(10000);
+        if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context))
+        {
+            YUI_LOG("eglMakeCurrent() returned error %X 2", eglGetError());
+            usleep(10000);
+            if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context))
+            {
+                YUI_LOG("eglMakeCurrent() returned error %X 3", eglGetError());
+                usleep(10000);
+                if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context))
+                {
+                    YUI_LOG("eglMakeCurrent() returned error %X 4", eglGetError());
+                    usleep(10000);
+                    if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context))
+                    {
+                        YUI_LOG("eglMakeCurrent() returned error %X 5", eglGetError());
+                        return -1;
+                    }
+                }
+            }
+        }
+    }
+#endif
+    glDisable(GL_SCISSOR_TEST);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
     eglSwapBuffers(g_Display, g_Surface);
-    glClear( GL_COLOR_BUFFER_BIT );
+    glClear(GL_COLOR_BUFFER_BIT);
     eglSwapBuffers(g_Display, g_Surface);
     return 0;
 }
 
-
-int initEgl( ANativeWindow* window )
+int initEgl(ANativeWindow *window)
 {
-	int i;
+    int i;
     int res;
-    void * padbits;
+    void *padbits;
 
-     const EGLint attribs[] = {
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT|EGL_PBUFFER_BIT,
-		EGL_RENDERABLE_TYPE,EGL_OPENGL_ES2_BIT,
+    const EGLint attribs[] = {
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
         EGL_BLUE_SIZE, 8,
         EGL_GREEN_SIZE, 8,
         EGL_RED_SIZE, 8,
         EGL_ALPHA_SIZE, 8,
-        EGL_DEPTH_SIZE,24,
-        EGL_STENCIL_SIZE,8,
+        EGL_DEPTH_SIZE, 24,
+        EGL_STENCIL_SIZE, 8,
 
-        EGL_NONE
-    };
+        EGL_NONE};
 
-     EGLint pbuffer_attribs[] = {
+    EGLint pbuffer_attribs[] = {
         EGL_WIDTH, 8,
         EGL_HEIGHT, 8,
         //EGL_TEXTURE_FORMAT, EGL_TEXTURE_RGBA,
         //EGL_TEXTURE_TARGET, EGL_TEXTURE_2D,
         //EGL_LARGEST_PBUFFER, EGL_TRUE,
-        EGL_NONE
-    };
+        EGL_NONE};
 
     EGLDisplay display;
     EGLConfig config;
@@ -1212,31 +1282,35 @@ int initEgl( ANativeWindow* window )
     EGLint height;
     int tmp;
     GLfloat ratio;
-    int attrib_list[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
+    int attrib_list[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
 
-    if( s_vidcoretype == VIDCORE_SOFT ) {
-        attrib_list[1]=2;
+    if (s_vidcoretype == VIDCORE_SOFT)
+    {
+        attrib_list[1] = 2;
     }
-
 
     YUI_LOG("Initializing context");
 
-    if ((display = eglGetDisplay(EGL_DEFAULT_DISPLAY)) == EGL_NO_DISPLAY) {
+    if ((display = eglGetDisplay(EGL_DEFAULT_DISPLAY)) == EGL_NO_DISPLAY)
+    {
         YUI_LOG("eglGetDisplay() returned error %X", eglGetError());
         return -1;
     }
-    if (!eglInitialize(display, 0, 0)) {
+    if (!eglInitialize(display, 0, 0))
+    {
         YUI_LOG("eglInitialize() returned error %X", eglGetError());
         return -1;
     }
 
-    if (!eglChooseConfig(display, attribs, &config, 1, &numConfigs)) {
+    if (!eglChooseConfig(display, attribs, &config, 1, &numConfigs))
+    {
         YUI_LOG("eglChooseConfig() returned error %X", eglGetError());
         destroy();
         return -1;
     }
 
-    if (!eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format)) {
+    if (!eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format))
+    {
         YUI_LOG("eglGetConfigAttrib() returned error %X", eglGetError());
         destroy();
         return -1;
@@ -1245,117 +1319,122 @@ int initEgl( ANativeWindow* window )
     //ANativeWindow_setBuffersGeometry(window, 0, 0, format);
 
     YUI_LOG("eglCreateContext");
-    if (!(context = eglCreateContext(display, config, 0, attrib_list))) {
+    if (!(context = eglCreateContext(display, config, 0, attrib_list)))
+    {
         YUI_LOG("eglCreateContext() for context returned error %d, Fall back to software vidcore mode", eglGetError());
         s_vidcoretype = VIDCORE_SOFT;
-        attrib_list[1]=2;
-        if (!(context = eglCreateContext(display, config, 0, attrib_list))) {
+        attrib_list[1] = 2;
+        if (!(context = eglCreateContext(display, config, 0, attrib_list)))
+        {
             YUI_LOG("eglCreateContext() returned error %d", eglGetError());
             destroy();
             return -1;
         }
     }
 
-    if (!(g_Context_Sub = eglCreateContext(display, config, context, attrib_list))) {
+    if (!(g_Context_Sub = eglCreateContext(display, config, context, attrib_list)))
+    {
         YUI_LOG("eglCreateContext() for g_Context_Sub returned error %d, Fall back to software vidcore mode", eglGetError());
         s_vidcoretype = VIDCORE_SOFT;
-        attrib_list[1]=2;
-        if (!(g_Context_Sub = eglCreateContext(display, config, context, attrib_list))) {
+        attrib_list[1] = 2;
+        if (!(g_Context_Sub = eglCreateContext(display, config, context, attrib_list)))
+        {
             YUI_LOG("eglCreateContext() returned error %d", eglGetError());
             destroy();
             return -1;
         }
     }
-	
+
     YUI_LOG("eglCreateWindowSurface");
-    if (!(surface = eglCreateWindowSurface(display, config, window, 0))) {
+    if (!(surface = eglCreateWindowSurface(display, config, window, 0)))
+    {
         YUI_LOG("eglCreateWindowSurface() returned error %X", eglGetError());
         destroy();
         return -1;
     }
-    
-    eglQuerySurface(display,surface,EGL_WIDTH,&width);
-    eglQuerySurface(display,surface,EGL_HEIGHT,&height);
+
+    eglQuerySurface(display, surface, EGL_WIDTH, &width);
+    eglQuerySurface(display, surface, EGL_HEIGHT, &height);
     //eglSurfaceAttrib(display, surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_DESTOYED);
-    YUI_LOG("eglCreateWindowSurface() ok size = %d,%d", width,height);  
+    YUI_LOG("eglCreateWindowSurface() ok size = %d,%d", width, height);
 
     pbuffer_attribs[1] = ANativeWindow_getWidth(window);
     pbuffer_attribs[3] = ANativeWindow_getHeight(window);
 
-	YUI_LOG("eglCreatePbufferSurface");
-    if (!(g_Pbuffer = eglCreatePbufferSurface(display, config, pbuffer_attribs ))) {
+    YUI_LOG("eglCreatePbufferSurface");
+    if (!(g_Pbuffer = eglCreatePbufferSurface(display, config, pbuffer_attribs)))
+    {
         YUI_LOG("eglCreatePbufferSurface() returned error %X", eglGetError());
         destroy();
         return -1;
     }
 
-
-
     YUI_LOG("eglMakeCurrent");
-    if (!eglMakeCurrent(display, surface, surface, context)) {
+    if (!eglMakeCurrent(display, surface, surface, context))
+    {
         YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
         destroy();
         return -1;
     }
-   glClearColor( 0.0f, 0.0f,0.0f,1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     if (!eglQuerySurface(display, surface, EGL_WIDTH, &width) ||
-        !eglQuerySurface(display, surface, EGL_HEIGHT, &height)) {
+        !eglQuerySurface(display, surface, EGL_HEIGHT, &height))
+    {
         YUI_LOG("eglQuerySurface() returned error %X", eglGetError());
         destroy();
         return -1;
     }
 
-
     g_Display = display;
     g_Surface = surface;
     g_Context = context;
-    g_Config  = config;
+    g_Config = config;
 
-    YUI_LOG("%s",glGetString(GL_VENDOR));
-    YUI_LOG("%s",glGetString(GL_RENDERER));
-    YUI_LOG("%s",glGetString(GL_VERSION));
-    YUI_LOG("%s",glGetString(GL_EXTENSIONS));
-    YUI_LOG("%s",eglQueryString(g_Display,EGL_EXTENSIONS));
+    YUI_LOG("%s", glGetString(GL_VENDOR));
+    YUI_LOG("%s", glGetString(GL_RENDERER));
+    YUI_LOG("%s", glGetString(GL_VERSION));
+    YUI_LOG("%s", glGetString(GL_EXTENSIONS));
+    YUI_LOG("%s", eglQueryString(g_Display, EGL_EXTENSIONS));
 
-    GLint  range[2];
-    GLint  precision[2];
+    GLint range[2];
+    GLint precision[2];
     glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_LOW_FLOAT, range, precision);
-    YUI_LOG("GL_LOW_FLOAT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+    YUI_LOG("GL_LOW_FLOAT [ %d - %d ][ %d - %d ]", range[0], range[1], precision[0], precision[1]);
     glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_MEDIUM_FLOAT, range, precision);
-    YUI_LOG("GL_MEDIUM_FLOAT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+    YUI_LOG("GL_MEDIUM_FLOAT [ %d - %d ][ %d - %d ]", range[0], range[1], precision[0], precision[1]);
     glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, range, precision);
-    YUI_LOG("GL_HIGH_FLOAT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+    YUI_LOG("GL_HIGH_FLOAT [ %d - %d ][ %d - %d ]", range[0], range[1], precision[0], precision[1]);
     glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_LOW_INT, range, precision);
-    YUI_LOG("GL_LOW_INT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+    YUI_LOG("GL_LOW_INT [ %d - %d ][ %d - %d ]", range[0], range[1], precision[0], precision[1]);
     glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_MEDIUM_INT, range, precision);
-    YUI_LOG("GL_MEDIUM_INT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+    YUI_LOG("GL_MEDIUM_INT [ %d - %d ][ %d - %d ]", range[0], range[1], precision[0], precision[1]);
     glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_INT, range, precision);
-    YUI_LOG("GL_HIGH_INT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+    YUI_LOG("GL_HIGH_INT [ %d - %d ][ %d - %d ]", range[0], range[1], precision[0], precision[1]);
 
+    glViewport(0, 0, width, height);
 
-    glViewport(0,0,width,height);
-
-    glClearColor( 0.0f, 0.0f,0.0f,1.0f);
-    glClear( GL_COLOR_BUFFER_BIT );
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     return 0;
 }
 
-int YabauseInit(){
-	int i;
-    int res;    
+int YabauseInit()
+{
+    int i;
+    int res;
     EGLint width;
     EGLint height;
 
-    yabauseinit_struct yinit ={};
+    yabauseinit_struct yinit = {};
 
-    eglQuerySurface(g_Display,g_Surface,EGL_WIDTH,&width);
-    eglQuerySurface(g_Display,g_Surface,EGL_HEIGHT,&height);
+    eglQuerySurface(g_Display, g_Surface, EGL_WIDTH, &width);
+    eglQuerySurface(g_Display, g_Surface, EGL_HEIGHT, &height);
 
     //s_vidcoretype = VIDCORE_VULKAN;
-	memset(&yinit,0,sizeof(yinit));
+    memset(&yinit, 0, sizeof(yinit));
     //yinit.m68kcoretype = M68KCORE_C68K;
-	yinit.m68kcoretype = M68KCORE_MUSASHI;
+    yinit.m68kcoretype = M68KCORE_MUSASHI;
     yinit.percoretype = PERCORE_DUMMY;
 #if defined(SH2_DYNAREC) | defined(DYNAREC_DEVMIYAX)
     //g_CpuType = SH2CORE_DEBUGINTERPRETER;
@@ -1370,7 +1449,7 @@ int YabauseInit(){
 #else
     yinit.sndcoretype = SNDCORE_AUDIOTRACK;
 #endif
-    yinit.cdcoretype = CDCORE_ISO;
+    yinit.cdcoretype = CDCORE_WEBAPI;
     yinit.carttype = GetCartridgeType();
     yinit.regionid = 0;
 
@@ -1387,9 +1466,9 @@ int YabauseInit(){
     yinit.usethreads = 0;
     yinit.skip_load = 0;
     yinit.video_filter_type = g_VideoFilter;
-	yinit.polygon_generation_mode = g_PolygonGenerationMode;
-	yinit.use_new_scsp = g_SoundEngine;
-    yinit.resolution_mode =g_resolution_mode;
+    yinit.polygon_generation_mode = g_PolygonGenerationMode;
+    yinit.use_new_scsp = g_SoundEngine;
+    yinit.resolution_mode = g_resolution_mode;
     yinit.extend_backup = g_extmemory;
     yinit.rotate_screen = g_rotate_screen;
     yinit.scsp_sync_count_per_frame = g_scsp_sync_count;
@@ -1398,118 +1477,131 @@ int YabauseInit(){
     yinit.rbg_resolution_mode = g_rbg_resolution_mode;
     yinit.rbg_use_compute_shader = g_use_compute_shader;
     yinit.playRecordPath = s_playdatadir;
-    if( yinit.playRecordPath != NULL ){
-       PlayRecorder * p = PlayRecorder::getInstance();
-       gsc.setScreenshotCallback(p);
+    if (yinit.playRecordPath != NULL)
+    {
+        PlayRecorder *p = PlayRecorder::getInstance();
+        gsc.setScreenshotCallback(p);
     }
 
     res = YabauseInit(&yinit);
-    if (res != 0) {
-      YUI_LOG("Fail to YabauseInit %d", res);
-      return -1;
+    if (res != 0)
+    {
+        YUI_LOG("Fail to YabauseInit %d", res);
+        return -1;
     }
 
     update_pad_mode();
 
     //ScspSetFrameAccurate(1);
 
-    if( s_vidcoretype == VIDCORE_OGL ){
+    if (s_vidcoretype == VIDCORE_OGL)
+    {
         OSDChangeCore(OSDCORE_NANOVG);
-	   for (i = 0; VIDCoreList[i] != NULL; i++)
-	   {
-		  if (VIDCoreList[i]->id == s_vidcoretype)
-		  {
-			 VIDCoreList[i]->Resize(0,0,width,height,1,g_aspect_rate_mode);
-            glDisable(GL_SCISSOR_TEST);
-            glClearColor( 0.0f, 0.0f,0.0f,1.0f);
-            glClear( GL_COLOR_BUFFER_BIT );
-            eglSwapBuffers(g_Display, g_Surface);
-            glClear( GL_COLOR_BUFFER_BIT );
-            eglSwapBuffers(g_Display, g_Surface);
-    		break;
-		  }
-	   }
-    }else if(s_vidcoretype == VIDCORE_VULKAN ){
-        OSDChangeCore(OSDCORE_NANOVG_VULKAN);
-        for (i = 0; VIDCoreList[i] != NULL; i++){
-		  if (VIDCoreList[i]->id == s_vidcoretype)
-		  {
-			 VIDCoreList[i]->Resize(0,0,surface_width,surface_height,1,g_aspect_rate_mode);
-             break;
-     	  }
+        for (i = 0; VIDCoreList[i] != NULL; i++)
+        {
+            if (VIDCoreList[i]->id == s_vidcoretype)
+            {
+                VIDCoreList[i]->Resize(0, 0, width, height, 1, g_aspect_rate_mode);
+                glDisable(GL_SCISSOR_TEST);
+                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+                eglSwapBuffers(g_Display, g_Surface);
+                glClear(GL_COLOR_BUFFER_BIT);
+                eglSwapBuffers(g_Display, g_Surface);
+                break;
+            }
         }
-
-    }else{
+    }
+    else if (s_vidcoretype == VIDCORE_VULKAN)
+    {
+        OSDChangeCore(OSDCORE_NANOVG_VULKAN);
+        for (i = 0; VIDCoreList[i] != NULL; i++)
+        {
+            if (VIDCoreList[i]->id == s_vidcoretype)
+            {
+                VIDCoreList[i]->Resize(0, 0, surface_width, surface_height, 1, g_aspect_rate_mode);
+                break;
+            }
+        }
+    }
+    else
+    {
         OSDChangeCore(OSDCORE_SOFT);
-        if( YuiInitProgramForSoftwareRendering() != GL_TRUE ){
+        if (YuiInitProgramForSoftwareRendering() != GL_TRUE)
+        {
             YUI_LOG("Fail to YuiInitProgramForSoftwareRendering");
             return -1;
         }
     }
 
     return 0;
-
 }
 
-int switchWindow( ANativeWindow* window ){
+int switchWindow(ANativeWindow *window)
+{
 
     EGLint format;
     EGLSurface surface;
     EGLint width;
     EGLint height;
-	int i;
-    
-    if( g_Display == EGL_NO_DISPLAY ||  g_Config == NULL ) return -1;
-    
+    int i;
+
+    if (g_Display == EGL_NO_DISPLAY || g_Config == NULL)
+        return -1;
+
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    VdpRevoke(); 
-    if( YuiUseOGLOnThisThread() == -1 ){
+    VdpRevoke();
+    if (YuiUseOGLOnThisThread() == -1)
+    {
         // Don't care
     }
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroySurface(g_Display, g_Surface);
-    
+
     //YUI_LOG("ANativeWindow_setBuffersGeometry");
     //ANativeWindow_setBuffersGeometry(window, 0, 0, format);
 
     YUI_LOG("switchWindow eglCreateWindowSurface");
-    if (!(surface = eglCreateWindowSurface(g_Display, g_Config, window, 0))) {
+    if (!(surface = eglCreateWindowSurface(g_Display, g_Config, window, 0)))
+    {
         YUI_LOG("eglCreateWindowSurface() returned error %X", eglGetError());
         destroy();
         return -1;
     }
-    
-    eglQuerySurface(g_Display,surface,EGL_WIDTH,&width);
-    eglQuerySurface(g_Display,surface,EGL_HEIGHT,&height);
-    YUI_LOG("eglCreateWindowSurface() ok size = %d,%d", width,height);
-    if( eglMakeCurrent(g_Display, surface, surface, g_Context) != EGL_TRUE ){
-		YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
-	}
 
-   for (i = 0; VIDCoreList[i] != NULL; i++)
-   {
-	  if (VIDCoreList[i]->id == s_vidcoretype)
-	  {
-		YUI_LOG("Resize %d,%s %d,%d",s_vidcoretype,VIDCoreList[i]->Name,width,height);
-		 VIDCoreList[i]->Resize(0,0,width,height,1,g_aspect_rate_mode);
-         glDisable(GL_SCISSOR_TEST);
-         glClearColor( 0.0f,0.0f,0.0f,1.0f);
-         //glClear( GL_COLOR_BUFFER_BIT );
-         //eglSwapBuffers(g_Display, surface);
-         //glClear( GL_COLOR_BUFFER_BIT );
-         //eglSwapBuffers(g_Display, surface);
-		 break;
-	  }
-   }
+    eglQuerySurface(g_Display, surface, EGL_WIDTH, &width);
+    eglQuerySurface(g_Display, surface, EGL_HEIGHT, &height);
+    YUI_LOG("eglCreateWindowSurface() ok size = %d,%d", width, height);
+    if (eglMakeCurrent(g_Display, surface, surface, g_Context) != EGL_TRUE)
+    {
+        YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
+    }
+
+    for (i = 0; VIDCoreList[i] != NULL; i++)
+    {
+        if (VIDCoreList[i]->id == s_vidcoretype)
+        {
+            YUI_LOG("Resize %d,%s %d,%d", s_vidcoretype, VIDCoreList[i]->Name, width, height);
+            VIDCoreList[i]->Resize(0, 0, width, height, 1, g_aspect_rate_mode);
+            glDisable(GL_SCISSOR_TEST);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            //glClear( GL_COLOR_BUFFER_BIT );
+            //eglSwapBuffers(g_Display, surface);
+            //glClear( GL_COLOR_BUFFER_BIT );
+            //eglSwapBuffers(g_Display, surface);
+            break;
+        }
+    }
 
     g_Surface = surface;
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     VdpResume();
-	YuiRevokeOGLOnThisThread();
+    YuiRevokeOGLOnThisThread();
     return 0;
 }
 
-int destroy() {
+int destroy()
+{
     YabauseDeInit();
 
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
@@ -1525,288 +1617,307 @@ int destroy() {
     g_Context = EGL_NO_CONTEXT;
     g_Surface = EGL_NO_SURFACE;
     g_Pbuffer = EGL_NO_SURFACE;
- 
+
     return 0;
 }
 
-extern "C" {
-
-void
-Java_org_uoyabause_android_YabauseRunnable_deinit( JNIEnv* env )
+extern "C"
 {
-    g_msg = MSG_RENDER_LOOP_EXIT;
-	//pthread_join(_threadId,NULL);
-}
 
-void
-Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
-{
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_reset( JNIEnv* env )
-{
-    yprintf("sending MSG_RESET");
-    pthread_mutex_lock(&g_mtxGlLock);
-    g_msg = MSG_RESET;
-    pthread_mutex_unlock(&g_mtxGlLock);    
-}
-
-class Command{
-public:    
-    Command( int press, int pad ){
-        this->press = press;
-        this->pad = pad;
-    }
-    int press;
-    int pad;
-};
-
-typedef vector<Command> vecCommand;
-
-vecCommand commands;
-
-void
-Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
-{
-    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::RECORDING ) {
-        Command a(1,MAKE_PAD(player,key));
-        commands.push_back(a);
-        return;
-    }else if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) {
-        return;
-    }
-   
-	//yprintf("press: %d,%d",player,key);
-    PerKeyDown(MAKE_PAD(player,key));
-
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_axis( JNIEnv* env, jobject obj, jint key, jint player, jint val )
-{
-    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) return;
-	//yprintf("axis: %d,%d,%d",player,key,val);
-    PerAxisValue(MAKE_PAD(player,key),val); // from 0 to 255
-}
-
-
-void
-Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key, jint player )
-{
-    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::RECORDING ) {
-        Command a(0,MAKE_PAD(player,key));
-        commands.push_back(a);    
-        return;
-    }else if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) {
-        return;
-    }
-    PerKeyUp(MAKE_PAD(player,key));
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_switch_1padmode( JNIEnv* env, jobject obj, jint mode )
-{
-    g_pad_mode = mode;
-    if(yabause) s_player2Enable = GetPlayer2Device();
-    update_pad_mode();
-}
-
-void Java_org_uoyabause_android_YabauseRunnable_switch_1padmode2( JNIEnv* env, jobject obj, jint mode )
-{
-    g_pad2_mode = mode;
-    if(yabause) s_player2Enable = GetPlayer2Device();
-    update_pad_mode();
-}
-
-
-void
-Java_org_uoyabause_android_YabauseRunnable_enableFPS( JNIEnv* env, jobject obj, jint enable )
-{
-    g_EnagleFPS = enable;
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_enableExtendedMemory( JNIEnv* env, jobject obj, jint enable )
-{
-    g_extmemory = enable;
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_enableRotateScreen( JNIEnv* env, jobject obj, jint enable )
-{
-    g_rotate_screen = enable;
-    VideoSetSetting(VDP_SETTING_ROTATE_SCREEN,g_rotate_screen);
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_enableComputeShader( JNIEnv* env, jobject obj, jint enable )
-{
-    g_use_compute_shader = enable;
-    VideoSetSetting(VDP_SETTING_RBG_USE_COMPUTESHADER,g_use_compute_shader);
-}
-
-
-void
-Java_org_uoyabause_android_YabauseRunnable_setCpu( JNIEnv* env, jobject obj, jint cpu )
-{
-    g_CpuType = cpu;
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_setFilter( JNIEnv* env, jobject obj, jint filter )
-{
-    g_VideoFilter = filter;
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_setSoundEngine( JNIEnv* env, jobject obj, jint sound_engine )
-{
-    g_SoundEngine = sound_engine;
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_setResolutionMode( JNIEnv* env, jobject obj, jint resolution_mode )
-{
-    g_resolution_mode = resolution_mode;
-    VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, g_resolution_mode);
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_setRbgResolutionMode( JNIEnv* env, jobject obj, jint resolution_mode )
-{
-    g_rbg_resolution_mode = resolution_mode;
-    VideoSetSetting(VDP_SETTING_RBG_RESOLUTION_MODE, g_rbg_resolution_mode);
-}
-
-
-void
-Java_org_uoyabause_android_YabauseRunnable_setScspSyncPerFrame( JNIEnv* env, jobject obj, jint scsp_sync_count )
-{
-    g_scsp_sync_count = scsp_sync_count;
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_setScspSyncTimeMode( JNIEnv* env, jobject obj, jint mode )
-{
-    g_scsp_sync_time_mode = mode;
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_setCpuSyncPerLine( JNIEnv* env, jobject obj, jint count )
-{
-    switch(count){
-    case 1:
-        g_cpu_sync_shift = 0;
-        break;
-    case 2:
-        g_cpu_sync_shift = 1;
-        break;
-    case 4:
-        g_cpu_sync_shift = 2;
-        break;
-    case 8:
-        g_cpu_sync_shift = 3;
-        break;
-    default:
-        g_cpu_sync_shift = 0;
-        break;
+    void
+    Java_org_uoyabause_android_YabauseRunnable_deinit(JNIEnv *env)
+    {
+        g_msg = MSG_RENDER_LOOP_EXIT;
+        //pthread_join(_threadId,NULL);
     }
 
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_setPolygonGenerationMode(JNIEnv* env, jobject obj, jint pgm )
-{
-	g_PolygonGenerationMode = pgm;
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_setAspectRateMode(JNIEnv* env, jobject obj, jint ka )
-{
-	g_aspect_rate_mode = ka;
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_enableFrameskip( JNIEnv* env, jobject obj, jint enable )
-{
-    if (enable)
-        EnableAutoFrameSkip();
-    else
-        DisableAutoFrameSkip();
-}
-
-void
-Java_org_uoyabause_android_YabauseRunnable_setVolume( JNIEnv* env, jobject obj, jint volume )
-{
-    ScspSetVolume(volume);
-}
-
-jstring Java_org_uoyabause_android_YabauseRunnable_getGameTitle(JNIEnv *env) {
-	
-	char * buf;
-	
-	jstring rtn;
-	if( cdip == NULL ) return NULL;
-	buf = (char*)malloc(1024);
-	if( buf == NULL ) return NULL;
-    if( strcmp(cdip->cdinfo,"CD-1/1") == 0 ){
-        sprintf(buf,"%s",cdip->gamename);
-    }else{
-	    sprintf(buf,"%s(%s)",cdip->gamename,cdip->cdinfo);
-    }
-			
-	rtn = env->NewStringUTF(buf);
-	free(buf);
-	return rtn;
-}
-
-void Java_org_uoyabause_android_YabauseRunnable_updateCheat(JNIEnv *env, jobject object, jobjectArray stringArray) {
-
-    if( stringArray == NULL || env->GetArrayLength(stringArray) == 0 ){
-        CheatClearCodes();    
-        return;
+    void
+    Java_org_uoyabause_android_YabauseRunnable_exec(JNIEnv *env)
+    {
     }
 
-    int stringCount = env->GetArrayLength(stringArray);
-    int i = 0;
-    int index = 0;
-    CheatClearCodes();
-    for (i=0; i<stringCount; i++) {
-        jstring string = (jstring) (env->GetObjectArrayElement(stringArray, i));
-        if( string == NULL ){
-            continue;
+    void
+    Java_org_uoyabause_android_YabauseRunnable_reset(JNIEnv *env)
+    {
+        yprintf("sending MSG_RESET");
+        pthread_mutex_lock(&g_mtxGlLock);
+        g_msg = MSG_RESET;
+        pthread_mutex_unlock(&g_mtxGlLock);
+    }
+
+    class Command
+    {
+    public:
+        Command(int press, int pad)
+        {
+            this->press = press;
+            this->pad = pad;
         }
-        const char * rawString = env->GetStringUTFChars(string, 0);
-        // Don't forget to call `ReleaseStringUTFChars` when you're done.
+        int press;
+        int pad;
+    };
 
-        index = CheatAddARCode(rawString);
-        CheatEnableCode(index);
-        env->ReleaseStringUTFChars(string,rawString);
+    typedef vector<Command> vecCommand;
+
+    vecCommand commands;
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_press(JNIEnv *env, jobject obj, jint key, jint player)
+    {
+        if (PlayRecorder::getInstance()->getStatus() == PlayRecorder::RECORDING)
+        {
+            Command a(1, MAKE_PAD(player, key));
+            commands.push_back(a);
+            return;
+        }
+        else if (PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING)
+        {
+            return;
+        }
+
+        //yprintf("press: %d,%d",player,key);
+        PerKeyDown(MAKE_PAD(player, key));
     }
-    // CheatDoPatches(); will call at  Vblank-in
-    return;
-}
 
+    void
+    Java_org_uoyabause_android_YabauseRunnable_axis(JNIEnv *env, jobject obj, jint key, jint player, jint val)
+    {
+        if (PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING)
+            return;
+        //yprintf("axis: %d,%d,%d",player,key,val);
+        PerAxisValue(MAKE_PAD(player, key), val); // from 0 to 255
+    }
 
-jstring Java_org_uoyabause_android_YabauseRunnable_getGameinfo(JNIEnv *env) {
-	
-	char * buf;
-	
-	jstring rtn;
-	if( cdip == NULL ) return NULL;
-	buf = (char*)malloc(1024);
-	if( buf == NULL ) return NULL;
-	sprintf(buf,
-		"{game:{maker_id:\"%s\",product_number:\"%s\",version:\"%s\","
-		"release_date:\"%s\",\"device_infomation\":\"%s\","
-		"area:\"%s\",game_title:\"%s\",input_device:\"%s\"}}",
-			cdip->company,cdip->itemnum,cdip->version,cdip->date,cdip->cdinfo,cdip->region, cdip->gamename, cdip->peripheral);
-			
-	rtn = env->NewStringUTF(buf);
-	free(buf);
-	return rtn;
-}
+    void
+    Java_org_uoyabause_android_YabauseRunnable_release(JNIEnv *env, jobject obj, jint key, jint player)
+    {
+        if (PlayRecorder::getInstance()->getStatus() == PlayRecorder::RECORDING)
+        {
+            Command a(0, MAKE_PAD(player, key));
+            commands.push_back(a);
+            return;
+        }
+        else if (PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING)
+        {
+            return;
+        }
+        PerKeyUp(MAKE_PAD(player, key));
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_switch_1padmode(JNIEnv *env, jobject obj, jint mode)
+    {
+        g_pad_mode = mode;
+        if (yabause)
+            s_player2Enable = GetPlayer2Device();
+        update_pad_mode();
+    }
+
+    void Java_org_uoyabause_android_YabauseRunnable_switch_1padmode2(JNIEnv *env, jobject obj, jint mode)
+    {
+        g_pad2_mode = mode;
+        if (yabause)
+            s_player2Enable = GetPlayer2Device();
+        update_pad_mode();
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_enableFPS(JNIEnv *env, jobject obj, jint enable)
+    {
+        g_EnagleFPS = enable;
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_enableExtendedMemory(JNIEnv *env, jobject obj, jint enable)
+    {
+        g_extmemory = enable;
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_enableRotateScreen(JNIEnv *env, jobject obj, jint enable)
+    {
+        g_rotate_screen = enable;
+        VideoSetSetting(VDP_SETTING_ROTATE_SCREEN, g_rotate_screen);
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_enableComputeShader(JNIEnv *env, jobject obj, jint enable)
+    {
+        g_use_compute_shader = enable;
+        VideoSetSetting(VDP_SETTING_RBG_USE_COMPUTESHADER, g_use_compute_shader);
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_setCpu(JNIEnv *env, jobject obj, jint cpu)
+    {
+        g_CpuType = cpu;
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_setFilter(JNIEnv *env, jobject obj, jint filter)
+    {
+        g_VideoFilter = filter;
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_setSoundEngine(JNIEnv *env, jobject obj, jint sound_engine)
+    {
+        g_SoundEngine = sound_engine;
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_setResolutionMode(JNIEnv *env, jobject obj, jint resolution_mode)
+    {
+        g_resolution_mode = resolution_mode;
+        VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, g_resolution_mode);
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_setRbgResolutionMode(JNIEnv *env, jobject obj, jint resolution_mode)
+    {
+        g_rbg_resolution_mode = resolution_mode;
+        VideoSetSetting(VDP_SETTING_RBG_RESOLUTION_MODE, g_rbg_resolution_mode);
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_setScspSyncPerFrame(JNIEnv *env, jobject obj, jint scsp_sync_count)
+    {
+        g_scsp_sync_count = scsp_sync_count;
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_setScspSyncTimeMode(JNIEnv *env, jobject obj, jint mode)
+    {
+        g_scsp_sync_time_mode = mode;
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_setCpuSyncPerLine(JNIEnv *env, jobject obj, jint count)
+    {
+        switch (count)
+        {
+        case 1:
+            g_cpu_sync_shift = 0;
+            break;
+        case 2:
+            g_cpu_sync_shift = 1;
+            break;
+        case 4:
+            g_cpu_sync_shift = 2;
+            break;
+        case 8:
+            g_cpu_sync_shift = 3;
+            break;
+        default:
+            g_cpu_sync_shift = 0;
+            break;
+        }
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_setPolygonGenerationMode(JNIEnv *env, jobject obj, jint pgm)
+    {
+        g_PolygonGenerationMode = pgm;
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_setAspectRateMode(JNIEnv *env, jobject obj, jint ka)
+    {
+        g_aspect_rate_mode = ka;
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_enableFrameskip(JNIEnv *env, jobject obj, jint enable)
+    {
+        if (enable)
+            EnableAutoFrameSkip();
+        else
+            DisableAutoFrameSkip();
+    }
+
+    void
+    Java_org_uoyabause_android_YabauseRunnable_setVolume(JNIEnv *env, jobject obj, jint volume)
+    {
+        ScspSetVolume(volume);
+    }
+
+    jstring Java_org_uoyabause_android_YabauseRunnable_getGameTitle(JNIEnv *env)
+    {
+
+        char *buf;
+
+        jstring rtn;
+        if (cdip == NULL)
+            return NULL;
+        buf = (char *)malloc(1024);
+        if (buf == NULL)
+            return NULL;
+        if (strcmp(cdip->cdinfo, "CD-1/1") == 0)
+        {
+            sprintf(buf, "%s", cdip->gamename);
+        }
+        else
+        {
+            sprintf(buf, "%s(%s)", cdip->gamename, cdip->cdinfo);
+        }
+
+        rtn = env->NewStringUTF(buf);
+        free(buf);
+        return rtn;
+    }
+
+    void Java_org_uoyabause_android_YabauseRunnable_updateCheat(JNIEnv *env, jobject object, jobjectArray stringArray)
+    {
+
+        if (stringArray == NULL || env->GetArrayLength(stringArray) == 0)
+        {
+            CheatClearCodes();
+            return;
+        }
+
+        int stringCount = env->GetArrayLength(stringArray);
+        int i = 0;
+        int index = 0;
+        CheatClearCodes();
+        for (i = 0; i < stringCount; i++)
+        {
+            jstring string = (jstring)(env->GetObjectArrayElement(stringArray, i));
+            if (string == NULL)
+            {
+                continue;
+            }
+            const char *rawString = env->GetStringUTFChars(string, 0);
+            // Don't forget to call `ReleaseStringUTFChars` when you're done.
+
+            index = CheatAddARCode(rawString);
+            CheatEnableCode(index);
+            env->ReleaseStringUTFChars(string, rawString);
+        }
+        // CheatDoPatches(); will call at  Vblank-in
+        return;
+    }
+
+    jstring Java_org_uoyabause_android_YabauseRunnable_getGameinfo(JNIEnv *env)
+    {
+
+        char *buf;
+
+        jstring rtn;
+        if (cdip == NULL)
+            return NULL;
+        buf = (char *)malloc(1024);
+        if (buf == NULL)
+            return NULL;
+        sprintf(buf,
+                "{game:{maker_id:\"%s\",product_number:\"%s\",version:\"%s\","
+                "release_date:\"%s\",\"device_infomation\":\"%s\","
+                "area:\"%s\",game_title:\"%s\",input_device:\"%s\"}}",
+                cdip->company, cdip->itemnum, cdip->version, cdip->date, cdip->cdinfo, cdip->region, cdip->gamename, cdip->peripheral);
+
+        rtn = env->NewStringUTF(buf);
+        free(buf);
+        return rtn;
+    }
 
 #if 0
 void
@@ -1835,113 +1946,119 @@ Java_org_uoyabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject obj,
 }
 #endif
 
-void log_callback(char * message)
-{
-    __android_log_print(ANDROID_LOG_INFO, "yabause", "%s", message);
-}
+    void log_callback(char *message)
+    {
+        __android_log_print(ANDROID_LOG_INFO, "yabause", "%s", message);
+    }
 
-crashlytics_context_t* context = NULL;
+    crashlytics_context_t *context = NULL;
 
-jint JNI_OnLoad(JavaVM * vm, void * reserved)
-{
-    __android_log_print(ANDROID_LOG_INFO, "yabause", "JNI_OnLoad is called");
+    jint JNI_OnLoad(JavaVM *vm, void *reserved)
+    {
+        __android_log_print(ANDROID_LOG_INFO, "yabause", "JNI_OnLoad is called");
 
-    JNIEnv * env;
-    if (vm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        return -1;
-    yvm = vm;
+        JNIEnv *env;
+        if (vm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+            return -1;
+        yvm = vm;
 
-    LogStart();
-    LogChangeOutput(DEBUG_CALLBACK, (char *) log_callback);
+        LogStart();
+        LogChangeOutput(DEBUG_CALLBACK, (char *)log_callback);
 
-    context = crashlytics_init();
+        context = crashlytics_init();
 
-    return JNI_VERSION_1_6;
-}
+        return JNI_VERSION_1_6;
+    }
 
 } // extern "C"
 
-
-void update_pad_mode(){
-    void * padbits;
+void update_pad_mode()
+{
+    void *padbits;
 
     PerPortReset();
 
-    if( g_pad_mode == 0 ) {
+    if (g_pad_mode == 0)
+    {
         padbits = PerPadAdd(&PORTDATA1);
-        PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-
-    } else if( g_pad_mode == 1 ){
+        PerSetKey(MAKE_PAD(0, PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
+    }
+    else if (g_pad_mode == 1)
+    {
 
         padbits = Per3DPadAdd(&PORTDATA1);
 
-        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
-        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
-        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
-        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
 
-        PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-        PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
     }
 
-    if( s_player2Enable != -1 ) {
-        if( g_pad2_mode == 0 ) {
+    if (s_player2Enable != -1)
+    {
+        if (g_pad2_mode == 0)
+        {
             padbits = PerPadAdd(&PORTDATA2);
-            PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-        }else{
+            PerSetKey(MAKE_PAD(1, PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
+        }
+        else
+        {
             padbits = Per3DPadAdd(&PORTDATA2);
-            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
-            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
-            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
-            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-            PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
         }
     }
 }
@@ -1951,269 +2068,302 @@ void renderLoop()
     int renderingEnabled = 1;
     int pause = 0;
 
-#if HAVE_VULKAN    
-	Renderer * r = NULL;
+#if HAVE_VULKAN
+    Renderer *r = NULL;
 #endif
-   
-    int initResult=0;
 
-	YabThreadSetCurrentThreadAffinityMask(0x00);
+    int initResult = 0;
 
-    while (renderingEnabled != 0) {
+    YabThreadSetCurrentThreadAffinityMask(0x00);
 
-        if( initResult == 0 ){
-            if (g_Display && pause == 0 && g_window != NULL) {
-                if( commands.size() > 0 ){
-                    for( int i=0; i< commands.size(); i++ ){
-                        if( commands[i].press == 0 ){
+    while (renderingEnabled != 0)
+    {
+
+        if (initResult == 0)
+        {
+            if (g_Display && pause == 0 && g_window != NULL)
+            {
+                if (commands.size() > 0)
+                {
+                    for (int i = 0; i < commands.size(); i++)
+                    {
+                        if (commands[i].press == 0)
+                        {
                             PerKeyUp(commands[i].pad);
-                        }else{
+                        }
+                        else
+                        {
                             PerKeyDown(commands[i].pad);
                         }
                     }
                     commands.clear();
                 }
-            YabauseExec();
+                YabauseExec();
             }
         }
+        else
+        {
+            usleep(16666);
+        }
 
-        pthread_mutex_lock(&g_mtxGlLock);        
+        pthread_mutex_lock(&g_mtxGlLock);
         // process incoming messages
-        switch (g_msg) {
+        switch (g_msg)
+        {
 
-            case MSG_WINDOW_SET:
-                YUI_LOG("MSG_WINDOW_SET");
-                if( s_vidcoretype == VIDCORE_VULKAN ){
-#if HAVE_VULKAN                    
-                    if( r == NULL ){
-                        r = new Renderer();
-                        r->setNativeWindow(g_window);
-                        VIDVulkan::getInstance()->setRenderer(r);
-                    }
-#endif                    
-                    g_Display = (void*)1;
-                }else{
-                    if( initEgl( g_window ) != 0 ){
-                      destroy();
-                      pthread_mutex_unlock(&g_mtxGlLock);
-                      return;
-                    }
+        case MSG_WINDOW_SET:
+            YUI_LOG("MSG_WINDOW_SET");
+            if (s_vidcoretype == VIDCORE_VULKAN)
+            {
+#if HAVE_VULKAN
+                if (r == NULL)
+                {
+                    r = new Renderer();
+                    r->setNativeWindow(g_window);
+                    VIDVulkan::getInstance()->setRenderer(r);
                 }
-                initResult = YabauseInit();
-                break;
-            case MSG_WINDOW_CHG:
-                YUI_LOG("MSG_WINDOW_CHG");
-                if( s_vidcoretype == VIDCORE_VULKAN ){
-#if HAVE_VULKAN                                        
-                    for (int i = 0; VIDCoreList[i] != NULL; i++)
+#endif
+                g_Display = (void *)1;
+            }
+            else
+            {
+                if (initEgl(g_window) != 0)
+                {
+                    destroy();
+                    pthread_mutex_unlock(&g_mtxGlLock);
+                    return;
+                }
+            }
+            initResult = YabauseInit();
+            break;
+        case MSG_WINDOW_CHG:
+            YUI_LOG("MSG_WINDOW_CHG");
+            if (s_vidcoretype == VIDCORE_VULKAN)
+            {
+#if HAVE_VULKAN
+                for (int i = 0; VIDCoreList[i] != NULL; i++)
+                {
+                    if (VIDCoreList[i]->id == s_vidcoretype)
                     {
-                        if (VIDCoreList[i]->id == s_vidcoretype)
-                        {
-                            YUI_LOG("Resize %d,%s %d,%d",s_vidcoretype,VIDCoreList[i]->Name,surface_width,surface_height);
-                            r->setNativeWindow(g_window);
-                            VIDCoreList[i]->Resize(0,0,surface_width,surface_height,1,g_aspect_rate_mode);
-                            break;
-                        }
-                    }
-#endif                    
-                }else{
-                    if( switchWindow(g_window) != 0 ){
-                        destroy();
-                        pthread_mutex_unlock(&g_mtxGlLock);
-                        return;
+                        YUI_LOG("Resize %d,%s %d,%d", s_vidcoretype, VIDCoreList[i]->Name, surface_width, surface_height);
+                        r->setNativeWindow(g_window);
+                        VIDCoreList[i]->Resize(0, 0, surface_width, surface_height, 1, g_aspect_rate_mode);
+                        break;
                     }
                 }
-
-                break;
-            case MSG_RENDER_LOOP_EXIT:
-                YUI_LOG("MSG_RENDER_LOOP_EXIT");            
-                renderingEnabled = 0;
-                destroy();
-                break;
-
-            case MSG_SAVE_STATE:
+#endif
+            }
+            else
             {
-                int ret;
-                time_t t = time(NULL);
-                YUI_LOG("MSG_SAVE_STATE");
-
-                sprintf(last_state_filename, "%s/%s_%ld.yss", s_savepath, cdip->itemnum, t);
-                ret = YabSaveState(last_state_filename);
-
-                pthread_mutex_lock(&g_mtxFuncSync);
-                pthread_cond_signal(&g_cndFuncSync);
-                pthread_mutex_unlock(&g_mtxFuncSync);                
+                if (switchWindow(g_window) != 0)
+                {
+                    destroy();
+                    pthread_mutex_unlock(&g_mtxGlLock);
+                    return;
+                }
             }
+
+            break;
+        case MSG_RENDER_LOOP_EXIT:
+            YUI_LOG("MSG_RENDER_LOOP_EXIT");
+            renderingEnabled = 0;
+            destroy();
             break;
 
-            case MSG_LOAD_STATE:
+        case MSG_SAVE_STATE:
+        {
+            int ret;
+            time_t t = time(NULL);
+            YUI_LOG("MSG_SAVE_STATE");
+
+            sprintf(last_state_filename, "%s/%s_%ld.yss", s_savepath, cdip->itemnum, t);
+            ret = YabSaveState(last_state_filename);
+
+            pthread_mutex_lock(&g_mtxFuncSync);
+            pthread_cond_signal(&g_cndFuncSync);
+            pthread_mutex_unlock(&g_mtxFuncSync);
+        }
+        break;
+
+        case MSG_LOAD_STATE:
+        {
+            int rtn;
+            YUI_LOG("MSG_LOAD_STATE");
+            rtn = YabLoadState(s_savepath);
+            switch (rtn)
             {
-                int rtn;
-                YUI_LOG("MSG_LOAD_STATE");
-                rtn = YabLoadState(s_savepath);
-                switch(rtn){
-                case 0:
-                    YUI_LOG("Load State: OK");
-                    break;
-                case -1:
-                    YUI_LOG("Load State: File Not Found");
-                    break;
-                case -2:
-                    YUI_LOG("Load State: Bad format");
-                    break;
-                case -3:
-                    YUI_LOG("Load State: Bad format deep inside");
-                    break;                    
-                default:
-                    YUI_LOG("Load State: Fail unkown");
-                    break;                    
-                }
-                pthread_mutex_lock(&g_mtxFuncSync);
-                pthread_cond_signal(&g_cndFuncSync);
-                pthread_mutex_unlock(&g_mtxFuncSync);
-            }
-            break;
-
-            case MSG_SAVE_STATE_COMPRESSED:
-            {
-                int ret;
-                time_t t = time(NULL);
-                YUI_LOG("MSG_SAVE_STATE_COMPRESSED");
-
-                sprintf(last_state_filename, "%s/%s_%ld.yss", s_savepath, cdip->itemnum, t);
-                ret = YabSaveCompressedState(last_state_filename);
-
-                pthread_mutex_lock(&g_mtxFuncSync);
-                pthread_cond_signal(&g_cndFuncSync);
-                pthread_mutex_unlock(&g_mtxFuncSync);                
-            }
-            break;
-
-            case MSG_LOAD_STATE_COMPRESSED:
-            {
-                int rtn;
-                YUI_LOG("MSG_LOAD_STATE_COMPRESSED");
-                rtn = YabLoadCompressedState(s_savepath);
-                switch(rtn){
-                case 0:
-                    YUI_LOG("Load State: OK");
-                    break;
-                case -1:
-                    YUI_LOG("Load State: File Not Found");
-                    break;
-                case -2:
-                    YUI_LOG("Load State: Bad format");
-                    break;
-                case -3:
-                    YUI_LOG("Load State: Bad format deep inside");
-                    break;                    
-                default:
-                    YUI_LOG("Load State: Fail unkown");
-                    break;                    
-                }
-                pthread_mutex_lock(&g_mtxFuncSync);
-                pthread_cond_signal(&g_cndFuncSync);
-                pthread_mutex_unlock(&g_mtxFuncSync);
-            }
-            break;
-
-            case MSG_PAUSE:
-                YUI_LOG("MSG_PAUSE");
-                YabFlushBackups();
-                //ScspMuteAudio(SCSP_MUTE_SYSTEM);
-                pause = 1;
+            case 0:
+                YUI_LOG("Load State: OK");
                 break;
-            case MSG_RESUME:
-                YUI_LOG("MSG_RESUME");
-                //ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
-                pause = 0;
+            case -1:
+                YUI_LOG("Load State: File Not Found");
                 break;
-            case MSG_OPEN_TRAY:
-                YUI_LOG("MSG_OPEN_TRAY");
-                Cs2ForceOpenTray();
+            case -2:
+                YUI_LOG("Load State: Bad format");
                 break;
-            case MSG_CLOSE_TRAY:
-                YUI_LOG("MSG_CLOSE_TRAY");
-                Cs2ForceCloseTray(CDCORE_ISO, s_cdpath);
-                break;                
-            case MSG_SCREENSHOT:{
-                YUI_LOG("MSG_SCREENSHOT");
-                PlayRecorder * p = PlayRecorder::getInstance();
-                if (p->getStatus() == PlayRecorder::RECORDING) {
-                    p->takeShot();
-                }else{
-                    s_status = saveScreenshot(screenShotFilename);
-                }
-                pthread_mutex_lock(&g_mtxFuncSync);
-                pthread_cond_signal(&g_cndFuncSync);
-                pthread_mutex_unlock(&g_mtxFuncSync);
-            }
-            break;
-            case MSG_RESET:
-                YabauseReset();
+            case -3:
+                YUI_LOG("Load State: Bad format deep inside");
                 break;
-            case MSG_RECORD:{
-                PlayRecorder * p = PlayRecorder::getInstance();
-                if (p->getStatus() == PlayRecorder::IDLE) {
-                    gsc.setScreenshotCallback(p);
-                    p->setBaseDir(s_playrecord_path);
-                    p->startRocord();
-                }
-                else if (p->getStatus() == 0) {
-                    p->stopRocord();
-                }
-                pthread_mutex_lock(&g_mtxFuncSync);
-                pthread_cond_signal(&g_cndFuncSync);
-                pthread_mutex_unlock(&g_mtxFuncSync);                
-            }
-            break;
-            case MSG_PLAY:{
-                PlayRecorder * p = PlayRecorder::getInstance();
-                if (p->getStatus() == PlayRecorder::IDLE) {
-                    gsc.setScreenshotCallback(p);
-                    p->startPlay(s_playdatadir, true, NULL );
-                }
-                pthread_mutex_lock(&g_mtxFuncSync);
-                pthread_cond_signal(&g_cndFuncSync);
-                pthread_mutex_unlock(&g_mtxFuncSync);                
-            }
-            break;
             default:
+                YUI_LOG("Load State: Fail unkown");
                 break;
+            }
+            pthread_mutex_lock(&g_mtxFuncSync);
+            pthread_cond_signal(&g_cndFuncSync);
+            pthread_mutex_unlock(&g_mtxFuncSync);
+        }
+        break;
+
+        case MSG_SAVE_STATE_COMPRESSED:
+        {
+            int ret;
+            time_t t = time(NULL);
+            YUI_LOG("MSG_SAVE_STATE_COMPRESSED");
+
+            sprintf(last_state_filename, "%s/%s_%ld.yss", s_savepath, cdip->itemnum, t);
+            ret = YabSaveCompressedState(last_state_filename);
+
+            pthread_mutex_lock(&g_mtxFuncSync);
+            pthread_cond_signal(&g_cndFuncSync);
+            pthread_mutex_unlock(&g_mtxFuncSync);
+        }
+        break;
+
+        case MSG_LOAD_STATE_COMPRESSED:
+        {
+            int rtn;
+            YUI_LOG("MSG_LOAD_STATE_COMPRESSED");
+            rtn = YabLoadCompressedState(s_savepath);
+            switch (rtn)
+            {
+            case 0:
+                YUI_LOG("Load State: OK");
+                break;
+            case -1:
+                YUI_LOG("Load State: File Not Found");
+                break;
+            case -2:
+                YUI_LOG("Load State: Bad format");
+                break;
+            case -3:
+                YUI_LOG("Load State: Bad format deep inside");
+                break;
+            default:
+                YUI_LOG("Load State: Fail unkown");
+                break;
+            }
+            pthread_mutex_lock(&g_mtxFuncSync);
+            pthread_cond_signal(&g_cndFuncSync);
+            pthread_mutex_unlock(&g_mtxFuncSync);
+        }
+        break;
+
+        case MSG_PAUSE:
+            YUI_LOG("MSG_PAUSE");
+            YabFlushBackups();
+            //ScspMuteAudio(SCSP_MUTE_SYSTEM);
+            pause = 1;
+            break;
+        case MSG_RESUME:
+            YUI_LOG("MSG_RESUME");
+            //ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+            pause = 0;
+            break;
+        case MSG_OPEN_TRAY:
+            YUI_LOG("MSG_OPEN_TRAY");
+            Cs2ForceOpenTray();
+            break;
+        case MSG_CLOSE_TRAY:
+            YUI_LOG("MSG_CLOSE_TRAY");
+            Cs2ForceCloseTray(CDCORE_ISO, s_cdpath);
+            break;
+        case MSG_SCREENSHOT:
+        {
+            YUI_LOG("MSG_SCREENSHOT");
+            PlayRecorder *p = PlayRecorder::getInstance();
+            if (p->getStatus() == PlayRecorder::RECORDING)
+            {
+                p->takeShot();
+            }
+            else
+            {
+                s_status = saveScreenshot(screenShotFilename);
+            }
+            pthread_mutex_lock(&g_mtxFuncSync);
+            pthread_cond_signal(&g_cndFuncSync);
+            pthread_mutex_unlock(&g_mtxFuncSync);
+        }
+        break;
+        case MSG_RESET:
+            YabauseReset();
+            break;
+        case MSG_RECORD:
+        {
+            PlayRecorder *p = PlayRecorder::getInstance();
+            if (p->getStatus() == PlayRecorder::IDLE)
+            {
+                gsc.setScreenshotCallback(p);
+                p->setBaseDir(s_playrecord_path);
+                p->startRocord();
+            }
+            else if (p->getStatus() == 0)
+            {
+                p->stopRocord();
+            }
+            pthread_mutex_lock(&g_mtxFuncSync);
+            pthread_cond_signal(&g_cndFuncSync);
+            pthread_mutex_unlock(&g_mtxFuncSync);
+        }
+        break;
+        case MSG_PLAY:
+        {
+            PlayRecorder *p = PlayRecorder::getInstance();
+            if (p->getStatus() == PlayRecorder::IDLE)
+            {
+                gsc.setScreenshotCallback(p);
+                p->startPlay(s_playdatadir, true, NULL);
+            }
+            pthread_mutex_lock(&g_mtxFuncSync);
+            pthread_cond_signal(&g_cndFuncSync);
+            pthread_mutex_unlock(&g_mtxFuncSync);
+        }
+        break;
+        default:
+            break;
         }
         g_msg = MSG_NONE;
         pthread_mutex_unlock(&g_mtxGlLock);
     }
-    
+
     YUI_LOG("byebye");
 
-    if( context != NULL )
+    if (context != NULL)
         crashlytics_free(&context);
-
 }
 
-void* threadStartCallback(void *myself)
+void *threadStartCallback(void *myself)
 {
     renderLoop();
     pthread_exit(0);
     return NULL;
 }
 
-int saveScreenshot( const char * filename ){
-    
+int saveScreenshot(const char *filename)
+{
+
     int width;
     int height;
-    unsigned char * buf = NULL;
-    unsigned char * bufRGB = NULL;
-    png_bytep * row_pointers = NULL;
+    unsigned char *buf = NULL;
+    unsigned char *bufRGB = NULL;
+    png_bytep *row_pointers = NULL;
     int quality = 100; // best
-    FILE * outfile = NULL;
+    FILE *outfile = NULL;
     int row_stride;
     int glerror;
-    int u,v;
+    int u, v;
     int pmode;
     png_byte color_type;
-    png_byte bit_depth; 
+    png_byte bit_depth;
     png_structp png_ptr;
     png_infop info_ptr;
     int number_of_passes;
@@ -2221,33 +2371,38 @@ int saveScreenshot( const char * filename ){
 
     YUI_LOG("saveScreenshot %s", filename);
 
-    if(s_vidcoretype == VIDCORE_VULKAN ){
+    if (s_vidcoretype == VIDCORE_VULKAN)
+    {
 
-        for (int i = 0; VIDCoreList[i] != NULL; i++){
-		  if (VIDCoreList[i]->id == s_vidcoretype)
-		  {
-			 VIDCoreList[i]->GetScreenshot((void**)&buf,&width,&height);
-             break;
-     	  }
+        for (int i = 0; VIDCoreList[i] != NULL; i++)
+        {
+            if (VIDCoreList[i]->id == s_vidcoretype)
+            {
+                VIDCoreList[i]->GetScreenshot((void **)&buf, &width, &height);
+                break;
+            }
         }
+    }
+    else
+    {
 
-    }else{
-    
         eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        
-        VdpRevoke(); 
-        if( YuiUseOGLOnThisThread() == -1 ){
+
+        VdpRevoke();
+        if (YuiUseOGLOnThisThread() == -1)
+        {
             VdpResume();
             return -1;
         }
-        
+
         eglQuerySurface(g_Display, g_Surface, EGL_WIDTH, &width);
         eglQuerySurface(g_Display, g_Surface, EGL_HEIGHT, &height);
-        
-        YUI_LOG("screen %d,%d",width,height);
-        
-        buf = (unsigned char *)malloc(width*height*4);
-        if( buf == NULL ) {
+
+        YUI_LOG("screen %d,%d", width, height);
+
+        buf = (unsigned char *)malloc(width * height * 4);
+        if (buf == NULL)
+        {
             YUI_LOG("not enough memory\n");
             goto FINISH;
         }
@@ -2256,21 +2411,24 @@ int saveScreenshot( const char * filename ){
         pmode = GL_RGBA;
         glGetError();
         glReadPixels(0, 0, width, height, pmode, GL_UNSIGNED_BYTE, buf);
-        if( (glerror = glGetError()) != GL_NO_ERROR ){
-            YUI_LOG("glReadPixels %04X\n",glerror);
+        if ((glerror = glGetError()) != GL_NO_ERROR)
+        {
+            YUI_LOG("glReadPixels %04X\n", glerror);
             goto FINISH;
         }
-        for( u = 3; u <width*height*4; u+=4 ){
-            buf[u]=0xFF;
+        for (u = 3; u < width * height * 4; u += 4)
+        {
+            buf[u] = 0xFF;
         }
     }
-	
-    row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
-    for (v=0; v<height; v++)
-        row_pointers[v] = (png_byte*)&buf[ (height-1-v) * width * 4];
+
+    row_pointers = (png_bytep *)malloc(sizeof(png_bytep) * height);
+    for (v = 0; v < height; v++)
+        row_pointers[v] = (png_byte *)&buf[(height - 1 - v) * width * 4];
 
     // save as png
-    if ((outfile = fopen(filename, "wb")) == NULL) {
+    if ((outfile = fopen(filename, "wb")) == NULL)
+    {
         YUI_LOG("can't open %s\n", filename);
         goto FINISH;
     }
@@ -2278,75 +2436,80 @@ int saveScreenshot( const char * filename ){
     /* initialize stuff */
     png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 
-    if (!png_ptr){
+    if (!png_ptr)
+    {
         YUI_LOG("[write_png_file] png_create_write_struct failed");
         goto FINISH;
     }
 
     info_ptr = png_create_info_struct(png_ptr);
-    if (!info_ptr){
+    if (!info_ptr)
+    {
         YUI_LOG("[write_png_file] png_create_info_struct failed");
         goto FINISH;
     }
 
-    if (setjmp(png_jmpbuf(png_ptr))){
+    if (setjmp(png_jmpbuf(png_ptr)))
+    {
         YUI_LOG("[write_png_file] Error during init_io");
         goto FINISH;
     }
     /* write header */
     png_init_io(png_ptr, outfile);
-    
-    if (setjmp(png_jmpbuf(png_ptr))){
+
+    if (setjmp(png_jmpbuf(png_ptr)))
+    {
         YUI_LOG("[write_png_file] Error during writing header");
         goto FINISH;
     }
     bit_depth = 8;
     color_type = PNG_COLOR_TYPE_RGB_ALPHA;
     png_set_IHDR(png_ptr, info_ptr, width, height,
-        bit_depth, color_type, PNG_INTERLACE_NONE,
-        PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+                 bit_depth, color_type, PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     //png_set_gAMA(png_ptr, info_ptr, 1.0);
     {
         png_text text[3];
         int txt_fields = 0;
         char desc[256];
-        
-        time_t      gmt;
-        png_time    mod_time;
-        
+
+        time_t gmt;
+        png_time mod_time;
+
         time(&gmt);
         png_convert_from_time_t(&mod_time, gmt);
         png_set_tIME(png_ptr, info_ptr, &mod_time);
-    
-        text[txt_fields].key = (png_charp)"Title";
+
+        text[txt_fields].key = (png_charp) "Title";
         text[txt_fields].text = Cs2GetCurrentGmaecode();
         text[txt_fields].compression = PNG_TEXT_COMPRESSION_NONE;
         txt_fields++;
 
-        sprintf( desc, "uoYabause Version %s\n VENDER: %s\n RENDERER: %s\n VERSION %s\n",YAB_VERSION,glGetString(GL_VENDOR),glGetString(GL_RENDERER),glGetString(GL_VERSION));
-        text[txt_fields].key =(char*)"Description";
-        text[txt_fields].text=desc;
+        sprintf(desc, "uoYabause Version %s\n VENDER: %s\n RENDERER: %s\n VERSION %s\n", YAB_VERSION, glGetString(GL_VENDOR), glGetString(GL_RENDERER), glGetString(GL_VERSION));
+        text[txt_fields].key = (char *)"Description";
+        text[txt_fields].text = desc;
         text[txt_fields].compression = PNG_TEXT_COMPRESSION_NONE;
         txt_fields++;
-        
-        png_set_text(png_ptr, info_ptr, text,txt_fields);
-    }       
+
+        png_set_text(png_ptr, info_ptr, text, txt_fields);
+    }
     png_write_info(png_ptr, info_ptr);
 
-
     /* write bytes */
-    if (setjmp(png_jmpbuf(png_ptr))){
+    if (setjmp(png_jmpbuf(png_ptr)))
+    {
         YUI_LOG("[write_png_file] Error during writing bytes");
         goto FINISH;
     }
     png_write_image(png_ptr, row_pointers);
 
     /* end write */
-    if (setjmp(png_jmpbuf(png_ptr))){
+    if (setjmp(png_jmpbuf(png_ptr)))
+    {
         YUI_LOG("[write_png_file] Error during end of write");
         goto FINISH;
     }
-    
+
     png_write_end(png_ptr, NULL);
 
 #if 0 // JPEG Version
@@ -2407,55 +2570,65 @@ int saveScreenshot( const char * filename ){
     jpeg_destroy_compress(&cinfo);
 #endif
     rtn = 0;
-FINISH: 
-    if(outfile) fclose(outfile);
-    if(buf) free(buf);
-    if(bufRGB) free(bufRGB);
-    if(row_pointers) free(row_pointers);
+FINISH:
+    if (outfile)
+        fclose(outfile);
+    if (buf)
+        free(buf);
+    if (bufRGB)
+        free(bufRGB);
+    if (row_pointers)
+        free(row_pointers);
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    VdpResume(); 
+    VdpResume();
     YUI_LOG("write screenshot as  %s\n", filename);
-	YuiRevokeOGLOnThisThread();
-    
+    YuiRevokeOGLOnThisThread();
+
     return rtn;
 }
 
-extern "C" {
+extern "C"
+{
 
-  int YabauseThread_IsUseBios() {
-    if( s_biospath == NULL){
-        return 1;
+    int YabauseThread_IsUseBios()
+    {
+        if (s_biospath == NULL)
+        {
+            return 1;
+        }
+        return 0;
     }
-    return 0;
 
-  }
+    const char *YabauseThread_getBackupPath()
+    {
+        return s_buppath;
+    }
 
-  const char * YabauseThread_getBackupPath() {
-    return s_buppath;
-  }
+    void YabauseThread_setUseBios(int use)
+    {
+    }
 
-  void YabauseThread_setUseBios(int use) {
+    char tmpbakcup[256];
+    void YabauseThread_setBackupPath(const char *buf)
+    {
+        strcpy(tmpbakcup, buf);
+        s_buppath = tmpbakcup;
+    }
 
+    void YabauseThread_resetPlaymode()
+    {
+        if (s_playrecord_path != NULL)
+        {
+            free(s_playrecord_path);
+            s_playrecord_path = NULL;
+        }
+        s_buppath = GetMemoryPath();
+    }
 
-  }
-
-  char tmpbakcup[256];
-  void YabauseThread_setBackupPath( const char * buf) {
-      strcpy(tmpbakcup,buf);
-      s_buppath = tmpbakcup;
-  }
-
-  void YabauseThread_resetPlaymode() {
-      if( s_playrecord_path != NULL ){
-          free(s_playrecord_path);
-          s_playrecord_path = NULL;
-      }
-      s_buppath = GetMemoryPath();
-  }
-
-  void YabauseThread_coldBoot() {
-    YabauseDeInit();
-    YabauseInit();
-    YabauseReset();
-  }
+    void YabauseThread_coldBoot()
+    {
+        YabauseDeInit();
+        YabauseInit();
+        YabauseReset();
+    }
 }

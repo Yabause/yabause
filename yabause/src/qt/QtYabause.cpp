@@ -90,6 +90,7 @@ CDInterface *CDCoreList[] = {
 #ifndef UNKNOWN_ARCH
 &ArchCD,
 #endif
+&WebApiCD,
 NULL
 };
 

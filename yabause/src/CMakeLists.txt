@@ -60,6 +60,7 @@ set(yabause_SOURCES
 	#ygl_texture.cpp
 	BackupManager.cpp
 	jsoncpp.cpp
+	cd-web.cpp
 	PlayRecorder.cpp
 	sh2cache.c )
 	add_definitions(-DIMPROVED_SAVESTATES)

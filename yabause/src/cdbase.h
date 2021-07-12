@@ -48,11 +48,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <stdio.h>
 #include "core.h"
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 #define CDCORE_DEFAULT -1
 #define CDCORE_DUMMY    0
 #define CDCORE_ISO      1
 #define CDCORE_ARCH     2
 #define CDCORE_CHD      3
+#define CDCORE_WEBAPI   4
 
 #define CDCORE_NORMAL 0
 #define CDCORE_NODISC 2
@@ -76,5 +81,12 @@ extern CDInterface DummyCD;
 extern CDInterface ISOCD;
 
 extern CDInterface ArchCD;
+
+extern CDInterface WebApiCD;
+
+
+#if defined (__cplusplus)
+}
+#endif
 
 #endif
