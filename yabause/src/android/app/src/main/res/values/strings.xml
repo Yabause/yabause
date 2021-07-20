@@ -243,6 +243,7 @@
     <string name="siginin_message">
         Signing in enable to backup save data and state data to the cloud and share them between devices.\n
         However, these functions are experimental, so they do not work as expected, specifications may be changed or terminated without prior notice.
+        Even if you don\'t sign in, libraries such as Firebase collect the information to improve your app. A detailed privacy policy can be found at https://www.uoyabause.org/static_pages/privacy_policy.
     </string>
     <string name="agree">I agree</string>
     <string name="do_you_want_to_sign_in">Do you want to sign in?</string>

@@ -22,8 +22,16 @@ import android.os.Environment
 import android.os.StatFs
 import android.util.Log
 import androidx.preference.PreferenceManager
+import com.activeandroid.ActiveAndroid
 import com.activeandroid.query.Select
 import io.reactivex.ObservableEmitter
+import net.nend.android.a.g.o
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Credentials
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOCase
 import org.apache.commons.io.filefilter.IOFileFilter
@@ -31,6 +39,7 @@ import org.apache.commons.io.filefilter.SuffixFileFilter
 import org.devmiyax.yabasanshiro.R
 import org.json.JSONArray
 import org.json.JSONException
+import org.json.JSONObject
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -43,6 +52,7 @@ import java.net.PasswordAuthentication
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Arrays
+import kotlin.system.measureTimeMillis
 
 
 internal class BiosFilter : FilenameFilter {
@@ -78,6 +88,7 @@ internal class MemoryFilter : FilenameFilter {
 }
 
 class YabauseStorage private constructor() {
+    private var webcdUrl: String = ""
     private val bios: File
     private val games: File
     private val memory: File
@@ -97,6 +108,10 @@ class YabauseStorage private constructor() {
 
     fun getBiosPath(biosfile: String): String {
         return bios.toString() + File.separator + biosfile
+    }
+
+    fun setWebCdUrl(url: String){
+        webcdUrl = url
     }
 
     fun getGameFiles(other_dir_string: String): Array<String?> {
@@ -196,28 +211,41 @@ class YabauseStorage private constructor() {
             }
             val viewStrBuilder = StringBuilder()
             val ar = JSONArray(String(responseArray.toByteArray()))
+
+            ActiveAndroid.beginTransaction()
             for (i in 0 until ar.length()) {
-                val jsonObj = ar.getJSONObject(i)
                 var status: GameStatus? = null
-                status = try {
-                    Select()
-                            .from(GameStatus::class.java)
-                            .where("product_number = ?", jsonObj.getString("product_number"))
-                            .executeSingle()
-                } catch (e: Exception) {
-                    GameStatus()
+
+                val time = measureTimeMillis {
+                    val jsonObj = ar.getJSONObject(i)
+                    if (lastupdate == null) {
+                        status = GameStatus()
+                    } else {
+                        status = try {
+                            Select()
+                                .from(GameStatus::class.java)
+                                .where("product_number = ?", jsonObj.getString("product_number"))
+                                .executeSingle()
+                        } catch (e: Exception) {
+                            GameStatus()
+                        }
+                        if (status == null) {
+                            status = GameStatus()
+                        }
+                    }
+                    status!!.product_number = jsonObj.getString("product_number")
+                    status!!.image_url = jsonObj.getString("image_url")
+                    val dateStr = jsonObj.getString("updated_at")
+                    val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+                    status!!.update_at = sdf.parse(dateStr)
+                    status!!.rating = jsonObj.getInt("rating")
+                    status!!.save()
                 }
-                if (status == null) {
-                    status = GameStatus()
-                }
-                status.product_number = jsonObj.getString("product_number")
-                status.image_url = jsonObj.getString("image_url")
-                val dateStr = jsonObj.getString("updated_at")
-                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-                status.update_at = sdf.parse(dateStr)
-                status.rating = jsonObj.getInt("rating")
-                status.save()
+                //Log.i("YabauseStorage", "updateing ${status?.product_number} : ${time}")
+                status?.product_number?.let { progress_emitter!!.onNext(it) }
             }
+            ActiveAndroid.endTransaction()
+
         } catch (e: MalformedURLException) {
             e.printStackTrace()
             return -1
@@ -234,6 +262,108 @@ class YabauseStorage private constructor() {
         }
         return 0
     }
+/*
+    fun generateGameListFromWebServer(dir: String?) {
+
+        val client = OkHttpClient()
+
+
+        val ctx = YabauseApplication.appContext
+        val user: String = ctx!!.getString(R.string.basic_user)
+        val password: String = ctx!!.getString(R.string.basic_password)
+
+        progress_emitter!!.onNext("game status")
+
+        val requestStatus = Request.Builder()
+            .url("https://www.uoyabause.org//api/games/get_status_from/?date=1970/01/01T14:34:57" )
+            .header("Authorization",
+                Credentials.basic(
+                    user,
+                    password))
+            .build()
+
+        val stateRsponse = client.newCall(requestStatus).execute()
+        if (!stateRsponse.isSuccessful) throw IOException("Unexpected code $stateRsponse")
+        val gameStatus = JSONArray(stateRsponse.body()?.string())
+
+        var gamesJ = JSONObject()
+
+        try {
+
+
+            for (index in 0 until gameStatus.length()) {
+
+                val obj = gameStatus.getJSONObject(index)
+                val number = obj?.getString("product_number")
+                if (obj != null && number != null) {
+                    gamesJ.put(number, obj)
+                }
+
+            }
+        }catch( e: JSONException ){
+            Log.e("YabauseStorage", e.localizedMessage)
+
+        }
+
+
+        progress_emitter!!.onNext("game list")
+
+        val request = Request.Builder()
+            .url(webcdUrl + "/games/list" )
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val responseBody = response.body()?.string().orEmpty()
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("Error", e.toString())
+            }
+        })
+        val response = client.newCall(request).execute()
+        if (!response.isSuccessful) throw IOException("Unexpected code $response")
+        //println(response.body()?.string())
+
+        val gameList = JSONArray(response.body()?.string())
+
+
+        for (i in 0 until gameList.length()) {
+
+            try {
+                var g = GameInfo()
+                val jobj = gameList.getJSONObject(i)
+                g.file_path =
+                    "{ \"baseurl\":\"${webcdUrl}\", \"gameid\":\"${jobj.getString("id")}\" }"
+                g.iso_file_path = jobj.getString("id")
+                g.maker_id = jobj.getString("maker_id")
+                g.product_number = jobj.getString("product_number")
+                g.version = jobj.getString("version")
+                g.release_date = jobj.getString("release_date")
+                g.area = jobj.getString("area")
+                g.input_device = jobj.getString("input_device")
+                g.device_infomation = jobj.getString("device_infomation")
+                g.game_title = jobj.getString("game_title")
+                //g.updateState()
+
+                try {
+                    val obj = gamesJ.getJSONObject(g.product_number)
+                    if (obj != null) {
+                        g.image_url = obj.optString("image_url", "")
+                        g.rating = obj.optInt("rating", -1)
+                    }
+                }catch(e: JSONException){
+                    Log.e("YabauseStorage", e.localizedMessage)
+                }
+                g.save()
+                if (progress_emitter != null) {
+                    progress_emitter!!.onNext(g.game_title)
+                }
+            }catch(e: Exception){
+                Log.e("YabauseStorage", e.localizedMessage)
+            }
+        }
+    }
+ */
 
     fun generateGameListFromDirectory(dir: String?) {
         val extensions = arrayOf("img",
@@ -346,9 +476,11 @@ class YabauseStorage private constructor() {
         // val uniqueList: MutableList<String> = ArrayList()
         // uniqueList.addAll(list)
         val ulist = list.distinct()
-        for (i in ulist.indices) {
-            generateGameListFromDirectory(ulist[i])
-        }
+        //for (i in ulist.indices) {
+        //    generateGameListFromDirectory(ulist[i])
+        //}
+
+        //generateGameListFromWebServer("http://dddd")
 
 /*
         // inDirect Format

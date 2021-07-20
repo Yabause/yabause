@@ -167,6 +167,7 @@
     <string name="siginin_message">
         サインインすることで、セーブデータとステートデータをクラウドに保存して、異なるデバイスでも共有できるようになります。\n
         しかし,これらの機能は実験的なので期待通り動作しなかったり、事前の予告なしに仕様変更されたり、終了したりすることがあります。
+        ログインしなくてもFirebaseなどのライブラリから、アプリの改善に必要とされる情報が収集されます。詳しいプライバシーポリシーは https://www.uoyabause.org/static_pages/privacy_policy で参照できます。
     </string>
     <string name="agree">同意します</string>
     <string name="do_you_want_to_sign_in">ログインしますか？</string>

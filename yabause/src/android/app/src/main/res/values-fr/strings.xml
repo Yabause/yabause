@@ -219,7 +219,7 @@
     <string name="got_it">Je l\'ai!</string>
 
     <string name="siginin_message">
-        La connexion permet de sauvegarder les données de sauvegarde et les données d\'état dans le cloud et de les partager entre les appareils.\n Cependant, ces fonctions sont expérimentales, elles ne fonctionnent donc pas comme prévu, les spécifications peuvent être modifiées ou supprimées sans préavis.
+        La connexion permet de sauvegarder les données de sauvegarde et les données d\'état dans le cloud et de les partager entre les appareils.\n Cependant, ces fonctions sont expérimentales, elles ne fonctionnent donc pas comme prévu, les spécifications peuvent être modifiées ou supprimées sans préavis. Même si vous ne vous connectez pas, des bibliothèques telles que Firebase collectent les informations pour améliorer votre application. Une politique de confidentialité détaillée est disponible sur https://www.uoyabause.org/static_pages/privacy_policy.
     </string>
     <string name="pro_version_available">La version Pro est disponible!\n\n * Aucune restriction sur laj\'out de jeux\n * Enregistrer / charger l\'état du jeu entre les appareils\n * Aucune publicité\n\n</string>
     <string name="remaining_installation_count">Remaining installation count</string>
