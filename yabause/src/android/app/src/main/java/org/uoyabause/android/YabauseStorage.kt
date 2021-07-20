@@ -476,9 +476,9 @@ class YabauseStorage private constructor() {
         // val uniqueList: MutableList<String> = ArrayList()
         // uniqueList.addAll(list)
         val ulist = list.distinct()
-        //for (i in ulist.indices) {
-        //    generateGameListFromDirectory(ulist[i])
-        //}
+        for (i in ulist.indices) {
+            generateGameListFromDirectory(ulist[i])
+        }
 
         //generateGameListFromWebServer("http://dddd")
 
