@@ -365,6 +365,10 @@
     <string name="remaining_installation_count_is">Remaining installation count is </string>
     <string name="which_storage">Which Storage?</string>
     <string name="or_place_file_to">Or place game into \"%1$s\" manually.</string>
+    <string name="agreement">
+    By Tapping START button, you agree to <a href="https://www.uoyabause.org/static_pages/eula">the End-User License Agreement</a>.
+    Note: <a href="https://www.uoyabause.org/static_pages/privacy_policy"> The Privacy Policy </a> describes how data is handled. YabaSanshiro sends diagnostics data to devMiyax and third party services to help improve the app.
+    </string>
 
 </resources>
 	

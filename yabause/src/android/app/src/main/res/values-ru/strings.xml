@@ -416,5 +416,10 @@
     <string name="updating">Обновление...</string>
     <string name="add_a_game">Добавить игру</string>
 
+    <string name="agreement">
+    Нажимая кнопку СТАРТ, вы соглашаетесь с <a href="https://www.uoyabause.org/static_pages/eula"> Лицензионным соглашением с конечным пользователем </a>.
+    Примечание. <a href="https://www.uoyabause.org/static_pages/privacy_policy"> Политика конфиденциальности </a> описывает, как обрабатываются данные. YabaSanshiro отправляет диагностические данные в devMiyax и сторонние службы, чтобы помочь улучшить приложение.
+    </string>
+
 </resources>
 	

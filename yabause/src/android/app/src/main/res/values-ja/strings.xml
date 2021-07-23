@@ -290,5 +290,9 @@
     <string name="do_you_want_to_install">インストールしますか?</string>
     <string name="which_storage">どっちのストレージ？</string>
     <string name="or_place_file_to">または、ゲームを手動で \"%1$s\" に配置します</string>
+    <string name="agreement">
+    STARTボタンをタップすると <a href="https://www.uoyabause.org/static_pages/eula">利用規約</a>に同意したことになります。
+    注: このアプリでのデータの取り扱いについては<a href="https://www.uoyabause.org/static_pages/privacy_policy"> プライバシーポリシー </a> に記載されています。 アプリの改善に役立てるため、 診断データは自動的に devmiyaxおよびサードパーティーサービスに送信されます。
+    </string>
 
 </resources>

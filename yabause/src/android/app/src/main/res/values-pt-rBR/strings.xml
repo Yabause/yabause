@@ -130,5 +130,12 @@
     <string name="do_you_want_to_install">Você quer instalar?</string>
     <string name="which_storage">Qual armazenamento?</string>
     <string name="or_place_file_to">Ou coloque o jogo no \"%1$s\" manualmente.</string>
+    <string name="agreement">
+        Ao tocar no botão INICIAR, você concorda com o Contrato <a href="https://www.uoyabause.org/static_pages/eula">de EULA</a>.
+        Nota: <a href="https://www.uoyabause.org/static_pages/privacy_policy">A Política de Privacidade </a> descreve como os dados são tratados. YabaSanshiro envia dados de diagnóstico para devMiyax e serviços de terceiros para ajudar a melhorar o aplicativo.
+    </string>
+
+
+
 
 </resources>

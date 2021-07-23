@@ -19,33 +19,35 @@
 package org.devmiyax.yabasanshiro
 
 import android.app.UiModeManager
-import android.app.job.JobInfo
-import android.app.job.JobScheduler
-import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
+import android.text.method.LinkMovementMethod
 import android.util.Log
+import android.view.View
+import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.PurchasesUpdatedListener
+import com.google.android.gms.analytics.Tracker
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
-import okhttp3.OkHttpClient
 import org.uoyabause.android.phone.GameSelectActivityPhone
 import org.uoyabause.android.tv.GameSelectActivity
 import org.uoyabause.util.IabHelper
-import org.uoyabause.util.Purchase
-import java.util.ArrayList
+
 
 class StartupActivity : AppCompatActivity() {
     val TAG = "StartupActivity"
@@ -62,33 +64,8 @@ class StartupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_startup)
-        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
-        val configSettings = FirebaseRemoteConfigSettings.Builder()
-            .setDeveloperModeEnabled(BuildConfig.DEBUG)
-            .build()
-        mFirebaseRemoteConfig!!.setConfigSettings(configSettings)
-        mFirebaseRemoteConfig!!.setDefaults(R.xml.config)
-        var cacheExpiration: Long = 3600 // 1 hour in seconds.
-        // If your app is using developer mode, cacheExpiration is set to 0, so each fetch will
-        // retrieve values from the service.
-        if (mFirebaseRemoteConfig!!.info.configSettings.isDeveloperModeEnabled) {
-            cacheExpiration = 0
-        }
-        mFirebaseRemoteConfig!!.fetch(cacheExpiration)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    //Toast.makeText(GameSelectActivity.this, "Fetch Succeeded",
-                    //        Toast.LENGTH_SHORT).show();
 
-                    // After config data is successfully fetched, it must be activated before newly fetched
-                    // values are returned.
-                    mFirebaseRemoteConfig!!.activateFetched()
-                } else {
-                    //Toast.makeText(GameSelectActivity.this, "Fetch Failed",
-                    //        Toast.LENGTH_SHORT).show();
-                }
-                //displayWelcomeMessage();
-            }
+
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
         //boolean lock_landscape = sharedPref.getBoolean("pref_landscape", false);
         //if( lock_landscape == true ){
@@ -110,27 +87,57 @@ class StartupActivity : AppCompatActivity() {
             // not signed in
         }
 
-
-        billingClient = BillingClient.newBuilder(this)
-            .setListener(purchasesUpdatedListener)
-            .enablePendingPurchases()
-            .build()
-
-        billingClient.startConnection(object : BillingClientStateListener {
-            override fun onBillingSetupFinished(billingResult: BillingResult) {
-                if (billingResult.responseCode ==  BillingClient.BillingResponseCode.OK) {
-                    // The BillingClient is ready. You can query purchases here.
-                }
-            }
-            override fun onBillingServiceDisconnected() {
-                // Try to restart the connection on the next request to
-                // Google Play by calling the startConnection() method.
-            }
-        })
-
-
         val handler = Handler()
         val r = Runnable {
+
+            FirebaseApp.initializeApp(applicationContext)
+
+            mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
+            val configSettings = FirebaseRemoteConfigSettings.Builder()
+                .setDeveloperModeEnabled(BuildConfig.DEBUG)
+                .build()
+            mFirebaseRemoteConfig!!.setConfigSettings(configSettings)
+            mFirebaseRemoteConfig!!.setDefaults(R.xml.config)
+            var cacheExpiration: Long = 3600 // 1 hour in seconds.
+            // If your app is using developer mode, cacheExpiration is set to 0, so each fetch will
+            // retrieve values from the service.
+            if (mFirebaseRemoteConfig!!.info.configSettings.isDeveloperModeEnabled) {
+                cacheExpiration = 0
+            }
+            mFirebaseRemoteConfig!!.fetch(cacheExpiration)
+                .addOnCompleteListener(this) { task ->
+                    if (task.isSuccessful) {
+                        //Toast.makeText(GameSelectActivity.this, "Fetch Succeeded",
+                        //        Toast.LENGTH_SHORT).show();
+
+                        // After config data is successfully fetched, it must be activated before newly fetched
+                        // values are returned.
+                        mFirebaseRemoteConfig!!.activateFetched()
+                    } else {
+                        //Toast.makeText(GameSelectActivity.this, "Fetch Failed",
+                        //        Toast.LENGTH_SHORT).show();
+                    }
+                    //displayWelcomeMessage();
+                }
+
+
+            billingClient = BillingClient.newBuilder(this)
+                .setListener(purchasesUpdatedListener)
+                .enablePendingPurchases()
+                .build()
+
+            billingClient.startConnection(object : BillingClientStateListener {
+                override fun onBillingSetupFinished(billingResult: BillingResult) {
+                    if (billingResult.responseCode ==  BillingClient.BillingResponseCode.OK) {
+                        // The BillingClient is ready. You can query purchases here.
+                    }
+                }
+                override fun onBillingServiceDisconnected() {
+                    // Try to restart the connection on the next request to
+                    // Google Play by calling the startConnection() method.
+                }
+            })
+
             val uiModeManager = getSystemService(UI_MODE_SERVICE) as UiModeManager
             val sharedPref = PreferenceManager.getDefaultSharedPreferences(this@StartupActivity)
             val tvmode = sharedPref.getBoolean("pref_force_androidtv_mode", false)
@@ -142,6 +149,7 @@ class StartupActivity : AppCompatActivity() {
                 i = Intent(this@StartupActivity, GameSelectActivityPhone::class.java)
                 Log.d(TAG, "executing: GameSelectActivityPhone")
             }
+
             val sargs = intent.dataString
             if (sargs != null) {
                 Log.d(TAG, "getDataString = $sargs")
@@ -157,7 +165,29 @@ class StartupActivity : AppCompatActivity() {
             startActivity(i)
             return@Runnable
         }
-        handler.postDelayed(r, 2000)
+
+        val prefs = getSharedPreferences("private", Context.MODE_PRIVATE)
+        val agreed = prefs.getBoolean("agreed", false)
+
+        val v = findViewById<View>(R.id.agree)
+        val any = if (agreed) {
+            v.visibility = View.GONE
+            handler.postDelayed(r, 2000)
+        } else {
+
+            val t2 = findViewById<TextView>(R.id.agree_text)
+            t2.movementMethod = LinkMovementMethod.getInstance()
+
+            val b = findViewById<Button>(R.id.agree_and_start)
+            b.setOnClickListener {
+                prefs.edit().apply {
+                    putBoolean("agreed",true)
+                    commit()
+                }
+                handler.postDelayed(r, 1)
+            }
+            v.visibility = View.VISIBLE
+        }
     }
 
 }

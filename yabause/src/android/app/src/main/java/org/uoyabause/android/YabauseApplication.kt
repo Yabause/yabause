@@ -54,7 +54,6 @@ class YabauseApplication : MultiDexApplication() {
             .create()
         ActiveAndroid.initialize(config)
         appContext = applicationContext
-        FirebaseApp.initializeApp(applicationContext)
 
         // Log.d(TAG,"Firebase token: " + FirebaseInstanceId.getInstance().getToken() );
     } // To enable debug logging use: adb shell setprop log.tag.GAv4 DEBUG

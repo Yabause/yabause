@@ -194,5 +194,9 @@
         ]]>
     </string>
 
+    <string name="agreement"> 点击“开始”按钮，即表示您同意<a href="https://www.uoyabause.org/static_pages/eula">最终用户许可协议</a>。
+    注意：<a href="https://www.uoyabause.org/static_pages/privacy_policy">隐私政策</a>描述了数据的处理方式。 YabaSanshiro 将诊断数据发送到 devMiyax 和第三方服务，以帮助改进应用程序。
+    </string>
+
 </resources>
 	
