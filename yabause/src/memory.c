@@ -1306,7 +1306,8 @@ int YabSaveStateBuffer(void ** buffer, size_t * size)
    if (buffer != NULL) *buffer = NULL;
    *size = 0;
 
-   fp = tmpfile();
+   if ((fp = tmpfile()) == NULL)
+      return -1;
 
    status = YabSaveStateStream(fp);
    if (status != 0)
@@ -1486,7 +1487,8 @@ int YabLoadStateBuffer(const void * buffer, size_t size)
    FILE * fp;
    int status;
 
-   fp = tmpfile();
+   if ((fp = tmpfile()) == NULL)
+      return -1;
    fwrite(buffer, 1, size, fp);
 
    fseek(fp, 0, SEEK_SET);
