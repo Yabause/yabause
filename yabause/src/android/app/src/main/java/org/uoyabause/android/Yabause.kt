@@ -63,7 +63,6 @@ import android.view.WindowInsets.Type
 import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.widget.FrameLayout
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -79,10 +78,6 @@ import com.activeandroid.util.IOUtils
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.AuthUI.IdpConfig.GoogleBuilder
 import com.firebase.ui.auth.IdpResponse
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
 import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -109,7 +104,10 @@ import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.json.JSONObject
@@ -233,6 +231,8 @@ class Yabause : AppCompatActivity(),
     }
 
     var mParcelFileDescriptor: ParcelFileDescriptor? = null
+
+    private val apiscope = CoroutineScope(Dispatchers.IO)
 
     /**
      * Called when the activity is first created.
@@ -463,6 +463,7 @@ class Yabause : AppCompatActivity(),
         }
  */
         yabauseThread = YabauseRunnable(this)
+
     }
 
     private fun isSignedIn(): Boolean {
@@ -724,7 +725,7 @@ class Yabause : AppCompatActivity(),
                 checkMaxFileCount(save_path + current_gamecode)
             }
             R.id.save_state_cloud -> {
-                if (YabauseApplication.checkDonated(this, ) == 0) {
+                if (YabauseApplication.checkDonated(this) == 0) {
                     waitingResult = true
                     val loginobserver: Observer<FirebaseUser?> = object : Observer<FirebaseUser?> {
                         override fun onSubscribe(d: Disposable) {}

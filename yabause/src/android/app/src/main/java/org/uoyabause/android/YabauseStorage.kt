@@ -182,13 +182,16 @@ class YabauseStorage private constructor() {
         urlstr = if (lastupdate == null) {
             "https://www.uoyabause.org/api/games/get_status_from/?date=20010101"
         } else {
-            val f = SimpleDateFormat("yyyy/MM/dd'T'HH:mm:ss")
+            val f = SimpleDateFormat("yyyy/MM/dd'T'HH:mm:ss'.000Z'")
             val date_string = f.format(lastupdate)
             "https://www.uoyabause.org/api/games/get_status_from/?date=$date_string"
         }
         val ctx = YabauseApplication.appContext
         val user = ctx!!.getString(R.string.basic_user)
         val password = ctx!!.getString(R.string.basic_password)
+
+        var ar : JSONArray? = null
+
         try {
             val url = URL(urlstr)
             con = url.openConnection() as HttpURLConnection
@@ -210,8 +213,27 @@ class YabauseStorage private constructor() {
                 }
             }
             val viewStrBuilder = StringBuilder()
-            val ar = JSONArray(String(responseArray.toByteArray()))
+            ar = JSONArray(String(responseArray.toByteArray()))
+        } catch (e: MalformedURLException) {
+            e.printStackTrace()
+            return -1
+        } catch (e: IOException) {
+            e.printStackTrace()
+            return -1
+        } catch (e: JSONException) {
+            e.printStackTrace()
+            return -1
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return -1
+        }
 
+        if( ar == null ){
+            return -1
+        }
+
+
+        try {
             ActiveAndroid.beginTransaction()
             for (i in 0 until ar.length()) {
                 var status: GameStatus? = null
@@ -236,7 +258,7 @@ class YabauseStorage private constructor() {
                     status!!.product_number = jsonObj.getString("product_number")
                     status!!.image_url = jsonObj.getString("image_url")
                     val dateStr = jsonObj.getString("updated_at")
-                    val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+                    val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.000Z'")
                     status!!.update_at = sdf.parse(dateStr)
                     status!!.rating = jsonObj.getInt("rating")
                     status!!.save()
@@ -244,25 +266,15 @@ class YabauseStorage private constructor() {
                 //Log.i("YabauseStorage", "updateing ${status?.product_number} : ${time}")
                 status?.product_number?.let { progress_emitter!!.onNext(it) }
             }
-            ActiveAndroid.endTransaction()
-
-        } catch (e: MalformedURLException) {
-            e.printStackTrace()
-            return -1
-        } catch (e: IOException) {
-            e.printStackTrace()
-            return -1
-        } catch (e: JSONException) {
-            e.printStackTrace()
-            return -1
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return -1
-        } finally {
+            ActiveAndroid.setTransactionSuccessful()
         }
+        finally {
+            ActiveAndroid.endTransaction()
+        }
+
         return 0
     }
-/*
+
     fun generateGameListFromWebServer(dir: String?) {
 
         val client = OkHttpClient()
@@ -333,7 +345,7 @@ class YabauseStorage private constructor() {
                 var g = GameInfo()
                 val jobj = gameList.getJSONObject(i)
                 g.file_path =
-                    "{ \"baseurl\":\"${webcdUrl}\", \"gameid\":\"${jobj.getString("id")}\" }"
+                    "{ \"baseurl\":\"${webcdUrl}\", \"gameid\":\"${jobj.getString("id")}\", \"path\":\"${this.gamePath}\" }"
                 g.iso_file_path = jobj.getString("id")
                 g.maker_id = jobj.getString("maker_id")
                 g.product_number = jobj.getString("product_number")
@@ -363,7 +375,7 @@ class YabauseStorage private constructor() {
             }
         }
     }
- */
+
 
     fun generateGameListFromDirectory(dir: String?) {
         val extensions = arrayOf("img",
@@ -475,10 +487,13 @@ class YabauseStorage private constructor() {
         // set.addAll(list)
         // val uniqueList: MutableList<String> = ArrayList()
         // uniqueList.addAll(list)
+
+
         val ulist = list.distinct()
         for (i in ulist.indices) {
             generateGameListFromDirectory(ulist[i])
         }
+
 
         //generateGameListFromWebServer("http://dddd")
 
