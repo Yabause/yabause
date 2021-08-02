@@ -184,14 +184,19 @@ public class CloudCheatItemFragment extends AuthFragment implements CloudCheatIt
                 if( dataSnapshot.hasChildren() ) {
                     _items.clear();
                     for (DataSnapshot child : dataSnapshot.getChildren()) {
-                        CheatItem newitem = child.getValue(CheatItem.class);
-                        newitem.key = child.getKey();
 
-                        TabCheatFragment frag = getTabCheatFragmentInstance();
-                        if( frag != null ) {
-                            newitem.setEnable( frag.isActive( newitem.getCheatCode() ));
+                        try {
+                            CheatItem newitem = child.getValue(CheatItem.class);
+                            newitem.key = child.getKey();
+
+                            TabCheatFragment frag = getTabCheatFragmentInstance();
+                            if (frag != null) {
+                                newitem.setEnable(frag.isActive(newitem.getCheatCode()));
+                            }
+                            _items.add(newitem);
+                        }catch( Exception e ){
+                            
                         }
-                        _items.add(newitem);
                     }
 
                     Collections.reverse(_items);
