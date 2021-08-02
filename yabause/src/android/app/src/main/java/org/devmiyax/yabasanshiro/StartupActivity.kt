@@ -90,8 +90,6 @@ class StartupActivity : AppCompatActivity() {
         val handler = Handler()
         val r = Runnable {
 
-            FirebaseApp.initializeApp(applicationContext)
-
             mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
             val configSettings = FirebaseRemoteConfigSettings.Builder()
                 .setDeveloperModeEnabled(BuildConfig.DEBUG)
