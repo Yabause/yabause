@@ -42,6 +42,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -248,8 +249,25 @@ class GameSelectFragmentPhone : Fragment(),
             fab.visibility = View.GONE
         }
 
+        if( adheight != 0 ) {
+            onAdViewisShwon(adheight)
+        }
+
         return rootview
     }
+
+    var adheight = 0
+    fun onAdViewisShwon( height: Int) {
+        try {
+            var parent_layout = rootview.findViewById<DrawerLayout>(R.id.drawer_layout_game_select)
+            var parm = parent_layout.layoutParams as FrameLayout.LayoutParams
+            parm.bottomMargin = height + 4
+            parent_layout.layoutParams = parm
+        } catch (e: Exception) {
+            adheight = height
+        }
+    }
+
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         drawerLayout!!.closeDrawers()
