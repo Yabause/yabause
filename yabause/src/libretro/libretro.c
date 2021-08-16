@@ -592,8 +592,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
    info->timing.fps            = (retro_get_region() == RETRO_REGION_NTSC) ? 60 : 50;
    info->timing.sample_rate    = 44100;
-   info->geometry.base_width   = 320;
-   info->geometry.base_height  = 240;
+   info->geometry.base_width   = game_width;
+   info->geometry.base_height  = game_height;
    info->geometry.max_width    = 704;
    info->geometry.max_height   = 512;
    info->geometry.aspect_ratio = 4.0 / 3.0;
