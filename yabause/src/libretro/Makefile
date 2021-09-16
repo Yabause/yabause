@@ -108,6 +108,11 @@ ifneq (,$(findstring unix,$(platform)))
 		FLAGS += -DARM
 	endif
 
+	# riscv64
+	ifneq ($(findstring riscv64,$(shell uname -a)),)
+		HAVE_SSE = 0
+	endif
+
 else ifneq (,$(findstring linux-portable,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC -nostdlib
