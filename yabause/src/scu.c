@@ -2179,9 +2179,10 @@ void ScuExec(u32 cycles) {
 #endif
 
    // is dsp executing?
+   DebugPrintf(MainLog, __FILE__, __LINE__, "EX: %d\n", ScuDsp->ProgControlPort.part.EX);
    if (ScuDsp->ProgControlPort.part.EX) {
       while (timing > 0) {
-         u32 instruction;
+         u32 instruction;   
 
          // Make sure it isn't one of our breakpoints
          for (i=0; i < ScuBP->numcodebreakpoints; i++) {
@@ -2425,7 +2426,8 @@ void ScuExec(u32 cycles) {
             default: break;
          }
 
-         switch (instruction >> 30) {
+         switch (instruction >> 30) 
+         {
             case 0x00: // Operation Commands
 
                // X-bus
@@ -2703,18 +2705,20 @@ void ScuExec(u32 cycles) {
                   case 0x0F: // End Commands
                      ScuDsp->ProgControlPort.part.EX = 0;
 
-                     if (instruction & 0x8000000) {
+                     if (instruction == 0xF8000000) {
                         // End with Interrupt
                         ScuDsp->ProgControlPort.part.E = 1;
                         ScuSendDSPEnd();
                      }
 
                      LOG("dsp has ended\n");
-                     //dsp_trace_log("END\n");
-                     ScuDsp->ProgControlPort.part.P = ScuDsp->PC+1;
+                     ScuDsp->ProgControlPort.part.P = ScuDsp->PC + 1;
+                     ScuDsp->PC++;
                      timing = 1;
                      break;
-                  default: break;
+
+                  default:
+                    break;
                }
                break;
             }
@@ -2722,27 +2726,25 @@ void ScuExec(u32 cycles) {
                LOG("scu\t: Invalid DSP opcode %08X at offset %02X\n", instruction, ScuDsp->PC);
                break;
          }
+         
+         if (ScuDsp->ProgControlPort.part.EX) {
+            ScuDsp->MUL.all = (s64)ScuDsp->RX * (s64)ScuDsp->RY;
+            ScuDsp->PC++;
 
-         ScuDsp->MUL.all = (s64)ScuDsp->RX * (s64)ScuDsp->RY;
-		 
-
-		 //LOG("RX=%08X,RY=%08X,MUL=%16X\n", ScuDsp->RX, ScuDsp->RY, ScuDsp->MUL.all);
-		 //LOG("RX=%08X,RY=%08X,MUL=%16X\n", ScuDsp->RX, ScuDsp->RY, ScuDsp->MUL.all);
-        //dsp_trace_log("RX=%08X,RY=%08X,MUL=%16X\n", ScuDsp->RX, ScuDsp->RY, ScuDsp->MUL.all);
-
-
-         ScuDsp->PC++;
-
-         // Handle delayed jumps
-         if (ScuDsp->jmpaddr != 0xFFFFFFFF)
-         {
-            if (ScuDsp->delayed)
+            // Handle delayed jumps
+            if (ScuDsp->jmpaddr != 0xFFFFFFFF)
             {
-               ScuDsp->PC = (unsigned char)ScuDsp->jmpaddr;
-               ScuDsp->jmpaddr = 0xFFFFFFFF;
+               if (ScuDsp->delayed)
+               {
+                  ScuDsp->PC = (unsigned char)ScuDsp->jmpaddr;
+                  ScuDsp->jmpaddr = 0xFFFFFFFF;
+               }
+               else
+                  ScuDsp->delayed = 1;
             }
-            else
-               ScuDsp->delayed = 1;
+         } else {
+            // If the program is not executing anymore, quit loop.
+            break;
          }
 
          timing--;
@@ -3513,7 +3515,11 @@ void scu_dsp_int_set_program_control(u32 val)
 }
 u32 scu_dsp_int_get_program_control()
 {
-   return (ScuDsp->ProgControlPort.all & 0x00FD00FF);
+   // Must clear (E - End flag) and (V - Overflow flag) on readout.
+   const u32 portCopy = ScuDsp->ProgControlPort.all;
+   ScuDsp->ProgControlPort.part.E = 0;
+   ScuDsp->ProgControlPort.part.V = 0;
+   return (portCopy & 0x00FD00FF);
 }
 
 u32 scu_dsp_int_get_data_ram()
