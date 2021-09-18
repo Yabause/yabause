@@ -722,6 +722,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 else()
     CHECK_CXX_COMPILER_FLAG(-std=c++17 COMPILER_SUPPORTS_CXX17)
 
+    SET(CMAKE_REQUIRED_FLAGS "-std=c++17")
     check_cxx_source_compiles("
         #include <list>
         #include <filesystem>
