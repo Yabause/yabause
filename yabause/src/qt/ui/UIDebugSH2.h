@@ -27,10 +27,14 @@ class UIDebugSH2 : public UIDebugCPU
 	Q_OBJECT
 private:
    SH2_struct *debugSH2;
+   QString addr2line;
+   void restoreAddr2line();
+
 public:
    UIDebugSH2( UIDebugCPU::PROCTYPE proc, YabauseThread *mYabauseThread, QWidget* parent = 0 );
    void updateRegList();
    void updateCodeList(u32 addr);
+   void updateCodePage(u32 evaluateAddress) override;
    void updateBackTrace();
    void updateTrackInfLoop();
    void updateAll();
@@ -49,6 +53,7 @@ public:
 protected:
 
 protected slots:
+   void loadCodeAddress();
 };
 
 #endif // UIDEBUGSH2_H

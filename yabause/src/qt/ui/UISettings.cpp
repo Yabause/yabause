@@ -238,6 +238,8 @@ void UISettings::tbBrowse_clicked()
 		requestFile( QtYabause::translate( "Choose a sh1 rom" ), leSH1ROM );
 	else if ( tb == tbMpegROM )
 		requestFile( QtYabause::translate( "Choose a mpeg rom" ), leMpegROM );
+	else if ( tb == tbAddr2Line )
+		requestFile( QtYabause::translate( "Choose the location of the addr2line executable" ), leAddr2Line );
 }
 
 void UISettings::on_cbInput_currentIndexChanged( int id )
@@ -520,6 +522,9 @@ void UISettings::loadSettings()
 	bgShowLogWindow->setId( rbLogWindowNever, 0 );
 	bgShowLogWindow->setId( rbLogWindowMessage, 1 );
 	bgShowLogWindow->button( s->value( "View/LogWindow", 0 ).toInt() )->setChecked( true );
+
+	// debug
+	leAddr2Line->setText( s->value( "Debug/Addr2Line" ).toString() );
 }
 
 void UISettings::saveSettings()
@@ -625,6 +630,9 @@ void UISettings::saveSettings()
 		s->setValue(action->text(), accelText);
 	}
 	s->endGroup();
+
+	// debug
+	s->setValue( "Debug/Addr2Line", leAddr2Line->text() );
 }
 
 void UISettings::accept()

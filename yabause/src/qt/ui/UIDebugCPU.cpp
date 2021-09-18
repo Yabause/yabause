@@ -29,7 +29,7 @@ UIDebugCPU::UIDebugCPU( PROCTYPE proc, YabauseThread *mYabauseThread, QWidget* p
 	// set up dialog
 	setupUi( this );
 	if ( p && !p->isFullScreen() )
-		setWindowFlags( Qt::Sheet );
+		setWindowFlags( Qt::Sheet | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint );
 
 	// Disable unimplemented functions
 	gbBackTrace->setVisible( false );
@@ -40,6 +40,7 @@ UIDebugCPU::UIDebugCPU( PROCTYPE proc, YabauseThread *mYabauseThread, QWidget* p
 	pbReserved3->setVisible( false );
 	pbReserved4->setVisible( false );
 	pbReserved5->setVisible( false );
+	pbLoadCode->setVisible( false );
 
 	pbAddCodeBreakpoint->setEnabled( false );
 	pbDelCodeBreakpoint->setEnabled( false );
@@ -80,6 +81,7 @@ void UIDebugCPU::on_lwRegisters_itemDoubleClicked ( QListWidgetItem * item )
 void UIDebugCPU::on_lwBackTrace_itemDoubleClicked ( QListWidgetItem * item )
 {
 	updateCodeList(item->text().toUInt(NULL, 16));
+	updateCodePage(item->text().toUInt(NULL, 16));
 }
 
 void UIDebugCPU::on_twTrackInfLoop_itemDoubleClicked ( QTableWidgetItem * item )
@@ -295,6 +297,10 @@ void UIDebugCPU::updateRegList()
 void UIDebugCPU::updateCodeList(u32 addr)
 {
 }
+   
+void UIDebugCPU::updateCodePage(u32 addr)
+{
+}
 
 u32 UIDebugCPU::getRegister(int index, int *size)
 {
@@ -310,7 +316,7 @@ bool UIDebugCPU::addCodeBreakpoint(u32 addr)
 {
 	return true;
 }
-
+   
 void UIDebugCPU::toggleCodeBreakpoint(u32 addr)
 {
 	QString text;

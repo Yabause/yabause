@@ -41,6 +41,8 @@ public:
    u32 getAddress();
    void setProc( UIDebugCPU::PROCTYPE proc );
    void goToAddress(u32 address, bool setCursor=true);
+   void saveCursorPosition();
+   void restoreCursorPosition();
    virtual void setFont(const QFont &font);
    bool saveSelected(QString filename);
    bool saveTab(QString filename);
@@ -125,6 +127,8 @@ public:
    UIHexEditor( QWidget* parent = 0 );
 
    void goToAddress(u32 address, bool setCursor=true);
+   void saveCursorPosition();
+   void restoreCursorPosition();
    u32 getStartAddress();
    u32 getEndAddress();
    void setProc( UIDebugCPU::PROCTYPE proc );
