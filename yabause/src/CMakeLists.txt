@@ -711,38 +711,40 @@ add_definitions(-DVERSION=\"${YAB_VERSION}\")
 include(CheckCXXCompilerFlag)
 if (MSVC)
     if(NOT (MSVC_VERSION LESS 1800))
-        set(COMPILER_SUPPORTS_CXX11 ON)
+        set(COMPILER_SUPPORTS_CXX17 ON)
     else()
-        message(STATUS "Not enough C++11 support for dynarecs.")
+        message(STATUS "Not enough C++17 support for dynarecs.")
     endif()
 elseif(ANDROID)
     message(STATUS "CodeGen needs exceptions and rtti. Dynarecs disabled.")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(STATUS "CodeGen doesn't build in Clang yet. Dynarecs disabled.")
 else()
-    CHECK_CXX_COMPILER_FLAG(-std=c++11 COMPILER_SUPPORTS_CXX11)
+    CHECK_CXX_COMPILER_FLAG(-std=c++17 COMPILER_SUPPORTS_CXX17)
 
     check_cxx_source_compiles("
         #include <list>
+        #include <filesystem>
         int main() {
             std::list<int> list;
             list.erase(list.cbegin());
+            std::filesystem::path myPath;
         }
-        " CXX11_ERASE_CONST)
+        " CXX17_ERASE_CONST)
 
-    if(NOT CXX11_ERASE_CONST)
-        set(COMPILER_SUPPORTS_CXX11 OFF)
+    if(NOT CXX17_ERASE_CONST)
+        set(COMPILER_SUPPORTS_CXX17 OFF)
     endif()
 
-    if(COMPILER_SUPPORTS_CXX11)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    if(COMPILER_SUPPORTS_CXX17)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
     else()
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} doesn't have enough C++11 support. Dynarecs disabled.")
+        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} doesn't have enough C++17 support. Dynarecs disabled.")
     endif()
 endif()
 
 option(YAB_USE_PLAY_JIT "Enable Play codegen and dynarecs." ON)
-if (YAB_USE_PLAY_JIT AND COMPILER_SUPPORTS_CXX11)
+if (YAB_USE_PLAY_JIT AND COMPILER_SUPPORTS_CXX17)
     add_subdirectory(play)
     add_definitions(-DHAVE_PLAY_JIT=1)
     set(yabause_SOURCES ${yabause_SOURCES} scsp_dsp_jit.cpp scu_dsp_jit.cpp sh2_jit.cpp)
@@ -751,7 +753,7 @@ endif()
 
 add_library(yabause ${yabause_SOURCES} ${yabause_HEADERS})
 
-if (YAB_USE_PLAY_JIT AND COMPILER_SUPPORTS_CXX11)
+if (YAB_USE_PLAY_JIT AND COMPILER_SUPPORTS_CXX17)
     target_link_libraries(yabause CodeGen)
 endif()
 

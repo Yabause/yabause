@@ -1,3 +1,9 @@
+0.9.16 -> 0.9.17
+ general:
+  - Fixed DSP end termination handling (JIT still missing)
+  - Fixed DSP reset of V/E bits when acessing the control register
+ qt:
+  - Add experimental code debugging support with addr2line
 0.9.15 -> 0.9.16
  general:
   - Fixed reading cdblock data transfer register as a word
