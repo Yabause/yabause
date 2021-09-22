@@ -614,14 +614,11 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 
 size_t retro_serialize_size(void)
 {
-   void *buffer;
    size_t size;
 
    ScspMuteAudio(SCSP_MUTE_SYSTEM);
-   YabSaveStateBuffer (&buffer, &size);
+   YabSaveStateBuffer(NULL, &size);
    ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
-
-   free(buffer);
 
    return size;
 }
