@@ -220,3 +220,9 @@ ifeq ($(HAVE_MUSASHI), 1)
 else
 	OBJECTS_C += $(C68KEXEC_OBJECT)
 endif
+
+ifeq ($(USE_RGB_565), 1)
+    FLAGS += -DUSE_16BPP=1 -DUSE_RGB_565=1
+else
+    FLAGS += -DUSE_16BPP=1 -DUSE_RGB_555=1
+endif

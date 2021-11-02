@@ -994,12 +994,6 @@ void retro_init(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_PERF_INTERFACE, &perf_cb))
       perf_get_cpu_features_cb = perf_cb.get_cpu_features;
 
-#if 1
-   enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
-   if(environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565))
-      log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
-#endif
-
    if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
    {
       strncpy(g_system_dir, dir, sizeof(g_system_dir));
@@ -1025,6 +1019,14 @@ bool retro_load_game(const struct retro_game_info *info)
    int ret;
 
    if (!info)
+      return false;
+
+#ifdef USE_RGB_565
+   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
+#else
+   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_0RGB1555;
+#endif
+   if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
       return false;
 
    check_variables();

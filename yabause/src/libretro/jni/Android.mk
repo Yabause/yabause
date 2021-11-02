@@ -6,6 +6,7 @@ FLAGS        :=
 DYNAREC      := 0
 HAVE_THREADS := 1
 HAVE_MUSASHI := 1
+USE_RGB_565  := 1
 # The following is broken upstream ?
 USE_PLAY_JIT := 0
 USE_SCSP2    := 0
