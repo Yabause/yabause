@@ -77,6 +77,8 @@ static unsigned disk_index = 0;
 static unsigned disk_total = 0;
 static bool disk_tray_open = false;
 
+static bool libretro_supports_option_categories = false;
+
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
 
@@ -94,7 +96,8 @@ void retro_set_environment(retro_environment_t cb)
 {
    environ_cb = cb;
 
-   libretro_set_core_options(environ_cb);
+   libretro_set_core_options(environ_cb,
+         &libretro_supports_option_categories);
 
    static const struct retro_controller_description peripherals[] = {
        { "Saturn Pad", RETRO_DEVICE_JOYPAD },
