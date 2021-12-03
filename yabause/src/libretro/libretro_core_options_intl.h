@@ -40,18 +40,18 @@ extern "C" {
 /* RETRO_LANGUAGE_AR */
 
 #define YABAUSE_FRAMESKIP_LABEL_AR NULL
-#define YABAUSE_FRAMESKIP_INFO_0_AR NULL
+#define YABAUSE_FRAMESKIP_INFO_0_AR "تمكين frameskip، سيساعد في الأداء."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_AR NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_AR NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_AR NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_AR NULL
-#define OPTION_VAL_NONE_AR NULL
+#define OPTION_VAL_NONE_AR "لاشيء"
 #define OPTION_VAL_1M_RAM_AR NULL
 #define OPTION_VAL_4M_RAM_AR NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_AR NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_AR NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_AR "تمكين النقر المتعدد في المنفذ 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_AR NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_AR NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_AR "تمكين النقر المتعدد في المنفذ 2"
 #define YABAUSE_NUMTHREADS_LABEL_AR NULL
 #define YABAUSE_NUMTHREADS_INFO_0_AR NULL
 
@@ -160,7 +160,7 @@ struct retro_core_options_v2 options_ar = {
 /* RETRO_LANGUAGE_AST */
 
 #define YABAUSE_FRAMESKIP_LABEL_AST NULL
-#define YABAUSE_FRAMESKIP_INFO_0_AST NULL
+#define YABAUSE_FRAMESKIP_INFO_0_AST "Activa'l saltu de cuadros, habría ayudar al rindimientu."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_AST NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_AST NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_AST NULL
@@ -400,12 +400,12 @@ struct retro_core_options_v2 options_ca = {
 /* RETRO_LANGUAGE_CHS */
 
 #define YABAUSE_FRAMESKIP_LABEL_CHS NULL
-#define YABAUSE_FRAMESKIP_INFO_0_CHS NULL
+#define YABAUSE_FRAMESKIP_INFO_0_CHS "启用跳帧功能，此选项应能提升性能。"
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_CHS NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_CHS NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_CHS NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_CHS NULL
-#define OPTION_VAL_NONE_CHS NULL
+#define OPTION_VAL_NONE_CHS "无"
 #define OPTION_VAL_1M_RAM_CHS NULL
 #define OPTION_VAL_4M_RAM_CHS NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_CHS NULL
@@ -525,7 +525,7 @@ struct retro_core_options_v2 options_chs = {
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_CHT NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_CHT NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_CHT NULL
-#define OPTION_VAL_NONE_CHT NULL
+#define OPTION_VAL_NONE_CHT "無"
 #define OPTION_VAL_1M_RAM_CHT NULL
 #define OPTION_VAL_4M_RAM_CHT NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_CHT NULL
@@ -760,18 +760,18 @@ struct retro_core_options_v2 options_cs = {
 /* RETRO_LANGUAGE_CY */
 
 #define YABAUSE_FRAMESKIP_LABEL_CY NULL
-#define YABAUSE_FRAMESKIP_INFO_0_CY NULL
+#define YABAUSE_FRAMESKIP_INFO_0_CY "Galluogi frameskip, dylai helpu gyda pherfformiad."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_CY NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_CY NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_CY NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_CY NULL
-#define OPTION_VAL_NONE_CY NULL
+#define OPTION_VAL_NONE_CY "dim"
 #define OPTION_VAL_1M_RAM_CY NULL
 #define OPTION_VAL_4M_RAM_CY NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_CY NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_CY NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_CY "Galluogi multitap ym mhorthladd 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_CY NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_CY NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_CY "Galluogi multitap ym mhorthladd 2"
 #define YABAUSE_NUMTHREADS_LABEL_CY NULL
 #define YABAUSE_NUMTHREADS_INFO_0_CY NULL
 
@@ -880,7 +880,7 @@ struct retro_core_options_v2 options_cy = {
 /* RETRO_LANGUAGE_DA */
 
 #define YABAUSE_FRAMESKIP_LABEL_DA NULL
-#define YABAUSE_FRAMESKIP_INFO_0_DA NULL
+#define YABAUSE_FRAMESKIP_INFO_0_DA "Aktivér frameskip, det bør hjælpe på ydelsen."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_DA NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_DA NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_DA NULL
@@ -889,9 +889,9 @@ struct retro_core_options_v2 options_cy = {
 #define OPTION_VAL_1M_RAM_DA NULL
 #define OPTION_VAL_4M_RAM_DA NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_DA NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_DA NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_DA "Aktivér multitap i port 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_DA NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_DA NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_DA "Aktivér multitap i port 2"
 #define YABAUSE_NUMTHREADS_LABEL_DA NULL
 #define YABAUSE_NUMTHREADS_INFO_0_DA NULL
 
@@ -1000,18 +1000,18 @@ struct retro_core_options_v2 options_da = {
 /* RETRO_LANGUAGE_DE */
 
 #define YABAUSE_FRAMESKIP_LABEL_DE NULL
-#define YABAUSE_FRAMESKIP_INFO_0_DE NULL
+#define YABAUSE_FRAMESKIP_INFO_0_DE "Frameskip aktivieren, sollte die Leistung verbessern."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_DE NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_DE NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_DE NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_DE NULL
-#define OPTION_VAL_NONE_DE NULL
+#define OPTION_VAL_NONE_DE "keine"
 #define OPTION_VAL_1M_RAM_DE NULL
 #define OPTION_VAL_4M_RAM_DE NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_DE NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_DE NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_DE "Aktiviere Multitap in Port 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_DE NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_DE NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_DE "Aktiviere Multitap in Port 2"
 #define YABAUSE_NUMTHREADS_LABEL_DE NULL
 #define YABAUSE_NUMTHREADS_INFO_0_DE NULL
 
@@ -1120,18 +1120,18 @@ struct retro_core_options_v2 options_de = {
 /* RETRO_LANGUAGE_EL */
 
 #define YABAUSE_FRAMESKIP_LABEL_EL NULL
-#define YABAUSE_FRAMESKIP_INFO_0_EL NULL
+#define YABAUSE_FRAMESKIP_INFO_0_EL "Ενεργοποίηση frameskip, θα πρέπει να βοηθήσει με τις επιδόσεις."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_EL NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_EL NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_EL NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_EL NULL
-#define OPTION_VAL_NONE_EL NULL
+#define OPTION_VAL_NONE_EL "κανείς"
 #define OPTION_VAL_1M_RAM_EL NULL
 #define OPTION_VAL_4M_RAM_EL NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_EL NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_EL NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_EL "Ενεργοποίηση κιτ πολλαπλών παιχτών στη θύρα 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_EL NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_EL NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_EL "Ενεργοποίηση κιτ πολλαπλών παιχτών στη θύρα 2"
 #define YABAUSE_NUMTHREADS_LABEL_EL NULL
 #define YABAUSE_NUMTHREADS_INFO_0_EL NULL
 
@@ -1364,14 +1364,14 @@ struct retro_core_options_v2 options_eo = {
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_ES "Forzar BIOS HLE (es necesario reiniciar)"
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_ES "Utiliza esta opción por tu cuenta y riesgo, ya que produce más problemas de los que resuelve."
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_ES "Cartucho de expansión (es necesario reiniciar)"
-#define YABAUSE_ADDON_CARTRIDGE_INFO_0_ES "Selecciona el cartucho de ampliación."
-#define OPTION_VAL_NONE_ES NULL
+#define YABAUSE_ADDON_CARTRIDGE_INFO_0_ES "Selecciona el cartucho de expansión."
+#define OPTION_VAL_NONE_ES "Ninguno"
 #define OPTION_VAL_1M_RAM_ES "RAM de 1 MB"
 #define OPTION_VAL_4M_RAM_ES "RAM de 4 MB"
 #define YABAUSE_MULTITAP_PORT1_LABEL_ES "Adaptador para seis jugadores en el puerto 1"
-#define YABAUSE_MULTITAP_PORT1_INFO_0_ES "Activar un multitap en el puerto 1."
+#define YABAUSE_MULTITAP_PORT1_INFO_0_ES "Activa un multitap en el puerto 1."
 #define YABAUSE_MULTITAP_PORT2_LABEL_ES "Adaptador para seis jugadores en el puerto 2"
-#define YABAUSE_MULTITAP_PORT2_INFO_0_ES "Activar un multitap en el puerto 2."
+#define YABAUSE_MULTITAP_PORT2_INFO_0_ES "Activa un multitap en el puerto 2."
 #define YABAUSE_NUMTHREADS_LABEL_ES "Número de hilos (es necesario reiniciar)"
 #define YABAUSE_NUMTHREADS_INFO_0_ES "Este valor puede mejorar el rendimiento en función de tu CPU."
 
@@ -1480,7 +1480,7 @@ struct retro_core_options_v2 options_es = {
 /* RETRO_LANGUAGE_FA */
 
 #define YABAUSE_FRAMESKIP_LABEL_FA NULL
-#define YABAUSE_FRAMESKIP_INFO_0_FA NULL
+#define YABAUSE_FRAMESKIP_INFO_0_FA "پرش فریم را فعال کنید، باید به عملکرد کمک کند."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_FA NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_FA NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_FA NULL
@@ -1599,21 +1599,21 @@ struct retro_core_options_v2 options_fa = {
 
 /* RETRO_LANGUAGE_FI */
 
-#define YABAUSE_FRAMESKIP_LABEL_FI NULL
-#define YABAUSE_FRAMESKIP_INFO_0_FI NULL
-#define YABAUSE_FORCE_HLE_BIOS_LABEL_FI NULL
-#define YABAUSE_FORCE_HLE_BIOS_INFO_0_FI NULL
-#define YABAUSE_ADDON_CARTRIDGE_LABEL_FI NULL
-#define YABAUSE_ADDON_CARTRIDGE_INFO_0_FI NULL
-#define OPTION_VAL_NONE_FI NULL
+#define YABAUSE_FRAMESKIP_LABEL_FI "Kuvanohitus"
+#define YABAUSE_FRAMESKIP_INFO_0_FI "Ota käyttöön kuvan ohitus, jonka pitäisi auttaa suorituskyvyssä."
+#define YABAUSE_FORCE_HLE_BIOS_LABEL_FI "Pakota HLE BIOS (Uudelleenkäynnistys vaaditaan)"
+#define YABAUSE_FORCE_HLE_BIOS_INFO_0_FI "Käytä omalla riskilläsi, tämä aiheuttaa enemmän ongelmia kuin ratkaisee niitä."
+#define YABAUSE_ADDON_CARTRIDGE_LABEL_FI "Lisäosa kasetti (Uudelleenkäynnistys vaaditaan)"
+#define YABAUSE_ADDON_CARTRIDGE_INFO_0_FI "Valitse lisäosa kasetti."
+#define OPTION_VAL_NONE_FI "ei mitään"
 #define OPTION_VAL_1M_RAM_FI NULL
 #define OPTION_VAL_4M_RAM_FI NULL
-#define YABAUSE_MULTITAP_PORT1_LABEL_FI NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_FI NULL
-#define YABAUSE_MULTITAP_PORT2_LABEL_FI NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_FI NULL
-#define YABAUSE_NUMTHREADS_LABEL_FI NULL
-#define YABAUSE_NUMTHREADS_INFO_0_FI NULL
+#define YABAUSE_MULTITAP_PORT1_LABEL_FI "6 pelajaan adapteri 1 portissa"
+#define YABAUSE_MULTITAP_PORT1_INFO_0_FI "Ota \"multitap\" käyttöön 1 portissa"
+#define YABAUSE_MULTITAP_PORT2_LABEL_FI "6 pelajaan adapteri 2 portissa"
+#define YABAUSE_MULTITAP_PORT2_INFO_0_FI "Ota \"multitap\" käyttöön 2 portissa"
+#define YABAUSE_NUMTHREADS_LABEL_FI "Säikeiden määrä (Uudelleenkäynnistys vaaditaan)"
+#define YABAUSE_NUMTHREADS_INFO_0_FI "Riippuen prosessoristasi, tämän arvon muuttaminen voi auttaa suorituskyvyssä."
 
 struct retro_core_option_v2_category option_cats_fi[] = {
    { NULL, NULL, NULL },
@@ -1719,21 +1719,21 @@ struct retro_core_options_v2 options_fi = {
 
 /* RETRO_LANGUAGE_FR */
 
-#define YABAUSE_FRAMESKIP_LABEL_FR NULL
-#define YABAUSE_FRAMESKIP_INFO_0_FR NULL
-#define YABAUSE_FORCE_HLE_BIOS_LABEL_FR NULL
-#define YABAUSE_FORCE_HLE_BIOS_INFO_0_FR NULL
-#define YABAUSE_ADDON_CARTRIDGE_LABEL_FR NULL
-#define YABAUSE_ADDON_CARTRIDGE_INFO_0_FR NULL
-#define OPTION_VAL_NONE_FR NULL
+#define YABAUSE_FRAMESKIP_LABEL_FR "Saut d'images"
+#define YABAUSE_FRAMESKIP_INFO_0_FR "Activer le saut d'images, cela devrait améliorer les performances."
+#define YABAUSE_FORCE_HLE_BIOS_LABEL_FR "Forcer la BIOS HLE (Redémarrage requis)"
+#define YABAUSE_FORCE_HLE_BIOS_INFO_0_FR "Utiliser à vos risques et périls, cette option cause plus de problèmes qu'elle n'en résout."
+#define YABAUSE_ADDON_CARTRIDGE_LABEL_FR "Cartouche de mémoire supplémentaire (Redémarrage requis)"
+#define YABAUSE_ADDON_CARTRIDGE_INFO_0_FR "Sélectionner la cartouche de mémoire supplémentaire."
+#define OPTION_VAL_NONE_FR "aucune"
 #define OPTION_VAL_1M_RAM_FR NULL
 #define OPTION_VAL_4M_RAM_FR NULL
-#define YABAUSE_MULTITAP_PORT1_LABEL_FR NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_FR NULL
-#define YABAUSE_MULTITAP_PORT2_LABEL_FR NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_FR NULL
-#define YABAUSE_NUMTHREADS_LABEL_FR NULL
-#define YABAUSE_NUMTHREADS_INFO_0_FR NULL
+#define YABAUSE_MULTITAP_PORT1_LABEL_FR "Adaptateur 6 joueurs sur le port 1"
+#define YABAUSE_MULTITAP_PORT1_INFO_0_FR "Active le multitap dans le port 1"
+#define YABAUSE_MULTITAP_PORT2_LABEL_FR "Adaptateur 6 joueurs sur le port 2"
+#define YABAUSE_MULTITAP_PORT2_INFO_0_FR "Active le multitap dans le port 2"
+#define YABAUSE_NUMTHREADS_LABEL_FR "Nombre de fils d'exécution (Redémarrage requis)"
+#define YABAUSE_NUMTHREADS_INFO_0_FR "Selon votre processeur, changer cette valeur peut améliorer les performances."
 
 struct retro_core_option_v2_category option_cats_fr[] = {
    { NULL, NULL, NULL },
@@ -1845,7 +1845,7 @@ struct retro_core_options_v2 options_fr = {
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_GL NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_GL NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_GL NULL
-#define OPTION_VAL_NONE_GL NULL
+#define OPTION_VAL_NONE_GL "ningún"
 #define OPTION_VAL_1M_RAM_GL NULL
 #define OPTION_VAL_4M_RAM_GL NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_GL NULL
@@ -2200,7 +2200,7 @@ struct retro_core_options_v2 options_hu = {
 /* RETRO_LANGUAGE_ID */
 
 #define YABAUSE_FRAMESKIP_LABEL_ID NULL
-#define YABAUSE_FRAMESKIP_INFO_0_ID NULL
+#define YABAUSE_FRAMESKIP_INFO_0_ID "Aktifkan frameskip agar dapat membantu performa nya."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_ID NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_ID NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_ID NULL
@@ -2209,9 +2209,9 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_1M_RAM_ID NULL
 #define OPTION_VAL_4M_RAM_ID NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_ID NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_ID NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_ID "Aktifkan fitur multitap di port 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_ID NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_ID NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_ID "Aktifkan fitur multitap di port 2"
 #define YABAUSE_NUMTHREADS_LABEL_ID NULL
 #define YABAUSE_NUMTHREADS_INFO_0_ID NULL
 
@@ -2319,21 +2319,21 @@ struct retro_core_options_v2 options_id = {
 
 /* RETRO_LANGUAGE_IT */
 
-#define YABAUSE_FRAMESKIP_LABEL_IT NULL
-#define YABAUSE_FRAMESKIP_INFO_0_IT NULL
-#define YABAUSE_FORCE_HLE_BIOS_LABEL_IT NULL
-#define YABAUSE_FORCE_HLE_BIOS_INFO_0_IT NULL
-#define YABAUSE_ADDON_CARTRIDGE_LABEL_IT NULL
-#define YABAUSE_ADDON_CARTRIDGE_INFO_0_IT NULL
-#define OPTION_VAL_NONE_IT NULL
+#define YABAUSE_FRAMESKIP_LABEL_IT "Salta fotogramma"
+#define YABAUSE_FRAMESKIP_INFO_0_IT "Abilita frameskip, dovrebbe aiutare con le prestazioni."
+#define YABAUSE_FORCE_HLE_BIOS_LABEL_IT "Forza HLE BIOS (Riavvio Richiesto)"
+#define YABAUSE_FORCE_HLE_BIOS_INFO_0_IT "Utilizzare a proprio rischio, sta causando più problemi di quanto risolva."
+#define YABAUSE_ADDON_CARTRIDGE_LABEL_IT "Cartuccia Componente (Riavvio Richiesto)"
+#define YABAUSE_ADDON_CARTRIDGE_INFO_0_IT "Selezionare la cartuccia aggiuntiva."
+#define OPTION_VAL_NONE_IT "nessuno"
 #define OPTION_VAL_1M_RAM_IT NULL
 #define OPTION_VAL_4M_RAM_IT NULL
-#define YABAUSE_MULTITAP_PORT1_LABEL_IT NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_IT NULL
-#define YABAUSE_MULTITAP_PORT2_LABEL_IT NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_IT NULL
-#define YABAUSE_NUMTHREADS_LABEL_IT NULL
-#define YABAUSE_NUMTHREADS_INFO_0_IT NULL
+#define YABAUSE_MULTITAP_PORT1_LABEL_IT "Adattatore 6Player sulla porta 1"
+#define YABAUSE_MULTITAP_PORT1_INFO_0_IT "Abilita multitap nella porta 1"
+#define YABAUSE_MULTITAP_PORT2_LABEL_IT "Adattatore 6Player sulla porta 2"
+#define YABAUSE_MULTITAP_PORT2_INFO_0_IT "Abilita multitap nella porta 2"
+#define YABAUSE_NUMTHREADS_LABEL_IT "Numero di thread (Riavvio Richiesto)"
+#define YABAUSE_NUMTHREADS_INFO_0_IT "A seconda della CPU, cambiare questo valore può aiutare con le prestazioni."
 
 struct retro_core_option_v2_category option_cats_it[] = {
    { NULL, NULL, NULL },
@@ -2440,12 +2440,12 @@ struct retro_core_options_v2 options_it = {
 /* RETRO_LANGUAGE_JA */
 
 #define YABAUSE_FRAMESKIP_LABEL_JA NULL
-#define YABAUSE_FRAMESKIP_INFO_0_JA NULL
+#define YABAUSE_FRAMESKIP_INFO_0_JA "フレームスキップを有効にすると, パフォーマンス向上に役立ちます."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_JA NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_JA NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_JA NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_JA NULL
-#define OPTION_VAL_NONE_JA NULL
+#define OPTION_VAL_NONE_JA "なし"
 #define OPTION_VAL_1M_RAM_JA NULL
 #define OPTION_VAL_4M_RAM_JA NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_JA NULL
@@ -2559,21 +2559,21 @@ struct retro_core_options_v2 options_ja = {
 
 /* RETRO_LANGUAGE_KO */
 
-#define YABAUSE_FRAMESKIP_LABEL_KO NULL
-#define YABAUSE_FRAMESKIP_INFO_0_KO NULL
-#define YABAUSE_FORCE_HLE_BIOS_LABEL_KO NULL
-#define YABAUSE_FORCE_HLE_BIOS_INFO_0_KO NULL
-#define YABAUSE_ADDON_CARTRIDGE_LABEL_KO NULL
-#define YABAUSE_ADDON_CARTRIDGE_INFO_0_KO NULL
-#define OPTION_VAL_NONE_KO NULL
+#define YABAUSE_FRAMESKIP_LABEL_KO "프레임 스킵"
+#define YABAUSE_FRAMESKIP_INFO_0_KO "프레임 건너뛰기 사용, 성능에 도움이 됩니다."
+#define YABAUSE_FORCE_HLE_BIOS_LABEL_KO "HLE BIOS 강제 사용 (재시작 필요)"
+#define YABAUSE_FORCE_HLE_BIOS_INFO_0_KO "이 옵션을 사용하면 해결되는 문제보다 발생하는 문제가 더 많으니, 본인 책임 하에 사용하십시오."
+#define YABAUSE_ADDON_CARTRIDGE_LABEL_KO "확장 카트리지 (재시작 필요)"
+#define YABAUSE_ADDON_CARTRIDGE_INFO_0_KO "확장 카트리지를 선택합니다."
+#define OPTION_VAL_NONE_KO "없음"
 #define OPTION_VAL_1M_RAM_KO NULL
 #define OPTION_VAL_4M_RAM_KO NULL
-#define YABAUSE_MULTITAP_PORT1_LABEL_KO NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_KO NULL
-#define YABAUSE_MULTITAP_PORT2_LABEL_KO NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_KO NULL
-#define YABAUSE_NUMTHREADS_LABEL_KO NULL
-#define YABAUSE_NUMTHREADS_INFO_0_KO NULL
+#define YABAUSE_MULTITAP_PORT1_LABEL_KO "1번 포트에 6인 플레이 어댑터 사용"
+#define YABAUSE_MULTITAP_PORT1_INFO_0_KO "포트 1에서 멀티탭을 사용합니다"
+#define YABAUSE_MULTITAP_PORT2_LABEL_KO "2번 포트에 6인 플레이 어댑터 사용"
+#define YABAUSE_MULTITAP_PORT2_INFO_0_KO "포트 2에서 멀티탭을 사용합니다"
+#define YABAUSE_NUMTHREADS_LABEL_KO "스레드 수 (재시작 필요)"
+#define YABAUSE_NUMTHREADS_INFO_0_KO "CPU에 따라 값을 변경하면 성능에 도움을 줄 수 있습니다."
 
 struct retro_core_option_v2_category option_cats_ko[] = {
    { NULL, NULL, NULL },
@@ -2805,7 +2805,7 @@ struct retro_core_options_v2 options_mt = {
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_NL NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_NL NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_NL NULL
-#define OPTION_VAL_NONE_NL NULL
+#define OPTION_VAL_NONE_NL "geen"
 #define OPTION_VAL_1M_RAM_NL NULL
 #define OPTION_VAL_4M_RAM_NL NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_NL NULL
@@ -3039,19 +3039,19 @@ struct retro_core_options_v2 options_oc = {
 
 /* RETRO_LANGUAGE_PL */
 
-#define YABAUSE_FRAMESKIP_LABEL_PL NULL
-#define YABAUSE_FRAMESKIP_INFO_0_PL NULL
-#define YABAUSE_FORCE_HLE_BIOS_LABEL_PL NULL
+#define YABAUSE_FRAMESKIP_LABEL_PL "Pomijanie klatek"
+#define YABAUSE_FRAMESKIP_INFO_0_PL "Włącz pomijanie klatek, powinno pomóc w wydajności."
+#define YABAUSE_FORCE_HLE_BIOS_LABEL_PL "Wymuś BIOS HLE (wymagany restart)"
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_PL NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_PL NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_PL NULL
-#define OPTION_VAL_NONE_PL NULL
+#define OPTION_VAL_NONE_PL "brak"
 #define OPTION_VAL_1M_RAM_PL NULL
 #define OPTION_VAL_4M_RAM_PL NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_PL NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_PL NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_PL "Włącz multitap w porcie 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_PL NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_PL NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_PL "Włącz multitap w porcie 2"
 #define YABAUSE_NUMTHREADS_LABEL_PL NULL
 #define YABAUSE_NUMTHREADS_INFO_0_PL NULL
 
@@ -3159,19 +3159,19 @@ struct retro_core_options_v2 options_pl = {
 
 /* RETRO_LANGUAGE_PT_BR */
 
-#define YABAUSE_FRAMESKIP_LABEL_PT_BR NULL
-#define YABAUSE_FRAMESKIP_INFO_0_PT_BR NULL
+#define YABAUSE_FRAMESKIP_LABEL_PT_BR "Pulo de quadro"
+#define YABAUSE_FRAMESKIP_INFO_0_PT_BR "Habilita o salto de quadros, pode melhorar o desempenho."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_PT_BR NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_PT_BR NULL
-#define YABAUSE_ADDON_CARTRIDGE_LABEL_PT_BR NULL
-#define YABAUSE_ADDON_CARTRIDGE_INFO_0_PT_BR NULL
-#define OPTION_VAL_NONE_PT_BR NULL
+#define YABAUSE_ADDON_CARTRIDGE_LABEL_PT_BR "Cartucho de expansão (requer reinício)"
+#define YABAUSE_ADDON_CARTRIDGE_INFO_0_PT_BR "Seleciona o cartucho da expansão."
+#define OPTION_VAL_NONE_PT_BR "nenhum"
 #define OPTION_VAL_1M_RAM_PT_BR NULL
 #define OPTION_VAL_4M_RAM_PT_BR NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_PT_BR NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_PT_BR NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_PT_BR "Habilita o multitap na porta 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_PT_BR NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_PT_BR NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_PT_BR "Habilita o multitap na porta 2"
 #define YABAUSE_NUMTHREADS_LABEL_PT_BR NULL
 #define YABAUSE_NUMTHREADS_INFO_0_PT_BR NULL
 
@@ -3285,7 +3285,7 @@ struct retro_core_options_v2 options_pt_br = {
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_PT_PT NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_PT_PT NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_PT_PT NULL
-#define OPTION_VAL_NONE_PT_PT NULL
+#define OPTION_VAL_NONE_PT_PT "nenhum"
 #define OPTION_VAL_1M_RAM_PT_PT NULL
 #define OPTION_VAL_4M_RAM_PT_PT NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_PT_PT NULL
@@ -3519,21 +3519,21 @@ struct retro_core_options_v2 options_ro = {
 
 /* RETRO_LANGUAGE_RU */
 
-#define YABAUSE_FRAMESKIP_LABEL_RU NULL
-#define YABAUSE_FRAMESKIP_INFO_0_RU NULL
-#define YABAUSE_FORCE_HLE_BIOS_LABEL_RU NULL
-#define YABAUSE_FORCE_HLE_BIOS_INFO_0_RU NULL
-#define YABAUSE_ADDON_CARTRIDGE_LABEL_RU NULL
-#define YABAUSE_ADDON_CARTRIDGE_INFO_0_RU NULL
-#define OPTION_VAL_NONE_RU NULL
-#define OPTION_VAL_1M_RAM_RU NULL
-#define OPTION_VAL_4M_RAM_RU NULL
-#define YABAUSE_MULTITAP_PORT1_LABEL_RU NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_RU NULL
-#define YABAUSE_MULTITAP_PORT2_LABEL_RU NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_RU NULL
-#define YABAUSE_NUMTHREADS_LABEL_RU NULL
-#define YABAUSE_NUMTHREADS_INFO_0_RU NULL
+#define YABAUSE_FRAMESKIP_LABEL_RU "Пропуск кадров"
+#define YABAUSE_FRAMESKIP_INFO_0_RU "Включает пропуск кадров для повышения производительности."
+#define YABAUSE_FORCE_HLE_BIOS_LABEL_RU "Использовать HLE BIOS (требуется перезапуск)"
+#define YABAUSE_FORCE_HLE_BIOS_INFO_0_RU "Включение опции даёт больше проблем, чем преимуществ. Используйте с осторожностью."
+#define YABAUSE_ADDON_CARTRIDGE_LABEL_RU "Картридж расширения (требуется перезапуск)"
+#define YABAUSE_ADDON_CARTRIDGE_INFO_0_RU "Выбор картриджа расширения."
+#define OPTION_VAL_NONE_RU "нет"
+#define OPTION_VAL_1M_RAM_RU "1 МБ ОЗУ"
+#define OPTION_VAL_4M_RAM_RU "4 МБ ОЗУ"
+#define YABAUSE_MULTITAP_PORT1_LABEL_RU "Адаптер для 6 игроков в порте 1"
+#define YABAUSE_MULTITAP_PORT1_INFO_0_RU "Включить Multitap для портов 1"
+#define YABAUSE_MULTITAP_PORT2_LABEL_RU "Адаптер для 6 игроков в порте 2"
+#define YABAUSE_MULTITAP_PORT2_INFO_0_RU "Включить Multitap для портов 2"
+#define YABAUSE_NUMTHREADS_LABEL_RU "Число потоков (требуется перезапуск)"
+#define YABAUSE_NUMTHREADS_INFO_0_RU "В зависимости от процессора, изменение настройки может улучшить производительность."
 
 struct retro_core_option_v2_category option_cats_ru[] = {
    { NULL, NULL, NULL },
@@ -3760,18 +3760,18 @@ struct retro_core_options_v2 options_si = {
 /* RETRO_LANGUAGE_SK */
 
 #define YABAUSE_FRAMESKIP_LABEL_SK NULL
-#define YABAUSE_FRAMESKIP_INFO_0_SK NULL
+#define YABAUSE_FRAMESKIP_INFO_0_SK "Povoliť preskočenie snímkov, malo by pomôcť s výkonmi."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_SK NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_SK NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_SK NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_SK NULL
-#define OPTION_VAL_NONE_SK NULL
+#define OPTION_VAL_NONE_SK "žiadne"
 #define OPTION_VAL_1M_RAM_SK NULL
 #define OPTION_VAL_4M_RAM_SK NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_SK NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_SK NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_SK "Povoliť zariadenie pre viacerých hráčov na porte 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_SK NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_SK NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_SK "Povoliť zariadenie pre viacerých hráčov na porte 2"
 #define YABAUSE_NUMTHREADS_LABEL_SK NULL
 #define YABAUSE_NUMTHREADS_INFO_0_SK NULL
 
@@ -4000,7 +4000,7 @@ struct retro_core_options_v2 options_sr = {
 /* RETRO_LANGUAGE_SV */
 
 #define YABAUSE_FRAMESKIP_LABEL_SV NULL
-#define YABAUSE_FRAMESKIP_INFO_0_SV NULL
+#define YABAUSE_FRAMESKIP_INFO_0_SV "Aktivera frameskip, det bör hjälpa till med prestandan."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_SV NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_SV NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_SV NULL
@@ -4009,9 +4009,9 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_1M_RAM_SV NULL
 #define OPTION_VAL_4M_RAM_SV NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_SV NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_SV NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_SV "Aktivera multitap i port 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_SV NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_SV NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_SV "Aktivera multitap i port 2"
 #define YABAUSE_NUMTHREADS_LABEL_SV NULL
 #define YABAUSE_NUMTHREADS_INFO_0_SV NULL
 
@@ -4122,18 +4122,18 @@ struct retro_core_options_v2 options_sv = {
 #define YABAUSE_FRAMESKIP_LABEL_TR "Kare Atlama"
 #define YABAUSE_FRAMESKIP_INFO_0_TR "Kare atlamayı etkinleştirir, performansa yardımcı olması gerekir."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_TR "HLE BIOS'u zorla (Yeniden Başlatılmalı)"
-#define YABAUSE_FORCE_HLE_BIOS_INFO_0_TR "Kendi sorumluluğunuzda kullanın, çözdüğünden daha fazla soruna neden oluyor."
+#define YABAUSE_FORCE_HLE_BIOS_INFO_0_TR "Kullanmak kendi sorumluluğunuzdadır, çözdüğünden daha fazla soruna neden olabilir."
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_TR "Kartuş Eklentisi (Yeniden Başlatılmalı)"
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_TR "Ek kartuşu seçin."
-#define OPTION_VAL_NONE_TR NULL
+#define OPTION_VAL_NONE_TR "yok"
 #define OPTION_VAL_1M_RAM_TR NULL
 #define OPTION_VAL_4M_RAM_TR NULL
-#define YABAUSE_MULTITAP_PORT1_LABEL_TR "Bağlantı Noktası 1'deki 6Player Adaptörü"
-#define YABAUSE_MULTITAP_PORT1_INFO_0_TR "1. bağlantı noktasında multitap'ı etkinleştir"
-#define YABAUSE_MULTITAP_PORT2_LABEL_TR "Bağlantı Noktası 2'deki 6Player Adaptörü"
-#define YABAUSE_MULTITAP_PORT2_INFO_0_TR "2. bağlantı noktasında multitap'ı etkinleştir"
+#define YABAUSE_MULTITAP_PORT1_LABEL_TR "1. Port üstünde 6Player Adaptörü"
+#define YABAUSE_MULTITAP_PORT1_INFO_0_TR "1. porttaki multitap'ı etkinleştir"
+#define YABAUSE_MULTITAP_PORT2_LABEL_TR "2. Port üstünde 6Player Adaptörü"
+#define YABAUSE_MULTITAP_PORT2_INFO_0_TR "2. porttaki multitap'ı etkinleştir"
 #define YABAUSE_NUMTHREADS_LABEL_TR "İş Parçacığı Sayısı (Yeniden Başlatılmalı)"
-#define YABAUSE_NUMTHREADS_INFO_0_TR "CPU'nuza bağlı olarak, bu değeri değiştirmek performansa yardımcı olabilir."
+#define YABAUSE_NUMTHREADS_INFO_0_TR "CPU çeşidine bağlı olarak, bu değeri değiştirmek performansa yardımcı olabilir."
 
 struct retro_core_option_v2_category option_cats_tr[] = {
    { NULL, NULL, NULL },
@@ -4240,18 +4240,18 @@ struct retro_core_options_v2 options_tr = {
 /* RETRO_LANGUAGE_UK */
 
 #define YABAUSE_FRAMESKIP_LABEL_UK NULL
-#define YABAUSE_FRAMESKIP_INFO_0_UK NULL
+#define YABAUSE_FRAMESKIP_INFO_0_UK "Увімкнути пропуск кадрів, це має покращити продуктивність."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_UK NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_UK NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_UK NULL
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_UK NULL
-#define OPTION_VAL_NONE_UK NULL
+#define OPTION_VAL_NONE_UK "немає"
 #define OPTION_VAL_1M_RAM_UK NULL
 #define OPTION_VAL_4M_RAM_UK NULL
 #define YABAUSE_MULTITAP_PORT1_LABEL_UK NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_UK NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_UK "Увімкнути multitap для портів 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_UK NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_UK NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_UK "Увімкнути multitap для портів 2"
 #define YABAUSE_NUMTHREADS_LABEL_UK NULL
 #define YABAUSE_NUMTHREADS_INFO_0_UK NULL
 
@@ -4359,8 +4359,8 @@ struct retro_core_options_v2 options_uk = {
 
 /* RETRO_LANGUAGE_VN */
 
-#define YABAUSE_FRAMESKIP_LABEL_VN NULL
-#define YABAUSE_FRAMESKIP_INFO_0_VN NULL
+#define YABAUSE_FRAMESKIP_LABEL_VN "Bỏ qua khung hình"
+#define YABAUSE_FRAMESKIP_INFO_0_VN "Kích hoạt frameskip, nó có thể giúp cải thiện hiệu suất."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_VN NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_VN NULL
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_VN NULL
