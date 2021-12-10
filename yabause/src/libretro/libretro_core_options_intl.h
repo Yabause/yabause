@@ -399,7 +399,7 @@ struct retro_core_options_v2 options_ca = {
 
 /* RETRO_LANGUAGE_CHS */
 
-#define YABAUSE_FRAMESKIP_LABEL_CHS NULL
+#define YABAUSE_FRAMESKIP_LABEL_CHS "跳帧"
 #define YABAUSE_FRAMESKIP_INFO_0_CHS "启用跳帧功能，此选项应能提升性能。"
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_CHS NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_CHS NULL
@@ -1721,7 +1721,7 @@ struct retro_core_options_v2 options_fi = {
 
 #define YABAUSE_FRAMESKIP_LABEL_FR "Saut d'images"
 #define YABAUSE_FRAMESKIP_INFO_0_FR "Activer le saut d'images, cela devrait améliorer les performances."
-#define YABAUSE_FORCE_HLE_BIOS_LABEL_FR "Forcer la BIOS HLE (Redémarrage requis)"
+#define YABAUSE_FORCE_HLE_BIOS_LABEL_FR "Forcer le BIOS HLE (Redémarrage requis)"
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_FR "Utiliser à vos risques et périls, cette option cause plus de problèmes qu'elle n'en résout."
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_FR "Cartouche de mémoire supplémentaire (Redémarrage requis)"
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_FR "Sélectionner la cartouche de mémoire supplémentaire."
