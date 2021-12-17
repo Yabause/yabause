@@ -2439,21 +2439,21 @@ struct retro_core_options_v2 options_it = {
 
 /* RETRO_LANGUAGE_JA */
 
-#define YABAUSE_FRAMESKIP_LABEL_JA NULL
+#define YABAUSE_FRAMESKIP_LABEL_JA "フレームスキップ"
 #define YABAUSE_FRAMESKIP_INFO_0_JA "フレームスキップを有効にすると, パフォーマンス向上に役立ちます."
-#define YABAUSE_FORCE_HLE_BIOS_LABEL_JA NULL
-#define YABAUSE_FORCE_HLE_BIOS_INFO_0_JA NULL
-#define YABAUSE_ADDON_CARTRIDGE_LABEL_JA NULL
-#define YABAUSE_ADDON_CARTRIDGE_INFO_0_JA NULL
+#define YABAUSE_FORCE_HLE_BIOS_LABEL_JA "HLE BIOSを強制する (再起動が必要)"
+#define YABAUSE_FORCE_HLE_BIOS_INFO_0_JA "自己責任で使用してください。改善よりも、問題発生の方が多いです。"
+#define YABAUSE_ADDON_CARTRIDGE_LABEL_JA "アドオンカートリッジ (再起動が必要)"
+#define YABAUSE_ADDON_CARTRIDGE_INFO_0_JA "アドオンカートリッジを選択してください。"
 #define OPTION_VAL_NONE_JA "なし"
 #define OPTION_VAL_1M_RAM_JA NULL
 #define OPTION_VAL_4M_RAM_JA NULL
-#define YABAUSE_MULTITAP_PORT1_LABEL_JA NULL
-#define YABAUSE_MULTITAP_PORT1_INFO_0_JA NULL
-#define YABAUSE_MULTITAP_PORT2_LABEL_JA NULL
-#define YABAUSE_MULTITAP_PORT2_INFO_0_JA NULL
-#define YABAUSE_NUMTHREADS_LABEL_JA NULL
-#define YABAUSE_NUMTHREADS_INFO_0_JA NULL
+#define YABAUSE_MULTITAP_PORT1_LABEL_JA "ポート1でマルチターミナル6を使用する"
+#define YABAUSE_MULTITAP_PORT1_INFO_0_JA "ポート1でマルチタップを有効にする"
+#define YABAUSE_MULTITAP_PORT2_LABEL_JA "ポート2でマルチターミナル6を使用する"
+#define YABAUSE_MULTITAP_PORT2_INFO_0_JA "ポート2でマルチタップを有効にする"
+#define YABAUSE_NUMTHREADS_LABEL_JA "スレッド数 (再起動が必要)"
+#define YABAUSE_NUMTHREADS_INFO_0_JA "CPUによっては、この値を変更するとパフォーマンス向上に役立ちます。"
 
 struct retro_core_option_v2_category option_cats_ja[] = {
    { NULL, NULL, NULL },
@@ -3160,20 +3160,20 @@ struct retro_core_options_v2 options_pl = {
 /* RETRO_LANGUAGE_PT_BR */
 
 #define YABAUSE_FRAMESKIP_LABEL_PT_BR "Pulo de quadro"
-#define YABAUSE_FRAMESKIP_INFO_0_PT_BR "Habilita o salto de quadros, pode melhorar o desempenho."
-#define YABAUSE_FORCE_HLE_BIOS_LABEL_PT_BR NULL
-#define YABAUSE_FORCE_HLE_BIOS_INFO_0_PT_BR NULL
+#define YABAUSE_FRAMESKIP_INFO_0_PT_BR "Habilita o pulo de quadros, que pode melhorar o desempenho."
+#define YABAUSE_FORCE_HLE_BIOS_LABEL_PT_BR "Impor a BIOS HLE (requer reinício)"
+#define YABAUSE_FORCE_HLE_BIOS_INFO_0_PT_BR "Use por sua conta e risco, isto causa mais problemas do que resolve."
 #define YABAUSE_ADDON_CARTRIDGE_LABEL_PT_BR "Cartucho de expansão (requer reinício)"
 #define YABAUSE_ADDON_CARTRIDGE_INFO_0_PT_BR "Seleciona o cartucho da expansão."
 #define OPTION_VAL_NONE_PT_BR "nenhum"
-#define OPTION_VAL_1M_RAM_PT_BR NULL
-#define OPTION_VAL_4M_RAM_PT_BR NULL
-#define YABAUSE_MULTITAP_PORT1_LABEL_PT_BR NULL
+#define OPTION_VAL_1M_RAM_PT_BR "RAM de 1 MB"
+#define OPTION_VAL_4M_RAM_PT_BR "RAM de 4 MB"
+#define YABAUSE_MULTITAP_PORT1_LABEL_PT_BR "Adaptador para seis jogadores na porta 1"
 #define YABAUSE_MULTITAP_PORT1_INFO_0_PT_BR "Habilita o multitap na porta 1"
-#define YABAUSE_MULTITAP_PORT2_LABEL_PT_BR NULL
+#define YABAUSE_MULTITAP_PORT2_LABEL_PT_BR "Adaptador para seis jogadores na porta 2"
 #define YABAUSE_MULTITAP_PORT2_INFO_0_PT_BR "Habilita o multitap na porta 2"
-#define YABAUSE_NUMTHREADS_LABEL_PT_BR NULL
-#define YABAUSE_NUMTHREADS_INFO_0_PT_BR NULL
+#define YABAUSE_NUMTHREADS_LABEL_PT_BR "Número de threads (requer reinício)"
+#define YABAUSE_NUMTHREADS_INFO_0_PT_BR "Dependendo da sua CPU, alterar esse valor pode ajudar no desempenho."
 
 struct retro_core_option_v2_category option_cats_pt_br[] = {
    { NULL, NULL, NULL },
