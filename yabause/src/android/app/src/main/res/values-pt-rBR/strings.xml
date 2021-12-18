@@ -90,6 +90,31 @@
          Para mais detalhes, consulte nosso this [Youtube video](https://www.youtube.com/watch?v=Ch6_KhhAg10).\n
         ]]>
     </string>
+
+    <string name="welcome_11">
+        <![CDATA[
+        # Receber! \n\n
+
+        Para jogar os jogos SEGA Saturn, você tem três opções. \n\n
+
+        ## 1. Copie jogos para este dispositivo Android diretamente. \n\n
+
+        copie suas imagens ios para **\"%1$s\"**. \n\n
+
+        ## 2. Copie para um cartão SD externo. \n\n
+
+        copie suas imagens ios para **\"%2$s\"** em um cartão SD. \n\n
+
+        ## 3. Toque no botão + \n\n
+
+        Se você já tiver arquivos CHD ou imagens ISO compactadas. Basta tocar no botão + e selecionar o arquivo. \n\n
+
+        Mais detalhes são descritos em nosso site [aqui] (https://www.uoyabause.org/static_pages/guide). \n
+
+        ]]>
+    </string>
+
+
     <string name="delete_confirm_title">EXCLUIR CONFIRMAR</string>
     <string name="not_available">NÃO DISPONÍVEL!</string>
     <string name="only_pro_version">Esta função está disponível apenas para a versão pro</string>
@@ -97,7 +122,20 @@
 
     <string name="siginin_message">
         O login permite fazer backup de dados salvos e dados de estado na nuvem e compartilhá-los entre dispositivos.\n
-        No entanto, essas funções são experimentais, por isso não funcionam como esperado, as especificações podem ser alteradas ou encerradas sem aviso prévio.
+        No entanto, essas funções são experimentais, por isso não funcionam como esperado, as especificações podem ser alteradas ou encerradas sem aviso prévio. Mesmo se você não fizer login, bibliotecas como o Firebase coletam as informações para melhorar seu aplicativo. Uma política de privacidade detalhada pode ser encontrada em https://www.uoyabause.org/static_pages/privacy_policy.
     </string>
+    <string name="pro_version_available">A versão Pro está disponível!\n\n * Sem restrições para adicionar jogos\n * Salvar / carregar o estado do jogo entre os dispositivos\n * Sem anúncios\n</string>
+    <string name="remaining_installation_count">Оставшееся количество установок</string>
+    <string name="remaining_installation_count_is">Оставшееся количество установок : </string>
+    <string name="do_you_want_to_install">Você quer instalar?</string>
+    <string name="which_storage">Qual armazenamento?</string>
+    <string name="or_place_file_to">Ou coloque o jogo no \"%1$s\" manualmente.</string>
+    <string name="agreement">
+        Ao tocar no botão INICIAR, você concorda com o Contrato <a href="https://www.uoyabause.org/static_pages/eula">de EULA</a>.
+        Nota: <a href="https://www.uoyabause.org/static_pages/privacy_policy">A Política de Privacidade </a> descreve como os dados são tratados. YabaSanshiro envia dados de diagnóstico para devMiyax e serviços de terceiros para ajudar a melhorar o aplicativo.
+    </string>
+
+
+
 
 </resources>

@@ -19,7 +19,12 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="@string/game_select_screen">
+    <PreferenceCategory android:title="@string/game_select_screen" android:key="game_select_screen" >
+
+        <CheckBoxPreference
+            android:key="pref_force_androidtv_mode"
+            android:title="@string/foce_android_tv_mode"
+            android:defaultValue="false" />
 
         <org.uoyabause.android.GameDirectoriesDialogPreference
             android:key="pref_game_directory"
@@ -27,15 +32,17 @@
             android:summary=""
             android:defaultValue="" />
 
+        <ListPreference
+            android:key="pref_install_location"
+            android:title="@string/select_install_location"
+            android:summary=""
+            android:defaultValue="0" />
 <!--
         <Preference
             android:key="select_image"
             android:title="@string/select_bk_image" />
 -->
-        <CheckBoxPreference
-            android:key="pref_force_androidtv_mode"
-            android:title="@string/foce_android_tv_mode"
-            android:defaultValue="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/setting_general">
@@ -235,7 +242,6 @@
 
         <EditTextPreference
             android:key="pref_scsp_sync_per_frame"
-            android:inputType="number"
             android:defaultValue="4"
             android:summary=""
             android:title="Scsp synchronization count per a frame(1 - 255)" />
@@ -257,7 +263,7 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/information">
+    <PreferenceCategory android:key="information" android:title="@string/information">
         <PreferenceScreen
             android:summary="https://www.uoyabause.org/static_pages/privacy_policy.html"
             android:title="@string/privacy_policy"

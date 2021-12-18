@@ -243,6 +243,7 @@
     <string name="siginin_message">
         Signing in enable to backup save data and state data to the cloud and share them between devices.\n
         However, these functions are experimental, so they do not work as expected, specifications may be changed or terminated without prior notice.
+        Even if you don\'t sign in, libraries such as Firebase collect the information to improve your app. A detailed privacy policy can be found at https://www.uoyabause.org/static_pages/privacy_policy.
     </string>
     <string name="agree">I agree</string>
     <string name="do_you_want_to_sign_in">Do you want to sign in?</string>
@@ -276,7 +277,7 @@
     <string name="cpu_time">CPU time (Synchronize to emulated cpu time. If your device is fast enough, Sound emulation is very accurate.)</string>
     <string name="real_time">Real time (Synchronize to real world time. Although your device is not so fast, Sound is not corrupted.)</string>
     <string name="privacy_policy">Privacy Policy</string>
-    <string name="information">Infromation</string>
+    <string name="information">Information</string>
     <string name="already_have_been">If you already have been donated, Please contact smiyaxdev@gmail.com</string>
     <string name="close">Close</string>
     <string name="show_fps">Show FPS</string>
@@ -288,7 +289,7 @@
 
         To play SEGA Saturn games, follow this instructions.\n\n
 
-        1. Generate a image file from your game CD-ROM using DiscImageChef or something. Useful tools are listed [here](http://wiki.redump.org/index.php?title=Useful_Links).\n
+        1. Generate an image file from your game CD-ROM using DiscImageChef or something. Useful tools are listed [here](http://wiki.redump.org/index.php?title=Useful_Links).\n
         2. Copy the image files to the directory **\"%1$s\"**  in the smart phone internal storage.\n
         3. Show drawer menu and tap \"Refresh Game List\". Then game list is shown.\n
         4. Tap the game title you want to play.\n
@@ -297,6 +298,31 @@
         For more detail checkout this [Youtube video](https://www.youtube.com/watch?v=Ch6_KhhAg10).\n
         ]]>
     </string>
+
+    <string name="welcome_11">
+        <![CDATA[
+        # Welcome! \n\n
+
+        To play SEGA Saturn games, you have three options.\n\n
+
+        ## 1. Copy games to this Android device directly.\n
+
+        copy your ios images to **\"%1$s\"**.\n
+
+        ## 2. Copy to an external SD card.\n
+
+        copy your ios images to **\"%2$s\"** on an SD card.\n
+
+        ## 3. Tap + button\n
+
+        If you already have CHD or zipped iso images files. Just tap + button and select the file.\n\n
+
+        More detail is described in our web site [here](https://www.uoyabause.org/static_pages/guide).\n
+
+        ]]>
+    </string>
+
+
     <string name="delete_confirm_title">DELETE CONFIRM</string>
     <string name="not_available">NOT AVAILABLE!</string>
     <string name="only_pro_version">This function is only available for pro version</string>
@@ -333,6 +359,16 @@
     <string name="frameLimitNormal">Normal</string>
     <string name="frameLimitDouble">Double</string>
     <string name="frameLimitUnLimited">No Limit</string>
+    <string name="pro_version_available">Pro version is available!\n\n * No limit install count\n * Save/Load game state between devices\n * No advertisement\n\n</string>
+    <string name="select_install_location">Install Location</string>
+    <string name="remaining_installation_count">Remaining installation count</string>
+    <string name="remaining_installation_count_is">Remaining installation count is </string>
+    <string name="which_storage">Which Storage?</string>
+    <string name="or_place_file_to">Or place game into \"%1$s\" manually.</string>
+    <string name="agreement">
+    By Tapping START button, you agree to <a href="https://www.uoyabause.org/static_pages/eula">the End-User License Agreement</a>.
+    Note: <a href="https://www.uoyabause.org/static_pages/privacy_policy"> The Privacy Policy </a> describes how data is handled. YabaSanshiro sends diagnostics data to devMiyax and third party services to help improve the app.
+    </string>
 
 </resources>
 	

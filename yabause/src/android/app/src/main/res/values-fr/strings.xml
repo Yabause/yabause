@@ -188,13 +188,48 @@
         ]]>
     </string>
 
+    <string name="welcome_11">
+        <![CDATA[
+        # Bienvenue! \n\n
+
+        Pour jouer aux jeux SEGA Saturn, vous avez trois options.\n\n
+
+        ## 1. Copiez les jeux directement sur cet appareil Android.\n
+
+        copiez vos images ios dans **\"%1$s\"**.\n
+
+        ## 2. Copiez sur une carte SD externe.\n
+
+        copiez vos images ios dans **\"%2$s\"** sur une carte SD.\n
+
+        ## 3. Appuyez sur le bouton +\n
+
+        Si vous avez déjà des fichiers d\'images iso CHD ou zippés. Appuyez simplement sur le bouton + et sélectionnez le fichier.\n\n
+
+        Plus de détails sont décrits sur notre site Web [ici] (https://www.uoyabause.org/static_pages/guide).\n
+        ]]>
+    </string>
+
+
+
+
     <string name="delete_confirm_title">SUPPRIMER CONFIRMER</string>
     <string name="not_available">INDISPONIBLE!</string>
     <string name="only_pro_version">Cette fonction n\'est disponible que pour la version pro</string>
     <string name="got_it">Je l\'ai!</string>
 
     <string name="siginin_message">
-        La connexion permet de sauvegarder les données de sauvegarde et les données d\'état dans le cloud et de les partager entre les appareils.\n Cependant, ces fonctions sont expérimentales, elles ne fonctionnent donc pas comme prévu, les spécifications peuvent être modifiées ou supprimées sans préavis.
+        La connexion permet de sauvegarder les données de sauvegarde et les données d\'état dans le cloud et de les partager entre les appareils.\n Cependant, ces fonctions sont expérimentales, elles ne fonctionnent donc pas comme prévu, les spécifications peuvent être modifiées ou supprimées sans préavis. Même si vous ne vous connectez pas, des bibliothèques telles que Firebase collectent les informations pour améliorer votre application. Une politique de confidentialité détaillée est disponible sur https://www.uoyabause.org/static_pages/privacy_policy.
+    </string>
+    <string name="pro_version_available">La version Pro est disponible!\n\n * Aucune restriction sur laj\'out de jeux\n * Enregistrer / charger l\'état du jeu entre les appareils\n * Aucune publicité\n\n</string>
+    <string name="remaining_installation_count">Remaining installation count</string>
+    <string name="remaining_installation_count_is">Le nombre d’installations restantes est de</string>
+    <string name="do_you_want_to_install">Voulez-vous installer?</string>
+    <string name="which_storage">Quel stockage?</string>
+    <string name="or_place_file_to">Ou placez le jeu dans \"%1$s\" manuellement.</string>
+    <string name="agreement">
+    En appuyant sur le bouton DÉMARRER, vous acceptez le contrat <a href="https://www.uoyabause.org/static_pages/eula">de licence utilisateur final</a>.
+    Remarque : <a href="https://www.uoyabause.org/static_pages/privacy_policy">La politique de confidentialité</a> décrit la manière dont les données sont traitées. YabaSanshiro envoie des données de diagnostic à devMiyax et à des services tiers pour aider à améliorer l\'application.
     </string>
 
 </resources>

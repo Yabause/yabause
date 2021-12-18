@@ -63,7 +63,6 @@ import android.view.WindowInsets.Type
 import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.widget.FrameLayout
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -79,10 +78,6 @@ import com.activeandroid.util.IOUtils
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.AuthUI.IdpConfig.GoogleBuilder
 import com.firebase.ui.auth.IdpResponse
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
 import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -109,7 +104,10 @@ import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.json.JSONObject
@@ -119,6 +117,7 @@ import org.uoyabause.android.PadManager.ShowMenuListener
 import org.uoyabause.android.PadTestFragment.PadTestListener
 import org.uoyabause.android.StateListFragment.Companion.checkMaxFileCount
 import org.uoyabause.android.backup.TabBackupFragment
+import org.uoyabause.android.cheat.TabCheatFragment
 import org.uoyabause.android.game.BaseGame
 import org.uoyabause.android.game.GameUiEvent
 import org.uoyabause.android.game.SonicR
@@ -167,7 +166,7 @@ class Yabause : AppCompatActivity(),
     private var waitingResult = false
     private var tracker: Tracker? = null
     private var trayState: TrayState = TrayState.CLOSE
-    private var adView: AdView? = null
+    //private var adView: AdView? = null
     private var firebaseAnalytics: FirebaseAnalytics? = null
     private var inputManager: InputManager? = null
     private val returnCodeSignIn = 0x8010
@@ -233,6 +232,8 @@ class Yabause : AppCompatActivity(),
 
     var mParcelFileDescriptor: ParcelFileDescriptor? = null
 
+    private val apiscope = CoroutineScope(Dispatchers.IO)
+
     /**
      * Called when the activity is first created.
      */
@@ -284,6 +285,7 @@ class Yabause : AppCompatActivity(),
             }
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        window.setNavigationBarColor(getResources().getColor(R.color.black_opaque))
         drawerLayout = findViewById<View>(R.id.drawer_layout) as DrawerLayout
         updateViewLayout(resources.configuration.orientation)
         var navigationView = findViewById<View>(R.id.nav_view) as NavigationView
@@ -438,6 +440,7 @@ class Yabause : AppCompatActivity(),
         padManager.setShowMenulistener(this)
         waitingResult = false
         val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+/*
         if (uiModeManager.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION && BuildConfig.BUILD_TYPE != "pro") {
             val prefs = getSharedPreferences("private", Context.MODE_PRIVATE)
             val hasDonated = prefs.getBoolean("donated", false)
@@ -458,7 +461,9 @@ class Yabause : AppCompatActivity(),
         } else {
             adView = null
         }
+ */
         yabauseThread = YabauseRunnable(this)
+
     }
 
     private fun isSignedIn(): Boolean {
@@ -959,8 +964,8 @@ class Yabause : AppCompatActivity(),
                 editor.apply()
                 toggleMenu()
             }
-/*
-            R.id.menu_item_cheat -> {
+
+            R.id.menu_item_acp -> {
                 waitingResult = true
                 val transaction = supportFragmentManager.beginTransaction()
                 val fragment =
@@ -972,7 +977,7 @@ class Yabause : AppCompatActivity(),
                 transaction.show(fragment)
                 transaction.commit()
             }
- */
+
             R.id.exit -> {
                 YabauseRunnable.deinit()
                 try {
@@ -1472,7 +1477,7 @@ class Yabause : AppCompatActivity(),
                 val name = YabauseRunnable.getGameTitle()
                 tx.text = name
             }
-
+/*
             if (BuildConfig.BUILD_TYPE != "pro") {
                 val prefs = getSharedPreferences("private", Context.MODE_PRIVATE)
                 val hasDonated = prefs.getBoolean("donated", false)
@@ -1497,6 +1502,7 @@ class Yabause : AppCompatActivity(),
                     }
                 }
             }
+ */
             drawerLayout.openDrawer(GravityCompat.START)
         }
     }

@@ -23,7 +23,9 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.UiModeManager
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.Cursor
@@ -40,6 +42,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -52,6 +55,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
+import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
 import androidx.viewpager.widget.ViewPager
 import com.activeandroid.query.Select
@@ -205,6 +209,27 @@ class GameSelectFragmentPhone : Fragment(),
         tabpageAdapter = GameViewPagerAdapter(this@GameSelectFragmentPhone.childFragmentManager)
     }
 
+    fun selectGameFile(){
+        val prefs = requireActivity().getSharedPreferences("private",
+            MultiDexApplication.MODE_PRIVATE)
+        val InstallCount = prefs.getInt("InstallCount", 3)
+        if( InstallCount > 0){
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+            intent.addCategory(Intent.CATEGORY_OPENABLE)
+            intent.type = "*/*"
+            startActivityForResult(intent, READ_REQUEST_CODE)
+        }else {
+            val message = resources.getString(R.string.or_place_file_to, YabauseStorage.storage.gamePath);
+            val rtn = YabauseApplication.checkDonated(requireActivity(), message)
+            if ( rtn == 0) {
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                intent.type = "*/*"
+                startActivityForResult(intent, READ_REQUEST_CODE)
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -218,20 +243,31 @@ class GameSelectFragmentPhone : Fragment(),
         val fab: View = rootview.findViewById(R.id.fab)
         if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
             fab.setOnClickListener { _ ->
-
-                if (YabauseApplication.checkDonated(requireActivity()) == 0) {
-                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-                    intent.addCategory(Intent.CATEGORY_OPENABLE)
-                    intent.type = "*/*"
-                    startActivityForResult(intent, READ_REQUEST_CODE)
-                }
+                selectGameFile()
             }
         } else {
             fab.visibility = View.GONE
         }
 
+        if( adheight != 0 ) {
+            onAdViewisShwon(adheight)
+        }
+
         return rootview
     }
+
+    var adheight = 0
+    fun onAdViewisShwon( height: Int) {
+        try {
+            var parent_layout = rootview.findViewById<DrawerLayout>(R.id.drawer_layout_game_select)
+            var parm = parent_layout.layoutParams as FrameLayout.LayoutParams
+            parm.bottomMargin = height + 4
+            parent_layout.layoutParams = parm
+        } catch (e: Exception) {
+            adheight = height
+        }
+    }
+
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         drawerLayout!!.closeDrawers()
@@ -242,12 +278,7 @@ class GameSelectFragmentPhone : Fragment(),
             }
             R.id.menu_item_load_game -> {
                 if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
-                    if (YabauseApplication.checkDonated(requireActivity()) == 0) {
-                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-                        intent.addCategory(Intent.CATEGORY_OPENABLE)
-                        intent.type = "*/*"
-                        startActivityForResult(intent, READ_REQUEST_CODE)
-                    }
+                    selectGameFile()
                 } else {
                     val sharedPref =
                         PreferenceManager.getDefaultSharedPreferences(activity)
@@ -449,7 +480,7 @@ class GameSelectFragmentPhone : Fragment(),
             try {
 
                 val f = File(path)
-                zipFileName = YabauseStorage.storage.gamePath + "/" + f.name
+                zipFileName = YabauseStorage.storage.getInstallDir().absolutePath + "/" + f.name
                 val fd = File(zipFileName)
                 val parcelFileDescriptor =
                     requireActivity().contentResolver.openFileDescriptor(uri, "r")
@@ -482,12 +513,12 @@ class GameSelectFragmentPhone : Fragment(),
                                 entry.name.toLowerCase(Locale.ROOT).endsWith("cue") ||
                                 entry.name.toLowerCase(Locale.ROOT).endsWith("mds")
                             ) {
-                                targetFileName = YabauseStorage.storage.gamePath + "/" + entry.name
+                                targetFileName = YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name
                             }
                             zip.getInputStream(entry).use { input ->
                                 if (entry.isDirectory) {
                                     val unzipdir =
-                                        File(YabauseStorage.storage.gamePath + "/" + entry.name)
+                                        File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name)
                                     if (!unzipdir.exists()) {
                                         unzipdir.mkdirs()
                                     } else {
@@ -495,7 +526,7 @@ class GameSelectFragmentPhone : Fragment(),
                                         unzipdir.mkdirs()
                                     }
                                 } else {
-                                    File(YabauseStorage.storage.gamePath + "/" + entry.name).outputStream()
+                                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name).outputStream()
                                         .use { output ->
                                             input.copyTo(output)
                                         }
@@ -510,12 +541,12 @@ class GameSelectFragmentPhone : Fragment(),
                                 entry.name.toLowerCase(Locale.ROOT).endsWith("cue") ||
                                 entry.name.toLowerCase(Locale.ROOT).endsWith("mds")
                             ) {
-                                targetFileName = YabauseStorage.storage.gamePath + "/" + entry.name
+                                targetFileName = YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name
                             }
 
                             if (entry.isDirectory) {
                                 val unzipdir =
-                                    File(YabauseStorage.storage.gamePath + "/" + entry.name)
+                                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name)
                                 if (!unzipdir.exists()) {
                                     unzipdir.mkdirs()
                                 } else {
@@ -524,7 +555,7 @@ class GameSelectFragmentPhone : Fragment(),
                                 }
                             } else {
                                 sz.getInputStream(entry).use { input ->
-                                    File(YabauseStorage.storage.gamePath + "/" + entry.name).outputStream()
+                                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name).outputStream()
                                         .use { output ->
                                             input.copyTo(output)
                                         }
@@ -536,21 +567,34 @@ class GameSelectFragmentPhone : Fragment(),
 
                 if (targetFileName != "") {
                     withContext(Dispatchers.Main) {
+
+                        decrementInstallCount()
+
                         fileSelected(File(targetFileName))
                     }
                 } else {
-                    Toast.makeText(requireContext(),
-                        "ISO image is not found!!",
-                        Toast.LENGTH_LONG).show()
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(),
+                            "ISO image is not found!!",
+                            Toast.LENGTH_LONG).show()
+                    }
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(),
-                    "Fail to copy " + e.localizedMessage,
-                    Toast.LENGTH_LONG).show()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(),
+                        "Fail to copy " + e.localizedMessage,
+                        Toast.LENGTH_LONG).show()
+                }
             } catch (e: IOException) {
-                Toast.makeText(requireContext(),
-                    "Fail to copy " + e.localizedMessage,
-                    Toast.LENGTH_LONG).show()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(),
+                        "Fail to copy " + e.localizedMessage,
+                        Toast.LENGTH_LONG).show()
+                }
+
             } finally {
 
                 val fd = File(zipFileName)
@@ -625,7 +669,7 @@ class GameSelectFragmentPhone : Fragment(),
                 }
 
                 val fd =
-                    File(YabauseStorage.storage.gamePath + "/" + gameinfo.product_number + ".chd")
+                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + gameinfo.product_number + ".chd")
                 val parcelFileDescriptor =
                     requireActivity().contentResolver.openFileDescriptor(uri, "r")
                 val fileDescriptor: FileDescriptor = parcelFileDescriptor!!.fileDescriptor
@@ -641,13 +685,20 @@ class GameSelectFragmentPhone : Fragment(),
                     }
                 }
                 withContext(Dispatchers.Main) {
+
+                    decrementInstallCount()
+
                     fileSelected(fd)
                 }
                 parcelFileDescriptor.close()
             } catch (e: Exception) {
-                Toast.makeText(requireContext(),
-                    "Fail to copy " + e.localizedMessage,
-                    Toast.LENGTH_LONG).show()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(),
+                        "Fail to copy " + e.localizedMessage,
+                        Toast.LENGTH_LONG).show()
+                }
+
             } finally {
                 withContext(Dispatchers.Main) {
                     dismissDialog()
@@ -655,6 +706,55 @@ class GameSelectFragmentPhone : Fragment(),
             }
         }
         return
+    }
+
+    fun selectStorage( onOk: () -> Unit ) {
+        if( YabauseStorage.storage.hasExternalSD() ) {
+            val ctx = YabauseApplication.appContext
+            val sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx)
+            val path = sharedPref.getString("pref_install_location","0")
+            var selectItem = path?.toInt() ?: 0
+
+            var option: Array<String> = arrayOf()
+            option += "Internal" + " (" + YabauseStorage.storage.getAvailableInternalMemorySize() +" free)"
+            option += "External" + " (" +  YabauseStorage.storage.getAvailableExternalMemorySize() +" free)"
+
+            AlertDialog.Builder(requireActivity())
+                .setTitle(getString(R.string.which_storage))
+                .setSingleChoiceItems(option, selectItem
+                ) { dialog, which ->
+                    selectItem = which
+                }
+                .setPositiveButton(R.string.ok) { _, _ ->
+
+                    val editor = sharedPref.edit()
+                    editor.putString("pref_install_location",selectItem.toString())
+                    editor.commit()
+
+                    onOk()
+
+                }
+                .setNegativeButton(R.string.cancel){ _, _ -> }
+                .setCancelable(true)
+                .show()
+        }else{
+            onOk()
+        }
+    }
+
+    fun decrementInstallCount() {
+        val prefs = requireActivity().getSharedPreferences("private",
+            MultiDexApplication.MODE_PRIVATE)
+        var InstallCount = prefs.getInt("InstallCount", 3)
+        InstallCount -= 1
+        if( InstallCount < 0 ){
+            InstallCount = 0
+        }
+        with( prefs.edit()) {
+            putInt("InstallCount", InstallCount)
+            apply()
+        }
+
     }
 
     override fun onActivityResult(
@@ -684,19 +784,38 @@ class GameSelectFragmentPhone : Fragment(),
                         cursor.close()
 
                         size = size / 1024 / 1024
-                        val message =
+
+                        val prefs: SharedPreferences = requireActivity().getSharedPreferences("private",
+                            AppCompatActivity.MODE_PRIVATE)
+                        val count = prefs.getInt("InstallCount", 3)
+
+                        var message =
                             getString(R.string.install_game_message) + " " + size + getString(R.string.install_game_message_after)
+
+                        if(BuildConfig.BUILD_TYPE != "pro"){
+                            message += getString(R.string.remaining_installation_count_is) + " " + count + "."
+                        }
 
                         AlertDialog.Builder(requireActivity())
                             .setTitle(getString(R.string.do_you_want_to_install))
-                            // .setMessage("If you install, you can play from this game list directly. But it costs ${size} MBytes")
                             .setMessage(message)
-                            .setPositiveButton(R.string.yes) { _, _ -> installGameFile(uri) }
-                            .setNegativeButton(R.string.no) { _, _ -> openGameFileDirect(uri) }
+                            .setPositiveButton(R.string.yes) { _, _ ->
+                                selectStorage {
+                                    installGameFile(uri)
+                                }
+                            }
+                            .setNegativeButton(R.string.no) { _, _ ->
+                                decrementInstallCount()
+                                openGameFileDirect(uri)
+                            }
                             .setCancelable(true)
                             .show()
                     } else if (path.toLowerCase().endsWith("zip") || path.toLowerCase().endsWith("7z")) {
-                        installZipGameFile(uri, path)
+
+                        selectStorage {
+                            installZipGameFile(uri, path)
+                        }
+
                     } else {
                         Toast.makeText(requireContext(),
                             getString(R.string.only_chd_is_supported_for_load_game),
@@ -1066,11 +1185,30 @@ class GameSelectFragmentPhone : Fragment(),
                 viewPager!!.visibility = View.GONE
 
                 val markwon = Markwon.create(this.activity as Context)
-                val welcomeMessage = resources.getString(
-                    R.string.welcome,
-                    YabauseStorage.storage.gamePath
-                )
-                markwon.setMarkdown(viewMessage, welcomeMessage)
+
+                if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
+                    //val welcomeMessage = resources.getString(
+                    //    R.string.welcome_11
+                    //)
+
+                    val packagename = requireActivity().getPackageName()
+
+
+                    val welcomeMessage = resources.getString(
+                        R.string.welcome_11,
+                        "Android/data/" + packagename + "/files/yabause/games",
+                        "Android/data/" + packagename + "/files",
+                    )
+
+                    markwon.setMarkdown(viewMessage, welcomeMessage)
+
+                }else {
+                    val welcomeMessage = resources.getString(
+                        R.string.welcome,
+                        YabauseStorage.storage.gamePath
+                    )
+                    markwon.setMarkdown(viewMessage, welcomeMessage)
+                }
 
                 return
             }

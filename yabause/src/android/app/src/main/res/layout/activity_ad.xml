@@ -36,7 +36,7 @@
         android:layout_alignParentBottom="true"
         android:layout_marginTop="16dp"
         android:gravity="center"
-        android:text="Pro version is available!\n\n *Save/Load game state between devices\n *Delete games\n *No advertisement\n \n"
+        android:text="@string/pro_version_available"
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -59,12 +59,11 @@
         android:scaleType="centerInside"
         android:src="@drawable/icon_button"
         android:text="Get Yaba Sansiro Pro"
-        app:layout_constraintBottom_toBottomOf="@+id/textView6"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_view_ad" />
 
-
+<!--
     <TextView
         android:id="@+id/textView6"
         android:layout_width="match_parent"
@@ -76,16 +75,15 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
+-->
     <Button
         android:id="@+id/close"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
         android:text="@string/close"
-        app:layout_constraintBottom_toTopOf="@+id/textView6"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 

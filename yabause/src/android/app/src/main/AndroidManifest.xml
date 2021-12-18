@@ -79,7 +79,7 @@
         tools:targetApi="q">
         <activity
             android:name="org.uoyabause.android.SettingsActivity"
-            android:label="@string/title_activity_yaba_snashiro_settings"></activity>
+            android:label="@string/title_activity_yaba_snashiro_settings" />
         <activity android:name="org.uoyabause.android.AdActivity" />
 
         <meta-data
@@ -90,10 +90,10 @@
             android:value="true" />
         <meta-data
             android:name="AA_DB_NAME"
-            android:value="localgameinfo.db" />
+            android:value="localgameinfo2.db" />
         <meta-data
             android:name="AA_DB_VERSION"
-            android:value="2" />
+            android:value="3" />
         <meta-data
             android:name="AA_MODELS"
             android:value="org.uoyabause.android.GameInfo, org.uoyabause.android.GameStatus, org.uoyabause.android.Cheat" />
@@ -127,7 +127,6 @@
         <activity
             android:name="org.uoyabause.android.GameList"
             android:screenOrientation="landscape" />
-        <activity android:name="org.uoyabause.android.DonateActivity" />
         <activity
             android:name="org.uoyabause.android.Yabause"
             android:configChanges="orientation|keyboardHidden|screenSize|keyboard"
@@ -157,6 +156,10 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:theme="@android:style/Theme.Translucent" />
 
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/ad_app_id" />
+
         <service android:name="org.uoyabause.android.Notification">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -182,10 +185,6 @@
         <activity
             android:name="org.uoyabause.android.download.IsoDownload"
             android:label="@string/title_activity_iso_download"
-            android:theme="@style/AppTheme" />
-        <activity
-            android:name="org.uoyabause.android.CheckPaymentActivity"
-            android:label="@string/title_activity_check_payment"
             android:theme="@style/AppTheme" />
         <activity
             android:name="org.uoyabause.android.phone.GameSelectActivityPhone"
@@ -248,16 +247,12 @@
             </intent-filter>
         </receiver>
 
-        <service
-            android:name="org.uoyabause.android.CheckPSerivce"
-            android:exported="false"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
-
-        <meta-data android:name="com.google.android.gms.games.APP_ID"
+        <meta-data
+            android:name="com.google.android.gms.games.APP_ID"
             android:value="@string/game_id" />
-        <meta-data android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version"/>
-
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
     </application>
 
 </manifest>

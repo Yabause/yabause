@@ -28,4 +28,34 @@
     android:layout_height="match_parent"
     tools:context=".StartupActivity">
 
+    <LinearLayout
+        android:id="@+id/agree"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="32dp"
+        android:orientation="vertical">
+
+        <TextView
+
+            android:id="@+id/agree_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:elegantTextHeight="false"
+            android:singleLine="false"
+            android:text="@string/agreement"
+            android:textColor="@color/black"
+            android:textColorHighlight="@color/cardview_initial_background"
+            android:textColorLink="@color/black" />
+
+        <Button
+            android:id="@+id/agree_and_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:text="START" />
+
+    </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

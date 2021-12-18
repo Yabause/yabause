@@ -434,7 +434,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     }
 
     override fun onDestroy() {
-        this.setSelectedPosition(-1, false)
+        //this.setSelectedPosition(-1, false)
         System.gc()
         super.onDestroy()
         /*

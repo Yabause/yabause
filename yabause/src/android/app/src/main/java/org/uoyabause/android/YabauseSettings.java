@@ -206,54 +206,6 @@ public class YabauseSettings extends PreferenceActivity
       //do anything you want with the preferencey here
       preferenceCategory.addPreference(preference);
 
-      if( hasDonated ){
-          //editor.putString("donate_payload", purchase.getDeveloperPayload());
-          //editor.putString( "donate_item", purchase.getSku());
-
-          Boolean uoyabause_donation = prefs.getBoolean("uoyabause_donation", false);
-          if(uoyabause_donation){
-              String payload = prefs.getString("donate_payload","");
-              Preference prefPayload = new Preference(preferenceScreen.getContext());
-              prefPayload.setTitle("Payment ID");
-              prefPayload.setSummary( "uoYabause" );
-              preferenceCategory.addPreference(prefPayload);
-              return;
-          }
-
-          String payload = prefs.getString("donate_payload","");
-          Preference prefPayload = new Preference(preferenceScreen.getContext());
-          prefPayload.setTitle("Payment ID");
-          try {
-              String id = payload.substring(0, 6);
-              if (id != null) {
-                  prefPayload.setSummary(id);
-              } else {
-                  prefPayload.setSummary("REDEEM");
-              }
-          }catch(Exception e){
-              prefPayload.setSummary("REDEEM");
-          }
-          preferenceCategory.addPreference(prefPayload);
-
-          String donate_item = prefs.getString("donate_item","");
-          int count = prefs.getInt("donate_activate_count",-1);
-          String activate_status = "";
-          if (donate_item.equals(DonateActivity.SKU_DONATE_SMALL)) {
-              activate_status = count + "/1";
-          }
-          if (donate_item.equals(DonateActivity.SKU_DONATE_MEDIUM)) {
-              activate_status = count + "/5";
-          }
-          if (donate_item.equals(DonateActivity.SKU_DONATE_LARGE)  ) {
-              activate_status = count + "/Infinity";
-          }
-
-          Preference pref_activate_status = new Preference(preferenceScreen.getContext());
-          pref_activate_status.setTitle("Activate Count");
-          pref_activate_status.setSummary( activate_status );
-          preferenceCategory.addPreference(pref_activate_status);
-      }
-
   }
   
     @Override public void onCreate(Bundle savedInstanceState) {

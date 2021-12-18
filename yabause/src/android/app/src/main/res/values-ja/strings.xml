@@ -167,6 +167,7 @@
     <string name="siginin_message">
         サインインすることで、セーブデータとステートデータをクラウドに保存して、異なるデバイスでも共有できるようになります。\n
         しかし,これらの機能は実験的なので期待通り動作しなかったり、事前の予告なしに仕様変更されたり、終了したりすることがあります。
+        ログインしなくてもFirebaseなどのライブラリから、アプリの改善に必要とされる情報が収集されます。詳しいプライバシーポリシーは https://www.uoyabause.org/static_pages/privacy_policy で参照できます。
     </string>
     <string name="agree">同意します</string>
     <string name="do_you_want_to_sign_in">ログインしますか？</string>
@@ -245,6 +246,29 @@
         より詳しい使い方は私たちのthis [Youtube video](https://www.youtube.com/watch?v=Ch6_KhhAg10)を見てください。\n
         ]]>
     </string>
+
+    <string name="welcome_11">
+        <![CDATA[
+        # ようこそ！ \n\n
+
+        セガサターンのゲームをプレイするには3つの方法があります\n\n
+
+        ## 1. ゲームをこのAndroidデバイスに直接コピー\n
+
+        iOSイメージを **\"%1$s\"** にコピーします\n
+
+        ## 2. 外部SDカードにコピー\n
+
+        iOSイメージをSDカードの **\"%2$s\"** にコピーします\n
+
+        ## 3. +ボタンをタップ\n
+
+        すでにCHDまたはzip圧縮したISOイメージファイルがある場合,+ボタンをタップしてファイルを選択します。\n\n
+
+        詳細については、当社の [Webサイト](https://www.uoyabause.org/static_pages/guide)を参照してください。\n
+        ]]>
+    </string>
+
     <string name="delete_confirm_title">削除確認</string>
     <string name="not_available">利用できません!</string>
     <string name="only_pro_version">この機能はPro versionのみ使用できます</string>
@@ -260,6 +284,15 @@
     <string name="frameLimitDouble">倍速</string>
     <string name="frameLimitNormal">等速</string>
     <string name="frameLimitUnLimited">制限なし</string>
-
+    <string name="pro_version_available">プロバージョン\n\n * ゲームインストール数に制限なし\n * 状態保存をデバイス間で共有\n * 広告なし\n\n</string>
+    <string name="remaining_installation_count">残インストール可能数</string>
+    <string name="remaining_installation_count_is">残インストール可能数: </string>
+    <string name="do_you_want_to_install">インストールしますか?</string>
+    <string name="which_storage">どっちのストレージ？</string>
+    <string name="or_place_file_to">または、ゲームを手動で \"%1$s\" に配置します</string>
+    <string name="agreement">
+    STARTボタンをタップすると <a href="https://www.uoyabause.org/static_pages/eula">利用規約</a>に同意したことになります。
+    注: このアプリでのデータの取り扱いについては<a href="https://www.uoyabause.org/static_pages/privacy_policy"> プライバシーポリシー </a> に記載されています。 アプリの改善に役立てるため、 診断データは自動的に devmiyaxおよびサードパーティーサービスに送信されます。
+    </string>
 
 </resources>

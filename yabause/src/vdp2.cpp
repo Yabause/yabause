@@ -760,10 +760,27 @@ void frameSkipAndLimit() {
       framestoskip = 1;
 
     }
-    
-    if ( (onesecondticks + diffticks) < targetTime)
+
+    // just wait for next vsync
+    targetTime -= 1000;
+    if ( (onesecondticks + diffticks) < targetTime )
     {
-      YabNanosleep(targetTime - (onesecondticks + diffticks));
+
+      s64 sleeptime = (targetTime - (onesecondticks + diffticks));
+      u64 xcurticks = YabauseGetTicks();
+      if (sleeptime-1000 > 0) {
+        YabNanosleep(sleeptime-1000);
+      }
+
+      for (;;)
+      {
+        curticks = YabauseGetTicks();
+        diffticks = curticks - lastticks;
+        if ((onesecondticks + diffticks) >= targetTime)
+          break;
+      }
+      //u64 realstime = YabauseGetTicks() - xcurticks;
+      //yprintf("req time %d,real time %d diff = %d", (u32)sleeptime, (u32)realstime, realstime-sleeptime);
     }
 
     onesecondticks += diffticks;

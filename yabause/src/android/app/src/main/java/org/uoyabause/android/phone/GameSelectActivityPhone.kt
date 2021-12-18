@@ -27,8 +27,10 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -36,6 +38,13 @@ import com.google.android.gms.ads.MobileAds
 // import net.nend.android.NendAdView
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
+import android.view.ViewTreeObserver
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
+
+import com.google.android.gms.ads.AdListener
+
+
+
 
 class GameSelectActivityPhone : AppCompatActivity() {
     lateinit var frg_: GameSelectFragmentPhone
@@ -47,6 +56,7 @@ class GameSelectActivityPhone : AppCompatActivity() {
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
         window.setStatusBarColor(getResources().getColor(R.color.colorPrimaryDark))
+        window.setNavigationBarColor(getResources().getColor(R.color.black_opaque))
 
         val frame = FrameLayout(this)
         frame.id = CONTENT_VIEW_ID
@@ -64,6 +74,8 @@ class GameSelectActivityPhone : AppCompatActivity() {
             frg_ =
                 supportFragmentManager.findFragmentById(CONTENT_VIEW_ID) as GameSelectFragmentPhone
         }
+
+
         if (BuildConfig.BUILD_TYPE != "pro") {
             val prefs =
                 getSharedPreferences("private", Context.MODE_PRIVATE)
@@ -86,9 +98,26 @@ class GameSelectActivityPhone : AppCompatActivity() {
                     adView!!.invalidate()
                     ViewCompat.setTranslationZ(adView!!, 90f)
                     adView!!.loadAd(adRequest)
+
+                    adView!!.adListener = object : AdListener() {
+                        override fun onAdLoaded() {
+                            //mAdView.getHeight() returns 0 since the ad UI didn't load
+                            adView!!.viewTreeObserver.addOnGlobalLayoutListener(object :
+                                OnGlobalLayoutListener {
+                                override fun onGlobalLayout() {
+                                    adView!!.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                                    frg_?.onAdViewisShwon(adView!!.getHeight())
+                                }
+                            })
+                        }
+                    }
+
                 } catch (e: Exception) {
                 }
             }
+        }
+
+
 
 /*
                     val nendAdView = NendAdView(
@@ -109,9 +138,11 @@ class GameSelectActivityPhone : AppCompatActivity() {
                     nendAdView.loadAd()
                 } catch (e: Exception) {
                 }
+
             }
- */
+
         }
+ */
         /*
         GameSelectFragmentPhone frg = new GameSelectFragmentPhone();
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
