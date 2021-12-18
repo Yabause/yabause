@@ -12,6 +12,7 @@ if (YAB_WANT_VULKAN)
 	include_directories( ${VULKAN_INCLUDE_DIRS} )
 endif()
 
+
 if(Qt5_FOUND) 
 	message(STATUS "Qt5 Found")
 
@@ -176,6 +177,7 @@ set( yabause_qt_SOURCES
 	QtYabause.cpp
 	CommonDialogs.cpp
 	PerQt.c
+	GetPin.cpp
 	ui/UIYabause.cpp
 	ui/UISettings.cpp
 	ui/UIAbout.cpp
@@ -301,6 +303,26 @@ target_link_libraries( yabause-qt ${yabause_qt_windows_LIBRARIES} )
 target_link_libraries( yabause-qt ${yabause_qt_macosx_LIBRARIES} )
 target_link_libraries( yabause-qt ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-qt ${zlib_STATIC_LIBRARIES} )
+
+# OpenSSL for https
+if(WIN32) 
+
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/include )
+target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libssl-1_1.lib)
+target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libcrypto-1_1.lib)
+
+else()
+	
+  find_package(OpenSSL REQUIRED) 
+	if( OpenSSL_FOUND )
+		include_directories(${OPENSSL_INCLUDE_DIRS})
+		link_directories(${OPENSSL_LIBRARIES})
+		message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+		target_link_libraries(yabause-qt ${OPENSSL_LIBRARIES})
+  endif()
+
+endif()
+
 if (Qt5_FOUND)
 	target_link_libraries( yabause-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Multimedia_LIBRARIES})
 else()
@@ -372,8 +394,8 @@ if (WIN32)
 	#install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../README     DESTINATION "." RENAME README.txt)
 	#install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../README.WIN DESTINATION "." RENAME README.WIN.txt)
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/donate.png DESTINATION "." )
-	install(FILES c:/bin/libeay32.dll DESTINATION "." )
-	install(FILES c:/bin/ssleay32.dll DESTINATION "." )
+	#install(FILES c:/bin/libeay32.dll DESTINATION "." )
+	#install(FILES c:/bin/ssleay32.dll DESTINATION "." )
 	
 	if (MINGW)
 		get_filename_component( Mingw_Path ${CMAKE_CXX_COMPILER} PATH )
