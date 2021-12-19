@@ -1551,7 +1551,7 @@ int YglInit(int width, int height, unsigned int depth) {
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  YglTM = YglTMInit(512, 512);
+  YglTM = YglTMInit(512, 2048);
 
   _Ygl->smallfbo = 0;
   _Ygl->smallfbotex = 0;
