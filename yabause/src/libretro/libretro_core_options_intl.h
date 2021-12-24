@@ -3529,9 +3529,9 @@ struct retro_core_options_v2 options_ro = {
 #define OPTION_VAL_1M_RAM_RU "1 МБ ОЗУ"
 #define OPTION_VAL_4M_RAM_RU "4 МБ ОЗУ"
 #define YABAUSE_MULTITAP_PORT1_LABEL_RU "Адаптер для 6 игроков в порте 1"
-#define YABAUSE_MULTITAP_PORT1_INFO_0_RU "Включить Multitap для портов 1"
+#define YABAUSE_MULTITAP_PORT1_INFO_0_RU "Подключает Multitap для порта 1"
 #define YABAUSE_MULTITAP_PORT2_LABEL_RU "Адаптер для 6 игроков в порте 2"
-#define YABAUSE_MULTITAP_PORT2_INFO_0_RU "Включить Multitap для портов 2"
+#define YABAUSE_MULTITAP_PORT2_INFO_0_RU "Подключает Multitap для порта 2"
 #define YABAUSE_NUMTHREADS_LABEL_RU "Число потоков (требуется перезапуск)"
 #define YABAUSE_NUMTHREADS_INFO_0_RU "В зависимости от процессора, изменение настройки может улучшить производительность."
 
@@ -4239,7 +4239,7 @@ struct retro_core_options_v2 options_tr = {
 
 /* RETRO_LANGUAGE_UK */
 
-#define YABAUSE_FRAMESKIP_LABEL_UK NULL
+#define YABAUSE_FRAMESKIP_LABEL_UK "Пропуск кадру"
 #define YABAUSE_FRAMESKIP_INFO_0_UK "Увімкнути пропуск кадрів, це має покращити продуктивність."
 #define YABAUSE_FORCE_HLE_BIOS_LABEL_UK NULL
 #define YABAUSE_FORCE_HLE_BIOS_INFO_0_UK NULL
