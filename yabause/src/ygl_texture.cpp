@@ -36,7 +36,7 @@ extern "C" {
 
 #define YGLDEBUG LOG
 
-const char prg_generate_rbg[] =
+const char prg_generate_rbg_base[] =
 #if defined(_OGLES3_)
 "#version 310 es \n"
 "precision highp float; \n"
@@ -45,8 +45,7 @@ const char prg_generate_rbg[] =
 #else
 "#version 430 \n"
 #endif
-"#pragma optionNV(inline all)\n"
-"layout(local_size_x = 16, local_size_y = 16) in;\n"
+"layout(local_size_x = %d, local_size_y = %d, local_size_z = 1) in;\n"
 "layout(rgba8, binding = 0)  uniform writeonly image2D outSurface;\n"
 "layout(std430, binding = 1) readonly buffer VDP2 { uint vram[]; };\n"
 "struct vdp2rotationparameter_struct{ \n"
@@ -231,7 +230,6 @@ const char prg_generate_rbg[] =
 "  return 0; \n"
 "} \n"
 
-
 //----------------------------------------------------------------------
 // Main
 //----------------------------------------------------------------------
@@ -254,6 +252,8 @@ const char prg_generate_rbg[] =
 "  float posy = float(texel.y) * vres_scale;\n"
 "  specialfunction_in = (supplementdata >> 9) & 0x1u; \n"
 "  specialcolorfunction_in = (supplementdata >> 8) & 0x1u; \n";
+
+char prg_generate_rbg[ sizeof(prg_generate_rbg_base) + 64 ] = {};
 
 const char prg_rbg_rpmd0_2w[] =
 "  paramid = 0; \n"
@@ -1049,6 +1049,9 @@ class RBGGenerator {
 
   void * mapped_vram = nullptr;
 
+  int local_size_x = 10;
+  int local_size_y = 10;
+
 protected:
   RBGGenerator() {
     tex_surface_ = 0;
@@ -1133,6 +1136,7 @@ public:
       GLchar *info = new GLchar[length];
       glGetShaderInfoLog(result, length, NULL, info);
       YGLDEBUG("[COMPILE] %s\n", info);
+      YuiErrorMsg(info);
       FILE * fp = fopen("tmp.cpp", "w");
       if (fp) {
         for (int i = 0; i < count; i++) {
@@ -1140,6 +1144,8 @@ public:
         }
         fclose(fp);
       }
+
+      YabThreadUSleep(1000000);
       abort();
       delete[] info;
     }
@@ -1154,6 +1160,7 @@ public:
       GLchar *info = new GLchar[length];
       glGetProgramInfoLog(program, length, NULL, info);
       YGLDEBUG("[LINK] %s\n", info);
+      YuiErrorMsg(info);
       FILE * fp = fopen("tmp.cpp", "w");
       if (fp) {
         for (int i = 0; i < count; i++) {
@@ -1161,6 +1168,7 @@ public:
         }
         fclose(fp);
       }
+
       YabThreadUSleep(1000000);
       abort();
       delete[] info;
@@ -1190,6 +1198,23 @@ public:
     glGenBuffers(1, &ssbo_window_);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_window_);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(vdp2WindowInfo) * 512, NULL, GL_DYNAMIC_DRAW);
+
+    GLint workGroupCount[3], workGroupSize[3];
+    GLint maxInvocations;
+    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &maxInvocations);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &workGroupCount[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &workGroupCount[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &workGroupCount[2]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &workGroupSize[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &workGroupSize[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &workGroupSize[2]);
+
+    local_size_x = sqrtf(maxInvocations);
+    local_size_y = sqrtf(maxInvocations);
+
+    int length = sizeof(prg_generate_rbg_base) + 64;
+    snprintf(prg_generate_rbg,length,prg_generate_rbg_base,local_size_x,local_size_y);
+
 
     //prg_rbg_0_2w_bitmap_8bpp_ = createProgram(sizeof(a_prg_rbg_0_2w_bitmap) / sizeof(char*), (const GLchar**)a_prg_rbg_0_2w_bitmap);
     //prg_rbg_0_2w_p1_4bpp_ = createProgram(sizeof(a_prg_rbg_0_2w_p1_4bpp) / sizeof(char*), (const GLchar**)a_prg_rbg_0_2w_p1_4bpp);
@@ -1294,7 +1319,9 @@ public:
       case GL_INVALID_FRAMEBUFFER_OPERATION:  msg = "INVALID_FRAMEBUFFER_OPERATION"; break;
       default:  msg = "Unknown"; break;
       }
-      YGLDEBUG("GLErrorLayer:ERROR:%04x'%s' %s\n", error_code, msg, name);
+      char errorbuf[256];
+      snprintf(errorbuf,256,"GLErrorLayer:ERROR:%04x'%s' %s\n", error_code, msg, name);
+      YuiErrorMsg(errorbuf);
       abort();
       error_code = glGetError();
     } while (error_code != GL_NO_ERROR);
@@ -1321,8 +1348,6 @@ public:
   //-----------------------------------------------
   void update(RBGDrawInfo * rbg) {
     GLuint error;
-    int local_size_x = 4;
-    int local_size_y = 4;
 
     int work_groups_x = 1 + (tex_width_ - 1) / local_size_x;
     int work_groups_y = 1 + (tex_height_ - 1) / local_size_y;
