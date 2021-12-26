@@ -435,9 +435,9 @@ class Yabause : AppCompatActivity(),
             navigationView.menu.removeItem(MENU_ID_LEADERBOARD)
         }
 
-        padManager = PadManager.getPadManager()
+        padManager = PadManager.padManager!!
         padManager.loadSettings()
-        padManager.setShowMenulistener(this)
+        padManager.showMenulistener = this //setShowMenulistener(this)
         waitingResult = false
         val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
 /*
@@ -871,7 +871,7 @@ class Yabause : AppCompatActivity(),
             }
             R.id.menu_item_pad_setting -> {
                 waitingResult = true
-                if (padManager.player1InputDevice == -1) { // Using pad?
+                if (padManager.getPlayer1InputDevice() == -1) { // Using pad?
                     val transaction = supportFragmentManager.beginTransaction()
                     val fragment = PadTestFragment.newInstance("hoge", "hoge")
                     fragment.setListener(this)
@@ -894,7 +894,7 @@ class Yabause : AppCompatActivity(),
             }
             R.id.menu_item_pad_setting_p2 -> {
                 waitingResult = true
-                if (padManager.player2InputDevice != -1) { // Using pad?
+                if (padManager.getPlayer2InputDevice() != -1) { // Using pad?
                     val newFragment = InputSettingFragment()
                     newFragment.setPlayerAndFilename(
                         SelInputDeviceFragment.PLAYER2,
@@ -1428,12 +1428,15 @@ class Yabause : AppCompatActivity(),
         // Log.d("dispatchKeyEvent","device:" + event.getDeviceId() + ",action:" + action +",keyCoe:" + keyCode );
         if (action == KeyEvent.ACTION_UP) {
             val rtn = padManager.onKeyUp(keyCode, event)
-            if (rtn != 0) {
+            if( rtn == PadManager.TOGGLE_MENU){
+                toggleMenu()
+            }
+            if (rtn != PadManager.NO_ACTION_MAPPED) {
                 return true
             }
         } else if (action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
             val rtn = padManager.onKeyDown(keyCode, event)
-            if (rtn != 0) {
+            if (rtn != PadManager.NO_ACTION_MAPPED) {
                 return true
             }
         }
@@ -1648,13 +1651,13 @@ class Yabause : AppCompatActivity(),
 
         // InputDevice
         var selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535")
-        padManager = PadManager.updatePadManager()
-        padManager.setShowMenulistener(this)
+        padManager = PadManager.updatePadManager()!!
+        padManager.showMenulistener = this
         Log.d(TAG, "input $selInputdevice")
         // First time
         if (selInputdevice == "65535") {
             // if game pad is connected use it.
-            selInputdevice = if (padManager.deviceCount > 0) {
+            selInputdevice = if (padManager.getDeviceCount() > 0) {
                 padManager.setPlayer1InputDevice(null)
                 val editor = sharedPref.edit()
                 editor.putString("pref_player1_inputdevice", padManager.getId(0))
@@ -1709,21 +1712,21 @@ class Yabause : AppCompatActivity(),
         var analog = sharedPref.getBoolean("pref_analog_pad", false)
         val padv = findViewById<View>(R.id.yabause_pad) as YabausePad
         if (analog) {
-            padManager.setAnalogMode(PadManager.MODE_ANALOG)
+            padManager.analogMode = PadManager.MODE_ANALOG
             YabauseRunnable.switch_padmode(PadManager.MODE_ANALOG)
             padv.setPadMode(PadManager.MODE_ANALOG)
         } else {
-            padManager.setAnalogMode(PadManager.MODE_HAT)
+            padManager.analogMode = PadManager.MODE_HAT
             YabauseRunnable.switch_padmode(PadManager.MODE_HAT)
             padv.setPadMode(PadManager.MODE_HAT)
         }
         menu.findItem(R.id.pad_mode).isChecked = analog
         analog = sharedPref.getBoolean("pref_analog_pad2", false)
         if (analog) {
-            padManager.setAnalogMode2(PadManager.MODE_ANALOG)
+            padManager.analogMode2 = PadManager.MODE_ANALOG
             YabauseRunnable.switch_padmode2(PadManager.MODE_ANALOG)
         } else {
-            padManager.setAnalogMode2(PadManager.MODE_HAT)
+            padManager.analogMode2 = PadManager.MODE_HAT
             YabauseRunnable.switch_padmode2(PadManager.MODE_HAT)
         }
         menu.findItem(R.id.pad_mode_p2).isChecked = analog
@@ -1740,7 +1743,7 @@ class Yabause : AppCompatActivity(),
         get() = YabauseStorage.storage.getMemoryPath("memory.ram")
 
     val player2InputDevice: Int
-        get() = padManager.player2InputDevice
+        get() = padManager.getPlayer2InputDevice()
 
     val cartridgePath: String
         get() = YabauseStorage.storage
@@ -1772,8 +1775,8 @@ class Yabause : AppCompatActivity(),
         val menu = navigationView.menu
         val nav_pad_device = menu.findItem(R.id.menu_item_pad_device)
         val nav_pad_device_p2 = menu.findItem(R.id.menu_item_pad_device_p2)
-        padManager = PadManager.updatePadManager()
-        padManager.setShowMenulistener(this)
+        padManager = PadManager.updatePadManager()!!
+        padManager.showMenulistener = this
         if (padManager.getDeviceCount() > 0 && id != "-1") {
             when (target) {
                 SelInputDeviceFragment.PLAYER1 -> {

@@ -441,16 +441,16 @@ class SettingsActivity : AppCompatActivity() {
             val defkey = "pref_" + player + "_inputdef_file"
             val sharedPref = PreferenceManager.getDefaultSharedPreferences(activity)
             val res = resources
-            val padm = PadManager.getPadManager()
+            val padm = PadManager.padManager
             val input_device =
                 preferenceManager.findPreference(devicekey) as ListPreference?
             val Inputlabels: MutableList<CharSequence> = ArrayList()
             val Inputvalues: MutableList<CharSequence> = ArrayList()
             Inputlabels.add(res.getString(R.string.onscreen_pad))
             Inputvalues.add("-1")
-            for (inputType in 0 until padm.deviceCount) {
-                Inputlabels.add(padm.getName(inputType))
-                Inputvalues.add(padm.getId(inputType))
+            for (inputType in 0 until padm!!.getDeviceCount()) {
+                Inputlabels.add(padm.getName(inputType)!!)
+                Inputvalues.add(padm.getId(inputType)!!)
             }
             input_device!!.entries = Inputlabels.toTypedArray()
             input_device.entryValues = Inputvalues.toTypedArray()

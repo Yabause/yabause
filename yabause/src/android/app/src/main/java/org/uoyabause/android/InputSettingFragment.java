@@ -104,6 +104,7 @@ public class InputSettingFragment extends DialogFragment
     map.add(PadEvent.PERANALOG_AXIS_Y); // up to down
     map.add(PadEvent.PERANALOG_AXIS_LTRIGGER); // left trigger
     map.add(PadEvent.PERANALOG_AXIS_RTRIGGER); // right trigger
+    map.add(PadEvent.MENU); // right trigger
 
     //setDialogTitle(R.string.input_the_key);
     //setPositiveButtonText(null);  // OKボタンを非表示にする
@@ -230,6 +231,7 @@ public class InputSettingFragment extends DialogFragment
       jsonObject.put("PERANALOG_AXIS_Y", dmykey);
       jsonObject.put("PERANALOG_AXIS_LTRIGGER", dmykey);
       jsonObject.put("PERANALOG_AXIS_RTRIGGER", dmykey);
+      jsonObject.put("MENU", dmykey);
 
       for (HashMap.Entry<Integer, Integer> entry : Keymap.entrySet()) {
         // キーを取得
@@ -287,6 +289,9 @@ public class InputSettingFragment extends DialogFragment
             break;
           case PadEvent.PERANALOG_AXIS_RTRIGGER:
             jsonObject.put("PERANALOG_AXIS_RTRIGGER", key);
+            break;
+          case PadEvent.MENU:
+            jsonObject.put("MENU", key);
             break;
         }
       }
@@ -396,6 +401,10 @@ public class InputSettingFragment extends DialogFragment
       case PadEvent.PERANALOG_AXIS_RTRIGGER:
         setMessage(res.getString(R.string.axis_r));
         break;
+      case PadEvent.MENU:
+        setMessage(res.getString(R.string.menu));
+        break;
+
     }
 
     return true;
@@ -422,8 +431,8 @@ public class InputSettingFragment extends DialogFragment
 
       Log.d("Yabause", "key:" + event.getScanCode() + " value: " + event.getAction());
 
-      if (map.get(index) == PadEvent.PERANALOG_AXIS_X || map.get(index) == PadEvent.PERANALOG_AXIS_Y ||
-          map.get(index) == PadEvent.PERANALOG_AXIS_LTRIGGER || map.get(index) == PadEvent.PERANALOG_AXIS_RTRIGGER) {
+      if (map.get(index) == PadEvent.PERANALOG_AXIS_X || map.get(index) == PadEvent.PERANALOG_AXIS_Y /*||
+          map.get(index) == PadEvent.PERANALOG_AXIS_LTRIGGER || map.get(index) == PadEvent.PERANALOG_AXIS_RTRIGGER*/) {
         onkey = false;
         return true;
       }

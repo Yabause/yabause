@@ -69,6 +69,7 @@
     <string name="x_button">X</string>
     <string name="y_button">Y</string>
     <string name="z_button">Z</string>
+    <string name="menu">Menu</string>
 
     <string name="scale">Scale</string>
     <string name="transparency">Transparency</string>

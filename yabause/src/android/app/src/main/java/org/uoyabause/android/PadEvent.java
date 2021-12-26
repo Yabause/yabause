@@ -59,8 +59,7 @@ class PadEvent {
     final static int PERANALOG_AXIS_RTRIGGER = 20; // right trigger
     final static int PERANALOG_AXIS_LTRIGGER = 21; // left trigger
 
-
-
+    final static int MENU = 22; // show menu botton
 
     private int action;
     private int key;
