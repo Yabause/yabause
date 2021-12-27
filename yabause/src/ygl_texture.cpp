@@ -2612,6 +2612,7 @@ public:
       ErrorHandle("glBindImageTexture 0");
     }
 
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glDispatchCompute(work_groups_x, work_groups_y, 1);
     ErrorHandle("glDispatchCompute");
 
@@ -2620,7 +2621,7 @@ public:
 
   //-----------------------------------------------
   GLuint getTexture(int id) {
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
     if (id == 1) {
       return tex_surface_;
     }
@@ -2676,6 +2677,9 @@ void RBGGeneratorVulkan::init(VIDVulkan * vulkan, int width, int height) {
   vk::Device d(device);
   resize(width,height);
   if (queue) return;
+
+  int length = sizeof(prg_generate_rbg_base) + 64;
+  snprintf(prg_generate_rbg,length,prg_generate_rbg_base,16,16);
 
   //queue = vk::Queue(vulkan->getVulkanQueue()); //d.getQueue(vulkan->getVulkanComputeQueueFamilyIndex(), 0);
   queue = d.getQueue(vulkan->getVulkanComputeQueueFamilyIndex(), 0);
