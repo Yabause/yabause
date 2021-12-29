@@ -201,7 +201,7 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
       if (keyCode == 0) {
         keyCode = event.scanCode
       }
-      val PadKey = Keymap[keyCode]
+      var PadKey = Keymap[keyCode]
       return if (PadKey != null) {
         currentButtonState = currentButtonState or (1 shl PadKey)
         if (showMenuCode == currentButtonState) {
@@ -220,11 +220,22 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
         if (_testmode) {
           _pdm.addDebugString("onKeyDown: $keyCode Satpad: $PadKey")
         } else {
-          if ((_pdm.analogMode == PadManager.MODE_ANALOG && _playerindex == 0 || _pdm.analogMode2 == PadManager.MODE_ANALOG && _playerindex == 1) &&
-            PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER || PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER
+          if (
+            ( (_pdm.analogMode == PadManager.MODE_ANALOG && _playerindex == 0) ||
+              (_pdm.analogMode2 == PadManager.MODE_ANALOG && _playerindex == 1)) &&
+              ( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER || PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER )
           ) {
             YabauseRunnable.axis(PadKey, _playerindex, 255)
           } else {
+
+            if( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER ){
+              PadKey = PadEvent.BUTTON_LEFT_TRIGGER;
+            }
+
+            if( PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER ){
+              PadKey = PadEvent.BUTTON_RIGHT_TRIGGER
+            }
+
             YabauseRunnable.press(PadKey, _playerindex)
           }
         }
@@ -249,13 +260,15 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
         keyCode = event.scanCode
       }
       if (!event.isCanceled) {
-        val PadKey = Keymap[keyCode]
+        var PadKey = Keymap[keyCode]
         return if (PadKey != null) {
           currentButtonState = currentButtonState and (1 shl PadKey).inv()
           //Log.d(this.getClass().getSimpleName(),"currentButtonState = " + Integer.toHexString(currentButtonState) );
           if (_testmode) _pdm.addDebugString("onKeyUp: $keyCode Satpad: $PadKey") else {
-            if ((_pdm.analogMode == PadManager.MODE_ANALOG && _playerindex == 0 || _pdm.analogMode2 == PadManager.MODE_ANALOG && _playerindex == 1) &&
-              PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER || PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER
+            if (
+              ( (_pdm.analogMode == PadManager.MODE_ANALOG && _playerindex == 0) ||
+                  (_pdm.analogMode2 == PadManager.MODE_ANALOG && _playerindex == 1)) &&
+              ( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER || PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER )
             ) {
               YabauseRunnable.axis(PadKey, _playerindex, 0)
             } else {
@@ -263,6 +276,15 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
               if( PadKey == PadEvent.MENU ){
                 return TOGGLE_MENU
               }else {
+
+                if( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER ){
+                  PadKey = PadEvent.BUTTON_LEFT_TRIGGER;
+                }
+
+                if( PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER ){
+                  PadKey = PadEvent.BUTTON_RIGHT_TRIGGER
+                }
+
                 YabauseRunnable.release(PadKey, _playerindex)
               }
             }
