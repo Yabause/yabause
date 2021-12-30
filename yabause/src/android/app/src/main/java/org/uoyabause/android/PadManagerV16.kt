@@ -18,6 +18,7 @@
 */
 package org.uoyabause.android
 
+import android.util.Log
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -55,6 +56,9 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
   val showMenuCode = 0x1c40
   var Keymap: HashMap<Int, Int>
   var _pdm: PadManagerV16
+  var isLTriggerAnalog = true
+  var isRTriggerAnalog = true
+
   fun loadDefault() {
     Keymap.clear()
     Keymap[MotionEvent.AXIS_HAT_Y or 0x8000] = PadEvent.BUTTON_UP
@@ -75,6 +79,8 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
     Keymap[MotionEvent.AXIS_LTRIGGER] = PadEvent.PERANALOG_AXIS_LTRIGGER
     Keymap[MotionEvent.AXIS_RTRIGGER] = PadEvent.PERANALOG_AXIS_RTRIGGER
     Keymap[KeyEvent.KEYCODE_BUTTON_SELECT] = PadEvent.MENU
+    isRTriggerAnalog = true
+    isRTriggerAnalog = true
   }
 
   fun loadSettings(setting_filename: String) {
@@ -87,6 +93,9 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
       inputStream.read(buffer)
       inputStream.close()
       val json = String(buffer)
+
+      Log.d("yabause", "keymap: ${json}")
+
       val jsonObject = JSONObject(json)
       Keymap.clear()
       Keymap[jsonObject.getInt("BUTTON_UP")] = PadEvent.BUTTON_UP
@@ -107,6 +116,21 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
       Keymap[jsonObject.getInt("PERANALOG_AXIS_LTRIGGER")] = PadEvent.PERANALOG_AXIS_LTRIGGER
       Keymap[jsonObject.getInt("PERANALOG_AXIS_RTRIGGER")] = PadEvent.PERANALOG_AXIS_RTRIGGER
       Keymap[jsonObject.getInt("MENU")] = PadEvent.MENU
+
+      try {
+        isLTriggerAnalog = jsonObject.getBoolean("IS_LTRIGGER_ANALOG")
+      }catch(e: JSONException){
+        isLTriggerAnalog = true
+      }
+
+      try {
+        isRTriggerAnalog = jsonObject.getBoolean("IS_RTRIGGER_ANALOG")
+      }catch(e: JSONException){
+        isRTriggerAnalog = true
+      }
+
+
+
     } catch (e: IOException) {
       e.printStackTrace()
       loadDefault()
@@ -137,32 +161,33 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
             var nomalize_value: Double = motion_value * 128.0 + 128.0
             if (nomalize_value > 255.0) nomalize_value = 255.0
             if (nomalize_value < 0.0) nomalize_value = 0.0
+            Log.d("Yabause"," ${sat_btn}: ${motion_value}/${nomalize_value}")
             YabauseRunnable.axis(sat_btn, _playerindex, nomalize_value.toInt())
             continue
-          } else if (sat_btn == PadEvent.PERANALOG_AXIS_LTRIGGER || sat_btn == PadEvent.PERANALOG_AXIS_RTRIGGER) {
+          } else if (sat_btn == PadEvent.PERANALOG_AXIS_LTRIGGER && isLTriggerAnalog) {
             var nomalize_value: Double = motion_value * 255.0
             if (nomalize_value > 255.0) nomalize_value = 255.0
             if (nomalize_value < 0.0) nomalize_value = 0.0
             YabauseRunnable.axis(sat_btn, _playerindex, nomalize_value.toInt())
-
-
-            var digitalButton = PadEvent.BUTTON_LEFT_TRIGGER
-            if( sat_btn == PadEvent.PERANALOG_AXIS_LTRIGGER ){
-              digitalButton = PadEvent.BUTTON_LEFT_TRIGGER;
+            if( nomalize_value > 145.0 ) {
+              YabauseRunnable.press(PadEvent.BUTTON_LEFT_TRIGGER, _playerindex)
             }else{
-              digitalButton = PadEvent.BUTTON_RIGHT_TRIGGER;
+              YabauseRunnable.release(PadEvent.BUTTON_LEFT_TRIGGER, _playerindex)
             }
-            if( nomalize_value > 145 ) {
-              YabauseRunnable.press(digitalButton, _playerindex)
+            continue
+          }else if (sat_btn == PadEvent.PERANALOG_AXIS_RTRIGGER && isRTriggerAnalog) {
+            var nomalize_value: Double = motion_value * 255.0
+            if (nomalize_value > 255.0) nomalize_value = 255.0
+            if (nomalize_value < 0.0) nomalize_value = 0.0
+            YabauseRunnable.axis(sat_btn, _playerindex, nomalize_value.toInt())
+            if( nomalize_value > 145.0 ) {
+              YabauseRunnable.press(PadEvent.BUTTON_RIGHT_TRIGGER, _playerindex)
             }else{
-              YabauseRunnable.release(digitalButton, _playerindex)
+              YabauseRunnable.release(PadEvent.BUTTON_RIGHT_TRIGGER, _playerindex)
             }
-
-            // ToDo: Need to trigger event
-            //Keymap.put(MotionEvent.AXIS_LTRIGGER, PadEvent.BUTTON_LEFT_TRIGGER);
-            //Keymap.put(MotionEvent.AXIS_RTRIGGER, PadEvent.BUTTON_RIGHT_TRIGGER);
             continue
           }
+
         } else {
           if (sat_btn == PadEvent.PERANALOG_AXIS_X || sat_btn == PadEvent.PERANALOG_AXIS_Y || sat_btn == PadEvent.PERANALOG_AXIS_LTRIGGER || sat_btn == PadEvent.PERANALOG_AXIS_RTRIGGER) {
             continue
@@ -234,23 +259,30 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
           _pdm.addDebugString("onKeyDown: $keyCode Satpad: $PadKey")
         } else {
 
-            if (
-              ( (_pdm.analogMode == PadManager.MODE_ANALOG && _playerindex == 0) ||
-                (_pdm.analogMode2 == PadManager.MODE_ANALOG && _playerindex == 1)) &&
-                ( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER || PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER )
-            ) {
-              YabauseRunnable.axis(PadKey, _playerindex, 255)
-            }
+          if( ( (_pdm.analogMode == PadManager.MODE_ANALOG && _playerindex == 0) ||
+              (_pdm.analogMode2 == PadManager.MODE_ANALOG && _playerindex == 1)) ) {
 
-            if( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER ){
-              PadKey = PadEvent.BUTTON_LEFT_TRIGGER;
-            }
+                if( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER && isLTriggerAnalog == false ){
+                  YabauseRunnable.axis(PadKey, _playerindex, 255)
+                  YabauseRunnable.press(PadEvent.BUTTON_LEFT_TRIGGER, _playerindex)
+                }else if( PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER && isRTriggerAnalog == false ) {
+                  YabauseRunnable.axis(PadKey, _playerindex, 255)
+                  YabauseRunnable.press(PadEvent.BUTTON_RIGHT_TRIGGER, _playerindex)
+                }else if( PadKey == PadEvent.PERANALOG_AXIS_X  || PadKey == PadEvent.PERANALOG_AXIS_Y  ) {
 
-            if( PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER ){
+                }else{
+                  YabauseRunnable.press(PadKey, _playerindex)
+                }
+
+          }else {
+            if( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER){
+              PadKey = PadEvent.BUTTON_LEFT_TRIGGER
+            }
+            else if( PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER){
               PadKey = PadEvent.BUTTON_RIGHT_TRIGGER
             }
-
             YabauseRunnable.press(PadKey, _playerindex)
+          }
 
         }
         PadManager.ACTION_MAPPED // ignore this input
@@ -279,29 +311,31 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
           currentButtonState = currentButtonState and (1 shl PadKey).inv()
           //Log.d(this.getClass().getSimpleName(),"currentButtonState = " + Integer.toHexString(currentButtonState) );
           if (_testmode) _pdm.addDebugString("onKeyUp: $keyCode Satpad: $PadKey") else {
-              if (
-                ( (_pdm.analogMode == PadManager.MODE_ANALOG && _playerindex == 0) ||
-                    (_pdm.analogMode2 == PadManager.MODE_ANALOG && _playerindex == 1)) &&
-                ( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER || PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER )
-              ) {
-                YabauseRunnable.axis(PadKey, _playerindex, 0)
-              }
-
               if( PadKey == PadEvent.MENU ){
                 return TOGGLE_MENU
               }else {
-
-                if( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER ){
-                  PadKey = PadEvent.BUTTON_LEFT_TRIGGER;
+                if( ( (_pdm.analogMode == PadManager.MODE_ANALOG && _playerindex == 0) ||
+                      (_pdm.analogMode2 == PadManager.MODE_ANALOG && _playerindex == 1)) ) {
+                  if( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER && isLTriggerAnalog == false ){
+                    YabauseRunnable.axis(PadKey, _playerindex, 0)
+                    YabauseRunnable.release(PadEvent.BUTTON_LEFT_TRIGGER, _playerindex)
+                  }else if( PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER && isRTriggerAnalog == false ){
+                    YabauseRunnable.axis(PadKey, _playerindex, 0)
+                    YabauseRunnable.release(PadEvent.BUTTON_RIGHT_TRIGGER, _playerindex)
+                  }else if( PadKey == PadEvent.PERANALOG_AXIS_X  || PadKey == PadEvent.PERANALOG_AXIS_Y  ) {
+                  }else{
+                    YabauseRunnable.release(PadKey, _playerindex)
+                  }
+                }else{
+                  if( PadKey == PadEvent.PERANALOG_AXIS_LTRIGGER){
+                    PadKey = PadEvent.BUTTON_LEFT_TRIGGER
+                  }
+                  else if( PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER){
+                    PadKey = PadEvent.BUTTON_RIGHT_TRIGGER
+                  }
+                  YabauseRunnable.release(PadKey, _playerindex)
                 }
-
-                if( PadKey == PadEvent.PERANALOG_AXIS_RTRIGGER ){
-                  PadKey = PadEvent.BUTTON_RIGHT_TRIGGER
-                }
-
-                YabauseRunnable.release(PadKey, _playerindex)
               }
-
           }
           ACTION_MAPPED // ignore this input
         } else {
@@ -370,10 +404,10 @@ internal class PadManagerV16 : PadManager() {
   var pads: Array<BasicInputDevice?>
   override fun loadSettings() {
     if (pads[0] != null) {
-      pads[0]!!.loadSettings("keymap.json")
+      pads[0]!!.loadSettings("keymap_v2.json")
     }
     if (pads[1] != null) {
-      pads[1]!!.loadSettings("keymap_player2.json")
+      pads[1]!!.loadSettings("keymap_player2_v2.json")
     }
   }
 
@@ -497,7 +531,7 @@ internal class PadManagerV16 : PadManager() {
       pads[1]!!._selected_device_id = id
     }
     pads[1]!!._playerindex = 1
-    pads[1]!!.loadSettings("keymap_player2.json")
+    pads[1]!!.loadSettings("keymap_player2_v2.json")
     pads[1]!!._testmode = _testmode
     return
   }
