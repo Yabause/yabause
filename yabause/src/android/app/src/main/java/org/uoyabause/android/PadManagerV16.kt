@@ -502,7 +502,7 @@ internal class PadManagerV16 : PadManager() {
       pads[0]!!._selected_device_id = id
     }
     pads[0]!!._playerindex = 0
-    pads[0]!!.loadSettings("keymap.json")
+    pads[0]!!.loadSettings("keymap_v2.json")
     pads[0]!!._testmode = _testmode
     return
   }
