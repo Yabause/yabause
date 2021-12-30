@@ -34,7 +34,6 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/error.c \
 	$(SOURCE_DIR)/gameinfo.c \
 	$(SOURCE_DIR)/japmodem.c \
-	$(SOURCE_DIR)/junzip.c \
 	$(SOURCE_DIR)/m68kcore.c \
 	$(SOURCE_DIR)/memory.c \
 	$(SOURCE_DIR)/movie.c \
@@ -52,47 +51,58 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/sh2trace.c \
 	$(SOURCE_DIR)/sh7034.c \
 	$(SOURCE_DIR)/smpc.c \
-	$(SOURCE_DIR)/ygr.c \
-	$(LIBCHDR_DIR)/src/chd.c \
-	$(LIBCHDR_DIR)/src/bitstream.c \
-	$(LIBCHDR_DIR)/src/huffman.c \
-	$(LIBCHDR_DIR)/src/flac.c \
-	$(LIBCHDR_DIR)/src/cdrom.c \
-	$(FLAC_DIR)/src/libFLAC/stream_decoder.c \
-	$(FLAC_DIR)/src/libFLAC/format.c \
-	$(FLAC_DIR)/src/libFLAC/bitreader.c \
-	$(FLAC_DIR)/src/libFLAC/crc.c \
-	$(FLAC_DIR)/src/libFLAC/memory.c \
-	$(FLAC_DIR)/src/libFLAC/lpc.c \
-	$(FLAC_DIR)/src/libFLAC/cpu.c \
-	$(FLAC_DIR)/src/libFLAC/md5.c \
-	$(FLAC_DIR)/src/libFLAC/fixed.c \
-	$(LZMA_DIR)/C/LzmaEnc.c \
-	$(LZMA_DIR)/C/LzFind.c \
-	$(LZMA_DIR)/C/LzmaDec.c \
-	$(ZLIB_DIR)/adler32.c \
-	$(ZLIB_DIR)/crc32.c \
-	$(ZLIB_DIR)/inffast.c \
-	$(ZLIB_DIR)/inflate.c \
-	$(ZLIB_DIR)/inftrees.c \
-	$(ZLIB_DIR)/zutil.c
+	$(SOURCE_DIR)/ygr.c
+
+ifeq ($(ENABLE_CHD), 1)
+	# chd requires zlib
+	ENABLE_ZLIB = 1
+	FLAGS += -DENABLE_CHD=1
+	SOURCES_C +=  $(LIBCHDR_DIR)/src/chd.c \
+		$(LIBCHDR_DIR)/src/bitstream.c \
+		$(LIBCHDR_DIR)/src/huffman.c \
+		$(LIBCHDR_DIR)/src/flac.c \
+		$(LIBCHDR_DIR)/src/cdrom.c \
+		$(FLAC_DIR)/src/libFLAC/stream_decoder.c \
+		$(FLAC_DIR)/src/libFLAC/format.c \
+		$(FLAC_DIR)/src/libFLAC/bitreader.c \
+		$(FLAC_DIR)/src/libFLAC/crc.c \
+		$(FLAC_DIR)/src/libFLAC/memory.c \
+		$(FLAC_DIR)/src/libFLAC/lpc.c \
+		$(FLAC_DIR)/src/libFLAC/cpu.c \
+		$(FLAC_DIR)/src/libFLAC/md5.c \
+		$(FLAC_DIR)/src/libFLAC/fixed.c \
+		$(LZMA_DIR)/C/LzmaEnc.c \
+		$(LZMA_DIR)/C/LzFind.c \
+		$(LZMA_DIR)/C/LzmaDec.c
+endif
+
+ifeq ($(ENABLE_ZLIB), 1)
+	FLAGS += -DENABLE_ZLIB=1
+	SOURCES_C += $(ZLIB_DIR)/adler32.c \
+		$(ZLIB_DIR)/crc32.c \
+		$(ZLIB_DIR)/inffast.c \
+		$(ZLIB_DIR)/inflate.c \
+		$(ZLIB_DIR)/inftrees.c \
+		$(ZLIB_DIR)/zutil.c \
+		$(SOURCE_DIR)/junzip.c
+endif
 
 ifeq ($(ENABLE_TSUNAMI), 1)
 	FLAGS += -DENABLE_TSUNAMI=1
 	SOURCES_C += $(SOURCE_DIR)/tsunami/yab_tsunami.c \
-	$(SOURCE_DIR)/tsunami/Tsunami.c
+		$(SOURCE_DIR)/tsunami/Tsunami.c
 endif
 
 ifeq ($(HAVE_MUSASHI), 1)
 	SOURCES_C += $(SOURCE_DIR)/musashi/m68kcpu.c \
-	$(SOURCE_DIR)/musashi/m68kops.c \
-	$(SOURCE_DIR)/musashi/m68kopnz.c \
-	$(SOURCE_DIR)/musashi/m68kopac.c \
-	$(SOURCE_DIR)/musashi/m68kopdm.c \
-	$(SOURCE_DIR)/m68kmusashi.c
+		$(SOURCE_DIR)/musashi/m68kops.c \
+		$(SOURCE_DIR)/musashi/m68kopnz.c \
+		$(SOURCE_DIR)/musashi/m68kopac.c \
+		$(SOURCE_DIR)/musashi/m68kopdm.c \
+		$(SOURCE_DIR)/m68kmusashi.c
 else
 	SOURCES_C += $(SOURCE_DIR)/c68k/c68k.c \
-	$(SOURCE_DIR)/m68kc68k.c
+		$(SOURCE_DIR)/m68kc68k.c
 endif
 
 ifeq ($(USE_SCSP2), 1)

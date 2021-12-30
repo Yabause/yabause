@@ -443,8 +443,10 @@ static RFILE* OpenFile(char* buffer, const char* cue) {
    return ret_file;
 }
 
+#ifdef ENABLE_CHD
 static int LoadCHD(const char *chd_filename, RFILE *iso_file);
 static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer);
+#endif
 
 static int LoadBinCue(const char *cuefilename, RFILE *iso_file)
 {
@@ -606,7 +608,7 @@ static int LoadBinCue(const char *cuefilename, RFILE *iso_file)
    return 0;
 }
 
-
+#ifdef ENABLE_ZLIB 
 int infoFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void *user_data) {
     long offset;
     char name[1024];
@@ -917,6 +919,7 @@ static int LoadBinCueInZip(const char *filename, RFILE *fp)
 
    return 0;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1579,12 +1582,14 @@ static int ISOCDInit(const char * iso) {
       imgtype = IMG_BINCUE;
       ret = LoadBinCue(iso, iso_file);
    }
+#ifdef ENABLE_ZLIB
    else if (strcasecmp(ext, ".ZIP") == 0)
    {
       // It's a BIN/CUE
       imgtype = IMG_BINCUE;
       ret = LoadBinCueInZip(iso, iso_file);
    }
+#endif
    else if (strcasecmp(ext, ".MDS") == 0 && strncmp(header, "MEDIA ", sizeof(header)) == 0)
    {
       // It's a MDS
@@ -1597,12 +1602,14 @@ static int ISOCDInit(const char * iso) {
 		imgtype = IMG_CCD;
 		ret = LoadCCD(iso, iso_file);
 	}
+#ifdef ENABLE_CHD
   else if (strcasecmp(ext, ".CHD") == 0)
   {
     // It's a CCD
     imgtype = IMG_CHD;
     ret = LoadCHD(iso, iso_file);
   }
+#endif
    else
    {
       // Assume it's an ISO file
@@ -1720,9 +1727,11 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
 
    assert(disc.session);
 
+#ifdef ENABLE_CHD
    if (IMG_CHD == imgtype) {
      return ISOCDReadSectorFADFromCHD(FAD,buffer);
    }
+#endif
 
    memset(buffer, 0, 2448);
 
@@ -1852,6 +1861,7 @@ static void ISOCDReadAheadFAD(UNUSED u32 FAD)
 
 //////////////////////////////////////////////////////////////////////////////
 
+#ifdef ENABLE_CHD
 // Don't rely on libretro-common's chdr lib, somehow it's breaking this chd stuff
 
 #include "chd.h"
@@ -2127,4 +2137,4 @@ static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer) {
 
   return 1;
 }
-
+#endif

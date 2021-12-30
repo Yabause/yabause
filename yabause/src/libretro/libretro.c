@@ -1129,10 +1129,12 @@ bool retro_load_game(const struct retro_game_info *info)
    yinit.usethreads           = 0;
 #endif
 
+   log_cb(RETRO_LOG_DEBUG, "Starting emulation\n");
    ret = YabauseInit(&yinit);
    OSDChangeCore(OSDCORE_DUMMY);
    YabauseSetDecilineMode(1);
 
+   log_cb(RETRO_LOG_DEBUG, "Enabling cheevos\n");
    bool cheevos_supported                  = true;
    struct retro_memory_map mmaps           = {0};
    struct retro_memory_descriptor descs[2] =
