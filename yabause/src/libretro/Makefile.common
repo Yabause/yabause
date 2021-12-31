@@ -3,20 +3,20 @@ ifeq ($(LIBRETRO_COMM_DIR),)
 LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
 endif
 LIBCHDR_DIR := $(SOURCE_DIR)/libchdr
-LZMA_DIR := $(LIBCHDR_DIR)/deps/lzma-16.04
-CRYPTO_DIR := $(LIBCHDR_DIR)/deps/crypto
-FLAC_DIR := $(LIBCHDR_DIR)/deps/flac-1.3.2
+LZMA_DIR := $(LIBCHDR_DIR)/deps/lzma-19.00
+FLAC_DIR := $(LIBCHDR_DIR)/deps/flac-1.3.3
 ZLIB_DIR := $(LIBCHDR_DIR)/deps/zlib-1.2.11
+
+FLAGS += -D__LIBRETRO__ -DNO_CLI -DHAVE_SYS_TIME_H -DHAVE_GETTIMEOFDAY -DHAVE_STDINT_H=1 -DVERSION=\"0.9.15\"
 
 INCLUDE_DIRS := $(CORE_DIR) \
 	$(SOURCE_DIR) \
 	$(LIBRETRO_COMM_DIR)/include \
 	$(SOURCE_DIR)/musashi \
-	$(LIBCHDR_DIR)/src \
-	$(LZMA_DIR)/C \
-	$(CRYPTO_DIR) \
+	$(LIBCHDR_DIR)/include \
+	$(LZMA_DIR)/include \
 	$(FLAC_DIR)/include \
-	$(FLAC_DIR)/src/libFLAC/include \
+	$(FLAC_DIR)/src/include \
 	$(ZLIB_DIR)
 
 OBJECTS_S :=
@@ -54,26 +54,26 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/ygr.c
 
 ifeq ($(ENABLE_CHD), 1)
-	# chd requires zlib
+	# chd also requires zlib
 	ENABLE_ZLIB = 1
-	FLAGS += -DENABLE_CHD=1
-	SOURCES_C +=  $(LIBCHDR_DIR)/src/chd.c \
-		$(LIBCHDR_DIR)/src/bitstream.c \
-		$(LIBCHDR_DIR)/src/huffman.c \
-		$(LIBCHDR_DIR)/src/flac.c \
-		$(LIBCHDR_DIR)/src/cdrom.c \
-		$(FLAC_DIR)/src/libFLAC/stream_decoder.c \
-		$(FLAC_DIR)/src/libFLAC/format.c \
-		$(FLAC_DIR)/src/libFLAC/bitreader.c \
-		$(FLAC_DIR)/src/libFLAC/crc.c \
-		$(FLAC_DIR)/src/libFLAC/memory.c \
-		$(FLAC_DIR)/src/libFLAC/lpc.c \
-		$(FLAC_DIR)/src/libFLAC/cpu.c \
-		$(FLAC_DIR)/src/libFLAC/md5.c \
-		$(FLAC_DIR)/src/libFLAC/fixed.c \
-		$(LZMA_DIR)/C/LzmaEnc.c \
-		$(LZMA_DIR)/C/LzFind.c \
-		$(LZMA_DIR)/C/LzmaDec.c
+	FLAGS += -DENABLE_CHD=1 -DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DPACKAGE_VERSION=\"1.3.3\"
+	SOURCES_C +=  	$(LIBCHDR_DIR)/src/libchdr_chd.c \
+		$(LIBCHDR_DIR)/src/libchdr_bitstream.c \
+		$(LIBCHDR_DIR)/src/libchdr_huffman.c \
+		$(LIBCHDR_DIR)/src/libchdr_flac.c \
+		$(LIBCHDR_DIR)/src/libchdr_cdrom.c \
+		$(FLAC_DIR)/src/stream_decoder.c \
+		$(FLAC_DIR)/src/format.c \
+		$(FLAC_DIR)/src/bitreader.c \
+		$(FLAC_DIR)/src/crc.c \
+		$(FLAC_DIR)/src/memory.c \
+		$(FLAC_DIR)/src/lpc.c \
+		$(FLAC_DIR)/src/cpu.c \
+		$(FLAC_DIR)/src/md5.c \
+		$(FLAC_DIR)/src/fixed.c \
+		$(LZMA_DIR)/src/LzmaEnc.c \
+		$(LZMA_DIR)/src/LzFind.c \
+		$(LZMA_DIR)/src/LzmaDec.c
 endif
 
 ifeq ($(ENABLE_ZLIB), 1)
@@ -113,7 +113,7 @@ else
 endif
 
 ifeq ($(ARCH_IS_WINDOWS), 1)
-	SOURCES_C += $(FLAC_DIR)/src/libFLAC/windows_unicode_filenames.c
+	SOURCES_C += $(FLAC_DIR)/src/windows_unicode_filenames.c
 endif
 
 ifeq ($(HAVE_GRIFFIN), 1)
@@ -154,6 +154,7 @@ endif
 
 ifneq ($(STATIC_LINKING), 1)
 SOURCES_C += $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
+	$(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c \
 	$(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \

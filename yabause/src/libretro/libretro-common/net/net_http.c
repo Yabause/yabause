@@ -682,6 +682,11 @@ const char *net_http_connection_url(struct http_connection_t *conn)
    return conn->urlcopy;
 }
 
+const char* net_http_connection_method(struct http_connection_t* conn)
+{
+   return conn->methodcopy;
+}
+
 struct http_t *net_http_new(struct http_connection_t *conn)
 {
    bool error            = false;
@@ -893,14 +898,13 @@ bool net_http_update(struct http_t *state, size_t* progress, size_t* total)
          }
          else
          {
-            if (!strncmp(state->data, "Content-Length: ",
-                     STRLEN_CONST("Content-Length: ")))
+            if (string_starts_with_case_insensitive(state->data, "Content-Length: "))
             {
                state->bodytype = T_LEN;
                state->len = strtol(state->data +
                      STRLEN_CONST("Content-Length: "), NULL, 10);
             }
-            if (string_is_equal(state->data, "Transfer-Encoding: chunked"))
+            if (string_is_equal_case_insensitive(state->data, "Transfer-Encoding: chunked"))
                state->bodytype = T_CHUNK;
 
             /* TODO: save headers somewhere */

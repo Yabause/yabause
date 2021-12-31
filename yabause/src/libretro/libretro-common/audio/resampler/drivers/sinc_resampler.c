@@ -75,7 +75,6 @@ typedef struct rarch_sinc_resampler
    float *phase_table;
    float *buffer_l;
    float *buffer_r;
-   unsigned enable_avx;
    unsigned phase_bits;
    unsigned subphase_bits;
    unsigned subphase_mask;
@@ -84,34 +83,27 @@ typedef struct rarch_sinc_resampler
    uint32_t time;
    float subphase_mod;
    float kaiser_beta;
-   enum sinc_window window_type;
 } rarch_sinc_resampler_t;
 
-#if (defined(__ARM_NEON__) && !defined(DONT_WANT_ARM_OPTIMIZATIONS)) || defined(HAVE_NEON)
-#if TARGET_OS_IPHONE
-#else
-#ifndef WANT_NEON
-#define WANT_NEON
-#endif
-#endif
-#endif
+#if (defined(__ARM_NEON__) || defined(HAVE_NEON))
 
-#ifdef WANT_NEON
-/* Assumes that taps >= 8, and that taps is a multiple of 8. */
+#ifdef HAVE_ARM_NEON_ASM_OPTIMIZATIONS
 void process_sinc_neon_asm(float *out, const float *left,
       const float *right, const float *coeff, unsigned taps);
+#else
+#include <arm_neon.h>
+#endif
 
+/* Assumes that taps >= 8, and that taps is a multiple of 8. */
 static void resampler_sinc_process_neon(void *re_, struct resampler_data *data)
 {
    rarch_sinc_resampler_t *resamp = (rarch_sinc_resampler_t*)re_;
    unsigned phases                = 1 << (resamp->phase_bits + resamp->subphase_bits);
-
    uint32_t ratio                 = phases / data->ratio;
    const float *input             = data->data_in;
    float *output                  = data->data_out;
    size_t frames                  = data->input_frames;
    size_t out_frames              = 0;
-
    while (frames)
    {
       while (frames && resamp->time >= phases)
@@ -122,10 +114,10 @@ static void resampler_sinc_process_neon(void *re_, struct resampler_data *data)
          resamp->ptr--;
 
          resamp->buffer_l[resamp->ptr + resamp->taps] =
-         resamp->buffer_l[resamp->ptr]                = *input++;
+            resamp->buffer_l[resamp->ptr]                = *input++;
 
          resamp->buffer_r[resamp->ptr + resamp->taps] =
-         resamp->buffer_r[resamp->ptr]                = *input++;
+            resamp->buffer_r[resamp->ptr]                = *input++;
 
          resamp->time                                -= phases;
          frames--;
@@ -139,12 +131,32 @@ static void resampler_sinc_process_neon(void *re_, struct resampler_data *data)
          {
             unsigned phase           = resamp->time >> resamp->subphase_bits;
             const float *phase_table = resamp->phase_table + phase * taps;
-
+#ifdef HAVE_ARM_NEON_ASM_OPTIMIZATIONS
             process_sinc_neon_asm(output, buffer_l, buffer_r, phase_table, taps);
+#else
+            unsigned i;
+            float32x4_t p1 = {0, 0, 0, 0}, p2 = {0, 0, 0, 0};
+            float32x2_t p3, p4;
 
-            output += 2;
+            for (i = 0; i < taps; i += 8)
+            {
+               float32x4x2_t coeff8  = vld2q_f32(&phase_table[i]);
+               float32x4x2_t left8   = vld2q_f32(&buffer_l[i]);
+               float32x4x2_t right8  = vld2q_f32(&buffer_r[i]);
+
+               p1 = vmlaq_f32(p1,  left8.val[0], coeff8.val[0]);
+               p2 = vmlaq_f32(p2, right8.val[0], coeff8.val[0]);
+               p1 = vmlaq_f32(p1,  left8.val[1], coeff8.val[1]);
+               p2 = vmlaq_f32(p2, right8.val[1], coeff8.val[1]);
+            }
+
+            p3 = vadd_f32(vget_low_f32(p1), vget_high_f32(p1));
+            p4 = vadd_f32(vget_low_f32(p2), vget_high_f32(p2));
+            vst1_f32(output, vpadd_f32(p3, p4));
+#endif
+            output                 += 2;
             out_frames++;
-            resamp->time += ratio;
+            resamp->time           += ratio;
          }
       }
    }
@@ -154,7 +166,7 @@ static void resampler_sinc_process_neon(void *re_, struct resampler_data *data)
 #endif
 
 #if defined(__AVX__)
-static void resampler_sinc_process_avx(void *re_, struct resampler_data *data)
+static void resampler_sinc_process_avx_kaiser(void *re_, struct resampler_data *data)
 {
    rarch_sinc_resampler_t *resamp = (rarch_sinc_resampler_t*)re_;
    unsigned phases                = 1 << (resamp->phase_bits + resamp->subphase_bits);
@@ -165,7 +177,6 @@ static void resampler_sinc_process_avx(void *re_, struct resampler_data *data)
    size_t frames                  = data->input_frames;
    size_t out_frames              = 0;
 
-   if (resamp->window_type == SINC_WINDOW_KAISER)
    {
       while (frames)
       {
@@ -236,7 +247,21 @@ static void resampler_sinc_process_avx(void *re_, struct resampler_data *data)
          }
       }
    }
-   else
+
+   data->output_frames = out_frames;
+}
+
+static void resampler_sinc_process_avx(void *re_, struct resampler_data *data)
+{
+   rarch_sinc_resampler_t *resamp = (rarch_sinc_resampler_t*)re_;
+   unsigned phases                = 1 << (resamp->phase_bits + resamp->subphase_bits);
+
+   uint32_t ratio                 = phases / data->ratio;
+   const float *input             = data->data_in;
+   float *output                  = data->data_out;
+   size_t frames                  = data->input_frames;
+   size_t out_frames              = 0;
+
    {
       while (frames)
       {
@@ -308,7 +333,7 @@ static void resampler_sinc_process_avx(void *re_, struct resampler_data *data)
 #endif
 
 #if defined(__SSE__)
-static void resampler_sinc_process_sse(void *re_, struct resampler_data *data)
+static void resampler_sinc_process_sse_kaiser(void *re_, struct resampler_data *data)
 {
    rarch_sinc_resampler_t *resamp = (rarch_sinc_resampler_t*)re_;
    unsigned phases                = 1 << (resamp->phase_bits + resamp->subphase_bits);
@@ -319,7 +344,6 @@ static void resampler_sinc_process_sse(void *re_, struct resampler_data *data)
    size_t frames                  = data->input_frames;
    size_t out_frames              = 0;
 
-   if (resamp->window_type == SINC_WINDOW_KAISER)
    {
       while (frames)
       {
@@ -400,7 +424,21 @@ static void resampler_sinc_process_sse(void *re_, struct resampler_data *data)
          }
       }
    }
-   else
+
+   data->output_frames = out_frames;
+}
+
+static void resampler_sinc_process_sse(void *re_, struct resampler_data *data)
+{
+   rarch_sinc_resampler_t *resamp = (rarch_sinc_resampler_t*)re_;
+   unsigned phases                = 1 << (resamp->phase_bits + resamp->subphase_bits);
+
+   uint32_t ratio                 = phases / data->ratio;
+   const float *input             = data->data_in;
+   float *output                  = data->data_out;
+   size_t frames                  = data->input_frames;
+   size_t out_frames              = 0;
+
    {
       while (frames)
       {
@@ -481,7 +519,7 @@ static void resampler_sinc_process_sse(void *re_, struct resampler_data *data)
 }
 #endif
 
-static void resampler_sinc_process_c(void *re_, struct resampler_data *data)
+static void resampler_sinc_process_c_kaiser(void *re_, struct resampler_data *data)
 {
    rarch_sinc_resampler_t *resamp = (rarch_sinc_resampler_t*)re_;
    unsigned phases                = 1 << (resamp->phase_bits + resamp->subphase_bits);
@@ -492,7 +530,6 @@ static void resampler_sinc_process_c(void *re_, struct resampler_data *data)
    size_t frames                  = data->input_frames;
    size_t out_frames              = 0;
 
-   if (resamp->window_type == SINC_WINDOW_KAISER)
    {
       while (frames)
       {
@@ -547,7 +584,21 @@ static void resampler_sinc_process_c(void *re_, struct resampler_data *data)
 
       }
    }
-   else
+
+   data->output_frames = out_frames;
+}
+
+static void resampler_sinc_process_c(void *re_, struct resampler_data *data)
+{
+   rarch_sinc_resampler_t *resamp = (rarch_sinc_resampler_t*)re_;
+   unsigned phases                = 1 << (resamp->phase_bits + resamp->subphase_bits);
+
+   uint32_t ratio                 = phases / data->ratio;
+   const float *input             = data->data_in;
+   float *output                  = data->data_out;
+   size_t frames                  = data->input_frames;
+   size_t out_frames              = 0;
+
    {
       while (frames)
       {
@@ -734,14 +785,14 @@ static void *resampler_sinc_new(const struct resampler_config *config,
    double cutoff                  = 0.0;
    size_t phase_elems             = 0;
    size_t elems                   = 0;
+   unsigned enable_avx            = 0;
    unsigned sidelobes             = 0;
+   enum sinc_window window_type   = SINC_WINDOW_NONE;
    rarch_sinc_resampler_t *re     = (rarch_sinc_resampler_t*)
       calloc(1, sizeof(*re));
 
    if (!re)
       return NULL;
-
-   re->window_type                = SINC_WINDOW_NONE;
 
    switch (quality)
    {
@@ -750,34 +801,32 @@ static void *resampler_sinc_new(const struct resampler_config *config,
          sidelobes         = 2;
          re->phase_bits    = 12;
          re->subphase_bits = 10;
-         re->window_type   = SINC_WINDOW_LANCZOS;
-         re->enable_avx    = 0;
+         window_type       = SINC_WINDOW_LANCZOS;
          break;
       case RESAMPLER_QUALITY_LOWER:
          cutoff            = 0.98;
          sidelobes         = 4;
          re->phase_bits    = 12;
          re->subphase_bits = 10;
-         re->window_type   = SINC_WINDOW_LANCZOS;
-         re->enable_avx    = 0;
+         window_type       = SINC_WINDOW_LANCZOS;
          break;
       case RESAMPLER_QUALITY_HIGHER:
          cutoff            = 0.90;
          sidelobes         = 32;
          re->phase_bits    = 10;
          re->subphase_bits = 14;
-         re->window_type   = SINC_WINDOW_KAISER;
+         window_type       = SINC_WINDOW_KAISER;
          re->kaiser_beta   = 10.5;
-         re->enable_avx    = 1;
+         enable_avx        = 1;
          break;
       case RESAMPLER_QUALITY_HIGHEST:
          cutoff            = 0.962;
          sidelobes         = 128;
          re->phase_bits    = 10;
          re->subphase_bits = 14;
-         re->window_type   = SINC_WINDOW_KAISER;
+         window_type       = SINC_WINDOW_KAISER;
          re->kaiser_beta   = 14.5;
-         re->enable_avx    = 1;
+         enable_avx        = 1;
          break;
       case RESAMPLER_QUALITY_NORMAL:
       case RESAMPLER_QUALITY_DONTCARE:
@@ -785,9 +834,8 @@ static void *resampler_sinc_new(const struct resampler_config *config,
          sidelobes         = 8;
          re->phase_bits    = 8;
          re->subphase_bits = 16;
-         re->window_type   = SINC_WINDOW_KAISER;
+         window_type       = SINC_WINDOW_KAISER;
          re->kaiser_beta   = 5.5;
-         re->enable_avx    = 0;
          break;
    }
 
@@ -805,12 +853,12 @@ static void *resampler_sinc_new(const struct resampler_config *config,
 
    /* Be SIMD-friendly. */
 #if defined(__AVX__)
-   if (re->enable_avx)
+   if (enable_avx)
       re->taps  = (re->taps + 7) & ~7;
    else
 #endif
    {
-#if defined(WANT_NEON)
+#if (defined(__ARM_NEON__) || defined(HAVE_NEON))
       re->taps     = (re->taps + 7) & ~7;
 #else
       re->taps     = (re->taps + 3) & ~3;
@@ -818,7 +866,7 @@ static void *resampler_sinc_new(const struct resampler_config *config,
    }
 
    phase_elems     = ((1 << re->phase_bits) * re->taps);
-   if (re->window_type == SINC_WINDOW_KAISER)
+   if (window_type == SINC_WINDOW_KAISER)
       phase_elems  = phase_elems * 2;
    elems           = phase_elems + 4 * re->taps;
 
@@ -832,7 +880,7 @@ static void *resampler_sinc_new(const struct resampler_config *config,
    re->buffer_l    = re->main_buffer + phase_elems;
    re->buffer_r    = re->buffer_l + 2 * re->taps;
 
-   switch (re->window_type)
+   switch (window_type)
    {
       case SINC_WINDOW_LANCZOS:
          sinc_init_table_lanczos(re, cutoff, re->phase_table,
@@ -847,22 +895,28 @@ static void *resampler_sinc_new(const struct resampler_config *config,
    }
 
    sinc_resampler.process = resampler_sinc_process_c;
+   if (window_type == SINC_WINDOW_KAISER)
+      sinc_resampler.process    = resampler_sinc_process_c_kaiser;
 
-   if (mask & RESAMPLER_SIMD_AVX && re->enable_avx)
+   if (mask & RESAMPLER_SIMD_AVX && enable_avx)
    {
 #if defined(__AVX__)
-      sinc_resampler.process = resampler_sinc_process_avx;
+      sinc_resampler.process    = resampler_sinc_process_avx;
+      if (window_type == SINC_WINDOW_KAISER)
+         sinc_resampler.process = resampler_sinc_process_avx_kaiser;
 #endif
    }
    else if (mask & RESAMPLER_SIMD_SSE)
    {
 #if defined(__SSE__)
       sinc_resampler.process = resampler_sinc_process_sse;
+      if (window_type == SINC_WINDOW_KAISER)
+         sinc_resampler.process = resampler_sinc_process_sse_kaiser;
 #endif
    }
-   else if (mask & RESAMPLER_SIMD_NEON && re->window_type != SINC_WINDOW_KAISER)
+   else if (mask & RESAMPLER_SIMD_NEON && window_type != SINC_WINDOW_KAISER)
    {
-#if defined(WANT_NEON)
+#if (defined(__ARM_NEON__) || defined(HAVE_NEON))
       sinc_resampler.process = resampler_sinc_process_neon;
 #endif
    }
@@ -882,5 +936,3 @@ retro_resampler_t sinc_resampler = {
    "sinc",
    "sinc"
 };
-
-#undef WANT_NEON

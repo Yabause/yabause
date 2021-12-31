@@ -33,6 +33,10 @@
 #include "debug.h"
 #include "junzip.h"
 #include "zlib.h"
+#ifdef ENABLE_CHD
+// Don't rely on libretro-common's chdr lib, somehow it's breaking this chd stuff
+#include "libchdr/chd.h"
+#endif
 
 #include "streams/file_stream.h"
 #include "compat/posix_string.h"
@@ -1862,10 +1866,6 @@ static void ISOCDReadAheadFAD(UNUSED u32 FAD)
 //////////////////////////////////////////////////////////////////////////////
 
 #ifdef ENABLE_CHD
-// Don't rely on libretro-common's chdr lib, somehow it's breaking this chd stuff
-
-#include "chd.h"
-
 #define CD_MAX_SECTOR_DATA      (2352)
 #define CD_MAX_SUBCODE_DATA     (96)
 #define CD_FRAME_SIZE           (CD_MAX_SECTOR_DATA + CD_MAX_SUBCODE_DATA)
