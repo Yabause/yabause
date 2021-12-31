@@ -15,8 +15,8 @@ HAVE_FSEEKO = 0
 ARCH_IS_LINUX = 0
 ARCH_IS_MACOSX = 0
 ARCH_IS_WINDOWS = 0
-# format support
-ENABLE_ZIP = 1
+# compression libraries
+ENABLE_ZLIB = 1
 ENABLE_CHD = 1
 # The following is broken upstream ?
 USE_PLAY_JIT = 0

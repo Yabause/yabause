@@ -608,7 +608,7 @@ static int LoadBinCue(const char *cuefilename, RFILE *iso_file)
    return 0;
 }
 
-#ifdef ENABLE_ZIP 
+#ifdef ENABLE_ZLIB 
 int infoFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void *user_data) {
     long offset;
     char name[1024];
@@ -1582,7 +1582,7 @@ static int ISOCDInit(const char * iso) {
       imgtype = IMG_BINCUE;
       ret = LoadBinCue(iso, iso_file);
    }
-#ifdef ENABLE_ZIP
+#ifdef ENABLE_ZLIB
    else if (strcasecmp(ext, ".ZIP") == 0)
    {
       // It's a BIN/CUE

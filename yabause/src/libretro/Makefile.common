@@ -54,12 +54,37 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/ygr.c
 
 ifeq ($(ENABLE_CHD), 1)
+	# chd requires zlib
+	ENABLE_ZLIB = 1
 	FLAGS += -DENABLE_CHD=1
+	SOURCES_C +=  $(LIBCHDR_DIR)/src/chd.c \
+		$(LIBCHDR_DIR)/src/bitstream.c \
+		$(LIBCHDR_DIR)/src/huffman.c \
+		$(LIBCHDR_DIR)/src/flac.c \
+		$(LIBCHDR_DIR)/src/cdrom.c \
+		$(FLAC_DIR)/src/libFLAC/stream_decoder.c \
+		$(FLAC_DIR)/src/libFLAC/format.c \
+		$(FLAC_DIR)/src/libFLAC/bitreader.c \
+		$(FLAC_DIR)/src/libFLAC/crc.c \
+		$(FLAC_DIR)/src/libFLAC/memory.c \
+		$(FLAC_DIR)/src/libFLAC/lpc.c \
+		$(FLAC_DIR)/src/libFLAC/cpu.c \
+		$(FLAC_DIR)/src/libFLAC/md5.c \
+		$(FLAC_DIR)/src/libFLAC/fixed.c \
+		$(LZMA_DIR)/C/LzmaEnc.c \
+		$(LZMA_DIR)/C/LzFind.c \
+		$(LZMA_DIR)/C/LzmaDec.c
 endif
 
-ifeq ($(ENABLE_ZIP), 1)
-	FLAGS += -DENABLE_ZIP=1
-	SOURCES_C += $(SOURCE_DIR)/junzip.c
+ifeq ($(ENABLE_ZLIB), 1)
+	FLAGS += -DENABLE_ZLIB=1
+	SOURCES_C += $(ZLIB_DIR)/adler32.c \
+		$(ZLIB_DIR)/crc32.c \
+		$(ZLIB_DIR)/inffast.c \
+		$(ZLIB_DIR)/inflate.c \
+		$(ZLIB_DIR)/inftrees.c \
+		$(ZLIB_DIR)/zutil.c \
+		$(SOURCE_DIR)/junzip.c
 endif
 
 ifeq ($(ENABLE_TSUNAMI), 1)
@@ -153,30 +178,6 @@ SOURCES_C += $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
 	else
 		SOURCES_C += $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 	endif
-	# libchdr and deps
-	SOURCES_C +=  $(LIBCHDR_DIR)/src/chd.c \
-		$(LIBCHDR_DIR)/src/bitstream.c \
-		$(LIBCHDR_DIR)/src/huffman.c \
-		$(LIBCHDR_DIR)/src/flac.c \
-		$(LIBCHDR_DIR)/src/cdrom.c \
-		$(FLAC_DIR)/src/libFLAC/stream_decoder.c \
-		$(FLAC_DIR)/src/libFLAC/format.c \
-		$(FLAC_DIR)/src/libFLAC/bitreader.c \
-		$(FLAC_DIR)/src/libFLAC/crc.c \
-		$(FLAC_DIR)/src/libFLAC/memory.c \
-		$(FLAC_DIR)/src/libFLAC/lpc.c \
-		$(FLAC_DIR)/src/libFLAC/cpu.c \
-		$(FLAC_DIR)/src/libFLAC/md5.c \
-		$(FLAC_DIR)/src/libFLAC/fixed.c \
-		$(LZMA_DIR)/C/LzmaEnc.c \
-		$(LZMA_DIR)/C/LzFind.c \
-		$(LZMA_DIR)/C/LzmaDec.c \
-		$(ZLIB_DIR)/adler32.c \
-		$(ZLIB_DIR)/crc32.c \
-		$(ZLIB_DIR)/inffast.c \
-		$(ZLIB_DIR)/inflate.c \
-		$(ZLIB_DIR)/inftrees.c \
-		$(ZLIB_DIR)/zutil.c
 endif
 
 ifeq ($(HAVE_THREADS),1)
