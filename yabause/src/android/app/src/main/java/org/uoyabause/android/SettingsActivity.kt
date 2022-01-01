@@ -134,7 +134,7 @@ class SettingsActivity : AppCompatActivity() {
 
             var dir = findPreference("pref_game_directory") as Preference?
             if ( dir != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                dir.isVisible = false
+            //    dir.isVisible = false
             }
 
             var installLocation = findPreference("pref_install_location") as ListPreference?
@@ -176,6 +176,7 @@ class SettingsActivity : AppCompatActivity() {
                         }.toMap()
                     }
                 }
+
 
                 var index = 0
                 map.forEach() { path,label ->
@@ -409,6 +410,8 @@ class SettingsActivity : AppCompatActivity() {
 
                 preference.setDirListChangeListener(this)
 
+                f = GameDirectoriesDialogFragment.newInstance(preference.getKey())
+                /*
                 // Above version 10
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                     var dir = YabauseStorage.storage.gamePath
@@ -423,6 +426,8 @@ class SettingsActivity : AppCompatActivity() {
                 } else {
                     f = GameDirectoriesDialogFragment.newInstance(preference.getKey())
                 }
+                */
+
             } else {
                 f = null
             }

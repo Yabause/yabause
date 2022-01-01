@@ -106,6 +106,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
+import org.apache.commons.io.FilenameUtils
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.json.JSONObject
@@ -340,6 +341,7 @@ class Yabause : AppCompatActivity(),
 
         val uriString: String? = intent.getStringExtra("org.uoyabause.android.FileNameUri")
         if (uriString != null) {
+            val ext = FilenameUtils.getExtension(uriString)
             val uri = Uri.parse(uriString)
             var apath = ""
             try {
@@ -347,7 +349,7 @@ class Yabause : AppCompatActivity(),
                     if (mParcelFileDescriptor != null) {
                         val fd: Int? = mParcelFileDescriptor?.getFd()
                         if (fd != null) {
-                            apath = "/proc/self/fd/$fd"
+                            apath = "/proc/self/fd/$fd.${ext}"
                         }
                     }
             } catch (e: Exception) {
@@ -362,6 +364,13 @@ class Yabause : AppCompatActivity(),
                     return
             }
             gamePath = apath
+        }
+
+        val dirString: String? = intent.getStringExtra("org.uoyabause.android.FileDir")
+        if( dirString != null ){
+            currentDocumentUri = Uri.parse(dirString)
+        }else{
+            currentDocumentUri = null
         }
 
         Log.d(TAG, "File is " + gamePath)
@@ -1860,17 +1869,21 @@ class Yabause : AppCompatActivity(),
             return null
         }
 
-        val dir = DocumentFile.fromTreeUri(this,currentDocumentUri!!)
+        val dir = DocumentFile.fromTreeUri(YabauseApplication.appContext,currentDocumentUri!!)
         if( dir == null ){
             return null
         }
 
-        val files = dir.findFile(fileName)?.listFiles()
+        //for (file in dir!!.listFiles()) {
+        //    Log.d("Yabause", "Found file " + file.name + " with size " + file.length())
+        //}
+
+        val files = dir.findFile(fileName)
         if( files == null ){
             return null
         }
 
-        val parcelFileDescriptor = contentResolver.openFileDescriptor(files[0].uri, "r")
+        val parcelFileDescriptor = contentResolver.openFileDescriptor(files.uri, "r")
         if (parcelFileDescriptor != null) {
             val apath = "/proc/self/fd/${parcelFileDescriptor.fd}"
             return apath

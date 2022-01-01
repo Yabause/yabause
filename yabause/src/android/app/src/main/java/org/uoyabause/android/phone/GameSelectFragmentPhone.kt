@@ -1312,10 +1312,35 @@ class GameSelectFragmentPhone : Fragment(),
         firebaseAnalytics!!.logEvent(
             "yab_start_game", bundle
         )
-        val intent = Intent(activity, Yabause::class.java)
-        intent.putExtra("org.uoyabause.android.FileNameEx", item?.file_path)
-        intent.putExtra("org.uoyabause.android.gamecode", item?.product_number)
-        startActivityForResult(intent, YABAUSE_ACTIVITY)
+
+        if( item?.file_path!!.contains("content://") == true){
+            /*
+            var apath = ""
+            val uri = Uri.parse( item?.file_path!! )
+            var parcelFileDescriptor: ParcelFileDescriptor? = null
+            parcelFileDescriptor =
+                YabauseApplication.appContext.contentResolver.openFileDescriptor(
+                    uri,
+                    "r"
+                )
+            if (parcelFileDescriptor != null) {
+                val fd: Int? = parcelFileDescriptor.fd
+                if (fd != null) {
+                    apath = "/proc/self/fd/$fd"
+                }
+            }
+            */
+            val intent = Intent(activity, Yabause::class.java)
+            intent.putExtra("org.uoyabause.android.FileNameUri", item.file_path)
+            intent.putExtra("org.uoyabause.android.FileDir", item.iso_file_path)
+            intent.putExtra("org.uoyabause.android.gamecode", item.product_number)
+            startActivityForResult(intent, YABAUSE_ACTIVITY)
+        }else {
+            val intent = Intent(activity, Yabause::class.java)
+            intent.putExtra("org.uoyabause.android.FileNameEx", item.file_path)
+            intent.putExtra("org.uoyabause.android.gamecode", item.product_number)
+            startActivityForResult(intent, YABAUSE_ACTIVITY)
+        }
     }
 
     @SuppressLint("DefaultLocale")

@@ -18,7 +18,10 @@
 */
 package org.uoyabause.android
 
+import android.database.Cursor
+import android.net.Uri
 import android.os.Environment
+import android.os.ParcelFileDescriptor
 import android.os.StatFs
 import android.util.Log
 import androidx.preference.PreferenceManager
@@ -40,19 +43,20 @@ import org.devmiyax.yabasanshiro.R
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import java.io.BufferedInputStream
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FilenameFilter
-import java.io.IOException
-import java.net.Authenticator
-import java.net.HttpURLConnection
-import java.net.MalformedURLException
-import java.net.PasswordAuthentication
-import java.net.URL
+import java.net.*
 import java.text.SimpleDateFormat
-import java.util.Arrays
 import kotlin.system.measureTimeMillis
+import android.provider.MediaStore
+import android.provider.OpenableColumns
+import android.widget.Toast
+import androidx.core.net.toFile
+import androidx.documentfile.provider.DocumentFile
+import androidx.loader.content.CursorLoader
+import java.io.*
+import java.util.*
+import java.util.regex.Pattern
+import kotlin.collections.ArrayList
+import kotlin.collections.LinkedHashSet
 
 
 internal class BiosFilter : FilenameFilter {
@@ -375,8 +379,37 @@ class YabauseStorage private constructor() {
             }
         }
     }
-
-
+/*
+    private fun getRealPathFromURI(contentUri: Uri): String? {
+        val proj = arrayOf(MediaStore.Images.Media.DATA)
+        val loader = CursorLoader(YabauseApplication.appContext, contentUri, proj, null, null, null)
+        val cursor: Cursor? = loader.loadInBackground()
+        if( cursor != null ) {
+            val column_index: Int = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+            cursor.moveToFirst()
+            val result: String = cursor.getString(column_index)
+            cursor.close()
+            return result
+        }
+        return null
+    }
+*/
+    fun getRealPathFromURI(contentUri: Uri): String? {
+        var cursor: Cursor? = null
+        return try {
+            //val proj = arrayOf(MediaStore.Images.Media.DATA)
+            cursor = YabauseApplication.appContext.getContentResolver()
+                .query(contentUri, null, null, null, null)
+            val column_index = cursor!!.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+            cursor.moveToFirst()
+            cursor.getString(column_index)
+        } catch( e :Exception){
+            Log.e("Yabause",e.localizedMessage)
+            null
+        } finally {
+            cursor?.close()
+        }
+    }
     fun generateGameListFromDirectory(dir: String?) {
         val extensions = arrayOf("img",
             "bin",
@@ -394,58 +427,154 @@ class YabauseStorage private constructor() {
             "chd")
         val filter: IOFileFilter = SuffixFileFilter(extensions, IOCase.INSENSITIVE)
         val recursive = true
-        val gamedir = File(dir)
-        if (!gamedir.exists()) return
-        if (!gamedir.isDirectory) return
-        var iter = FileUtils.iterateFiles(gamedir, extensions, recursive)
-        val i = 0
-        while (iter.hasNext()) {
-            val gamefile = iter.next()
-            val gamefile_name = gamefile.absolutePath
-            Log.d("generateGameDB", gamefile_name)
-            var gameinfo: GameInfo? = null
-            if (gamefile_name.endsWith("CUE") || gamefile_name.endsWith("cue")) {
-                val tmp = GameInfo.getFromFileName(gamefile_name)
-                if (tmp == null) {
-                    gameinfo = GameInfo.genGameInfoFromCUE(gamefile_name)
+
+
+
+        if( dir?.contains("content://") == true){
+
+            var uri = Uri.parse( dir )
+            val pickedDir = DocumentFile.fromTreeUri(YabauseApplication.appContext, uri)
+            for (file in pickedDir!!.listFiles()) {
+                Log.d("Yabause", "Found file " + file.name + " with size " + file.length())
+                if (file.name!!.lowercase(Locale.ROOT).endsWith("chd")) {
+                    var apath = ""
+                    var parcelFileDescriptor: ParcelFileDescriptor? = null
+                    parcelFileDescriptor =
+                        YabauseApplication.appContext.contentResolver.openFileDescriptor(
+                            file.uri,
+                            "r"
+                        )
+                    if (parcelFileDescriptor != null) {
+                        val fd: Int? = parcelFileDescriptor.fd
+                        if (fd != null) {
+                            apath = "/proc/self/fd/$fd"
+                        }
+                        val gameinfo = GameInfo.genGameInfoFromCHD(apath)
+                        if (gameinfo != null) {
+                            gameinfo.file_path = file.uri.toString();
+                            gameinfo.iso_file_path = uri.toString();
+                            gameinfo.updateState()
+                            gameinfo.save()
+                            if (progress_emitter != null) {
+                                progress_emitter!!.onNext(gameinfo.game_title)
+                            }
+                        }
+                        parcelFileDescriptor.close()
+                    }
+
+                }else if(file.name!!.lowercase(Locale.ROOT).endsWith("cue")) {
+
+                    val stringBuilder = StringBuilder()
+                    YabauseApplication.appContext.contentResolver.openInputStream(file.uri)?.use { inputStream ->
+                        BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                            var line: String? = reader.readLine()
+                            var iso_file_name = ""
+                            while (line != null) {
+                                //System.out.println(str);
+                                val p = Pattern.compile("FILE \"(.*)\"")
+                                val m = p.matcher(line)
+                                if (m.find()) {
+                                    iso_file_name = m.group(1)
+                                    break
+                                }
+                                line = reader.readLine()
+                            }
+
+                            val dir = DocumentFile.fromTreeUri(YabauseApplication.appContext, uri)
+                            val isoFile = dir?.findFile(iso_file_name)
+                            if( isoFile != null) {
+
+                                YabauseApplication.appContext.contentResolver.openInputStream(isoFile.uri)?.use { inputStream ->
+
+                                    val buff = ByteArray(0xFF)
+                                    val dataInStream = DataInputStream(
+                                        BufferedInputStream(inputStream)
+                                    )
+                                    dataInStream.read(buff, 0x0, 0xFF)
+                                    dataInStream.close()
+
+                                    val gameinfo = GameInfo.getGimeInfoFromBuf(file.uri.toString(),buff)
+                                    if (gameinfo != null) {
+                                        gameinfo.file_path = file.uri.toString();
+                                        gameinfo.iso_file_path = uri.toString();
+                                        gameinfo.updateState()
+                                        gameinfo.save()
+                                        if (progress_emitter != null) {
+                                            progress_emitter!!.onNext(gameinfo.game_title)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }else if(file.name!!.lowercase(Locale.ROOT).endsWith("ccd")) {
+
+                    Toast.makeText(YabauseApplication.appContext,"ccd is not supported yet for SAF",Toast.LENGTH_LONG).show()
+
+                }else if(file.name!!.lowercase(Locale.ROOT).endsWith("mds")) {
+
+                    Toast.makeText(YabauseApplication.appContext,"mds is not supported yet for SAF",Toast.LENGTH_LONG).show()
                 }
-            } else if (gamefile_name.endsWith("MDS") || gamefile_name.endsWith("mds")) {
-                val tmp = GameInfo.getFromFileName(gamefile_name)
-                if (tmp == null) {
-                    gameinfo = GameInfo.genGameInfoFromMDS(gamefile_name)
+
+            }
+
+
+        }else {
+            val gamedir = File(dir)
+
+            if (!gamedir.exists()) return
+            if (!gamedir.isDirectory) return
+            var iter = FileUtils.iterateFiles(gamedir, extensions, recursive)
+            val i = 0
+            while (iter.hasNext()) {
+                val gamefile = iter.next()
+                val gamefile_name = gamefile.absolutePath
+                Log.d("generateGameDB", gamefile_name)
+                var gameinfo: GameInfo? = null
+                if (gamefile_name.lowercase(Locale.ROOT).endsWith("cue")) {
+                    val tmp = GameInfo.getFromFileName(gamefile_name)
+                    if (tmp == null) {
+                        gameinfo = GameInfo.genGameInfoFromCUE(gamefile_name)
+                    }
+                } else if (gamefile_name.lowercase(Locale.ROOT).endsWith("mds")) {
+                    val tmp = GameInfo.getFromFileName(gamefile_name)
+                    if (tmp == null) {
+                        gameinfo = GameInfo.genGameInfoFromMDS(gamefile_name)
+                    }
+                } else if (gamefile_name.lowercase(Locale.ROOT).endsWith("ccd")) {
+                    val tmp = GameInfo.getFromFileName(gamefile_name)
+                    if (tmp == null) {
+                        gameinfo = GameInfo.genGameInfoFromCCD(gamefile_name)
+                    }
+                } else if (gamefile_name.lowercase(Locale.ROOT).endsWith("chd")) {
+                    val tmp = GameInfo.getFromFileName(gamefile_name)
+                    if (tmp == null) {
+                        gameinfo = GameInfo.genGameInfoFromCHD(gamefile_name)
+                    }
                 }
-            } else if (gamefile_name.endsWith("CCD") || gamefile_name.endsWith("ccd")) {
-                val tmp = GameInfo.getFromFileName(gamefile_name)
-                if (tmp == null) {
-                    gameinfo = GameInfo.genGameInfoFromCCD(gamefile_name)
-                }
-            } else if (gamefile_name.endsWith("CHD") || gamefile_name.endsWith("chd")) {
-                val tmp = GameInfo.getFromFileName(gamefile_name)
-                if (tmp == null) {
-                    gameinfo = GameInfo.genGameInfoFromCHD(gamefile_name)
+                if (gameinfo != null) {
+                    gameinfo.updateState()
+                    gameinfo.save()
+                    if (progress_emitter != null) {
+                        progress_emitter!!.onNext(gameinfo.game_title)
+                    }
                 }
             }
-            if (gameinfo != null) {
-                gameinfo.updateState()
-                gameinfo.save()
-                if (progress_emitter != null) {
-                    progress_emitter!!.onNext(gameinfo.game_title)
-                }
-            }
-        }
-        iter = FileUtils.iterateFiles(gamedir, extensions, recursive)
-        while (iter.hasNext()) {
-            val gamefile = iter.next()
-            val gamefile_name = gamefile.absolutePath
-            if (gamefile_name.endsWith("BIN") || gamefile_name.endsWith("bin") ||
+            iter = FileUtils.iterateFiles(gamedir, extensions, recursive)
+            while (iter.hasNext()) {
+                val gamefile = iter.next()
+                val gamefile_name = gamefile.absolutePath
+                if (gamefile_name.endsWith("BIN") || gamefile_name.endsWith("bin") ||
                     gamefile_name.endsWith("ISO") || gamefile_name.endsWith("iso") ||
-                    gamefile_name.endsWith("IMG") || gamefile_name.endsWith("img")) {
-                val tmp = GameInfo.getFromInDirectFileName(gamefile_name)
-                if (tmp == null) {
-                    val gameinfo = GameInfo.genGameInfoFromIso(gamefile_name)
-                    if (gameinfo != null) {
-                        gameinfo.updateState()
-                        gameinfo.save()
+                    gamefile_name.endsWith("IMG") || gamefile_name.endsWith("img")
+                ) {
+                    val tmp = GameInfo.getFromInDirectFileName(gamefile_name)
+                    if (tmp == null) {
+                        val gameinfo = GameInfo.genGameInfoFromIso(gamefile_name)
+                        if (gameinfo != null) {
+                            gameinfo.updateState()
+                            gameinfo.save()
+                        }
                     }
                 }
             }
