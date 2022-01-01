@@ -70,6 +70,10 @@ int checkCHD(const char *filename );
 #endif
 
 #if defined(ANDROID)
+extern const char * GetFileDescriptorPath( const char * fileName );
+#endif
+
+#if defined(ANDROID)
 // Android 11 does not allow access file directory
 #include <unistd.h> // for dup()
 FILE* idiocy_fopen_fd(const char* fname, const char * mode) {
@@ -514,6 +518,17 @@ static FILE* OpenFile(char* buffer, const char* cue) {
    char *path;
    int tmp;
    FILE *ret_file = NULL;
+
+#if defined(ANDROID)
+  if (strstr(cue, "/proc/self/fd/") == cue) {
+     char * fdname = GetFileDescriptorPath(buffer);
+     if( fdname == NULL ){
+      YabSetError(YAB_ERR_FILENOTFOUND, buffer);
+      return -1;
+     }
+     ret_file = fopen(fdname, "rb");
+  }else{
+#endif
    // Now go and open up the image file, figure out its size, etc.
    if ((ret_file = fopen(buffer, "rb")) == NULL)
    {
@@ -551,8 +566,12 @@ static FILE* OpenFile(char* buffer, const char* cue) {
          YabSetError(YAB_ERR_FILENOTFOUND, buffer);
       }
    }
+#if defined(ANDROID)
+  }
+#endif
    return ret_file;
 }
+
 
 static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 {
@@ -669,6 +688,20 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
   fseek(iso_file, 0, SEEK_SET);
   matched = fscanf(iso_file, "FILE \"%[^\"]\" %*s\r\n", temp_buffer);
 
+
+  // check if File deskmode or not
+#if defined(ANDROID)
+  if (strstr(cuefilename, "/proc/self/fd/") == cuefilename) {
+     char * fdname = GetFileDescriptorPath(temp_buffer);
+     if( fdname == NULL ){
+      YabSetError(YAB_ERR_FILENOTFOUND, temp_buffer);
+      free(temp_buffer);
+      return -1;
+     }
+
+     bin_file = fopen(fdname, "rb");
+  }else{
+#endif
   // Now go and open up the image file, figure out its size, etc.
   if ((bin_file = fopen(temp_buffer, "rb")) == NULL)
   {
@@ -726,6 +759,9 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
       return -1;
     }
   }
+#if defined(ANDROID)
+  }
+#endif
 
   fseek(bin_file, 0, SEEK_END);
   file_size = ftell(bin_file);

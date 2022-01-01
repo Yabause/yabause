@@ -423,7 +423,8 @@ int GetVideoInterface()
     return (int)env->CallIntMethod(yabause, getVideoInterface);
 }
 
-const char *GetCartridgePath()
+
+const char * GetCartridgePath()
 {
     jclass yclass;
     jmethodID getCartridgePath;
@@ -460,9 +461,41 @@ int GetPlayer2Device()
     return env->CallIntMethod(yabause, getPlayer2InputDevice);
 }
 
+extern "C" 
+const char * GetFileDescriptorPath( const char * fileName )
+{
+    jclass yclass;
+    jmethodID getFileDescriptorPath;
+    jstring message;
+    jboolean dummy;
+    JNIEnv * env;
+    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
+        if(yvm->AttachCurrentThread(&env,NULL) != JNI_OK){
+            __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to AttachCurrentThread");
+            return NULL;
+        }
+    }
+
+    jstring strj = env->NewStringUTF(fileName);
+
+    yclass = env->GetObjectClass(yabause);
+    getFileDescriptorPath = env->GetMethodID(yclass, "getFileDescriptorPath", "(Ljava/lang/String;)Ljava/lang/String;");
+    message = (jstring)env->CallObjectMethod(yabause, getFileDescriptorPath, strj );
+
+    env->DeleteLocalRef(strj);
+
+    if( message == NULL ){
+        return NULL;
+    }
+
+    if (env->GetStringLength(message) == 0)
+        return NULL;
+    else
+        return env->GetStringUTFChars(message, &dummy);
+}
+
 void onBackupWrite(char *before, char *after, int size)
 {
-
     __android_log_print(ANDROID_LOG_INFO, "yabause", "onBackupWrite is called");
 
     jclass yclass;
@@ -1148,8 +1181,10 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, job
     s_player2Enable = GetPlayer2Device();
     s_playdatadir = GetPlayDataDir();
 
-    YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
-
+    GetFileDescriptorPath("test");
+	
+	YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
+    
     OSDInit(0);
 
     pthread_create(&_threadId, 0, threadStartCallback, NULL);

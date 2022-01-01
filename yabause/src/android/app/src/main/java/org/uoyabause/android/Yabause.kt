@@ -69,6 +69,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
+import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import androidx.preference.PreferenceManager
@@ -1846,6 +1847,35 @@ class Yabause : AppCompatActivity(),
         updateInputDevice()
         waitingResult = false
         toggleMenu()
+    }
+
+    var currentDocumentUri : Uri? = null
+    fun getFileDescriptorPath( fileName: String?):String?{
+
+        if( fileName == null ){
+            return null
+        }
+
+        if( currentDocumentUri == null ){
+            return null
+        }
+
+        val dir = DocumentFile.fromTreeUri(this,currentDocumentUri!!)
+        if( dir == null ){
+            return null
+        }
+
+        val files = dir.findFile(fileName)?.listFiles()
+        if( files == null ){
+            return null
+        }
+
+        val parcelFileDescriptor = contentResolver.openFileDescriptor(files[0].uri, "r")
+        if (parcelFileDescriptor != null) {
+            val apath = "/proc/self/fd/${parcelFileDescriptor.fd}"
+            return apath
+        }
+        return null
     }
 
     fun onBackupWrite(before: ByteArray, after: ByteArray) {
