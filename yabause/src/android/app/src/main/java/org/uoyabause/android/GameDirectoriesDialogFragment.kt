@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.util.Log
@@ -26,17 +27,7 @@ import java.util.*
 import androidx.documentfile.provider.DocumentFile
 import com.google.common.io.Files.getFileExtension
 import android.provider.DocumentsContract
-
-
-
-
-
-
-
-
-
-
-
+import android.provider.DocumentsContract.Root.FLAG_SUPPORTS_IS_CHILD
 
 
 class DirectoryListAdapter(private val context: Context) : BaseAdapter(), ListAdapter {
@@ -158,26 +149,21 @@ class GameDirectoriesDialogFragment : PreferenceDialogFragmentCompat(), View.OnC
       } finally {
         cursor?.close()
       }
-
-
-
-
     }
   }
 
   override fun onClick(v: View) {
-
-    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-      flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+      }
+      startActivityForResult(intent, 111)
+    }else {
+      val fd = FileDialog(requireActivity(), "")
+      fd.setSelectDirectoryOption(true)
+      fd.addDirectoryListener(this)
+      fd.showDialog()
     }
-    startActivityForResult(intent, 111)
-/*
-    val fd = FileDialog(requireActivity(), "")
-    fd.setSelectDirectoryOption(true)
-    fd.addDirectoryListener(this)
-    fd.showDialog()
- */
-
   }
 
   override fun directorySelected(directory: File) {

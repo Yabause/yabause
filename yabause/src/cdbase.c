@@ -1387,11 +1387,36 @@ static int LoadCCD(const char *ccd_filename, FILE *iso_file)
       return -1;
    }
 
+#if defined(ANDROID)
+  if (strstr(ccd_filename, "/proc/self/fd/") == ccd_filename) {
+    char * p  = strstr(ccd_filename, ";");
+    if( p != NULL){
+  	  strcpy(img_filename, p + 1);
+	    ext = strrchr(img_filename, '.');
+	    strcpy(ext, ".img");
+      const char * fdname = GetFileDescriptorPath(img_filename);
+      if( fdname == NULL ){
+
+        ext = strrchr(img_filename, '.');
+        strcpy(ext, ".iso");
+        const char * fdname = GetFileDescriptorPath(img_filename);
+        if( fdname == NULL ){
+          YabSetError(YAB_ERR_FILENOTFOUND, img_filename);
+          return -1;
+        }
+
+      }
+      fp = fopen(fdname, "rb");
+    }else{
+        YabSetError(YAB_ERR_FILENOTFOUND, ccd_filename);
+        return -1;
+    }
+  }else{
+#endif
 	strcpy(img_filename, ccd_filename);
 	ext = strrchr(img_filename, '.');
 	strcpy(ext, ".img");
 	fp = fopen(img_filename, "rb");
-
 	if (fp == NULL)
 	{
 		ext = strrchr(img_filename, '.');
@@ -1402,7 +1427,9 @@ static int LoadCCD(const char *ccd_filename, FILE *iso_file)
 			return -1;
 		}
 	}
-
+#if defined(ANDROID)
+  }
+#endif
 	fseek(iso_file, 0, SEEK_SET);
 
 	// Load CCD file as dictionary

@@ -485,14 +485,12 @@ class YabauseStorage private constructor() {
                             if( isoFile != null) {
 
                                 YabauseApplication.appContext.contentResolver.openInputStream(isoFile.uri)?.use { inputStream ->
-
                                     val buff = ByteArray(0xFF)
                                     val dataInStream = DataInputStream(
                                         BufferedInputStream(inputStream)
                                     )
                                     dataInStream.read(buff, 0x0, 0xFF)
                                     dataInStream.close()
-
                                     val gameinfo = GameInfo.getGimeInfoFromBuf(file.uri.toString(),buff)
                                     if (gameinfo != null) {
                                         gameinfo.file_path = file.uri.toString();
@@ -508,17 +506,38 @@ class YabauseStorage private constructor() {
                         }
                     }
                 }else if(file.name!!.lowercase(Locale.ROOT).endsWith("ccd")) {
-
-                    Toast.makeText(YabauseApplication.appContext,"ccd is not supported yet for SAF",Toast.LENGTH_LONG).show()
-
+                    var realname = file.name!!.replace(".ccd",".img")
+                    val dir = DocumentFile.fromTreeUri(YabauseApplication.appContext, uri)
+                    var isoFile = dir?.findFile(realname)
+                    if( isoFile == null ){
+                        realname = file.name!!.replace(".ccd",".iso")
+                        isoFile = dir?.findFile(realname)
+                    }
+                    if( isoFile != null) {
+                        YabauseApplication.appContext.contentResolver.openInputStream(isoFile.uri)?.use { inputStream ->
+                            val buff = ByteArray(0xFF)
+                            val dataInStream = DataInputStream(
+                                BufferedInputStream(inputStream)
+                            )
+                            dataInStream.read(buff, 0x0, 0xFF)
+                            dataInStream.close()
+                            val gameinfo = GameInfo.getGimeInfoFromBuf(file.uri.toString(),buff)
+                            if (gameinfo != null) {
+                                gameinfo.file_path = file.uri.toString();
+                                gameinfo.iso_file_path = uri.toString();
+                                gameinfo.updateState()
+                                gameinfo.save()
+                                if (progress_emitter != null) {
+                                    progress_emitter!!.onNext(gameinfo.game_title)
+                                }
+                            }
+                        }
+                    }
+                    //Toast.makeText(YabauseApplication.appContext,"ccd is not supported yet for SAF",Toast.LENGTH_LONG).show()
                 }else if(file.name!!.lowercase(Locale.ROOT).endsWith("mds")) {
-
                     Toast.makeText(YabauseApplication.appContext,"mds is not supported yet for SAF",Toast.LENGTH_LONG).show()
                 }
-
             }
-
-
         }else {
             val gamedir = File(dir)
 

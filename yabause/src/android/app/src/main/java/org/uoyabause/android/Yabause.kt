@@ -119,6 +119,7 @@ import org.uoyabause.android.cheat.TabCheatFragment
 import org.uoyabause.android.game.BaseGame
 import org.uoyabause.android.game.GameUiEvent
 import org.uoyabause.android.game.SonicR
+import org.uoyabause.android.phone.GameSelectFragmentPhone
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -126,6 +127,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.net.URLDecoder
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Arrays
@@ -179,6 +181,7 @@ class Yabause : AppCompatActivity(),
     private lateinit var progressMessage: TextView
 
     private val MENU_ID_LEADERBOARD = 0x8123
+    private val OPEN_FILE = 0x1234
 
     fun showWaitDialog(message: String) {
         progressMessage.text = message
@@ -229,6 +232,7 @@ class Yabause : AppCompatActivity(),
     }
 
     var mParcelFileDescriptor: ParcelFileDescriptor? = null
+    var subFileDescripters = mutableListOf<ParcelFileDescriptor>()
 
     private val apiscope = CoroutineScope(Dispatchers.IO)
 
@@ -341,7 +345,8 @@ class Yabause : AppCompatActivity(),
 
         val uriString: String? = intent.getStringExtra("org.uoyabause.android.FileNameUri")
         if (uriString != null) {
-            val ext = FilenameUtils.getExtension(uriString)
+            val fnameIndex = uriString.lastIndexOf("%2F", ignoreCase = true)
+            val fname = uriString.substring(fnameIndex+3)
             val uri = Uri.parse(uriString)
             var apath = ""
             try {
@@ -349,7 +354,7 @@ class Yabause : AppCompatActivity(),
                     if (mParcelFileDescriptor != null) {
                         val fd: Int? = mParcelFileDescriptor?.getFd()
                         if (fd != null) {
-                            apath = "/proc/self/fd/$fd.${ext}"
+                            apath = "/proc/self/fd/$fd;${fname}"
                         }
                     }
             } catch (e: Exception) {
@@ -924,9 +929,17 @@ class Yabause : AppCompatActivity(),
                     } else {
                         path = YabauseStorage.storage.gamePath
                     }
-                    val fd = FileDialog(this@Yabause, path)
-                    fd.addFileListener(this@Yabause)
-                    fd.showDialog()
+
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                        intent.addCategory(Intent.CATEGORY_OPENABLE)
+                        intent.type = "*/*"
+                        startActivityForResult(intent, OPEN_FILE)
+                    }else {
+                        val fd = FileDialog(this@Yabause, path)
+                        fd.addFileListener(this@Yabause)
+                        fd.showDialog()
+                    }
                 }
             }
             R.id.pad_mode -> {
@@ -990,6 +1003,11 @@ class Yabause : AppCompatActivity(),
                     Thread.sleep(1000)
                 } catch (e: InterruptedException) {
                 }
+                mParcelFileDescriptor?.close()
+                subFileDescripters.forEach {
+                    it.close()
+                }
+                subFileDescripters.clear()
                 finish()
                 killProcess(myPid())
             }
@@ -1339,6 +1357,29 @@ class Yabause : AppCompatActivity(),
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
+            OPEN_FILE -> {
+                if( resultCode == Activity.RESULT_OK && data != null && data.data != null ) {
+                    val tmpParcelFileDescriptor = contentResolver.openFileDescriptor(data.data!!, "r")
+                    if (tmpParcelFileDescriptor != null) {
+                        gamePath = "/proc/self/fd/${tmpParcelFileDescriptor.getFd()};${data.data.toString()}"
+                        mParcelFileDescriptor?.close()
+                        mParcelFileDescriptor = tmpParcelFileDescriptor
+                    }else{
+                        Snackbar.make(
+                            drawerLayout,
+                            "Failed to Open file",
+                            Snackbar.LENGTH_SHORT
+                        ).show()
+                    }
+                }else{
+                    Snackbar.make(
+                        drawerLayout,
+                        "Failed to Open file",
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                }
+                YabauseRunnable.closeTray()
+            }
             MENU_ID_LEADERBOARD -> {
                 waitingResult = false
                 toggleMenu()
@@ -1865,6 +1906,8 @@ class Yabause : AppCompatActivity(),
             return null
         }
 
+        val decodedResult: String = URLDecoder.decode(fileName, "UTF-8")
+
         if( currentDocumentUri == null ){
             return null
         }
@@ -1878,13 +1921,15 @@ class Yabause : AppCompatActivity(),
         //    Log.d("Yabause", "Found file " + file.name + " with size " + file.length())
         //}
 
-        val files = dir.findFile(fileName)
+        val files = dir.findFile(decodedResult)
         if( files == null ){
             return null
         }
 
         val parcelFileDescriptor = contentResolver.openFileDescriptor(files.uri, "r")
         if (parcelFileDescriptor != null) {
+
+            subFileDescripters.add(parcelFileDescriptor)
             val apath = "/proc/self/fd/${parcelFileDescriptor.fd}"
             return apath
         }
