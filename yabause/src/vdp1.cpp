@@ -637,7 +637,6 @@ extern "C" void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
 
    if (Vdp1External.status == VDP1_STATUS_RUNNING) {
-     Vdp1External.status = VDP1_STATUS_IDLE;
      LOG("VDP1: Readched to max comand count = %d", command_count);
    }
 }

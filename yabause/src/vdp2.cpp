@@ -1002,10 +1002,16 @@ void Vdp2HBlankOUT(void) {
     if (Vdp1External.swap_frame_buffer == 1)
     {
       Vdp1Regs->EDSR >>= 1;
-      if (Vdp1External.frame_change_plot == 1) {
+      if (Vdp1External.frame_change_plot == 1 ) {
         yabsys.wait_line_count += 45;
         yabsys.wait_line_count %= yabsys.VBlankLineCount;
         FRAMELOG("SET Vdp1 end wait at %d", yabsys.wait_line_count);
+      }
+    }else{
+      // Continue from previus frame
+      if ( Vdp1External.status == VDP1_STATUS_RUNNING) {
+        yabsys.wait_line_count += 45;
+        yabsys.wait_line_count %= yabsys.VBlankLineCount;
       }
     }
     //YabClearEventQueue(vdp1_rcv_evqueue);
@@ -1020,21 +1026,17 @@ void Vdp2HBlankOUT(void) {
 
   }
   if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
-      if (Vdp1External.status == VDP1_STATUS_IDLE) {
-        FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
-        YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
-        YabClearEventQueue(vdp1_rcv_evqueue);
-        FRAMELOG("**WAIT END**");
-        FrameProfileAdd("DirectDraw sync");        
-        ScuSendDrawEnd();
-        FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
-        yabsys.wait_line_count = -1;
-        Vdp1Regs->EDSR |= 2;
-      } else {
-        yabsys.wait_line_count += 10;
-        yabsys.wait_line_count %= yabsys.VBlankLineCount;
-        FRAMELOG("Vdp1Draw wait at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
-      }
+    FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
+    YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
+    YabClearEventQueue(vdp1_rcv_evqueue);
+    FRAMELOG("**WAIT END**");
+    yabsys.wait_line_count = -1;
+    FrameProfileAdd("DirectDraw sync");        
+    if (Vdp1External.status == VDP1_STATUS_IDLE) {
+      FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
+      Vdp1Regs->EDSR |= 2;
+      ScuSendDrawEnd();
+    }  
   }
 #else
     vdp2VBlankOUT();
@@ -1299,6 +1301,8 @@ void vdp2VBlankOUT(void) {
     }
   }
   else {
+
+    // Continue from previus frame
     if ( Vdp1External.status == VDP1_STATUS_RUNNING) {
       LOG("[VDP1] Start Drawing continue");
       Vdp1Draw();
