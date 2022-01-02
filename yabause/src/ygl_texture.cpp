@@ -28,6 +28,8 @@ extern "C" {
   extern Vdp2 * fixVdp2Regs;
 }
 
+#include <math.h>
+
 #if defined(HAVE_VULKAN)
 #include "vulkan/VIDVulkan.h"
 #include "vulkan/vulkan.hpp"
