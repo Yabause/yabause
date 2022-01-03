@@ -1010,8 +1010,8 @@ void Vdp2HBlankOUT(void) {
     }else{
       // Continue from previus frame
       if ( Vdp1External.status == VDP1_STATUS_RUNNING) {
-        yabsys.wait_line_count += 45;
-        yabsys.wait_line_count %= yabsys.VBlankLineCount;
+        //yabsys.wait_line_count += 45;
+        //yabsys.wait_line_count %= yabsys.VBlankLineCount;
       }
     }
     //YabClearEventQueue(vdp1_rcv_evqueue);
@@ -1307,6 +1307,11 @@ void vdp2VBlankOUT(void) {
       LOG("[VDP1] Start Drawing continue");
       Vdp1Draw();
       isrender = 1;
+#if defined(YAB_ASYNC_RENDERING)
+      yabsys.wait_line_count += 45;
+      yabsys.wait_line_count %= yabsys.VBlankLineCount;
+#endif
+
     }
   }
 
