@@ -357,7 +357,7 @@ OnGenericMotionListener, View.OnClickListener {
     //Log.d("Yabause", "onGenericMotion: ${event} ")
 
     if (event?.deviceId != _selected_device_id) return false
-    if (onkey == false) return false
+    //if (onkey == false) return false
     if (event?.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
       for (i in motions!!.indices) {
         val value = event.getAxisValue(motions!![i].id)
@@ -372,7 +372,7 @@ OnGenericMotionListener, View.OnClickListener {
           map!![index] == PadEvent.PERANALOG_AXIS_Y ||
           map!![index] == PadEvent.PERANALOG_AXIS_LTRIGGER ||
           map!![index] == PadEvent.PERANALOG_AXIS_RTRIGGER) {
-          if ( value <= -0.9f  || value >= 0.9f) {
+          if (value <= -0.9f || value >= 0.9f) {
             motions!![i].oldval = value
             if (map!![index] == PadEvent.PERANALOG_AXIS_LTRIGGER) {
               isLTriggerAnalog = true
@@ -382,11 +382,12 @@ OnGenericMotionListener, View.OnClickListener {
             }
             onkey = false
             val PadKey = Keymap!!.get(motions!!.get(i).id)
-            setKeymap( motions!!.get(i).id or -0x80000000 )
+            setKeymap(motions!!.get(i).id or -0x70000000)
             return true
           }
-        } else {
-/*
+
+      } else {
+
           if (java.lang.Float.compare(value, -1.0f) <= 0) {
             motions!![i].oldval = value
             onkey = false
@@ -399,7 +400,7 @@ OnGenericMotionListener, View.OnClickListener {
             val PadKey = Keymap!![motions!![i].id or -0x80000000]
             return setKeymap(motions!![i].id or -0x80000000)
           }
- */
+
         }
       }
     }
