@@ -154,10 +154,15 @@ class GameDirectoriesDialogFragment : PreferenceDialogFragmentCompat(), View.OnC
 
   override fun onClick(v: View) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+
+      val rtn = YabauseApplication.checkDonated(requireActivity(), "")
+      if ( rtn == 0) {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+          flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+        }
+        startActivityForResult(intent, 111)
       }
-      startActivityForResult(intent, 111)
+
     }else {
       val fd = FileDialog(requireActivity(), "")
       fd.setSelectDirectoryOption(true)
