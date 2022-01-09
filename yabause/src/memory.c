@@ -79,12 +79,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #if CACHE_ENABLE
 #else
-u8 FASTCALL MappedMemoryReadByteNocache(u32 addr){ return MappedMemoryReadByte(addr, NULL); }
-u16 FASTCALL MappedMemoryReadWordNocache(u32 addr){ return MappedMemoryReadWord(addr, NULL); }
-u32 FASTCALL MappedMemoryReadLongNocache(u32 addr){ return MappedMemoryReadLong(addr, NULL); }
-void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val){ MappedMemoryWriteByte(addr,val, NULL);  }
-void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val){ MappedMemoryWriteWord(addr, val, NULL); }
-void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val){ MappedMemoryWriteLong(addr, val, NULL); }
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr, u32 * cycle){ return MappedMemoryReadByte(addr, NULL); }
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr, u32 * cycle){ return MappedMemoryReadWord(addr, NULL); }
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr, u32 * cycle){ return MappedMemoryReadLong(addr, NULL); }
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val, u32 * cycle){ MappedMemoryWriteByte(addr,val, NULL);  }
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val, u32 * cycle){ MappedMemoryWriteWord(addr, val, NULL); }
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val, u32 * cycle){ MappedMemoryWriteLong(addr, val, NULL); }
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -842,10 +842,10 @@ inline u32 getMemCycle(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-u8 FASTCALL MappedMemoryReadByte(u32 addr){
-	return cache_memory_read_b(&CurrentSH2->onchip.cache, addr);
+u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle){
+	return cache_memory_read_b(&CurrentSH2->onchip.cache, addr, cycle);
 }
-u8 FASTCALL MappedMemoryReadByteNocache(u32 addr)
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr, u32 * cycle)
 #else
 u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle)
 #endif
@@ -906,10 +906,10 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle)
 
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-u16 FASTCALL MappedMemoryReadWord(u32 addr){
-	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle){
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr, cycle);
 }
-u16 FASTCALL MappedMemoryReadWordNocache(u32 addr)
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr, u32 * cycle)
 #else
 u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle)
 #endif
@@ -969,10 +969,10 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle)
 
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-u32 FASTCALL MappedMemoryReadLong(u32 addr){
-	return cache_memory_read_l(&CurrentSH2->onchip.cache, addr);
+u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle){
+	return cache_memory_read_l(&CurrentSH2->onchip.cache, addr,cycle);
 }
-u32 FASTCALL MappedMemoryReadLongNocache(u32 addr)
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr, u32 * cycle)
 #else
 u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle)
 #endif
@@ -1035,10 +1035,10 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle)
 
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val){
-	cache_memory_write_b(&CurrentSH2->onchip.cache,addr,val);
+void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle){
+	cache_memory_write_b(&CurrentSH2->onchip.cache,addr,val,cycle);
 }
-void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val)
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val, u32 * cycle)
 #else
 void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle)
 #endif
@@ -1099,10 +1099,10 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle)
 
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val){
-	cache_memory_write_w(&CurrentSH2->onchip.cache, addr, val);
+void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle){
+	cache_memory_write_w(&CurrentSH2->onchip.cache, addr, val, cycle);
 }
-void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val)
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val, u32 * cycle)
 #else
 void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle )
 #endif
@@ -1161,16 +1161,28 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle )
    }
 }
 
+#if 0  
+extern FILE * slogp;
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val){
-	cache_memory_write_l(&CurrentSH2->onchip.cache, addr, val);
+void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val , u32 * cycle ){
+	cache_memory_write_l(&CurrentSH2->onchip.cache, addr, val, cycle);
 }
-void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val)
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val , u32 * cycle)
 #else
 void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val, u32 * cycle )
 #endif
 {
+#if 0   
+   if( (addr & 0x0FFFFFFF) == 0x06091EE4 || (addr & 0x0FFFFFFF) == 0x06042C68 /*&& CurrentSH2->regs.PC == 0x0601DFFC*/ ){
+      if (slogp != NULL){
+         fprintf(slogp, "%08X: CPU write 0x%08X = %d(0x%08X)\n", CurrentSH2->regs.PC, addr, val,val );
+      }
+   }
+#endif
+
   if (cycle != NULL) { 
     //*cycle = getMemCycle(addr); 
     GET_MEM_CYCLE_W

@@ -137,7 +137,7 @@ static INLINE int select_way_to_replace(u32 lru)
    return 0;
 }
 
-void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val){
+void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val, u32 * cycle){
 
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
@@ -145,7 +145,7 @@ void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val){
       u32 tagaddr = 0;
       u32 entry = 0;
 		if (ca->enable == 0){
-			MappedMemoryWriteByteNocache(addr, val);
+			MappedMemoryWriteByteNocache(addr, val, cycle);
 			return;
 		}
 		tagaddr = (addr & TAG_MASK);
@@ -166,19 +166,19 @@ void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val){
 			ca->way[3][entry].data[addr&LINE_MASK] = val;
          update_lru(3, &ca->lru[entry]);
 		}
-		MappedMemoryWriteByteNocache(addr, val);
+		MappedMemoryWriteByteNocache(addr, val, cycle);
 	}
 	break;
 	case CACHE_THROUGH:
-		MappedMemoryWriteByteNocache(addr, val);
+		MappedMemoryWriteByteNocache(addr, val, cycle);
 		break;
 	default:
-		MappedMemoryWriteByteNocache(addr, val);
+		MappedMemoryWriteByteNocache(addr, val, cycle);
 		break;
 	}
 }
 
-void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val){
+void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val, u32 * cycle){
 
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
@@ -186,7 +186,7 @@ void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val){
       u32 tagaddr = 0;
       u32 entry = 0;
 		if (ca->enable == 0){
-			MappedMemoryWriteWordNocache(addr, val);
+			MappedMemoryWriteWordNocache(addr, val,cycle);
 			return;
 		}
 
@@ -214,19 +214,19 @@ void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val){
 		}
 
 		// write through
-		MappedMemoryWriteWordNocache(addr, val);
+		MappedMemoryWriteWordNocache(addr, val,cycle);
 	}
 	break;
 	case CACHE_THROUGH:
-		MappedMemoryWriteWordNocache(addr, val);
+		MappedMemoryWriteWordNocache(addr, val,cycle);
 		break;
 	default:
-		MappedMemoryWriteWordNocache(addr, val);
+		MappedMemoryWriteWordNocache(addr, val,cycle);
 		break;
 	}
 }
 
-void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val){
+void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val, u32 *cycle){
 
 	switch (addr & AREA_MASK){
    case CACHE_PURGE://associative purge
@@ -250,7 +250,7 @@ void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val){
       u32 tagaddr = 0;
       u32 entry = 0;
 		if (ca->enable == 0){
-			MappedMemoryWriteLongNocache(addr, val);
+			MappedMemoryWriteLongNocache(addr, val,cycle);
 			return;
 		}
 
@@ -287,20 +287,20 @@ void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val){
 		}
 
 		// write through
-		MappedMemoryWriteLongNocache(addr, val);
+		MappedMemoryWriteLongNocache(addr, val,cycle);
 	}
 	break;
 	case CACHE_THROUGH:
-		MappedMemoryWriteLongNocache(addr, val);
+		MappedMemoryWriteLongNocache(addr, val,cycle);
 		break;
 	default:
-		MappedMemoryWriteLongNocache(addr, val);
+		MappedMemoryWriteLongNocache(addr, val,cycle);
 		break;
 	}
 }
 
 
-u8 cache_memory_read_b(cache_enty * ca, u32 addr){
+u8 cache_memory_read_b(cache_enty * ca, u32 addr, u32 * cycle){
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
 	{
@@ -309,7 +309,7 @@ u8 cache_memory_read_b(cache_enty * ca, u32 addr){
       int i = 0;
       int lruway = 0;
 		if (ca->enable == 0){
-			return MappedMemoryReadByteNocache(addr);
+			return MappedMemoryReadByteNocache(addr,cycle);
 		}
 		tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
@@ -342,16 +342,16 @@ u8 cache_memory_read_b(cache_enty * ca, u32 addr){
 	}
 	break;
 	case CACHE_THROUGH:
-		return MappedMemoryReadByteNocache(addr);
+		return MappedMemoryReadByteNocache(addr,cycle);
 		break;
 	default:
-		return MappedMemoryReadByteNocache(addr);
+		return MappedMemoryReadByteNocache(addr,cycle);
 		break;
 	}
 	return 0;
 }
 
-u16 cache_memory_read_w(cache_enty * ca, u32 addr){
+u16 cache_memory_read_w(cache_enty * ca, u32 addr, u32 * cycle){
 
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
@@ -361,7 +361,7 @@ u16 cache_memory_read_w(cache_enty * ca, u32 addr){
       int i = 0;
       int lruway = 0;
 		if (ca->enable == 0){
-			return MappedMemoryReadWordNocache(addr);
+			return MappedMemoryReadWordNocache(addr,cycle);
 		}
 	   tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
@@ -394,16 +394,16 @@ u16 cache_memory_read_w(cache_enty * ca, u32 addr){
 	}
 	break;
 	case CACHE_THROUGH:
-		return MappedMemoryReadWordNocache(addr);
+		return MappedMemoryReadWordNocache(addr,cycle);
 		break;
 	default:
-		return MappedMemoryReadWordNocache(addr);
+		return MappedMemoryReadWordNocache(addr,cycle);
 		break;
 	}
 	return 0;
 }
 
-u32 cache_memory_read_l(cache_enty * ca, u32 addr){
+u32 cache_memory_read_l(cache_enty * ca, u32 addr, u32 * cycle){
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
 	{
@@ -412,7 +412,7 @@ u32 cache_memory_read_l(cache_enty * ca, u32 addr){
       int i = 0;
       int lruway = 0;
 		if (ca->enable == 0){
-			return MappedMemoryReadLongNocache(addr);
+			return MappedMemoryReadLongNocache(addr,cycle);
 		}
 		tagaddr = (addr & TAG_MASK);
 	   entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
@@ -460,10 +460,10 @@ u32 cache_memory_read_l(cache_enty * ca, u32 addr){
 	}
 	break;
 	case CACHE_THROUGH:
-		return MappedMemoryReadLongNocache(addr);
+		return MappedMemoryReadLongNocache(addr,cycle);
 		break;
 	default:
-		return MappedMemoryReadLongNocache(addr);
+		return MappedMemoryReadLongNocache(addr,cycle);
 		break;
 	}
 	return 0;

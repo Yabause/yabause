@@ -220,33 +220,36 @@ static u32 FASTCALL FetchBios(u32 addr)
     }
   }
 
-#if CACHE_ENABLE
-   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-#else
+//#if CACHE_ENABLE
+//   u32 cycle = 0;
+//   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr,&cycle);
+//#else
    return T2ReadWord(BiosRom, addr & 0x7FFFF);
-#endif
+//#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchCs0(u32 addr)
 {
-#if CACHE_ENABLE
-   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-#else
+//#if CACHE_ENABLE
+ //  u32 cycle=0;
+ //  return cache_memory_read_w(&CurrentSH2->onchip.cache, addr,&cycle);
+//#else
    return CartridgeArea->Cs0ReadWord(addr);
-#endif
+//#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchLWram(u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-#else
+//#if CACHE_ENABLE
+//   u32 cycle=0;
+//	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr,&cycle);
+//#else
 	return T2ReadWord(LowWram, addr & 0xFFFFF);
-#endif
+//#endif
 
 }
 
@@ -254,11 +257,12 @@ static u32 FASTCALL FetchLWram(u32 addr)
 
 static u32 FASTCALL FetchHWram(u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-#else
+//#if CACHE_ENABLE
+//   u32 cycle=0;
+//	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr, &cycle);
+//#else
 	return T2ReadWord(HighWram, addr & 0xFFFFF);
-#endif
+//#endif
 }
 
 extern u8 * Vdp1Ram;

@@ -65,11 +65,16 @@ static void ScuTestInterruptMask(void);
 void ScuRemoveInterruptByCPU(u32 pre, u32 after);
 void step_dsp_dma(scudspregs_struct *sc);
 
-//#define DSPLOG
+//#define ENABLE_DSPLOG
 
-#ifdef DSPLOG
-static FILE * slogp = NULL;
+#ifdef ENABLE_DSPLOG
+FILE * slogp = NULL;
+#define DSPLOG( ... ) if(slogp){ fprintf(slogp,__VA_ARGS__);}
+#else
+#define DSPLOG( ... )
 #endif
+
+
 
 //#define LOG
 #define OLD_DMA 0
@@ -96,7 +101,17 @@ int ScuInit(void) {
    ScuBP->numcodebreakpoints = 0;
    ScuBP->BreakpointCallBack=NULL;
    ScuBP->inbreakpoint=0;
-   
+
+   for( int j=0; i<4; j++ ){
+      for( int i=0; i<64; i++ ){
+         ScuDsp->MD[j][i] = -1;
+      }
+   }
+#ifdef ENABLE_DSPLOG
+   if (slogp == NULL){
+     slogp = fopen("slog.txt", "w");
+   }   
+#endif   
    return 0;
 }
 
@@ -501,7 +516,9 @@ static u32 readgensrc(u8 num)
        ScuDsp->dsp_dma_wait = 0;
        step_dsp_dma(ScuDsp);
      }
-     //LOG("readgensrc from [%d][%d]= %08X", (num & 0x3), ScuDsp->CT[(num & 0x3)] & 0x3F, ScuDsp->MD[(num & 0x3)][ScuDsp->CT[(num & 0x3)] & 0x3F]);
+
+     DSPLOG("%02X: READ from [%ld][%d] val %ld\n", ScuDsp->PC, (num & 0x3), ScuDsp->CT[(num & 0x3)]&0x3F, ScuDsp->MD[(num & 0x3)][ScuDsp->CT[(num & 0x3)]&0x3F] );
+
      return ScuDsp->MD[(num & 0x3)][ScuDsp->CT[(num & 0x3)]&0x3F];
    }else{
      if (num == 0x9)  // ALL
@@ -549,6 +566,8 @@ static u32 readgensrc(u8 num)
 
 static void writed1busdest(u8 num, u32 val)
 {
+
+
   //LOG("writed1busdest [%d][%d] = %08X",num, ScuDsp->CT[0] & 0x3F, val);
 
   // Finish Previous DMA operation
@@ -559,21 +578,25 @@ static void writed1busdest(u8 num, u32 val)
 
    switch(num) { 
       case 0x0:
+          DSPLOG("write [%d][%d] = %08X\n",0, ScuDsp->CT[0]&0x3F, val);
           ScuDsp->MD[0][ScuDsp->CT[0]&0x3F] = val;
           incFlg[0] = 1;
           return;
       case 0x1:
-        ScuDsp->MD[1][ScuDsp->CT[1] & 0x3F] = val;
-          incFlg[1] = 1;
-          return;
+         DSPLOG("write [%d][%d] = %08X\n",1, ScuDsp->CT[1]&0x3F, val);
+         ScuDsp->MD[1][ScuDsp->CT[1] & 0x3F] = val;
+         incFlg[1] = 1;
+         return;
       case 0x2:
-        ScuDsp->MD[2][ScuDsp->CT[2] & 0x3F] = val;
-          incFlg[2] = 1;
-          return;
+         DSPLOG( "write [%d][%d] = %08X\n",2, ScuDsp->CT[2]&0x3F, val);
+         ScuDsp->MD[2][ScuDsp->CT[2] & 0x3F] = val;
+         incFlg[2] = 1;
+         return;
       case 0x3:
-        ScuDsp->MD[3][ScuDsp->CT[3] & 0x3F] = val;
-          incFlg[3] = 1;
-          return;
+         DSPLOG( "write [%d][%d] = %08X\n",3, ScuDsp->CT[3]&0x3F, val);
+         ScuDsp->MD[3][ScuDsp->CT[3] & 0x3F] = val;
+         incFlg[3] = 1;
+         return;
       case 0x4:
           ScuDsp->RX = val;
           return;
@@ -616,6 +639,9 @@ static void writed1busdest(u8 num, u32 val)
 
 static void writeloadimdest(u8 num, u32 val)
 {
+
+   //LOG("writeloadimdest [%d][%d] = %08X",num, ScuDsp->CT[0] & 0x3F, val);
+
   // Finish Previous DMA operation
   if (ScuDsp->dsp_dma_wait > 0) {
     ScuDsp->dsp_dma_wait = 0;
@@ -624,22 +650,22 @@ static void writeloadimdest(u8 num, u32 val)
 
    switch(num) { 
       case 0x0: // MC0
-        //LOG("writeloadimdest [%d][%d] = %08X", num, ScuDsp->CT[0] & 0x3F, val);
-        ScuDsp->MD[0][ScuDsp->CT[0] & 0x3F] = val;
-          incFlg[0] = 1;
-          return;
+         DSPLOG( "write [%d][%d] = %08X\n",0, ScuDsp->CT[0] & 0x3F, val);
+         ScuDsp->MD[0][ScuDsp->CT[0] & 0x3F] = val;
+         incFlg[0] = 1;
+         return;
       case 0x1: // MC1
-        //LOG("writeloadimdest [%d][%d] = %08X", num, ScuDsp->CT[1] & 0x3F, val);
+        DSPLOG( "write [%d][%d] = %08X\n",1, ScuDsp->CT[1] & 0x3F, val);
         ScuDsp->MD[1][ScuDsp->CT[1] & 0x3F] = val;
         incFlg[1] = 1;
         return;
       case 0x2: // MC2
-        //LOG("writeloadimdest [%d][%d] = %08X", num, ScuDsp->CT[2] & 0x3F, val);
+        DSPLOG( "write [%d][%d] = %08X\n",2, ScuDsp->CT[2] & 0x3F, val);
         ScuDsp->MD[2][ScuDsp->CT[2] & 0x3F] = val;
           incFlg[2] = 1;
           return;
       case 0x3: // MC3
-        //LOG("writeloadimdest [%d][%d] = %08X", num, ScuDsp->CT[3] & 0x3F, val);
+        DSPLOG( "write [%d][%d] = %08X\n",3, ScuDsp->CT[3] & 0x3F, val);
         ScuDsp->MD[3][ScuDsp->CT[3] & 0x3F] = val;
           incFlg[3] = 1;
           return;
@@ -683,12 +709,16 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
 
   //LOG("DSP DMA01 read addr=%08X cnt= %d add = %d\n", (sc->RA0M << 2), imm, add );
 
+
   // is A-Bus?
   u32 abus_check = ((sc->RA0M << 2) & 0x0FF00000);
   if (abus_check >= 0x02000000 && abus_check < 0x05900000){
     for (i = 0; i < imm; i++)
     {
       sc->MD[sel][sc->CT[sel] & 0x3F] = MappedMemoryReadLong((sc->RA0M << 2), NULL);
+
+      DSPLOG( "DSP DMA01 read [%d][%d] = %d\n", sel, sc->CT[sel& 0x3F], sc->MD[sel][sc->CT[sel] & 0x3F]);
+
       //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0M << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F] );
       sc->CT[sel]++;
       sc->CT[sel] &= 0x3F;
@@ -699,6 +729,9 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
     for (i = 0; i < imm ; i++)
     {
       sc->MD[sel][sc->CT[sel] & 0x3F] = MappedMemoryReadLong((sc->RA0M << 2), NULL);
+
+       DSPLOG( "DSP DMA01 read [%d][%d] = %d\n", sel, sc->CT[sel& 0x3F], sc->MD[sel][sc->CT[sel] & 0x3F]);
+
       //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0M << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F]);
       sc->CT[sel]++;
       sc->CT[sel] &= 0x3F;
@@ -824,6 +857,8 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
   const u32 add = (1 << (mode & 0x2)) &~1;
 
   //LOG("DSP DMA03 read addr=%08X cnt= %d add = %d\n", (sc->RA0M << 2), Counter, add);
+
+   DSPLOG( "DSP DMA03 read addr=%08X cnt= %d add = %d\n", (sc->RA0M << 2), Counter, add);
 
   u32 abus_check = ((sc->RA0M << 2) & 0x0FF00000);
   if (abus_check >= 0x02000000 && abus_check < 0x05900000){
@@ -1350,21 +1385,15 @@ void ScuExec(u32 timing) {
    // is dsp executing?
    if (ScuDsp->ProgControlPort.part.EX) {
 
-#ifdef DSPLOG
-     if (slogp == NULL){
-#if defined(ANDROID)
-       slogp = fopen("/mnt/sdcard/slog.txt", "w");
-#else
-       slogp = fopen("slog.txt", "w");
-#endif
-     }
-     if (slogp){
-       fprintf(slogp, "*********************************************\n");
-     }
-#endif
+     DSPLOG( "*********************************************\n");
+
      s32 dsp_counter = (s32)timing;
       while (dsp_counter > 0) {
          u32 instruction;
+
+         //if (slogp != NULL && ScuDsp->MD[0][61] == 82 ){
+         //   DSPLOG( "ScuDsp->MD[0][61] == 82\n");
+         //}
 
          // Make sure it isn't one of our breakpoints
          for (i=0; i < ScuBP->numcodebreakpoints; i++) {
@@ -1387,13 +1416,12 @@ void ScuExec(u32 timing) {
          incFlg[3] = 0;
 
          ScuDsp->ALU.all = ScuDsp->AC.all;
-#ifdef DSPLOG
-         if (slogp){
-           char buf[128];
-           ScuDspDisasm(ScuDsp->PC, buf);
-           fprintf(slogp, "%s ALU=%" PRId64 ",P=%" PRId64 "\n", buf, ScuDsp->ALU.all, ScuDsp->P.all);
+
+         {
+            char buf[128];
+            ScuDspDisasm(ScuDsp->PC, buf);
+            DSPLOG( "%s ALU=%" PRId64 ",P=%" PRId64 "\n", buf, ScuDsp->ALU.all, ScuDsp->P.all);
          }
-#endif
 
          // ALU commands
          switch (instruction >> 26)
@@ -1450,11 +1478,7 @@ void ScuExec(u32 timing) {
                break;
             case 0x4: // ADD
                ScuDsp->ALU.part.L = (s32)ScuDsp->AC.part.L + (s32)ScuDsp->P.part.L;
-#ifdef DSPLOG
-               if (slogp){
-                 fprintf(slogp, "%02X: %d + %d = %d\n", ScuDsp->PC, (s32)ScuDsp->AC.part.L, (s32)ScuDsp->P.part.L, (s32)ScuDsp->ALU.part.L);
-               }
-#endif
+                 DSPLOG( "%02X: %d + %d = %d\n", ScuDsp->PC, (s32)ScuDsp->AC.part.L, (s32)ScuDsp->P.part.L, (s32)ScuDsp->ALU.part.L);
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
@@ -1481,13 +1505,9 @@ void ScuExec(u32 timing) {
                break;
             case 0x5: // SUB
             {
-              //u64 ans = (u64)ScuDsp->AC.part.L - (u32)ScuDsp->P.part.L;
+              u64 ans = (u64)ScuDsp->AC.part.L - (u32)ScuDsp->P.part.L;
               ScuDsp->ALU.part.L = (s32)ScuDsp->AC.part.L - (s32)ScuDsp->P.part.L;
-#ifdef DSPLOG
-              if (slogp) {
-                fprintf(slogp, "%02X: %" PRId64 " - %d = %" PRId64 " \n", ScuDsp->PC, (u64)ScuDsp->AC.part.L, (u32)ScuDsp->P.part.L, ans);
-              }
-#endif
+              DSPLOG( "%02X: %" PRId64 " - %d = %" PRId64 " \n", ScuDsp->PC, (u64)ScuDsp->AC.part.L, (u32)ScuDsp->P.part.L, ans);
               //ScuDsp->ProgControlPort.part.C = ((ans >> 32) & 0x01);
 
               //ScuDsp->ALU.part.L = ans;
@@ -1523,11 +1543,7 @@ void ScuExec(u32 timing) {
                break;
             case 0x6: // AD2
               ScuDsp->ALU.all = (s64)ScuDsp->AC.all +(s64)ScuDsp->P.all;
-#ifdef DSPLOG
-              if (slogp){
-                fprintf(slogp, "%02X: %" PRId64 "+ %" PRId64 "= %" PRId64 "\n", ScuDsp->PC, ScuDsp->AC.all, ScuDsp->P.all, ScuDsp->ALU.all);
-              }
-#endif
+               DSPLOG( "%02X: %" PRId64 "+2 %" PRId64 "= %" PRId64 "\n", ScuDsp->PC, ScuDsp->AC.all, ScuDsp->P.all, ScuDsp->ALU.all);
                if (ScuDsp->ALU.all == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
@@ -1618,7 +1634,7 @@ void ScuExec(u32 timing) {
                //ScuDsp->AC.part.L = ScuDsp->ALU.part.L;
                break;
             case 0xF: // RL8
-
+              DSPLOG( "%02X:RL8 %d = %d\n", ScuDsp->PC, ScuDsp->AC.part.L, ((u32)(ScuDsp->AC.part.L << 8) | ((ScuDsp->AC.part.L >> 24) & 0xFF)) );
               ScuDsp->ProgControlPort.part.C = (ScuDsp->AC.part.L >> 24) & 0x01;
               ScuDsp->ALU.part.L  = ((u32)(ScuDsp->AC.part.L << 8) | ((ScuDsp->AC.part.L >> 24) & 0xFF)) ;
 
@@ -1651,7 +1667,7 @@ void ScuExec(u32 timing) {
                      break;
                   case 3: // MOV [s], P
                      //s32 cast to sign extend
-                    ScuDsp->P.all = (s64)(s32)readgensrc((instruction >> 20) & 0x7);
+                     ScuDsp->P.all = (s64)(s32)readgensrc((instruction >> 20) & 0x7);
                      break;
                   default: break;
                }
@@ -2726,9 +2742,11 @@ u32 FASTCALL ScuReadLong(u32 addr) {
       case 0x80: // DSP Program Control Port
          return (ScuDsp->ProgControlPort.all & 0x00FD00FF);
       case 0x8C: // DSP Data Ram Data Port
-         if (!ScuDsp->ProgControlPort.part.EX)
-            return ScuDsp->MD[ScuDsp->DataRamPage][ScuDsp->DataRamReadAddress++];
-         else
+         if (!ScuDsp->ProgControlPort.part.EX){
+            u32 rtn = ScuDsp->MD[ (ScuDsp->DataRamReadAddress >> 6) & 0x3][(ScuDsp->DataRamReadAddress) & 0x3F ];
+            ScuDsp->DataRamReadAddress++;
+            return rtn;
+         }else
             return 0;
       case 0xA4:
          //LOG("Read IST %08X", ScuRegs->IST);
@@ -2927,13 +2945,14 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          break;
       case 0x88: // DSP Data Ram Address Port
          //LOG("scu: wrote %08X to DSP Data Ram ", val);
-         ScuDsp->DataRamPage = (val >> 6) & 3;
-         ScuDsp->DataRamReadAddress = val & 0x3F;
+         //ScuDsp->DataRamPage = (val >> 6) & 3;
+         ScuDsp->DataRamReadAddress = val;
          break;
       case 0x8C: // DSP Data Ram Data Port
          //LOG("scu: wrote %08X to DSP Data Ram Data Port Page %d offset %02X", val, ScuDsp->DataRamPage, ScuDsp->DataRamReadAddress);
          if (!ScuDsp->ProgControlPort.part.EX) {
-            ScuDsp->MD[ScuDsp->DataRamPage][ScuDsp->DataRamReadAddress] = val;
+            ScuDsp->MD[ (ScuDsp->DataRamReadAddress >> 6) & 0x03][ ScuDsp->DataRamReadAddress & 0x3F ] = val;
+            DSPLOG( "%08X: CPU write [%d][%d] = %d\n", CurrentSH2->regs.PC, (ScuDsp->DataRamReadAddress >> 6) & 0x03 , ScuDsp->DataRamReadAddress & 0x3F , val );
             ScuDsp->DataRamReadAddress++;
          }
          break;

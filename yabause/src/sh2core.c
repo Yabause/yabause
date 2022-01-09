@@ -1132,7 +1132,9 @@ void OnchipReset(SH2_struct *context) {
 
 u8 FASTCALL OnchipReadByte(u32 addr) {
    
-   //LOG("[%s] OnchipReadByte %08X\n", CurrentSH2->isslave?"SH2-S":"SH2-M", addr);
+   if( !CurrentSH2->isslave ){
+      LOG("[%s] OnchipReadByte %08X\n", CurrentSH2->isslave?"SH2-S":"SH2-M", addr);
+   }
 
    switch(addr)
    {
@@ -1175,8 +1177,10 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
        // if (CurrentSH2->onchip.FTCSR & 0x80) { LOG("Read FTCSR = 0x80"); }
          return CurrentSH2->onchip.FTCSR;
       case 0x012:         
+         LOG("[FRCH] %02X",CurrentSH2->onchip.FRC.part.H);
          return CurrentSH2->onchip.FRC.part.H;
       case 0x013:
+         LOG("[FRCL] %02X",CurrentSH2->onchip.FRC.part.L);
          return CurrentSH2->onchip.FRC.part.L;
       case 0x014:
          if (!(CurrentSH2->onchip.TOCR & 0x10))
@@ -1189,6 +1193,7 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
          else
             return CurrentSH2->onchip.OCRB & 0xFF;
       case 0x016:
+         LOG("[TCR] %02X",CurrentSH2->onchip.TCR);
          return CurrentSH2->onchip.TCR;
       case 0x017:
          return CurrentSH2->onchip.TOCR;
@@ -1243,7 +1248,7 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
 
 u16 FASTCALL OnchipReadWord(u32 addr) {
 
-   //LOG("[%s] OnchipReadWord %08X\n", CurrentSH2->isslave?"SH2-S":"SH2-M", addr);
+   LOG("[%s] OnchipReadWord %08X\n", CurrentSH2->isslave?"SH2-S":"SH2-M", addr);
          
    switch(addr)
    {
@@ -1298,7 +1303,7 @@ u16 FASTCALL OnchipReadWord(u32 addr) {
 
 u32 FASTCALL OnchipReadLong(u32 addr) {
 
-   //LOG("[%s] OnchipReadLong %08X@%08X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC );
+   LOG("[%s] OnchipReadLong %08X@%08X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC );
    
    switch(addr)
    {
@@ -1375,6 +1380,9 @@ u32 FASTCALL OnchipReadLong(u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
+
+LOG("[%s] OnchipWriteByte %08X@%08X %02X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC, val );
+
    switch(addr) {
       case 0x000:
 //         LOG("Serial Mode Register write: %02X\n", val);
@@ -1557,6 +1565,9 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
+
+   LOG("[%s] OnchipWriteWord %08X@%08X %04X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC, val );
+
    switch(addr)
    {
       case 0x060:
@@ -1680,6 +1691,9 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
+
+   LOG("[%s] OnchipWriteLong %08X@%08X %08X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC, val );
+
    switch (addr)
    {
    case 0x010:
@@ -1817,6 +1831,9 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
          return;
       case 0x180:
          CurrentSH2->onchip.SAR0 = val;
+         if( val == 0x0604cae8 ){
+            LOG("hit");
+         }
          return;
       case 0x184:
          CurrentSH2->onchip.DAR0 = val;
@@ -2339,6 +2356,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
    int size;
    u32 i = 0;
    int count;
+   u32 cycle=0;
 
    //LOG("sh2 dma src=%08X,dst=%08X,%d type:%d cycle:%d\n", *dmac->SAR, *dmac->DAR, *dmac->TCR, ((*dmac->CHCR & 0x0C00) >> 10), cycles);
 
@@ -2370,13 +2388,13 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
          case 0:
             while( dmac->copy_clock >= 0 )  {
                dmac->copy_clock -= eat;
-				       MappedMemoryWriteByteNocache(*dmac->DAR, MappedMemoryReadByteNocache(*dmac->SAR));
+				       MappedMemoryWriteByteNocache(*dmac->DAR, MappedMemoryReadByteNocache(*dmac->SAR,&cycle),&cycle);
                *dmac->SAR += srcInc;
                *dmac->DAR += destInc;
                *dmac->TCR -= 1;
                i++;
                if( *dmac->TCR <= 0 ){
-                 LOG("DMA finished");
+                  LOG("DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X", *dmac->SAR, *dmac->DAR, *dmac->TCR );
                   if (*dmac->CHCR & 0x4){
                      SH2SendInterrupt(CurrentSH2, *dmac->VCRDMA, (CurrentSH2->onchip.IPRA & 0xF00) >> 8);
                   }
@@ -2393,13 +2411,13 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
             srcInc *= 2;
             while (dmac->copy_clock >= 0) {
               dmac->copy_clock -= eat;
-				      MappedMemoryWriteWordNocache(*dmac->DAR, MappedMemoryReadWordNocache(*dmac->SAR));
+				      MappedMemoryWriteWordNocache(*dmac->DAR, MappedMemoryReadWordNocache(*dmac->SAR,&cycle),&cycle);
                *dmac->SAR += srcInc;
                *dmac->DAR += destInc;
                *dmac->TCR -= 1;
                i++;
                if( *dmac->TCR <= 0 ){
-                  LOG("DMA finished");
+                  LOG("DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X", *dmac->SAR, *dmac->DAR, *dmac->TCR );
                   if (*dmac->CHCR & 0x4){
                      SH2SendInterrupt(CurrentSH2, *dmac->VCRDMA, (CurrentSH2->onchip.IPRA & 0xF00) >> 8);
                   }
@@ -2416,15 +2434,15 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
             srcInc *= 4;
             while (dmac->copy_clock >= 0) {
               dmac->copy_clock -= eat;
-               u32 val = MappedMemoryReadLongNocache(*dmac->SAR);
+               u32 val = MappedMemoryReadLongNocache(*dmac->SAR,&cycle);
                //printf("CPU DMA src:%08X dst:%08X val:%08X\n", *SAR, *DAR, val);
-				       MappedMemoryWriteLongNocache(*dmac->DAR,val);
+				       MappedMemoryWriteLongNocache(*dmac->DAR,val,&cycle);
                *dmac->DAR += destInc;
                *dmac->SAR += srcInc;
                *dmac->TCR -= 1;
                i++;
                if( *dmac->TCR <= 0 ){
-                 LOG("DMA finished");
+                 LOG("DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X", *dmac->SAR, *dmac->DAR, *dmac->TCR );
                   if (*dmac->CHCR & 0x4){
                      SH2SendInterrupt(CurrentSH2, *dmac->VCRDMA, (CurrentSH2->onchip.IPRA & 0xF00) >> 8);
                   }
@@ -2440,15 +2458,15 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
            srcInc *= 4;
            while (dmac->copy_clock >= 0) {
              dmac->copy_clock -= (eat>>2);
-             u32 val = MappedMemoryReadLongNocache(*dmac->SAR);
+             u32 val = MappedMemoryReadLongNocache(*dmac->SAR,&cycle);
              //printf("CPU DMA src:%08X dst:%08X val:%08X\n", *SAR, *DAR, val);
-             MappedMemoryWriteLongNocache(*dmac->DAR, val);
+             MappedMemoryWriteLongNocache(*dmac->DAR, val,&cycle);
              *dmac->DAR += destInc;
              *dmac->SAR += srcInc;
              *dmac->TCR -= 1;
              i++;
              if (*dmac->TCR <= 0) {
-               LOG("DMA finished");
+               LOG("DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X", *dmac->SAR, *dmac->DAR, *dmac->TCR );
                if (*dmac->CHCR & 0x4) {
                  SH2SendInterrupt(CurrentSH2, *dmac->VCRDMA, (CurrentSH2->onchip.IPRA & 0xF00) >> 8);
                }
@@ -2471,6 +2489,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
 {
    int size;
    u32 i, i2;
+   u32 cycle=0;
 
 
    if (!(*CHCR & 0x2)) { // TE is not set
@@ -2496,7 +2515,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
       switch (size = ((*CHCR & 0x0C00) >> 10)) {
          case 0:
             for (i = 0; i < *TCR; i++) {
-				MappedMemoryWriteByteNocache(*DAR, MappedMemoryReadByteNocache(*SAR));
+				MappedMemoryWriteByteNocache(*DAR, MappedMemoryReadByteNocache(*SAR,&cycle),&cycle);
                *SAR += srcInc;
                *DAR += destInc;
             }
@@ -2508,7 +2527,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
             srcInc *= 2;
 
             for (i = 0; i < *TCR; i++) {
-				MappedMemoryWriteWordNocache(*DAR, MappedMemoryReadWordNocache(*SAR));
+				MappedMemoryWriteWordNocache(*DAR, MappedMemoryReadWordNocache(*SAR,&cycle),&cycle);
                *SAR += srcInc;
                *DAR += destInc;
             }
@@ -2519,9 +2538,9 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
             destInc *= 4;
             srcInc *= 4;
             for (i = 0; i < *TCR; i++) {
-               u32 val = MappedMemoryReadLongNocache(*SAR);
+               u32 val = MappedMemoryReadLongNocache(*SAR,&cycle);
                //printf("CPU DMA src:%08X dst:%08X val:%08X\n", *SAR, *DAR, val);
-				   MappedMemoryWriteLongNocache(*DAR,val);
+				   MappedMemoryWriteLongNocache(*DAR,val,&cycle);
                *DAR += destInc;
                *SAR += srcInc;
             }
@@ -2537,11 +2556,11 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
            srcInc *= 4;
            for (i = 0; i < *TCR; i += 4) {
              for (i2 = 0; i2 < 4; i2++) {
-               buffer[i2] = MappedMemoryReadLongNocache((*SAR + (i2 << 2) & 0x07FFFFFC));
+               buffer[i2] = MappedMemoryReadLongNocache((*SAR + (i2 << 2) & 0x07FFFFFC),&cycle);
              }
              *SAR += 0x10;
              for (i2 = 0; i2 < 4; i2++) {
-               MappedMemoryWriteLongNocache(*DAR & 0x07FFFFFC, buffer[i2]);
+               MappedMemoryWriteLongNocache(*DAR & 0x07FFFFFC, buffer[i2],&cycle);
                if (show) {
                  LOG("mov %08X @%08X", buffer[i2], *DAR);
                }
