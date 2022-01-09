@@ -940,7 +940,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   //while (ptr - startptr < MaxSize) {
   while (1) {
     // translate the opcode and insert code
-    op = MappedMemoryReadWord(addr, NULL);
+    op = MappedMemoryReadWordNocache(addr, NULL);
 #ifdef SET_DIRTY
     if (ParentT) {
       u32 keepaddr = adress_mask(addr);
@@ -976,7 +976,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }else if(delay == 1 || delay == 5) {
       calsize = (ptr - startptr) + *asm_list[i].size + nomal_seperator_size + DELAYJUMPSIZE + EPILOGSIZE;
     } else {
-      u32 op2 = MappedMemoryReadWord(addr+2,NULL);
+      u32 op2 = MappedMemoryReadWordNocache(addr+2,NULL);
       u32 delayop = dsh2_instructions[op2];
       calsize = (ptr - startptr) + *asm_list[i].size + *asm_list[delayop].size + delay_seperator_size + SEPERATORSIZE_DELAY_AFTER + EPILOGSIZE;
     }
@@ -1118,7 +1118,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       ptr += *(asm_list[i].size) + delay_seperator_size;
 
       // Get NExt instruction
-      temp = MappedMemoryReadWord(addr,NULL);
+      temp = MappedMemoryReadWordNocache(addr,NULL);
 #ifdef SET_DIRTY
       if (ParentT) {
         u32 keepaddr = adress_mask(addr);
@@ -1296,14 +1296,17 @@ DynarecSh2::~DynarecSh2(){
 }
 
 void DynarecSh2::ResetCPU(){
+
+  u32 cycle = 0;
+
   memset((void*)m_pDynaSh2->GenReg, 0, sizeof(u32) * 16);
   memset((void*)m_pDynaSh2->CtrlReg, 0, sizeof(u32) * 3);
   memset((void*)m_pDynaSh2->SysReg, 0, sizeof(u32) * 6);
 
   m_pDynaSh2->CtrlReg[0] = 0x000000;  // SR
   m_pDynaSh2->CtrlReg[2] = 0x000000; // VBR
-  m_pDynaSh2->SysReg[3] = MappedMemoryReadLong(m_pDynaSh2->CtrlReg[2],NULL);
-  m_pDynaSh2->GenReg[15] = MappedMemoryReadLong(m_pDynaSh2->CtrlReg[2] + 4,NULL);
+  m_pDynaSh2->SysReg[3] = MappedMemoryReadLongNocache(m_pDynaSh2->CtrlReg[2],&cycle);
+  m_pDynaSh2->GenReg[15] = MappedMemoryReadLongNocache(m_pDynaSh2->CtrlReg[2] + 4,&cycle);
   m_pDynaSh2->SysReg[4] = 0;
   m_pDynaSh2->SysReg[5] = 0;
   pre_cnt_ = 0;
@@ -1629,9 +1632,9 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
 
     interruput_cnt_++;
     m_pDynaSh2->GenReg[15] -= 4;
-    MappedMemoryWriteLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->CtrlReg[0],NULL);
+    MappedMemoryWriteLongNocache(m_pDynaSh2->GenReg[15], m_pDynaSh2->CtrlReg[0],NULL);
     m_pDynaSh2->GenReg[15] -= 4;
-    MappedMemoryWriteLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->SysReg[3],NULL);
+    MappedMemoryWriteLongNocache(m_pDynaSh2->GenReg[15], m_pDynaSh2->SysReg[3],NULL);
     if (level == 0x10) { //NMI
       m_pDynaSh2->CtrlReg[0] |= 0x000000F0;
     }
@@ -1656,7 +1659,7 @@ int DynarecSh2GetDisasmebleString(string & out, u32 from, u32 to) {
   char linebuf[128];
   if (from > to) return -1;
   for (u32 i = from; i < (to+2); i += 2) {
-    SH2Disasm(i, MappedMemoryReadWord(i,NULL), 0, NULL, linebuf);
+    SH2Disasm(i, MappedMemoryReadWordNocache(i,NULL), 0, NULL, linebuf);
     out += linebuf;
     out += "\n";
   }
