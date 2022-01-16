@@ -519,7 +519,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         // if( !hasDonated) {
         //    gridRowAdapter.add(getResources().getString(R.string.donation));
         // }
-        gridRowAdapter.add(getString(R.string.load_game))
+        gridRowAdapter.add("+")
         gridRowAdapter.add(resources.getString(R.string.refresh_db))
         // gridRowAdapter.add("GoogleDrive");
         val auth = FirebaseAuth.getInstance()
