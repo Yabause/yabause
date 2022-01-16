@@ -61,7 +61,6 @@ class DirectoryListAdapter(private val context: Context) : BaseAdapter(), ListAd
       view = inflater.inflate(R.layout.game_directories_listitem, null)
     }
 
-
     (view!!.findViewById<View>(R.id.game_directory_item) as TextView).text = list[position]
     val deleteBtn = view.findViewById<View>(R.id.button_delete) as Button
     deleteBtn.tag = position
@@ -70,7 +69,7 @@ class DirectoryListAdapter(private val context: Context) : BaseAdapter(), ListAd
       if (position != null) {
         list.removeAt(position) //or some other task
         notifyDataSetChanged()
-        GameSelectFragment.refresh_level = 3
+        //GameSelectPresenter.refresh_level_ = 3
       }
     }
     return view
@@ -142,7 +141,7 @@ class GameDirectoriesDialogFragment : PreferenceDialogFragmentCompat(), View.OnC
 
         adapter!!.addDirectory(data.data!!.toString())
         adapter!!.notifyDataSetChanged()
-        GameSelectFragment.refresh_level = 3
+        //GameSelectPresenter.refresh_level_ = 3
 
       } catch( e :Exception){
         Log.e("Yabause",e.localizedMessage)
@@ -174,7 +173,7 @@ class GameDirectoriesDialogFragment : PreferenceDialogFragmentCompat(), View.OnC
   override fun directorySelected(directory: File) {
     adapter!!.addDirectory(directory.absolutePath)
     adapter!!.notifyDataSetChanged()
-    GameSelectFragment.refresh_level = 3
+    //GameSelectPresenter.refresh_level_ = 3
   }
 
   companion object {

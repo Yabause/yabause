@@ -106,6 +106,7 @@
     <string name="enable">有効化</string>
     <string name="edit">編集</string>
     <string name="select_game_directory">ゲームディレクトリの選択</string>
+    <string name="add_dir">追加</string>
     <string name="polygon_generation_type">ポリゴン生成方法</string>
     <string name="new_dynrec_cpu_interface">新ダイナミックリコンパイラ(インタプリタより速く,旧ダイナミックリコンパイラより正確)</string>
     <string name="dynrec_cpu_interface">旧ダイナミックリコンパイラ(速いけどバグあり)</string>
@@ -251,19 +252,23 @@
         <![CDATA[
         # ようこそ！ \n\n
 
-        セガサターンのゲームをプレイするには3つの方法があります\n\n
+        セガサターンのゲームをプレイするには4つの方法があります\n\n
 
         ## 1. ゲームをこのAndroidデバイスに直接コピー\n
 
-        iOSイメージを **\"%1$s\"** にコピーします\n
+        ISOイメージを **\"%1$s\"** にコピーします\n
 
         ## 2. 外部SDカードにコピー\n
 
-        iOSイメージをSDカードの **\"%2$s\"** にコピーします\n
+        ISOイメージをSDカードの **\"%2$s\"** にコピーします\n
 
         ## 3. +ボタンをタップ\n
 
-        すでにCHDまたはzip圧縮したISOイメージファイルがある場合,+ボタンをタップしてファイルを選択します。\n\n
+        すでにCHDまたはzip圧縮したISOイメージファイルがある場合,+ボタンをタップしてファイルを選択します。* Android TVの場合はマウスが必要です。 \n\n
+
+        ## 4. ISOイメージがあるディレクトリを指定\n
+
+        [設定] -> [ゲームディレクトリの選択] -> [追加] でISOイメージがあるディレクトリを選択します。 * Android TVの場合はマウスが必要です。 \n\n
 
         詳細については、当社の [Webサイト](https://www.uoyabause.org/static_pages/guide)を参照してください。\n
         ]]>
