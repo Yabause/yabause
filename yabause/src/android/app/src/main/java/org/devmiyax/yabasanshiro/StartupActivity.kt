@@ -177,11 +177,13 @@ class StartupActivity : AppCompatActivity() {
             t2.movementMethod = LinkMovementMethod.getInstance()
 
             val b = findViewById<Button>(R.id.agree_and_start)
+            b.requestFocus()
             b.setOnClickListener {
                 prefs.edit().apply {
                     putBoolean("agreed",true)
                     commit()
                 }
+                v.visibility = View.GONE
                 handler.postDelayed(r, 1)
             }
             v.visibility = View.VISIBLE

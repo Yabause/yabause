@@ -121,6 +121,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     private var mTracker: Tracker? = null
     private var mInterstitialAd: InterstitialAd? = null
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
+    private var initialDialog : AlertDialog? = null
     var isfisrtupdate = true
     var v_: View? = null
     lateinit var presenter_: GameSelectPresenter
@@ -157,7 +158,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
      * Callback is defined in resource layout definition.
      */
     fun checkStoragePermission(): Int {
-        if (Build.VERSION.SDK_INT >= 23) {
+        if (Build.VERSION.SDK_INT >= 23 && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ) {
             // Verify that all required contact permissions have been granted.
             if (ActivityCompat.checkSelfPermission(requireActivity(),
                     Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -213,6 +214,10 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     }
 
     fun showDialog( message : String ) {
+        if( initialDialog != null ){
+            initialDialog?.dismiss()
+            initialDialog = null
+        }
         if (mProgressDialog == null) {
             mProgressDialog = ProgressDialog(activity)
             mProgressDialog!!.setMessage(message)
@@ -221,7 +226,15 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     }
 
     fun updateDialogString(msg: String) {
-        if (mProgressDialog != null) {
+        if( initialDialog != null ){
+            initialDialog?.dismiss()
+            initialDialog = null
+        }
+        if (mProgressDialog == null) {
+            mProgressDialog = ProgressDialog(activity)
+            mProgressDialog!!.setMessage(msg)
+            mProgressDialog!!.show()
+        }else {
             mProgressDialog!!.setMessage("$msg")
         }
     }
@@ -361,11 +374,11 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             // GithubRepositoryApiCompleteEventEntity eventResult = new GithubRepositoryApiCompleteEventEntity();
             override fun onSubscribe(d: Disposable) {
                 observer = this
-                showDialog("")
+                showDialog("Updating")
             }
 
             override fun onNext(response: String) {
-                updateDialogString(response)
+                updateDialogString( "Updating .. $response")
             }
 
             override fun onError(e: Throwable) {
@@ -399,7 +412,6 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             mTracker!!.setScreenName(TAG)
             mTracker!!.send(ScreenViewBuilder().build())
         }
-        updateGameList()
     }
 
     override fun onPause() {
@@ -458,12 +470,14 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                 viewMessage.setPadding(64)
 
 
-                AlertDialog.Builder(requireActivity(),R.style.Theme_AppCompat)
+                initialDialog = AlertDialog.Builder(requireActivity(),R.style.Theme_AppCompat)
                     .setView(viewMessage)
                     .setPositiveButton(R.string.ok) { _, _ ->
 
                     }
-                    .show()
+                    .create()
+
+                    initialDialog?.show()
 
 
                 return
@@ -916,6 +930,11 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+
+        if( initialDialog != null ){
+            initialDialog?.dismiss()
+            initialDialog = null
+        }
         when (requestCode) {
             READ_REQUEST_CODE -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {

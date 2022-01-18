@@ -54,6 +54,7 @@
             android:id="@+id/agree_and_start"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:focusable="true"
             android:layout_gravity="bottom|center_horizontal"
             android:text="START" />
 

@@ -594,8 +594,8 @@ internal class PadManagerV16 : PadManager() {
     for (deviceId in ids) {
       val dev = InputDevice.getDevice(deviceId)
       val sources = dev.sources
-      if (sources and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD
-        || sources and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK
+      if ( (sources and InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD
+        || (sources and InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK
       ) {
         if (deviceIds[dev.descriptor] == null) {
 
@@ -603,6 +603,11 @@ internal class PadManagerV16 : PadManager() {
           if (dev.name == "msm8974-taiko-mtp-snd-card Button Jack") {
             continue
           }
+
+          if (dev.name == "uinput-fpc") {
+            continue
+          }
+
           deviceIds[dev.descriptor] = deviceId
         }
       }

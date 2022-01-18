@@ -119,7 +119,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
     fun updateGameList(refresh_level: Int, observer: Observer<String>?) {
         refresh_level_ = refresh_level
         val activity = target_.activity ?: return
-        if (Build.VERSION.SDK_INT >= 23) {
+        if (Build.VERSION.SDK_INT >= 23 && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ) {
             // Verify that all required contact permissions have been granted.
             if (ActivityCompat.checkSelfPermission(activity,
                     Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -340,7 +340,10 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
                 message += target_.getString(org.devmiyax.yabasanshiro.R.string.remaining_installation_count_is) + " " + count + "."
             }
 
-            AlertDialog.Builder(target_.requireActivity(),R.style.Theme_AppCompat)
+
+
+            AlertDialog.Builder(ContextThemeWrapper(
+                target_.activity, R.style.Theme_AppCompat))
                 .setTitle(target_.getString(R.string.do_you_want_to_install))
                 .setMessage(message)
                 .setPositiveButton(R.string.yes) { _, _ ->

@@ -316,7 +316,7 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     private fun checkStoragePermission(): Int {
-        if (Build.VERSION.SDK_INT >= 23) { // Verify that all required contact permissions have been granted.
+        if (Build.VERSION.SDK_INT >= 23 && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ) { // Verify that all required contact permissions have been granted.
             if (ActivityCompat.checkSelfPermission(
                     requireActivity().applicationContext,
                     Manifest.permission.READ_EXTERNAL_STORAGE
