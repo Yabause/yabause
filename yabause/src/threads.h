@@ -61,10 +61,12 @@ enum {
 // yabauseinit_struct.usethreads != 0 at YabauseInit() time)
 ///////////////////////////////////////////////////////////////////////////
 
+int YabThreadInit();
+
 // YabThreadStart:  Start a new thread for the given function.  Only one
 // thread will be started for each thread ID (YAB_THREAD_*).  Returns 0 on
 // success, -1 on error.
-int YabThreadStart(unsigned int id, void * (*func)(void *), void *arg);
+int YabThreadStart(unsigned int id, const char * name, void * (*func)(void *), void *arg);
 
 // YabThreadWait:  Wait for the given ID's thread to terminate.  Returns
 // immediately if no thread has been started on the given ID.
@@ -108,6 +110,7 @@ void YabThreadUnLock( YabMutex * mtx );
 YabMutex * YabThreadCreateMutex();
 void YabThreadFreeMutex( YabMutex * mtx );
 
+int YabThreadGetFastestCpuIndex();
 void YabThreadSetCurrentThreadAffinityMask(int mask);
 int YabThreadGetCurrentThreadAffinityMask();
 

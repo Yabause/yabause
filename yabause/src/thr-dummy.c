@@ -23,7 +23,9 @@
 
 //////////////////////////////////////////////////////////////////////////////
 
-int YabThreadStart(unsigned int id, void (*func)(void *), void *arg) { return -1; }
+int YabThreadInit();
+
+int YabThreadStart(unsigned int id, const char * name. void (*func)(void *), void *arg) { return -1; }
 
 void YabThreadWait(unsigned int id) {}
 

@@ -361,7 +361,14 @@ int Vdp2Init(void) {
      VIDCore->OnUpdateColorRamWord(i);
    }
 
+#if defined(YAB_ASYNC_RENDERING)
+   YuiRevokeOGLOnThisThread();
+   evqueue = YabThreadCreateQueue(32);
+   vdp_proc_running = 1;
+   YabThreadStart(YAB_THREAD_VDP, "vdp", VdpProc, NULL);
+#endif   
    return 0;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -506,12 +513,9 @@ extern "C" void * VdpProc( void *arg ){
     return NULL;
   }
 
+  YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
+
   while( vdp_proc_running ){
-#if defined(__RP64__) || defined(__N2__)	  
-    YabThreadSetCurrentThreadAffinityMask(0x5);
-#else
-    YabThreadSetCurrentThreadAffinityMask(0x1);
-#endif
     evcode = YabWaitEventQueue(evqueue);
     switch(evcode){
     case VDPEV_VBLANK_IN:
@@ -821,12 +825,15 @@ void Vdp2VBlankIN(void) {
   FRAMELOG("***** VIN *****");
 
 #if defined(YAB_ASYNC_RENDERING)
+
+/*
   if( vdp_proc_running == 0 ){
     vdp_proc_running = 1;
     YuiRevokeOGLOnThisThread();
     evqueue = YabThreadCreateQueue(32);
-    YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
+    YabThreadStart(YAB_THREAD_VDP, "vdp", VdpProc, NULL);
   }
+*/
 
   FrameProfileAdd("VIN event");
   YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
@@ -993,12 +1000,14 @@ void Vdp2HBlankOUT(void) {
       FRAMELOG("frame_change_plot 0");
     }
 #if defined(YAB_ASYNC_RENDERING)
+/*
     if (vdp_proc_running == 0) {
       YuiRevokeOGLOnThisThread();
       evqueue = YabThreadCreateQueue(32);
       vdp_proc_running = 1;
-      YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
+      YabThreadStart(YAB_THREAD_VDP, "vdp", VdpProc, NULL);
     }
+*/    
     if (Vdp1External.swap_frame_buffer == 1)
     {
       Vdp1Regs->EDSR >>= 1;

@@ -184,6 +184,10 @@ YabEventQueue * q_scsp_finish;
 
 int YabauseInit(yabauseinit_struct *init)
 {
+
+  YabThreadInit();
+  YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
+
   q_scsp_frame_start = YabThreadCreateQueue(1);
   q_scsp_finish = YabThreadCreateQueue(1);
   setM68kCounter(0);

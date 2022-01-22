@@ -57,7 +57,7 @@ static void gdb_stub_listener(void * data)
 
       SH2SetBreakpointCallBack(stub->context, gdb_client_lock, client);
 
-      YabThreadStart(YAB_THREAD_GDBSTUBCLIENT, gdb_stub_client, client);
+      YabThreadStart(YAB_THREAD_GDBSTUBCLIENT, "YAB_THREAD_GDBSTUBCLIENT", gdb_stub_client, client);
    }
 }
 
@@ -77,7 +77,7 @@ int GdbStubInit(SH2_struct * context, int port)
    stub->context = context;
    stub->server = server;
 
-   YabThreadStart(YAB_THREAD_GDBSTUBLISTENER, gdb_stub_listener, stub);
+   YabThreadStart(YAB_THREAD_GDBSTUBLISTENER, "YAB_THREAD_GDBSTUBLISTENER", gdb_stub_listener, stub);
 
    return 0;
 }

@@ -57,7 +57,12 @@ static DWORD wrapper(void *hnd)
    return 0;
 }
 
-int YabThreadStart(unsigned int id, void * (*func)(void *), void *arg) 
+int YabThreadInit(){
+    return 0;
+}
+
+
+int YabThreadStart(unsigned int id, const char * name, void * (*func)(void *), void *arg) 
 { 
    if (!hnd_key_once)
    {

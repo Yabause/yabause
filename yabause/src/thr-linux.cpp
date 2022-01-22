@@ -74,6 +74,7 @@ pid_t gettid(void)
 
 // Thread handles for each Yabause subthread
 static pthread_t thread_handle[YAB_NUM_THREADS];
+static int * used_cpu_cores = NULL;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -81,7 +82,26 @@ static void dummy_sighandler(int signum_unused) {}  // For thread sleep/wake
 
 extern "C" {
 
-int YabThreadStart(unsigned int id, void* (*func)(void *), void *arg)
+int YabThreadInit(){
+
+  int cpu_count = sysconf(_SC_NPROCESSORS_CONF);
+  if( used_cpu_cores != NULL ){
+    delete [] used_cpu_cores;
+  }
+  used_cpu_cores = new int[cpu_count];
+  for( int i=0; i<cpu_count; i++  ){
+    used_cpu_cores[i] = 0;
+  }
+
+  memset( thread_handle, 0, sizeof(pthread_t) * YAB_NUM_THREADS );
+
+  pthread_t self_thread = pthread_self();
+  pthread_setname_np(self_thread,"yaba main");  
+
+  return 0;
+}
+
+int YabThreadStart(unsigned int id, const char * name, void* (*func)(void *), void *arg)
 {
    // Set up a dummy signal handler for SIGUSR1 so we can return from pause()
    // in YabThreadSleep()
@@ -98,11 +118,20 @@ int YabThreadStart(unsigned int id, void* (*func)(void *), void *arg)
       return -1;
    }
 
-   if (pthread_create(&thread_handle[id], NULL, func, arg) != 0)
+  pthread_attr_t attr;
+
+  if (pthread_attr_init(&attr) != 0) {
+      perror("Error in pthread_attr_init()");
+      exit(EXIT_FAILURE);
+  }   
+
+   if (pthread_create(&thread_handle[id], &attr, func, arg) != 0)
    {
       perror("pthread_create");
       return -1;
    }
+
+   pthread_setname_np(thread_handle[id], name);
 
    return 0;
 }
@@ -283,33 +312,72 @@ void YabThreadFreeMutex( YabMutex * mtx ){
     }
 }
 
+
+int YabThreadGetFastestCpuIndex(){
+#if defined(IOS) || defined(__JETSON__)
+  return 0;
+#else  
+    unsigned int cpu_f = 0;
+    unsigned int max_cpu_index = 0;
+    char fname[128];
+    char buf[64];
+
+    int cpu_count = sysconf(_SC_NPROCESSORS_CONF);
+
+  
+    // Find Fastest CPU
+    for ( int cpuindex = 0; cpuindex < cpu_count; cpuindex++){
+        sprintf(fname, "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", cpuindex);
+        FILE * fp = fopen(fname, "r");
+        if (fp){
+            fread(buf, 1, 64, fp);
+            unsigned int tmp = atoi(buf);
+            fclose(fp);
+            if( tmp >= cpu_f && used_cpu_cores[cpuindex] == 0 ){
+                max_cpu_index = cpuindex;
+                cpu_f = tmp;
+            }
+        }
+    }
+
+    used_cpu_cores[max_cpu_index] = 1;
+    return max_cpu_index;
+#endif    
+}
+
+
+
 void YabThreadSetCurrentThreadAffinityMask(int mask)
 {
-#if defined(__XU4__) || defined(IOS) || defined(__JETSON__)
-	return;
-#else
-	#if !defined(ANDROID) // it needs more than android-21
-	    int err, syscallres;
-		#ifdef SYS_gettid
-		    pid_t pid = syscall(SYS_gettid);
-		#else
-		    pid_t pid = gettid();
-		#endif    
-	    mask = 1 << mask;
-	    syscallres = syscall(__NR_sched_setaffinity, pid, sizeof(mask), &mask);
-	    if (syscallres)
-	    {
-	        err = errno;
-	        //LOG("Error in the syscall setaffinity: mask=%d=0x%x err=%d=0x%x", mask, mask, err, err);
-	    }
-	
-	//    cpu_set_t my_set;        /* Define your cpu_set bit mask. */
-	//    CPU_ZERO(&my_set);       /* Initialize it all to 0, i.e. no CPUs selected. */
-	//    CPU_SET(mask, &my_set);
-	//	CPU_SET(mask+4, &my_set);
-	//    sched_setaffinity(pid,sizeof(my_set), &my_set);
-	#endif
+#if defined(IOS) || defined(__JETSON__)
+  return;
 #endif
+
+    int err, syscallres;
+#ifdef SYS_gettid
+    pid_t pid = syscall(SYS_gettid);
+#else
+    pid_t pid = gettid();
+#endif    
+    
+#if defined(ANDROID) // it needs more than android-21    
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+  CPU_SET(mask, &cpu_set);
+  syscallres = syscall(__NR_sched_setaffinity, pid, sizeof(cpu_set), &cpu_set);
+  if (syscallres)
+  {
+      err = errno;
+      //LOG("Error in the syscall setaffinity: mask=%d=0x%x err=%d=0x%x", mask, mask, err, err);
+  }
+#else    
+  cpu_set_t my_set;        /* Define your cpu_set bit mask. */
+  CPU_ZERO(&my_set);       /* Initialize it all to 0, i.e. no CPUs selected. */
+  CPU_SET(mask, &my_set);
+	CPU_SET(mask+4, &my_set);
+  sched_setaffinity(pid,sizeof(my_set), &my_set);
+#endif
+  return;
 }
 
 #include <sys/syscall.h>

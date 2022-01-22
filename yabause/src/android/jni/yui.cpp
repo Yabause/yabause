@@ -2098,6 +2098,9 @@ void update_pad_mode()
     }
 }
 
+
+
+
 void renderLoop()
 {
     int renderingEnabled = 1;
@@ -2106,13 +2109,9 @@ void renderLoop()
 #if HAVE_VULKAN
     Renderer *r = NULL;
 #endif
+    int initResult=0;
 
-    int initResult = 0;
-
-    YabThreadSetCurrentThreadAffinityMask(0x00);
-
-    while (renderingEnabled != 0)
-    {
+    while (renderingEnabled != 0) {
 
         if (initResult == 0)
         {

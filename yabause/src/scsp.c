@@ -5511,7 +5511,7 @@ void ScspAsynMainCpuTime( void * p ){
   struct timespec tm;
   setpriority( PRIO_PROCESS, 0, -20);
 #endif
-  YabThreadSetCurrentThreadAffinityMask( 0x03 );
+  YabThreadSetCurrentThreadAffinityMask( YabThreadGetFastestCpuIndex() );
   before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
   u32 wait_clock = 0;
   u64 pre_m68k_cycle = 0;
@@ -5608,7 +5608,7 @@ void ScspAsynMainRealtime(void * p) {
 
   const u32 base_clock = (u32)((644.8412698 / ((double)samplecnt / (double)step)) * (1 << CLOCK_SYNC_SHIFT));
 
-  YabThreadSetCurrentThreadAffinityMask(0x03);
+  YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
   before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
   u32 wait_clock = 0;
 
@@ -5749,10 +5749,10 @@ void ScspExec(){
   if (thread_running == 0){
     thread_running = 1;
     if (g_scsp_main_mode == 0) {
-      YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpuTime, NULL);
+      YabThreadStart(YAB_THREAD_SCSP, "scsp sync", ScspAsynMainCpuTime, NULL);
     }
     else {
-      YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainRealtime, NULL);
+      YabThreadStart(YAB_THREAD_SCSP, "scsp async", ScspAsynMainRealtime, NULL);
     }
     YabThreadUSleep(100000);
   }

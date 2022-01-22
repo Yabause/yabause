@@ -3532,8 +3532,9 @@ void Vdp2DrawRotationThread(void * p) {
 #endif
 
   printf("Vdp2DrawRotationThread\n");
+  YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
+
   while (Vdp2DrawRotationThread_running) {
-    YabThreadSetCurrentThreadAffinityMask(0x02);
     YabThreadLock(g_rotate_mtx);
     if (Vdp2DrawRotationThread_running == 0) {
       break;
@@ -3715,7 +3716,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
       Vdp2DrawRotationThread_running = 1;
       g_rotate_mtx = YabThreadCreateMutex();
       YabThreadLock(g_rotate_mtx);
-      YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_RBG0, Vdp2DrawRotationThread, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_RBG0, "vdp rotate", Vdp2DrawRotationThread, NULL);
     }
     Vdp2RgbTextureSync();
     YGL_THREAD_DEBUG("Vdp2DrawRotation in %d\n", curret_rbg->vdp2_sync_flg);
@@ -4339,7 +4340,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void SetSaturnResolution(int width, int height)
+void SetSaturnResolution(int width, int height)
 {
   YglChangeResolution(width, height);
   YglSetDensity((vdp2_interlace == 0) ? 1 : 2);
@@ -4374,7 +4375,7 @@ static void SetSaturnResolution(int width, int height)
 
         if (_Ygl->rotate_screen) {
           if (_Ygl->isFullScreen) {
-            if (GlHeight > GlWidth) {
+            if (  (GlHeight * hrate) > GlWidth) {
               _Ygl->originy = (GlHeight - GlWidth  * wrate);
               GlHeight = _Ygl->screen_width * wrate;
             }
@@ -4390,7 +4391,7 @@ static void SetSaturnResolution(int width, int height)
         }
         else {
           if (_Ygl->isFullScreen) {
-            if (GlHeight > GlWidth) {
+            if (  (GlHeight * wrate) > GlWidth) {
               _Ygl->originy = (GlHeight - GlWidth  * hrate);
               GlHeight = _Ygl->screen_width * hrate;
             }

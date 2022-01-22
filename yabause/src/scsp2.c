@@ -963,7 +963,7 @@ int ScspInit(int coreid, void (*interrupt_handler)(void))
    {
       scsp_thread_running = 1;  // Set now so the thread doesn't quit instantly
       PSP_FLUSH_ALL();
-      if (YabThreadStart(YAB_THREAD_SCSP, ScspThread, NULL) < 0)
+      if (YabThreadStart(YAB_THREAD_SCSP, "scsp", ScspThread, NULL) < 0)
       {
          SCSPLOG("Failed to start SCSP thread\n");
          scsp_thread_running = 0;
