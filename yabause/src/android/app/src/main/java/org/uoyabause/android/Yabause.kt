@@ -134,6 +134,10 @@ import java.util.Arrays
 import java.util.Date
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import android.util.DisplayMetrics
+
+
+
 
 internal enum class TrayState {
     OPEN,
@@ -1029,6 +1033,9 @@ class Yabause : AppCompatActivity(),
                     override fun onComplete() {
                         // getSupportFragmentManager().popBackStack();
                         YabauseRunnable.lockGL()
+
+                        updateViewLayout(resources.configuration.orientation)
+
                         val gamePreference = getSharedPreferences(gameCode, Context.MODE_PRIVATE)
                         YabauseRunnable.enableRotateScreen(
                             if (gamePreference.getBoolean(
@@ -1049,15 +1056,13 @@ class Yabause : AppCompatActivity(),
                         val sKa: Int? =
                             gamePreference.getString("pref_polygon_generation", "0")?.toInt()
                         YabauseRunnable.setPolygonGenerationMode(sKa!!)
-                        YabauseRunnable.setAspectRateMode(
-                            gamePreference.getString(
-                                "pref_aspect_rate",
-                                "0"
-                            )?.toInt()!!
-                        )
-                        val resolution_setting: Int? =
-                            gamePreference.getString("pref_resolution", "0")?.toInt()!!
+
+                        val aspect = gamePreference.getString("pref_aspect_rate","0")?.toInt()
+                        YabauseRunnable.setAspectRateMode(aspect!!)
+
+                        val resolution_setting = gamePreference.getString("pref_resolution", "0")?.toInt()
                         YabauseRunnable.setResolutionMode(resolution_setting!!)
+
                         YabauseRunnable.enableComputeShader(
                             if (gamePreference.getBoolean(
                                     "pref_use_compute_shader",
@@ -1574,6 +1579,7 @@ class Yabause : AppCompatActivity(),
     }
 
     private fun readPreferences(gamecode: String?) {
+
         setupInGamePreferences(this, gamecode)
 
         // ------------------------------------------------------------------------------------------------
@@ -1605,13 +1611,9 @@ class Yabause : AppCompatActivity(),
         val sKa: Int? = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
         YabauseRunnable.setPolygonGenerationMode(sKa!!)
 
-        // ToDo: list
-        // boolean keep_aspectrate = gamePreference.getBoolean("pref_keepaspectrate", true);
-        // if(keep_aspectrate) {
-        //  YabauseRunnable.setKeepAspect(1);
-        // }else {
-        //  YabauseRunnable.setKeepAspect(0);
-        // }
+        val aspect = gamePreference.getString("pref_aspect_rate","0")?.toInt()
+        YabauseRunnable.setAspectRateMode(aspect!!)
+
         val resolution_setting: Int? = gamePreference.getString("pref_resolution", "0")?.toInt()
         YabauseRunnable.setResolutionMode(resolution_setting!!)
         val rbg_resolution_setting: Int? =
@@ -1640,7 +1642,6 @@ class Yabause : AppCompatActivity(),
         val ifilter: Int? = sharedPref.getString("pref_filter", "0")?.toInt()
         YabauseRunnable.setFilter(ifilter!!)
         Log.d(TAG, "setFilter $ifilter")
-        YabauseRunnable.setAspectRateMode(0)
         val audioout = sharedPref.getBoolean("pref_audio", true)
         if (audioout) {
             audio.unmute(audio.USER)

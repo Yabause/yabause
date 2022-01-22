@@ -14,6 +14,8 @@ import android.os.Bundle
 import android.os.storage.StorageManager
 import android.os.storage.StorageVolume
 import android.text.InputType
+import android.util.DisplayMetrics
+import android.view.Display
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -130,7 +132,6 @@ class SettingsActivity : AppCompatActivity() {
         @RequiresApi(Build.VERSION_CODES.N)
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.preferences, rootKey)
-
 
             var dir = findPreference("pref_game_directory") as Preference?
             if ( dir != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
