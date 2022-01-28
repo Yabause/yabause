@@ -4477,6 +4477,126 @@ struct retro_core_options_v2 options_uk = {
    option_defs_uk
 };
 
+/* RETRO_LANGUAGE_VAL */
+
+#define YABAUSE_FRAMESKIP_LABEL_VAL NULL
+#define YABAUSE_FRAMESKIP_INFO_0_VAL NULL
+#define YABAUSE_FORCE_HLE_BIOS_LABEL_VAL NULL
+#define YABAUSE_FORCE_HLE_BIOS_INFO_0_VAL NULL
+#define YABAUSE_ADDON_CARTRIDGE_LABEL_VAL NULL
+#define YABAUSE_ADDON_CARTRIDGE_INFO_0_VAL NULL
+#define OPTION_VAL_NONE_VAL NULL
+#define OPTION_VAL_1M_RAM_VAL NULL
+#define OPTION_VAL_4M_RAM_VAL NULL
+#define YABAUSE_MULTITAP_PORT1_LABEL_VAL NULL
+#define YABAUSE_MULTITAP_PORT1_INFO_0_VAL NULL
+#define YABAUSE_MULTITAP_PORT2_LABEL_VAL NULL
+#define YABAUSE_MULTITAP_PORT2_INFO_0_VAL NULL
+#define YABAUSE_NUMTHREADS_LABEL_VAL NULL
+#define YABAUSE_NUMTHREADS_INFO_0_VAL NULL
+
+struct retro_core_option_v2_category option_cats_val[] = {
+   { NULL, NULL, NULL },
+};
+struct retro_core_option_v2_definition option_defs_val[] = {
+   {
+      "yabause_frameskip",
+      YABAUSE_FRAMESKIP_LABEL_VAL,
+      NULL,
+      YABAUSE_FRAMESKIP_INFO_0_VAL,
+      NULL,
+      NULL,
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      "yabause_force_hle_bios",
+      YABAUSE_FORCE_HLE_BIOS_LABEL_VAL,
+      NULL,
+      YABAUSE_FORCE_HLE_BIOS_INFO_0_VAL,
+      NULL,
+      NULL,
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      "yabause_addon_cartridge",
+      YABAUSE_ADDON_CARTRIDGE_LABEL_VAL,
+      NULL,
+      YABAUSE_ADDON_CARTRIDGE_INFO_0_VAL,
+      NULL,
+      NULL,
+      {
+         { "none", OPTION_VAL_NONE_VAL },
+         { "1M_ram", OPTION_VAL_1M_RAM_VAL },
+         { "4M_ram", OPTION_VAL_4M_RAM_VAL },
+         { NULL, NULL},
+      },
+      "none"
+   },
+   {
+      "yabause_multitap_port1",
+      YABAUSE_MULTITAP_PORT1_LABEL_VAL,
+      NULL,
+      YABAUSE_MULTITAP_PORT1_INFO_0_VAL,
+      NULL,
+      NULL,
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      "yabause_multitap_port2",
+      YABAUSE_MULTITAP_PORT2_LABEL_VAL,
+      NULL,
+      YABAUSE_MULTITAP_PORT2_INFO_0_VAL,
+      NULL,
+      NULL,
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+#ifdef HAVE_THREADS
+   {
+      "yabause_numthreads",
+      YABAUSE_NUMTHREADS_LABEL_VAL,
+      NULL,
+      YABAUSE_NUMTHREADS_INFO_0_VAL,
+      NULL,
+      NULL,
+      {
+         { "1", NULL },
+         { "2", NULL },
+         { "4", NULL },
+         { "8", NULL },
+         { "16", NULL },
+         { "32", NULL },
+         { NULL, NULL},
+      },
+      "4"
+   },
+#endif
+   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
+};
+struct retro_core_options_v2 options_val = {
+   option_cats_val,
+   option_defs_val
+};
+
 /* RETRO_LANGUAGE_VN */
 
 #define YABAUSE_FRAMESKIP_LABEL_VN "Bỏ qua khung hình"
