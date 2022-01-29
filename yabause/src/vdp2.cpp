@@ -513,7 +513,9 @@ extern "C" void * VdpProc( void *arg ){
     return NULL;
   }
 
-  YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
+  if( yabsys.use_cpu_affinity ){
+    YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
+  }
 
   while( vdp_proc_running ){
     evcode = YabWaitEventQueue(evqueue);

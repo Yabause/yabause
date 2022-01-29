@@ -1639,6 +1639,11 @@ class Yabause : AppCompatActivity(),
         }
         YabauseRunnable.setCpu(icpu!!.toInt())
         Log.d(TAG, "cpu $icpu")
+
+        val cpuAffinity = sharedPref.getBoolean("pref_use_cpu_affinity", true)
+        YabauseRunnable.setUseCpuAffinity(if (cpuAffinity) 1 else 0)
+
+
         val ifilter: Int? = sharedPref.getString("pref_filter", "0")?.toInt()
         YabauseRunnable.setFilter(ifilter!!)
         Log.d(TAG, "setFilter $ifilter")
@@ -1687,6 +1692,8 @@ class Yabause : AppCompatActivity(),
         YabauseRunnable.setCpuSyncPerLine(cpu_sync!!)
         val scsp_time_sync: Int? = sharedPref.getString("scsp_time_sync_mode", "1")?.toInt()!!
         YabauseRunnable.setScspSyncTimeMode(scsp_time_sync!!)
+
+
         updateInputDevice()
     }
 

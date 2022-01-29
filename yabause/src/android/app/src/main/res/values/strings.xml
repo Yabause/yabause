@@ -377,5 +377,9 @@
     Note: <a href="https://www.uoyabause.org/static_pages/privacy_policy"> The Privacy Policy </a> describes how data is handled. YabaSanshiro sends diagnostics data to devMiyax and third party services to help improve the app.
     </string>
 
+    <string name="use_cpu_affinity">
+        Use CPU affinity
+    </string>
+
 </resources>
 	

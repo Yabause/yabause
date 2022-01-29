@@ -3532,7 +3532,10 @@ void Vdp2DrawRotationThread(void * p) {
 #endif
 
   printf("Vdp2DrawRotationThread\n");
-  YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
+
+  if( yabsys.use_cpu_affinity ){
+    YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
+  }
 
   while (Vdp2DrawRotationThread_running) {
     YabThreadLock(g_rotate_mtx);

@@ -130,6 +130,7 @@ static int g_scsp_sync_count = 1;
 static int g_cpu_sync_shift = 1;
 static int g_scsp_sync_time_mode = 1;
 static int g_aspect_rate_mode = 0;
+static int s_use_cpu_affinity = 1;
 int frameLimitMode = 0;
 
 static int s_status = 0;
@@ -1488,14 +1489,10 @@ int YabauseInit()
 #else
     yinit.sndcoretype = SNDCORE_AUDIOTRACK;
 #endif
-<<<<<<< HEAD
-    yinit.cdcoretype = CDCORE_WEBAPI;
-=======
 
     yinit.sndcoretype = SNDCORE_OBOE; 
 
     yinit.cdcoretype = CDCORE_ISO;
->>>>>>> 732737167... add Oboe for realtime sound
     yinit.carttype = GetCartridgeType();
     yinit.regionid = 0;
 
@@ -1528,6 +1525,8 @@ int YabauseInit()
         PlayRecorder *p = PlayRecorder::getInstance();
         gsc.setScreenshotCallback(p);
     }
+
+    yinit.use_cpu_affinity = s_use_cpu_affinity;
 
     res = YabauseInit(&yinit);
     if (res != 0)
@@ -1887,24 +1886,23 @@ extern "C"
         ScspSetVolume(volume);
     }
 
+    void Java_org_uoyabause_android_YabauseRunnable_setUseCpuAffinity( JNIEnv* env, jobject obj, jint mode )
+    {
+        s_use_cpu_affinity = mode;
+    }    
+
     jstring Java_org_uoyabause_android_YabauseRunnable_getGameTitle(JNIEnv *env)
     {
-
-        char *buf;
-
+        char * buf;
+        
         jstring rtn;
-        if (cdip == NULL)
-            return NULL;
-        buf = (char *)malloc(1024);
-        if (buf == NULL)
-            return NULL;
-        if (strcmp(cdip->cdinfo, "CD-1/1") == 0)
-        {
-            sprintf(buf, "%s", cdip->gamename);
-        }
-        else
-        {
-            sprintf(buf, "%s(%s)", cdip->gamename, cdip->cdinfo);
+        if( cdip == NULL ) return NULL;
+        buf = (char*)malloc(1024);
+        if( buf == NULL ) return NULL;
+        if( strcmp(cdip->cdinfo,"CD-1/1") == 0 ){
+            sprintf(buf,"%s",cdip->gamename);
+        }else{
+            sprintf(buf,"%s(%s)",cdip->gamename,cdip->cdinfo);
         }
 
         rtn = env->NewStringUTF(buf);
