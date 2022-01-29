@@ -73,6 +73,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "sndopensl.h"
 #endif
 
+#include "SndOboe.h"
+
 #include "libpng16/png.h"
 
 #include "PlayRecorder.h"
@@ -222,7 +224,9 @@ SoundInterface_struct *SNDCoreList[] = {
 #ifdef HAVE_OPENSL
     &SNDOpenSL,
 #endif
-    NULL};
+    &SNDOboe,
+    NULL
+};
 
 VideoInterface_struct *VIDCoreList[] = {
     &VIDDummy,
@@ -1484,7 +1488,14 @@ int YabauseInit()
 #else
     yinit.sndcoretype = SNDCORE_AUDIOTRACK;
 #endif
+<<<<<<< HEAD
     yinit.cdcoretype = CDCORE_WEBAPI;
+=======
+
+    yinit.sndcoretype = SNDCORE_OBOE; 
+
+    yinit.cdcoretype = CDCORE_ISO;
+>>>>>>> 732737167... add Oboe for realtime sound
     yinit.carttype = GetCartridgeType();
     yinit.regionid = 0;
 

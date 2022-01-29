@@ -67,6 +67,10 @@
         android:name="android.hardware.opengles.aep"
         android:required="false" />
 
+    <uses-feature android:name="android.hardware.audio.low_latency"/>
+    <uses-feature android:name="android.hardware.audio.pro"/>
+
+
     <application
         android:name="org.uoyabause.android.YabauseApplication"
         android:icon="@mipmap/ic_launcher"

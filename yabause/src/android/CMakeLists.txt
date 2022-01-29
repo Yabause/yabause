@@ -35,6 +35,8 @@ include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libpng.cmake )
 #include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_zlib.cmake )
 
 set( SOURCES 
+ jni/SndOboe.h
+ jni/SndOboe.cpp
  jni/yui.cpp
  #jni/sndaudiotrack.c
  jni/sndopensl.c
@@ -44,6 +46,11 @@ set( SOURCES
  jni/ChdFileInfo.cpp
  jni/ChdFileInfo.h
 )
+
+set (OBOE_DIR ./oboe)
+add_subdirectory (${OBOE_DIR} ./oboe)
+include_directories (${OBOE_DIR}/include)
+
 
 if( YAB_WANT_VULKAN )
 set( SOURCES ${SOURCES} ../vulkan/Window_android.cpp )
@@ -84,6 +91,7 @@ target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES}
 	png16
 	${ZLIB_LIBRARY_RELEASE}
 	${VULKAN_LIBRARIES}
+	oboe
 	#${zlib_STATIC_LIBRARIES}
 	#    ${PROJECT_SOURCE_DIR}/debuglib/libNvidia_gfx_debugger_stub.a
 )
