@@ -39,7 +39,7 @@ public:
     virtual ~SndOboeEngine() = default;
 
     int32_t startAudio() {
-        std::lock_guard<std::mutex> lock(mLock);
+        //std::lock_guard<std::mutex> lock(mLock);
 
         soundbufsize = blockSize * NUMSOUNDBLOCKS * 2 * 2;        
         stereodata16 = new u16[soundbufsize];
