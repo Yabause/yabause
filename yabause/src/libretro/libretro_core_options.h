@@ -40,7 +40,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "yabause_frameskip",
       "Frameskip",
       NULL,
-      "Enable frameskip, it should help with performances.",
+      "Skip frames to improve performance.",
       NULL,
       NULL,
       {
@@ -54,7 +54,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "yabause_force_hle_bios",
       "Force HLE BIOS (Restart Required)",
       NULL,
-      "Use at your own risk, it's causing more issues than it solves.",
+      "Use High Level Emulation BIOS. Not recommended, as it's causing more issues than it solves.",
       NULL,
       NULL,
       {
@@ -68,11 +68,11 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "yabause_addon_cartridge",
       "Add-on Cartridge (Restart Required)",
       NULL,
-      "Select the add-on cartridge.",
+      "Emulate an add-on RAM expansion cartridge. Some games require this to be played, while a few others will have improved performance.",
       NULL,
       NULL,
       {
-         { "none", NULL },
+         { "none", "disabled" },
          { "1M_ram", NULL },
          { "4M_ram", NULL },
          { NULL, NULL},
@@ -83,7 +83,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "yabause_multitap_port1",
       "6Player Adaptor on Port 1",
       NULL,
-      "Enable multitap in port 1",
+      "Enable multitap in port 1.",
       NULL,
       NULL,
       {
@@ -97,7 +97,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "yabause_multitap_port2",
       "6Player Adaptor on Port 2",
       NULL,
-      "Enable multitap in port 2",
+      "Enable multitap in port 2.",
       NULL,
       NULL,
       {
@@ -112,7 +112,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "yabause_numthreads",
       "Number of Threads (Restart Required)",
       NULL,
-      "Depending on your CPU, changing this value can help with performances.",
+      "Depending on your CPU, changing this value can improve performance.",
       NULL,
       NULL,
       {
