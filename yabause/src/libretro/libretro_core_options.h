@@ -73,8 +73,8 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       NULL,
       {
          { "none", "disabled" },
-         { "1M_ram", NULL },
-         { "4M_ram", NULL },
+         { "1M_ram", "1MB RAM" },
+         { "4M_ram", "4MB RAM" },
          { NULL, NULL},
       },
       "none"
