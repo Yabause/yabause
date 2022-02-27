@@ -108,13 +108,22 @@ static INLINE int select_way_to_replace(u32 lru){
 		return lru_replace[lru & CurrentSH2->onchip.ccr_replace_and ]  | CurrentSH2->onchip.ccr_replace_or[0];  // i\IsInstr
 }
 
-static INLINE u16 SWAP16( u16 v ){
-	return ((v >> 8)&0x00FF)|((v<<8) & 0xFF00) ;
-}
 
+#if HAVE_BUILTIN_BSWAP16
+#define SWAP16(v) (__builtin_bswap16(v))
+#else
+static INLINE u16 SWAP16( u16 v ){
+	return ((v >> 8)&0x00FF)|((v<<8) & 0xFF00);
+}
+#endif  
+
+#if HAVE_BUILTIN_BSWAP32
+#define SWAP32( v ) (__builtin_bswap32(v))		
+#else
 static INLINE u32 SWAP32( u32 v ){
 	return ((v >> 24)&0x000000FF) | ((v>>8)&0x0000FF00) | ((v << 8)&0x00FF0000) | ((v<<24) & 0xFF000000);
-}
+}  
+#endif
 
 void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val, u32 * cycle){
 
