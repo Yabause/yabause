@@ -3172,6 +3172,8 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
       if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
       else
 #endif
+      //context->instruction =  MappedMemoryReadWord(context->regs.PC,NULL);  //fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+
       context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       // Execute it

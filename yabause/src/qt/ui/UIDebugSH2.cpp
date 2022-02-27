@@ -23,7 +23,7 @@
 
 int SH2Dis(u32 addr, char *string)
 {
-   SH2Disasm(addr, MappedMemoryReadWord(addr, NULL), 0, NULL, string);
+   SH2Disasm(addr, MappedMemoryReadWordNocache(addr, NULL), 0, NULL, string);
    return 2;
 }
 

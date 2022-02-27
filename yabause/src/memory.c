@@ -1207,6 +1207,8 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val, u32 * cycle )
 
       case 0x3:
       {
+         if (cycle != NULL) { *cycle = 2; }
+         
          // Address Array
          AddressArrayWriteLong(addr, val);
          return;

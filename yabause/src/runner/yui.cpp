@@ -829,7 +829,7 @@ namespace yabauseut
          //emulate a frame
          PERCore->HandleEvents();
 
-         status = MappedMemoryReadByte(VDP2_VRAM + AUTO_TEST_STATUS_ADDRESS);
+         status = MappedMemoryReadByteNoCache(VDP2_VRAM + AUTO_TEST_STATUS_ADDRESS);
 
          if (status == AUTO_TEST_MESSAGE_SENT)
          {

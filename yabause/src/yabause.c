@@ -906,6 +906,19 @@ int YabauseEmulate(void) {
 #if DYNAREC_DEVMIYAX
    if (SH2Core->id == 3) SH2DynShowSttaics(MSH2, SSH2);
 #endif
+
+#ifdef CACHE_STATICS
+   DebugLog( "%d: MSH2 hit:%d, miss:%d, wirte:%d", yabsys.frame_count, MSH2->onchip.cache.read_hit_count, MSH2->onchip.cache.read_miss_count, MSH2->onchip.cache.write_count );
+   MSH2->onchip.cache.read_hit_count = 0;
+   MSH2->onchip.cache.read_miss_count = 0;
+   MSH2->onchip.cache.write_count = 0;
+
+   DebugLog( "%d: SSH2 hit:%d, miss:%d, wirte:%d", yabsys.frame_count, SSH2->onchip.cache.read_hit_count, SSH2->onchip.cache.read_miss_count, SSH2->onchip.cache.write_count );
+   SSH2->onchip.cache.read_hit_count = 0;
+   SSH2->onchip.cache.read_miss_count = 0;
+   SSH2->onchip.cache.write_count = 0;
+#endif
+
    return 0;
 }
 

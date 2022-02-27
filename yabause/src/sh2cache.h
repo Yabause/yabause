@@ -21,16 +21,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #ifndef _SH2_CACHE_H_
 #define _SH2_CACHE_H_
 
+extern FILE * cache_f;
+//#define CACHE_LOG(...) if( cache_f == NULL ){ cache_f = fopen("cache.txt","w"); }  fprintf( cache_f , __VA_ARGS__);
+#define CACHE_LOG(...)
+
+//#define CACHE_STATICS
+
+#define CCR_CE (0x01)
+#define CCR_ID (0x02)
+#define CCR_OD (0x04)
+#define CCR_TW (0x08)
+#define CCR_CP (0x10)
+#define CCR_W0 (0x40)
+#define CCR_W1 (0x80)
+
 typedef struct _cache_line{
-	u32 tag;
-   int v;
-	u8 data[16];
+	u32 tag[4];
+	u8 data[4][16];
+  int v[4];	
 } cache_line;
 
 typedef struct _cache_enty{
 	u32 enable;
 	u32 lru[64];
-	cache_line way[4][64];
+	cache_line way[64];
+#ifdef CACHE_STATICS	
+	u32 read_hit_count;
+	u32 read_miss_count;
+	u32 write_count;
+#endif	
 } cache_enty;
 
 #ifdef __cplusplus
