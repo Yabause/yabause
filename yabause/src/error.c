@@ -71,6 +71,7 @@ void YabSetError(int type, const void *extra)
       case YAB_ERR_SH2INVALIDOPCODE:
 #ifdef DMPHISTORY
         SH2DumpHistory(CurrentSH2);
+        exit(-1);
 #endif
          sh = (SH2_struct *)extra;
          SH2GetRegisters(sh, &sh->regs);

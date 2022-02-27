@@ -22,8 +22,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define _SH2_CACHE_H_
 
 extern FILE * cache_f;
+#if defined(ANDROID)
+#define CACHE_LOG(...)
+#else
 //#define CACHE_LOG(...) if( cache_f == NULL ){ cache_f = fopen("cache.txt","w"); }  fprintf( cache_f , __VA_ARGS__);
 #define CACHE_LOG(...)
+#endif
+
 
 //#define CACHE_STATICS
 

@@ -113,7 +113,7 @@ static INLINE int select_way_to_replace(u32 lru){
 #define SWAP16(v) (__builtin_bswap16(v))
 #else
 static INLINE u16 SWAP16( u16 v ){
-	return ((v >> 8)&0x00FF)|((v<<8) & 0xFF00);
+	return ((v >> 8)&0x00FF)|((v<<8) & 0xFF00); 
 }
 #endif  
 
@@ -179,8 +179,8 @@ void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val, u32 * cycle){
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
 	{
-      u32 tagaddr = 0;
-      u32 entry = 0;
+    u32 tagaddr = 0;
+    u32 entry = 0;
 		if (ca->enable == 0){
 			MappedMemoryWriteWordNocache(addr, val,cycle);
 			return;
@@ -539,6 +539,7 @@ u32 FASTCALL AddressArrayReadLong(u32 addr) {
    u32 data = CurrentSH2->onchip.cache.way[entry].tag[way];
    data |= CurrentSH2->onchip.cache.lru[entry] << 4;
    data |= CurrentSH2->onchip.cache.way[entry].v[way] << 2;
+	 CACHE_LOG( cache_f , "[SH2-%s] Address Read %08X %d:%d:%d %08X\n", CurrentSH2->isslave?"S":"M", addr,entry, way, addr & 0x0F , data);  
    return data;
 #else
    return CurrentSH2->AddressArray[(addr & 0x3FC) >> 2];
@@ -566,7 +567,9 @@ u8 FASTCALL DataArrayReadByte(u32 addr) {
 #ifdef CACHE_ENABLE
    int way = (addr >> 10) & 3;
    int entry = (addr >> 4) & 0x3f;
-   return CurrentSH2->onchip.cache.way[entry].data[way][addr&0xf];
+	 u8 data = CurrentSH2->onchip.cache.way[entry].data[way][addr&0xf];
+	 CACHE_LOG( cache_f , "[SH2-%s] DataArrayReadByte %08X %d:%d:%d %08X\n", CurrentSH2->isslave?"S":"M", addr,entry, way, addr & 0x0F , data);  
+   return data;
 #else
    return T2ReadByte(CurrentSH2->DataArray, addr & 0xFFF);
 #endif
@@ -578,7 +581,9 @@ u16 FASTCALL DataArrayReadWord(u32 addr) {
 #ifdef CACHE_ENABLE
    int way = (addr >> 10) & 3;
    int entry = (addr >> 4) & 0x3f;
-   return ((u16)(CurrentSH2->onchip.cache.way[entry].data[way][addr&0xf]) << 8) | CurrentSH2->onchip.cache.way[entry].data[way][(addr&0xf) + 1];
+   u16 data = ((u16)(CurrentSH2->onchip.cache.way[entry].data[way][addr&0xf]) << 8) | CurrentSH2->onchip.cache.way[entry].data[way][(addr&0xf) + 1];
+	 CACHE_LOG( cache_f , "[SH2-%s] DataArrayReadWord %08X %d:%d:%d %08X\n", CurrentSH2->isslave?"S":"M", addr,entry, way, addr & 0x0F , data);  
+   return data;
 #else
    return T2ReadWord(CurrentSH2->DataArray, addr & 0xFFF);
 #endif
@@ -594,7 +599,9 @@ u32 FASTCALL DataArrayReadLong(u32 addr) {
       ((u32)(CurrentSH2->onchip.cache.way[entry].data[way][(addr& 0xf) + 1]) << 16) |
       ((u32)(CurrentSH2->onchip.cache.way[entry].data[way][(addr& 0xf) + 2]) << 8) |
       ((u32)(CurrentSH2->onchip.cache.way[entry].data[way][(addr& 0xf) + 3]) << 0);
-    
+
+	CACHE_LOG( cache_f , "[SH2-%s] DataArrayReadLong %08X %d:%d:%d %08X\n", CurrentSH2->isslave?"S":"M", addr,entry, way, addr & 0x0F , data);  
+	return data;			
 #else
    return T2ReadLong(CurrentSH2->DataArray, addr & 0xFFF);
 #endif

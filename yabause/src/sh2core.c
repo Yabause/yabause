@@ -1546,7 +1546,7 @@ LOG("[%s] OnchipWriteByte %08X@%08X %02X", CurrentSH2->isslave?"SH2-S":"SH2-M", 
          CurrentSH2->onchip.ccr_replace_and =  (val & 0x08 ) ? 0x01 : 0x3F;
          CurrentSH2->onchip.ccr_replace_or[0] =  (val & CCR_OD ) ? -1 : 0;
          CurrentSH2->onchip.ccr_replace_or[1] =  (val & CCR_ID ) ? -1 : 0;
-         if (val & 0x10){
+         if (val & CCR_CP){
 			  cache_clear(&CurrentSH2->onchip.cache);
 		   }
 		   if ( (CurrentSH2->onchip.CCR & 0x01)  ){
