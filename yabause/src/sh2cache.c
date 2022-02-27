@@ -347,8 +347,10 @@ u8 cache_memory_read_b(cache_enty * ca, u32 addr, u32 * cycle){
 			ca->way[entry].tag[lruway] = tagaddr;
 			for (i = 0; i < 16; i += 4){
 				u32 odi = (addr + 4 +i) & 0xC;
-				u32 data = ReadLongList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi);
-				*(u32*)(&ca->way[entry].data[lruway][odi]) = SWAP32(data);
+				ca->way[entry].data[lruway][odi]   = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi);
+        ca->way[entry].data[lruway][odi+1] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi+1);
+        ca->way[entry].data[lruway][odi+2] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi+2);
+        ca->way[entry].data[lruway][odi+3] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi+3);
 				CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave?"S":"M", CurrentSH2->cycles, addr, entry,lruway, odi, data);
 			}
 			ca->way[entry].v[lruway] = 1; //becomes valid
@@ -424,8 +426,8 @@ u16 cache_memory_read_w(cache_enty * ca, u32 addr, u32 * cycle){
 			ca->way[entry].tag[lruway] = tagaddr;
 			for (i = 0; i < 16; i += 4){
 				u32 odi = (addr + 4 +i) & 0xC;
-				u32 data = ReadLongList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi);
-				*(u32*)(&ca->way[entry].data[lruway][odi]) = SWAP32(data);
+				*(u16*)(&ca->way[entry].data[lruway][odi]) = SWAP16(ReadWordList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi));
+        *(u16*)(&ca->way[entry].data[lruway][odi+2]) = SWAP16(ReadWordList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi+2));
 				CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave?"S":"M", CurrentSH2->cycles, addr, entry,lruway, odi, data);
 			}
 			ca->way[entry].v[lruway] = 1; //becomes valid
