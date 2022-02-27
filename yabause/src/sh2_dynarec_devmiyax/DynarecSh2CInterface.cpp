@@ -408,9 +408,9 @@ void memSetByte(u32 addr , u8 data )
     block->LookupTableLow[  (addr&0x000FFFFF)>>1 ] = NULL;
     //T2WriteByte(LowWram, addr & 0xFFFFF, data);
     //if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 7;
-    MappedMemoryWriteByte(addr, data, &cycle);
-    dynaFree();
-    return;
+    //MappedMemoryWriteByte(addr, data, &cycle);
+    //dynaFree();
+    //return;
     break;
   // High Memory
   case 0x06000000:
@@ -421,9 +421,9 @@ void memSetByte(u32 addr , u8 data )
 #endif
     //T2WriteByte(HighWram, addr & 0xFFFFF, data);
     //if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 2;
-    MappedMemoryWriteByte(addr, data, &cycle);
-    dynaFree();
-    return;
+    //MappedMemoryWriteByte(addr, data, &cycle);
+    //dynaFree();
+    //return;
     break;
 
   // Cache
