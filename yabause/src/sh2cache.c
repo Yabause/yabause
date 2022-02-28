@@ -159,7 +159,8 @@ void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val, u32 * cycle){
 			update_lru(way, &ca->lru[entry]);
 			CACHE_LOG("[%s] %d Cache Write 4 %08X %d:%d:%d %08X\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, addr, entry,way, (addr&LINE_MASK) , val);
 		}
-
+    MappedMemoryWriteByteNocache(addr, val, NULL);
+    break;
 	} // THROUGH TO CACHE_THROUGH
 	case CACHE_THROUGH:
 		MappedMemoryWriteByteNocache(addr, val, cycle);
@@ -216,6 +217,8 @@ void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val, u32 * cycle){
 #ifdef CACHE_STATICS
 		ca->write_count++;
 #endif
+    MappedMemoryWriteWordNocache(addr, val, NULL);
+    break;
 	} // THROUGH TO CACHE_THROUGH
 	case CACHE_THROUGH:{
 		MappedMemoryWriteWordNocache(addr, val,cycle);
@@ -292,6 +295,8 @@ void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val, u32 *cycle){
 #ifdef CACHE_STATICS
 		ca->write_count++;
 #endif
+    MappedMemoryWriteLongNocache(addr, val, NULL);
+    break;
 	} // THROUGH TO CACHE_THROUGH
 	case CACHE_THROUGH:
 		MappedMemoryWriteLongNocache(addr, val,cycle);
