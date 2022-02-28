@@ -1416,13 +1416,13 @@ void ScuExec(u32 timing) {
          incFlg[3] = 0;
 
          ScuDsp->ALU.all = ScuDsp->AC.all;
-
+#if 0
          {
             char buf[128];
             ScuDspDisasm(ScuDsp->PC, buf);
             DSPLOG( "%s ALU=%" PRId64 ",P=%" PRId64 "\n", buf, ScuDsp->ALU.all, ScuDsp->P.all);
          }
-
+#endif
          // ALU commands
          switch (instruction >> 26)
          {
