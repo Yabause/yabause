@@ -749,19 +749,19 @@ INLINE int getVramCycle(u32 addr) {
 #define GET_MEM_CYCLE_W \
   switch (addr & 0xDFF00000) { \
   case 0x00200000: /* Low */ \
-    *cycle = 7; \
+    *cycle = 7;  \
     break; \
   case 0x05A00000: /* SOUND */ \
-    *cycle = 7; \
+    *cycle = 7;   \
     break; \
   case 0x05C00000: /* VDP1 */ \
     *cycle = 2; \
     break; \
   case 0x05e00000: /* VDP2 */ \
-    *cycle = getVramCycle(addr);  \
+    *cycle = getVramCycle(addr); \
     break; \
   case 0x06000000: /* High */ \
-    *cycle = 2; \
+    *cycle = 1;  \
     break; \
   default: \
     *cycle = 0; \
