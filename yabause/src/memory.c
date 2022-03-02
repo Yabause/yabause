@@ -749,7 +749,7 @@ INLINE int getVramCycle(u32 addr) {
 #define GET_MEM_CYCLE_W \
   switch (addr & 0xDFF00000) { \
   case 0x00200000: /* Low */ \
-    *cycle = 7;  \
+    *cycle = 8;  \
     break; \
   case 0x05A00000: /* SOUND */ \
     *cycle = 7;   \
@@ -761,7 +761,7 @@ INLINE int getVramCycle(u32 addr) {
     *cycle = getVramCycle(addr); \
     break; \
   case 0x06000000: /* High */ \
-    *cycle = 1;  \
+    *cycle = 2;  \
     break; \
   default: \
     *cycle = 0; \
@@ -775,7 +775,7 @@ INLINE int getVramCycle(u32 addr) {
     *cycle = 16; \
     break; \
   case 0x00200000: /* Low */ \
-    *cycle = 12; \
+    *cycle = 8; \
     break; \
   case 0x02000000: /* CS0 */ \
   case 0x05800000: /* CS2 */ \
@@ -790,7 +790,7 @@ INLINE int getVramCycle(u32 addr) {
     *cycle = getVramCycle(addr); \
     break; \
   case 0x06000000: /* High */ \
-    *cycle = 0; \
+    *cycle = 2; \
     break; \
   default: \
     *cycle = 0; \
