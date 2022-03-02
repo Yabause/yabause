@@ -657,6 +657,8 @@ int DelayEachClock() {
 
 int DebugDelayClock() {
   dynaLock();
+  CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT(); // ->SysReg[4];
+  CurrentSH2->regs.PC = DynarecSh2::CurrentContext->GET_PC();
   DynaCheckBreakPoint(DynarecSh2::CurrentContext->GET_PC());
   dynaFree();
   return 0;
@@ -746,6 +748,9 @@ if( pc == 0x060133C8 ) {
     dynaFree();
     return 1;
   }
+
+  CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT(); // ->SysReg[4];
+  CurrentSH2->regs.PC = DynarecSh2::CurrentContext->GET_PC() + 2;
 
   dynaFree();
   return 0;

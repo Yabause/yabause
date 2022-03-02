@@ -195,7 +195,11 @@ void SH2HandleInterrupts(SH2_struct *context)
         context->regs.SR.part.I = level;
       }
       context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2), NULL);
-      LOG("[%s] Exception %u, vecnum=%02x, saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", 9, context->interrupts[context->NumberOfInterrupts - 1].vector, oldpc, context->regs.PC);
+
+      int Vector = context->interrupts[context->NumberOfInterrupts - 1].vector;
+      LOG("**** [%s] Exception vecnum=%s(%x), PC=%08X to %08X, level=%08X\n", (context->isslave) ? "S" : "M", ScuGetVectorString(Vector), Vector, oldpc, context->regs.PC, level);
+
+      //LOG("[%s] Exception vecnum=%s(%x), saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", ScuGetVectorString(context->interrupts[context->NumberOfInterrupts - 1].vector), context->interrupts[context->NumberOfInterrupts - 1].vector,oldpc, context->regs.PC);
       context->NumberOfInterrupts--;
       context->isIdle = 0;
       context->isSleeping = 0;

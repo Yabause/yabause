@@ -1179,10 +1179,10 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
        // if (CurrentSH2->onchip.FTCSR & 0x80) { LOG("Read FTCSR = 0x80"); }
          return CurrentSH2->onchip.FTCSR;
       case 0x012:         
-         LOG("[FRCH] %02X",CurrentSH2->onchip.FRC.part.H);
+         //LOG("[FRCH] %02X",CurrentSH2->onchip.FRC.part.H);
          return CurrentSH2->onchip.FRC.part.H;
       case 0x013:
-         LOG("[FRCL] %02X",CurrentSH2->onchip.FRC.part.L);
+         //LOG("[FRCL] %02X",CurrentSH2->onchip.FRC.part.L);
          return CurrentSH2->onchip.FRC.part.L;
       case 0x014:
          if (!(CurrentSH2->onchip.TOCR & 0x10))
@@ -1305,7 +1305,7 @@ u16 FASTCALL OnchipReadWord(u32 addr) {
 
 u32 FASTCALL OnchipReadLong(u32 addr) {
 
-   LOG("[%s] OnchipReadLong %08X@%08X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC );
+   //LOG("[%s] OnchipReadLong %08X@%08X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC );
    
    switch(addr)
    {
