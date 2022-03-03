@@ -251,7 +251,6 @@ void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val, u32 *cycle){
          {
             //only v bit is changed, the rest of the data remains
             ca->way[entry].v[i] = 0;
-            break;
          }
       }
    }
