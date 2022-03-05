@@ -938,7 +938,7 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle)
       case 0x5:
       {
         // Purge Area
-        return 0xFFFFFFFF;
+        return 0xFFFF;
       }
 
 

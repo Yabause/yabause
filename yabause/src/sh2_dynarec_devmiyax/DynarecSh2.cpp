@@ -965,7 +965,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }else if(delay == 1 || delay == 5) {
       calsize = (ptr - startptr) + *asm_list[i].size + nomal_seperator_size + Y_MAX(internal_jmp_size,DELAYJUMPSIZE) + EPILOGSIZE;
     } else {
-      u32 op2 = memGetWord(addr+2);
+      u32 op2 = MappedMemoryReadInst(addr+2,NULL);
       u32 delayop = dsh2_instructions[op2];
       calsize = (ptr - startptr) + *asm_list[i].size + *asm_list[delayop].size + 
       delay_seperator_size + Y_MAX(internal_delay_jmp_size,SEPERATORSIZE_DELAY_AFTER) + EPILOGSIZE;
@@ -991,7 +991,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 
     // Inifinity Loop Detection
     if (count == 0 && (op & 0xF00F) == 0x6000) { // mov ? R0
-      u32 loopcheck = memGetLong(addr + 2);
+      u32 loopcheck = MappedMemoryReadLong(addr + 2,NULL);
       if ((loopcheck & 0xFF00FFFF) == 0xC80089FC) { // test, bf
         page->flags |= BLOCK_LOOP;
       }
@@ -1379,11 +1379,11 @@ void DynarecSh2::Undecoded(){
   LOG("Undecoded %08X", GET_PC());
   // Save regs.SR on stack
   GetGenRegPtr()[15] -= 4;
-  memSetLong(GetGenRegPtr()[15], GET_SR());
+  MappedMemoryWriteLong(GetGenRegPtr()[15], GET_SR(),NULL);
 
   // Save regs.PC on stack
   GetGenRegPtr()[15] -= 4;
-  memSetLong(GetGenRegPtr()[15], GET_PC()+2);
+  MappedMemoryWriteLong(GetGenRegPtr()[15], GET_PC()+2, NULL);
 
 
   // What caused the exception? The delay slot or a general instruction?
@@ -1391,7 +1391,7 @@ void DynarecSh2::Undecoded(){
   u32 vectnum = 4; //  Fix me
 
   // Jump to Exception service routine
-  u32 newpc = memGetLong(GET_VBR() + (vectnum << 2));
+  u32 newpc = MappedMemoryReadLong(GET_VBR() + (vectnum << 2),NULL);
   SET_PC(newpc);
 
   return;
@@ -1642,7 +1642,7 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
       m_pDynaSh2->CtrlReg[0] &= ~0x000000F0;
       m_pDynaSh2->CtrlReg[0] |= ((u32)(level << 4) & 0x000000F0);
     }
-    m_pDynaSh2->SysReg[3] = memGetLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2));
+    m_pDynaSh2->SysReg[3] = MappedMemoryReadLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2),NULL);
 
     LOG("**** [%s] Exception vecnum=%s(%x), PC=%08X to %08X, level=%08X\n", (is_slave_ == false) ? "M" : "S", ScuGetVectorString(Vector), Vector,prepc, m_pDynaSh2->SysReg[3], level);
 
