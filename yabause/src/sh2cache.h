@@ -43,7 +43,6 @@ extern FILE * cache_f;
 typedef struct _cache_line{
 	u32 tag[4];
 	u8 data[4][16];
-  int v[4];	
 } cache_line;
 
 typedef struct _cache_enty{

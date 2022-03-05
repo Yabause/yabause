@@ -66,8 +66,6 @@ void cache_clear(cache_enty * ca){
          
          for (i = 0; i < 16; i++)
             ca->way[entry].data[way][i] = 0;
-
-         ca->way[entry].v[way] = 0;
       }
 	}
 	return;
@@ -138,19 +136,13 @@ void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val, u32 * cycle){
 		}
 		tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
+
 		int way = -1;
-		if (ca->way[entry].v[0] && ca->way[entry].tag[0] == tagaddr){
-			way = 0;
-		}
-		else if (ca->way[entry].v[1] && ca->way[entry].tag[1] == tagaddr){
-			way = 1;
-		}
-		else if (ca->way[entry].v[2] && ca->way[entry].tag[2] == tagaddr){
-			way = 2;
-		}
-		else if (ca->way[entry].v[3] && ca->way[entry].tag[3] == tagaddr){
-			way = 3;
-		}
+		if (ca->way[entry].tag[3] == (tagaddr|0x02)){way = 3;}
+    if (ca->way[entry].tag[2] == (tagaddr|0x02)){way = 2;}
+		if (ca->way[entry].tag[1] == (tagaddr|0x02)){way = 1;}
+		if (ca->way[entry].tag[0] == (tagaddr|0x02)){way = 0;}
+
 #ifdef CACHE_STATICS		
 		ca->write_count++;
 #endif		
@@ -194,19 +186,12 @@ void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val, u32 * cycle){
 
 		tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
+
 		int way = -1;
-		if (ca->way[entry].v[0] && ca->way[entry].tag[0] == tagaddr){
-			way = 0;
-		}
-		else if (ca->way[entry].v[1] && ca->way[entry].tag[1] == tagaddr){
-			way = 1;
-		}
-		else if (ca->way[entry].v[2] && ca->way[entry].tag[2] == tagaddr){
-			way = 2;
-		}
-		else if (ca->way[entry].v[3] && ca->way[entry].tag[3] == tagaddr){
-			way = 3;
-		}
+		if (ca->way[entry].tag[3] == (tagaddr|0x02)){way = 3;}
+    if (ca->way[entry].tag[2] == (tagaddr|0x02)){way = 2;}
+		if (ca->way[entry].tag[1] == (tagaddr|0x02) ){way = 1;}
+		if (ca->way[entry].tag[0] == (tagaddr|0x02) ){way = 0;}
 
 		if( way > -1 ){
 			*(u16*)(&ca->way[entry].data[way][(addr&LINE_MASK)]) = SWAP16(val);
@@ -247,10 +232,10 @@ void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val, u32 *cycle){
 
       for (i = 0; i < 4; i++)
       {
-         if (ca->way[entry].tag[i] == tagaddr)
+         if (ca->way[entry].tag[i] == (tagaddr|0x02) )
          {
             //only v bit is changed, the rest of the data remains
-            ca->way[entry].v[i] = 0;
+            ca->way[entry].tag[i] &= ~0x02;
          }
       }
    }
@@ -273,18 +258,13 @@ void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val, u32 *cycle){
 		tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
 		int way = -1;
-		if (ca->way[entry].v[0] && ca->way[entry].tag[0] == tagaddr){
-			way = 0;
-		}
-		else if (ca->way[entry].v[1] && ca->way[entry].tag[1] == tagaddr){
-			way = 1;
-		}
-		else if (ca->way[entry].v[2] && ca->way[entry].tag[2] == tagaddr){
-			way = 2;
-		}
-		else if (ca->way[entry].v[3] && ca->way[entry].tag[3] == tagaddr){
-			way = 3;
-		}
+	
+		if (ca->way[entry].tag[3] == (tagaddr|0x02)){way = 3;}
+    if (ca->way[entry].tag[2] == (tagaddr|0x02)){way = 2;}
+		if (ca->way[entry].tag[1] == (tagaddr|0x02)){way = 1;}
+		if (ca->way[entry].tag[0] == (tagaddr|0x02)){way = 0;}
+
+
 		if( way > -1 ){
 			*(u32*)(&ca->way[entry].data[way][(addr&LINE_MASK)]) = SWAP32(val);
 			update_lru(way, &ca->lru[entry]);
@@ -321,18 +301,11 @@ u8 cache_memory_read_b(cache_enty * ca, u32 addr, u32 * cycle){
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
 
 		int way = -1;
-		if (ca->way[entry].v[0] && ca->way[entry].tag[0] == tagaddr){
-			way = 0;
-		}
-		else if (ca->way[entry].v[1] && ca->way[entry].tag[1] == tagaddr){
-			way = 1;
-		}
-		else if (ca->way[entry].v[2] && ca->way[entry].tag[2] == tagaddr){
-			way = 2;
-		}
-		else if (ca->way[entry].v[3] && ca->way[entry].tag[3] == tagaddr){
-			way = 3;
-		}
+		if (ca->way[entry].tag[3] == (tagaddr|0x02)){way = 3;}
+    if (ca->way[entry].tag[2] == (tagaddr|0x02)){way = 2;}
+		if (ca->way[entry].tag[1] == (tagaddr|0x02)){way = 1;}
+		if (ca->way[entry].tag[0] == (tagaddr|0x02)){way = 0;}
+
 
 		if( way > -1){
 #ifdef CACHE_STATICS				
@@ -357,7 +330,7 @@ u8 cache_memory_read_b(cache_enty * ca, u32 addr, u32 * cycle){
         ca->way[entry].data[lruway][odi+3] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi+3);
 				CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave?"S":"M", CurrentSH2->cycles, addr, entry,lruway, odi, data);
 			}
-			ca->way[entry].v[lruway] = 1; //becomes valid
+			ca->way[entry].tag[lruway] |= 0x02; //becomes valid
 			return ca->way[entry].data[lruway][addr&LINE_MASK];
 		}else{
 			return MappedMemoryReadLongNocache(addr,cycle);	
@@ -398,18 +371,11 @@ u16 cache_memory_read_w(cache_enty * ca, u32 addr, u32 * cycle){
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
 
 		int way = -1;
-		if (ca->way[entry].v[0] && ca->way[entry].tag[0] == tagaddr){
-			way = 0;
-		}
-		else if (ca->way[entry].v[1] && ca->way[entry].tag[1] == tagaddr){
-			way = 1;
-		}
-		else if (ca->way[entry].v[2] && ca->way[entry].tag[2] == tagaddr){
-			way = 2;
-		}
-		else if (ca->way[entry].v[3] && ca->way[entry].tag[3] == tagaddr){
-			way = 3;
-		}
+		if (ca->way[entry].tag[3] == (tagaddr|0x02)){way = 3;}
+    if (ca->way[entry].tag[2] == (tagaddr|0x02)){way = 2;}
+		if (ca->way[entry].tag[1] == (tagaddr|0x02)){way = 1;}
+		if (ca->way[entry].tag[0] == (tagaddr|0x02)){way = 0;}
+
 
 		if( way > -1){
 #ifdef CACHE_STATICS	
@@ -434,7 +400,7 @@ u16 cache_memory_read_w(cache_enty * ca, u32 addr, u32 * cycle){
         *(u16*)(&ca->way[entry].data[lruway][odi+2]) = SWAP16(ReadWordList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi+2));
 				CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave?"S":"M", CurrentSH2->cycles, addr, entry,lruway, odi, data);
 			}
-			ca->way[entry].v[lruway] = 1; //becomes valid
+			ca->way[entry].tag[lruway] |= 0x02; //becomes valid
 			u16 rtn = SWAP16( *(u16*)(&ca->way[entry].data[lruway][(addr&LINE_MASK)]));
 			return rtn;			
 		}else{
@@ -476,18 +442,10 @@ u32 cache_memory_read_l(cache_enty * ca, u32 addr, u32 * cycle){
 	  entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
 
 	  int way = -1;
-		if (ca->way[entry].v[0] && ca->way[entry].tag[0] == tagaddr){
-			way = 0;
-		}
-		else if (ca->way[entry].v[1] && ca->way[entry].tag[1] == tagaddr){
-			way = 1;
-		}
-		else if (ca->way[entry].v[2] && ca->way[entry].tag[2] == tagaddr){
-			way = 2;
-		}
-		else if (ca->way[entry].v[3] && ca->way[entry].tag[3] == tagaddr){
-			way = 3;
-		}
+		if (ca->way[entry].tag[3] == (tagaddr|0x02)){way = 3;}
+    if (ca->way[entry].tag[2] == (tagaddr|0x02)){way = 2;}
+		if (ca->way[entry].tag[1] == (tagaddr|0x02)){way = 1;}
+		if (ca->way[entry].tag[0] == (tagaddr|0x02)){way = 0;}
 
 		if( way > -1){
 #ifdef CACHE_STATICS			
@@ -512,7 +470,7 @@ u32 cache_memory_read_l(cache_enty * ca, u32 addr, u32 * cycle){
 				*(u32*)(&ca->way[entry].data[lruway][odi]) = SWAP32(data);
 				CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave?"S":"M", CurrentSH2->cycles, addr, entry,lruway, odi, data);
 			}
-			ca->way[entry].v[lruway] = 1; //becomes valid
+			ca->way[entry].tag[lruway] |= 0x02; //becomes valid
 
 			u32 rtn = SWAP32( *(u32*)(&ca->way[entry].data[lruway][(addr&LINE_MASK)]) );
 			return rtn;
@@ -544,7 +502,6 @@ u32 FASTCALL AddressArrayReadLong(u32 addr) {
    int entry = (addr & 0x3FC) >> 4;
    u32 data = CurrentSH2->onchip.cache.way[entry].tag[way];
    data |= CurrentSH2->onchip.cache.lru[entry] << 4;
-   data |= CurrentSH2->onchip.cache.way[entry].v[way] << 2;
 	 CACHE_LOG( cache_f , "[SH2-%s] Address Read %08X %d:%d:%d %08X\n", CurrentSH2->isslave?"S":"M", addr,entry, way, addr & 0x0F , data);  
    return data;
 #else
@@ -558,8 +515,7 @@ void FASTCALL AddressArrayWriteLong(u32 addr, u32 val)  {
 #ifdef CACHE_ENABLE
    int way = (CurrentSH2->onchip.CCR >> 6) & 3;
    int entry = (addr & 0x3FC) >> 4;
-   CurrentSH2->onchip.cache.way[entry].tag[way] = addr & 0x1FFFFC00;
-   CurrentSH2->onchip.cache.way[entry].v[way] = (addr >> 2) & 1;
+   CurrentSH2->onchip.cache.way[entry].tag[way] = addr & 0x1FFFFC02;
    CurrentSH2->onchip.cache.lru[entry] = (val >> 4) & 0x3f;
    CACHE_LOG( cache_f , "[SH2-%s] Address Write %08X %d:%d:%d %08X\n", CurrentSH2->isslave?"S":"M", addr,entry, way, addr & 0x0F , val);  
 #else
