@@ -300,7 +300,7 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
    if ((addr & 0xC0000000) == 0xC0000000) sh->instruction = DataArrayReadWord(addr);
    else
 #endif
-   sh->instruction = fetchlist[(addr >> 20) & 0x0FF](addr);
+     sh->instruction = MappedMemoryReadInst(addr,NULL); //fetchlist[(addr >> 20) & 0x0FF](addr);
 
 #ifdef DMPHISTORY
    sh->pchistory_index++;
@@ -3126,7 +3126,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
       if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
       else
 #endif
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+      context->instruction = MappedMemoryReadInst(context->regs.PC, NULL); //fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       SH2HandleBackTrace(context);
       SH2HandleStepOverOut(context);
@@ -3178,7 +3178,7 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 #endif
       //context->instruction =  MappedMemoryReadWord(context->regs.PC,NULL);  //fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+        context->instruction = MappedMemoryReadInst(context->regs.PC, NULL);// fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       // Execute it
       opcodes[context->instruction](context);

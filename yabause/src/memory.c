@@ -906,11 +906,17 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle)
 
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
+u16 MappedMemoryReadInst(u32 addr, u32 * cycle) {
+  return cache_memory_read_w(&CurrentSH2->onchip.cache, addr, cycle, 1);
+}
 u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle){
-	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr, cycle);
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr, cycle, 0);
 }
 u16 FASTCALL MappedMemoryReadWordNocache(u32 addr, u32 * cycle)
 #else
+u16 MappedMemoryReadInst(u32 addr, u32 * cycle) {
+  return MappedMemoryReadWord(addr,cycle);
+}
 u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle)
 #endif
 {

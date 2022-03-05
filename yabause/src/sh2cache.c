@@ -102,8 +102,8 @@ static INLINE void update_lru(int way, u32*lru){
 	return;
 }
 
-static INLINE int select_way_to_replace(u32 lru){
-		return lru_replace[lru & CurrentSH2->onchip.ccr_replace_and ]  | CurrentSH2->onchip.ccr_replace_or[0];  // i\IsInstr
+static INLINE int select_way_to_replace(u32 lru, u32 isInstr ){
+		return lru_replace[lru & CurrentSH2->onchip.ccr_replace_and ]  | CurrentSH2->onchip.ccr_replace_or[isInstr]; 
 }
 
 
@@ -286,7 +286,7 @@ void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val, u32 *cycle){
 	}
 }
 
-u8 cache_memory_read_b(cache_enty * ca, u32 addr, u32 * cycle){
+u8 cache_memory_read_b(cache_enty * ca, u32 addr, u32 * cycle ){
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
 	{
@@ -318,7 +318,7 @@ u8 cache_memory_read_b(cache_enty * ca, u32 addr, u32 * cycle){
 #ifdef CACHE_STATICS			
 		ca->read_miss_count++;
 #endif
-		lruway = select_way_to_replace(ca->lru[entry]);
+		lruway = select_way_to_replace(ca->lru[entry], 0);
 		if( lruway >= 0 ){
 			update_lru(lruway, &ca->lru[entry]);
 			ca->way[entry].tag[lruway] = tagaddr;
@@ -349,7 +349,7 @@ u8 cache_memory_read_b(cache_enty * ca, u32 addr, u32 * cycle){
 	return 0;
 }
 
-u16 cache_memory_read_w(cache_enty * ca, u32 addr, u32 * cycle){
+u16 cache_memory_read_w(cache_enty * ca, u32 addr, u32 * cycle, u32 isInst ){
 
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
@@ -390,7 +390,7 @@ u16 cache_memory_read_w(cache_enty * ca, u32 addr, u32 * cycle){
 		ca->read_miss_count++;
 #endif		
 
-		lruway = select_way_to_replace(ca->lru[entry]);
+		lruway = select_way_to_replace(ca->lru[entry], isInst);
 		if( lruway >= 0 ){
 			update_lru(lruway, &ca->lru[entry]);
 			ca->way[entry].tag[lruway] = tagaddr;
@@ -459,7 +459,7 @@ u32 cache_memory_read_l(cache_enty * ca, u32 addr, u32 * cycle){
 		ca->read_miss_count++;
 #endif
 		// cache miss
-		lruway = select_way_to_replace(ca->lru[entry]);
+		lruway = select_way_to_replace(ca->lru[entry],0);
 		if( lruway >= 0 ){
 
 			update_lru(lruway, &ca->lru[entry]);

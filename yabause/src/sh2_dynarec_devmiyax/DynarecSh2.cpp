@@ -940,7 +940,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   //while (ptr - startptr < MaxSize) {
   while (1) {
     // translate the opcode and insert code
-    op = MappedMemoryReadWord(addr, NULL);
+    op = MappedMemoryReadInst(addr, NULL);
 #ifdef SET_DIRTY
     if (ParentT) {
       u32 keepaddr = adress_mask(addr);
@@ -976,7 +976,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }else if(delay == 1 || delay == 5) {
       calsize = (ptr - startptr) + *asm_list[i].size + nomal_seperator_size + DELAYJUMPSIZE + EPILOGSIZE;
     } else {
-      u32 op2 = MappedMemoryReadWord(addr+2,NULL);
+      u32 op2 = MappedMemoryReadInst(addr+2,NULL);
       u32 delayop = dsh2_instructions[op2];
       calsize = (ptr - startptr) + *asm_list[i].size + *asm_list[delayop].size + delay_seperator_size + SEPERATORSIZE_DELAY_AFTER + EPILOGSIZE;
     }
@@ -1118,7 +1118,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       ptr += *(asm_list[i].size) + delay_seperator_size;
 
       // Get NExt instruction
-      temp = MappedMemoryReadWord(addr,NULL);
+      temp = MappedMemoryReadInst(addr,NULL);
 #ifdef SET_DIRTY
       if (ParentT) {
         u32 keepaddr = adress_mask(addr);
@@ -1659,7 +1659,7 @@ int DynarecSh2GetDisasmebleString(string & out, u32 from, u32 to) {
   char linebuf[128];
   if (from > to) return -1;
   for (u32 i = from; i < (to+2); i += 2) {
-    SH2Disasm(i, MappedMemoryReadWord(i,NULL), 0, NULL, linebuf);
+    SH2Disasm(i, MappedMemoryReadInst(i,NULL), 0, NULL, linebuf);
     out += linebuf;
     out += "\n";
   }

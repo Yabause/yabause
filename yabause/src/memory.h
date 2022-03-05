@@ -364,6 +364,7 @@ extern "C" {
   void MappedMemoryInit(void);
   u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle);
   u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle);
+  u16 FASTCALL MappedMemoryReadInst(u32 addr, u32 * cycle);
   u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle);
   void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle);
   void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle);
