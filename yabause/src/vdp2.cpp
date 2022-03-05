@@ -893,6 +893,8 @@ void Vdp2HBlankOUT(void) {
   int i;
   if (yabsys.LineCount < yabsys.VBlankLineCount)
   {
+    ScuRemoveHBlankIN();
+    
     Vdp2Regs->TVSTAT &= ~0x0004;
     u32 cell_scroll_table_start_addr = (Vdp2Regs->VCSTA.all & 0x7FFFE) << 1;
     memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));

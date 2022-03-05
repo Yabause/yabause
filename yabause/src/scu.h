@@ -312,6 +312,7 @@ extern "C" {
   void ScuSendVBlankIN(void);
   void ScuSendVBlankOUT(void);
   void ScuSendHBlankIN(void);
+  void ScuRemoveHBlankIN();
   void ScuSendTimer0(void);
   void ScuSendTimer1(void);
   void ScuSendDSPEnd(void);

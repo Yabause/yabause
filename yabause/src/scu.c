@@ -3012,6 +3012,7 @@ void ScuRemoveInterruptByCPU(u32 pre, u32 after) {
       for (ii = 0; ii < ScuRegs->NumberOfInterrupts; ii++) {
         if (ScuRegs->interrupts[i].statusbit == (1<<i)) {
           hit = ii;
+          ScuRegs->IST &= ~ScuRegs->interrupts[i].statusbit;
           LOG("%s(%0X) is removed at frame %d:%d", ScuGetVectorString(ScuRegs->interrupts[i].vector), ScuRegs->interrupts[i].vector, yabsys.frame_count, yabsys.LineCount);
           break;
         }
@@ -3115,6 +3116,34 @@ static void ScuQueueInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit)
    }
 }
 
+void ScuRemoveInterrupt(u8 vector, u8 level, u32 statusbit){
+   ScuRegs->IST &= ~statusbit;
+
+   int i2 = 0;
+   int ii = 0;
+   int hit = -1;
+
+   // find pending interrupt
+   for (ii = 0; ii < ScuRegs->NumberOfInterrupts; ii++) {
+      if( ScuRegs->interrupts[ii].vector == vector ) {
+         hit = ii;
+         break;
+      }
+   }
+
+   // remove pending interrupt
+   if( hit != -1 ){
+      for (ii = 0; ii < ScuRegs->NumberOfInterrupts; ii++) {
+         if (ii != hit) {
+            memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[ii], sizeof(scuinterrupt_struct));
+            i2++;
+         }
+      }
+      ScuRegs->NumberOfInterrupts--;
+   }
+
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
@@ -3128,13 +3157,15 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
       }
     }
   }else if (!(ScuRegs->IMS & mask)){
+
+     ScuRegs->IST |= statusbit;
     //if (vector != 0x41) LOG("INT %d", vector);
     //LOG("%s(%x) at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
     SH2SendInterrupt(MSH2, vector, level);
   }
   else
    {
-      //LOG("%s(%x) is Queued %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
+      //LOG("%s(%x) is Queued IMS=%08X %d:%d", ScuGetVectorString(vector), vector, ScuRegs->IMS, yabsys.frame_count, yabsys.LineCount);
       ScuQueueInterrupt(vector, level, mask, statusbit);
       ScuRegs->IST |= statusbit;
    }
@@ -3206,7 +3237,7 @@ static INLINE void ScuChekIntrruptDMA(int id){
   }
 }
 
-void ScuRemoveInterrupt(u8 vector, u8 level); 
+void ScuRemoveInterrupt(u8 vector, u8 level, u32 statusbit); 
 void ScuRemoveVBlankOut();
 void ScuRemoveHBlankIN();
 void ScuRemoveVBlankIN();
@@ -3253,21 +3284,21 @@ const char * ScuGetVectorString(u32 vec) {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankIN(void) {
-   //ScuRemoveVBlankOut();
+   ScuRemoveVBlankOut();
    //ScuRemoveHBlankIN();
    SendInterrupt(0x40, 0xF, 0x0001, 0x0001);
    ScuChekIntrruptDMA(0);
 }
 
 void ScuRemoveVBlankIN() {
-  //ScuRemoveInterrupt(0x40, 0x0F);
+  ScuRemoveInterrupt(0x40, 0x0F, 0x0001);
   //SH2RemoveInterrupt(MSH2, 0x40, 0x0F);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankOUT(void) {
-   //ScuRemoveVBlankIN();
+   ScuRemoveVBlankIN();
    SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
    ScuRegs->timer0 = 0;
    if (ScuRegs->T1MD & 0x1)
@@ -3285,14 +3316,14 @@ void ScuSendVBlankOUT(void) {
 }
 
 void ScuRemoveVBlankOut() {
-  //ScuRemoveInterrupt(0x41, 0x0E);
+  ScuRemoveInterrupt(0x41, 0x0E, 0x02 );
   //SH2RemoveInterrupt(MSH2, 0x41, 0x0E);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuRemoveHBlankIN() {
-  //ScuRemoveInterrupt(0x42, 0x0D);
+  ScuRemoveInterrupt(0x42, 0x0D, 0x0004);
   //SH2RemoveInterrupt(MSH2, 0x42, 0x0D);
 }
 
