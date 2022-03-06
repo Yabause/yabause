@@ -106,6 +106,9 @@ android {
                 strippedNativeLibsDir  'src/main/jniLibs'
                 unstrippedNativeLibsDir  'src/main/jniLibs'
             }
+            ndk{
+                debugSymbolLevel 'FULL'
+            }
             resValue "string", "app_name", "Yaba Sanshiro 2"
         }
         pro {
@@ -125,7 +128,9 @@ android {
                 strippedNativeLibsDir  'src/main/jniLibs'
                 unstrippedNativeLibsDir  'src/main/jniLibs'
             }
-
+            ndk{
+                debugSymbolLevel 'FULL'
+            }
         }
         debug {
             debuggable true
