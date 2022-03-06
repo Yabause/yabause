@@ -193,6 +193,8 @@ int YabauseInit(yabauseinit_struct *init)
 
   yabsys.use_cpu_affinity = init->use_cpu_affinity;
 
+  yabsys.use_sh2_cache = init->use_sh2_cache;
+
   q_scsp_frame_start = YabThreadCreateQueue(1);
   q_scsp_finish = YabThreadCreateQueue(1);
   setM68kCounter(0);

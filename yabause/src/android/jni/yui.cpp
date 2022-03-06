@@ -131,6 +131,7 @@ static int g_cpu_sync_shift = 1;
 static int g_scsp_sync_time_mode = 1;
 static int g_aspect_rate_mode = 0;
 static int s_use_cpu_affinity = 1;
+static int s_use_sh2_cache = 1;
 int frameLimitMode = 0;
 
 static int s_status = 0;
@@ -428,8 +429,7 @@ int GetVideoInterface()
     return (int)env->CallIntMethod(yabause, getVideoInterface);
 }
 
-
-const char * GetCartridgePath()
+const char *GetCartridgePath()
 {
     jclass yclass;
     jmethodID getCartridgePath;
@@ -466,16 +466,17 @@ int GetPlayer2Device()
     return env->CallIntMethod(yabause, getPlayer2InputDevice);
 }
 
-extern "C" 
-const char * GetFileDescriptorPath( const char * fileName )
+extern "C" const char *GetFileDescriptorPath(const char *fileName)
 {
     jclass yclass;
     jmethodID getFileDescriptorPath;
     jstring message;
     jboolean dummy;
-    JNIEnv * env;
-    if (yvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK){
-        if(yvm->AttachCurrentThread(&env,NULL) != JNI_OK){
+    JNIEnv *env;
+    if (yvm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
+        if (yvm->AttachCurrentThread(&env, NULL) != JNI_OK)
+        {
             __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to AttachCurrentThread");
             return NULL;
         }
@@ -485,11 +486,12 @@ const char * GetFileDescriptorPath( const char * fileName )
 
     yclass = env->GetObjectClass(yabause);
     getFileDescriptorPath = env->GetMethodID(yclass, "getFileDescriptorPath", "(Ljava/lang/String;)Ljava/lang/String;");
-    message = (jstring)env->CallObjectMethod(yabause, getFileDescriptorPath, strj );
+    message = (jstring)env->CallObjectMethod(yabause, getFileDescriptorPath, strj);
 
     env->DeleteLocalRef(strj);
 
-    if( message == NULL ){
+    if (message == NULL)
+    {
         return NULL;
     }
 
@@ -516,11 +518,11 @@ void onBackupWrite(char *before, char *after, int size)
     /*
     if (yvm->GetEnv( (void**) &env, JNI_VERSION_1_6) != JNI_OK){
 
-        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to GetEnv");
+            __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to GetEnv");
 
-        return;
-    }
-*/
+            return;
+        }
+    */
     jbyteArray jniBefore = env->NewByteArray(size);
     if (jniBefore == NULL)
     {
@@ -828,7 +830,7 @@ extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_init
             surface_width = width;
             surface_height = height;
             g_msg = MSG_WINDOW_CHG;
-            //YUI_LOG("Got window ignore %p %d,%d", g_window, g_msg,width,height );
+            // YUI_LOG("Got window ignore %p %d,%d", g_window, g_msg,width,height );
         }
     }
     else
@@ -1187,12 +1189,15 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, job
     s_playdatadir = GetPlayDataDir();
 
     GetFileDescriptorPath("test");
-	
-	YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
-    
+
+    YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
+
     OSDInit(0);
 
-    pthread_create(&_threadId, 0, threadStartCallback, NULL);
+    pthread_attr_t tattr;
+    pthread_attr_init(&tattr);
+
+    pthread_create(&_threadId, &tattr, threadStartCallback, NULL);
 
     return res;
 }
@@ -1307,9 +1312,9 @@ int initEgl(ANativeWindow *window)
     EGLint pbuffer_attribs[] = {
         EGL_WIDTH, 8,
         EGL_HEIGHT, 8,
-        //EGL_TEXTURE_FORMAT, EGL_TEXTURE_RGBA,
-        //EGL_TEXTURE_TARGET, EGL_TEXTURE_2D,
-        //EGL_LARGEST_PBUFFER, EGL_TRUE,
+        // EGL_TEXTURE_FORMAT, EGL_TEXTURE_RGBA,
+        // EGL_TEXTURE_TARGET, EGL_TEXTURE_2D,
+        // EGL_LARGEST_PBUFFER, EGL_TRUE,
         EGL_NONE};
 
     EGLDisplay display;
@@ -1355,8 +1360,8 @@ int initEgl(ANativeWindow *window)
         destroy();
         return -1;
     }
-    //YUI_LOG("ANativeWindow_setBuffersGeometry");
-    //ANativeWindow_setBuffersGeometry(window, 0, 0, format);
+    // YUI_LOG("ANativeWindow_setBuffersGeometry");
+    // ANativeWindow_setBuffersGeometry(window, 0, 0, format);
 
     YUI_LOG("eglCreateContext");
     if (!(context = eglCreateContext(display, config, 0, attrib_list)))
@@ -1395,7 +1400,7 @@ int initEgl(ANativeWindow *window)
 
     eglQuerySurface(display, surface, EGL_WIDTH, &width);
     eglQuerySurface(display, surface, EGL_HEIGHT, &height);
-    //eglSurfaceAttrib(display, surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_DESTOYED);
+    // eglSurfaceAttrib(display, surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_DESTOYED);
     YUI_LOG("eglCreateWindowSurface() ok size = %d,%d", width, height);
 
     pbuffer_attribs[1] = ANativeWindow_getWidth(window);
@@ -1471,18 +1476,18 @@ int YabauseInit()
     eglQuerySurface(g_Display, g_Surface, EGL_WIDTH, &width);
     eglQuerySurface(g_Display, g_Surface, EGL_HEIGHT, &height);
 
-    //s_vidcoretype = VIDCORE_VULKAN;
+    // s_vidcoretype = VIDCORE_VULKAN;
     memset(&yinit, 0, sizeof(yinit));
-    //yinit.m68kcoretype = M68KCORE_C68K;
+    // yinit.m68kcoretype = M68KCORE_C68K;
     yinit.m68kcoretype = M68KCORE_MUSASHI;
     yinit.percoretype = PERCORE_DUMMY;
 #if defined(SH2_DYNAREC) | defined(DYNAREC_DEVMIYAX)
-    //g_CpuType = SH2CORE_DEBUGINTERPRETER;
+    // g_CpuType = SH2CORE_DEBUGINTERPRETER;
     yinit.sh2coretype = g_CpuType;
 #else
     yinit.sh2coretype = SH2CORE_DEFAULT;
 #endif
-    //s_vidcoretype = VIDCORE_DUMMY;
+    // s_vidcoretype = VIDCORE_DUMMY;
     yinit.vidcoretype = s_vidcoretype;
 #ifdef HAVE_OPENSL
     yinit.sndcoretype = SNDCORE_OPENSL;
@@ -1490,7 +1495,7 @@ int YabauseInit()
     yinit.sndcoretype = SNDCORE_AUDIOTRACK;
 #endif
 
-    yinit.sndcoretype = SNDCORE_OBOE; 
+    yinit.sndcoretype = SNDCORE_OBOE;
 
     yinit.cdcoretype = CDCORE_ISO;
     yinit.carttype = GetCartridgeType();
@@ -1527,6 +1532,7 @@ int YabauseInit()
     }
 
     yinit.use_cpu_affinity = s_use_cpu_affinity;
+    yinit.use_sh2_cache = s_use_sh2_cache;
 
     res = YabauseInit(&yinit);
     if (res != 0)
@@ -1537,7 +1543,7 @@ int YabauseInit()
 
     update_pad_mode();
 
-    //ScspSetFrameAccurate(1);
+    // ScspSetFrameAccurate(1);
 
     if (s_vidcoretype == VIDCORE_OGL)
     {
@@ -1603,8 +1609,8 @@ int switchWindow(ANativeWindow *window)
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroySurface(g_Display, g_Surface);
 
-    //YUI_LOG("ANativeWindow_setBuffersGeometry");
-    //ANativeWindow_setBuffersGeometry(window, 0, 0, format);
+    // YUI_LOG("ANativeWindow_setBuffersGeometry");
+    // ANativeWindow_setBuffersGeometry(window, 0, 0, format);
 
     YUI_LOG("switchWindow eglCreateWindowSurface");
     if (!(surface = eglCreateWindowSurface(g_Display, g_Config, window, 0)))
@@ -1630,10 +1636,10 @@ int switchWindow(ANativeWindow *window)
             VIDCoreList[i]->Resize(0, 0, width, height, 1, g_aspect_rate_mode);
             glDisable(GL_SCISSOR_TEST);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            //glClear( GL_COLOR_BUFFER_BIT );
-            //eglSwapBuffers(g_Display, surface);
-            //glClear( GL_COLOR_BUFFER_BIT );
-            //eglSwapBuffers(g_Display, surface);
+            // glClear( GL_COLOR_BUFFER_BIT );
+            // eglSwapBuffers(g_Display, surface);
+            // glClear( GL_COLOR_BUFFER_BIT );
+            // eglSwapBuffers(g_Display, surface);
             break;
         }
     }
@@ -1673,7 +1679,7 @@ extern "C"
     Java_org_uoyabause_android_YabauseRunnable_deinit(JNIEnv *env)
     {
         g_msg = MSG_RENDER_LOOP_EXIT;
-        //pthread_join(_threadId,NULL);
+        // pthread_join(_threadId,NULL);
     }
 
     void
@@ -1720,7 +1726,7 @@ extern "C"
             return;
         }
 
-        //yprintf("press: %d,%d",player,key);
+        // yprintf("press: %d,%d",player,key);
         PerKeyDown(MAKE_PAD(player, key));
     }
 
@@ -1729,7 +1735,7 @@ extern "C"
     {
         if (PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING)
             return;
-        //yprintf("axis: %d,%d,%d",player,key,val);
+        // yprintf("axis: %d,%d,%d",player,key,val);
         PerAxisValue(MAKE_PAD(player, key), val); // from 0 to 255
     }
 
@@ -1886,23 +1892,34 @@ extern "C"
         ScspSetVolume(volume);
     }
 
-    void Java_org_uoyabause_android_YabauseRunnable_setUseCpuAffinity( JNIEnv* env, jobject obj, jint mode )
+    void Java_org_uoyabause_android_YabauseRunnable_setUseCpuAffinity(JNIEnv *env, jobject obj, jint mode)
     {
         s_use_cpu_affinity = mode;
-    }    
+    }
+
+    void Java_org_uoyabause_android_YabauseRunnable_setUseSh2Cache(JNIEnv *env, jobject obj, jint mode)
+    {
+        s_use_sh2_cache = mode;
+    }
 
     jstring Java_org_uoyabause_android_YabauseRunnable_getGameTitle(JNIEnv *env)
     {
-        char * buf;
-        
+
+        char *buf;
+
         jstring rtn;
-        if( cdip == NULL ) return NULL;
-        buf = (char*)malloc(1024);
-        if( buf == NULL ) return NULL;
-        if( strcmp(cdip->cdinfo,"CD-1/1") == 0 ){
-            sprintf(buf,"%s",cdip->gamename);
-        }else{
-            sprintf(buf,"%s(%s)",cdip->gamename,cdip->cdinfo);
+        if (cdip == NULL)
+            return NULL;
+        buf = (char *)malloc(1024);
+        if (buf == NULL)
+            return NULL;
+        if (strcmp(cdip->cdinfo, "CD-1/1") == 0)
+        {
+            sprintf(buf, "%s", cdip->gamename);
+        }
+        else
+        {
+            sprintf(buf, "%s(%s)", cdip->gamename, cdip->cdinfo);
         }
 
         rtn = env->NewStringUTF(buf);
@@ -2107,9 +2124,6 @@ void update_pad_mode()
     }
 }
 
-
-
-
 void renderLoop()
 {
     int renderingEnabled = 1;
@@ -2118,9 +2132,10 @@ void renderLoop()
 #if HAVE_VULKAN
     Renderer *r = NULL;
 #endif
-    int initResult=0;
+    int initResult = 0;
 
-    while (renderingEnabled != 0) {
+    while (renderingEnabled != 0)
+    {
 
         if (initResult == 0)
         {
@@ -2304,12 +2319,12 @@ void renderLoop()
         case MSG_PAUSE:
             YUI_LOG("MSG_PAUSE");
             YabFlushBackups();
-            //ScspMuteAudio(SCSP_MUTE_SYSTEM);
+            // ScspMuteAudio(SCSP_MUTE_SYSTEM);
             pause = 1;
             break;
         case MSG_RESUME:
             YUI_LOG("MSG_RESUME");
-            //ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+            // ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
             pause = 0;
             break;
         case MSG_OPEN_TRAY:
@@ -2510,7 +2525,7 @@ int saveScreenshot(const char *filename)
     png_set_IHDR(png_ptr, info_ptr, width, height,
                  bit_depth, color_type, PNG_INTERLACE_NONE,
                  PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-    //png_set_gAMA(png_ptr, info_ptr, 1.0);
+    // png_set_gAMA(png_ptr, info_ptr, 1.0);
     {
         png_text text[3];
         int txt_fields = 0;

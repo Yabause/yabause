@@ -381,5 +381,9 @@
         Use CPU affinity
     </string>
 
+    <string name="use_sh2_cache">
+        Use SH2 cache
+    </string>
+
 </resources>
 	

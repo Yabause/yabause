@@ -395,6 +395,227 @@ void SH2DynShowSttaics(SH2_struct * master, SH2_struct * slave ){
 #pragma GCC optimize ("O1")
 #endif
 
+void memSetByteNoCache(u32 addr, u8 data)
+{
+  dynaLock();
+  u32 cycle = 0;
+  //LOG("memSetWord %08X, %08X\n", addr, data);
+  CompileBlocks * block = CompileBlocks::getInstance();
+  switch (addr & 0xDFF00000)
+  {
+    // Low Memory
+  case 0x00200000:
+    block->LookupTableLow[(addr & 0x000FFFFF) >> 1] = NULL;
+    T2WriteByte(LowWram, addr & 0xFFFFF, data);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 7;
+    dynaFree();
+    return;
+    break;
+    // High Memory
+  case 0x06000000:
+#if defined(SET_DIRTY)
+    block->setDirty(addr);
+#else
+    block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
+#endif
+    T2WriteByte(HighWram, addr & 0xFFFFF, data);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 2;
+    dynaFree();
+    return;
+    break;
+
+    // Cache
+  default:
+    if ((addr & 0xFF000000) == 0xC0000000)
+    {
+      block->LookupTableC[(addr & 0x000FFFFF) >> 1] = NULL;
+    }
+  }
+  MappedMemoryWriteByte(addr, data, &cycle);
+  DynarecSh2::CurrentContext->memcycle_ += cycle;
+  dynaFree();
+
+}
+
+void memSetWordNoCache(u32 addr, u16 data)
+{
+  dynaLock();
+  u32 cycle = 0;
+  //LOG("memSetWord %08X, %08X\n", addr, data);
+
+  CompileBlocks * block = CompileBlocks::getInstance();
+  switch (addr & 0xDFF00000)
+  {
+    // Low Memory
+  case 0x00200000:
+    block->LookupTableLow[(addr & 0x000FFFFF) >> 1] = NULL;
+    T2WriteWord(LowWram, addr & 0xFFFFF, data);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 7;
+    dynaFree();
+    return;
+    break;
+    // High Memory
+  case 0x06000000: {
+#if defined(SET_DIRTY)
+    block->setDirty(addr);
+#else
+    block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
+#endif
+    T2WriteWord(HighWram, addr & 0xFFFFF, data);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 2;
+    dynaFree();
+    return;
+  }
+                   break;
+                   // Cache
+  default:
+    if ((addr & 0xFF000000) == 0xC0000000)
+    {
+      block->LookupTableC[(addr & 0x000FFFFF) >> 1] = NULL;
+    }
+  }
+  MappedMemoryWriteWord(addr, data, &cycle);
+  DynarecSh2::CurrentContext->memcycle_ += cycle;
+  dynaFree();
+
+}
+
+
+void memSetLongNoCache(u32 addr, u32 data)
+{
+  dynaLock();
+  //LOG("memSetLong %08X, %08X\n", addr, data);
+  u32 cycle = 0;
+
+  CompileBlocks * block = CompileBlocks::getInstance();
+  switch (addr & 0xDFF00000)
+  {
+    // Low Memory
+  case 0x00200000:
+    block->LookupTableLow[(addr & 0x000FFFFF) >> 1] = NULL;
+    block->LookupTableLow[((addr & 0x000FFFFF) >> 1) + 1] = NULL;
+    T2WriteLong(LowWram, addr & 0xFFFFF, data);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 7;
+    dynaFree();
+    return;
+    break;
+    // High Memory
+  case 0x06000000:
+#if defined(SET_DIRTY)
+    block->setDirty(addr);
+    block->setDirty(addr + 2);
+#else
+    block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
+    block->LookupTable[((addr & 0x000FFFFF) >> 1) + 1] = NULL;
+#endif
+    T2WriteLong(HighWram, addr & 0xFFFFF, data);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 2;
+    dynaFree();
+    return;
+    break;
+
+    // Cache
+  default:
+    if ((addr & 0xFF000000) == 0xC0000000)
+    {
+      block->LookupTableC[(addr & 0x000FFFFF) >> 1] = NULL;
+    }
+  }
+  MappedMemoryWriteLong(addr, data, &cycle);
+  DynarecSh2::CurrentContext->memcycle_ += cycle;
+  dynaFree();
+
+}
+
+u8 memGetByteNoCache(u32 addr)
+{
+  dynaLock();
+  u8 val;
+  u32 cycle = 0;
+
+  switch (addr & 0xDFF00000)
+  {
+    // Low Memory
+  case 0x00200000:
+    val = T2ReadByte(LowWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 4;
+    dynaFree();
+    return val;
+    break;
+    // High Memory
+  case 0x06000000:
+    val = T2ReadByte(HighWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 2;
+    dynaFree();
+    return val;
+    break;
+  }
+  val = MappedMemoryReadByte(addr, &cycle);
+  DynarecSh2::CurrentContext->memcycle_ += cycle;
+  dynaFree();
+  return val;
+}
+
+u16 memGetWordNoCache(u32 addr)
+{
+  dynaLock();
+  u16 val;
+  u32 cycle = 0;
+
+  switch (addr & 0xDFF00000)
+  {
+    // Low Memory
+  case 0x00200000:
+    val = T2ReadWord(LowWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 4;
+    dynaFree();
+    return val;
+    break;
+    // High Memory
+  case 0x06000000:
+    val = T2ReadWord(HighWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 2;
+    dynaFree();
+    return val;
+    break;
+  }
+  val = MappedMemoryReadWord(addr, &cycle);
+  DynarecSh2::CurrentContext->memcycle_ += cycle;
+  dynaFree();
+  return val;
+}
+
+u32 memGetLongNoCache(u32 addr)
+{
+  dynaLock();
+
+  u32 val;
+  u32 cycle = 0;
+  switch (addr & 0xDFF00000)
+  {
+    // Low Memory
+  case 0x00200000:
+    val = T2ReadLong(LowWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 4;
+    dynaFree();
+    return val;
+    break;
+    // High Memory
+  case 0x06000000:
+    val = T2ReadLong(HighWram, addr & 0xFFFFF);
+    if (addr & 0x20000000) DynarecSh2::CurrentContext->memcycle_ += 2;
+    dynaFree();
+    return val;
+    break;
+  }
+  val = MappedMemoryReadLong(addr, &cycle);
+  DynarecSh2::CurrentContext->memcycle_ += cycle;
+  dynaFree();
+  return val;
+}
+
+
+
 void memSetByte(u32 addr , u8 data )
 {
   dynaLock();

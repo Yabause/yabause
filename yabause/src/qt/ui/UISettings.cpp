@@ -531,6 +531,8 @@ void UISettings::loadSettings()
    cbRotateScreen->setChecked(s->value("Video/RotateScreen").toBool());
    cbUseComputeShader->setChecked(s->value("Video/UseComputeShader").toBool());
 
+   cbSh2Cache->setChecked(s->value("General/UseSh2Cache", true).toBool());
+
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
    cbNewScsp->setChecked(s->value("Sound/NewScsp", true).toBool());
@@ -639,6 +641,8 @@ void UISettings::saveSettings()
 //	s->setValue( "General/NumThreads", sbNumberOfThreads->value());
   s->setValue("Video/RotateScreen", cbRotateScreen->isChecked());
 
+  s->setValue("General/UseSh2Cache", cbSh2Cache->isChecked());
+  
   
 
   s->setValue("Sound/ScspSync", spinBox_scs_sync_count->value() );

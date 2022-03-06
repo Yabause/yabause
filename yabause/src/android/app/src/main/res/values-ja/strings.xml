@@ -300,4 +300,7 @@
     注: このアプリでのデータの取り扱いについては<a href="https://www.uoyabause.org/static_pages/privacy_policy"> プライバシーポリシー </a> に記載されています。 アプリの改善に役立てるため、 診断データは自動的に devmiyaxおよびサードパーティーサービスに送信されます。
     </string>
 
+    <string name="use_sh2_cache">
+        SH2 cacheを使用する
+    </string>
 </resources>

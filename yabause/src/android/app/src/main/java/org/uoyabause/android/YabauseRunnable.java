@@ -42,6 +42,7 @@ public class YabauseRunnable implements Runnable
     public static native void enableComputeShader(int enable);
     public static native void enableFrameskip(int enable);
     public static native void setUseCpuAffinity(int enable);
+    public static native void setUseSh2Cache(int enable);
     public static native void setCpu( int cpu );
     public static native void setFilter( int filter );
     public static native void setVolume(int volume);

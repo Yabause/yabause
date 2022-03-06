@@ -88,6 +88,7 @@ typedef struct
    u32 sync_shift;
    const char *playRecordPath;
    int use_cpu_affinity;
+   int use_sh2_cache;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -145,6 +146,7 @@ typedef struct
    int extend_backup;
    u32 sync_shift;
    int use_cpu_affinity;
+   int use_sh2_cache;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

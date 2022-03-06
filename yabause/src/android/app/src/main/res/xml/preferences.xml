@@ -86,6 +86,11 @@
             android:key="pref_use_cpu_affinity"
             android:title="@string/use_cpu_affinity"
             android:defaultValue="true" />
+
+        <CheckBoxPreference
+            android:key="pref_use_sh2_cache"
+            android:title="@string/use_sh2_cache"
+            android:defaultValue="true" />
 <!--
         <ListPreference
             android:key="pref_cpu_sync_per_line"

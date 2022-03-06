@@ -593,6 +593,9 @@ void YabauseThread::reloadSettings()
 
   mYabauseConf.playRecordPath = strdup(vs->value("General/RecordDir", mYabauseConf.playRecordPath).toString().toLatin1().constData());
 
+
+  mYabauseConf.use_sh2_cache = vs->value("General/UseSh2Cache", true).toBool()?1:0 ;
+
 	reloadClock();
 	reloadControllers();
 }

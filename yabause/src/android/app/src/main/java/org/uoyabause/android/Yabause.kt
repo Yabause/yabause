@@ -1644,6 +1644,9 @@ class Yabause : AppCompatActivity(),
         val cpuAffinity = sharedPref.getBoolean("pref_use_cpu_affinity", true)
         YabauseRunnable.setUseCpuAffinity(if (cpuAffinity) 1 else 0)
 
+        val sh2Cache = sharedPref.getBoolean("pref_use_sh2_cache", true)
+        YabauseRunnable.setUseSh2Cache(if (sh2Cache) 1 else 0)
+
 
         val ifilter: Int? = sharedPref.getString("pref_filter", "0")?.toInt()
         YabauseRunnable.setFilter(ifilter!!)

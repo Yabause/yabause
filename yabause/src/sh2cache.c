@@ -75,7 +75,12 @@ void cache_clear(cache_enty *ca)
 void cache_enable(cache_enty *ca)
 {
   // cache enable does not clear the cache
-  ca->enable = 1;
+  if (yabsys.use_sh2_cache) {
+    ca->enable = 1;
+  }
+  else {
+    ca->enable = 0;
+  }
 }
 
 void cache_disable(cache_enty *ca)
