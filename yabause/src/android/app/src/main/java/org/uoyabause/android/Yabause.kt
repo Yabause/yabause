@@ -267,7 +267,7 @@ class Yabause : AppCompatActivity(),
         progressBar = findViewById(R.id.llProgressBar)
         progressBar.visibility = View.GONE
         progressMessage = findViewById(R.id.pbText)
-
+/*
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 window.setSustainedPerformanceMode(true)
@@ -275,6 +275,7 @@ class Yabause : AppCompatActivity(),
         } catch (e: Exception) {
             // Do Nothing
         }
+ */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             window.attributes.layoutInDisplayCutoutMode =
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
