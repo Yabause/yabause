@@ -3286,8 +3286,10 @@ const char * ScuGetVectorString(u32 vec) {
 void ScuSendVBlankIN(void) {
    ScuRemoveVBlankOut();
    //ScuRemoveHBlankIN();
+   ScuRemoveTimer0();
    SendInterrupt(0x40, 0xF, 0x0001, 0x0001);
    ScuChekIntrruptDMA(0);
+   
 }
 
 void ScuRemoveVBlankIN() {
@@ -3299,19 +3301,10 @@ void ScuRemoveVBlankIN() {
 
 void ScuSendVBlankOUT(void) {
    ScuRemoveVBlankIN();
+   ScuRemoveTimer0();
+   ScuRemoveTimer1();
    SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
    ScuRegs->timer0 = 0;
-   if (ScuRegs->T1MD & 0x1)
-   {
-     if (ScuRegs->timer0 == ScuRegs->T0C) {
-       ScuRegs->timer0_set = 1;
-       ScuSendTimer0();
-     }
-     else {
-       ScuRegs->timer0_set = 0;
-       //ScuRemoveTimer0();
-     }
-   }
    ScuChekIntrruptDMA(1);
 }
 
@@ -3341,13 +3334,13 @@ void ScuSendHBlankIN(void) {
      }
      else {
        ScuRegs->timer0_set = 0;
-       //ScuRemoveTimer0();
+       ScuRemoveTimer0();
      }
 
      if (ScuRegs->timer1_set == 1) {
         ScuRegs->timer1_set = 0;
         ScuRegs->timer1_counter = ScuRegs->timer1_preset;
-        //ScuRemoveTimer1();
+        ScuRemoveTimer1();
       }
    }
    ScuChekIntrruptDMA(2);
@@ -3368,13 +3361,13 @@ void ScuSendTimer1(void) {
 }
 
 void ScuRemoveTimer0(void) {
-  //ScuRemoveInterrupt(0x43, 0x0C);
+  ScuRemoveInterrupt(0x43, 0x0C, 0x00000008);
   //SH2RemoveInterrupt(MSH2, 0x43, 0x0C);
 }
 
 
 void ScuRemoveTimer1(void) {
-  //ScuRemoveInterrupt(0x44, 0x0B);
+  ScuRemoveInterrupt(0x44, 0x0B, 0x00000010);
   //SH2RemoveInterrupt(MSH2, 0x44, 0xB);
 }
 

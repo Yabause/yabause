@@ -56,7 +56,7 @@ extern "C" {
 #undef MACH
 #endif
 
-//#define DMPHISTORY
+#define DMPHISTORY
 #define MAX_DMPHISTORY (512)
 
 // UBC Flags
@@ -310,8 +310,6 @@ typedef struct
    cache_enty cache;
    u32 CHCR0M;
    u32 WTCSRM;   // 0xFFFFFE80 mirror
-   s32 ccr_replace_or[2];
-   u8 ccr_replace_and;
 } Onchip_struct;
 
 typedef struct

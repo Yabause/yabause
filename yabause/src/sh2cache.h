@@ -54,6 +54,8 @@ typedef struct _cache_enty{
 	u32 read_miss_count;
 	u32 write_count;
 #endif	
+  s32 ccr_replace_or[2];
+  u8 ccr_replace_and;
 } cache_enty;
 
 #ifdef __cplusplus

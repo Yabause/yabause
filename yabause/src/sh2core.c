@@ -218,6 +218,9 @@ void SH2Reset(SH2_struct *context)
    memset(context->pchistory, 0, sizeof(context->pchistory));
    context->pchistory_index = 0;
 #endif
+
+   if(context->isslave)
+    SH2AddCodeBreakpoint(context, 0x06003B90);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1543,9 +1546,9 @@ LOG("[%s] OnchipWriteByte %08X@%08X %02X", CurrentSH2->isslave?"SH2-S":"SH2-M", 
 
          //printf("[SH2-%s] CCR changed: 0x%02X->0x%02X\n", CurrentSH2->isslave?"S":"M", CurrentSH2->onchip.CCR, val & 0xCF  );
          CurrentSH2->onchip.CCR = val & 0xCF;
-         CurrentSH2->onchip.ccr_replace_and =  (val & 0x08 ) ? 0x01 : 0x3F;
-         CurrentSH2->onchip.ccr_replace_or[0] =  (val & CCR_OD ) ? -1 : 0;
-         CurrentSH2->onchip.ccr_replace_or[1] =  (val & CCR_ID ) ? -1 : 0;
+         CurrentSH2->onchip.cache.ccr_replace_and =  (val & 0x08 ) ? 0x01 : 0x3F;
+         CurrentSH2->onchip.cache.ccr_replace_or[0] =  (val & CCR_OD ) ? -1 : 0;
+         CurrentSH2->onchip.cache.ccr_replace_or[1] =  (val & CCR_ID ) ? -1 : 0;
          if (val & CCR_CP){
 			  cache_clear(&CurrentSH2->onchip.cache);
 		   }
