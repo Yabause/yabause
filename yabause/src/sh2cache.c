@@ -263,14 +263,6 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
 
 void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
 {
-
-  if (0x26000040 == addr) {
-    LOG("[%s] cycle=%d PC=%08X addr=%08X val=%08X",
-      CurrentSH2->isslave ? "SH2-S" : "SH2-M",
-      CurrentSH2->cycles,
-      CurrentSH2->regs.PC, addr, val);
-  }
-
   switch (addr & AREA_MASK)
   {
   case CACHE_PURGE: // associative purge

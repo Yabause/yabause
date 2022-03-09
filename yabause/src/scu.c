@@ -3292,9 +3292,16 @@ void ScuSendVBlankIN(void) {
    
 }
 
+
+//if (vector == 0x42)
+//SH2SendInterrupt(SSH2, 0x41, 1);
+//if (vector == 0x40)
+//SH2SendInterrupt(SSH2, 0x43, 2);
+
 void ScuRemoveVBlankIN() {
   ScuRemoveInterrupt(0x40, 0x0F, 0x0001);
-  //SH2RemoveInterrupt(MSH2, 0x40, 0x0F);
+  SH2RemoveInterrupt(MSH2, 0x40, 0x0F);
+  SH2RemoveInterrupt(SSH2, 0x43, 0x0F);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3310,14 +3317,15 @@ void ScuSendVBlankOUT(void) {
 
 void ScuRemoveVBlankOut() {
   ScuRemoveInterrupt(0x41, 0x0E, 0x02 );
-  //SH2RemoveInterrupt(MSH2, 0x41, 0x0E);
+  SH2RemoveInterrupt(MSH2, 0x41, 0x0E);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuRemoveHBlankIN() {
   ScuRemoveInterrupt(0x42, 0x0D, 0x0004);
-  //SH2RemoveInterrupt(MSH2, 0x42, 0x0D);
+  SH2RemoveInterrupt(MSH2, 0x42, 0x0D);
+  SH2RemoveInterrupt(SSH2, 0x41, 0x0D);
 }
 
 
