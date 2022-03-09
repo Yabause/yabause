@@ -3362,13 +3362,13 @@ void ScuSendTimer1(void) {
 
 void ScuRemoveTimer0(void) {
   ScuRemoveInterrupt(0x43, 0x0C, 0x00000008);
-  //SH2RemoveInterrupt(MSH2, 0x43, 0x0C);
+  SH2RemoveInterrupt(MSH2, 0x43, 0x0C);
 }
 
 
 void ScuRemoveTimer1(void) {
   ScuRemoveInterrupt(0x44, 0x0B, 0x00000010);
-  //SH2RemoveInterrupt(MSH2, 0x44, 0xB);
+  SH2RemoveInterrupt(MSH2, 0x44, 0xB);
 }
 
 //////////////////////////////////////////////////////////////////////////////
