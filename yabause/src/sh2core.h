@@ -56,7 +56,7 @@ extern "C" {
 #undef MACH
 #endif
 
-#define DMPHISTORY
+//#define DMPHISTORY
 #define MAX_DMPHISTORY (512)
 
 // UBC Flags
