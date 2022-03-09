@@ -737,10 +737,10 @@ INLINE int getVramCycle(u32 addr) {
     return 2; 
   }
   if ((addr & 0x000F0000) < 0x00040000) {
-    return Vdp2External.cpu_cycle_a;
+    return Vdp2External.cpu_cycle_a>>1;
   }
   else {
-    return Vdp2External.cpu_cycle_b;
+    return Vdp2External.cpu_cycle_b>>1;
   }
   return 2;
 }
