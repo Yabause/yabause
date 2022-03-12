@@ -3312,6 +3312,7 @@ void ScuSendVBlankOUT(void) {
    ScuRemoveTimer1();
    SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
    ScuRegs->timer0 = 0;
+
    if (ScuRegs->T1MD & 0x1)
    {
      if (ScuRegs->timer0 == ScuRegs->T0C) {
@@ -3323,6 +3324,7 @@ void ScuSendVBlankOUT(void) {
        ScuRemoveTimer0();
      }
    }
+
    ScuChekIntrruptDMA(1);
 }
 
@@ -3394,7 +3396,7 @@ void ScuRemoveTimer1(void) {
 
 void ScuSendDSPEnd(void) {
    SendInterrupt(0x45, 0xA, 0x0020, 0x00000020);
-   ScuRemoveInterrupt(0x45, 0xA, 0x0020, 0x00000020);
+   //ScuRemoveInterrupt(0x45, 0xA, 0x0020, 0x00000020);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3402,49 +3404,49 @@ void ScuSendDSPEnd(void) {
 void ScuSendSoundRequest(void) {
    SendInterrupt(0x46, 0x9, 0x0040, 0x00000040);
    ScuChekIntrruptDMA(5);
-   ScuRemoveInterrupt(0x46, 0x9, 0x0040, 0x00000040);
+   //ScuRemoveInterrupt(0x46, 0x9, 0x0040, 0x00000040);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendSystemManager(void) {
    SendInterrupt(0x47, 0x8, 0x0080, 0x00000080);
-   ScuRemoveInterrupt(0x47, 0x8, 0x0080, 0x00000080);
+   //ScuRemoveInterrupt(0x47, 0x8, 0x0080, 0x00000080);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendPadInterrupt(void) {
    SendInterrupt(0x48, 0x8, 0x0100, 0x00000100);
-   ScuRemoveInterrupt(0x48, 0x8, 0x0100, 0x00000100);
+   //ScuRemoveInterrupt(0x48, 0x8, 0x0100, 0x00000100);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendLevel2DMAEnd(void) {
    SendInterrupt(0x49, 0x6, 0x0200, 0x00000200);
-   ScuRemoveInterrupt(0x49, 0x6, 0x0200, 0x00000200);
+   //ScuRemoveInterrupt(0x49, 0x6, 0x0200, 0x00000200);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendLevel1DMAEnd(void) {
    SendInterrupt(0x4A, 0x6, 0x0400, 0x00000400);
-   ScuRemoveInterrupt(0x4A, 0x6, 0x0400, 0x00000400);
+   //ScuRemoveInterrupt(0x4A, 0x6, 0x0400, 0x00000400);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendLevel0DMAEnd(void) {
    SendInterrupt(0x4B, 0x5, 0x0800, 0x00000800);
-   ScuRemoveInterrupt(0x4B, 0x5, 0x0800, 0x00000800);
+   //ScuRemoveInterrupt(0x4B, 0x5, 0x0800, 0x00000800);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendDMAIllegal(void) {
    SendInterrupt(0x4C, 0x3, 0x1000, 0x00001000);
-   ScuRemoveInterrupt(0x4C, 0x3, 0x1000, 0x00001000);
+   //ScuRemoveInterrupt(0x4C, 0x3, 0x1000, 0x00001000);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3452,7 +3454,7 @@ void ScuSendDMAIllegal(void) {
 void ScuSendDrawEnd(void) {
    SendInterrupt(0x4D, 0x2, 0x2000, 0x00002000);
    ScuChekIntrruptDMA(6);
-   ScuRemoveInterrupt(0x4D, 0x2, 0x2000, 0x00002000);
+   //ScuRemoveInterrupt(0x4D, 0x2, 0x2000, 0x00002000);
 }
 
 //////////////////////////////////////////////////////////////////////////////
