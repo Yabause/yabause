@@ -51,6 +51,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define CACHE_IO ((0x07) << 29)
 
 FILE *cache_f = NULL;
+//#define COHERENCY_CHECK
 
 void cache_clear(cache_enty *ca)
 {
@@ -379,14 +380,20 @@ u8 cache_memory_read_b(cache_enty *ca, u32 addr, u32 *cycle)
       ca->read_hit_count++;
 #endif
       update_lru(way, &ca->lru[entry]);
-      u8 rtn = ca->way[entry].data[way][(addr & LINE_MASK)];
+      const u8 rtn = ca->way[entry].data[way][(addr & LINE_MASK)];
+#ifdef COHERENCY_CHECK
+      u8 real = MappedMemoryReadByteNocache(addr, cycle);
+      if (real != rtn) {
+        LOG("[SH2-%s] %d Cache coherency ERROR %08X %d:%d:%d cache = %02X real = %02X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn,real);
+      }
+#endif
       return rtn;
     }
 #ifdef CACHE_STATICS
     ca->read_miss_count++;
 #endif
     lruway = select_way_to_replace(ca,ca->lru[entry], 0);
-    if (lruway >= 0)
+    if(lruway >= 0)
     {
       update_lru(lruway, &ca->lru[entry]);
       ca->way[entry].tag[lruway] = tagaddr;
@@ -409,7 +416,7 @@ u8 cache_memory_read_b(cache_enty *ca, u32 addr, u32 *cycle)
     }
     else
     {
-      return MappedMemoryReadLongNocache(addr, cycle);
+      return MappedMemoryReadByteNocache(addr, cycle);
     }
   }
   break;
@@ -471,6 +478,13 @@ u16 cache_memory_read_w(cache_enty *ca, u32 addr, u32 *cycle, u32 isInst)
 #endif
       update_lru(way, &ca->lru[entry]);
       u16 rtn = SWAP16(*(u16 *)(&ca->way[entry].data[way][(addr & LINE_MASK)]));
+#ifdef COHERENCY_CHECK
+      u16 real = MappedMemoryReadWordNocache(addr, cycle);
+      if (real != rtn) {
+        LOG("[SH2-%s] %d Cache coherency ERROR %08X %d:%d:%d cache = %04X real = %04X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn, real);
+      }
+#endif
+
       return rtn;
     }
 
@@ -500,7 +514,7 @@ u16 cache_memory_read_w(cache_enty *ca, u32 addr, u32 *cycle, u32 isInst)
     }
     else
     {
-      return MappedMemoryReadLongNocache(addr, cycle);
+      return MappedMemoryReadWordNocache(addr, cycle);
     }
   }
   break;
@@ -562,6 +576,13 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
 #endif
       update_lru(way, &ca->lru[entry]);
       u32 rtn = SWAP32(*(u32 *)(&ca->way[entry].data[way][(addr & LINE_MASK)]));
+
+#ifdef COHERENCY_CHECK
+      u32 real = MappedMemoryReadLongNocache(addr, cycle);
+      if (real != rtn) {
+        LOG("[SH2-%s] %d Cache coherency ERROR %08X %d:%d:%d cache = %08X real = %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn, real);
+    }
+#endif
       return rtn;
     }
 #ifdef CACHE_STATICS

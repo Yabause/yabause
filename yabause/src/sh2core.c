@@ -2134,7 +2134,7 @@ int DMAProc( int cycles ){
    if ( ((CurrentSH2->onchip.CHCR0 & 0x3)==0x01)  && ((CurrentSH2->onchip.CHCR1 & 0x3)==0x01) ) { // both channel wants DMA
       if (CurrentSH2->onchip.DMAOR & 0x8) { // round robin priority
 
-        if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles *= 1.3f; } //Dual Chanel
+        if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles *= 2; } //Dual Chanel
 
         DMATransferCycles(&CurrentSH2->dma_ch0, cycles);
         DMATransferCycles(&CurrentSH2->dma_ch1, cycles);
@@ -2143,10 +2143,10 @@ int DMAProc( int cycles ){
       else { // channel 0 > channel 1 priority
 
          if( (CurrentSH2->onchip.CHCR0 & 0x03) == 0x01 ){
-           if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles *= 1.3f; } //Dual Chanel
+           if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles *= 2; } //Dual Chanel
            DMATransferCycles(&CurrentSH2->dma_ch0, cycles);
          }else if( (CurrentSH2->onchip.CHCR1 &0x03) == 0x01 ) {
-           if ((CurrentSH2->onchip.CHCR1 & 0x08) == 0) { cycles *= 1.3f; } //Dual Chanel
+           if ((CurrentSH2->onchip.CHCR1 & 0x08) == 0) { cycles *= 2; } //Dual Chanel
            DMATransferCycles(&CurrentSH2->dma_ch1, cycles);
          }
       }
@@ -2154,11 +2154,11 @@ int DMAProc( int cycles ){
    else { // only one channel wants DMA
 	   if (((CurrentSH2->onchip.CHCR0 & 0x3) == 0x01)) { // DMA for channel 0
 
-       if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles *= 1.3f;  } //Dual Chanel
+       if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles *= 2;  } //Dual Chanel
        DMATransferCycles(&CurrentSH2->dma_ch0, cycles);
        return 0;
       }else if (((CurrentSH2->onchip.CHCR1 & 0x3) == 0x01)) { // DMA for channel 1
-         if ((CurrentSH2->onchip.CHCR1 & 0x08) == 0) { cycles *= 1.3f; } //Dual Chanel
+         if ((CurrentSH2->onchip.CHCR1 & 0x08) == 0) { cycles *= 2; } //Dual Chanel
          DMATransferCycles(&CurrentSH2->dma_ch1, cycles);
          return 0;
       }
