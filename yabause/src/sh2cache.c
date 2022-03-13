@@ -384,7 +384,7 @@ u8 cache_memory_read_b(cache_enty *ca, u32 addr, u32 *cycle)
 #ifdef COHERENCY_CHECK
       u8 real = MappedMemoryReadByteNocache(addr, cycle);
       if (real != rtn) {
-        LOG("[SH2-%s] %d Cache coherency ERROR %08X %d:%d:%d cache = %02X real = %02X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn,real);
+        LOG("[SH2-%s] %d Cache coherency ERROR 1 %08X %d:%d:%d cache = %02X real = %02X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn,real);
       }
 #endif
       return rtn;
@@ -481,7 +481,7 @@ u16 cache_memory_read_w(cache_enty *ca, u32 addr, u32 *cycle, u32 isInst)
 #ifdef COHERENCY_CHECK
       u16 real = MappedMemoryReadWordNocache(addr, cycle);
       if (real != rtn) {
-        LOG("[SH2-%s] %d Cache coherency ERROR %08X %d:%d:%d cache = %04X real = %04X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn, real);
+        LOG("[SH2-%s] %d Cache coherency ERROR 2 %08X %d:%d:%d cache = %04X real = %04X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn, real);
       }
 #endif
 
@@ -580,7 +580,7 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
 #ifdef COHERENCY_CHECK
       u32 real = MappedMemoryReadLongNocache(addr, cycle);
       if (real != rtn) {
-        LOG("[SH2-%s] %d Cache coherency ERROR %08X %d:%d:%d cache = %08X real = %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn, real);
+        LOG("[SH2-%s] %d Cache coherency ERROR 4 %08X %d:%d:%d cache = %08X real = %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn, real);
     }
 #endif
       return rtn;

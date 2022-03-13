@@ -1138,7 +1138,7 @@ void OnchipReset(SH2_struct *context) {
 u8 FASTCALL OnchipReadByte(u32 addr) {
    
    if( !CurrentSH2->isslave ){
-      LOG("[%s] OnchipReadByte %08X\n", CurrentSH2->isslave?"SH2-S":"SH2-M", addr);
+      LOG("[%s] OnchipReadByte %d %08X %08X \n", CurrentSH2->isslave?"SH2-S":"SH2-M", CurrentSH2->cycles, CurrentSH2->regs.PC, addr );
    }
 
    switch(addr)
@@ -1182,10 +1182,10 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
        // if (CurrentSH2->onchip.FTCSR & 0x80) { LOG("Read FTCSR = 0x80"); }
          return CurrentSH2->onchip.FTCSR;
       case 0x012:         
-         //LOG("[FRCH] %02X",CurrentSH2->onchip.FRC.part.H);
+         LOG("[FRCH] %02X",CurrentSH2->onchip.FRC.part.H);
          return CurrentSH2->onchip.FRC.part.H;
       case 0x013:
-         //LOG("[FRCL] %02X",CurrentSH2->onchip.FRC.part.L);
+         LOG("[FRCL] %02X",CurrentSH2->onchip.FRC.part.L);
          return CurrentSH2->onchip.FRC.part.L;
       case 0x014:
          if (!(CurrentSH2->onchip.TOCR & 0x10))
@@ -1439,21 +1439,25 @@ LOG("[%s] OnchipWriteByte %08X@%08X %02X", CurrentSH2->isslave?"SH2-S":"SH2-M", 
          CurrentSH2->onchip.FTCSR = (CurrentSH2->onchip.FTCSR & (val & 0xFE)) | (val & 0x1);
 /*
          if( (CurrentSH2->onchip.FTCSR & 0x80) == 0x00 ){
+
+           LOG("Force run target CPU");
+
            if (CurrentSH2->depth < 4) {
              CurrentSH2->depth++;
              SH2_struct * tmpCurrentSH2 = CurrentSH2;
              if (CurrentSH2->isslave) {
-               //SH2Exec(MSH2, 1);
+               SH2Exec(MSH2, 4);
              }
              else {
-               //SH2Exec(SSH2, 1);
+               SH2Exec(SSH2, 4);
              }
              CurrentSH2 = tmpCurrentSH2;
              CurrentSH2->depth--;
            }
+
          }
-*/         
-         //LOG("Write FTCSR = %X\n", CurrentSH2->onchip.FTCSR);
+ */        
+         LOG("[%s] Write FTCSR = %X PC=%08X\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->onchip.FTCSR, CurrentSH2->regs.PC);
          return;
       case 0x012:
          CurrentSH2->onchip.FRC.part.H = val;
@@ -2539,19 +2543,20 @@ void FASTCALL SSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
    // Time for an Interrupt?
    if (SSH2->onchip.TIER & 0x80)
       SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
-
+#if 0
    if (CurrentSH2->depth < 4) {
      CurrentSH2->depth++;
      SH2_struct * tmpCurrentSH2 = CurrentSH2;
      if (CurrentSH2->isslave) {
-       SH2Exec(MSH2, 16);
+       //SH2Exec(MSH2, 4);
      }
      else {
-       SH2Exec(SSH2, 16);
+       //SH2Exec(SSH2, 4);
      }
      CurrentSH2 = tmpCurrentSH2;
      CurrentSH2->depth--;
    }
+#endif
 
 }
 

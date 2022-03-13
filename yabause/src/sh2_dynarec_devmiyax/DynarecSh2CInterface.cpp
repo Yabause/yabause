@@ -791,6 +791,9 @@ int DebugEachClock() {
 
   //printf("PC:%08X\n",DynarecSh2::CurrentContext->GET_PC());
 
+  CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT(); // ->SysReg[4];
+  CurrentSH2->regs.PC = DynarecSh2::CurrentContext->GET_PC();
+
 #if 0
   u32 pc = DynarecSh2::CurrentContext->GET_PC();
   u16 inst = memGetWord(pc);

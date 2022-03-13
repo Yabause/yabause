@@ -1026,7 +1026,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   page->flags = 0;
   
 #ifdef BUILD_INFO  
-  if( show_code_ ) LOG("*********** start block %08X *************\n", addr );
+  if( show_code_ ) LOG("*********** [%s] start block %08X *************\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", addr );
 #endif
   //LOG("Compile %08X\n", addr );
   //MaxSize = MAXBLOCKSIZE - MAXINSTRSIZE- delay_seperator_size - SEPERATORSIZE_DELAY_AFTER - nomal_seperator_size - EPILOGSIZE;
