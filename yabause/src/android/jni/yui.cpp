@@ -217,7 +217,6 @@ PerInterface_struct *PERCoreList[] = {
 CDInterface *CDCoreList[] = {
     &DummyCD,
     &ISOCD,
-    &WebApiCD,
     NULL};
 
 SoundInterface_struct *SNDCoreList[] = {
@@ -227,8 +226,7 @@ SoundInterface_struct *SNDCoreList[] = {
     &SNDOpenSL,
 #endif
     &SNDOboe,
-    NULL
-};
+    NULL};
 
 VideoInterface_struct *VIDCoreList[] = {
     &VIDDummy,
@@ -516,7 +514,7 @@ void onBackupWrite(char *before, char *after, int size)
     }
 
     /*
-    if (yvm->GetEnv( (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+        if (yvm->GetEnv( (void**) &env, JNI_VERSION_1_6) != JNI_OK){
 
             __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to GetEnv");
 
@@ -571,7 +569,7 @@ void onBackupWrite(char *before, char *after, int size)
 
 extern "C" void YuiErrorMsg(const char *string)
 {
-    //YUI_LOG("YuiErrorMsg %s",string);
+    // YUI_LOG("YuiErrorMsg %s",string);
 
     jclass yclass;
     jmethodID errorMsg;

@@ -745,7 +745,7 @@ u32 memGetLong(u32 addr)
   return val;
 }
 
-#if defined(__JETSON__) || defined(__N2__) || defined(__XU4__) || defined(__RP64__)
+#ifdef __JETSON__
 #pragma GCC pop_options
 #endif
 
