@@ -2583,10 +2583,10 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
 
    // Write header
    if (context->isslave == 0)
-      offset = StateWriteHeader(fp, "MSH2", 4);
+      offset = StateWriteHeader(fp, "MSH2", 5);
    else
    {
-      offset = StateWriteHeader(fp, "SSH2", 4);
+      offset = StateWriteHeader(fp, "SSH2", 5);
       ywrite(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
    }
 
@@ -2628,6 +2628,92 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void convV4toV5(Onchip_struct * dst,Onchip_struct_v4 * src) {
+
+  dst->SMR = src->SMR;     // 0xFFFFFE00
+  dst->BRR = src->BRR;     // 0xFFFFFE01
+  dst->SCR = src->SCR;     // 0xFFFFFE02
+  dst->TDR = src->TDR;     // 0xFFFFFE03
+  dst->SSR = src->SSR;     // 0xFFFFFE04
+  dst->RDR = src->RDR;     // 0xFFFFFE05
+  dst->TIER = src->TIER;    // 0xFFFFFE10
+  dst->FTCSR = src->FTCSR;   // 0xFFFFFE11
+  dst->FRC.all = src->FRC.all;
+  dst->OCRA = src->OCRA;   // 0xFFFFFE14/0xFFFFFE15
+  dst->OCRB = src->OCRB;   // 0xFFFFFE14/0xFFFFFE15
+  dst->TCR = src->TCR;     // 0xFFFFFE16
+  dst->TOCR = src->TOCR;    // 0xFFFFFE17
+  dst->FICR = src->FICR;   // 0xFFFFFE18
+  dst->IPRB = src->IPRB;   // 0xFFFFFE60
+  dst->VCRA = src->VCRA;   // 0xFFFFFE62
+  dst->VCRB = src->VCRB;   // 0xFFFFFE64
+  dst->VCRC = src->VCRC;   // 0xFFFFFE66
+  dst->VCRD = src->VCRD;   // 0xFFFFFE68
+  dst->DRCR0 = src->DRCR0;   // 0xFFFFFE71
+  dst->DRCR1 = src->DRCR1;   // 0xFFFFFE72
+  dst->WTCSR = src->WTCSR;   // 0xFFFFFE80
+  dst->WTCNT = src->WTCNT;   // 0xFFFFFE81
+  dst->RSTCSR = src->RSTCSR;  // 0xFFFFFE83
+  dst->SBYCR = src->SBYCR;   // 0xFFFFFE91
+  dst->CCR = src->CCR;     // 0xFFFFFE92
+  dst->ICR = src->ICR;    // 0xFFFFFEE0
+  dst->IPRA = src->IPRA;   // 0xFFFFFEE2
+  dst->VCRWDT = src->VCRWDT; // 0xFFFFFEE4
+  dst->DVSR = src->DVSR;   // 0xFFFFFF00
+  dst->DVDNT = src->DVDNT;  // 0xFFFFFF04
+  dst->DVCR = src->DVCR;   // 0xFFFFFF08
+  dst->VCRDIV = src->VCRDIV; // 0xFFFFFF0C
+  dst->DVDNTH = src->DVDNTH; // 0xFFFFFF10
+  dst->DVDNTL = src->DVDNTL; // 0xFFFFFF14
+  dst->DVDNTUH = src->DVDNTUH; // 0xFFFFFF18
+  dst->DVDNTUL = src->DVDNTUL; // 0xFFFFFF1C
+  dst->BARA.all = src->BARA.all;
+  dst->BAMRA.all = src->BAMRA.all;
+  dst->BBRA = src->BBRA;   // 0xFFFFFF48
+  dst->BARB.all = src->BARB.all;
+  dst->BAMRB.all = src->BAMRB.all;
+  dst->BBRB = src->BBRB;   // 0xFFFFFF68
+  dst->BDRB.all = src->BDRB.all;
+  dst->BDMRB.all = src->BDMRB.all;
+  dst->BRCR = src->BRCR;   // 0xFFFFFF78
+  dst->SAR0 = src->SAR0;   // 0xFFFFFF80
+  dst->DAR0 = src->DAR0;   // 0xFFFFFF84
+  dst->TCR0 = src->TCR0;   // 0xFFFFFF88
+  dst->CHCR0 = src->CHCR0;  // 0xFFFFFF8C
+  dst->SAR1 = src->SAR1;   // 0xFFFFFF90
+  dst->DAR1 = src->DAR1;   // 0xFFFFFF94
+  dst->TCR1 = src->TCR1;   // 0xFFFFFF98
+  dst->CHCR1 = src->CHCR1;  // 0xFFFFFF9C
+  dst->CHCR1M = src->CHCR1M;
+  dst->VCRDMA0 = src->VCRDMA0;// 0xFFFFFFA0
+  dst->VCRDMA1 = src->VCRDMA1;// 0xFFFFFFA8
+  dst->DMAOR = src->DMAOR;  // 0xFFFFFFB0
+  dst->BCR1 = src->BCR1;   // 0xFFFFFFE0
+  dst->BCR2 = src->BCR2;   // 0xFFFFFFE4
+  dst->WCR = src->WCR;    // 0xFFFFFFE8
+  dst->MCR = src->MCR;    // 0xFFFFFFEC
+  dst->RTCSR = src->RTCSR;  // 0xFFFFFFF0
+  dst->RTCNT = src->RTCNT;  // 0xFFFFFFF4
+  dst->RTCOR = src->RTCOR;  // 0xFFFFFFF8
+  dst->CHCR0M = src->CHCR0M;
+  dst->WTCSRM = src->WTCSRM;   // 0xFFFFFE80 mirror
+
+  // v3 is not conpatible, purge all cahce
+  if (dst->cache.enable) {
+    int entry = 0;
+    int i = 0;
+    for (entry = 0; entry < 64; entry++) {
+      for (i = 0; i < 4; i++)
+      {
+         // only v bit is changed, the rest of the data remains
+         dst->cache.way[entry].tag[i] &= ~0x02;
+      }
+    }
+  }
+
+};
+
+
 int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
 {
    IOCheck_struct check = { 0, 0 };
@@ -2646,9 +2732,18 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
 
    // Read onchip registers
    if (version < 2) {
-     yread(&check, (void *)&context->onchip, sizeof(Onchip_struct)-sizeof(u32)/*CHCR0M*/-sizeof(u32)/*WTCSRM*/ , 1, fp);
+     Onchip_struct_v4 v4;
+     yread(&check, (void *)&v4, sizeof(Onchip_struct_v4)-sizeof(u32)/*CHCR0M*/-sizeof(u32)/*WTCSRM*/ , 1, fp);
+     convV4toV5(&context->onchip, &v4);
    }else if (version == 3) {
-      yread(&check, (void *)&context->onchip, sizeof(Onchip_struct)-sizeof(u32)/*WTCSRM*/, 1, fp);
+     Onchip_struct_v4 v4;
+     yread(&check, (void *)&v4, sizeof(Onchip_struct_v4)-sizeof(u32)/*WTCSRM*/, 1, fp);
+     convV4toV5(&context->onchip, &v4);
+   }
+   else if (version == 4) {
+     Onchip_struct_v4 v4;
+     yread(&check, (void *)&v4, sizeof(Onchip_struct_v4), 1, fp);
+     convV4toV5(&context->onchip, &v4);
    }else {
      yread(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
    }
