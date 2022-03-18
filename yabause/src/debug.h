@@ -72,7 +72,7 @@ extern "C"{
   void LogStop(void);
   void LogChangeOutput(DebugOutType t, char * s);
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #define LOG_IF(a, ...) if((a)){DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__);}
