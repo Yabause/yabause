@@ -142,6 +142,7 @@ void BiosInit(void)
 
    // Setup Bios Functions
    MappedMemoryWriteLong(0x06000210, 0x00000210,&cycle);
+   MappedMemoryWriteLong(0x06000260, 0x06000D00,&cycle);
    MappedMemoryWriteLong(0x0600026C, 0x0000026C,&cycle);
    MappedMemoryWriteLong(0x06000274, 0x00000274,&cycle);
    MappedMemoryWriteLong(0x06000280, 0x00000280,&cycle);
@@ -160,6 +161,8 @@ void BiosInit(void)
    MappedMemoryWriteLong(0x06000348, 0xFFFFFFFF,&cycle);
    MappedMemoryWriteLong(0x06000354, 0x00000000,&cycle);
    MappedMemoryWriteLong(0x06000358, 0x00000358,&cycle);
+
+
 }
 
 //////////////////////////////////////////////////////////////////////////////

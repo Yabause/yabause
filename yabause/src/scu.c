@@ -146,7 +146,7 @@ void ScuReset(void) {
    ScuRegs->T1MD = 0x0;
 
    ScuRegs->IMS = 0xBFFF;
-   ScuRegs->IST = 0x0;
+   //ScuRegs->IST = 0x0;
 
    ScuRegs->AIACK = 0x0;
    ScuRegs->ASR0 = ScuRegs->ASR1 = 0x0;
