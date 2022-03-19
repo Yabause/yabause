@@ -4738,14 +4738,11 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int i;
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-  if (cmd.CMDSIZE == 0) {
-    return; // BAD Command
-  }
 
   sprite.dst = 0;
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
   sprite.linescreen = 0;
-
+  
   if ((cmd.CMDYA & 0x1000)) cmd.CMDYA |= 0xE000; else cmd.CMDYA &= ~(0xE000);
   if ((cmd.CMDYC & 0x1000)) cmd.CMDYC |= 0xE000; else cmd.CMDYC &= ~(0xE000);
   if ((cmd.CMDYB & 0x1000)) cmd.CMDYB |= 0xE000; else cmd.CMDYB &= ~(0xE000);
@@ -4756,6 +4753,11 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   sprite.h = cmd.CMDSIZE & 0xFF;
   sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
+
+  if (cmd.CMDSIZE == 0) {
+    sprite.w = 1;
+    sprite.h = 1;
+  }
 
   // Setup Zoom Point
   switch ((cmd.CMDCTRL & 0xF00) >> 8)
