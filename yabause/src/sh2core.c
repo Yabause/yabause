@@ -2514,8 +2514,10 @@ void FASTCALL MSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
       SH2SendInterrupt(MSH2, (MSH2->onchip.VCRC >> 8) & 0x7F, (MSH2->onchip.IPRB >> 8) & 0xF);
 
    // Sleeping? wake!
-   if( MappedMemoryReadWordNocache(MSH2->regs.PC,NULL) == 0x1b ){
-      MSH2->regs.PC += 2;
+   u32 pc = SH2Core->GetPC(MSH2);
+   if( MappedMemoryReadWordNocache(pc,NULL) == 0x1b ){
+      pc += 2;
+      SH2Core->SetPC(MSH2, pc);
    }
 
 /*
@@ -2551,8 +2553,10 @@ void FASTCALL SSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
       SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
 
    // Sleeping? wake!
-   if( MappedMemoryReadWordNocache(SSH2->regs.PC,NULL) == 0x1b ){
-      SSH2->regs.PC += 2;
+   u32 pc = SH2Core->GetPC(SSH2);
+   if( MappedMemoryReadWordNocache(pc,NULL) == 0x1b ){
+     pc += 2;
+     SH2Core->SetPC(SSH2,pc);
    }
 
 #if 0
