@@ -2512,6 +2512,12 @@ void FASTCALL MSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
    // Time for an Interrupt?
    if (MSH2->onchip.TIER & 0x80)
       SH2SendInterrupt(MSH2, (MSH2->onchip.VCRC >> 8) & 0x7F, (MSH2->onchip.IPRB >> 8) & 0xF);
+
+   // Sleeping? wake!
+   if( MappedMemoryReadWordNocache(MSH2->regs.PC,NULL) == 0x1b ){
+      MSH2->regs.PC += 2;
+   }
+
 /*
    if (CurrentSH2->depth < 4) {
      CurrentSH2->depth++;
@@ -2543,6 +2549,12 @@ void FASTCALL SSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
    // Time for an Interrupt?
    if (SSH2->onchip.TIER & 0x80)
       SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
+
+   // Sleeping? wake!
+   if( MappedMemoryReadWordNocache(SSH2->regs.PC,NULL) == 0x1b ){
+      SSH2->regs.PC += 2;
+   }
+
 #if 0
    if (CurrentSH2->depth < 4) {
      CurrentSH2->depth++;
