@@ -281,12 +281,12 @@ void SH2Step(SH2_struct *context)
       u32 tmp = SH2Core->GetPC(context);
 
       // Execute 1 instruction
-      SH2Exec(context, 1);
+      SH2Exec(context, context->pre_cycle+1);
 
       // Sometimes it doesn't always execute one instruction,
       // let's make sure it did
-      if (tmp == SH2Core->GetPC(context))
-         SH2Exec(context, 1);
+      //if (tmp == SH2Core->GetPC(context))
+      //   SH2Exec(context, 1);
    }
 }
 
