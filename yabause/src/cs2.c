@@ -2288,6 +2288,8 @@ void Cs2ResetSelector(void) {
         memset(Cs2Area->block[i].data, 0, 2352);
      }
 
+     Cs2Area->blockfreespace = 200;
+     Cs2Area->isbufferfull = 0;
      Cs2Area->isonesectorstored = 0;
      Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
   }
