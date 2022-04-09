@@ -167,11 +167,15 @@ extern "C"
 	
 	void YuiSwapBuffers()
 	{
+#ifdef HAVE_VULKAN		
     if (VIDCore->id == VIDCORE_VULKAN) {
       VIDVulkan::getInstance()->present();
     }else{
       QtYabause::mainWindow()->swapBuffers();
     }
+#else
+		QtYabause::mainWindow()->swapBuffers();
+#endif
 	}
 
 #if defined(HAVE_DIRECTINPUT) || defined(HAVE_DIRECTSOUND)

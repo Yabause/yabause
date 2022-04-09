@@ -615,8 +615,20 @@ public class YabausePad extends View implements OnTouchListener {
                 for (int btnindex = PadEvent.BUTTON_RIGHT_TRIGGER; btnindex < PadEvent.BUTTON_LAST; btnindex++) {
                     if (buttons[btnindex].isOn()) {
                         YabauseRunnable.press(btnindex, 0);
+                        if(btnindex == PadEvent.BUTTON_RIGHT_TRIGGER) {
+                            YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_RTRIGGER, 0, 255);
+                        }
+                        if(btnindex == PadEvent.BUTTON_LEFT_TRIGGER) {
+                            YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_LTRIGGER, 0, 255);
+                        }
                     } else {
                         YabauseRunnable.release(btnindex, 0);
+                        if(btnindex == PadEvent.BUTTON_RIGHT_TRIGGER) {
+                            YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_RTRIGGER, 0, 0);
+                        }
+                        if(btnindex == PadEvent.BUTTON_LEFT_TRIGGER) {
+                            YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_LTRIGGER, 0, 0);
+                        }
                     }
                 }
             }

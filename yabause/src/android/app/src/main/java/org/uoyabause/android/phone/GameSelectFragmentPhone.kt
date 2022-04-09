@@ -316,7 +316,7 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     private fun checkStoragePermission(): Int {
-        if (Build.VERSION.SDK_INT >= 23) { // Verify that all required contact permissions have been granted.
+        if (Build.VERSION.SDK_INT >= 23 && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ) { // Verify that all required contact permissions have been granted.
             if (ActivityCompat.checkSelfPermission(
                     requireActivity().applicationContext,
                     Manifest.permission.READ_EXTERNAL_STORAGE
@@ -401,362 +401,6 @@ class GameSelectFragmentPhone : Fragment(),
         tabpageAdapter.notifyDataSetChanged()
     }
 
-    @Suppress("BlockingMethodInNonBlockingContext")
-    private fun openGameFileDirect(uri: Uri) {
-        scope.launch {
-            withContext(Dispatchers.Main) {
-                showDialog("Opening ...")
-            }
-
-            var parcelFileDescriptor: ParcelFileDescriptor? = null
-            val uriString = uri.toString().toLowerCase(Locale.ROOT)
-            var apath = ""
-            try {
-                parcelFileDescriptor =
-                    requireActivity().contentResolver.openFileDescriptor(uri, "r")
-                if (parcelFileDescriptor != null) {
-                    val fd: Int? = parcelFileDescriptor.fd
-                    if (fd != null) {
-                        apath = "/proc/self/fd/$fd"
-                    }
-                }
-            } catch (fne: FileNotFoundException) {
-                apath = ""
-            }
-            if (apath == "") {
-                Toast.makeText(requireContext(), "Fail to open $uriString", Toast.LENGTH_LONG)
-                    .show()
-                parcelFileDescriptor?.close()
-                withContext(Dispatchers.Main) {
-                    dismissDialog()
-                }
-                return@launch
-            }
-
-            val gameinfo = GameInfo.genGameInfoFromCHD(apath)
-            if (gameinfo != null) {
-
-                val bundle = Bundle()
-                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
-                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
-                firebaseAnalytics!!.logEvent(
-                    "yab_start_game", bundle
-                )
-                parcelFileDescriptor!!.close()
-                val intent = Intent(activity, Yabause::class.java)
-                intent.putExtra("org.uoyabause.android.FileNameUri", uri.toString())
-                intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number)
-                startActivityForResult(intent, YABAUSE_ACTIVITY)
-            } else {
-                Toast.makeText(requireContext(), "Fail to open $apath", Toast.LENGTH_LONG).show()
-                parcelFileDescriptor?.close()
-            }
-            withContext(Dispatchers.Main) {
-                dismissDialog()
-            }
-        }
-    }
-
-    @Throws(IOException::class)
-    fun copyFileO(sourceFile: FileInputStream, destFile: FileOutputStream) {
-        var source: FileChannel? = null
-        var destination: FileChannel? = null
-        try {
-            source = sourceFile.channel
-            destination = destFile.channel
-            destination.transferFrom(source, 0, source.size())
-        } finally {
-            source?.close()
-            destination?.close()
-        }
-    }
-
-    fun installZipGameFile(uri: Uri, path: String) {
-        scope.launch {
-            withContext(Dispatchers.Main) {
-                showDialog("Installing ...")
-            }
-            var zipFileName = ""
-            try {
-
-                val f = File(path)
-                zipFileName = YabauseStorage.storage.getInstallDir().absolutePath + "/" + f.name
-                val fd = File(zipFileName)
-                val parcelFileDescriptor =
-                    requireActivity().contentResolver.openFileDescriptor(uri, "r")
-                val fileDescriptor: FileDescriptor = parcelFileDescriptor!!.fileDescriptor
-                FileInputStream(fileDescriptor).use { inputStream ->
-                    FileOutputStream(fd).use { outputStream ->
-                        if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
-                            FileUtils.copy(inputStream, outputStream)
-                        } else {
-                            copyFileO(inputStream, outputStream)
-                        }
-                        inputStream.close()
-                        outputStream.close()
-                    }
-                }
-                parcelFileDescriptor.close()
-
-                var targetFileName = ""
-
-                withContext(Dispatchers.Main) {
-                    updateDialogString("Extracting ${fd.name}")
-                }
-
-                if (zipFileName.toLowerCase().endsWith("zip")) {
-
-                    ZipFile(zipFileName).use { zip ->
-                        zip.entries().asSequence().forEach { entry ->
-
-                            if (entry.name.toLowerCase(Locale.ROOT).endsWith("ccd") ||
-                                entry.name.toLowerCase(Locale.ROOT).endsWith("cue") ||
-                                entry.name.toLowerCase(Locale.ROOT).endsWith("mds")
-                            ) {
-                                targetFileName = YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name
-                            }
-                            zip.getInputStream(entry).use { input ->
-                                if (entry.isDirectory) {
-                                    val unzipdir =
-                                        File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name)
-                                    if (!unzipdir.exists()) {
-                                        unzipdir.mkdirs()
-                                    } else {
-                                        unzipdir.delete()
-                                        unzipdir.mkdirs()
-                                    }
-                                } else {
-                                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name).outputStream()
-                                        .use { output ->
-                                            input.copyTo(output)
-                                        }
-                                }
-                            }
-                        }
-                    }
-                } else if (zipFileName.toLowerCase().endsWith("7z")) {
-                    SevenZFile(File(zipFileName)).use { sz ->
-                        sz.entries.asSequence().forEach { entry ->
-                            if (entry.name.toLowerCase(Locale.ROOT).endsWith("ccd") ||
-                                entry.name.toLowerCase(Locale.ROOT).endsWith("cue") ||
-                                entry.name.toLowerCase(Locale.ROOT).endsWith("mds")
-                            ) {
-                                targetFileName = YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name
-                            }
-
-                            if (entry.isDirectory) {
-                                val unzipdir =
-                                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name)
-                                if (!unzipdir.exists()) {
-                                    unzipdir.mkdirs()
-                                } else {
-                                    unzipdir.delete()
-                                    unzipdir.mkdirs()
-                                }
-                            } else {
-                                sz.getInputStream(entry).use { input ->
-                                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name).outputStream()
-                                        .use { output ->
-                                            input.copyTo(output)
-                                        }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (targetFileName != "") {
-                    withContext(Dispatchers.Main) {
-
-                        decrementInstallCount()
-
-                        fileSelected(File(targetFileName))
-                    }
-                } else {
-
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(requireContext(),
-                            "ISO image is not found!!",
-                            Toast.LENGTH_LONG).show()
-                    }
-                }
-            } catch (e: Exception) {
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(),
-                        "Fail to copy " + e.localizedMessage,
-                        Toast.LENGTH_LONG).show()
-                }
-            } catch (e: IOException) {
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(),
-                        "Fail to copy " + e.localizedMessage,
-                        Toast.LENGTH_LONG).show()
-                }
-
-            } finally {
-
-                val fd = File(zipFileName)
-                if (fd.isFile && fd.exists()) {
-                    fd.delete()
-                }
-
-                withContext(Dispatchers.Main) {
-                    dismissDialog()
-                }
-            }
-        }
-    }
-
-    @Suppress("BlockingMethodInNonBlockingContext")
-    fun installGameFile(uri: Uri) {
-        scope.launch {
-            withContext(Dispatchers.Main) {
-                showDialog("Installing ...")
-            }
-            try {
-                val parcelFileDescriptor1: ParcelFileDescriptor?
-                val uriString = uri.toString().toLowerCase(Locale.ROOT)
-                var apath = ""
-                try {
-                    parcelFileDescriptor1 =
-                        requireActivity().contentResolver.openFileDescriptor(uri, "r")
-                    if (parcelFileDescriptor1 != null) {
-                        val fd: Int? = parcelFileDescriptor1.fd
-                        if (fd != null) {
-                            apath = "/proc/self/fd/$fd"
-                        }
-                    }
-                } catch (e: Exception) {
-                    Toast.makeText(requireContext(),
-                        "Fail to open $uriString with ${e.localizedMessage}",
-                        Toast.LENGTH_LONG).show()
-                    withContext(Dispatchers.Main) {
-                        dismissDialog()
-                    }
-                    return@launch
-                }
-
-                if (apath == "") {
-                    Toast.makeText(requireContext(), "Fail to open $uriString", Toast.LENGTH_LONG)
-                        .show()
-                    withContext(Dispatchers.Main) {
-                        dismissDialog()
-                    }
-                    return@launch
-                }
-
-                val gameinfo = GameInfo.genGameInfoFromCHD(apath)
-                if (gameinfo != null) {
-
-                    val bundle = Bundle()
-                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
-                    bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
-                    firebaseAnalytics!!.logEvent(
-                        "yab_start_game", bundle
-                    )
-                    parcelFileDescriptor1!!.close()
-                } else {
-                    Toast.makeText(requireContext(), "Fail to open $apath", Toast.LENGTH_LONG)
-                        .show()
-                    parcelFileDescriptor1?.close()
-                    return@launch
-                }
-
-                withContext(Dispatchers.Main) {
-                    updateDialogString("Installing ${gameinfo.game_title}")
-                }
-
-                val fd =
-                    File(YabauseStorage.storage.getInstallDir().absolutePath + "/" + gameinfo.product_number + ".chd")
-                val parcelFileDescriptor =
-                    requireActivity().contentResolver.openFileDescriptor(uri, "r")
-                val fileDescriptor: FileDescriptor = parcelFileDescriptor!!.fileDescriptor
-                FileInputStream(fileDescriptor).use { inputStream ->
-                    FileOutputStream(fd).use { outputStream ->
-                        if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
-                            FileUtils.copy(inputStream, outputStream)
-                        } else {
-                            copyFileO(inputStream, outputStream)
-                        }
-                        inputStream.close()
-                        outputStream.close()
-                    }
-                }
-                withContext(Dispatchers.Main) {
-
-                    decrementInstallCount()
-
-                    fileSelected(fd)
-                }
-                parcelFileDescriptor.close()
-            } catch (e: Exception) {
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(),
-                        "Fail to copy " + e.localizedMessage,
-                        Toast.LENGTH_LONG).show()
-                }
-
-            } finally {
-                withContext(Dispatchers.Main) {
-                    dismissDialog()
-                }
-            }
-        }
-        return
-    }
-
-    fun selectStorage( onOk: () -> Unit ) {
-        if( YabauseStorage.storage.hasExternalSD() ) {
-            val ctx = YabauseApplication.appContext
-            val sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx)
-            val path = sharedPref.getString("pref_install_location","0")
-            var selectItem = path?.toInt() ?: 0
-
-            var option: Array<String> = arrayOf()
-            option += "Internal" + " (" + YabauseStorage.storage.getAvailableInternalMemorySize() +" free)"
-            option += "External" + " (" +  YabauseStorage.storage.getAvailableExternalMemorySize() +" free)"
-
-            AlertDialog.Builder(requireActivity())
-                .setTitle(getString(R.string.which_storage))
-                .setSingleChoiceItems(option, selectItem
-                ) { dialog, which ->
-                    selectItem = which
-                }
-                .setPositiveButton(R.string.ok) { _, _ ->
-
-                    val editor = sharedPref.edit()
-                    editor.putString("pref_install_location",selectItem.toString())
-                    editor.commit()
-
-                    onOk()
-
-                }
-                .setNegativeButton(R.string.cancel){ _, _ -> }
-                .setCancelable(true)
-                .show()
-        }else{
-            onOk()
-        }
-    }
-
-    fun decrementInstallCount() {
-        val prefs = requireActivity().getSharedPreferences("private",
-            MultiDexApplication.MODE_PRIVATE)
-        var InstallCount = prefs.getInt("InstallCount", 3)
-        InstallCount -= 1
-        if( InstallCount < 0 ){
-            InstallCount = 0
-        }
-        with( prefs.edit()) {
-            putInt("InstallCount", InstallCount)
-            apply()
-        }
-
-    }
-
     override fun onActivityResult(
         requestCode: Int,
         resultCode: Int,
@@ -771,57 +415,7 @@ class GameSelectFragmentPhone : Fragment(),
             if (data != null) {
                 val uri = data.data
                 if (uri != null) {
-                    Log.i(TAG, "Uri: $uri")
-
-                    val cursor: Cursor? = requireActivity().contentResolver.query(uri,
-                        null, null, null, null)
-
-                    cursor!!.moveToFirst()
-                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    val path = cursor.getString(nameIndex)
-                    if (path.toLowerCase(Locale.ROOT).endsWith("chd")) {
-                        var size: Long = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE))
-                        cursor.close()
-
-                        size = size / 1024 / 1024
-
-                        val prefs: SharedPreferences = requireActivity().getSharedPreferences("private",
-                            AppCompatActivity.MODE_PRIVATE)
-                        val count = prefs.getInt("InstallCount", 3)
-
-                        var message =
-                            getString(R.string.install_game_message) + " " + size + getString(R.string.install_game_message_after)
-
-                        if(BuildConfig.BUILD_TYPE != "pro"){
-                            message += getString(R.string.remaining_installation_count_is) + " " + count + "."
-                        }
-
-                        AlertDialog.Builder(requireActivity())
-                            .setTitle(getString(R.string.do_you_want_to_install))
-                            .setMessage(message)
-                            .setPositiveButton(R.string.yes) { _, _ ->
-                                selectStorage {
-                                    installGameFile(uri)
-                                }
-                            }
-                            .setNegativeButton(R.string.no) { _, _ ->
-                                decrementInstallCount()
-                                openGameFileDirect(uri)
-                            }
-                            .setCancelable(true)
-                            .show()
-                    } else if (path.toLowerCase().endsWith("zip") || path.toLowerCase().endsWith("7z")) {
-
-                        selectStorage {
-                            installZipGameFile(uri, path)
-                        }
-
-                    } else {
-                        Toast.makeText(requireContext(),
-                            getString(R.string.only_chd_is_supported_for_load_game),
-                            Toast.LENGTH_LONG).show()
-                    }
-                    return
+                    presenter.onSelectFile(uri)
                 }
             }
             return
@@ -869,7 +463,7 @@ class GameSelectFragmentPhone : Fragment(),
             AD_ACTIVITY -> {
                 updateRecent()
             }
-            YABAUSE_ACTIVITY -> if (BuildConfig.BUILD_TYPE != "pro") {
+            GameSelectPresenter.YABAUSE_ACTIVITY -> if (BuildConfig.BUILD_TYPE != "pro") {
                 val prefs = activity?.getSharedPreferences(
                     "private",
                     Context.MODE_PRIVATE
@@ -911,52 +505,8 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     override fun fileSelected(file: File?) {
-        if (file == null) { // canceled
-            return
-        }
-        val apath: String = file.absolutePath
-        // save last selected dir
-        val sharedPref =
-            PreferenceManager.getDefaultSharedPreferences(activity)
-        val editor = sharedPref.edit()
-        editor.putString("pref_last_dir", file.parent)
-        editor.apply()
-        var gameinfo = GameInfo.getFromFileName(apath)
-        if (gameinfo == null) {
-            gameinfo = if (apath.endsWith("CUE") || apath.endsWith("cue")) {
-                GameInfo.genGameInfoFromCUE(apath)
-            } else if (apath.endsWith("MDS") || apath.endsWith("mds")) {
-                GameInfo.genGameInfoFromMDS(apath)
-            } else if (apath.endsWith("CHD") || apath.endsWith("chd")) {
-                GameInfo.genGameInfoFromCHD(apath)
-            } else if (apath.endsWith("CCD") || apath.endsWith("ccd")) {
-                GameInfo.genGameInfoFromMDS(apath)
-            } else {
-                GameInfo.genGameInfoFromIso(apath)
-            }
-        }
-        if (gameinfo != null) {
-            scope.launch {
-                gameinfo.updateState()
-                val c = Calendar.getInstance()
-                gameinfo.lastplay_date = c.time
-                gameinfo.save()
-                withContext(Dispatchers.Main) {
-                    loadRows()
-                    val bundle = Bundle()
-                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
-                    bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
-                    firebaseAnalytics!!.logEvent(
-                        "yab_start_game", bundle
-                    )
-                    val intent = Intent(activity, Yabause::class.java)
-                    intent.putExtra("org.uoyabause.android.FileNameEx", apath)
-                    intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number)
-                    startActivityForResult(intent, YABAUSE_ACTIVITY)
-                }
-            }
-        } else {
-            return
+        if( file != null ) {
+            presenter.fileSelected(file)
         }
     }
 
@@ -1295,27 +845,9 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     override fun onItemClick(position: Int, item: GameInfo?, v: View?) {
-        val c = Calendar.getInstance()
-        item?.lastplay_date = c.time
-        item?.save()
-        if (tracker != null) {
-            tracker!!.send(
-                EventBuilder()
-                    .setCategory("Action")
-                    .setAction(item?.game_title)
-                    .build()
-            )
+        if( item != null ){
+            presenter.startGame(item)
         }
-        val bundle = Bundle()
-        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, item?.product_number)
-        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, item?.game_title)
-        firebaseAnalytics!!.logEvent(
-            "yab_start_game", bundle
-        )
-        val intent = Intent(activity, Yabause::class.java)
-        intent.putExtra("org.uoyabause.android.FileNameEx", item?.file_path)
-        intent.putExtra("org.uoyabause.android.gamecode", item?.product_number)
-        startActivityForResult(intent, YABAUSE_ACTIVITY)
     }
 
     @SuppressLint("DefaultLocale")
@@ -1383,10 +915,25 @@ class GameSelectFragmentPhone : Fragment(),
         showSnackbar(string_id)
     }
 
+    override fun onShowDialog(message: String) {
+        showDialog(message)
+    }
+
+    override fun onUpdateDialogMessage(message: String) {
+        updateDialogString(message)
+    }
+
+    override fun onDismissDialog() {
+        dismissDialog()
+    }
+
+    override fun onLoadRows() {
+        loadRows()
+    }
+
     companion object {
         private const val TAG = "GameSelectFragmentPhone"
         private const val SETTING_ACTIVITY = 0x01
-        private const val YABAUSE_ACTIVITY = 0x02
         private const val DOWNLOAD_ACTIVITY = 0x03
         private const val AD_ACTIVITY = 0x04
         private const val READ_REQUEST_CODE = 0xFFE0

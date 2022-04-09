@@ -3672,7 +3672,7 @@ void VIDVulkan::drawRotation(RBGDrawInfo * rbg, VdpPipeline ** pipleLine)
       Vdp2DrawRotationThread_running = 1;
       g_rotate_mtx = YabThreadCreateMutex();
       YabThreadLock(g_rotate_mtx);
-      YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_RBG0, Vdp2DrawRotationThread, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_RBG0, "vdp rbg0", Vdp2DrawRotationThread, NULL);
     }
     Vdp2RgbTextureSync();
     YGL_THREAD_DEBUG("Vdp2DrawRotation in %d\n", curret_rbg->vdp2_sync_flg);

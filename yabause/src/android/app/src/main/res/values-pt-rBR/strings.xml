@@ -68,7 +68,10 @@
 	<string name="software_video_interface">Sem aceleração</string>
 	<string name="onscreen_pad">Controles de Toque</string>
 	<string name="select_from_other_directory">Escolha a partir de outro diretório.</string>
-	
+    <string name="add_dir">adicionar</string>
+
+    <string name="select_game_directory">selecione o diretório do jogo</string>
+
 	<string name="menu_save_screenshot">Captura de Tela</string>
     <string name="already_have_been">Se você já foi doado, por favor entre em contato com smiyaxdev@gmail.com</string>
     <string name="close">Close</string>
@@ -95,19 +98,23 @@
         <![CDATA[
         # Receber! \n\n
 
-        Para jogar os jogos SEGA Saturn, você tem três opções. \n\n
+        Para jogar jogos SEGA Saturn, você tem quatro opções. \n\n
 
         ## 1. Copie jogos para este dispositivo Android diretamente. \n\n
 
-        copie suas imagens ios para **\"%1$s\"**. \n\n
+        copie suas imagens ISO para **\"%1$s\"**. \n\n
 
         ## 2. Copie para um cartão SD externo. \n\n
 
-        copie suas imagens ios para **\"%2$s\"** em um cartão SD. \n\n
+        copie suas imagens ISO para **\"%2$s\"** em um cartão SD. \n\n
 
         ## 3. Toque no botão + \n\n
 
-        Se você já tiver arquivos CHD ou imagens ISO compactadas. Basta tocar no botão + e selecionar o arquivo. \n\n
+        Se você já tiver arquivos CHD ou imagens ISO compactadas. Basta tocar no botão + e selecionar o arquivo. * Você precisa de um mouse na Android TV. \n\n
+
+        ## 4. Selecione um diretório que contenha imagens ISO \n
+
+        [Configurações] -> [selecione o diretório do jogo] -> [adicionar] * Você precisa de um mouse na Android TV. \n\n
 
         Mais detalhes são descritos em nosso site [aqui] (https://www.uoyabause.org/static_pages/guide). \n
 

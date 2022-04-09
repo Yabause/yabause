@@ -26,8 +26,10 @@
 
 #include "../peripheral.h"
 
+#ifdef HAVE_VULKAN
 #include "vulkan/VIDVulkan.h"
 #include "vulkan/VIDVulkanCInterface.h"
+#endif
 
 #include <QDateTime>
 #include <QStringList>
@@ -112,6 +114,8 @@ yabauseinit_struct* YabauseThread::yabauseConf()
 	return &mYabauseConf;
 }
 
+#ifdef HAVE_VULKAN
+
 void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
   VIDCore->Resize(0, 0, width, height, 0, 0);
 }
@@ -167,9 +171,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
 
   }
-  
-
 }
+#endif
+
 
 void YabauseThread::initEmulation()
 {
@@ -177,6 +181,8 @@ void YabauseThread::initEmulation()
 
   VolatileSettings* vs = QtYabause::volatileSettings();
   int vidcoretype = vs->value("Video/VideoCore", mYabauseConf.vidcoretype).toInt();
+
+#ifdef HAVE_VULKAN	
   if (vidcoretype == VIDCORE_VULKAN) {
     int width = vs->value("Video/WinWidth", 800).toInt();
     int height = vs->value("Video/WinHeight", 600).toInt();
@@ -188,25 +194,32 @@ void YabauseThread::initEmulation()
     glfwSetKeyCallback(w->getWindowHandle(), key_callback);
     _monitor = glfwGetPrimaryMonitor();
   }
+#endif	
 	mInit = YabauseInit( &mYabauseConf );
 	SetOSDToggle(showFPS);
 }
+
 
 void YabauseThread::deInitEmulation()
 {
   VolatileSettings* vs = QtYabause::volatileSettings();
   int vidcoretype = vs->value("Video/VideoCore", mYabauseConf.vidcoretype).toInt();
+
+#ifdef HAVE_VULKAN		
   if (vidcoretype == VIDCORE_VULKAN) {
     vkQueueWaitIdle(vulkanRenderer->GetVulkanQueue());
     vkDeviceWaitIdle(vulkanRenderer->GetVulkanDevice());
   }
+#endif	
 	YabauseDeInit();
 
+#ifdef HAVE_VULKAN	
   if (vidcoretype == VIDCORE_VULKAN) {
     vkQueueWaitIdle(vulkanRenderer->GetVulkanQueue());
     vkDeviceWaitIdle(vulkanRenderer->GetVulkanDevice());
     delete vulkanRenderer;
   }
+#endif
 
 	mInit = -1;
 }
@@ -579,6 +592,9 @@ void YabauseThread::reloadSettings()
   mYabauseConf.scsp_main_mode = vs->value("Sound/ScspMainMode", 1).toInt();
 
   mYabauseConf.playRecordPath = strdup(vs->value("General/RecordDir", mYabauseConf.playRecordPath).toString().toLatin1().constData());
+
+
+  mYabauseConf.use_sh2_cache = vs->value("General/UseSh2Cache", true).toBool()?1:0 ;
 
 	reloadClock();
 	reloadControllers();

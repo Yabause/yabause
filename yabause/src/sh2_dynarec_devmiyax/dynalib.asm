@@ -1217,7 +1217,7 @@ push eax              ;1
 mov  eax, _memGetLong ;5
 call eax              ;2
 mov  [edx],eax        ;3
-sub  [edx],byte 2     ;3
+sub  dword [edx],byte 2     ;3
 pop  eax              ;1
 pop  eax              ;1
 pop  eax              ;1

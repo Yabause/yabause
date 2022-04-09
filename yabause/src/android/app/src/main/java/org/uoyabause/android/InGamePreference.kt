@@ -4,6 +4,7 @@ package org.uoyabause.android
 
 import android.content.Context
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -74,8 +75,25 @@ fun setupInGamePreferences(context: Context, gameCode: String?) {
 
     if (!gamePreference.contains("pref_aspect_rate")) {
         val editor = gamePreference.edit()
-        // editor.putInt("pref_aspect_rate", defaultPrefernce.getInt("pref_resolution",0))
-        editor.putString("pref_aspect_rate", "0")
+/*
+            val displayMetrics = DisplayMetrics()
+            windowManager.defaultDisplay.getMetrics(displayMetrics)
+            val height = displayMetrics.heightPixels
+            val width = displayMetrics.widthPixels
+            val arate = width.toDouble() / height.toDouble()
+
+
+            if( arate >= 1.2 && arate <= 1.34 ){
+                // for 4:3 display force default setting is 4:3
+                val v = defaultPreference.getString("pref_aspect_rate","1")
+                editor.putString("pref_aspect_rate", v)
+            }else{
+                val v = defaultPreference.getString("pref_aspect_rate","0")
+                editor.putString("pref_aspect_rate", v)
+            }
+*/
+        val v = defaultPreference.getString("pref_aspect_rate","0")
+        editor.putString("pref_aspect_rate", v)
         editor.apply()
     }
 
@@ -97,6 +115,7 @@ fun setupInGamePreferences(context: Context, gameCode: String?) {
         editor.apply()
     }
 }
+
 
 class InGamePreference(val gamecode: String) : PreferenceFragmentCompat() {
 

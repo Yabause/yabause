@@ -848,7 +848,8 @@ void UIYabause::on_aFileSettings_triggered()
 			newhash["General/CdRom"]!=hash["General/CdRom"] ||
 			newhash["General/CdRomISO"]!=hash["General/CdRomISO"] ||
 			newhash["General/ClockSync"]!=hash["General/ClockSync"] ||
-			newhash["General/FixedBaseTime"]!=hash["General/FixedBaseTime"]
+			newhash["General/FixedBaseTime"]!=hash["General/FixedBaseTime"] ||
+      newhash["General/UseSh2Cache"] != hash["General/UseSh2Cache"]
 		)
 		{
 			if ( mYabauseThread->pauseEmulation( true, true ) )

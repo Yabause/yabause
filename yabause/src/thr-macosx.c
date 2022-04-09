@@ -55,7 +55,11 @@ static void *wrapper(void *hnd) {
     return NULL;
 }
 
-int YabThreadStart(unsigned int id, void (*func)(void *), void *arg) {
+int YabThreadInit(){
+    return 0;
+}
+
+int YabThreadStart(unsigned int id, const char * name, void (*func)(void *), void *arg) {
     /* Create the key to access the thread handle if we haven't made it yet. */
     pthread_once(&hnd_key_once, make_key);
 

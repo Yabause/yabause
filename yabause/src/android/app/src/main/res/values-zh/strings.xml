@@ -143,6 +143,7 @@
     <string name="edit">编辑</string>
     <string name="delete">删除</string>
     <string name="select_game_directory">选择游戏目录</string>
+    <string name="add_dir">添加</string>
 
     <string name="sound_curent">当前(对于高端设备 高品质版本)</string>
     <string name="sound_legacy">传统(对于低端设备)</string>
@@ -176,19 +177,23 @@
         <![CDATA[
         # 欢迎！ \n\n
 
-        要玩 SEGA Saturn 游戏，您有三种选择。\n\n
+        要玩 SEGA Saturn 游戏，您有四个选择。\n\n
 
         ## 1. 直接将游戏复制到此 Android 设备。\n
 
-        将您的 ios 图像复制到 **\"%1$s\"**。\n
+        将您的 ISO 图像复制到 **\"%1$s\"**。\n
 
         ## 2. 复制到外部 SD 卡。\n
 
-        将您的 ios 图像复制到 SD 卡上的 **\"%2$s\"**。\n
+        将您的 ISO 图像复制到 SD 卡上的 **\"%2$s\"**。\n
 
         ## 3. 点击 + 按钮\n
 
-        如果您已经有 CHD 或压缩的 iso 图像文件。只需点按 + 按钮并选择文件。\n\n
+        如果您已经有 CHD 或压缩的 iso 图像文件。只需点按 + 按钮并选择文件。* 您需要在 Android TV 上使用鼠标 \n\n
+
+        ## 4. 选择一个包含 ISO 镜像的目录\n
+
+        [设置] -> [选择游戏目录] -> [添加] * 您需要在 Android TV 上使用鼠标 \n\n
 
         我们的网站 [此处](https://www.uoyabause.org/static_pages/guide) 中描述了更多详细信息。\n
         ]]>

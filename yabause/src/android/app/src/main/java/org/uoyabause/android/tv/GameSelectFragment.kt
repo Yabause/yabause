@@ -55,8 +55,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.setPadding
 import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -68,7 +70,9 @@ import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
+import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
+import androidx.viewpager.widget.ViewPager
 import com.activeandroid.query.Select
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
@@ -79,6 +83,7 @@ import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
+import io.noties.markwon.Markwon
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import java.io.File
@@ -93,18 +98,13 @@ import java.util.Timer
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.devmiyax.yabasanshiro.StartupActivity
-import org.uoyabause.android.AdActivity
-import org.uoyabause.android.FileDialog
+import org.uoyabause.android.*
 import org.uoyabause.android.FileDialog.FileSelectedListener
-import org.uoyabause.android.GameInfo
-import org.uoyabause.android.GameSelectPresenter
 import org.uoyabause.android.GameSelectPresenter.GameSelectPresenterListener
-import org.uoyabause.android.SettingsActivity
 import org.uoyabause.android.ShowPinInFragment.Companion.newInstance
-import org.uoyabause.android.Yabause
-import org.uoyabause.android.YabauseApplication
 import org.uoyabause.android.YabauseStorage.Companion.storage
 import org.uoyabause.android.download.IsoDownload
+import org.uoyabause.android.phone.GameSelectFragmentPhone
 import org.uoyabause.android.tv.GameSelectFragment.GridItemPresenter
 import org.uoyabause.android.tv.GameSelectFragment.ItemViewClickedListener
 import org.uoyabause.android.tv.GameSelectFragment.ItemViewSelectedListener
@@ -121,9 +121,10 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     private var mTracker: Tracker? = null
     private var mInterstitialAd: InterstitialAd? = null
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
+    private var initialDialog : AlertDialog? = null
     var isfisrtupdate = true
     var v_: View? = null
-    var presenter_: GameSelectPresenter? = null
+    lateinit var presenter_: GameSelectPresenter
     var alphabet = arrayOf("A",
         "B",
         "C",
@@ -157,7 +158,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
      * Callback is defined in resource layout definition.
      */
     fun checkStoragePermission(): Int {
-        if (Build.VERSION.SDK_INT >= 23) {
+        if (Build.VERSION.SDK_INT >= 23 && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ) {
             // Verify that all required contact permissions have been granted.
             if (ActivityCompat.checkSelfPermission(requireActivity(),
                     Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -212,17 +213,29 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         }
     }
 
-    fun showDialog() {
+    fun showDialog( message : String ) {
+        if( initialDialog != null ){
+            initialDialog?.dismiss()
+            initialDialog = null
+        }
         if (mProgressDialog == null) {
             mProgressDialog = ProgressDialog(activity)
-            mProgressDialog!!.setMessage("Updating...")
+            mProgressDialog!!.setMessage(message)
             mProgressDialog!!.show()
         }
     }
 
     fun updateDialogString(msg: String) {
-        if (mProgressDialog != null) {
-            mProgressDialog!!.setMessage("Updating... $msg")
+        if( initialDialog != null ){
+            initialDialog?.dismiss()
+            initialDialog = null
+        }
+        if (mProgressDialog == null) {
+            mProgressDialog = ProgressDialog(activity)
+            mProgressDialog!!.setMessage(msg)
+            mProgressDialog!!.show()
+        }else {
+            mProgressDialog!!.setMessage("$msg")
         }
     }
 
@@ -267,8 +280,8 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         val application = requireActivity().application as YabauseApplication
         mTracker = application.defaultTracker
         MobileAds.initialize(requireContext())
-        mInterstitialAd = InterstitialAd(activity)
-        mInterstitialAd!!.adUnitId = activity!!.getString(R.string.banner_ad_unit_id)
+        mInterstitialAd = InterstitialAd(requireActivity())
+        mInterstitialAd!!.adUnitId = requireActivity().getString(R.string.banner_ad_unit_id)
         requestNewInterstitial()
         mInterstitialAd!!.adListener = object : AdListener() {
             override fun onAdClosed() {
@@ -278,13 +291,6 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         val intent = requireActivity().intent
         val uri = intent.data
         if (uri != null && !uri.pathSegments.isEmpty()) {
-/*
-            ComponentName componentName = new ComponentName(getActivity(), CheckPSerivce.class);
-            JobInfo.Builder builder = new JobInfo.Builder(1, componentName);
-            builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
-            JobScheduler scheduler = (JobScheduler) getActivity().getSystemService(Context.JOB_SCHEDULER_SERVICE);
-            scheduler.schedule(builder.build());
-*/
             val pathSegments = uri.pathSegments
             var filename = pathSegments[1]
             Log.d(TAG, "filename: $filename")
@@ -294,25 +300,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             }
             val game = GameInfo.getFromFileName(filename)
             if (game != null) {
-                val c = Calendar.getInstance()
-                game.lastplay_date = c.time
-                game.save()
-                if (mTracker != null) {
-                    mTracker!!.send(HitBuilders.EventBuilder()
-                        .setCategory("Action")
-                        .setAction(game.game_title)
-                        .build())
-                }
-                val bundle = Bundle()
-                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, game.product_number)
-                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game.game_title)
-                mFirebaseAnalytics!!.logEvent(
-                    "yab_start_game", bundle
-                )
-                val intent_game = Intent(activity, Yabause::class.java)
-                intent_game.putExtra("org.uoyabause.android.FileNameEx", game.file_path)
-                intent.putExtra("org.uoyabause.android.gamecode", game.product_number)
-                startActivityForResult(intent_game, YABAUSE_ACTIVITY)
+                presenter_.startGame(game)
             }
         }
         prepareBackgroundManager()
@@ -334,7 +322,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             // if( !hasDonated) {
             //    gridRowAdapter.add(getResources().getString(R.string.donation));
             // }
-            gridRowAdapter.add(getString(R.string.load_game))
+            gridRowAdapter.add("+")
             gridRowAdapter.add(resources.getString(R.string.refresh_db))
             // gridRowAdapter.add("GoogleDrive");
             val auth = FirebaseAuth.getInstance()
@@ -386,11 +374,11 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             // GithubRepositoryApiCompleteEventEntity eventResult = new GithubRepositoryApiCompleteEventEntity();
             override fun onSubscribe(d: Disposable) {
                 observer = this
-                showDialog()
+                showDialog("Updating")
             }
 
             override fun onNext(response: String) {
-                updateDialogString(response)
+                updateDialogString( "Updating .. $response")
             }
 
             override fun onError(e: Throwable) {
@@ -424,7 +412,6 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             mTracker!!.setScreenName(TAG)
             mTracker!!.send(ScreenViewBuilder().build())
         }
-        updateGameList()
     }
 
     override fun onPause() {
@@ -446,6 +433,59 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     }
 
     private fun loadRows() {
+
+        try {
+            val checklist = Select()
+                .from(GameInfo::class.java)
+                .limit(1)
+                .execute<GameInfo?>()
+            if (checklist.size == 0) {
+
+                var viewMessage = TextView(requireContext())
+
+                val markwon = Markwon.create(requireContext()
+                )
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    //val welcomeMessage = resources.getString(
+                    //    R.string.welcome_11
+                    //)
+
+                    val packagename = requireActivity().getPackageName()
+
+
+                    val welcomeMessage = resources.getString(
+                        R.string.welcome_11,
+                        "Android/data/" + packagename + "/files/yabause/games",
+                        "Android/data/" + packagename + "/files",
+                    )
+
+                    markwon.setMarkdown(viewMessage, welcomeMessage)
+
+                }else {
+                    val welcomeMessage = resources.getString(R.string.welcome,YabauseStorage.storage.gamePath)
+                    markwon.setMarkdown(viewMessage, welcomeMessage)
+                }
+
+                viewMessage.setPadding(64)
+
+
+                initialDialog = AlertDialog.Builder(requireActivity(),R.style.Theme_AppCompat)
+                    .setView(viewMessage)
+                    .setPositiveButton(R.string.ok) { _, _ ->
+
+                    }
+                    .create()
+
+                    initialDialog?.show()
+
+
+                return
+            }
+        } catch (e: Exception) {
+            Log.d(TAG, e.localizedMessage!!)
+        }
+
         if (!isAdded) return
         var addindex = 0
         mRowsAdapter = ArrayObjectAdapter(ListRowPresenter())
@@ -493,7 +533,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         // if( !hasDonated) {
         //    gridRowAdapter.add(getResources().getString(R.string.donation));
         // }
-        gridRowAdapter.add(getString(R.string.load_game))
+        gridRowAdapter.add("+")
         gridRowAdapter.add(resources.getString(R.string.refresh_db))
         // gridRowAdapter.add("GoogleDrive");
         val auth = FirebaseAuth.getInstance()
@@ -683,7 +723,6 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     }
 */
     val SETTING_ACTIVITY = 0x01
-    val YABAUSE_ACTIVITY = 0x02
     val DOWNLOAD_ACTIVITY = 0x03
 
     private inner class ItemViewClickedListener : OnItemViewClickedListener {
@@ -694,33 +733,14 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             row: Row
         ) {
             if (item is GameInfo) {
-                val game = item
-                val c = Calendar.getInstance()
-                game.lastplay_date = c.time
-                game.save()
-                if (mTracker != null) {
-                    mTracker!!.send(HitBuilders.EventBuilder()
-                        .setCategory("Action")
-                        .setAction(game.game_title)
-                        .build())
-                }
-                val bundle = Bundle()
-                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, game.product_number)
-                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game.game_title)
-                mFirebaseAnalytics!!.logEvent(
-                    "yab_start_game", bundle
-                )
-                val intent = Intent(activity, Yabause::class.java)
-                intent.putExtra("org.uoyabause.android.FileNameEx", game.file_path)
-                intent.putExtra("org.uoyabause.android.gamecode", game.product_number)
-                startActivityForResult(intent, YABAUSE_ACTIVITY)
+                presenter_.startGame(item)
             } else if (item is String) {
                 if (item == getString(R.string.sign_in)) {
-                    presenter_!!.signIn()
+                    presenter_.signIn()
                 } else if (item == getString(R.string.sign_out)) {
-                    presenter_!!.signOut()
+                    presenter_.signOut()
                 } else if (item == getString(R.string.sign_in_to_other_devices)) {
-                    newInstance(presenter_!!).show(childFragmentManager, "sample")
+                    newInstance(presenter_).show(childFragmentManager, "sample")
                 } else if (item.indexOf("Backup") >= 0) {
                     val intent = Intent(activity, IsoDownload::class.java)
                     val savepath: String?
@@ -748,18 +768,45 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                     // FragmentTransaction ft = getFragmentManager().beginTransaction();
                     // DownloadDialog newFragment = new DownloadDialog();
                     // newFragment.show(ft, "dialog");
-                } else if (item.indexOf(getString(R.string.setting)) >= 0) {
+                } else if (item == getString(R.string.setting)) {
                     val intent = Intent(activity, SettingsActivity::class.java)
                     startActivityForResult(intent, SETTING_ACTIVITY)
-                } else if (item.indexOf(getString(R.string.load_game)) >= 0) {
+                } else if (item == "+") {
 
-                    val yabroot = File(storage.rootPath)
-                    val sharedPref = PreferenceManager.getDefaultSharedPreferences(
-                        activity)
-                    val last_dir = sharedPref.getString("pref_last_dir", yabroot.path)
-                    val fd = FileDialog(activity, last_dir)
-                    fd.addFileListener(this@GameSelectFragment)
-                    fd.showDialog()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        val prefs = requireActivity().getSharedPreferences("private",
+                            MultiDexApplication.MODE_PRIVATE)
+                        val InstallCount = prefs.getInt("InstallCount", 3)
+                        if( InstallCount > 0){
+                            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                            intent.addCategory(Intent.CATEGORY_OPENABLE)
+                            intent.type = "*/*"
+                            startActivityForResult(intent,
+                                READ_REQUEST_CODE
+                            )
+                        }else {
+                            val message = resources.getString(R.string.or_place_file_to, YabauseStorage.storage.gamePath);
+                            val rtn = YabauseApplication.checkDonated(requireActivity(), message)
+                            if ( rtn == 0) {
+                                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                                intent.type = "*/*"
+                                startActivityForResult(intent,
+                                    READ_REQUEST_CODE
+                                )
+                            }
+                        }
+
+                    }else{
+                        val yabroot = File(storage.rootPath)
+                        val sharedPref = PreferenceManager.getDefaultSharedPreferences(
+                            activity
+                        )
+                        val last_dir = sharedPref.getString("pref_last_dir", yabroot.path)
+                        val fd = FileDialog(activity, last_dir)
+                        fd.addFileListener(this@GameSelectFragment)
+                        fd.showDialog()
+                    }
                 } else if (item.indexOf(getString(R.string.refresh_db)) >= 0) {
                     refresh_level = 3
                     if (checkStoragePermission() == 0) {
@@ -768,8 +815,6 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                     // }else if(  ((String) item).indexOf(getString(R.string.donation)) >= 0){
                     //    Intent intent = new Intent(getActivity(), DonateActivity.class);
                     //    startActivity(intent);
-                } else if (item.indexOf(getString(R.string.invite)) >= 0) {
-                    onInviteClicked()
                 } else if (item.indexOf("GoogleDrive") >= 0) {
                     onGoogleDriveClciked()
                 }
@@ -794,23 +839,6 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         }
     }
 
-    private fun onInviteClicked() {
-/*
-        Intent intent = new AppInviteInvitation.IntentBuilder(getString(R.string.invitation_title))
-                .setMessage(getString(R.string.invitation_message))
-                .setDeepLink(Uri.parse(getString(R.string.invitation_deep_link)))
-                .setCustomImage(Uri.parse(getString(R.string.invitation_custom_image)))
-                .setCallToActionText(getString(R.string.invitation_cta))
-                .build();
-        startActivityForResult(intent, REQUEST_INVITE);
-
-        SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
-        Date date = new Date(System.currentTimeMillis());
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putLong("introduce", date.getTime());
-        editor.commit();
-*/
-    }
 
     private inner class ItemViewSelectedListener : OnItemViewSelectedListener {
         override fun onItemSelected(
@@ -867,6 +895,23 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         showSnackbar(string_id)
     }
 
+    override fun onShowDialog(message: String){
+        showDialog(message)
+    }
+
+    override fun onUpdateDialogMessage(message: String) {
+        updateDialogString(message)
+    }
+
+    override fun onDismissDialog() {
+        dismissDialog()
+    }
+
+    override fun onLoadRows() {
+        loadRows()
+    }
+
+
     private fun showSnackbar(id: Int) {
         Toast.makeText(activity, getString(id), Toast.LENGTH_SHORT).show()
         /*
@@ -885,7 +930,20 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+
+        if( initialDialog != null ){
+            initialDialog?.dismiss()
+            initialDialog = null
+        }
         when (requestCode) {
+            READ_REQUEST_CODE -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val uri = data.data
+                    if (uri != null) {
+                        presenter_.onSelectFile(uri)
+                    }
+                }
+            }
             GameSelectPresenter.RC_GAME_SIGN_IN -> {
                 presenter_!!.onGameIdSignIn(resultCode, data)
             }
@@ -928,7 +986,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             } else {
                 updateBackGraound()
             }
-            YABAUSE_ACTIVITY -> if (BuildConfig.BUILD_TYPE != "pro") {
+            GameSelectPresenter.YABAUSE_ACTIVITY -> if (BuildConfig.BUILD_TYPE != "pro") {
                 val prefs = requireActivity().getSharedPreferences("private", Context.MODE_PRIVATE)
                 val hasDonated = prefs.getBoolean("donated", false)
                 if (hasDonated == false) {
@@ -964,6 +1022,8 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         mInterstitialAd!!.loadAd(adRequest)
     }
 
+    var refresh_level = 0
+
     companion object {
         private const val TAG = "GameSelectFragment"
         private const val BACKGROUND_UPDATE_DELAY = 300
@@ -973,9 +1033,6 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         private const val NUM_COLS = 15
         private const val REQUEST_INVITE = 0x1121
 
-        // public static final int RC_SIGN_IN = 123;
-        @JvmField
-        var refresh_level = 2
         @JvmField
         var isForeground: GameSelectFragment? = null
         private const val REQUEST_STORAGE = 1

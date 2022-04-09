@@ -195,7 +195,11 @@ void SH2HandleInterrupts(SH2_struct *context)
         context->regs.SR.part.I = level;
       }
       context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2), NULL);
-      LOG("[%s] Exception %u, vecnum=%02x, saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", 9, context->interrupts[context->NumberOfInterrupts - 1].vector, oldpc, context->regs.PC);
+
+      int Vector = context->interrupts[context->NumberOfInterrupts - 1].vector;
+      //LOG("**** [%s] Exception vecnum=%s(%x), PC=%08X to %08X, level=%08X\n", (context->isslave) ? "S" : "M", ScuGetVectorString(Vector), Vector, oldpc, context->regs.PC, level);
+
+      //LOG("[%s] Exception vecnum=%s(%x), saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", ScuGetVectorString(context->interrupts[context->NumberOfInterrupts - 1].vector), context->interrupts[context->NumberOfInterrupts - 1].vector,oldpc, context->regs.PC);
       context->NumberOfInterrupts--;
       context->isIdle = 0;
       context->isSleeping = 0;
@@ -220,33 +224,36 @@ static u32 FASTCALL FetchBios(u32 addr)
     }
   }
 
-#if CACHE_ENABLE
-   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-#else
+//#if CACHE_ENABLE
+//   u32 cycle = 0;
+//   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr,&cycle);
+//#else
    return T2ReadWord(BiosRom, addr & 0x7FFFF);
-#endif
+//#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchCs0(u32 addr)
 {
-#if CACHE_ENABLE
-   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-#else
+//#if CACHE_ENABLE
+ //  u32 cycle=0;
+ //  return cache_memory_read_w(&CurrentSH2->onchip.cache, addr,&cycle);
+//#else
    return CartridgeArea->Cs0ReadWord(addr);
-#endif
+//#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchLWram(u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-#else
+//#if CACHE_ENABLE
+//   u32 cycle=0;
+//	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr,&cycle);
+//#else
 	return T2ReadWord(LowWram, addr & 0xFFFFF);
-#endif
+//#endif
 
 }
 
@@ -254,11 +261,12 @@ static u32 FASTCALL FetchLWram(u32 addr)
 
 static u32 FASTCALL FetchHWram(u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-#else
+//#if CACHE_ENABLE
+//   u32 cycle=0;
+//	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr, &cycle);
+//#else
 	return T2ReadWord(HighWram, addr & 0xFFFFF);
-#endif
+//#endif
 }
 
 extern u8 * Vdp1Ram;
@@ -292,7 +300,7 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
    if ((addr & 0xC0000000) == 0xC0000000) sh->instruction = DataArrayReadWord(addr);
    else
 #endif
-   sh->instruction = fetchlist[(addr >> 20) & 0x0FF](addr);
+     sh->instruction = MappedMemoryReadInst(addr,NULL); //fetchlist[(addr >> 20) & 0x0FF](addr);
 
 #ifdef DMPHISTORY
    sh->pchistory_index++;
@@ -3118,7 +3126,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
       if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
       else
 #endif
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+      context->instruction = MappedMemoryReadInst(context->regs.PC, NULL); //fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       SH2HandleBackTrace(context);
       SH2HandleStepOverOut(context);
@@ -3168,7 +3176,9 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
       if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
       else
 #endif
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+      //context->instruction =  MappedMemoryReadWord(context->regs.PC,NULL);  //fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+
+        context->instruction = MappedMemoryReadInst(context->regs.PC, NULL);// fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       // Execute it
       opcodes[context->instruction](context);

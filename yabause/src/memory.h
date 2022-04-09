@@ -364,16 +364,17 @@ extern "C" {
   void MappedMemoryInit(void);
   u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle);
   u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle);
+  u16 FASTCALL MappedMemoryReadInst(u32 addr, u32 * cycle);
   u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle);
   void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle);
   void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle);
   void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val, u32 * cycle);
-  u8 FASTCALL MappedMemoryReadByteNocache(u32 addr);
-  u16 FASTCALL MappedMemoryReadWordNocache(u32 addr);
-  u32 FASTCALL MappedMemoryReadLongNocache(u32 addr);
-  void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val);
-  void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val);
-  void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val);
+  u8 FASTCALL MappedMemoryReadByteNocache(u32 addr, u32 * cycle);
+  u16 FASTCALL MappedMemoryReadWordNocache(u32 addr, u32 * cycle);
+  u32 FASTCALL MappedMemoryReadLongNocache(u32 addr, u32 * cycle);
+  void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val, u32 * cycle);
+  void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val, u32 * cycle);
+  void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val, u32 * cycle);
 
   extern u8 *HighWram;
   extern u8 *LowWram;

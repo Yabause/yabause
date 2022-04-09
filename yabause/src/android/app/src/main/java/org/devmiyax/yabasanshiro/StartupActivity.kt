@@ -26,11 +26,13 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.text.method.LinkMovementMethod
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.preference.ListPreference
 import androidx.preference.PreferenceManager
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -73,6 +75,28 @@ class StartupActivity : AppCompatActivity() {
         //}else{
         //    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         //}
+
+        // Set the proper aspect rate for running device at first time
+        val aspectRateSetting = sharedPref.getString("pref_aspect_rate","BAD")
+        if( aspectRateSetting == "BAD" ){
+            val editor = sharedPref.edit()
+
+            val displayMetrics = DisplayMetrics()
+            windowManager.defaultDisplay.getMetrics(displayMetrics)
+            val height = displayMetrics.heightPixels
+            val width = displayMetrics.widthPixels
+            val arate = width.toDouble() / height.toDouble()
+
+            if( arate >= 1.21 && arate <= 1.34 ){
+                // for 4:3 display force default setting is fullscreen
+                editor.putString("pref_aspect_rate", "3")
+            }else{
+                editor.putString("pref_aspect_rate", "0")
+            }
+
+            editor.apply()
+        }
+
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         val googleAPI = GoogleApiAvailability.getInstance()
         val resultCode = googleAPI.isGooglePlayServicesAvailable(this)
@@ -177,11 +201,13 @@ class StartupActivity : AppCompatActivity() {
             t2.movementMethod = LinkMovementMethod.getInstance()
 
             val b = findViewById<Button>(R.id.agree_and_start)
+            b.requestFocus()
             b.setOnClickListener {
                 prefs.edit().apply {
                     putBoolean("agreed",true)
                     commit()
                 }
+                v.visibility = View.GONE
                 handler.postDelayed(r, 1)
             }
             v.visibility = View.VISIBLE

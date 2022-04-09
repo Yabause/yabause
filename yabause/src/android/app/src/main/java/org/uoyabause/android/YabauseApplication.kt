@@ -98,7 +98,7 @@ class YabauseApplication : MultiDexApplication() {
             //    return 0
             //}
             var rtn = -1
-            if (BuildConfig.BUILD_TYPE != "pro") {
+            if (BuildConfig.BUILD_TYPE != "pro" && BuildConfig.BUILD_TYPE != "debug") {
                 val prefs = ctx.getSharedPreferences("private", MODE_PRIVATE)
                 val hasDonated = prefs.getBoolean("donated", false)
                 if (hasDonated == false ) {

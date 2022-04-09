@@ -1,5 +1,4 @@
-/*  src/thr-dummy.c: Dummy thread functions for systems without thread support
-    Copyright 2010 Andrew Church
+/*  Copyright 2012 Guillaume Duhamel
 
     This file is part of Yabause.
 
@@ -18,23 +17,24 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include "core.h"
-#include "threads.h"
+#ifndef SNDOBOE_H
+#define SNDOBOE_H
 
-//////////////////////////////////////////////////////////////////////////////
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-int YabThreadInit();
 
-int YabThreadStart(unsigned int id, const char * name. void (*func)(void *), void *arg) { return -1; }
+#define SNDCORE_OBOE 0x21
 
-void YabThreadWait(unsigned int id) {}
+#include "scsp.h"
 
-void YabThreadYield(void) {}
+extern SoundInterface_struct SNDOboe;
 
-void YabThreadSleep(void) {}
 
-void YabThreadRemoteSleep(unsigned int id) {}
+#ifdef __cplusplus
+}
+#endif
 
-void YabThreadWake(unsigned int id) {}
 
-//////////////////////////////////////////////////////////////////////////////
+#endif

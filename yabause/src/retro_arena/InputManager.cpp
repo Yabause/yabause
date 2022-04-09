@@ -142,7 +142,9 @@ uint32_t genidAnalogjson( int user, int joyId, const json & result ){
   return MAKE_PAD(0,((joyId << 18)|SDL_MEDIUM_AXIS_VALUE|result["id"].get<int>() ));
 }
 
+
 int setPlayerKeys( void * padbits, int user, int joyId, const json & player ){
+
     if( player.find("up") != player.end()) PerSetKey(genidjson(user,joyId,player["up"]),PERPAD_UP, padbits);
     if( player.find("down") != player.end()) PerSetKey(genidjson(user,joyId,player["down"]),PERPAD_DOWN, padbits);
     if( player.find("left") != player.end()) PerSetKey(genidjson(user,joyId,player["left"]),PERPAD_LEFT, padbits);
@@ -156,23 +158,24 @@ int setPlayerKeys( void * padbits, int user, int joyId, const json & player ){
     if( player.find("z") != player.end()) PerSetKey(genidjson(user,joyId,player["z"]),PERPAD_Z, padbits);
     if( player.find("l") != player.end()) PerSetKey(genidjson(user,joyId,player["l"]),PERPAD_LEFT_TRIGGER, padbits);
     if( player.find("r") != player.end())PerSetKey(genidjson(user,joyId,player["r"]),PERPAD_RIGHT_TRIGGER, padbits);    
-    if( player.find("analogx") != player.end())  {
-        PerSetKey(genidAnalogjson(user,joyId,player["analogx"]), PERANALOG_AXIS1, padbits);
-	InputManager::getInstance()->_analogType[joyId] = 0;
+
+    if( player.find("analogx") != player.end()) {
+      PerSetKey(genidAnalogjson(user,joyId,player["analogx"]), PERANALOG_AXIS1, padbits);
+      InputManager::getInstance()->_analogType[joyId] = 0;
     }
     if( player.find("analogy") != player.end()) {
         PerSetKey(genidAnalogjson(user,joyId,player["analogy"]), PERANALOG_AXIS2, padbits);
         InputManager::getInstance()->_analogType[joyId] = 0; 
     }
-    if( player.find("analogl") != player.end()) {
-        PerSetKey(genidAnalogjson(user,joyId,player["analogl"]), PERANALOG_AXIS4, padbits);
-	InputManager::getInstance()->_analogType[joyId] = 1;
+    if( player.find("analogleft") != player.end()) {
+      PerSetKey(genidAnalogjson(user,joyId,player["analogleft"]), PERANALOG_AXIS4, padbits);
+      InputManager::getInstance()->_analogType[joyId] = 1;
     }
-    if( player.find("analogr") != player.end()) {
-	PerSetKey(genidAnalogjson(user,joyId,player["analogr"]), PERANALOG_AXIS3, padbits);  
-	InputManager::getInstance()->_analogType[joyId] = 1; 
+    if( player.find("analogright") != player.end()) {
+      PerSetKey(genidAnalogjson(user,joyId,player["analogright"]), PERANALOG_AXIS3, padbits);  
+      InputManager::getInstance()->_analogType[joyId] = 1; 
     }
-
+    return 0;
 }
 
 void InputManager::genJoyString( string & out, SDL_JoystickID id, const string & name, const string & guid ){

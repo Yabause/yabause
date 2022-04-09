@@ -14,6 +14,8 @@ import android.os.Bundle
 import android.os.storage.StorageManager
 import android.os.storage.StorageVolume
 import android.text.InputType
+import android.util.DisplayMetrics
+import android.view.Display
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -131,10 +133,9 @@ class SettingsActivity : AppCompatActivity() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.preferences, rootKey)
 
-
             var dir = findPreference("pref_game_directory") as Preference?
             if ( dir != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                dir.isVisible = false
+            //    dir.isVisible = false
             }
 
             var installLocation = findPreference("pref_install_location") as ListPreference?
@@ -176,6 +177,7 @@ class SettingsActivity : AppCompatActivity() {
                         }.toMap()
                     }
                 }
+
 
                 var index = 0
                 map.forEach() { path,label ->
@@ -409,6 +411,8 @@ class SettingsActivity : AppCompatActivity() {
 
                 preference.setDirListChangeListener(this)
 
+                f = GameDirectoriesDialogFragment.newInstance(preference.getKey())
+                /*
                 // Above version 10
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                     var dir = YabauseStorage.storage.gamePath
@@ -423,6 +427,8 @@ class SettingsActivity : AppCompatActivity() {
                 } else {
                     f = GameDirectoriesDialogFragment.newInstance(preference.getKey())
                 }
+                */
+
             } else {
                 f = null
             }
@@ -441,16 +447,16 @@ class SettingsActivity : AppCompatActivity() {
             val defkey = "pref_" + player + "_inputdef_file"
             val sharedPref = PreferenceManager.getDefaultSharedPreferences(activity)
             val res = resources
-            val padm = PadManager.getPadManager()
+            val padm = PadManager.padManager
             val input_device =
                 preferenceManager.findPreference(devicekey) as ListPreference?
             val Inputlabels: MutableList<CharSequence> = ArrayList()
             val Inputvalues: MutableList<CharSequence> = ArrayList()
             Inputlabels.add(res.getString(R.string.onscreen_pad))
             Inputvalues.add("-1")
-            for (inputType in 0 until padm.deviceCount) {
-                Inputlabels.add(padm.getName(inputType))
-                Inputvalues.add(padm.getId(inputType))
+            for (inputType in 0 until padm!!.getDeviceCount()) {
+                Inputlabels.add(padm.getName(inputType)!!)
+                Inputvalues.add(padm.getId(inputType)!!)
             }
             input_device!!.entries = Inputlabels.toTypedArray()
             input_device.entryValues = Inputvalues.toTypedArray()

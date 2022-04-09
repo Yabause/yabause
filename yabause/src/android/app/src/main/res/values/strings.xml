@@ -69,6 +69,7 @@
     <string name="x_button">X</string>
     <string name="y_button">Y</string>
     <string name="z_button">Z</string>
+    <string name="menu">Menu</string>
 
     <string name="scale">Scale</string>
     <string name="transparency">Transparency</string>
@@ -159,6 +160,7 @@
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
     <string name="select_game_directory">Select Game Directory</string>
+    <string name="add_dir">Add</string>
 
     <string name="sound_curent">Current(High quality version for high-end devices)</string>
     <string name="sound_legacy">Legacy(for low-end devices)</string>
@@ -303,19 +305,24 @@
         <![CDATA[
         # Welcome! \n\n
 
-        To play SEGA Saturn games, you have three options.\n\n
+        To play SEGA Saturn games, you have four options.\n\n
 
         ## 1. Copy games to this Android device directly.\n
 
-        copy your ios images to **\"%1$s\"**.\n
+        copy your ISO images to **\"%1$s\"**.\n
 
         ## 2. Copy to an external SD card.\n
 
-        copy your ios images to **\"%2$s\"** on an SD card.\n
+        copy your ISO images to **\"%2$s\"** on an SD card.\n
 
         ## 3. Tap + button\n
 
-        If you already have CHD or zipped iso images files. Just tap + button and select the file.\n\n
+        If you already have CHD or zipped iso images files. Just tap + button and select the file. * You need a mouse on Android TV \n\n
+
+        ## 4. Select a directory that contains ISO images\n
+
+        [Setting] -> [Select Game Directory] -> [ADD] * You need a mouse on Android TV \n\n
+
 
         More detail is described in our web site [here](https://www.uoyabause.org/static_pages/guide).\n
 
@@ -368,6 +375,14 @@
     <string name="agreement">
     By Tapping START button, you agree to <a href="https://www.uoyabause.org/static_pages/eula">the End-User License Agreement</a>.
     Note: <a href="https://www.uoyabause.org/static_pages/privacy_policy"> The Privacy Policy </a> describes how data is handled. YabaSanshiro sends diagnostics data to devMiyax and third party services to help improve the app.
+    </string>
+
+    <string name="use_cpu_affinity">
+        Use CPU affinity
+    </string>
+
+    <string name="use_sh2_cache">
+        Use SH2 cache
     </string>
 
 </resources>

@@ -884,6 +884,99 @@ void CompileBlocks::opcodePass(x86op_desc *op, u16 opcode, u8 *ptr)
 #define Y_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define Y_MIN(a, b) ((a) < (b) ? (a) : (b))
 
+
+int CompileBlocks::overrideMemFunc( void* ptr, int i ) {
+
+#if defined(__aarch64__) || defined(__arm__)
+  const  int copysize = *asm_list[i].size;
+  memcpy((void*)ptr, (void*)(asm_list[i].func), copysize);
+  return 0;
+#else
+  const  int copysize = *asm_list[i].size;
+
+  if (copysize < 0) {
+    return -1;
+  }
+
+  u8 * override_func = (u8*)malloc(sizeof(u8)*copysize+4);
+  memcpy((void*)override_func, (void*)(asm_list[i].func), copysize);
+  
+  int hitcount = 0;
+  for (u16 funi = 0; funi < copysize-4 ; funi++) {
+    if (*(u32*)(&override_func[funi]) == (uintptr_t)memSetByte) {
+      hitcount++;
+      override_func[funi + 0] = ((uintptr_t)memSetByteNoCache >> 0) & 0xFF;
+      override_func[funi + 1] = ((uintptr_t)memSetByteNoCache >> 8) & 0xFF;
+      override_func[funi + 2] = ((uintptr_t)memSetByteNoCache >> 16) & 0xFF;
+      override_func[funi + 3] = ((uintptr_t)memSetByteNoCache >> 24) & 0xFF;
+
+      funi += 3;
+    }
+
+    if (*(u32*)(&override_func[funi]) == (uintptr_t)memSetWord) {
+      hitcount++;
+      override_func[funi + 0] = ((uintptr_t)memSetWordNoCache >> 0) & 0xFF;
+      override_func[funi + 1] = ((uintptr_t)memSetWordNoCache >> 8) & 0xFF;
+      override_func[funi + 2] = ((uintptr_t)memSetWordNoCache >> 16) & 0xFF;
+      override_func[funi + 3] = ((uintptr_t)memSetWordNoCache >> 24) & 0xFF;
+
+      funi += 3;
+    }
+
+    if (*(u32*)(&override_func[funi]) == (uintptr_t)memSetLong) {
+      hitcount++;
+      override_func[funi + 0] = ((uintptr_t)memSetLongNoCache >> 0) & 0xFF;
+      override_func[funi + 1] = ((uintptr_t)memSetLongNoCache >> 8) & 0xFF;
+      override_func[funi + 2] = ((uintptr_t)memSetLongNoCache >> 16) & 0xFF;
+      override_func[funi + 3] = ((uintptr_t)memSetLongNoCache >> 24) & 0xFF;
+
+      funi += 3;
+    }
+
+    if (*(u32*)(&override_func[funi]) == (uintptr_t)memGetByte) {
+      hitcount++;
+      override_func[funi + 0] = ((uintptr_t)memGetByteNoCache >> 0) & 0xFF;
+      override_func[funi + 1] = ((uintptr_t)memGetByteNoCache >> 8) & 0xFF;
+      override_func[funi + 2] = ((uintptr_t)memGetByteNoCache >> 16) & 0xFF;
+      override_func[funi + 3] = ((uintptr_t)memGetByteNoCache >> 24) & 0xFF;
+
+      funi += 3;
+    }
+
+    if (*(u32*)(&override_func[funi]) == (uintptr_t)memGetWord) {
+      hitcount++;
+      override_func[funi + 0] = ((uintptr_t)memGetWordNoCache >> 0) & 0xFF;
+      override_func[funi + 1] = ((uintptr_t)memGetWordNoCache >> 8) & 0xFF;
+      override_func[funi + 2] = ((uintptr_t)memGetWordNoCache >> 16) & 0xFF;
+      override_func[funi + 3] = ((uintptr_t)memGetWordNoCache >> 24) & 0xFF;
+
+      funi += 3;
+    }
+
+    if (*(u32*)(&override_func[funi]) == (uintptr_t)memSetLong) {
+      hitcount++;
+      override_func[funi + 0] = ((uintptr_t)memGetLongNoCache >> 0) & 0xFF;
+      override_func[funi + 1] = ((uintptr_t)memGetLongNoCache >> 8) & 0xFF;
+      override_func[funi + 2] = ((uintptr_t)memGetLongNoCache >> 16) & 0xFF;
+      override_func[funi + 3] = ((uintptr_t)memGetLongNoCache >> 24) & 0xFF;
+
+      funi += 3;
+    }
+
+  }
+
+  if (hitcount > 0) {
+    memcpy((void*)ptr, (void*)override_func, copysize);
+  }
+  else {
+    memcpy((void*)ptr, (void*)(asm_list[i].func), copysize);
+  }
+  free(override_func);
+#endif  
+  return 0;
+}
+
+
 int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 {
   int i, j, jmp = 0, count = 0;
@@ -933,14 +1026,14 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   page->flags = 0;
   
 #ifdef BUILD_INFO  
-  if( show_code_ ) LOG("*********** start block %08X *************\n", addr );
+  if( show_code_ ) LOG("*********** [%s] start block %08X *************\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", addr );
 #endif
   //LOG("Compile %08X\n", addr );
   //MaxSize = MAXBLOCKSIZE - MAXINSTRSIZE- delay_seperator_size - SEPERATORSIZE_DELAY_AFTER - nomal_seperator_size - EPILOGSIZE;
   //while (ptr - startptr < MaxSize) {
   while (1) {
     // translate the opcode and insert code
-    op = MappedMemoryReadWord(addr, NULL);
+    op = MappedMemoryReadInst(addr, NULL);
 #ifdef SET_DIRTY
     if (ParentT) {
       u32 keepaddr = adress_mask(addr);
@@ -965,7 +1058,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }else if(delay == 1 || delay == 5) {
       calsize = (ptr - startptr) + *asm_list[i].size + nomal_seperator_size + Y_MAX(internal_jmp_size,DELAYJUMPSIZE) + EPILOGSIZE;
     } else {
-      u32 op2 = memGetWord(addr+2);
+      u32 op2 = MappedMemoryReadInst(addr+2,NULL);
       u32 delayop = dsh2_instructions[op2];
       calsize = (ptr - startptr) + *asm_list[i].size + *asm_list[delayop].size + 
       delay_seperator_size + Y_MAX(internal_delay_jmp_size,SEPERATORSIZE_DELAY_AFTER) + EPILOGSIZE;
@@ -976,7 +1069,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }else if(delay == 1 || delay == 5) {
       calsize = (ptr - startptr) + *asm_list[i].size + nomal_seperator_size + DELAYJUMPSIZE + EPILOGSIZE;
     } else {
-      u32 op2 = MappedMemoryReadWord(addr+2,NULL);
+      u32 op2 = MappedMemoryReadInst(addr+2,NULL);
       u32 delayop = dsh2_instructions[op2];
       calsize = (ptr - startptr) + *asm_list[i].size + *asm_list[delayop].size + delay_seperator_size + SEPERATORSIZE_DELAY_AFTER + EPILOGSIZE;
     }
@@ -991,7 +1084,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 
     // Inifinity Loop Detection
     if (count == 0 && (op & 0xF00F) == 0x6000) { // mov ? R0
-      u32 loopcheck = memGetLong(addr + 2);
+      u32 loopcheck = MappedMemoryReadLong(addr + 2,NULL);
       if ((loopcheck & 0xFF00FFFF) == 0xC80089FC) { // test, bf
         page->flags |= BLOCK_LOOP;
       }
@@ -1039,8 +1132,15 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 
 
     // Regular Opcode ( No Delay Branch )
-    if (asm_list[i].delay == 0) { 
-      memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
+    if (asm_list[i].delay == 0) {
+
+      if (!yabsys.use_sh2_cache) {
+        overrideMemFunc(ptr, i);
+      }
+      else {
+        memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
+      }
+
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)nomal_seperator, nomal_seperator_size);
       instrSize[blockCount][count++] = *(asm_list[i].size) + nomal_seperator_size;
       opcodePass(&asm_list[i], op, ptr);
@@ -1056,8 +1156,15 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }
 
     // No Intrupt Func ToDo: Never end block these functions
-    else if (asm_list[i].delay == 0xFF ) { 
-      memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
+    else if (asm_list[i].delay == 0xFF ) {
+
+      if (!yabsys.use_sh2_cache) {
+        overrideMemFunc(ptr, i);
+      }
+      else {
+        memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
+      }
+
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)nomal_seperator, nomal_seperator_size);
       instrSize[blockCount][count++] = *(asm_list[i].size) + nomal_seperator_size;
       opcodePass(&asm_list[i], op, ptr);
@@ -1066,7 +1173,14 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 
     // Normal Jump
     else if (asm_list[i].delay == 1 || asm_list[i].delay == 5 ) { 
-      memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
+
+      if (!yabsys.use_sh2_cache) {
+        overrideMemFunc(ptr, i);
+      }
+      else {
+        memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
+      }
+
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)nomal_seperator, nomal_seperator_size);
       if (jumpptr != 0xFFFFFFFF ) {
         intptr_t offset = *(asm_list[i].size) + nomal_seperator_size;
@@ -1111,14 +1225,22 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     else { 
 
       u32 cycle = asm_list[i].cycle;
-      memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
+      //memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
+
+      if (!yabsys.use_sh2_cache) {
+        overrideMemFunc(ptr, i);
+      }
+      else {
+        memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
+      }
+
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)delay_seperator, delay_seperator_size);
       instrSize[blockCount][count++] = *(asm_list[i].size) + delay_seperator_size;
       opcodePass(&asm_list[i], op, ptr);
       ptr += *(asm_list[i].size) + delay_seperator_size;
 
       // Get NExt instruction
-      temp = MappedMemoryReadWord(addr,NULL);
+      temp = MappedMemoryReadInst(addr,NULL);
 #ifdef SET_DIRTY
       if (ParentT) {
         u32 keepaddr = adress_mask(addr);
@@ -1145,7 +1267,16 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       cycle += asm_list[j].cycle;
       
       intptr_t offset = 0;
-      memcpy((void*)ptr, (void*)(asm_list[j].func), *(asm_list[j].size));
+      
+
+      if (!yabsys.use_sh2_cache) {
+        overrideMemFunc(ptr, j);
+      }
+      else {
+        memcpy((void*)ptr, (void*)(asm_list[j].func), *(asm_list[j].size));
+      }
+
+
       offset = *(asm_list[j].size);
 
       // internal loop
@@ -1268,12 +1399,27 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 
 DynarecSh2::DynarecSh2() {
   m_pDynaSh2     = new tagSH2;
-  m_pDynaSh2->getmembyte = (uintptr_t)memGetByte;
-  m_pDynaSh2->getmemword = (uintptr_t)memGetWord;
-  m_pDynaSh2->getmemlong = (uintptr_t)memGetLong;
-  m_pDynaSh2->setmembyte = (uintptr_t)memSetByte;
-  m_pDynaSh2->setmemword = (uintptr_t)memSetWord;
-  m_pDynaSh2->setmemlong = (uintptr_t)memSetLong;
+
+#if CACHE_ENABLE
+  if (yabsys.use_sh2_cache) {
+    m_pDynaSh2->getmembyte = (uintptr_t)memGetByte;
+    m_pDynaSh2->getmemword = (uintptr_t)memGetWord;
+    m_pDynaSh2->getmemlong = (uintptr_t)memGetLong;
+    m_pDynaSh2->setmembyte = (uintptr_t)memSetByte;
+    m_pDynaSh2->setmemword = (uintptr_t)memSetWord;
+    m_pDynaSh2->setmemlong = (uintptr_t)memSetLong;
+  }
+  else 
+#endif  
+  {
+    m_pDynaSh2->getmembyte = (uintptr_t)memGetByteNoCache;
+    m_pDynaSh2->getmemword = (uintptr_t)memGetWordNoCache;
+    m_pDynaSh2->getmemlong = (uintptr_t)memGetLongNoCache;
+    m_pDynaSh2->setmembyte = (uintptr_t)memSetByteNoCache;
+    m_pDynaSh2->setmemword = (uintptr_t)memSetWordNoCache;
+    m_pDynaSh2->setmemlong = (uintptr_t)memSetLongNoCache;
+  }
+
   m_pDynaSh2->eachclock = (uintptr_t)DebugEachClock;
 
   m_pCompiler = CompileBlocks::getInstance();
@@ -1296,14 +1442,17 @@ DynarecSh2::~DynarecSh2(){
 }
 
 void DynarecSh2::ResetCPU(){
+
+  u32 cycle = 0;
+
   memset((void*)m_pDynaSh2->GenReg, 0, sizeof(u32) * 16);
   memset((void*)m_pDynaSh2->CtrlReg, 0, sizeof(u32) * 3);
   memset((void*)m_pDynaSh2->SysReg, 0, sizeof(u32) * 6);
 
   m_pDynaSh2->CtrlReg[0] = 0x000000;  // SR
   m_pDynaSh2->CtrlReg[2] = 0x000000; // VBR
-  m_pDynaSh2->SysReg[3] = MappedMemoryReadLong(m_pDynaSh2->CtrlReg[2],NULL);
-  m_pDynaSh2->GenReg[15] = MappedMemoryReadLong(m_pDynaSh2->CtrlReg[2] + 4,NULL);
+  m_pDynaSh2->SysReg[3] = MappedMemoryReadLongNocache(m_pDynaSh2->CtrlReg[2],&cycle);
+  m_pDynaSh2->GenReg[15] = MappedMemoryReadLongNocache(m_pDynaSh2->CtrlReg[2] + 4,&cycle);
   m_pDynaSh2->SysReg[4] = 0;
   m_pDynaSh2->SysReg[5] = 0;
   pre_cnt_ = 0;
@@ -1376,11 +1525,11 @@ void DynarecSh2::Undecoded(){
   LOG("Undecoded %08X", GET_PC());
   // Save regs.SR on stack
   GetGenRegPtr()[15] -= 4;
-  memSetLong(GetGenRegPtr()[15], GET_SR());
+  MappedMemoryWriteLong(GetGenRegPtr()[15], GET_SR(),NULL);
 
   // Save regs.PC on stack
   GetGenRegPtr()[15] -= 4;
-  memSetLong(GetGenRegPtr()[15], GET_PC()+2);
+  MappedMemoryWriteLong(GetGenRegPtr()[15], GET_PC()+2, NULL);
 
 
   // What caused the exception? The delay slot or a general instruction?
@@ -1388,7 +1537,7 @@ void DynarecSh2::Undecoded(){
   u32 vectnum = 4; //  Fix me
 
   // Jump to Exception service routine
-  u32 newpc = memGetLong(GET_VBR() + (vectnum << 2));
+  u32 newpc = MappedMemoryReadLong(GET_VBR() + (vectnum << 2),NULL);
   SET_PC(newpc);
 
   return;
@@ -1639,15 +1788,15 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
       m_pDynaSh2->CtrlReg[0] &= ~0x000000F0;
       m_pDynaSh2->CtrlReg[0] |= ((u32)(level << 4) & 0x000000F0);
     }
-    m_pDynaSh2->SysReg[3] = memGetLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2));
+    m_pDynaSh2->SysReg[3] = MappedMemoryReadLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2),NULL);
 
-    //LOG("**** [%s] Exception vecnum=%s(%x), PC=%08X to %08X, level=%08X\n", (is_slave_ == false) ? "M" : "S", ScuGetVectorString(Vector), Vector,prepc, m_pDynaSh2->SysReg[3], level);
+    LOG("**** [%s] Exception vecnum=%s(%x), PC=%08X to %08X, level=%08X\n", (is_slave_ == false) ? "M" : "S", ScuGetVectorString(Vector), Vector,prepc, m_pDynaSh2->SysReg[3], level);
 
 #if defined(DEBUG_CPU)
 //    LOG("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X\n", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level);
 #endif
     return 1;
-  }
+  } 
   return 0; 
 }
 
@@ -1656,7 +1805,7 @@ int DynarecSh2GetDisasmebleString(string & out, u32 from, u32 to) {
   char linebuf[128];
   if (from > to) return -1;
   for (u32 i = from; i < (to+2); i += 2) {
-    SH2Disasm(i, MappedMemoryReadWord(i,NULL), 0, NULL, linebuf);
+    SH2Disasm(i, MappedMemoryReadInst(i,NULL), 0, NULL, linebuf);
     out += linebuf;
     out += "\n";
   }

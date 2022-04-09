@@ -628,6 +628,10 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
   unsigned int * new_texture[2];
   GLuint error;
 
+  //u32 texsize[32];
+  //glGetIntegerv(GL_MAX_TEXTURE_SIZE, texsize);
+  //printf("texsize %d",texsize[0]);
+
   Vdp2RgbTextureSync();
 
   if (tm->texture_in[tm->current] != NULL) {
@@ -1551,7 +1555,7 @@ int YglInit(int width, int height, unsigned int depth) {
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  YglTM = YglTMInit(512, 512);
+  YglTM = YglTMInit(768, 2048);
 
   _Ygl->smallfbo = 0;
   _Ygl->smallfbotex = 0;

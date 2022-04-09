@@ -490,7 +490,7 @@ void fill_alfo_tables()
 void op1(struct Slot * slot)
 {
    u32 oct = slot->regs.oct ^ 8;
-   u32 fns = slot->regs.fns ^ 0x400;
+   u32 fns = 0x400 ^ slot->regs.fns;
    u32 phase_increment = fns << oct;
    int plfo_val = 0;
    int plfo_shifted = 0;
@@ -1105,10 +1105,10 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
       slot->regs.unknown3 = (data >> 7) & 1;
       slot->regs.oct = (data >> 3) & 0xf;
       slot->regs.unknown4 = (data >> 2) & 1;
-      slot->regs.fns = (slot->regs.fns & 0xff) | ((data & 3) << 8);
+      slot->regs.fns = (slot->regs.fns & 0xff) | ((data & 0x7) << 8);
       break;
    case 17:
-      slot->regs.fns = (slot->regs.fns & 0x300) | data;
+      slot->regs.fns = (slot->regs.fns & 0x700) | data;
       break;
    case 18:
       slot->regs.re = (data >> 7) & 1;
@@ -1317,7 +1317,7 @@ void scsp_slot_write_word(struct Scsp *s, u32 addr, u16 data)
       slot->regs.unknown3 = (data >> 15) & 1;
       slot->regs.unknown4 = (data >> 10) & 1;
       slot->regs.oct = (data >> 11) & 0xf;
-      slot->regs.fns = data & 0x3ff;
+      slot->regs.fns = data & 0x7ff;
       break;
    case 9:
       slot->regs.re = (data >> 15) & 1;
@@ -5511,7 +5511,9 @@ void ScspAsynMainCpuTime( void * p ){
   struct timespec tm;
   setpriority( PRIO_PROCESS, 0, -20);
 #endif
-  YabThreadSetCurrentThreadAffinityMask( 0x03 );
+  if( yabsys.use_cpu_affinity ){
+    YabThreadSetCurrentThreadAffinityMask( YabThreadGetFastestCpuIndex() );
+  }
   before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
   u32 wait_clock = 0;
   u64 pre_m68k_cycle = 0;
@@ -5608,7 +5610,10 @@ void ScspAsynMainRealtime(void * p) {
 
   const u32 base_clock = (u32)((644.8412698 / ((double)samplecnt / (double)step)) * (1 << CLOCK_SYNC_SHIFT));
 
-  YabThreadSetCurrentThreadAffinityMask(0x03);
+  if( yabsys.use_cpu_affinity ){
+    YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
+  }
+  
   before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
   u32 wait_clock = 0;
 
@@ -5749,10 +5754,10 @@ void ScspExec(){
   if (thread_running == 0){
     thread_running = 1;
     if (g_scsp_main_mode == 0) {
-      YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpuTime, NULL);
+      YabThreadStart(YAB_THREAD_SCSP, "scsp sync", ScspAsynMainCpuTime, NULL);
     }
     else {
-      YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainRealtime, NULL);
+      YabThreadStart(YAB_THREAD_SCSP, "scsp async", ScspAsynMainRealtime, NULL);
     }
     YabThreadUSleep(100000);
   }

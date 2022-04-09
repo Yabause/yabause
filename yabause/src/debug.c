@@ -187,13 +187,12 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
     {
       int i=0;
       int strnewhash = 0;
-#ifdef _WINDOWS
+#if !defined(ANDROID)
       static FILE * dfp = NULL;
       if (dfp == NULL){
         dfp = fopen("debug.txt", "w");
       }
-#endif
-#ifdef ANDROID
+#else
 //      static FILE * dfp = NULL;
 //      if (dfp == NULL){
 //       dfp = fopen("/mnt/sdcard/debug.txt", "w");
@@ -206,14 +205,13 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
         //OutputDebugString(strtmp);
         //d->output.callback(strtmp);
         OSDAddLogString(strtmp);
-#if defined(ANDROID) 
+#if !defined(ANDROID)
+        fprintf(dfp, "%s\n",strtmp);
+        fflush(dfp);
+#else        
         yprintf("%s",strtmp);
 //        fprintf(dfp, "%s\n",strtmp);
  //       fflush(dfp);
-#endif
-#if defined(_WINDOWS)
-        fprintf(dfp, "%s\n",strtmp);
-        fflush(dfp);
 #endif
       //}
       //strhash = strnewhash;

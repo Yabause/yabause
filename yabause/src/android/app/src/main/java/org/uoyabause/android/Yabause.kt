@@ -69,6 +69,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
+import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import androidx.preference.PreferenceManager
@@ -104,15 +105,12 @@ import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import org.apache.commons.io.FilenameUtils
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.json.JSONObject
 import org.uoyabause.android.FileDialog.FileSelectedListener
-import org.uoyabause.android.InputSettingFragment.InputSettingListener
 import org.uoyabause.android.PadManager.ShowMenuListener
 import org.uoyabause.android.PadTestFragment.PadTestListener
 import org.uoyabause.android.StateListFragment.Companion.checkMaxFileCount
@@ -121,6 +119,7 @@ import org.uoyabause.android.cheat.TabCheatFragment
 import org.uoyabause.android.game.BaseGame
 import org.uoyabause.android.game.GameUiEvent
 import org.uoyabause.android.game.SonicR
+import org.uoyabause.android.phone.GameSelectFragmentPhone
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -128,12 +127,17 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.net.URLDecoder
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Arrays
 import java.util.Date
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import android.util.DisplayMetrics
+
+
+
 
 internal enum class TrayState {
     OPEN,
@@ -181,6 +185,7 @@ class Yabause : AppCompatActivity(),
     private lateinit var progressMessage: TextView
 
     private val MENU_ID_LEADERBOARD = 0x8123
+    private val OPEN_FILE = 0x1234
 
     fun showWaitDialog(message: String) {
         progressMessage.text = message
@@ -231,6 +236,7 @@ class Yabause : AppCompatActivity(),
     }
 
     var mParcelFileDescriptor: ParcelFileDescriptor? = null
+    var subFileDescripters = mutableListOf<ParcelFileDescriptor>()
 
     private val apiscope = CoroutineScope(Dispatchers.IO)
 
@@ -261,7 +267,7 @@ class Yabause : AppCompatActivity(),
         progressBar = findViewById(R.id.llProgressBar)
         progressBar.visibility = View.GONE
         progressMessage = findViewById(R.id.pbText)
-
+/*
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 window.setSustainedPerformanceMode(true)
@@ -269,6 +275,7 @@ class Yabause : AppCompatActivity(),
         } catch (e: Exception) {
             // Do Nothing
         }
+ */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             window.attributes.layoutInDisplayCutoutMode =
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
@@ -343,6 +350,8 @@ class Yabause : AppCompatActivity(),
 
         val uriString: String? = intent.getStringExtra("org.uoyabause.android.FileNameUri")
         if (uriString != null) {
+            val fnameIndex = uriString.lastIndexOf("%2F", ignoreCase = true)
+            val fname = uriString.substring(fnameIndex+3)
             val uri = Uri.parse(uriString)
             var apath = ""
             try {
@@ -350,7 +359,7 @@ class Yabause : AppCompatActivity(),
                     if (mParcelFileDescriptor != null) {
                         val fd: Int? = mParcelFileDescriptor?.getFd()
                         if (fd != null) {
-                            apath = "/proc/self/fd/$fd"
+                            apath = "/proc/self/fd/$fd;${fname}"
                         }
                     }
             } catch (e: Exception) {
@@ -365,6 +374,13 @@ class Yabause : AppCompatActivity(),
                     return
             }
             gamePath = apath
+        }
+
+        val dirString: String? = intent.getStringExtra("org.uoyabause.android.FileDir")
+        if( dirString != null ){
+            currentDocumentUri = Uri.parse(dirString)
+        }else{
+            currentDocumentUri = null
         }
 
         Log.d(TAG, "File is " + gamePath)
@@ -435,9 +451,9 @@ class Yabause : AppCompatActivity(),
             navigationView.menu.removeItem(MENU_ID_LEADERBOARD)
         }
 
-        padManager = PadManager.getPadManager()
+        padManager = PadManager.padManager!!
         padManager.loadSettings()
-        padManager.setShowMenulistener(this)
+        padManager.showMenulistener = this //setShowMenulistener(this)
         waitingResult = false
         val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
 /*
@@ -871,7 +887,7 @@ class Yabause : AppCompatActivity(),
             }
             R.id.menu_item_pad_setting -> {
                 waitingResult = true
-                if (padManager.player1InputDevice == -1) { // Using pad?
+                if (padManager.getPlayer1InputDevice() == -1) { // Using pad?
                     val transaction = supportFragmentManager.beginTransaction()
                     val fragment = PadTestFragment.newInstance("hoge", "hoge")
                     fragment.setListener(this)
@@ -894,7 +910,7 @@ class Yabause : AppCompatActivity(),
             }
             R.id.menu_item_pad_setting_p2 -> {
                 waitingResult = true
-                if (padManager.player2InputDevice != -1) { // Using pad?
+                if (padManager.getPlayer2InputDevice() != -1) { // Using pad?
                     val newFragment = InputSettingFragment()
                     newFragment.setPlayerAndFilename(
                         SelInputDeviceFragment.PLAYER2,
@@ -918,9 +934,17 @@ class Yabause : AppCompatActivity(),
                     } else {
                         path = YabauseStorage.storage.gamePath
                     }
-                    val fd = FileDialog(this@Yabause, path)
-                    fd.addFileListener(this@Yabause)
-                    fd.showDialog()
+
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                        intent.addCategory(Intent.CATEGORY_OPENABLE)
+                        intent.type = "*/*"
+                        startActivityForResult(intent, OPEN_FILE)
+                    }else {
+                        val fd = FileDialog(this@Yabause, path)
+                        fd.addFileListener(this@Yabause)
+                        fd.showDialog()
+                    }
                 }
             }
             R.id.pad_mode -> {
@@ -984,6 +1008,11 @@ class Yabause : AppCompatActivity(),
                     Thread.sleep(1000)
                 } catch (e: InterruptedException) {
                 }
+                mParcelFileDescriptor?.close()
+                subFileDescripters.forEach {
+                    it.close()
+                }
+                subFileDescripters.clear()
                 finish()
                 killProcess(myPid())
             }
@@ -1005,6 +1034,9 @@ class Yabause : AppCompatActivity(),
                     override fun onComplete() {
                         // getSupportFragmentManager().popBackStack();
                         YabauseRunnable.lockGL()
+
+                        updateViewLayout(resources.configuration.orientation)
+
                         val gamePreference = getSharedPreferences(gameCode, Context.MODE_PRIVATE)
                         YabauseRunnable.enableRotateScreen(
                             if (gamePreference.getBoolean(
@@ -1025,15 +1057,13 @@ class Yabause : AppCompatActivity(),
                         val sKa: Int? =
                             gamePreference.getString("pref_polygon_generation", "0")?.toInt()
                         YabauseRunnable.setPolygonGenerationMode(sKa!!)
-                        YabauseRunnable.setAspectRateMode(
-                            gamePreference.getString(
-                                "pref_aspect_rate",
-                                "0"
-                            )?.toInt()!!
-                        )
-                        val resolution_setting: Int? =
-                            gamePreference.getString("pref_resolution", "0")?.toInt()!!
+
+                        val aspect = gamePreference.getString("pref_aspect_rate","0")?.toInt()
+                        YabauseRunnable.setAspectRateMode(aspect!!)
+
+                        val resolution_setting = gamePreference.getString("pref_resolution", "0")?.toInt()
                         YabauseRunnable.setResolutionMode(resolution_setting!!)
+
                         YabauseRunnable.enableComputeShader(
                             if (gamePreference.getBoolean(
                                     "pref_use_compute_shader",
@@ -1333,6 +1363,29 @@ class Yabause : AppCompatActivity(),
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
+            OPEN_FILE -> {
+                if( resultCode == Activity.RESULT_OK && data != null && data.data != null ) {
+                    val tmpParcelFileDescriptor = contentResolver.openFileDescriptor(data.data!!, "r")
+                    if (tmpParcelFileDescriptor != null) {
+                        gamePath = "/proc/self/fd/${tmpParcelFileDescriptor.getFd()};${data.data.toString()}"
+                        mParcelFileDescriptor?.close()
+                        mParcelFileDescriptor = tmpParcelFileDescriptor
+                    }else{
+                        Snackbar.make(
+                            drawerLayout,
+                            "Failed to Open file",
+                            Snackbar.LENGTH_SHORT
+                        ).show()
+                    }
+                }else{
+                    Snackbar.make(
+                        drawerLayout,
+                        "Failed to Open file",
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                }
+                YabauseRunnable.closeTray()
+            }
             MENU_ID_LEADERBOARD -> {
                 waitingResult = false
                 toggleMenu()
@@ -1428,12 +1481,15 @@ class Yabause : AppCompatActivity(),
         // Log.d("dispatchKeyEvent","device:" + event.getDeviceId() + ",action:" + action +",keyCoe:" + keyCode );
         if (action == KeyEvent.ACTION_UP) {
             val rtn = padManager.onKeyUp(keyCode, event)
-            if (rtn != 0) {
+            if( rtn == PadManager.TOGGLE_MENU){
+                toggleMenu()
+            }
+            if (rtn != PadManager.NO_ACTION_MAPPED) {
                 return true
             }
         } else if (action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
             val rtn = padManager.onKeyDown(keyCode, event)
-            if (rtn != 0) {
+            if (rtn != PadManager.NO_ACTION_MAPPED) {
                 return true
             }
         }
@@ -1524,6 +1580,7 @@ class Yabause : AppCompatActivity(),
     }
 
     private fun readPreferences(gamecode: String?) {
+
         setupInGamePreferences(this, gamecode)
 
         // ------------------------------------------------------------------------------------------------
@@ -1555,13 +1612,9 @@ class Yabause : AppCompatActivity(),
         val sKa: Int? = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
         YabauseRunnable.setPolygonGenerationMode(sKa!!)
 
-        // ToDo: list
-        // boolean keep_aspectrate = gamePreference.getBoolean("pref_keepaspectrate", true);
-        // if(keep_aspectrate) {
-        //  YabauseRunnable.setKeepAspect(1);
-        // }else {
-        //  YabauseRunnable.setKeepAspect(0);
-        // }
+        val aspect = gamePreference.getString("pref_aspect_rate","0")?.toInt()
+        YabauseRunnable.setAspectRateMode(aspect!!)
+
         val resolution_setting: Int? = gamePreference.getString("pref_resolution", "0")?.toInt()
         YabauseRunnable.setResolutionMode(resolution_setting!!)
         val rbg_resolution_setting: Int? =
@@ -1587,10 +1640,17 @@ class Yabause : AppCompatActivity(),
         }
         YabauseRunnable.setCpu(icpu!!.toInt())
         Log.d(TAG, "cpu $icpu")
+
+        val cpuAffinity = sharedPref.getBoolean("pref_use_cpu_affinity", true)
+        YabauseRunnable.setUseCpuAffinity(if (cpuAffinity) 1 else 0)
+
+        val sh2Cache = sharedPref.getBoolean("pref_use_sh2_cache", true)
+        YabauseRunnable.setUseSh2Cache(if (sh2Cache) 1 else 0)
+
+
         val ifilter: Int? = sharedPref.getString("pref_filter", "0")?.toInt()
         YabauseRunnable.setFilter(ifilter!!)
         Log.d(TAG, "setFilter $ifilter")
-        YabauseRunnable.setAspectRateMode(0)
         val audioout = sharedPref.getBoolean("pref_audio", true)
         if (audioout) {
             audio.unmute(audio.USER)
@@ -1636,6 +1696,8 @@ class Yabause : AppCompatActivity(),
         YabauseRunnable.setCpuSyncPerLine(cpu_sync!!)
         val scsp_time_sync: Int? = sharedPref.getString("scsp_time_sync_mode", "1")?.toInt()!!
         YabauseRunnable.setScspSyncTimeMode(scsp_time_sync!!)
+
+
         updateInputDevice()
     }
 
@@ -1648,13 +1710,13 @@ class Yabause : AppCompatActivity(),
 
         // InputDevice
         var selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535")
-        padManager = PadManager.updatePadManager()
-        padManager.setShowMenulistener(this)
+        padManager = PadManager.updatePadManager()!!
+        padManager.showMenulistener = this
         Log.d(TAG, "input $selInputdevice")
         // First time
         if (selInputdevice == "65535") {
             // if game pad is connected use it.
-            selInputdevice = if (padManager.deviceCount > 0) {
+            selInputdevice = if (padManager.getDeviceCount() > 0) {
                 padManager.setPlayer1InputDevice(null)
                 val editor = sharedPref.edit()
                 editor.putString("pref_player1_inputdevice", padManager.getId(0))
@@ -1709,21 +1771,21 @@ class Yabause : AppCompatActivity(),
         var analog = sharedPref.getBoolean("pref_analog_pad", false)
         val padv = findViewById<View>(R.id.yabause_pad) as YabausePad
         if (analog) {
-            padManager.setAnalogMode(PadManager.MODE_ANALOG)
+            padManager.analogMode = PadManager.MODE_ANALOG
             YabauseRunnable.switch_padmode(PadManager.MODE_ANALOG)
             padv.setPadMode(PadManager.MODE_ANALOG)
         } else {
-            padManager.setAnalogMode(PadManager.MODE_HAT)
+            padManager.analogMode = PadManager.MODE_HAT
             YabauseRunnable.switch_padmode(PadManager.MODE_HAT)
             padv.setPadMode(PadManager.MODE_HAT)
         }
         menu.findItem(R.id.pad_mode).isChecked = analog
         analog = sharedPref.getBoolean("pref_analog_pad2", false)
         if (analog) {
-            padManager.setAnalogMode2(PadManager.MODE_ANALOG)
+            padManager.analogMode2 = PadManager.MODE_ANALOG
             YabauseRunnable.switch_padmode2(PadManager.MODE_ANALOG)
         } else {
-            padManager.setAnalogMode2(PadManager.MODE_HAT)
+            padManager.analogMode2 = PadManager.MODE_HAT
             YabauseRunnable.switch_padmode2(PadManager.MODE_HAT)
         }
         menu.findItem(R.id.pad_mode_p2).isChecked = analog
@@ -1740,7 +1802,7 @@ class Yabause : AppCompatActivity(),
         get() = YabauseStorage.storage.getMemoryPath("memory.ram")
 
     val player2InputDevice: Int
-        get() = padManager.player2InputDevice
+        get() = padManager.getPlayer2InputDevice()
 
     val cartridgePath: String
         get() = YabauseStorage.storage
@@ -1772,8 +1834,8 @@ class Yabause : AppCompatActivity(),
         val menu = navigationView.menu
         val nav_pad_device = menu.findItem(R.id.menu_item_pad_device)
         val nav_pad_device_p2 = menu.findItem(R.id.menu_item_pad_device_p2)
-        padManager = PadManager.updatePadManager()
-        padManager.setShowMenulistener(this)
+        padManager = PadManager.updatePadManager()!!
+        padManager.showMenulistener = this
         if (padManager.getDeviceCount() > 0 && id != "-1") {
             when (target) {
                 SelInputDeviceFragment.PLAYER1 -> {
@@ -1847,6 +1909,43 @@ class Yabause : AppCompatActivity(),
         updateInputDevice()
         waitingResult = false
         toggleMenu()
+    }
+
+    var currentDocumentUri : Uri? = null
+    fun getFileDescriptorPath( fileName: String?):String?{
+
+        if( fileName == null ){
+            return null
+        }
+
+        val decodedResult: String = URLDecoder.decode(fileName, "UTF-8")
+
+        if( currentDocumentUri == null ){
+            return null
+        }
+
+        val dir = DocumentFile.fromTreeUri(YabauseApplication.appContext,currentDocumentUri!!)
+        if( dir == null ){
+            return null
+        }
+
+        //for (file in dir!!.listFiles()) {
+        //    Log.d("Yabause", "Found file " + file.name + " with size " + file.length())
+        //}
+
+        val files = dir.findFile(decodedResult)
+        if( files == null ){
+            return null
+        }
+
+        val parcelFileDescriptor = contentResolver.openFileDescriptor(files.uri, "r")
+        if (parcelFileDescriptor != null) {
+
+            subFileDescripters.add(parcelFileDescriptor)
+            val apath = "/proc/self/fd/${parcelFileDescriptor.fd}"
+            return apath
+        }
+        return null
     }
 
     fun onBackupWrite(before: ByteArray, after: ByteArray) {

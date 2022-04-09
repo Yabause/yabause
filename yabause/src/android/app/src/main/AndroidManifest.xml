@@ -67,6 +67,7 @@
         android:name="android.hardware.opengles.aep"
         android:required="false" />
 
+
     <application
         android:name="org.uoyabause.android.YabauseApplication"
         android:icon="@mipmap/ic_launcher"

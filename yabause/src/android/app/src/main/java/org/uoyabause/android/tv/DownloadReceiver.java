@@ -40,7 +40,7 @@ public class DownloadReceiver extends BroadcastReceiver {
         switch (action) {
             case DOWNLOAD_COMPLETE_NOTIFICATION:
                 Toast.makeText(context, intent.getStringExtra("filename") + " download is completed.", Toast.LENGTH_LONG).show();
-                GameSelectFragment.refresh_level = 3;
+                //GameSelectFragment.refresh_level = 3;
 
                 if( GameSelectFragment.isForeground != null ){
                     GameSelectFragment.isForeground.updateGameList();

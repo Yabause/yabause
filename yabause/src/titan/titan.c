@@ -402,11 +402,11 @@ int TitanInit()
          priority_thread_context.need_draw[i] = 0;
       }
 
-      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_0, VidsoftPriorityThread0, NULL);
-      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_1, VidsoftPriorityThread1, NULL);
-      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_2, VidsoftPriorityThread2, NULL);
-      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_3, VidsoftPriorityThread3, NULL);
-      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_4, VidsoftPriorityThread4, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_0, "YAB_THREAD_VIDSOFT_PRIORITY_0", VidsoftPriorityThread0, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_1, "YAB_THREAD_VIDSOFT_PRIORITY_1", VidsoftPriorityThread1, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_2, "YAB_THREAD_VIDSOFT_PRIORITY_2", VidsoftPriorityThread2, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_3, "YAB_THREAD_VIDSOFT_PRIORITY_3", VidsoftPriorityThread3, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_4, "YAB_THREAD_VIDSOFT_PRIORITY_4", VidsoftPriorityThread4, NULL);
 
       tt_context.inited = 1;
    }
