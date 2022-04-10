@@ -43,7 +43,6 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import org.uoyabause.android.phone.GameSelectActivityPhone
@@ -103,7 +102,7 @@ class StartupActivity : AppCompatActivity() {
         if (resultCode != ConnectionResult.SUCCESS) {
             Log.e(TAG, "This device is not supported.")
         }
-        Log.d(TAG, "InstanceID token: " + FirebaseInstanceId.getInstance().token)
+        //Log.d(TAG, "InstanceID token: " + FirebaseInstanceId.getInstance().token)
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser != null) {
             // already signed in
@@ -115,17 +114,8 @@ class StartupActivity : AppCompatActivity() {
         val r = Runnable {
 
             mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
-            val configSettings = FirebaseRemoteConfigSettings.Builder()
-                .setDeveloperModeEnabled(BuildConfig.DEBUG)
-                .build()
-            mFirebaseRemoteConfig!!.setConfigSettings(configSettings)
-            mFirebaseRemoteConfig!!.setDefaults(R.xml.config)
+            mFirebaseRemoteConfig!!.setDefaultsAsync(R.xml.config)
             var cacheExpiration: Long = 3600 // 1 hour in seconds.
-            // If your app is using developer mode, cacheExpiration is set to 0, so each fetch will
-            // retrieve values from the service.
-            if (mFirebaseRemoteConfig!!.info.configSettings.isDeveloperModeEnabled) {
-                cacheExpiration = 0
-            }
             mFirebaseRemoteConfig!!.fetch(cacheExpiration)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
@@ -134,7 +124,7 @@ class StartupActivity : AppCompatActivity() {
 
                         // After config data is successfully fetched, it must be activated before newly fetched
                         // values are returned.
-                        mFirebaseRemoteConfig!!.activateFetched()
+                        mFirebaseRemoteConfig!!.fetchAndActivate()
                     } else {
                         //Toast.makeText(GameSelectActivity.this, "Fetch Failed",
                         //        Toast.LENGTH_SHORT).show();

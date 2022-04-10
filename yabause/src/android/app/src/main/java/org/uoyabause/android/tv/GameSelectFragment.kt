@@ -72,13 +72,15 @@ import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
 import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
-import androidx.viewpager.widget.ViewPager
 import com.activeandroid.query.Select
+import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.InterstitialAd
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.analytics.HitBuilders
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -86,15 +88,6 @@ import com.google.firebase.auth.FirebaseAuth
 import io.noties.markwon.Markwon
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
-import java.io.File
-import java.lang.Exception
-import java.net.InetAddress
-import java.net.NetworkInterface
-import java.net.URI
-import java.net.URLDecoder
-import java.util.Calendar
-import java.util.Collections
-import java.util.Timer
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.devmiyax.yabasanshiro.StartupActivity
@@ -104,10 +97,14 @@ import org.uoyabause.android.GameSelectPresenter.GameSelectPresenterListener
 import org.uoyabause.android.ShowPinInFragment.Companion.newInstance
 import org.uoyabause.android.YabauseStorage.Companion.storage
 import org.uoyabause.android.download.IsoDownload
-import org.uoyabause.android.phone.GameSelectFragmentPhone
-import org.uoyabause.android.tv.GameSelectFragment.GridItemPresenter
-import org.uoyabause.android.tv.GameSelectFragment.ItemViewClickedListener
-import org.uoyabause.android.tv.GameSelectFragment.ItemViewSelectedListener
+import java.io.File
+import java.net.InetAddress
+import java.net.NetworkInterface
+import java.net.URI
+import java.net.URLDecoder
+import java.util.Collections
+import java.util.Timer
+
 
 class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     GameSelectPresenterListener {
@@ -198,7 +195,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
-        grantResults: IntArray
+        grantResults: IntArray,
     ) {
         if (requestCode == REQUEST_STORAGE) {
             Log.i(TAG, "Received response for contact permissions request.")
@@ -280,14 +277,9 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         val application = requireActivity().application as YabauseApplication
         mTracker = application.defaultTracker
         MobileAds.initialize(requireContext())
-        mInterstitialAd = InterstitialAd(requireActivity())
-        mInterstitialAd!!.adUnitId = requireActivity().getString(R.string.banner_ad_unit_id)
+
         requestNewInterstitial()
-        mInterstitialAd!!.adListener = object : AdListener() {
-            override fun onAdClosed() {
-                requestNewInterstitial()
-            }
-        }
+
         val intent = requireActivity().intent
         val uri = intent.data
         if (uri != null && !uri.pathSegments.isEmpty()) {
@@ -352,7 +344,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View? {
         v_ = super.onCreateView(inflater, container, savedInstanceState)
         val uiModeManager = requireActivity().getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
@@ -730,7 +722,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             itemViewHolder: Presenter.ViewHolder,
             item: Any,
             rowViewHolder: RowPresenter.ViewHolder,
-            row: Row
+            row: Row,
         ) {
             if (item is GameInfo) {
                 presenter_.startGame(item)
@@ -845,7 +837,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             itemViewHolder: Presenter.ViewHolder?,
             item: Any?,
             rowViewHolder: RowPresenter.ViewHolder?,
-            row: Row?
+            row: Row?,
         ) {
             // if (item instanceof Movie) {
             //   mBackgroundURI = ((Movie) item).getBackgroundImageURI();
@@ -995,8 +987,8 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                         val uiModeManager =
                             requireActivity().getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
                         if (uiModeManager.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION) {
-                            if (mInterstitialAd!!.isLoaded) {
-                                mInterstitialAd!!.show()
+                            if (mInterstitialAd != null) {
+                                mInterstitialAd!!.show(requireActivity())
                             } else {
                                 val intent = Intent(activity, AdActivity::class.java)
                                 startActivity(intent)
@@ -1017,9 +1009,38 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     }
 
     private fun requestNewInterstitial() {
-        val adRequest = AdRequest.Builder() // .addTestDevice("YOUR_DEVICE_HASH")
-            .build()
-        mInterstitialAd!!.loadAd(adRequest)
+        val adRequest = AdRequest.Builder().build()
+        InterstitialAd.load(requireActivity(), requireActivity().getString(R.string.banner_ad_unit_id), adRequest,
+            object : InterstitialAdLoadCallback() {
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                    // The mInterstitialAd reference will be null until
+                    // an ad is loaded.
+                    mInterstitialAd = interstitialAd
+                    //Log.i(BrowseSupportFragment.TAG, "onAdLoaded")
+                }
+
+                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                    // Handle the error
+                    //Log.i(BrowseSupportFragment.TAG, loadAdError.message)
+                    mInterstitialAd = null
+                }
+            })
+
+        mInterstitialAd?.fullScreenContentCallback = object: FullScreenContentCallback() {
+            override fun onAdDismissedFullScreenContent() {
+                Log.d(TAG, "Ad was dismissed.")
+                //requestNewInterstitial()
+            }
+
+            override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
+                Log.d(TAG, "Ad failed to show.")
+            }
+
+            override fun onAdShowedFullScreenContent() {
+                Log.d(TAG, "Ad showed fullscreen content.")
+                mInterstitialAd = null
+            }
+        }
     }
 
     var refresh_level = 0

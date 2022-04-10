@@ -82,7 +82,7 @@ class GameSelectActivityPhone : AppCompatActivity() {
             val hasDonated = prefs.getBoolean("donated", false)
             if (hasDonated == false) {
                 try {
-                    MobileAds.initialize(this, getString(R.string.ad_app_id))
+                    MobileAds.initialize(this)
                     adView = AdView(this)
                     adView!!.adUnitId = this.getString(R.string.banner_ad_unit_id)
                     adView!!.adSize = AdSize.BANNER
