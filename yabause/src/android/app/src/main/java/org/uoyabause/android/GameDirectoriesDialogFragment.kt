@@ -170,10 +170,11 @@ class GameDirectoriesDialogFragment : PreferenceDialogFragmentCompat(), View.OnC
     }
   }
 
-  override fun directorySelected(directory: File) {
-    adapter!!.addDirectory(directory.absolutePath)
-    adapter!!.notifyDataSetChanged()
-    //GameSelectPresenter.refresh_level_ = 3
+  override fun directorySelected(directory: File?) {
+    if( directory != null ) {
+      adapter!!.addDirectory(directory.absolutePath)
+      adapter!!.notifyDataSetChanged()
+    }
   }
 
   companion object {
@@ -185,4 +186,5 @@ class GameDirectoriesDialogFragment : PreferenceDialogFragmentCompat(), View.OnC
       return fragment
     }
   }
+
 }

@@ -47,12 +47,11 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import org.uoyabause.android.phone.GameSelectActivityPhone
 import org.uoyabause.android.tv.GameSelectActivity
-import org.uoyabause.util.IabHelper
 
 
 class StartupActivity : AppCompatActivity() {
     val TAG = "StartupActivity"
-    var mHelper: IabHelper? = null
+
     private var mFirebaseRemoteConfig: FirebaseRemoteConfig? = null
 
     private val purchasesUpdatedListener =
@@ -132,7 +131,7 @@ class StartupActivity : AppCompatActivity() {
                     //displayWelcomeMessage();
                 }
 
-
+/*
             billingClient = BillingClient.newBuilder(this)
                 .setListener(purchasesUpdatedListener)
                 .enablePendingPurchases()
@@ -149,7 +148,7 @@ class StartupActivity : AppCompatActivity() {
                     // Google Play by calling the startConnection() method.
                 }
             })
-
+*/
             val uiModeManager = getSystemService(UI_MODE_SERVICE) as UiModeManager
             val sharedPref = PreferenceManager.getDefaultSharedPreferences(this@StartupActivity)
             val tvmode = sharedPref.getBoolean("pref_force_androidtv_mode", false)

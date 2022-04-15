@@ -162,7 +162,7 @@ class BackupItemFragment : AuthFragment(),
         if (arguments != null) {
             currentpage_ = requireArguments().getInt("position")
         }
-        val jsonstr: String
+        val jsonstr: String?
         jsonstr = YabauseRunnable.getDevicelist()
         backup_devices_ = mutableListOf()
         try {
@@ -403,8 +403,8 @@ class BackupItemFragment : AuthFragment(),
     override fun onItemClick(
         currentpage: Int,
         position: Int,
-        backupitem: BackupItem,
-        v: View
+        backupitem: BackupItem?,
+        v: View?
     ) {
         val popup = PopupMenu(activity, v)
         val inflate = popup.menuInflater
@@ -413,6 +413,8 @@ class BackupItemFragment : AuthFragment(),
         popupMenu.findItem(R.id.copy_to_internal).isVisible = false
         popupMenu.findItem(R.id.copy_to_cloud).isVisible = false
         popupMenu.findItem(R.id.copy_to_external).isVisible = false
+        if( backupitem == null ) return
+        if( v == null ) return
         for (i in backup_devices_!!.indices) {
             if (currentpage != i) {
                 if (backup_devices_!![i].id_ == 0) {
@@ -544,7 +546,10 @@ class BackupItemFragment : AuthFragment(),
     }
 
     fun uploadToCloud(backupitemi: BackupItem) {
-        val jsonstr = YabauseRunnable.getFile(backupitemi.index_)
+        val jsonstr : String? = YabauseRunnable.getFile(backupitemi.index_)
+        if( jsonstr == null ){
+            return
+        }
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser == null) {
             return

@@ -855,7 +855,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
         val editor = sharedPref.edit()
         editor.putString("pref_last_dir", file.parent)
         editor.apply()
-        var gameinfo = GameInfo.getFromFileName(apath)
+        var gameinfo : GameInfo? = GameInfo.getFromFileName(apath)
         if (gameinfo == null) {
             gameinfo = if (apath.endsWith("CUE") || apath.endsWith("cue")) {
                 GameInfo.genGameInfoFromCUE(apath)

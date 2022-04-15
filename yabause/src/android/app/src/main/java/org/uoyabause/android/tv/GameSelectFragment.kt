@@ -74,7 +74,6 @@ import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
 import com.activeandroid.query.Select
 import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
@@ -96,7 +95,6 @@ import org.uoyabause.android.FileDialog.FileSelectedListener
 import org.uoyabause.android.GameSelectPresenter.GameSelectPresenterListener
 import org.uoyabause.android.ShowPinInFragment.Companion.newInstance
 import org.uoyabause.android.YabauseStorage.Companion.storage
-import org.uoyabause.android.download.IsoDownload
 import java.io.File
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -245,8 +243,10 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         }
     }
 
-    override fun fileSelected(file: File) {
-        presenter_!!.fileSelected(file)
+    override fun fileSelected(file: File?) {
+        if( file != null ) {
+            presenter_!!.fileSelected(file)
+        }
     }
 
     // @Override
@@ -733,33 +733,6 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                     presenter_.signOut()
                 } else if (item == getString(R.string.sign_in_to_other_devices)) {
                     newInstance(presenter_).show(childFragmentManager, "sample")
-                } else if (item.indexOf("Backup") >= 0) {
-                    val intent = Intent(activity, IsoDownload::class.java)
-                    val savepath: String?
-                    val ys = storage
-                    if (ys.hasExternalSD() == false) {
-                        savepath = ys.gamePath
-                    } else {
-                        val sharedPref = PreferenceManager.getDefaultSharedPreferences(
-                            activity)
-                        val sel = sharedPref.getString("pref_game_download_directory", "0")
-                        if (sel != null) {
-                            if (sel == "0") { // internal
-                                savepath = ys.gamePath
-                            } else if (sel == "1") { // external
-                                savepath = ys.externalGamePath
-                            } else {
-                                savepath = ys.gamePath // Error
-                            }
-                        } else {
-                            savepath = ys.gamePath // Error
-                        }
-                    }
-                    intent.putExtra("save_path", savepath)
-                    startActivityForResult(intent, DOWNLOAD_ACTIVITY)
-                    // FragmentTransaction ft = getFragmentManager().beginTransaction();
-                    // DownloadDialog newFragment = new DownloadDialog();
-                    // newFragment.show(ft, "dialog");
                 } else if (item == getString(R.string.setting)) {
                     val intent = Intent(activity, SettingsActivity::class.java)
                     startActivityForResult(intent, SETTING_ACTIVITY)
@@ -795,7 +768,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                             activity
                         )
                         val last_dir = sharedPref.getString("pref_last_dir", yabroot.path)
-                        val fd = FileDialog(activity, last_dir)
+                        val fd = FileDialog(requireActivity(), last_dir)
                         fd.addFileListener(this@GameSelectFragment)
                         fd.showDialog()
                     }

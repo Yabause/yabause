@@ -393,7 +393,7 @@ class Yabause : AppCompatActivity(),
         if (gameCode != null) {
             this.gameCode = gameCode
         } else {
-            var gameinfo = GameInfo.getFromFileName(gamePath)
+            var gameinfo : GameInfo? = GameInfo.getFromFileName(gamePath)
             if (gameinfo != null) {
                 this.gameCode = gameinfo.product_number
             } else {
@@ -588,30 +588,32 @@ class Yabause : AppCompatActivity(),
             }
             val save_path = YabauseStorage.storage.stateSavePath
             val current_gamecode = YabauseRunnable.getCurrentGameCode()
-            val save_root = File(YabauseStorage.storage.stateSavePath, current_gamecode)
-            if (!save_root.exists()) save_root.mkdir()
-            val save_filename = YabauseRunnable.savestate_compress(save_path + current_gamecode)
-            if (save_filename != "") {
-                val storage = FirebaseStorage.getInstance()
-                val storage_ref = storage.reference
-                val base = storage_ref.child(user.uid)
-                val backup = base.child("state")
-                val fileref = backup.child(current_gamecode)
-                val file = Uri.fromFile(File(save_filename))
-                val tsk = fileref.putFile(file)
-                tsk.addOnFailureListener { exception ->
-                    val stateFile = File(save_filename)
-                    if (stateFile.exists()) {
-                        stateFile.delete()
+            if( current_gamecode != null ) {
+                val save_root = File(YabauseStorage.storage.stateSavePath, current_gamecode)
+                if (!save_root.exists()) save_root.mkdir()
+                val save_filename = YabauseRunnable.savestate_compress(save_path + current_gamecode)
+                if (save_filename != "") {
+                    val storage = FirebaseStorage.getInstance()
+                    val storage_ref = storage.reference
+                    val base = storage_ref.child(user.uid)
+                    val backup = base.child("state")
+                    val fileref = backup.child(current_gamecode)
+                    val file = Uri.fromFile(File(save_filename))
+                    val tsk = fileref.putFile(file)
+                    tsk.addOnFailureListener { exception ->
+                        val stateFile = File(save_filename)
+                        if (stateFile.exists()) {
+                            stateFile.delete()
+                        }
+                        emitter.onError(exception)
+                    }.addOnSuccessListener {
+                        val stateFile = File(save_filename)
+                        if (stateFile.exists()) {
+                            stateFile.delete()
+                        }
+                        emitter.onNext("OK")
+                        emitter.onComplete()
                     }
-                    emitter.onError(exception)
-                }.addOnSuccessListener {
-                    val stateFile = File(save_filename)
-                    if (stateFile.exists()) {
-                        stateFile.delete()
-                    }
-                    emitter.onNext("OK")
-                    emitter.onComplete()
                 }
             }
         }).subscribeOn(Schedulers.computation())
@@ -632,28 +634,30 @@ class Yabause : AppCompatActivity(),
             val storage_ref = storage.reference
             val base = storage_ref.child(user.uid)
             val backup = base.child("state")
-            val fileref = backup.child(current_gamecode)
-            try {
-                val localFile = File.createTempFile("currentstate", "bin.z")
-                fileref.getFile(localFile).addOnSuccessListener(OnSuccessListener {
-                    try {
-                        if (localFile.exists()) {
-                            YabauseRunnable.loadstate_compress(localFile.absolutePath)
-                            localFile.delete()
+            if( current_gamecode != null ) {
+                val fileref = backup.child(current_gamecode)
+                try {
+                    val localFile = File.createTempFile("currentstate", "bin.z")
+                    fileref.getFile(localFile).addOnSuccessListener(OnSuccessListener {
+                        try {
+                            if (localFile.exists()) {
+                                YabauseRunnable.loadstate_compress(localFile.absolutePath)
+                                localFile.delete()
+                            }
+                            emitter.onNext("OK")
+                            emitter.onComplete()
+                        } catch (e: Exception) {
+                            emitter.onError(e)
+                            return@OnSuccessListener
                         }
-                        emitter.onNext("OK")
-                        emitter.onComplete()
-                    } catch (e: Exception) {
-                        emitter.onError(e)
-                        return@OnSuccessListener
-                    }
-                }).addOnFailureListener(OnFailureListener { exception ->
-                    localFile.delete()
-                    emitter.onError(exception)
-                    return@OnFailureListener
-                })
-            } catch (e: IOException) {
-                emitter.onError(e)
+                    }).addOnFailureListener(OnFailureListener { exception ->
+                        localFile.delete()
+                        emitter.onError(exception)
+                        return@OnFailureListener
+                    })
+                } catch (e: IOException) {
+                    emitter.onError(e)
+                }
             }
         }).subscribeOn(Schedulers.computation())
             .observeOn(AndroidSchedulers.mainThread())
@@ -712,7 +716,7 @@ class Yabause : AppCompatActivity(),
                 val save_root = File(YabauseStorage.storage.stateSavePath, current_gamecode)
                 if (!save_root.exists()) save_root.mkdir()
                 var save_filename = YabauseRunnable.savestate(save_path + current_gamecode)
-                if (save_filename != "") {
+                if (save_filename != null) {
                     val point = save_filename.lastIndexOf(".")
                     if (point != -1) {
                         save_filename = save_filename.substring(0, point)
@@ -1020,6 +1024,12 @@ class Yabause : AppCompatActivity(),
                 waitingResult = true
                 val transaction = supportFragmentManager.beginTransaction()
                 val currentGameCode = YabauseRunnable.getCurrentGameCode()
+                if( currentGameCode == null ) {
+                    waitingResult = false
+                    YabauseRunnable.resume()
+                    audio.unmute(audio.SYSTEM)
+                    return true
+                }
                 val fragment = InGamePreference(currentGameCode)
                 val observer: Observer<String?> = object : Observer<String?> {
                     // GithubRepositoryApiCompleteEventEntity eventResult = new GithubRepositoryApiCompleteEventEntity();
@@ -1119,9 +1129,11 @@ class Yabause : AppCompatActivity(),
     }
 
     // after disc change event
-    override fun fileSelected(file: File) {
-        gamePath = file.absolutePath
-        YabauseRunnable.closeTray()
+    override fun fileSelected(file: File?) {
+        if( file != null ) {
+            gamePath = file.absolutePath
+            YabauseRunnable.closeTray()
+        }
     }
 
     public override fun onPause() {
@@ -1220,17 +1232,17 @@ class Yabause : AppCompatActivity(),
 
     @JvmField
     var _report_status = REPORT_STATE_INIT
-    var cheat_codes: Array<String>? = null
-    fun updateCheatCode(cheat_codes: Array<String>?) {
+    var cheat_codes: Array<String?>? = null
+    fun updateCheatCode(cheat_codes: Array<String?>?) {
         this.cheat_codes = cheat_codes
         if (cheat_codes == null || cheat_codes.size == 0) {
             YabauseRunnable.updateCheat(null)
         } else {
             val send_codes = ArrayList<String>()
             for (i in cheat_codes.indices) {
-                val tmp = cheat_codes[i].split("\n".toRegex()).dropLastWhile { it.isEmpty() }
-                    .toTypedArray()
-                for (j in tmp.indices) {
+                val tmp = cheat_codes[i]?.split("\n".toRegex())?.dropLastWhile { it.isEmpty() }
+                    ?.toTypedArray()
+                for (j in tmp?.indices!!) {
                     send_codes.add(tmp[j])
                 }
             }
@@ -1344,7 +1356,11 @@ class Yabause : AppCompatActivity(),
             )
             val url = "https://www.uoyabause.org/api/"
             scope.launch {
-                asyncTask.report(url, YabauseRunnable.getCurrentGameCode())
+
+                val cg = YabauseRunnable.getCurrentGameCode()
+                if( cg != null ) {
+                    asyncTask.report(url, cg)
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, e.localizedMessage!!)
@@ -1828,7 +1844,7 @@ class Yabause : AppCompatActivity(),
     }
 
     override fun onDeviceUpdated(target: Int) {}
-    override fun onSelected(target: Int, name: String, id: String) {
+    override fun onSelected(target: Int, name: String?, id: String?) {
         val pad = findViewById<View>(R.id.yabause_pad) as YabausePad
         val navigationView = findViewById<View>(R.id.nav_view) as NavigationView
         val menu = navigationView.menu

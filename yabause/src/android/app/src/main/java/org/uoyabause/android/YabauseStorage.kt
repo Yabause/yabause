@@ -182,7 +182,7 @@ class YabauseStorage private constructor() {
     fun updateAllGameStatus(): Int {
         var con: HttpURLConnection? = null
         val urlstr: String
-        val lastupdate = GameStatus.getLastUpdate()
+        val lastupdate = GameStatus.lastUpdate
         urlstr = if (lastupdate == null) {
             "https://www.uoyabause.org/api/games/get_status_from/?date=20010101"
         } else {

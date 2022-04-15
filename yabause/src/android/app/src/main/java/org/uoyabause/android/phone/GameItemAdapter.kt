@@ -118,8 +118,8 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
                 rate += " " + game.device_infomation
             }
             textViewVersion.text = rate
-            if (game.image_url != "") { // try {
-                if (game.image_url.startsWith("http")) {
+            if (game.image_url != null && game.image_url != "") { // try {
+                if (game.image_url!!.startsWith("http")) {
                     Glide.with(ctx)
                         .load(game.image_url)
                         .into(imageView)

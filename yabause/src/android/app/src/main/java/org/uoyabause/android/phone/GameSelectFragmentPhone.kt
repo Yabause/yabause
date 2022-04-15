@@ -285,7 +285,7 @@ class GameSelectFragmentPhone : Fragment(),
                     val lastDir =
                         sharedPref.getString("pref_last_dir", YabauseStorage.storage.gamePath)
                     val fd =
-                        FileDialog(activity, lastDir)
+                        FileDialog(requireActivity(), lastDir)
                     fd.addFileListener(this)
                     fd.showDialog()
                 }
