@@ -23,12 +23,22 @@ import android.net.Uri
 import android.os.Environment
 import android.os.ParcelFileDescriptor
 import android.os.StatFs
+import android.provider.OpenableColumns
 import android.util.Log
+import android.widget.Toast
+import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceManager
 import com.activeandroid.ActiveAndroid
 import com.activeandroid.query.Select
 import io.reactivex.ObservableEmitter
-import net.nend.android.a.g.o
+import java.io.*
+import java.net.*
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.regex.Pattern
+import kotlin.collections.ArrayList
+import kotlin.collections.LinkedHashSet
+import kotlin.system.measureTimeMillis
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Credentials
@@ -43,21 +53,6 @@ import org.devmiyax.yabasanshiro.R
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import java.net.*
-import java.text.SimpleDateFormat
-import kotlin.system.measureTimeMillis
-import android.provider.MediaStore
-import android.provider.OpenableColumns
-import android.widget.Toast
-import androidx.core.net.toFile
-import androidx.documentfile.provider.DocumentFile
-import androidx.loader.content.CursorLoader
-import java.io.*
-import java.util.*
-import java.util.regex.Pattern
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashSet
-
 
 internal class BiosFilter : FilenameFilter {
     override fun accept(dir: File, filename: String): Boolean {
@@ -114,17 +109,21 @@ class YabauseStorage private constructor() {
         return bios.toString() + File.separator + biosfile
     }
 
-    fun setWebCdUrl(url: String){
+    fun setWebCdUrl(url: String) {
         webcdUrl = url
     }
 
     fun getGameFiles(other_dir_string: String): Array<String?> {
         val gameFiles = games.list(GameFilter())
-        Arrays.sort(gameFiles) { obj0, obj1 -> obj0.compareTo(obj1) }
+        if (gameFiles != null) {
+            Arrays.sort(gameFiles) { obj0, obj1 -> obj0.compareTo(obj1) }
+        }
         val selfiles = arrayOf(other_dir_string)
-        val allLists = arrayOfNulls<String>(selfiles.size + gameFiles.size)
+        val allLists = arrayOfNulls<String>(selfiles.size + (gameFiles?.size ?: 0))
         System.arraycopy(selfiles, 0, allLists, 0, selfiles.size)
-        System.arraycopy(gameFiles, 0, allLists, selfiles.size, gameFiles.size)
+        if (gameFiles != null) {
+            System.arraycopy(gameFiles, 0, allLists, selfiles.size, gameFiles.size)
+        }
         return allLists
     }
 
@@ -136,7 +135,7 @@ class YabauseStorage private constructor() {
         get() = games.toString() + File.separator
 
     fun setExternalStoragePath(expath: String?) {
-        external = File(expath)
+        external = expath?.let { File(it) }
     }
 
     fun hasExternalSD(): Boolean {
@@ -151,7 +150,7 @@ class YabauseStorage private constructor() {
         } else external.toString() + File.separator
 
     val memoryFiles: Array<String>
-        get() = memory.list(MemoryFilter())
+        get() = memory.list(MemoryFilter()) as Array<String>
 
     fun getMemoryPath(memoryfile: String): String {
         return memory.toString() + File.separator + memoryfile
@@ -180,7 +179,6 @@ class YabauseStorage private constructor() {
     }
 
     fun updateAllGameStatus(): Int {
-        var con: HttpURLConnection? = null
         val urlstr: String
         val lastupdate = GameStatus.lastUpdate
         urlstr = if (lastupdate == null) {
@@ -191,17 +189,17 @@ class YabauseStorage private constructor() {
             "https://www.uoyabause.org/api/games/get_status_from/?date=$date_string"
         }
         val ctx = YabauseApplication.appContext
-        val user = ctx!!.getString(R.string.basic_user)
-        val password = ctx!!.getString(R.string.basic_password)
+        val user = ctx.getString(R.string.basic_user)
+        val password = ctx.getString(R.string.basic_password)
 
-        var ar : JSONArray? = null
+        var ar: JSONArray? = null
 
         try {
             val url = URL(urlstr)
-            con = url.openConnection() as HttpURLConnection
+            val con = url.openConnection() as HttpURLConnection
             val authenticator: Authenticator = BasicAuthenticator(user, password)
             Authenticator.setDefault(authenticator)
-            con!!.requestMethod = "GET"
+            con.requestMethod = "GET"
             con.instanceFollowRedirects = false
             con.connect()
             if (con.responseCode != 200) {
@@ -216,7 +214,6 @@ class YabauseStorage private constructor() {
                     responseArray.write(buff, 0, length)
                 }
             }
-            val viewStrBuilder = StringBuilder()
             ar = JSONArray(String(responseArray.toByteArray()))
         } catch (e: MalformedURLException) {
             e.printStackTrace()
@@ -230,68 +227,61 @@ class YabauseStorage private constructor() {
         } catch (e: Exception) {
             e.printStackTrace()
             return -1
+        } finally {
+            if (ar == null) {
+                return -1
+            }
         }
-
-        if( ar == null ){
-            return -1
-        }
-
 
         try {
             ActiveAndroid.beginTransaction()
             for (i in 0 until ar.length()) {
-                var status: GameStatus? = null
-
-                val time = measureTimeMillis {
-                    val jsonObj = ar.getJSONObject(i)
-                    if (lastupdate == null) {
-                        status = GameStatus()
-                    } else {
-                        status = try {
-                            Select()
-                                .from(GameStatus::class.java)
-                                .where("product_number = ?", jsonObj.getString("product_number"))
-                                .executeSingle()
-                        } catch (e: Exception) {
-                            GameStatus()
-                        }
-                        if (status == null) {
-                            status = GameStatus()
-                        }
+                var status: GameStatus?
+                val jsonObj = ar.getJSONObject(i)
+                if (lastupdate == null) {
+                    status = GameStatus()
+                } else {
+                    status = try {
+                        Select()
+                            .from(GameStatus::class.java)
+                            .where("product_number = ?", jsonObj.getString("product_number"))
+                            .executeSingle()
+                    } catch (e: Exception) {
+                        GameStatus()
                     }
-                    status!!.product_number = jsonObj.getString("product_number")
-                    status!!.image_url = jsonObj.getString("image_url")
-                    val dateStr = jsonObj.getString("updated_at")
-                    val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.000Z'")
-                    status!!.update_at = sdf.parse(dateStr)
-                    status!!.rating = jsonObj.getInt("rating")
-                    status!!.save()
+                    if (status == null) {
+                        status = GameStatus()
+                    }
                 }
-                //Log.i("YabauseStorage", "updateing ${status?.product_number} : ${time}")
-                status?.product_number?.let { progress_emitter!!.onNext(it) }
+                status.product_number = jsonObj.getString("product_number")
+                status.image_url = jsonObj.getString("image_url")
+                val dateStr = jsonObj.getString("updated_at")
+                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.000Z'")
+                status.update_at = sdf.parse(dateStr)
+                status.rating = jsonObj.getInt("rating")
+                status.save()
+                status.product_number.let { progress_emitter!!.onNext(it) }
             }
             ActiveAndroid.setTransactionSuccessful()
-        }
-        finally {
+        } finally {
             ActiveAndroid.endTransaction()
         }
 
         return 0
     }
 
-    fun generateGameListFromWebServer(dir: String?) {
+    fun generateGameListFromWebServer() {
 
         val client = OkHttpClient()
 
-
         val ctx = YabauseApplication.appContext
-        val user: String = ctx!!.getString(R.string.basic_user)
-        val password: String = ctx!!.getString(R.string.basic_password)
+        val user: String = ctx.getString(R.string.basic_user)
+        val password: String = ctx.getString(R.string.basic_password)
 
         progress_emitter!!.onNext("game status")
 
         val requestStatus = Request.Builder()
-            .url("https://www.uoyabause.org//api/games/get_status_from/?date=1970/01/01T14:34:57" )
+            .url("https://www.uoyabause.org//api/games/get_status_from/?date=1970/01/01T14:34:57")
             .header("Authorization",
                 Credentials.basic(
                     user,
@@ -306,7 +296,6 @@ class YabauseStorage private constructor() {
 
         try {
 
-
             for (index in 0 until gameStatus.length()) {
 
                 val obj = gameStatus.getJSONObject(index)
@@ -314,22 +303,19 @@ class YabauseStorage private constructor() {
                 if (obj != null && number != null) {
                     gamesJ.put(number, obj)
                 }
-
             }
-        }catch( e: JSONException ){
-            Log.e("YabauseStorage", e.localizedMessage)
-
+        } catch (e: JSONException) {
+            e.localizedMessage?.let { Log.e("YabauseStorage", it) }
         }
-
 
         progress_emitter!!.onNext("game list")
 
         val request = Request.Builder()
-            .url(webcdUrl + "/games/list" )
+            .url(webcdUrl + "/games/list")
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
-                val responseBody = response.body()?.string().orEmpty()
+                //response.body()?.string().orEmpty()
             }
 
             override fun onFailure(call: Call, e: IOException) {
@@ -338,10 +324,9 @@ class YabauseStorage private constructor() {
         })
         val response = client.newCall(request).execute()
         if (!response.isSuccessful) throw IOException("Unexpected code $response")
-        //println(response.body()?.string())
+        // println(response.body()?.string())
 
         val gameList = JSONArray(response.body()?.string())
-
 
         for (i in 0 until gameList.length()) {
 
@@ -359,23 +344,21 @@ class YabauseStorage private constructor() {
                 g.input_device = jobj.getString("input_device")
                 g.device_infomation = jobj.getString("device_infomation")
                 g.game_title = jobj.getString("game_title")
-                //g.updateState()
+                // g.updateState()
 
                 try {
                     val obj = gamesJ.getJSONObject(g.product_number)
-                    if (obj != null) {
-                        g.image_url = obj.optString("image_url", "")
-                        g.rating = obj.optInt("rating", -1)
-                    }
-                }catch(e: JSONException){
-                    Log.e("YabauseStorage", e.localizedMessage)
+                    g.image_url = obj.optString("image_url", "")
+                    g.rating = obj.optInt("rating", -1)
+                } catch (e: JSONException) {
+                    e.localizedMessage?.let { Log.e("YabauseStorage", it) }
                 }
                 g.save()
                 if (progress_emitter != null) {
                     progress_emitter!!.onNext(g.game_title)
                 }
-            }catch(e: Exception){
-                Log.e("YabauseStorage", e.localizedMessage)
+            } catch (e: Exception) {
+                e.localizedMessage?.let { Log.e("YabauseStorage", it) }
             }
         }
     }
@@ -397,14 +380,14 @@ class YabauseStorage private constructor() {
     fun getRealPathFromURI(contentUri: Uri): String? {
         var cursor: Cursor? = null
         return try {
-            //val proj = arrayOf(MediaStore.Images.Media.DATA)
+            // val proj = arrayOf(MediaStore.Images.Media.DATA)
             cursor = YabauseApplication.appContext.getContentResolver()
                 .query(contentUri, null, null, null, null)
             val column_index = cursor!!.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
             cursor.moveToFirst()
             cursor.getString(column_index)
-        } catch( e :Exception){
-            Log.e("Yabause",e.localizedMessage)
+        } catch (e: Exception) {
+            e.localizedMessage?.let { Log.e("Yabause", it) }
             null
         } finally {
             cursor?.close()
@@ -425,21 +408,17 @@ class YabauseStorage private constructor() {
             "ISO",
             "CHD",
             "chd")
-        val filter: IOFileFilter = SuffixFileFilter(extensions, IOCase.INSENSITIVE)
+
         val recursive = true
+        if (dir?.contains("content://") == true) {
 
-
-
-        if( dir?.contains("content://") == true){
-
-            var uri = Uri.parse( dir )
+            var uri = Uri.parse(dir)
             val pickedDir = DocumentFile.fromTreeUri(YabauseApplication.appContext, uri)
             for (file in pickedDir!!.listFiles()) {
                 Log.d("Yabause", "Found file " + file.name + " with size " + file.length())
                 if (file.name!!.lowercase(Locale.ROOT).endsWith("chd")) {
                     var apath = ""
-                    var parcelFileDescriptor: ParcelFileDescriptor? = null
-                    parcelFileDescriptor =
+                    val parcelFileDescriptor =
                         YabauseApplication.appContext.contentResolver.openFileDescriptor(
                             file.uri,
                             "r"
@@ -451,8 +430,8 @@ class YabauseStorage private constructor() {
                         }
                         val gameinfo = GameInfo.genGameInfoFromCHD(apath)
                         if (gameinfo != null) {
-                            gameinfo.file_path = file.uri.toString();
-                            gameinfo.iso_file_path = uri.toString();
+                            gameinfo.file_path = file.uri.toString()
+                            gameinfo.iso_file_path = uri.toString()
                             gameinfo.updateState()
                             gameinfo.save()
                             if (progress_emitter != null) {
@@ -461,28 +440,26 @@ class YabauseStorage private constructor() {
                         }
                         parcelFileDescriptor.close()
                     }
+                } else if (file.name!!.lowercase(Locale.ROOT).endsWith("cue")) {
 
-                }else if(file.name!!.lowercase(Locale.ROOT).endsWith("cue")) {
-
-                    val stringBuilder = StringBuilder()
                     YabauseApplication.appContext.contentResolver.openInputStream(file.uri)?.use { inputStream ->
                         BufferedReader(InputStreamReader(inputStream)).use { reader ->
                             var line: String? = reader.readLine()
                             var iso_file_name = ""
                             while (line != null) {
-                                //System.out.println(str);
+                                // System.out.println(str);
                                 val p = Pattern.compile("FILE \"(.*)\"")
                                 val m = p.matcher(line)
                                 if (m.find()) {
-                                    iso_file_name = m.group(1)
+                                    iso_file_name = m.group(1) as String
                                     break
                                 }
                                 line = reader.readLine()
                             }
 
-                            val dir = DocumentFile.fromTreeUri(YabauseApplication.appContext, uri)
-                            val isoFile = dir?.findFile(iso_file_name)
-                            if( isoFile != null) {
+                            val dirDoc = DocumentFile.fromTreeUri(YabauseApplication.appContext, uri)
+                            val isoFile = dirDoc?.findFile(iso_file_name)
+                            if (isoFile != null) {
 
                                 YabauseApplication.appContext.contentResolver.openInputStream(isoFile.uri)?.use { inputStream ->
                                     val buff = ByteArray(0xFF)
@@ -491,10 +468,10 @@ class YabauseStorage private constructor() {
                                     )
                                     dataInStream.read(buff, 0x0, 0xFF)
                                     dataInStream.close()
-                                    val gameinfo = GameInfo.getGimeInfoFromBuf(file.uri.toString(),buff)
+                                    val gameinfo = GameInfo.getGimeInfoFromBuf(file.uri.toString(), buff)
                                     if (gameinfo != null) {
-                                        gameinfo.file_path = file.uri.toString();
-                                        gameinfo.iso_file_path = uri.toString();
+                                        gameinfo.file_path = file.uri.toString()
+                                        gameinfo.iso_file_path = uri.toString()
                                         gameinfo.updateState()
                                         gameinfo.save()
                                         if (progress_emitter != null) {
@@ -505,15 +482,15 @@ class YabauseStorage private constructor() {
                             }
                         }
                     }
-                }else if(file.name!!.lowercase(Locale.ROOT).endsWith("ccd")) {
-                    var realname = file.name!!.replace(".ccd",".img")
-                    val dir = DocumentFile.fromTreeUri(YabauseApplication.appContext, uri)
-                    var isoFile = dir?.findFile(realname)
-                    if( isoFile == null ){
-                        realname = file.name!!.replace(".ccd",".iso")
-                        isoFile = dir?.findFile(realname)
+                } else if (file.name!!.lowercase(Locale.ROOT).endsWith("ccd")) {
+                    var realname = file.name!!.replace(".ccd", ".img")
+                    val dirDoc = DocumentFile.fromTreeUri(YabauseApplication.appContext, uri)
+                    var isoFile = dirDoc?.findFile(realname)
+                    if (isoFile == null) {
+                        realname = file.name!!.replace(".ccd", ".iso")
+                        isoFile = dirDoc?.findFile(realname)
                     }
-                    if( isoFile != null) {
+                    if (isoFile != null) {
                         YabauseApplication.appContext.contentResolver.openInputStream(isoFile.uri)?.use { inputStream ->
                             val buff = ByteArray(0xFF)
                             val dataInStream = DataInputStream(
@@ -521,10 +498,10 @@ class YabauseStorage private constructor() {
                             )
                             dataInStream.read(buff, 0x0, 0xFF)
                             dataInStream.close()
-                            val gameinfo = GameInfo.getGimeInfoFromBuf(file.uri.toString(),buff)
+                            val gameinfo = GameInfo.getGimeInfoFromBuf(file.uri.toString(), buff)
                             if (gameinfo != null) {
-                                gameinfo.file_path = file.uri.toString();
-                                gameinfo.iso_file_path = uri.toString();
+                                gameinfo.file_path = file.uri.toString()
+                                gameinfo.iso_file_path = uri.toString()
                                 gameinfo.updateState()
                                 gameinfo.save()
                                 if (progress_emitter != null) {
@@ -533,18 +510,24 @@ class YabauseStorage private constructor() {
                             }
                         }
                     }
-                    //Toast.makeText(YabauseApplication.appContext,"ccd is not supported yet for SAF",Toast.LENGTH_LONG).show()
-                }else if(file.name!!.lowercase(Locale.ROOT).endsWith("mds")) {
-                    Toast.makeText(YabauseApplication.appContext,"mds is not supported yet for SAF",Toast.LENGTH_LONG).show()
+                    // Toast.makeText(YabauseApplication.appContext,"ccd is not supported yet for SAF",Toast.LENGTH_LONG).show()
+                } else if (file.name!!.lowercase(Locale.ROOT).endsWith("mds")) {
+                    Toast.makeText(YabauseApplication.appContext, "mds is not supported yet for SAF", Toast.LENGTH_LONG).show()
+                } else if (file.isDirectory()) {
+                    generateGameListFromDirectory(file.uri.toString())
                 }
             }
-        }else {
-            val gamedir = File(dir)
+        } else {
+            val gamedir = dir?.let { File(it) }
 
-            if (!gamedir.exists()) return
-            if (!gamedir.isDirectory) return
+            if (gamedir != null) {
+                if (!gamedir.exists()) return
+                if (!gamedir.isDirectory) return
+            }else{
+                return
+            }
+
             var iter = FileUtils.iterateFiles(gamedir, extensions, recursive)
-            val i = 0
             while (iter.hasNext()) {
                 val gamefile = iter.next()
                 val gamefile_name = gamefile.absolutePath
@@ -636,14 +619,12 @@ class YabauseStorage private constructor() {
         // val uniqueList: MutableList<String> = ArrayList()
         // uniqueList.addAll(list)
 
-
         val ulist = list.distinct()
         for (i in ulist.indices) {
             generateGameListFromDirectory(ulist[i])
         }
 
-
-        //generateGameListFromWebServer("http://dddd")
+        // generateGameListFromWebServer("http://dddd")
 
 /*
         // inDirect Format
@@ -694,13 +675,13 @@ class YabauseStorage private constructor() {
 */
     }
 
-    fun getInstallDir() : File {
+    fun getInstallDir(): File {
         val ctx = YabauseApplication.appContext
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx)
-        val path = sharedPref.getString("pref_install_location","0")
-        if(path=="0" || hasExternalSD() == false ){
+        val path = sharedPref.getString("pref_install_location", "0")
+        if (path == "0" || hasExternalSD() == false) {
             return games
-        }else {
+        } else {
             return external!!
         }
     }
@@ -718,14 +699,12 @@ class YabauseStorage private constructor() {
         const val REFRESH_LEVEL_REBUILD = 3
     }
 
-
-
     init {
-        var yabroot = File(YabauseApplication.appContext!!.getExternalFilesDir(null), "yabause")
+        var yabroot = File(YabauseApplication.appContext.getExternalFilesDir(null), "yabause")
 
         // Above version 10
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            val oldyabroot = File(Environment.getExternalStorageDirectory(), "yabause")
+            //val oldyabroot = File(Environment.getExternalStorageDirectory(), "yabause")
             // if (!yabroot.exists() && oldyabroot.exists()) {
             //    Files.move(oldyabroot.toPath(), yabroot.toPath(), StandardCopyOption.REPLACE_EXISTING)
             // }
@@ -750,7 +729,6 @@ class YabauseStorage private constructor() {
         if (!screenshots.exists()) screenshots.mkdir()
         record = File(yabroot, "record")
         if (!record.exists()) record.mkdir()
-
     }
 
     fun externalMemoryAvailable(): Boolean {
@@ -795,21 +773,21 @@ class YabauseStorage private constructor() {
     }
 
     fun formatSize(size: Long): String? {
-        var size = size
+        var lsize = size
         var suffix: String? = null
-        if (size >= 1024) {
+        if (lsize >= 1024) {
             suffix = "KB"
-            size /= 1024
-            if (size >= 1024) {
+            lsize /= 1024
+            if (lsize >= 1024) {
                 suffix = "MB"
-                size /= 1024
+                lsize /= 1024
             }
-            if (size >= 1024) {
+            if (lsize >= 1024) {
                 suffix = "GB"
-                size /= 1024
+                lsize /= 1024
             }
         }
-        val resultBuffer = java.lang.StringBuilder(java.lang.Long.toString(size))
+        val resultBuffer = java.lang.StringBuilder(java.lang.Long.toString(lsize))
         var commaOffset = resultBuffer.length - 3
         while (commaOffset > 0) {
             resultBuffer.insert(commaOffset, ',')

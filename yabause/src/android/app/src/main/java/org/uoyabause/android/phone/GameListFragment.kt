@@ -65,7 +65,7 @@ class GameListFragment : Fragment() {
         if (rootview_ != null) {
             recyclerView = rootview_!!.findViewById<View>(R.id.my_recycler_view) as RecyclerView
             recyclerView.setHasFixedSize(true)
-            recyclerView.itemAnimator = DefaultItemAnimator() as RecyclerView.ItemAnimator?
+            recyclerView.itemAnimator = DefaultItemAnimator()
 
             if (activity?.resources?.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 recyclerView.layoutManager = GridLayoutManager(activity, 2)

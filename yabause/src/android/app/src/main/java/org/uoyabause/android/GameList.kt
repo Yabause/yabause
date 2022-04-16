@@ -36,23 +36,17 @@
 */
 package org.uoyabause.android
 
-import org.uoyabause.android.YabauseStorage.Companion.storage
 import android.app.ListActivity
-import org.uoyabause.android.FileDialog.FileSelectedListener
-import android.os.Bundle
-import org.uoyabause.android.GameListAdapter
-import org.uoyabause.android.YabauseStorage
-import android.content.SharedPreferences
 import android.content.Intent
-import org.uoyabause.android.Yabause
-import org.uoyabause.android.GameList
-import android.app.Activity
+import android.os.Bundle
 import android.view.View
 import android.widget.ListView
 import androidx.preference.PreferenceManager
 import java.io.File
 import java.io.UnsupportedEncodingException
 import java.net.URLDecoder
+import org.uoyabause.android.FileDialog.FileSelectedListener
+import org.uoyabause.android.YabauseStorage.Companion.storage
 
 class GameList : ListActivity(), FileSelectedListener {
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,9 +60,9 @@ class GameList : ListActivity(), FileSelectedListener {
         if (position == 0) {
 
             // This method is not supported on Android TV
-            //Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            //intent.setType("file/*");
-            //startActivityForResult(intent, CHOSE_FILE_CODE);
+            // Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            // intent.setType("file/*");
+            // startActivityForResult(intent, CHOSE_FILE_CODE);
             val yabroot = File(storage.rootPath)
             val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
             val last_dir = sharedPref.getString("pref_last_dir", yabroot.path)
@@ -99,7 +93,6 @@ class GameList : ListActivity(), FileSelectedListener {
     override fun fileSelected(file: File?) {
         val string: String
         string = file!!.absolutePath
-        val storage = storage
 
         // save last selected dir
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
@@ -107,14 +100,6 @@ class GameList : ListActivity(), FileSelectedListener {
         editor.putString("pref_last_dir", file.parent)
         editor.apply()
 
-        /* seems it doesn't work
-		ProcessBuilder pb = new ProcessBuilder("ln", "-s", string, storage.getGamePath());
-		try {
-			Process p = pb.start();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		*/
         val intent = Intent(this, Yabause::class.java)
         intent.putExtra("org.uoyabause.android.FileNameEx", string)
         startActivity(intent)

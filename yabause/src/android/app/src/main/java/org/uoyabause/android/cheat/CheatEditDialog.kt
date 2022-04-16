@@ -18,42 +18,37 @@
 */
 package org.uoyabause.android.cheat
 
-import org.uoyabause.android.cheat.CheatEditDialog
-import org.uoyabause.android.cheat.Cheat
-import android.view.ViewGroup
-import android.view.LayoutInflater
-import org.devmiyax.yabasanshiro.R
-import android.widget.TextView
-import androidx.core.content.ContextCompat
-import android.widget.AdapterView
-import com.google.firebase.database.DatabaseReference
-import org.uoyabause.android.cheat.CheatListAdapter
-import android.widget.ArrayAdapter
-import android.content.DialogInterface
-import org.uoyabause.android.Yabause
-import android.os.Bundle
-import android.widget.EditText
-import android.widget.TextView.OnEditorActionListener
-import android.view.inputmethod.EditorInfo
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
-import androidx.fragment.app.DialogFragment
 import android.content.Context
+import android.content.DialogInterface
+import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.BaseAdapter
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ListAdapter
 import android.widget.ListView
-import androidx.fragment.app.FragmentActivity
-import org.uoyabause.android.cheat.CheatEditDialog.MenuDialogFragment
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import android.widget.TextView
+import android.widget.TextView.OnEditorActionListener
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.DialogFragment
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import java.util.ArrayList
+import org.devmiyax.yabasanshiro.R
+import org.uoyabause.android.Yabause
+import org.uoyabause.android.cheat.CheatEditDialog.MenuDialogFragment
 
 /**
  * Created by shinya on 2017/02/25.
@@ -73,10 +68,10 @@ class CheatListAdapter(parent: CheatEditDialog, list: MutableList<Cheat>?, conte
 
     override fun getItemId(pos: Int): Long {
         return pos.toLong()
-        //just return 0 if your list items do not have an Id variable.
+        // just return 0 if your list items do not have an Id variable.
     }
 
-    override fun getView(position: Int, convertView: View, parent: ViewGroup): View {
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         var view = convertView
         if (view == null) {
             val inflater =
@@ -84,8 +79,8 @@ class CheatListAdapter(parent: CheatEditDialog, list: MutableList<Cheat>?, conte
             view = inflater.inflate(R.layout.cheat_item, null)
         }
 
-        //Handle TextView and display string from your list
-        val listItemText = view.findViewById<View>(R.id.text_description) as TextView
+        // Handle TextView and display string from your list
+        val listItemText = view?.findViewById<View>(R.id.text_description) as TextView
         listItemText.text = list[position].description
         if (list[position].enable) {
             listItemText.setTextColor(ContextCompat.getColor(context, R.color.colorAccent))
@@ -93,7 +88,7 @@ class CheatListAdapter(parent: CheatEditDialog, list: MutableList<Cheat>?, conte
             listItemText.setTextColor(ContextCompat.getColor(context, R.color.disable))
         }
 
-        //Handle buttons and add onClickListeners
+        // Handle buttons and add onClickListeners
 /*
         Button deleteBtn = (Button)view.findViewById(R.id.button_delete_cheat);
         Button addBtn = (Button)view.findViewById(R.id.button_cheat_edit);
@@ -120,7 +115,8 @@ class CheatListAdapter(parent: CheatEditDialog, list: MutableList<Cheat>?, conte
                 CheatListAdapter.this.parent.EditCheat(position);
             }
         });
-*/return view
+*/
+        return view
     }
 
     fun add(cheat: Cheat) {
@@ -153,11 +149,11 @@ open class CheatEditDialog : DialogFragment(), AdapterView.OnItemClickListener {
     @JvmField
     var CheatAdapter: CheatListAdapter? = null
 
-    //List<Cheat> Cheats;
+    // List<Cheat> Cheats;
     @JvmField
     var mCheatListCode: Array<String?>? = null
     var adapter: ArrayAdapter<String?>? = null
-    var mContent: View? = null
+    lateinit var mContent: View
     var editing_ = -1
     fun setGameCode(st: String?, cheat_code: Array<String?>?) {
         mGameCode = st
@@ -198,25 +194,22 @@ open class CheatEditDialog : DialogFragment(), AdapterView.OnItemClickListener {
         }
         val inflater = requireActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         mContent = inflater.inflate(R.layout.cheat, null)
-        if( mContent == null ){
-            return builder.create()
-        }
         builder.setView(mContent)
-        mListView = mContent?.findViewById<View>(R.id.list_cheats) as ListView
+        mListView = mContent.findViewById<View>(R.id.list_cheats) as ListView
         mListView!!.adapter = CheatAdapter
         mListView!!.onItemClickListener = this
-        //getActivity().registerForContextMenu(mListView);
-        val edit_view = mContent?.findViewById<View>(R.id.edit_cheat_view)
+        // getActivity().registerForContextMenu(mListView);
+        val edit_view = mContent.findViewById<View>(R.id.edit_cheat_view)
         edit_view!!.visibility = View.GONE
 
         // Add new item
-        val add_new_button = mContent?.findViewById<View>(R.id.add_new_cheat) as Button
+        val add_new_button = mContent.findViewById<View>(R.id.add_new_cheat) as Button
         add_new_button.setOnClickListener {
-            val edit_view = mContent?.findViewById<View>(R.id.edit_cheat_view)
-            edit_view!!.visibility = View.VISIBLE
-            val add_new_button = mContent?.findViewById<View>(R.id.add_new_cheat) as Button
-            add_new_button.visibility = View.GONE
-            val desc = mContent?.findViewById<View>(R.id.editText_cheat_desc)
+            val editCheatView = mContent.findViewById<View>(R.id.edit_cheat_view)
+            editCheatView?.visibility = View.VISIBLE
+            val addNewCheat = mContent.findViewById<View>(R.id.add_new_cheat) as Button
+            addNewCheat.visibility = View.GONE
+            val desc = mContent.findViewById<View>(R.id.editText_cheat_desc)
             desc!!.requestFocus()
             val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.showSoftInput(desc, InputMethodManager.SHOW_IMPLICIT)
@@ -224,14 +217,14 @@ open class CheatEditDialog : DialogFragment(), AdapterView.OnItemClickListener {
         }
 
         // Apply Button
-        val button_apply = mContent?.findViewById<View>(R.id.button_cheat_edit_apply) as Button
+        val button_apply = mContent.findViewById<View>(R.id.button_cheat_edit_apply) as Button
         button_apply.setOnClickListener {
-            val desc = mContent?.findViewById<View>(R.id.editText_cheat_desc) as EditText
-            val ccode = mContent?.findViewById<View>(R.id.editText_code) as EditText
-            val edit_view = mContent?.findViewById<View>(R.id.edit_cheat_view)
-            edit_view!!.visibility = View.GONE
-            val add_new_button = mContent?.findViewById<View>(R.id.add_new_cheat) as Button
-            add_new_button!!.visibility = View.VISIBLE
+            val desc = mContent.findViewById<View>(R.id.editText_cheat_desc) as EditText
+            val ccode = mContent.findViewById<View>(R.id.editText_code) as EditText
+            val editCheatView = mContent.findViewById<View>(R.id.edit_cheat_view)
+            editCheatView.visibility = View.GONE
+            val addNewCheat = mContent.findViewById<View>(R.id.add_new_cheat) as Button
+            addNewCheat.visibility = View.VISIBLE
 
             // new item
             if (editing_ == -1) {
@@ -240,20 +233,20 @@ open class CheatEditDialog : DialogFragment(), AdapterView.OnItemClickListener {
                 UpdateItem(editing_, mGameCode, desc.text.toString(), ccode.text.toString())
             }
         }
-        val button_cancel = mContent?.findViewById<View>(R.id.button_edit_cheat_cancel) as Button
+        val button_cancel = mContent.findViewById<View>(R.id.button_edit_cheat_cancel) as Button
         button_cancel.setOnClickListener {
-            val edit_view = mContent?.findViewById<View>(R.id.edit_cheat_view)
-            edit_view!!.visibility = View.GONE
-            val add_new_button = mContent?.findViewById<View>(R.id.add_new_cheat) as Button
-            add_new_button!!.visibility = View.VISIBLE
+            val editCheatView = mContent.findViewById<View>(R.id.edit_cheat_view)
+            editCheatView.visibility = View.GONE
+            val addNewCheat = mContent.findViewById<View>(R.id.add_new_cheat) as Button
+            addNewCheat.visibility = View.VISIBLE
         }
-        (mContent?.findViewById<View>(R.id.editText_code) as EditText).setOnEditorActionListener(
-            OnEditorActionListener { v, actionId, event -> //For ShieldTV
+        (mContent.findViewById<View>(R.id.editText_code) as EditText).setOnEditorActionListener(
+            OnEditorActionListener { _, actionId, _ -> // For ShieldTV
                 if (actionId == EditorInfo.IME_ACTION_NEXT) {
-                    val edit_view = mContent?.findViewById<View>(R.id.editText_code) as EditText
-                    var currentstr: String? = edit_view!!.text.toString()
+                    val editTextCode = mContent.findViewById<View>(R.id.editText_code) as EditText
+                    var currentstr: String? = editTextCode.text.toString()
                     currentstr += System.lineSeparator()
-                    edit_view.setText(currentstr)
+                    editTextCode.setText(currentstr)
                     return@OnEditorActionListener true
                 }
                 // Return true if you have consumed the action, else false.
@@ -268,7 +261,6 @@ open class CheatEditDialog : DialogFragment(), AdapterView.OnItemClickListener {
         var parent: CheatEditDialog? = null
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             var items = arrayOf<CharSequence>("Enable", "Edit", "Delete")
-            val activity = activity
             items[0] = resources.getString(R.string.enable)
             items[1] = resources.getString(R.string.edit)
             items[2] = resources.getString(R.string.delete)
@@ -281,7 +273,7 @@ open class CheatEditDialog : DialogFragment(), AdapterView.OnItemClickListener {
                 items[0] = resources.getString(R.string.disable)
             }
             val builder = AlertDialog.Builder(getActivity())
-            builder.setItems(items) { dialog, which ->
+            builder.setItems(items) { _, which ->
                 when (which) {
                     0 -> {
                         parent!!.Cheats!![position].enable = !isEnable
@@ -302,7 +294,7 @@ open class CheatEditDialog : DialogFragment(), AdapterView.OnItemClickListener {
         newFragment.isEnable = Cheats!![position].enable
         newFragment.position = position
         newFragment.parent = this
-        newFragment.show( requireActivity().supportFragmentManager, "cheat_edit_menu")
+        newFragment.show(requireActivity().supportFragmentManager, "cheat_edit_menu")
     }
 
     open fun NewItem(gameid: String?, desc: String?, value: String?) {
@@ -332,7 +324,7 @@ open class CheatEditDialog : DialogFragment(), AdapterView.OnItemClickListener {
                 if (dataSnapshot.hasChildren()) {
                     Cheats?.clear()
                     for (child in dataSnapshot.children) {
-                        //ids.add(child.getKey());
+                        // ids.add(child.getKey());
                         val newitem = Cheat()
                         newitem.key = child.key
                         newitem.description = child.child("description").value as String?
@@ -367,20 +359,20 @@ open class CheatEditDialog : DialogFragment(), AdapterView.OnItemClickListener {
         editing_ = pos
         AlertDialog.Builder(activity)
             .setMessage("Are you sure to delete " + Cheats!![editing_].description + "?")
-            .setPositiveButton("YES") { dialog, which -> Remove(editing_) }
+            .setPositiveButton("YES") { _, _ -> Remove(editing_) }
             .setNegativeButton("No", null)
             .show()
     }
 
     fun EditCheat(pos: Int) {
-        val edit_view = mContent!!.findViewById<View>(R.id.edit_cheat_view)
+        val edit_view = mContent.findViewById<View>(R.id.edit_cheat_view)
         edit_view.visibility = View.VISIBLE
-        val add_new_button = mContent!!.findViewById<View>(R.id.add_new_cheat) as Button
+        val add_new_button = mContent.findViewById<View>(R.id.add_new_cheat) as Button
         add_new_button.visibility = View.GONE
-        val cheat = mContent!!.findViewById<View>(R.id.editText_code) as EditText
+        val cheat = mContent.findViewById<View>(R.id.editText_code) as EditText
         cheat.setText(Cheats!![pos].cheat_code)
         cheat.requestFocus()
-        val desc = mContent!!.findViewById<View>(R.id.editText_cheat_desc) as EditText
+        val desc = mContent.findViewById<View>(R.id.editText_cheat_desc) as EditText
         desc.setText(Cheats!![pos].description)
         val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showSoftInput(cheat, InputMethodManager.SHOW_IMPLICIT)

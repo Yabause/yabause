@@ -55,6 +55,7 @@ import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.ArrayList
 import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
@@ -64,7 +65,7 @@ import java.util.regex.Pattern
 @Table(name = "GameInfo")
 class GameInfo : Model() {
     companion object {
-        fun getFromFileName(file_path: String?): GameInfo {
+        fun getFromFileName(file_path: String?): GameInfo? {
             Log.d("GameInfo :", file_path!!)
             return Select()
                 .from(GameInfo::class.java)
@@ -72,13 +73,13 @@ class GameInfo : Model() {
                 .executeSingle()
         }
 
-        fun getFromInDirectFileName(file_path: String): GameInfo {
-            var file_path = file_path
-            Log.d("GameInfo direct:", file_path)
-            file_path = file_path.toUpperCase()
+        fun getFromInDirectFileName(file_path: String): GameInfo? {
+            var lfile_path = file_path
+            Log.d("GameInfo direct:", lfile_path)
+            lfile_path = file_path.uppercase(Locale.getDefault())
             return Select()
                 .from(GameInfo::class.java)
-                .where("iso_file_path = ?", file_path)
+                .where("iso_file_path = ?", lfile_path)
                 .executeSingle()
         }
 
@@ -91,7 +92,6 @@ class GameInfo : Model() {
             val file = File(file_path)
             val dirName = file.parent
             var iso_file_name = ""
-            var tmp: GameInfo? = null
             try {
                 val filereader = FileReader(file)
                 val br = BufferedReader(filereader)
@@ -101,7 +101,7 @@ class GameInfo : Model() {
                     val p = Pattern.compile("FILE \"(.*)\"")
                     val m = p.matcher(str)
                     if (m.find()) {
-                        iso_file_name = m.group(1)
+                        iso_file_name = m.group(1) as String
                         break
                     }
                     str = br.readLine()
@@ -117,22 +117,23 @@ class GameInfo : Model() {
                 println(e)
                 return null
             }
-            iso_file_name = dirName + File.separator + iso_file_name
-            tmp = genGameInfoFromIso(iso_file_name)
+            if (dirName != null) {
+                iso_file_name = dirName + File.separator + iso_file_name
+            }
+            var tmp: GameInfo? = genGameInfoFromIso(iso_file_name)
             if (tmp == null) return null
             tmp.file_path = file_path
-            tmp.iso_file_path = iso_file_name.toUpperCase()
+            tmp.iso_file_path = iso_file_name.uppercase(Locale.getDefault())
             return tmp
         }
 
         fun genGameInfoFromMDS(file_path: String?): GameInfo? {
             if( file_path == null ) return null
             val iso_file_name = file_path.replace(".mds", ".mdf")
-            var tmp: GameInfo? = null
-            tmp = genGameInfoFromIso(iso_file_name)
+            var tmp = genGameInfoFromIso(iso_file_name)
             if (tmp == null) return null
             tmp.file_path = file_path
-            tmp.iso_file_path = iso_file_name.toUpperCase()
+            tmp.iso_file_path = iso_file_name.uppercase(Locale.getDefault())
 
             // read mdf
             return tmp
@@ -141,20 +142,23 @@ class GameInfo : Model() {
         fun genGameInfoFromCCD(file_path: String?): GameInfo? {
             if( file_path == null ) return null
             val iso_file_name = file_path.replace(".ccd", ".img")
-            var tmp: GameInfo? = null
-            tmp = genGameInfoFromIso(iso_file_name)
+            var tmp = genGameInfoFromIso(iso_file_name)
             if (tmp == null) return null
             tmp.file_path = file_path
-            tmp.iso_file_path = iso_file_name.toUpperCase()
+            tmp.iso_file_path = iso_file_name.uppercase(Locale.getDefault())
             return tmp
         }
 
         fun getGimeInfoFromBuf(file_path: String?, header: ByteArray): GameInfo? {
             if( file_path == null ) return null
-            var tmp: GameInfo? = null
             var startindex = -1
             val check_str =
-                byteArrayOf('S'.toByte(), 'E'.toByte(), 'G'.toByte(), 'A'.toByte(), ' '.toByte())
+                byteArrayOf(
+                    'S'.code.toByte(),
+                    'E'.code.toByte(),
+                    'G'.code.toByte(),
+                    'A'.code.toByte(),
+                    ' '.code.toByte())
             for (i in 0 until header.size - check_str.size) {
                 if (header[i + 0] == check_str[0] && header[i + 1] == check_str[1] && header[i + 2] == check_str[2] && header[i + 3] == check_str[3] && header[i + 4] == check_str[4]) {
                     startindex = i
@@ -162,11 +166,11 @@ class GameInfo : Model() {
                 }
             }
             if (startindex == -1) return null
+            var tmp = GameInfo()
             try {
-                tmp = GameInfo()
                 val charaset = Charset.forName("MS932")
                 tmp.file_path = file_path
-                tmp.iso_file_path = file_path.toUpperCase()
+                tmp.iso_file_path = file_path.uppercase(Locale.getDefault())
                 tmp.maker_id = String(header, startindex + 0x10, 0x10, )
                 tmp.maker_id = tmp.maker_id.trim { it <= ' ' }
                 tmp.product_number = String(header, startindex + 0x20, 0xA, charaset)
@@ -184,7 +188,7 @@ class GameInfo : Model() {
                 tmp.game_title = String(header, startindex + 0x60, 0x70, charaset)
                 tmp.game_title = tmp.game_title.trim { it <= ' ' }
             } catch (e: Exception) {
-                Log.e("GameInfo", e.localizedMessage)
+                e.localizedMessage?.let { Log.e("GameInfo", it) }
                 return null
             }
             return tmp
@@ -273,7 +277,7 @@ class GameInfo : Model() {
     @Column(name = "lastplay_date")
     var lastplay_date: Date? = null
     fun removeInstance() {
-        val fname = file_path.toUpperCase()
+        val fname = file_path.uppercase(Locale.getDefault())
         if (fname.endsWith("CHD")) {
             val file = File(file_path)
             if (file.exists()) {
@@ -287,10 +291,12 @@ class GameInfo : Model() {
             searchName = searchName.replace(".(?i)ccd".toRegex(), "")
             searchName = searchName.replace(".(?i)mds".toRegex(), "")
             val searchNamef = searchName
-            val matchingFiles = dir.listFiles { dir, name -> name.startsWith(searchNamef) }
-            for (removefile in matchingFiles) {
-                if (removefile.exists()) {
-                    removefile.delete()
+            val matchingFiles = dir?.listFiles { _, name -> name.startsWith(searchNamef) }
+            if( matchingFiles != null ) {
+                for (removefile in matchingFiles) {
+                    if (removefile.exists()) {
+                        removefile.delete()
+                    }
                 }
             }
             this.delete()
@@ -305,14 +311,14 @@ class GameInfo : Model() {
                     val p = Pattern.compile("FILE \"(.*)\"")
                     val m = p.matcher(str)
                     if (m.find()) {
-                        delete_files.add(m.group(1))
+                        m.group(1)?.let { delete_files.add(it) }
                     }
                     str = br.readLine()
                 }
                 br.close()
                 val file = File(file_path)
                 for (removefile in delete_files) {
-                    val delname = file.parentFile.absolutePath + "/" + removefile
+                    val delname = file.parentFile?.absolutePath + "/" + removefile
                     val f = File(delname)
                     if (f.exists()) {
                         f.delete()
@@ -363,15 +369,12 @@ class GameInfo : Model() {
         }
         val save_path = storage.screenshotPath
         val screen_shot_save_path = "$save_path$product_number.png"
-        var fp: File? = File(screen_shot_save_path)
+        val fp: File? = File(screen_shot_save_path)
         if (fp != null && fp.exists()) {
             image_url = screen_shot_save_path
-            fp = null
-        } else {
-            //image_url = status.image_url;
         }
         if (product_number == "") return -1
-        var con: HttpURLConnection? = null
+
         try {
             var encoded_product_id = product_number
             encoded_product_id = encoded_product_id.replace(".", "%2E")
@@ -382,11 +385,11 @@ class GameInfo : Model() {
             val user = ctx.getString(R.string.basic_user)
             val password = ctx.getString(R.string.basic_password)
             val url = URL(urlstr)
-            con = url.openConnection() as HttpURLConnection
+            var con = url.openConnection() as HttpURLConnection
             val authenticator: Authenticator = BasicAuthenticator(user, password)
             Authenticator.setDefault(authenticator)
             con.requestMethod = "GET"
-            con!!.instanceFollowRedirects = false
+            con.instanceFollowRedirects = false
             con.connect()
             val responseCode = con.responseCode
             val inputStream = BufferedInputStream(con.inputStream)
@@ -398,7 +401,6 @@ class GameInfo : Model() {
                     responseArray.write(buff, 0, length)
                 }
             }
-            val viewStrBuilder = StringBuilder()
             val jsonObj = JSONObject(String(responseArray.toByteArray()))
             try {
                 if (jsonObj.getBoolean("result") == false) {
@@ -425,18 +427,13 @@ class GameInfo : Model() {
                         val MIMEType = MediaType.parse("application/json; charset=utf-8")
                         val requestBody = RequestBody.create(MIMEType, job.toString())
                         val request = Request.Builder().url(urlstr).post(requestBody).build()
-                        var client: OkHttpClient? = null
-                        client = OkHttpClient.Builder()
+                        var client = OkHttpClient.Builder()
                             .connectTimeout(10, TimeUnit.SECONDS)
                             .writeTimeout(10, TimeUnit.SECONDS)
                             .readTimeout(30, TimeUnit.SECONDS)
-                            .authenticator { route, response ->
-                                val ctx = appContext
-                                //if (responseCount(response) >= 3) {
-                                //    return null; // If we've failed 3 times, give up. - in real life, never give up!!
-                                //}
+                            .authenticator { _, response ->
                                 val credential =
-                                    Credentials.basic(ctx.getString(R.string.basic_user),
+                                    Credentials.basic(appContext.getString(R.string.basic_user),
                                         ctx.getString(R.string.basic_password))
                                 response.request().newBuilder().header("Authorization", credential)
                                     .build()

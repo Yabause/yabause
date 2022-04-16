@@ -18,21 +18,13 @@
 */
 package org.uoyabause.android
 
-import org.uoyabause.android.GameDirectoriesDialogPreference.DirListChangeListener
 import android.app.Activity
 import android.content.Context
 import android.util.AttributeSet
 import androidx.preference.DialogPreference
+import org.uoyabause.android.GameDirectoriesDialogPreference.DirListChangeListener
 
-/**
- * Created by shinya on 2016/01/07.
- */
 class GameDirectoriesDialogPreference : DialogPreference {
-    //    private YabauseSettings _context = null;
-    //public GameDirectoriesDialogPreference(Context context) {
-    //    super(context);
-    //    InitObjects(context);
-    //}
     interface DirListChangeListener {
         fun onChangeDir(isChange: Boolean?)
     }
@@ -43,32 +35,13 @@ class GameDirectoriesDialogPreference : DialogPreference {
     }
 
     constructor(context: Context?, attrs: AttributeSet?) : super(
-        context!!, attrs) {        //InitObjects(context);
+        context!!, attrs) { // InitObjects(context);
     }
 
-    /*
-    @Override
-    protected void onDialogClosed(boolean positiveResult) {
-        if(positiveResult){
-            String resultstring = "";
-            ArrayList<String> list = adapter.getList();
-            for( int i=0; i< list.size(); i++ ){
-                resultstring += list.get(i);
-                resultstring += ";";
-            }
-            String data = getPersistedString ("err");
-            if( !data.equals(resultstring)){
-                _context.setDireListChangeStatus(true);
-            }
-            persistString(resultstring);
-        }
-        super.onDialogClosed(positiveResult);
-    }
-*/
     fun save(resultstring: String) {
         val data = getPersistedString("err")
         if (data != resultstring) {
-            //_context.setDireListChangeStatus(true);
+            // _context.setDireListChangeStatus(true);
         }
         persistString(resultstring)
         if (listener != null) {
@@ -81,60 +54,9 @@ class GameDirectoriesDialogPreference : DialogPreference {
 
     constructor(context: Context?, attrs: AttributeSet?, defStyle: Int) : super(
         context!!, attrs, defStyle) {
-        //InitObjects(context);
+        // InitObjects(context);
         if (listener != null) {
             listener!!.onChangeDir(false)
         }
     }
-
-    fun setActivity(a: Activity?) {
-        //_context = (YabauseSettings)a;
-        //_context.setDireListChangeStatus(false);
-    } //void InitObjects( Context context) {
-    //setDialogLayoutResource(R.layout.game_directories);
-    //}
-    /*
-    @Override
-    protected void onBindDialogView(View view) {
-        super.onBindDialogView(view);
-        ArrayList<String> list;
-        list = new ArrayList<String>();
-        String data = getPersistedString("err");
-        if (data.equals("err")) {
-            //YabauseStorage yb = YabauseStorage.storage;
-            //list.add(yb.getGamePath());
-            YabauseStorage yb = YabauseStorage.getStorage();
-            list.add(yb.getGamePath());
-        } else {
-            String[] paths = data.split(";", 0);
-            for (int i = 0; i < paths.length; i++) {
-                list.add(paths[i]);
-            }
-        }
-
-        listView = (ListView) view.findViewById(R.id.listView);
-        adapter = new DirectoryListAdapter(_context);
-        adapter.setDirectorytList(list);
-        listView.setAdapter(adapter);
-
-        View button = (Button) view.findViewById(R.id.button_add);
-        button.setOnClickListener(this);
-
-    }
-*/
-    /*
-    public void onClick(View v) {
-        FileDialog fd = new FileDialog(_context,"");
-        fd.setSelectDirectoryOption(true);
-        fd.addDirectoryListener(this);
-        fd.showDialog();
-    }
-
-    @Override
-    public void directorySelected(File directory){
-        adapter.addDirectory(directory.getAbsolutePath());
-        adapter.notifyDataSetChanged();
-        GameSelectFragment.refresh_level = 3;
-    }
-*/
 }

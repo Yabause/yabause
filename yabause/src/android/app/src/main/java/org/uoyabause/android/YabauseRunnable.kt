@@ -20,8 +20,6 @@ package org.uoyabause.android
 
 import android.util.Log
 import android.view.Surface
-import org.uoyabause.android.Yabause
-import org.uoyabause.android.YabauseRunnable
 
 class YabauseRunnable(yabause: Yabause?) : Runnable {
     private var inited: Boolean

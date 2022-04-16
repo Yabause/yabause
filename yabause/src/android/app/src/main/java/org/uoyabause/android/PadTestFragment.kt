@@ -19,25 +19,19 @@
 package org.uoyabause.android
 
 import android.app.AlertDialog
-import org.uoyabause.android.PadManager.Companion.padManager
-import org.uoyabause.android.YabausePad.OnPadListener
-import org.uoyabause.android.YabausePad
-import org.uoyabause.android.PadManager
-import android.widget.TextView
-import org.uoyabause.android.PadTestFragment.PadTestListener
-import android.view.LayoutInflater
-import android.view.ViewGroup
 import android.os.Bundle
-import org.devmiyax.yabasanshiro.R
-import android.widget.SeekBar.OnSeekBarChangeListener
-import android.content.DialogInterface
-import android.content.SharedPreferences
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.SeekBar
+import android.widget.SeekBar.OnSeekBarChangeListener
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
-import org.uoyabause.android.PadEvent
-import org.uoyabause.android.PadTestFragment
+import org.devmiyax.yabasanshiro.R
+import org.uoyabause.android.PadManager.Companion.padManager
+import org.uoyabause.android.PadTestFragment.PadTestListener
+import org.uoyabause.android.YabausePad.OnPadListener
 
 class PadTestFragment : Fragment(), OnPadListener {
     var mPadView: YabausePad? = null
@@ -58,7 +52,8 @@ class PadTestFragment : Fragment(), OnPadListener {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val rootView = inflater.inflate(R.layout.padtest, container, false)
@@ -118,7 +113,7 @@ class PadTestFragment : Fragment(), OnPadListener {
         val alert = AlertDialog.Builder(activity)
         alert.setTitle("")
         alert.setMessage(R.string.do_you_want_to_save_this_setting)
-        alert.setPositiveButton(R.string.yes) { dialog, which ->
+        alert.setPositiveButton(R.string.yes) { _, _ ->
             val sharedPref = PreferenceManager.getDefaultSharedPreferences(
                 requireActivity())
             val editor = sharedPref.edit()
@@ -133,12 +128,12 @@ class PadTestFragment : Fragment(), OnPadListener {
             editor.commit()
             if (listener_ != null) listener_!!.onFinish()
         }
-        alert.setNegativeButton(R.string.no) { dialog, which -> if (listener_ != null) listener_!!.onCancel() }
+        alert.setNegativeButton(R.string.no) { _, _ -> if (listener_ != null) listener_!!.onCancel() }
         alert.show()
     }
 
     override fun onPad(event: PadEvent?): Boolean {
-        //TextView tv = (TextView)findViewById(R.id.text_status);
+        // TextView tv = (TextView)findViewById(R.id.text_status);
         tv!!.text = mPadView!!.statusString
         tv!!.invalidate()
         return true
@@ -146,7 +141,7 @@ class PadTestFragment : Fragment(), OnPadListener {
 
     companion object {
         const val TAG = "PadTestFragment"
-        fun newInstance(param1: String?, param2: String?): PadTestFragment {
+        fun newInstance(): PadTestFragment {
             val fragment = PadTestFragment()
             val args = Bundle()
             fragment.arguments = args

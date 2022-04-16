@@ -20,34 +20,27 @@ package org.uoyabause.android.cheat
 
 import android.app.AlertDialog
 import android.content.Context
-import org.uoyabause.android.cheat.LocalCheatItemRecyclerViewAdapter
-import org.uoyabause.android.cheat.CheatItem
-import com.google.firebase.database.DatabaseReference
-import androidx.recyclerview.widget.RecyclerView
-import android.os.Bundle
-import org.uoyabause.android.cheat.LocalCheatItemFragment
-import org.uoyabause.android.cheat.CheatConverter
-import android.view.LayoutInflater
-import android.view.ViewGroup
-import org.devmiyax.yabasanshiro.R
-import androidx.recyclerview.widget.LinearLayoutManager
-import android.widget.Toast
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.DataSnapshot
-import org.uoyabause.android.cheat.TabCheatFragment
-import com.google.firebase.database.DatabaseError
-import android.view.MenuInflater
-import org.uoyabause.android.cheat.LocalCheatEditDialog
-import android.content.Intent
 import android.content.DialogInterface
+import android.content.Intent
+import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import java.util.ArrayList
+import org.devmiyax.yabasanshiro.R
 
 /**
  * A fragment representing a list of Items.
@@ -82,7 +75,8 @@ class LocalCheatItemFragment
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_localcheatitem_list, container, false)
@@ -92,14 +86,14 @@ class LocalCheatItemFragment
         updateCheatList()
         root_view_ = view
         val add = view.findViewById<View>(R.id.button_add) as Button
-        add.setOnClickListener { v -> onAddItem(v) }
+        add.setOnClickListener { _ -> onAddItem() }
         return view
     }
 
     override fun setUserVisibleHint(isVisibleToUser: Boolean) {
         super.setUserVisibleHint(isVisibleToUser)
         if (isVisibleToUser) {
-            //updateCheatList();
+            // updateCheatList();
         } else {
         }
     }
@@ -192,11 +186,10 @@ class LocalCheatItemFragment
         val inflate = popup.menuInflater
         inflate.inflate(R.menu.local_cheat, popup.menu)
         val cheatitem = item
-        val position_ = position
         val popupMenu = popup.menu
         val mitem = popupMenu.getItem(0)
 
-        if( cheatitem == null ){
+        if (cheatitem == null) {
             return
         }
 
@@ -211,8 +204,8 @@ class LocalCheatItemFragment
         } else {
             sitem.setTitle(R.string.share)
         }
-        popup.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener { item ->
-            when (item.itemId) {
+        popup.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener { clickedItem ->
+            when (clickedItem.itemId) {
                 R.id.acp_activate -> {
                     cheatitem.enable = !cheatitem.enable
                     val frag = tabCheatFragmentInstance
@@ -230,9 +223,9 @@ class LocalCheatItemFragment
                     val newFragment = LocalCheatEditDialog()
                     newFragment.setEditTarget(cheatitem)
                     newFragment.setTargetFragment(this@LocalCheatItemFragment, EDIT_ITEM)
-                    newFragment.show( requireFragmentManager(), "Cheat")
+                    newFragment.show(requireFragmentManager(), "Cheat")
                 }
-                R.id.acp_share -> if ( cheatitem.sharedKey != "") {
+                R.id.acp_share -> if (cheatitem.sharedKey != "") {
                     UnShare(cheatitem)
                 } else {
                     Share(cheatitem)
@@ -248,7 +241,7 @@ class LocalCheatItemFragment
         popup.show()
     }
 
-    fun onAddItem(v: View?) {
+    fun onAddItem() {
         val newFragment = LocalCheatEditDialog()
         newFragment.setTargetFragment(this, NEW_ITEM)
         newFragment.show(requireFragmentManager(), "Cheat")
@@ -289,7 +282,7 @@ class LocalCheatItemFragment
     fun RemoveCheat(cheatitem: CheatItem) {
         AlertDialog.Builder(activity)
             .setMessage(getString(R.string.are_you_sure_to_delete) + cheatitem.description + "?")
-            .setPositiveButton(R.string.yes, DialogInterface.OnClickListener { dialog, which ->
+            .setPositiveButton(R.string.yes, DialogInterface.OnClickListener { _, _ ->
                 if (database_ == null) {
                     showErrorMessage()
                     return@OnClickListener
@@ -342,9 +335,7 @@ class LocalCheatItemFragment
         val baseref = FirebaseDatabase.getInstance().reference
         val baseurl = "/shared-cheats/" + mGameCode + "/" + cheatitem.sharedKey
         val sharedb = baseref.child(baseurl)
-        if (sharedb != null) {
-            sharedb.removeValue()
-        }
+        sharedb.removeValue()
         database_!!.child(cheatitem.key).child("shared_key").setValue("")
     }
 

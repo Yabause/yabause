@@ -18,22 +18,17 @@
 */
 package org.uoyabause.android
 
-import androidx.appcompat.app.AppCompatActivity
-import org.uoyabause.android.PadTestFragment.PadTestListener
-import org.uoyabause.android.YabausePad
-import org.uoyabause.android.PadManager
-import android.widget.TextView
-import android.os.Bundle
-import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
+import android.os.Bundle
 import android.view.View
 import android.view.Window
 import android.widget.FrameLayout
 import android.widget.SeekBar
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
-import org.uoyabause.android.PadTestActivity
-import org.uoyabause.android.PadTestFragment
+import org.uoyabause.android.PadTestFragment.PadTestListener
 
 class PadTestActivity : AppCompatActivity(), PadTestListener {
     var mPadView: YabausePad? = null

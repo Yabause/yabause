@@ -4,7 +4,6 @@ package org.uoyabause.android
 
 import android.content.Context
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -66,7 +65,6 @@ fun setupInGamePreferences(context: Context, gameCode: String?) {
         editor.apply()
     }
 
-
     if (!gamePreference.contains("pref_resolution")) {
         val editor = gamePreference.edit()
         editor.putString("pref_resolution", defaultPreference.getString("pref_resolution", "0"))
@@ -92,7 +90,7 @@ fun setupInGamePreferences(context: Context, gameCode: String?) {
                 editor.putString("pref_aspect_rate", v)
             }
 */
-        val v = defaultPreference.getString("pref_aspect_rate","0")
+        val v = defaultPreference.getString("pref_aspect_rate", "0")
         editor.putString("pref_aspect_rate", v)
         editor.apply()
     }
@@ -114,10 +112,22 @@ fun setupInGamePreferences(context: Context, gameCode: String?) {
         )
         editor.apply()
     }
+
+    val gameSharedPreference = context.getSharedPreferences(gameCode, 0)
+    val editor = gameSharedPreference.edit()
+    editor.putBoolean("pref_fps", gamePreference.getBoolean("pref_fps", false))
+    editor.putBoolean("pref_frameskip", gamePreference.getBoolean("pref_frameskip", false))
+    editor.putBoolean("pref_rotate_screen", gamePreference.getBoolean("pref_rotate_screen", false))
+    editor.putString("pref_polygon_generation", gamePreference.getString("pref_polygon_generation", "0"))
+    editor.putString("pref_frameLimit", gamePreference.getString("pref_frameLimit", "0"))
+    val v = gamePreference.getString("pref_aspect_rate", "0")
+    editor.putString("pref_aspect_rate", v)
+    editor.putString("pref_rbg_resolution", gamePreference.getString("pref_rbg_resolution", "0"))
+    editor.putBoolean("pref_use_compute_shader", gamePreference.getBoolean("pref_use_compute_shader", false))
+    editor.apply()
 }
 
-
-class InGamePreference(val gamecode: String) : PreferenceFragmentCompat() {
+class InGamePreference(val gamecode: String) : PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
 
     companion object {
         @JvmField
@@ -157,6 +167,12 @@ class InGamePreference(val gamecode: String) : PreferenceFragmentCompat() {
         preferenceManager.sharedPreferencesName = gamecode
         setPreferencesFromResource(R.xml.in_game_preferences, rootKey)
         setSummaries()
+        this.preferenceScreen.sharedPreferences!!.registerOnSharedPreferenceChangeListener(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        this.preferenceScreen.sharedPreferences!!.unregisterOnSharedPreferenceChangeListener(this)
     }
 
     override fun onCreateView(
@@ -165,7 +181,7 @@ class InGamePreference(val gamecode: String) : PreferenceFragmentCompat() {
         savedInstanceState: Bundle?
     ): View? {
         val view = super.onCreateView(inflater, container, savedInstanceState)
-        view?.setBackgroundColor(ContextCompat.getColor(activityContext, R.color.default_background))
+        view.setBackgroundColor(ContextCompat.getColor(activityContext, R.color.default_background))
         return view
     }
 
@@ -179,5 +195,32 @@ class InGamePreference(val gamecode: String) : PreferenceFragmentCompat() {
 
     fun onBackPressed() {
         this.emitter.onComplete()
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+
+        if (sharedPreferences == null) {
+            return
+        }
+
+        val gamePreference = requireContext().getHarmonySharedPreferences(gamecode)
+
+        val editor = gamePreference.edit()
+        editor.putBoolean("pref_fps", sharedPreferences.getBoolean("pref_fps", false))
+        editor.putBoolean("pref_frameskip", sharedPreferences.getBoolean("pref_frameskip", false))
+        editor.putBoolean("pref_rotate_screen", sharedPreferences.getBoolean("pref_rotate_screen", false))
+        editor.putString("pref_polygon_generation", sharedPreferences.getString("pref_polygon_generation", "0"))
+        editor.putString("pref_frameLimit", sharedPreferences.getString("pref_frameLimit", "0"))
+        val v = sharedPreferences.getString("pref_aspect_rate", "0")
+        editor.putString("pref_aspect_rate", v)
+        editor.putString(
+            "pref_rbg_resolution",
+            sharedPreferences.getString("pref_rbg_resolution", "0")
+        )
+        editor.putBoolean(
+            "pref_use_compute_shader",
+            sharedPreferences.getBoolean("pref_use_compute_shader", false)
+        )
+        editor.apply()
     }
 }

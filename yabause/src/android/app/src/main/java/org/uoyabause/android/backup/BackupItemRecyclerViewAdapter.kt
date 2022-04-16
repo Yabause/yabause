@@ -19,21 +19,20 @@
 package org.uoyabause.android.backup
 
 import android.view.KeyEvent
-import org.uoyabause.android.backup.BackupItem
-import androidx.recyclerview.widget.RecyclerView
-import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
-import org.devmiyax.yabasanshiro.R
-import androidx.core.content.ContextCompat
+import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.RecyclerView
+import org.devmiyax.yabasanshiro.R
 
 class BackupItemRecyclerViewAdapter(
     currentpage: Int,
     private val mValues: List<BackupItem>,
     private var mListener: OnItemClickListener?
 ) : RecyclerView.Adapter<BackupItemRecyclerViewAdapter.ViewHolder>() {
-    //private final OnListFragmentInteractionListener mListener;
+    // private final OnListFragmentInteractionListener mListener;
     var currentpage_ = 0
     private var focusedItem = 0
     fun setOnItemClickListener(listener: OnItemClickListener?) {
@@ -48,7 +47,7 @@ class BackupItemRecyclerViewAdapter(
         super.onAttachedToRecyclerView(recyclerView)
 
         // Handle key up and key down and attempt to move selection
-        recyclerView.setOnKeyListener(View.OnKeyListener { v, keyCode, event ->
+        recyclerView.setOnKeyListener(View.OnKeyListener { _, keyCode, event ->
             val lm = recyclerView.layoutManager
 
             // Return false if scrolled to the bounds and allow focus to move off the list
@@ -98,7 +97,7 @@ class BackupItemRecyclerViewAdapter(
         holder.mNameView.text = mValues[position].filename
         holder.tvComment.text = mValues[position].comment
         holder.mSizeView.text = String.format("%,dByte", mValues[position].datasize)
-        //holder.mDateView.setText(new SimpleDateFormat(DATE_PATTERN).format(mValues.get(position)._savedate));
+        // holder.mDateView.setText(new SimpleDateFormat(DATE_PATTERN).format(mValues.get(position)._savedate));
         holder.mDateView.text = mValues[position].savedate
         holder.itemView.isSelected = focusedItem == position
         if (focusedItem == position) holder.itemView.setBackgroundColor(ContextCompat.getColor(
@@ -113,7 +112,7 @@ class BackupItemRecyclerViewAdapter(
             if (null != mListener) {
                 // Notify the active callbacks interface (the activity, if the
                 // fragment is attached to one) that an item has been selected.
-                //mListener.onListFragmentInteraction(holder.mItem);
+                // mListener.onListFragmentInteraction(holder.mItem);
                 mListener!!.onItemClick(currentpage_, position, holder.mItem, holder.mView)
             }
         }

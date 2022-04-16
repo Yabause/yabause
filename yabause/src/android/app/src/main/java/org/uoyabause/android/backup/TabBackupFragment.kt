@@ -20,11 +20,6 @@ package org.uoyabause.android.backup
 
 import android.content.Context
 import android.net.Uri
-import org.uoyabause.android.backup.BackupItemFragment.Companion.getInstance
-import androidx.fragment.app.FragmentStatePagerAdapter
-import org.uoyabause.android.backup.BackupDevice
-import org.uoyabause.android.backup.BackupItemFragment
-import com.google.android.material.tabs.TabLayout
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -32,14 +27,15 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import org.devmiyax.yabasanshiro.R
-import org.uoyabause.android.YabauseRunnable
-import org.json.JSONObject
-import org.json.JSONArray
-import org.json.JSONException
-import org.uoyabause.android.backup.TabBackupFragment
+import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.viewpager.widget.ViewPager
+import com.google.android.material.tabs.TabLayout
 import java.util.ArrayList
+import org.devmiyax.yabasanshiro.R
+import org.json.JSONException
+import org.json.JSONObject
+import org.uoyabause.android.YabauseRunnable
+import org.uoyabause.android.backup.BackupItemFragment.Companion.getInstance
 
 internal class ViewPagerAdapter(fm: FragmentManager?) : FragmentStatePagerAdapter(
     fm!!) {
@@ -73,7 +69,8 @@ class TabBackupFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         mainv_ = inflater.inflate(R.layout.fragment_tab_backup, container, false)
@@ -81,14 +78,16 @@ class TabBackupFragment : Fragment() {
         jsonstr = YabauseRunnable.getDevicelist()
         backup_devices_ = ArrayList()
         try {
-            val json = JSONObject(jsonstr)
-            val array = json.getJSONArray("devices")
-            for (i in 0 until array.length()) {
-                val data = array.getJSONObject(i)
-                val tmp = BackupDevice()
-                tmp.name_ = data.getString("name")
-                tmp.id_ = data.getInt("id")
-                backup_devices_.add(tmp)
+            val json = jsonstr?.let { JSONObject(it) }
+            if( json != null ) {
+                val array = json.getJSONArray("devices")
+                for (i in 0 until array.length()) {
+                    val data = array.getJSONObject(i)
+                    val tmp = BackupDevice()
+                    tmp.name_ = data.getString("name")
+                    tmp.id_ = data.getInt("id")
+                    backup_devices_.add(tmp)
+                }
             }
             val tmp = BackupDevice()
             tmp.name_ = "cloud"
@@ -106,7 +105,7 @@ class TabBackupFragment : Fragment() {
             requireActivity().supportFragmentManager)
         adapter.setDevices(backup_devices_)
         viewPager_.adapter = adapter
-        tablayout_!!.setupWithViewPager(viewPager_)
+        tablayout_.setupWithViewPager(viewPager_)
         return mainv_
     }
 
@@ -130,7 +129,7 @@ class TabBackupFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        tablayout_!!.setupWithViewPager(null)
+        tablayout_.setupWithViewPager(null)
         super.onDestroyView()
     }
 
@@ -154,7 +153,7 @@ class TabBackupFragment : Fragment() {
     }
 
     override fun onDetach() {
-        //enableFullScreen();
+        // enableFullScreen();
         super.onDetach()
         mListener = null
     }
@@ -165,7 +164,7 @@ class TabBackupFragment : Fragment() {
 
     companion object {
         const val TAG = "TabBackupFragment"
-        fun newInstance(param1: String?, param2: String?): TabBackupFragment {
+        fun newInstance(): TabBackupFragment {
             val fragment = TabBackupFragment()
             val args = Bundle()
             fragment.arguments = args

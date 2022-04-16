@@ -66,6 +66,10 @@ import io.reactivex.SingleOnSubscribe
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.observers.DisposableSingleObserver
 import io.reactivex.schedulers.Schedulers
+import java.io.*
+import java.nio.channels.FileChannel
+import java.util.*
+import java.util.zip.ZipFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -74,11 +78,6 @@ import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.YabauseStorage.Companion.storage
-import org.uoyabause.android.phone.GameSelectFragmentPhone
-import java.io.*
-import java.nio.channels.FileChannel
-import java.util.*
-import java.util.zip.ZipFile
 
 class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListener) {
     private val mFirebaseAnalytics: FirebaseAnalytics
@@ -90,7 +89,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
     interface GameSelectPresenterListener {
         // void onUpdateGameList( );
         fun onShowMessage(string_id: Int)
-        fun onShowDialog( message: String )
+        fun onShowDialog(message: String)
         fun onUpdateDialogMessage(message: String)
         fun onDismissDialog()
         fun onLoadRows()
@@ -119,7 +118,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
     fun updateGameList(refresh_level: Int, observer: Observer<String>?) {
         refresh_level_ = refresh_level
         val activity = target_.activity ?: return
-        if (Build.VERSION.SDK_INT >= 23 && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ) {
+        if (Build.VERSION.SDK_INT >= 23 && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             // Verify that all required contact permissions have been granted.
             if (ActivityCompat.checkSelfPermission(activity,
                     Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -205,7 +204,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
         if (resultCode == Activity.RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(intent)
             try {
-                val account = task.getResult(ApiException::class.java)
+                task.getResult(ApiException::class.java)
             } catch (apiException: ApiException) {
                 var message = apiException.message
                 if (message == null || message.isEmpty()) {
@@ -314,7 +313,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
         listener_.onShowMessage(R.string.unknown_sign_in_response)
     }
 
-    fun onSelectFile( uri: Uri ){
+    fun onSelectFile(uri: Uri) {
         Log.i(TAG, "Uri: $uri")
 
         val cursor: Cursor? = target_.requireActivity().contentResolver.query(uri,
@@ -323,7 +322,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
         cursor!!.moveToFirst()
         val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
         val path = cursor.getString(nameIndex)
-        if (path.toLowerCase(Locale.ROOT).endsWith("chd")) {
+        if (path.lowercase(Locale.ROOT).endsWith("chd")) {
             var size: Long = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE))
             cursor.close()
 
@@ -336,11 +335,9 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
             var message =
                 target_.getString(R.string.install_game_message) + " " + size + target_.getString(R.string.install_game_message_after)
 
-            if(BuildConfig.BUILD_TYPE != "pro"){
+            if (BuildConfig.BUILD_TYPE != "pro") {
                 message += target_.getString(org.devmiyax.yabasanshiro.R.string.remaining_installation_count_is) + " " + count + "."
             }
-
-
 
             AlertDialog.Builder(ContextThemeWrapper(
                 target_.activity, R.style.Theme_AppCompat))
@@ -357,51 +354,49 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
                 }
                 .setCancelable(true)
                 .show()
-        } else if (path.toLowerCase().endsWith("zip") || path.toLowerCase().endsWith("7z")) {
+        } else if (path.lowercase(Locale.getDefault()).endsWith("zip") || path.lowercase(Locale.getDefault())
+                .endsWith("7z")) {
 
             selectStorage {
                 installZipGameFile(uri, path)
             }
-
         } else {
             Toast.makeText(target_.requireContext(),
                 target_.getString(R.string.only_chd_is_supported_for_load_game),
                 Toast.LENGTH_LONG).show()
         }
         return
-
     }
 
-    fun selectStorage( onOk: () -> Unit ) {
-        if( YabauseStorage.storage.hasExternalSD() ) {
+    fun selectStorage(onOk: () -> Unit) {
+        if (YabauseStorage.storage.hasExternalSD()) {
             val ctx = YabauseApplication.appContext
             val sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx)
-            val path = sharedPref.getString("pref_install_location","0")
+            val path = sharedPref.getString("pref_install_location", "0")
             var selectItem = path?.toInt() ?: 0
 
             var option: Array<String> = arrayOf()
-            option += "Internal" + " (" + YabauseStorage.storage.getAvailableInternalMemorySize() +" free)"
-            option += "External" + " (" +  YabauseStorage.storage.getAvailableExternalMemorySize() +" free)"
+            option += "Internal" + " (" + YabauseStorage.storage.getAvailableInternalMemorySize() + " free)"
+            option += "External" + " (" + YabauseStorage.storage.getAvailableExternalMemorySize() + " free)"
 
             AlertDialog.Builder(target_.requireActivity())
                 .setTitle(target_.getString(R.string.which_storage))
                 .setSingleChoiceItems(option, selectItem
-                ) { dialog, which ->
+                ) { _, which ->
                     selectItem = which
                 }
                 .setPositiveButton(R.string.ok) { _, _ ->
 
                     val editor = sharedPref.edit()
-                    editor.putString("pref_install_location",selectItem.toString())
+                    editor.putString("pref_install_location", selectItem.toString())
                     editor.commit()
 
                     onOk()
-
                 }
-                .setNegativeButton(R.string.cancel){ _, _ -> }
+                .setNegativeButton(R.string.cancel) { _, _ -> }
                 .setCancelable(true)
                 .show()
-        }else{
+        } else {
             onOk()
         }
     }
@@ -414,7 +409,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
             }
 
             var parcelFileDescriptor: ParcelFileDescriptor? = null
-            val uriString = uri.toString().toLowerCase(Locale.ROOT)
+            val uriString = uri.toString().lowercase(Locale.ROOT)
             var apath = ""
             try {
                 parcelFileDescriptor =
@@ -462,16 +457,15 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
         }
     }
 
-
     fun decrementInstallCount() {
         val prefs = target_.requireActivity().getSharedPreferences("private",
             MultiDexApplication.MODE_PRIVATE)
         var InstallCount = prefs.getInt("InstallCount", 3)
         InstallCount -= 1
-        if( InstallCount < 0 ){
+        if (InstallCount < 0) {
             InstallCount = 0
         }
-        with( prefs.edit()) {
+        with(prefs.edit()) {
             putInt("InstallCount", InstallCount)
             apply()
         }
@@ -524,14 +518,14 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
                     listener_.onUpdateDialogMessage("Extracting ${fd.name}")
                 }
 
-                if (zipFileName.toLowerCase().endsWith("zip")) {
+                if (zipFileName.lowercase(Locale.getDefault()).endsWith("zip")) {
 
                     ZipFile(zipFileName).use { zip ->
                         zip.entries().asSequence().forEach { entry ->
 
-                            if (entry.name.toLowerCase(Locale.ROOT).endsWith("ccd") ||
-                                entry.name.toLowerCase(Locale.ROOT).endsWith("cue") ||
-                                entry.name.toLowerCase(Locale.ROOT).endsWith("mds")
+                            if (entry.name.lowercase(Locale.ROOT).endsWith("ccd") ||
+                                entry.name.lowercase(Locale.ROOT).endsWith("cue") ||
+                                entry.name.lowercase(Locale.ROOT).endsWith("mds")
                             ) {
                                 targetFileName = YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name
                             }
@@ -554,12 +548,12 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
                             }
                         }
                     }
-                } else if (zipFileName.toLowerCase().endsWith("7z")) {
+                } else if (zipFileName.lowercase(Locale.getDefault()).endsWith("7z")) {
                     SevenZFile(File(zipFileName)).use { sz ->
                         sz.entries.asSequence().forEach { entry ->
-                            if (entry.name.toLowerCase(Locale.ROOT).endsWith("ccd") ||
-                                entry.name.toLowerCase(Locale.ROOT).endsWith("cue") ||
-                                entry.name.toLowerCase(Locale.ROOT).endsWith("mds")
+                            if (entry.name.lowercase(Locale.ROOT).endsWith("ccd") ||
+                                entry.name.lowercase(Locale.ROOT).endsWith("cue") ||
+                                entry.name.lowercase(Locale.ROOT).endsWith("mds")
                             ) {
                                 targetFileName = YabauseStorage.storage.getInstallDir().absolutePath + "/" + entry.name
                             }
@@ -614,7 +608,6 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
                         "Fail to copy " + e.localizedMessage,
                         Toast.LENGTH_LONG).show()
                 }
-
             } finally {
 
                 val fd = File(zipFileName)
@@ -633,11 +626,11 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
     fun installGameFile(uri: Uri) {
         scope.launch {
             withContext(Dispatchers.Main) {
-                listener_?.onShowDialog("Installing ...")
+                listener_.onShowDialog("Installing ...")
             }
             try {
                 val parcelFileDescriptor1: ParcelFileDescriptor?
-                val uriString = uri.toString().toLowerCase(Locale.ROOT)
+                val uriString = uri.toString().lowercase(Locale.ROOT)
                 var apath = ""
                 try {
                     parcelFileDescriptor1 =
@@ -673,7 +666,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
                     val bundle = Bundle()
                     bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
                     bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
-                    mFirebaseAnalytics!!.logEvent(
+                    mFirebaseAnalytics.logEvent(
                         "yab_start_game", bundle
                     )
                     parcelFileDescriptor1!!.close()
@@ -718,7 +711,6 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
                         "Fail to copy " + e.localizedMessage,
                         Toast.LENGTH_LONG).show()
                 }
-
             } finally {
                 withContext(Dispatchers.Main) {
                     listener_.onDismissDialog()
@@ -728,9 +720,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
         return
     }
 
-
-
-    fun startGame( item: GameInfo ){
+    fun startGame(item: GameInfo) {
         val c = Calendar.getInstance()
         item.lastplay_date = c.time
         item.save()
@@ -750,13 +740,13 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
             "yab_start_game", bundle
         )
 
-        if( item.file_path!!.contains("content://") == true){
+        if (item.file_path.contains("content://") == true) {
             val intent = Intent(target_.activity, Yabause::class.java)
             intent.putExtra("org.uoyabause.android.FileNameUri", item.file_path)
             intent.putExtra("org.uoyabause.android.FileDir", item.iso_file_path)
             intent.putExtra("org.uoyabause.android.gamecode", item.product_number)
             target_.activity?.startActivityForResult(intent, YABAUSE_ACTIVITY)
-        }else {
+        } else {
             val intent = Intent(target_.activity, Yabause::class.java)
             intent.putExtra("org.uoyabause.android.FileNameEx", item.file_path)
             intent.putExtra("org.uoyabause.android.gamecode", item.product_number)
@@ -855,7 +845,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
         val editor = sharedPref.edit()
         editor.putString("pref_last_dir", file.parent)
         editor.apply()
-        var gameinfo : GameInfo? = GameInfo.getFromFileName(apath)
+        var gameinfo: GameInfo? = GameInfo.getFromFileName(apath)
         if (gameinfo == null) {
             gameinfo = if (apath.endsWith("CUE") || apath.endsWith("cue")) {
                 GameInfo.genGameInfoFromCUE(apath)
@@ -880,7 +870,7 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
                     val bundle = Bundle()
                     bundle.putString(FirebaseAnalytics.Param.ITEM_ID, gameinfo.product_number)
                     bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, gameinfo.game_title)
-                    mFirebaseAnalytics!!.logEvent(
+                    mFirebaseAnalytics.logEvent(
                         "yab_start_game", bundle
                     )
                     val intent = Intent(target_.requireActivity(), Yabause::class.java)
@@ -894,7 +884,6 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
         }
     }
 
-
     companion object {
         const val RC_SIGN_IN = 123
         const val RC_GAME_SIGN_IN = 124
@@ -906,6 +895,5 @@ class GameSelectPresenter(target: Fragment, listener: GameSelectPresenterListene
         target_ = target
         listener_ = listener
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(target_.requireActivity())
-
     }
 }

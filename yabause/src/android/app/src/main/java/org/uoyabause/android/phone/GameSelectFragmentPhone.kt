@@ -810,7 +810,7 @@ class GameSelectFragmentPhone : Fragment(),
             val it = list!!.iterator()
             while (it.hasNext()) {
                 val game = it.next()
-                if (game.game_title.toUpperCase(Locale.ROOT).indexOf(alphabet[i]) == 0) {
+                if (game.game_title.uppercase(Locale.ROOT).indexOf(alphabet[i]) == 0) {
                     alphabetedList!!.add(game)
                     Log.d(
                         "GameSelect",
@@ -856,7 +856,7 @@ class GameSelectFragmentPhone : Fragment(),
         val recentPage = gameListPages!!.find { it.pageTitle == "RECENT" }
         recentPage?.gameList?.removeItem(item.id)
 
-        val title = item.game_title.toUpperCase()[0]
+        val title = item.game_title.uppercase(Locale.getDefault())[0]
         val alphabetPage = gameListPages!!.find { it.pageTitle == title.toString() }
         if (alphabetPage != null) {
             alphabetPage.gameList.removeItem(item.id)

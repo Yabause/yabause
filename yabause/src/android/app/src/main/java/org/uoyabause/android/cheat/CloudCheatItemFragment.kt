@@ -19,31 +19,26 @@
 package org.uoyabause.android.cheat
 
 import android.content.Context
-import org.uoyabause.android.AuthFragment
-import org.uoyabause.android.cheat.CloudCheatItemRecyclerViewAdapter
-import org.uoyabause.android.cheat.CheatItem
-import com.google.firebase.database.DatabaseReference
-import androidx.recyclerview.widget.RecyclerView
-import android.os.Bundle
-import org.uoyabause.android.cheat.CloudCheatItemFragment
-import android.view.LayoutInflater
-import android.view.ViewGroup
-import org.devmiyax.yabasanshiro.R
-import org.uoyabause.android.cheat.TabCheatFragment
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import android.view.MenuInflater
 import android.content.DialogInterface
+import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import java.lang.Exception
 import java.util.ArrayList
 import java.util.Collections
+import org.devmiyax.yabasanshiro.R
+import org.uoyabause.android.AuthFragment
 
 /**
  * A fragment representing a list of Items.
@@ -73,17 +68,12 @@ class CloudCheatItemFragment
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_cloudcheatitem_list, container, false)
         listview_ = view.findViewById<View>(R.id.list) as RecyclerView
-        //sum_ = (TextView) view.findViewById(R.id.tvSum);
-        val context = view.context
-        //LinearLayoutManager layoutManager = new LinearLayoutManager(context);
-        //layoutManager.setReverseLayout(true);
-        //layoutManager.setStackFromEnd(true);
-        //listview_.setLayoutManager(layoutManager);
         root_view_ = view
         updateCheatList()
         return view
@@ -132,7 +122,6 @@ class CloudCheatItemFragment
     }
 
     fun updateCheatList() {
-        val auth = checkAuth() ?: return
         _items = ArrayList()
         val baseref = FirebaseDatabase.getInstance().reference
         val baseurl = "/shared-cheats/$mGameCode"
@@ -151,14 +140,14 @@ class CloudCheatItemFragment
                             val newitem = child.getValue(CheatItem::class.java)
                             newitem!!.key = child.key!!
                             val frag = tabCheatFragmentInstance
-                            if (frag != null && newitem.cheat_code != null ) {
-                                newitem.enable = frag.isActive(newitem.cheat_code!!)
+                            if (frag != null) {
+                                newitem.enable = frag.isActive(newitem.cheat_code)
                             }
                             _items!!.add(newitem)
                         } catch (e: Exception) {
                         }
                     }
-                    Collections.reverse(_items)
+                    _items?.let { Collections.reverse(it) }
                     adapter_ =
                         CloudCheatItemRecyclerViewAdapter(_items, this@CloudCheatItemFragment)
                     listview_!!.adapter = adapter_
@@ -183,19 +172,19 @@ class CloudCheatItemFragment
         val popupMenu = popup.menu
         val mitem = popupMenu.getItem(0)
 
-        if( cheatitem == null ) return
+        if (cheatitem == null) return
 
         if (cheatitem.enable) {
             mitem.setTitle(R.string.disable)
         } else {
             mitem.setTitle(R.string.enable)
         }
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
+        popup.setOnMenuItemClickListener { selectedItem ->
+            when (selectedItem.itemId) {
                 R.id.acp_activate -> {
                     cheatitem.enable = !cheatitem.enable
                     val frag = tabCheatFragmentInstance
-                    if (frag != null && cheatitem.cheat_code != null ) {
+                    if (frag != null) {
                         if (cheatitem.enable) {
                             frag.AddActiveCheat(cheatitem.cheat_code)
                         } else {
@@ -222,11 +211,11 @@ class CloudCheatItemFragment
         checkedItems.add(defaultItem)
         AlertDialog.Builder(requireActivity())
             .setTitle("Rate this cheat")
-            .setSingleChoiceItems(items, defaultItem) { dialog, which ->
+            .setSingleChoiceItems(items, defaultItem) { _, which ->
                 checkedItems.clear()
                 checkedItems.add(which)
             }
-            .setPositiveButton(R.string.ok, DialogInterface.OnClickListener { dialog, which ->
+            .setPositiveButton(R.string.ok, DialogInterface.OnClickListener { _, _ ->
                 if (!checkedItems.isEmpty()) {
                     Log.d("checkedItem:", "" + checkedItems[0])
                     val baseref = FirebaseDatabase.getInstance().reference
@@ -252,11 +241,11 @@ class CloudCheatItemFragment
                             // ...
                         }
                     })
-                    val auth = FirebaseAuth.getInstance()
-                    if (auth.currentUser == null) {
+                    val checkAuth = FirebaseAuth.getInstance()
+                    if (checkAuth.currentUser == null) {
                         return@OnClickListener
                     }
-                    database_!!.child(item.key).child("scores").child(auth.currentUser!!.uid)
+                    database_!!.child(item.key).child("scores").child(checkAuth.currentUser!!.uid)
                         .setValue(
                             checkedItems[0] + 1)
                 }

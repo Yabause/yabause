@@ -19,41 +19,23 @@
 package org.uoyabause.android
 
 import android.app.Dialog
-import android.content.Context
-import android.content.DialogInterface
 import android.os.Bundle
-import android.os.Handler
-import android.util.Log
-import android.util.TypedValue
 import android.view.*
-import android.view.InputDevice
-import android.view.View.OnGenericMotionListener
-import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.preference.PreferenceDialogFragmentCompat
-import org.devmiyax.yabasanshiro.R
-import org.json.JSONException
-import org.json.JSONObject
-import org.uoyabause.android.PadManager.Companion.padManager
-import org.uoyabause.android.YabauseStorage.Companion.storage
 import java.io.*
 import java.util.*
-import android.view.LayoutInflater
-
-
-
+import org.devmiyax.yabasanshiro.R
 
 class InputSettingPreferenceFragment() : PreferenceDialogFragmentCompat() {
 
-  val presenter : InputSettingPresenter =  InputSettingPresenter()
+  val presenter: InputSettingPresenter = InputSettingPresenter()
 
   lateinit var mainView: View
   override fun onPrepareDialogBuilder(builder: AlertDialog.Builder) {
     super.onPrepareDialogBuilder(builder)
-    builder.setTitle(R.string.input_the_key);
-    builder.setPositiveButton(null,null);
+    builder.setTitle(R.string.input_the_key)
+    builder.setPositiveButton(null, null)
     val view = requireActivity().layoutInflater.inflate(R.layout.keymap, null, false)
     onBindDialogView(view)
     builder.setView(view)
@@ -62,7 +44,7 @@ class InputSettingPreferenceFragment() : PreferenceDialogFragmentCompat() {
 
   override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
     val dlg = super.onCreateDialog(savedInstanceState)
-    presenter.onCreateDialog(requireActivity(),dlg,mainView)
+    presenter.onCreateDialog(requireActivity(), dlg, mainView)
     return dlg
   }
 

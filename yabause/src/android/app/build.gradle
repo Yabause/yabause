@@ -216,6 +216,7 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.0'
     implementation 'androidx.tvprovider:tvprovider:1.0.0'
+    implementation "androidx.window:window:1.0.0"
 
     implementation 'com.firebaseui:firebase-ui-auth:6.4.0'
     implementation 'com.google.firebase:firebase-core:20.1.2'

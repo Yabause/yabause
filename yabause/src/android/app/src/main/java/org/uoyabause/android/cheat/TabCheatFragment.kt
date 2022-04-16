@@ -20,24 +20,21 @@ package org.uoyabause.android.cheat
 
 import android.content.Context
 import android.net.Uri
-import org.uoyabause.android.cheat.LocalCheatItemFragment.Companion.newInstance
-import org.uoyabause.android.cheat.CloudCheatItemFragment.Companion.newInstance
-import androidx.fragment.app.FragmentStatePagerAdapter
-import org.uoyabause.android.cheat.LocalCheatItemFragment
-import org.uoyabause.android.cheat.CloudCheatItemFragment
-import com.google.android.material.tabs.TabLayout
 import android.os.Bundle
-import org.uoyabause.android.cheat.TabCheatFragment
-import org.uoyabause.android.Yabause
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import org.devmiyax.yabasanshiro.R
+import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.viewpager.widget.ViewPager
+import com.google.android.material.tabs.TabLayout
 import java.util.ArrayList
 import java.util.HashSet
+import org.devmiyax.yabasanshiro.R
+import org.uoyabause.android.Yabause
+import org.uoyabause.android.cheat.CloudCheatItemFragment.Companion.newInstance
+import org.uoyabause.android.cheat.LocalCheatItemFragment.Companion.newInstance
 
 internal class ViewPagerAdapter(fm: FragmentManager?) : FragmentStatePagerAdapter(
     fm!!) {
@@ -130,11 +127,12 @@ class TabCheatFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         mainv_ = inflater.inflate(R.layout.fragment_tab_cheat, container, false)
-        if( mainv_ == null ){
+        if (mainv_ == null) {
             return null
         }
 
@@ -173,7 +171,7 @@ class TabCheatFragment : Fragment() {
     }
 
     override fun onAttach(context: Context) {
-        //disableFullScreen();
+        // disableFullScreen();
         super.onAttach(context)
         if (context is OnFragmentInteractionListener) {
             mListener = context
@@ -182,7 +180,7 @@ class TabCheatFragment : Fragment() {
     }
 
     override fun onDetach() {
-        //enableFullScreen();
+        // enableFullScreen();
         sendCheatListToYabause()
         super.onDetach()
         mListener = null

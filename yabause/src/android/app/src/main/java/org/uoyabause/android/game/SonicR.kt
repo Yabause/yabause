@@ -42,11 +42,10 @@ class SonicRRecord {
 }
 
 class SonicRBackup {
-    lateinit var records: MutableList<SonicRRecord>
+    var records: MutableList<SonicRRecord> = mutableListOf<SonicRRecord>()
     var totalTime: Long = 0
 
     constructor(bin: ByteArray) {
-        records = mutableListOf<SonicRRecord>()
         totalTime = 0
         for (i in 0..4) {
             var record = SonicRRecord()
@@ -90,10 +89,15 @@ class SonicR : BaseGame {
             if (afterRecord.records[i].courseRecord < beforeRecord.records[i].courseRecord) {
                 val context = YabauseApplication.appContext
                 val score = afterRecord.records[i].courseRecord.toLong()
-                Games.getLeaderboardsClient(
-                    context,
-                    GoogleSignIn.getLastSignedInAccount(context))
-                    .submitScore(leaderBoards?.get(i)?.id, score)
+                val account = GoogleSignIn.getLastSignedInAccount(context)
+                val gid = leaderBoards?.get(i)?.id
+                if (account != null && gid != null) {
+                    Games.getLeaderboardsClient(
+                        context,
+                        account
+                    )
+                    .submitScore(gid, score)
+                }
 
                 val bundle = Bundle()
                 bundle.putLong(FirebaseAnalytics.Param.SCORE, score)

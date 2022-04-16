@@ -27,10 +27,8 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.LinearLayout
-import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -38,13 +36,9 @@ import com.google.android.gms.ads.MobileAds
 // import net.nend.android.NendAdView
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
-import android.view.ViewTreeObserver
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 
 import com.google.android.gms.ads.AdListener
-
-
-
 
 class GameSelectActivityPhone : AppCompatActivity() {
     lateinit var frg_: GameSelectFragmentPhone
@@ -75,7 +69,6 @@ class GameSelectActivityPhone : AppCompatActivity() {
                 supportFragmentManager.findFragmentById(CONTENT_VIEW_ID) as GameSelectFragmentPhone
         }
 
-
         if (BuildConfig.BUILD_TYPE != "pro") {
             val prefs =
                 getSharedPreferences("private", Context.MODE_PRIVATE)
@@ -101,77 +94,31 @@ class GameSelectActivityPhone : AppCompatActivity() {
 
                     adView!!.adListener = object : AdListener() {
                         override fun onAdLoaded() {
-                            //mAdView.getHeight() returns 0 since the ad UI didn't load
+                            // mAdView.getHeight() returns 0 since the ad UI didn't load
                             adView!!.viewTreeObserver.addOnGlobalLayoutListener(object :
                                 OnGlobalLayoutListener {
                                 override fun onGlobalLayout() {
                                     adView!!.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                                    frg_?.onAdViewisShwon(adView!!.getHeight())
+                                    frg_.onAdViewisShwon(adView!!.getHeight())
                                 }
                             })
                         }
                     }
-
                 } catch (e: Exception) {
                 }
             }
         }
-
-
-
-/*
-                    val nendAdView = NendAdView(
-                        this,
-                        getString(R.string.nend_spoid).toInt(),
-                        getString(R.string.nend_apikey)
-                    )
-                    nendAdView.setListener(this)
-                    val params = FrameLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    )
-                    params.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                    frame.addView(nendAdView, params)
-                    nendAdView.bringToFront()
-                    nendAdView.invalidate()
-                    ViewCompat.setTranslationZ(nendAdView, 90f)
-                    nendAdView.loadAd()
-                } catch (e: Exception) {
-                }
-
-            }
-
-        }
- */
-        /*
-        GameSelectFragmentPhone frg = new GameSelectFragmentPhone();
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        //transaction.replace(R.id.fragment_container, newFragment);
-        transaction.add(frg,"mainfrag");
-        transaction.addToBackStack(null);
-        transaction.commit();
-*/
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        if (frg_ != null) {
-            frg_!!.onConfigurationChanged(newConfig)
-        }
-        // mDrawerToggle.onConfigurationChanged(newConfig);
+        frg_.onConfigurationChanged(newConfig)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean { // Pass the event to ActionBarDrawerToggle, if it returns
-// true, then it has handled the app icon touch event
-// if (mDrawerToggle.onOptionsItemSelected(item)) {
-//    return true;
-// }
-
-        if (frg_ != null) {
-            val rtn = frg_!!.onOptionsItemSelected(item)
-            if (rtn == true) {
-                return true
-            }
+        val rtn = frg_.onOptionsItemSelected(item)
+        if (rtn == true) {
+            return true
         }
         return super.onOptionsItemSelected(item)
     }

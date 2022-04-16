@@ -19,14 +19,13 @@
 package org.uoyabause.android
 
 import android.app.Activity
-import androidx.recyclerview.widget.RecyclerView
-import android.os.Bundle
-import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
+import android.os.Bundle
 import android.view.View
 import androidx.preference.PreferenceManager
-import org.devmiyax.yabasanshiro.R
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.tv.RecyclerGameListAdapter
 
 class YabauseGameSelectActivity : Activity() {

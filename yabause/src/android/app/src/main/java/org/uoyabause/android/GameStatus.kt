@@ -22,7 +22,6 @@ import com.activeandroid.Model
 import com.activeandroid.annotation.Column
 import com.activeandroid.annotation.Table
 import com.activeandroid.query.Select
-import org.uoyabause.android.GameStatus
 import java.util.Date
 
 /**

@@ -20,16 +20,15 @@ package org.uoyabause.android.cheat
 
 import android.annotation.SuppressLint
 import android.view.KeyEvent
-import org.uoyabause.android.cheat.CheatItem
-import androidx.recyclerview.widget.RecyclerView
-import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
-import org.devmiyax.yabasanshiro.R
-import androidx.core.content.ContextCompat
-import android.widget.TextView
+import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.RatingBar
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.RecyclerView
+import org.devmiyax.yabasanshiro.R
 
 /**
  * [RecyclerView.Adapter] that can display a [CheatItem] and makes a call to the
@@ -45,7 +44,7 @@ class CloudCheatItemRecyclerViewAdapter(
         super.onAttachedToRecyclerView(recyclerView)
 
         // Handle key up and key down and attempt to move selection
-        recyclerView.setOnKeyListener(View.OnKeyListener { v, keyCode, event ->
+        recyclerView.setOnKeyListener(View.OnKeyListener { _, keyCode, event ->
             val lm = recyclerView.layoutManager
 
             // Return false if scrolled to the bounds and allow focus to move off the list
@@ -118,7 +117,7 @@ class CloudCheatItemRecyclerViewAdapter(
     }
 
     override fun getItemCount(): Int {
-        return if(mValues == null) 0 else mValues.size
+        return if (mValues == null) 0 else mValues.size
     }
 
     inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(

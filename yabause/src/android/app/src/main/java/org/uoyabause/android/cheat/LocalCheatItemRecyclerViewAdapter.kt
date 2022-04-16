@@ -20,15 +20,14 @@ package org.uoyabause.android.cheat
 
 import android.annotation.SuppressLint
 import android.view.KeyEvent
-import org.uoyabause.android.cheat.CheatItem
-import androidx.recyclerview.widget.RecyclerView
-import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
-import org.devmiyax.yabasanshiro.R
-import androidx.core.content.ContextCompat
-import android.widget.TextView
+import android.view.ViewGroup
 import android.widget.CheckBox
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.RecyclerView
+import org.devmiyax.yabasanshiro.R
 
 class LocalCheatItemRecyclerViewAdapter(
     private val mValues: List<CheatItem?>?,
@@ -39,7 +38,7 @@ class LocalCheatItemRecyclerViewAdapter(
         super.onAttachedToRecyclerView(recyclerView)
 
         // Handle key up and key down and attempt to move selection
-        recyclerView.setOnKeyListener(View.OnKeyListener { v, keyCode, event ->
+        recyclerView.setOnKeyListener(View.OnKeyListener { _, keyCode, event ->
             val lm = recyclerView.layoutManager
 
             // Return false if scrolled to the bounds and allow focus to move off the list
@@ -90,7 +89,7 @@ class LocalCheatItemRecyclerViewAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, @SuppressLint("RecyclerView") position: Int) {
 
-        if( mValues == null ) return
+        if (mValues == null) return
 
         holder.mItem = mValues.get(position)
         holder.mIdView.setText(mValues.get(position)?.description)

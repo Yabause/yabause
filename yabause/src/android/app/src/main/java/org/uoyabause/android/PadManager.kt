@@ -18,7 +18,6 @@
 */
 package org.uoyabause.android
 
-import android.os.Build
 import android.view.KeyEvent
 import android.view.MotionEvent
 

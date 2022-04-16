@@ -37,13 +37,13 @@
 package org.uoyabause.android
 
 import android.content.Context
-import android.view.ViewGroup
-import android.widget.TextView
-import android.view.LayoutInflater
-import org.devmiyax.yabasanshiro.R
 import android.database.DataSetObserver
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ListAdapter
+import android.widget.TextView
+import org.devmiyax.yabasanshiro.R
 
 internal class GameListAdapter(ctx: Context) : ListAdapter {
     private val storage: YabauseStorage
@@ -67,13 +67,7 @@ internal class GameListAdapter(ctx: Context) : ListAdapter {
 
     override fun getView(position: Int, convertView: View, parent: ViewGroup): View {
         val tv: TextView
-        tv = if (convertView != null) {
-            convertView as TextView
-        } else {
-            val inflater =
-                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            inflater.inflate(R.layout.game_item, parent, false) as TextView
-        }
+        tv = convertView as TextView
         tv.text = gamefiles[position]
         return tv
     }

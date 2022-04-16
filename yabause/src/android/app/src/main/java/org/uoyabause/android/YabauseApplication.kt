@@ -93,18 +93,18 @@ class YabauseApplication : MultiDexApplication() {
             return false
         }
 
-        fun checkDonated(ctx: Context, additionalMessage: String = "" ): Int {
-            //if (BuildConfig.BUILD_TYPE == "debug") {
+        fun checkDonated(ctx: Context, additionalMessage: String = ""): Int {
+            // if (BuildConfig.BUILD_TYPE == "debug") {
             //    return 0
-            //}
+            // }
             var rtn = -1
             if (BuildConfig.BUILD_TYPE != "pro" && BuildConfig.BUILD_TYPE != "debug") {
                 val prefs = ctx.getSharedPreferences("private", MODE_PRIVATE)
                 val hasDonated = prefs.getBoolean("donated", false)
-                if (hasDonated == false ) {
+                if (hasDonated == false) {
                     val builder = AlertDialog.Builder(ctx)
                     builder.setTitle(R.string.not_available)
-                    builder.setMessage( ctx.getString(R.string.only_pro_version) + " \n" + additionalMessage )
+                    builder.setMessage(ctx.getString(R.string.only_pro_version) + " \n" + additionalMessage)
                     builder.setPositiveButton(R.string.got_it
                     ) { _, _ ->
                         val url =

@@ -27,7 +27,7 @@ data class CheatItem(
     var gameid: String = "",
     var description: String = "",
     var cheat_code: String = "",
-    var star_count: Double = 0.0,
+    var star_count: Double = 0.0
 ) {
     var enable: Boolean = false
     var sharedKey = ""
@@ -41,17 +41,5 @@ data class CheatItem(
             "star_count" to star_count,
             "key" to key
         )
-/*
-        val result = HashMap<String, Any>()
-        result["gameid"] = this.gameid!!
-        result["description"] = description!!
-        result["cheat_code"] = cheat_code!!
-        result["star_count"] = star_count!!
-        result["key"] = this.key!!
-        return result
- */
-
     }
-
-
 }

@@ -21,19 +21,16 @@ package org.uoyabause.android.cheat
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
-import org.uoyabause.android.cheat.CheatItem
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
-import org.devmiyax.yabasanshiro.R
-import android.widget.EditText
-import android.content.Intent
 import android.view.View
-import org.uoyabause.android.cheat.LocalCheatEditDialog
-import android.widget.TextView.OnEditorActionListener
-import android.widget.TextView
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView.OnEditorActionListener
 import androidx.fragment.app.DialogFragment
+import org.devmiyax.yabasanshiro.R
 
 class LocalCheatEditDialog : DialogFragment() {
     var mContent: View? = null
@@ -47,7 +44,7 @@ class LocalCheatEditDialog : DialogFragment() {
         val inflater =
             requireActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         mContent = inflater.inflate(R.layout.edit_cheat, null)
-        if( mContent == null ){
+        if (mContent == null) {
             return builder.create()
         }
 
@@ -62,11 +59,11 @@ class LocalCheatEditDialog : DialogFragment() {
         // Apply Button
         val button_apply = mContent!!.findViewById<View>(R.id.button_cheat_edit_apply) as Button
         button_apply.setOnClickListener {
-            val desc = mContent!!.findViewById<View>(R.id.editText_cheat_desc) as EditText
-            val code = mContent!!.findViewById<View>(R.id.editText_code) as EditText
+            val cheatDesc = mContent!!.findViewById<View>(R.id.editText_cheat_desc) as EditText
+            val cheatCode = mContent!!.findViewById<View>(R.id.editText_code) as EditText
             val intent = Intent()
-            val sdesc = desc.text.toString()
-            val scode = code.text.toString()
+            val sdesc = cheatDesc.text.toString()
+            val scode = cheatCode.text.toString()
             intent.putExtra(DESC, sdesc)
             intent.putExtra(CODE, scode)
             if (target_ != null) {
@@ -81,7 +78,7 @@ class LocalCheatEditDialog : DialogFragment() {
             dismiss()
         }
         (mContent!!.findViewById<View>(R.id.editText_code) as EditText).setOnEditorActionListener(
-            OnEditorActionListener { v, actionId, event -> //For ShieldTV
+            OnEditorActionListener { _, actionId, _ -> // For ShieldTV
                 if (actionId == EditorInfo.IME_ACTION_NEXT) {
                     val edit_view = mContent!!.findViewById<View>(R.id.editText_code) as EditText
                     var currentstr: String? = edit_view.text.toString()

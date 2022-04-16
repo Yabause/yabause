@@ -35,7 +35,7 @@ import org.devmiyax.yabasanshiro.R
  */
 open class AuthFragment : Fragment(), AuthStateListener {
     private fun showSnackbar(id: Int) {
-        //Toast.makeText(getActivity(), getString(id), Toast.LENGTH_SHORT).show();
+        // Toast.makeText(getActivity(), getString(id), Toast.LENGTH_SHORT).show();
         Snackbar
             .make(this.view!!, getString(id), Snackbar.LENGTH_SHORT)
             .show()
@@ -64,11 +64,11 @@ open class AuthFragment : Fragment(), AuthStateListener {
                 // Successfully signed in
                 if (resultCode == Activity.RESULT_OK) {
                     response!!.idpToken
-                    val token = response.idpToken
-                    //FirebaseAuth auth = FirebaseAuth.getInstance();
-                    //if( auth.getCurrentUser() == null ){
+                    //val token = response.idpToken
+                    // FirebaseAuth auth = FirebaseAuth.getInstance();
+                    // if( auth.getCurrentUser() == null ){
                     //    Log.d("AuthAragment","auth.getCurrentUser() == null");
-                    //}
+                    // }
                     return
                 } else {
                     // Sign in failed

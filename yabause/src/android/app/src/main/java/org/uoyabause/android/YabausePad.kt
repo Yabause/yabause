@@ -37,19 +37,19 @@
 package org.uoyabause.android
 
 import android.content.Context
-import android.graphics.RectF
-import android.view.View.OnTouchListener
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import org.devmiyax.yabasanshiro.R
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.View.OnTouchListener
 import androidx.preference.PreferenceManager
 import java.util.HashMap
+import org.devmiyax.yabasanshiro.R
 
 internal open class PadButton {
     protected var rect: RectF
@@ -142,9 +142,9 @@ internal class ActionButton(
     override fun draw(canvas: Canvas, nomal_back: Paint?, active_back: Paint?, front: Paint?) {
         super.draw(canvas, nomal_back, active_back, front)
         canvas.drawCircle(rect.centerX(), rect.centerY(), width * scale, back!!)
-        //front.setTextSize(textsize);
-        //front.setTextAlign(Paint.Align.CENTER);
-        //canvas.drawText(text, rect.centerX() , rect.centerY() , front);
+        // front.setTextSize(textsize);
+        // front.setTextAlign(Paint.Align.CENTER);
+        // canvas.drawText(text, rect.centerX() , rect.centerY() , front);
     }
 }
 
@@ -177,10 +177,10 @@ internal class AnalogPad(
         front: Paint?
     ) {
         super.draw(canvas, nomal_back, active_back, front)
-        //canvas.drawCircle(rect.centerX(), rect.centerY(), width * this.scale, back);
-        //front.setTextSize(textsize);
-        //front.setTextAlign(Paint.Align.CENTER);
-        //canvas.drawText(text, rect.centerX() , rect.centerY() , front);
+        // canvas.drawCircle(rect.centerX(), rect.centerY(), width * this.scale, back);
+        // front.setTextSize(textsize);
+        // front.setTextAlign(Paint.Align.CENTER);
+        // canvas.drawText(text, rect.centerX() , rect.centerY() , front);
         val dx = (sx - 128.0) / 128.0 * (width * scale / 2)
         val dy = (sy - 128.0) / 128.0 * (width * scale / 2)
         canvas.drawCircle(rect.centerX() + dx.toInt(),
@@ -271,7 +271,7 @@ class YabausePad : View, OnTouchListener {
         scale = sharedPref.getFloat("pref_pad_scale", 0.75f)
         ypos = sharedPref.getFloat("pref_pad_pos", 0.1f)
         trans = sharedPref.getFloat("pref_pad_trans", 0.7f)
-        //setPadScale( width_, height_ );
+        // setPadScale( width_, height_ );
         requestLayout()
         this.invalidate()
     }
@@ -305,8 +305,8 @@ class YabausePad : View, OnTouchListener {
         paint.setARGB(0xFF, 0, 0, 0xFF)
         apaint.setARGB(0xFF, 0xFF, 0x00, 0x00)
         tpaint.setARGB(0x80, 0xFF, 0xFF, 0xFF)
-        //bitmap_pad_left = BitmapFactory.decodeResource(getResources(), R.drawable.pad_l);
-        //bitmap_pad_right= BitmapFactory.decodeResource(getResources(), R.drawable.pad_r);
+        // bitmap_pad_left = BitmapFactory.decodeResource(getResources(), R.drawable.pad_l);
+        // bitmap_pad_right= BitmapFactory.decodeResource(getResources(), R.drawable.pad_r);
         mPaint.isAntiAlias = true
         mPaint.isFilterBitmap = true
         mPaint.isDither = true
@@ -364,9 +364,9 @@ class YabausePad : View, OnTouchListener {
             _axi_x = _analog_pad!!.getXvalue(posx)
             _axi_y = _analog_pad!!.getYvalue(posy)
 
-            //_analog_pad.Off();
-            //_axi_x = 128;
-            //_axi_y = 128;
+            // _analog_pad.Off();
+            // _axi_x = 128;
+            // _axi_y = 128;
             invalidate()
             if (!padTestestMode) {
                 YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_X, 0, _axi_x)
@@ -616,20 +616,19 @@ class YabausePad : View, OnTouchListener {
     fun setPadScale(width: Int, height: Int) {
         var dens = resources.displayMetrics.density
         dens /= 2.0f
-        var pos = 0.0f
         val bitmap_height = bitmap_pad_right!!.height
         if (width > height) {
             wscale = width.toFloat() / basewidth
-            hscale = wscale //(float) height / baseheight;
+            hscale = wscale // (float) height / baseheight;
         } else {
             wscale = width.toFloat() / baseheight
-            hscale = wscale //(float) height / basewidth;
+            hscale = wscale // (float) height / basewidth;
         }
         var maxpos = height - bitmap_height * scale * hscale
         if (maxpos < 0.0f) {
             maxpos = 0.0f
         }
-        pos = ypos * maxpos
+        var pos = ypos * maxpos
         matrix_right.reset()
         matrix_right.postTranslate(-780f, -baseheight)
         matrix_right.postScale(scale * wscale, scale * hscale)
@@ -648,16 +647,16 @@ class YabausePad : View, OnTouchListener {
         _analog_pad!!.updateRect(matrix_left, 130, 512, 420 + 144, 533 + 378)
         _analog_pad!!.updateScale(scale * wscale)
 
-        //buttons[PadEvent.BUTTON_UP].updateRect(matrix_left, 303, 497, 303+ 89,497+180);
+        // buttons[PadEvent.BUTTON_UP].updateRect(matrix_left, 303, 497, 303+ 89,497+180);
         buttons[PadEvent.BUTTON_UP]!!.updateRect(matrix_left, 130, 512, 130 + 429, 512 + 151)
-        //buttons[PadEvent.BUTTON_DOWN].updateRect(matrix_left,303,752,303+89,752+180);
+        // buttons[PadEvent.BUTTON_DOWN].updateRect(matrix_left,303,752,303+89,752+180);
         buttons[PadEvent.BUTTON_DOWN]!!.updateRect(matrix_left, 130, 784, 130 + 429, 784 + 151)
-        //buttons[PadEvent.BUTTON_RIGHT].updateRect(matrix_left,392,671,392+162,671+93);
+        // buttons[PadEvent.BUTTON_RIGHT].updateRect(matrix_left,392,671,392+162,671+93);
         buttons[PadEvent.BUTTON_RIGHT]!!.updateRect(matrix_left, 436, 533, 436 + 128, 533 + 378)
-        //buttons[PadEvent.BUTTON_LEFT].updateRect(matrix_left,141,671,141+162,671+93);
+        // buttons[PadEvent.BUTTON_LEFT].updateRect(matrix_left,141,671,141+162,671+93);
         buttons[PadEvent.BUTTON_LEFT]!!.updateRect(matrix_left, 148, 533, 148 + 128, 533 + 378)
         buttons[PadEvent.BUTTON_LEFT_TRIGGER]!!.updateRect(matrix_left, 56, 57, 56 + 376, 57 + 92)
-        //buttons[PadEvent.BUTTON_START].updateRect(matrix_left,510,1013,510+182,1013+57);
+        // buttons[PadEvent.BUTTON_START].updateRect(matrix_left,510,1013,510+182,1013+57);
         buttons[PadEvent.BUTTON_START]!!
             .updateRect(matrix_center, 0, 57, bitmap_pad_middle!!.width, bitmap_pad_middle!!.height)
 

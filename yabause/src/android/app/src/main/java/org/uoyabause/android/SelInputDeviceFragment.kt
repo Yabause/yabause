@@ -20,19 +20,15 @@ package org.uoyabause.android
 
 import android.app.Dialog
 import android.content.Context
-import org.uoyabause.android.PadManager.Companion.updatePadManager
-import org.uoyabause.android.PadManager.Companion.padManager
 import android.hardware.input.InputManager
-import org.uoyabause.android.PadManager
-import org.uoyabause.android.SelInputDeviceFragment
 import android.os.Bundle
-import android.content.SharedPreferences
-import org.devmiyax.yabasanshiro.R
-import android.content.DialogInterface
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.preference.PreferenceManager
 import java.util.ArrayList
+import org.devmiyax.yabasanshiro.R
+import org.uoyabause.android.PadManager.Companion.padManager
+import org.uoyabause.android.PadManager.Companion.updatePadManager
 
 class InputDevice(var Inputlabel_: CharSequence?, var Inputvalue_: CharSequence?)
 class SelInputDeviceFragment : DialogFragment(), InputManager.InputDeviceListener {
@@ -109,17 +105,17 @@ class SelInputDeviceFragment : DialogFragment(), InputManager.InputDeviceListene
         }
         dialogBuilder.setTitle("Select Input Device")
         dialogBuilder.setSingleChoiceItems(items, selid, null)
-        dialogBuilder.setNegativeButton("Cancel") { dialog, whichButton ->
+        dialogBuilder.setNegativeButton("Cancel") { _, _ ->
             if (listener_ != null) {
                 listener_!!.onCancel(target_)
             }
         }
-        dialogBuilder.setPositiveButton(R.string.ok) { dialog, whichButton ->
+        dialogBuilder.setPositiveButton(R.string.ok) { dialog, _ ->
             dialog.dismiss()
             val selectedPosition = (dialog as AlertDialog).listView.checkedItemPosition
-            val sharedPref = PreferenceManager.getDefaultSharedPreferences(
+            val lsharedPref = PreferenceManager.getDefaultSharedPreferences(
                 requireActivity())
-            val editor = sharedPref.edit()
+            val editor = lsharedPref.edit()
             val edit_target: String
             edit_target = when (target_) {
                 PLAYER1 -> "pref_player1_inputdevice"
@@ -148,19 +144,19 @@ class SelInputDeviceFragment : DialogFragment(), InputManager.InputDeviceListene
     }
 
     override fun onInputDeviceAdded(i: Int) {
-        //PadManager.updatePadManager();
+        // PadManager.updatePadManager();
         if (listener_ != null) listener_!!.onDeviceUpdated(target_)
         dismiss()
     }
 
     override fun onInputDeviceRemoved(i: Int) {
-        //PadManager.updatePadManager();
+        // PadManager.updatePadManager();
         if (listener_ != null) listener_!!.onDeviceUpdated(target_)
         dismiss()
     }
 
     override fun onInputDeviceChanged(i: Int) {
-        //PadManager.updatePadManager();
+        // PadManager.updatePadManager();
         if (listener_ != null) listener_!!.onDeviceUpdated(target_)
         dismiss()
     }

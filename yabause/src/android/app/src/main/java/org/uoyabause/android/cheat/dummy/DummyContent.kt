@@ -18,11 +18,10 @@
 */
 package org.uoyabause.android.cheat.dummy
 
-import org.uoyabause.android.cheat.dummy.DummyContent.DummyItem
-import org.uoyabause.android.cheat.dummy.DummyContent
 import java.lang.StringBuilder
 import java.util.ArrayList
 import java.util.HashMap
+import org.uoyabause.android.cheat.dummy.DummyContent.DummyItem
 
 /**
  * Helper class for providing sample content for user interfaces created by

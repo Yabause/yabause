@@ -22,17 +22,16 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
-import android.widget.RatingBar.OnRatingBarChangeListener
-import android.widget.RatingBar
-import android.widget.TextView
-import android.widget.EditText
-import android.widget.CheckBox
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.CheckBox
+import android.widget.EditText
+import android.widget.RatingBar
+import android.widget.RatingBar.OnRatingBarChangeListener
+import android.widget.TextView
 import androidx.fragment.app.DialogFragment
 import org.devmiyax.yabasanshiro.R
-import org.uoyabause.android.Yabause
 
 class ReportDialog : DialogFragment(), DialogInterface.OnClickListener, OnRatingBarChangeListener {
     var _GameStatusRating: RatingBar? = null
@@ -41,16 +40,16 @@ class ReportDialog : DialogFragment(), DialogInterface.OnClickListener, OnRating
     var _chk: CheckBox? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //setStyle(DialogFragment.STYLE_NORMAL, R.style.FullScreenDialogStyle);
+        // setStyle(DialogFragment.STYLE_NORMAL, R.style.FullScreenDialogStyle);
     }
 
     override fun onStart() {
         super.onStart()
         val dialog = dialog
         if (dialog != null) {
-            //int width = ViewGroup.LayoutParams.MATCH_PARENT;
-            //int height = ViewGroup.LayoutParams.MATCH_PARENT;
-            //dialog.getWindow().setLayout(width, height);
+            // int width = ViewGroup.LayoutParams.MATCH_PARENT;
+            // int height = ViewGroup.LayoutParams.MATCH_PARENT;
+            // dialog.getWindow().setLayout(width, height);
         }
     }
 
@@ -90,7 +89,8 @@ class ReportDialog : DialogFragment(), DialogInterface.OnClickListener, OnRating
     }
 
     override fun onRatingChanged(
-        ratingBar: RatingBar, rating: Float,
+        ratingBar: RatingBar,
+        rating: Float,
         fromUser: Boolean
     ) {
         val iRate = rating.toInt()

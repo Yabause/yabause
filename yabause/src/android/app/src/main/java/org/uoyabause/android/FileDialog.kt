@@ -18,21 +18,19 @@
 */
 package org.uoyabause.android
 
-import org.uoyabause.android.YabauseStorage.Companion.storage
-import org.uoyabause.android.ListenerList.FireHandler
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
-import org.uoyabause.android.ListenerList
-import org.uoyabause.android.FileDialog.FileSelectedListener
-import org.uoyabause.android.FileDialog.DirectorySelectedListener
-import android.content.DialogInterface
 import android.util.Log
-import org.uoyabause.android.YabauseStorage
 import android.widget.Toast
 import java.io.File
 import java.io.FilenameFilter
 import java.util.ArrayList
+import org.uoyabause.android.FileDialog.DirectorySelectedListener
+import org.uoyabause.android.FileDialog.FileSelectedListener
+import org.uoyabause.android.ListenerList.FireHandler
+import org.uoyabause.android.YabauseStorage.Companion.storage
+import java.util.Locale
 
 internal class ListenerList<L> {
     private val listenerList: MutableList<L> = ArrayList()
@@ -83,11 +81,10 @@ class FileDialog(private val activity: Activity, path: String?) {
      * @return file dialog
      */
     fun createFileDialog(): Dialog? {
-        var dialog: Dialog? = null
         val builder = AlertDialog.Builder(activity)
         builder.setTitle(currentPath!!.path)
         if (selectDirectoryOption) {
-            builder.setPositiveButton("Select directory") { dialog, which ->
+            builder.setPositiveButton("Select directory") { _, _ ->
                 Log.d(TAG,
                     currentPath!!.path)
                 fireDirectorySelectedEvent(currentPath)
@@ -96,19 +93,18 @@ class FileDialog(private val activity: Activity, path: String?) {
         builder.setItems(fileList) { dialog, which ->
             val fileChosen = fileList[which]
             val chosenFile = getChosenFile(fileChosen)
-            if (chosenFile.isDirectory) {
+            if (chosenFile?.isDirectory == true) {
                 loadFileList(chosenFile)
                 dialog.cancel()
                 dialog.dismiss()
                 showDialog()
             } else fireFileSelectedEvent(chosenFile)
         }
-        builder.setNegativeButton("Cancel") { dialog, which ->
+        builder.setNegativeButton("Cancel") { dialog, _ ->
             dialog.dismiss()
             fireFileSelectedEvent(null)
         }
-        dialog = builder.show()
-        return dialog
+        return builder.show()
     }
 
     fun addFileListener(listener: FileSelectedListener) {
@@ -154,46 +150,46 @@ class FileDialog(private val activity: Activity, path: String?) {
         })
     }
 
-    private fun loadFileList(path: File) {
-        var path: File? = path
-        if (path == null || path.isDirectory == false) {
+    private fun loadFileList(path: File?) {
+        var lpath: File? = path
+        if (lpath == null || lpath.isDirectory == false) {
             val s = storage
-            path = File(s.rootPath)
-            if (!path.exists()) path.mkdir()
+            lpath = File(s.rootPath)
+            if (!lpath.exists()) lpath.mkdir()
         }
-        currentPath = path
+        currentPath = lpath
         val r: MutableList<String> = ArrayList()
-        if (path.exists()) {
-            if (path.parentFile != null) r.add(PARENT_DIR)
+        if (lpath.exists()) {
+            if (lpath.parentFile != null) r.add(PARENT_DIR)
             val filter = FilenameFilter { dir, filename ->
                 val sel = File(dir, filename)
                 if (!sel.canRead()) return@FilenameFilter false
                 if (selectDirectoryOption) sel.isDirectory else {
                     val endsWith = if (fileEndsWith != null) filename
-                        .toLowerCase().endsWith(fileEndsWith!!) else true
+                        .lowercase(Locale.getDefault()).endsWith(fileEndsWith!!) else true
                     endsWith || sel.isDirectory
                 }
             }
-            val fileList1 = path.list(filter)
+            val fileList1 = lpath.list(filter)
             if (fileList1 != null) {
                 for (file in fileList1) r.add(file)
             } else {
                 Toast.makeText(activity,
-                    path.absolutePath + " is not readable. ",
+                    lpath.absolutePath + " is not readable. ",
                     Toast.LENGTH_LONG)
             }
         }
-        fileList = r.toTypedArray() as Array<String>
+        fileList = r.toTypedArray()
     }
 
-    private fun getChosenFile(fileChosen: String): File {
+    private fun getChosenFile(fileChosen: String): File? {
         return if (fileChosen == PARENT_DIR) currentPath!!.parentFile else File(
             currentPath,
             fileChosen)
     }
 
     fun setFileEndsWith(fileEndsWith: String?) {
-        this.fileEndsWith = fileEndsWith?.toLowerCase() ?: fileEndsWith
+        this.fileEndsWith = fileEndsWith?.lowercase(Locale.getDefault()) ?: fileEndsWith
     }
 
     companion object {
@@ -205,6 +201,6 @@ class FileDialog(private val activity: Activity, path: String?) {
      * @param path
      */
     init {
-        loadFileList(File(path))
+        loadFileList(File(path!!))
     }
 }

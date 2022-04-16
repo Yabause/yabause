@@ -19,16 +19,13 @@
 package org.uoyabause.android.cheat
 
 import com.activeandroid.query.Select
-import org.uoyabause.android.cheat.CheatEditDialog
-import org.uoyabause.android.cheat.Cheat
-import org.uoyabause.android.cheat.CheatListAdapter
 
 /**
  * Created by shinya on 2017/03/04.
  */
 class CheatEditDialogStandalone : CheatEditDialog() {
     override fun LoadData(gameid: String?): Int {
-        //super.LoadData();
+        // super.LoadData();
         Cheats = Select().from(Cheat::class.java).where("gameid = ?", gameid).execute()
         if (Cheats == null) {
             return -1

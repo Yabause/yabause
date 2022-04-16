@@ -22,9 +22,8 @@ import com.activeandroid.Model
 import com.activeandroid.query.Delete
 import com.activeandroid.query.Select
 import com.activeandroid.util.Log
-import org.uoyabause.android.cheat.Cheat
-import com.google.firebase.database.DatabaseReference
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import java.lang.Exception
 
@@ -52,7 +51,7 @@ class CheatConverter {
             return -1
         }
         Cheats = Select().from(Cheat::class.java).execute()
-        if (Cheats == null || Cheats?.size == 0) {
+        if (Cheats == null || Cheats.isEmpty()) {
             return -1
         }
         val baseref = FirebaseDatabase.getInstance().reference
