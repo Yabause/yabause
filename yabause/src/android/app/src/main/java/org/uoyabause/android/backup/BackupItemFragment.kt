@@ -32,6 +32,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.tasks.OnSuccessListener
@@ -50,7 +51,6 @@ import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.json.JSONException
 import org.json.JSONObject
-import org.uoyabause.android.AuthFragment
 import org.uoyabause.android.YabauseRunnable
 import org.uoyabause.android.backup.BackupItemFragment.OnListFragmentInteractionListener
 
@@ -133,7 +133,7 @@ class BackupItem {
  * Activities containing this fragment MUST implement the [OnListFragmentInteractionListener]
  * interface.
  */
-class BackupItemFragment : AuthFragment(),
+class BackupItemFragment : Fragment(),
     BackupItemRecyclerViewAdapter.OnItemClickListener {
     internal var backup_devices_: MutableList<BackupDevice>? = null
     private var mListener: OnListFragmentInteractionListener? =
@@ -215,12 +215,8 @@ class BackupItemFragment : AuthFragment(),
         mListener = null
     }
 
-    override fun OnAuthAccepted() {
-        updateSaveListCloud()
-    }
-
     fun updateSaveListCloud() {
-        val auth = checkAuth()
+        val auth = FirebaseAuth.getInstance()
         if (auth.currentUser == null) {
             return
         }

@@ -27,6 +27,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -38,7 +39,6 @@ import java.lang.Exception
 import java.util.ArrayList
 import java.util.Collections
 import org.devmiyax.yabasanshiro.R
-import org.uoyabause.android.AuthFragment
 
 /**
  * A fragment representing a list of Items.
@@ -52,7 +52,7 @@ class CloudCheatItemFragment
  * Mandatory empty constructor for the fragment manager to instantiate the
  * fragment (e.g. upon screen orientation changes).
  */
-    : AuthFragment(), CloudCheatItemRecyclerViewAdapter.OnItemClickListener {
+    : Fragment(), CloudCheatItemRecyclerViewAdapter.OnItemClickListener {
     private var mColumnCount = 1
     private var mListener: OnListFragmentInteractionListener? = null
     private var _items: ArrayList<CheatItem?>? = null
@@ -117,9 +117,9 @@ class CloudCheatItemFragment
         fun onListFragmentInteraction(item: CheatItem?)
     }
 
-    override fun OnAuthAccepted() {
-        updateCheatList()
-    }
+    //override fun OnAuthAccepted() {
+    //    updateCheatList()
+    //}
 
     fun updateCheatList() {
         _items = ArrayList()

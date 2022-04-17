@@ -55,6 +55,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -261,11 +262,39 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         retainInstance = true
-        presenter_ = GameSelectPresenter(this, this)
+        presenter_ = GameSelectPresenter(this, yabauseActivityLauncher,this)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             if (requireContext().display?.isMinimalPostProcessingSupported()!!) {
                 requireActivity().window.setPreferMinimalPostProcessing(true)
             } else {
+            }
+        }
+    }
+
+    var yabauseActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (BuildConfig.BUILD_TYPE != "pro") {
+            val prefs = requireActivity().getSharedPreferences("private", Context.MODE_PRIVATE)
+            val hasDonated = prefs.getBoolean("donated", false)
+            if (hasDonated == false) {
+                val rn = Math.random()
+                if (rn <= 0.5) {
+                    val uiModeManager =
+                        requireActivity().getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+                    if (uiModeManager.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION) {
+                        if (mInterstitialAd != null) {
+                            mInterstitialAd!!.show(requireActivity())
+                        } else {
+                            val intent = Intent(activity, AdActivity::class.java)
+                            startActivity(intent)
+                        }
+                    } else {
+                        val intent = Intent(activity, AdActivity::class.java)
+                        startActivity(intent)
+                    }
+                } else if (rn > 0.5) {
+                    val intent = Intent(activity, AdActivity::class.java)
+                    startActivity(intent)
+                }
             }
         }
     }
@@ -292,7 +321,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             }
             val game = GameInfo.getFromFileName(filename)
             if (game != null) {
-                presenter_.startGame(game)
+                presenter_.startGame(game, yabauseActivityLauncher)
             }
         }
         prepareBackgroundManager()
@@ -358,6 +387,15 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         return v_
     }
 
+    private var signInActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        presenter_.onSignIn(result.resultCode, result.data)
+        if (presenter_.currentUserName != null) {
+            //val m = navigationView!!.menu
+            //val miLogin = m.findItem(R.id.menu_item_login)
+            //miLogin.setTitle(R.string.sign_out)
+        }
+    }
+
     private var observer: Observer<*>? = null
     fun updateGameList() {
         // showDialog();
@@ -388,7 +426,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                     if (ac != null && ac.intent.getBooleanExtra("showPin", false)) {
                         newInstance(presenter_!!).show(childFragmentManager, "sample")
                     } else {
-                        presenter_!!.checkSignIn()
+                        presenter_!!.checkSignIn(signInActivityLauncher)
                     }
                 }
             }
@@ -717,6 +755,10 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
     val SETTING_ACTIVITY = 0x01
     val DOWNLOAD_ACTIVITY = 0x03
 
+    var signinActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        presenter_!!.onSignIn(result.resultCode, result.data)
+    }
+
     private inner class ItemViewClickedListener : OnItemViewClickedListener {
         override fun onItemClicked(
             itemViewHolder: Presenter.ViewHolder,
@@ -725,10 +767,10 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             row: Row,
         ) {
             if (item is GameInfo) {
-                presenter_.startGame(item)
+                presenter_.startGame(item,yabauseActivityLauncher)
             } else if (item is String) {
                 if (item == getString(R.string.sign_in)) {
-                    presenter_.signIn()
+                    presenter_.signIn(signinActivityLauncher)
                 } else if (item == getString(R.string.sign_out)) {
                     presenter_.signOut()
                 } else if (item == getString(R.string.sign_in_to_other_devices)) {
@@ -746,9 +788,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                             intent.addCategory(Intent.CATEGORY_OPENABLE)
                             intent.type = "*/*"
-                            startActivityForResult(intent,
-                                READ_REQUEST_CODE
-                            )
+                            readRequestLauncher.launch(intent)
                         }else {
                             val message = resources.getString(R.string.or_place_file_to, YabauseStorage.storage.gamePath);
                             val rtn = YabauseApplication.checkDonated(requireActivity(), message)
@@ -756,9 +796,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                                 intent.addCategory(Intent.CATEGORY_OPENABLE)
                                 intent.type = "*/*"
-                                startActivityForResult(intent,
-                                    READ_REQUEST_CODE
-                                )
+                                readRequestLauncher.launch(intent)
                             }
                         }
 
@@ -812,30 +850,10 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             rowViewHolder: RowPresenter.ViewHolder?,
             row: Row?,
         ) {
-            // if (item instanceof Movie) {
-            //   mBackgroundURI = ((Movie) item).getBackgroundImageURI();
-            //    startBackgroundTimer();
-            // }
         }
     }
 
-    /*
-    private class UpdateBackgroundTask extends TimerTask {
 
-        @Override
-        public void run() {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (mBackgroundURI != null) {
-                        updateBackground(mBackgroundURI.toString());
-                    }
-                }
-            });
-
-        }
-    }
-*/
     private inner class GridItemPresenter : Presenter() {
         override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
             val view = TextView(parent.context)
@@ -893,6 +911,17 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
 */
     }
 
+    private var readRequestLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if ( result.resultCode == Activity.RESULT_OK) {
+            if (result.data != null) {
+                val uri = result.data!!.data
+                if (uri != null) {
+                    presenter_.onSelectFile(uri)
+                }
+            }
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -901,20 +930,14 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             initialDialog = null
         }
         when (requestCode) {
-            READ_REQUEST_CODE -> {
-                if (resultCode == Activity.RESULT_OK && data != null) {
-                    val uri = data.data
-                    if (uri != null) {
-                        presenter_.onSelectFile(uri)
-                    }
-                }
-            }
-            GameSelectPresenter.RC_GAME_SIGN_IN -> {
-                presenter_!!.onGameIdSignIn(resultCode, data)
-            }
-            GameSelectPresenter.RC_SIGN_IN -> {
-                presenter_!!.onSignIn(resultCode, data)
-            }
+            //READ_REQUEST_CODE -> {
+            //    if (resultCode == Activity.RESULT_OK && data != null) {
+            //        val uri = data.data
+            //        if (uri != null) {
+            //           presenter_.onSelectFile(uri)
+            //        }
+            //    }
+            //}
             DOWNLOAD_ACTIVITY -> {
                 if (resultCode == 0) {
                     refresh_level = 3
@@ -1087,6 +1110,6 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
 
         const val GAMELIST_NEED_TO_UPDATED = 0x8001
         const val GAMELIST_NEED_TO_RESTART = 0x8002
-        const val READ_REQUEST_CODE = 0x8003
+        //const val READ_REQUEST_CODE = 0x8003
     }
 }

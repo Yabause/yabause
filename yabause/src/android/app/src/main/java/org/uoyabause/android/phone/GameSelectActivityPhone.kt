@@ -99,7 +99,7 @@ class GameSelectActivityPhone : AppCompatActivity() {
                                 OnGlobalLayoutListener {
                                 override fun onGlobalLayout() {
                                     adView!!.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                                    frg_.onAdViewisShwon(adView!!.getHeight())
+                                    frg_.onAdViewIsShown(adView!!.getHeight())
                                 }
                             })
                         }

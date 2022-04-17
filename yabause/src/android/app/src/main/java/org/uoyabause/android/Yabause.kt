@@ -182,15 +182,6 @@ class Yabause : AppCompatActivity(),
     private val MENU_ID_LEADERBOARD = 0x8123
     private val OPEN_FILE = 0x1234
 
-    fun showWaitDialog(message: String) {
-        progressMessage.text = message
-        progressBar.visibility = View.VISIBLE
-    }
-
-    fun dismissWaitDialog() {
-        progressBar.visibility = View.GONE
-    }
-
     fun showDialog() {
         progressMessage.text = "Sending..."
         progressBar.visibility = View.VISIBLE
