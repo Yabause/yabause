@@ -802,6 +802,7 @@ class GameSelectFragmentPhone : Fragment(),
         } catch (e: Exception) {
 //            Log.d(TAG, "${e.localizedMessage}")
         }
+
         var i = 0
         while (i < alphabet.size) {
             var hit = false
@@ -818,6 +819,7 @@ class GameSelectFragmentPhone : Fragment(),
                     )
                     it.remove()
                     hit = true
+                    it.remove()
                 }
             }
             if (hit) {
