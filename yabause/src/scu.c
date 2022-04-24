@@ -1818,7 +1818,29 @@ void ScuExec(u32 timing) {
                    ScuDsp->dsp_dma_wait = 2; // DMA operation will be start when this count is zero
                    ScuDsp->WA0M = ScuDsp->WA0;
                    ScuDsp->RA0M = ScuDsp->RA0;
-                   //LOG("Start DSP DMA RA=%08X WA=%08X inst=%08X count=%d wait = %d", ScuDsp->RA0M, ScuDsp->WA0M, ScuDsp->dsp_dma_instruction, Counter, ScuDsp->dsp_dma_wait );
+
+                   int cycle = 0;
+                   switch ((ScuDsp->WA0M << 2) & 0xDFF00000) {
+                   case 0x00200000: /* Low */
+                     cycle = 2;
+                     break;
+                   case 0x05A00000: /* SOUND */
+                     cycle = 1;
+                     break;
+                   case 0x05C00000: /* VDP1 */
+                     cycle = 1;
+                     break;
+                   case 0x05e00000: /* VDP2 */
+                     cycle = 1;
+                     break;
+                   case 0x06000000: /* High */
+                     cycle = 4;
+                     break;
+                   default:
+                     cycle = 4;
+                   }
+                   ScuDsp->dsp_dma_wait = Counter >> cycle;
+                   LOG("Start DSP DMA RA=%08X WA=%08X inst=%08X count=%d wait = %d", ScuDsp->RA0M<<2, ScuDsp->WA0M<<2, ScuDsp->dsp_dma_instruction, Counter, ScuDsp->dsp_dma_wait );
                    break;
                   }
                   case 0x0D: // Jump Commands
@@ -3066,7 +3088,7 @@ void ScuTestInterruptMask()
        }
        else {
          u8 vector = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].vector;
-         LOG("%s(%0X) delay at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
+         LOG("%s(%0X) IST=%08X delay at frame %d:%d", ScuGetVectorString(vector), vector, ScuRegs->IST, yabsys.frame_count, yabsys.LineCount);
 
          SH2SendInterrupt(MSH2, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].level);
          ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].statusbit;
@@ -3284,7 +3306,7 @@ const char * ScuGetVectorString(u32 vec) {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankIN(void) {
-   ScuRemoveVBlankOut();
+   //ScuRemoveVBlankOut();
    //ScuRemoveHBlankIN();
    ScuRemoveTimer0();
    SendInterrupt(0x40, 0xF, 0x0001, 0x0001);
@@ -3307,7 +3329,7 @@ void ScuRemoveVBlankIN() {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankOUT(void) {
-   ScuRemoveVBlankIN();
+   //ScuRemoveVBlankIN();
    ScuRemoveTimer0();
    ScuRemoveTimer1();
    SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
