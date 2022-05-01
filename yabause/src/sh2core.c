@@ -1537,7 +1537,7 @@ LOG("[%s] OnchipWriteByte %08X@%08X %02X", CurrentSH2->isslave?"SH2-S":"SH2-M", 
          CurrentSH2->onchip.SBYCR = val & 0xDF;
          return;
       case 0x092:
-         CACHE_LOG(
+         LOG(
             "[SH2-%s] CCR changed: 0x%02x->0x%02x %s %s %s %s %s %s %s\n", CurrentSH2->isslave?"S":"M", CurrentSH2->onchip.CCR, val, 
             (val & CCR_CE) ? "(CACHE ENABLE)" : "(CACHE DISABLE)",
             (val & CCR_ID) ? "(Instruction Disable)" : "(Instruction Enable)",
@@ -1675,6 +1675,17 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
             CurrentSH2->onchip.RSTCSR = (CurrentSH2->onchip.RSTCSR & 0x80) | (val & 0x60) | 0x1F;
          return;
       case 0x092:
+        LOG(
+          "[SH2-%s] CCR changed: 0x%02x->0x%02x %s %s %s %s %s %s %s\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->onchip.CCR, val,
+          (val & CCR_CE) ? "(CACHE ENABLE)" : "(CACHE DISABLE)",
+          (val & CCR_ID) ? "(Instruction Disable)" : "(Instruction Enable)",
+          (val & CCR_OD) ? "(Data Disable)" : "(Data Enable)",
+          (val & CCR_TW) ? "(Two-way)" : "",
+          (val & CCR_CP) ? "(CACHE PURGE!)" : "",
+          (val & CCR_W0) ? "(W0)" : "",
+          (val & CCR_W1) ? "(W1)" : ""
+        );
+
          CurrentSH2->onchip.CCR = val & 0xCF;
 		 if (val&0x10){
 			 cache_clear( &CurrentSH2->onchip.cache );

@@ -761,7 +761,7 @@ INLINE int getVramCycle(u32 addr) {
     *cycle = getVramCycle(addr); \
     break; \
   case 0x06000000: /* High */ \
-    *cycle = 0;  \
+    *cycle = 2;  \
     break; \
   default: \
     *cycle = 0; \
@@ -790,7 +790,7 @@ INLINE int getVramCycle(u32 addr) {
     *cycle = getVramCycle(addr); \
     break; \
   case 0x06000000: /* High */ \
-    *cycle = 1; \
+    *cycle = 2; \
     break; \
   default: \
     *cycle = 0; \

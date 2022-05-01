@@ -185,6 +185,7 @@ static void FASTCALL BiosSetScuInterrupt(SH2_struct * sh)
       sh->cycles += 9;
    }
 
+   sh->cycles += 32;
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
 }
@@ -297,7 +298,6 @@ static void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
       MappedMemoryWriteLong(0x25FE00A8, 1,&cycle); // A-bus Interrupt Acknowledge
 
    sh->cycles += 20;
-
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
 }
@@ -2452,4 +2452,5 @@ int BiosBUPStatusMem( int device, devicestatus_struct * status )
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
 

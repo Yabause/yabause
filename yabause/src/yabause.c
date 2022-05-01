@@ -962,6 +962,11 @@ void YabauseStartSlave(void) {
       MappedMemoryWriteLong(0xFFFFFFA0, 0x0000006D, NULL); // VCRDMA0
       MappedMemoryWriteLong(0xFFFFFF0C, 0x0000006E, NULL); // VCRDIV
       MappedMemoryWriteLong(0xFFFFFE10, 0x00000081, NULL); // TIER
+
+      MappedMemoryWriteByte(0xfffffe92, 0x00, NULL); // CCR
+      MappedMemoryWriteByte(0xfffffe92, 0x40, NULL); // CCR
+      MappedMemoryWriteByte(0xfffffe92, 0x80, NULL); // CCR
+
       CurrentSH2 = MSH2;
 
       SH2GetRegisters(SSH2, &SSH2->regs);
@@ -1369,6 +1374,10 @@ int YabauseQuickLoadGame(void)
       Vdp2ColorRamWriteWord(0x1C, 0xF39C);
       Vdp2ColorRamWriteWord(0x1E, 0xFBDE);
       Vdp2ColorRamWriteWord(0xFF, 0x0000);
+
+      // Enable Cache
+      MappedMemoryWriteByte(0xfffffe92, 0x11, NULL); // CCR
+
    }
    else
    {
