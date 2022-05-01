@@ -60,6 +60,8 @@ import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.logEvent
+import com.google.firebase.ktx.Firebase
 import io.noties.markwon.Markwon
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
@@ -261,10 +263,20 @@ class GameSelectFragmentPhone : Fragment(),
         drawerLayout!!.closeDrawers()
         when (item.itemId) {
             R.id.menu_item_setting -> {
+
+                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                    param("event", "menu_item_setting")
+                }
+
                 val intent = Intent(activity, SettingsActivity::class.java)
                 settingActivityLauncher.launch(intent)
             }
             R.id.menu_item_load_game -> {
+
+                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                    param("event", "menu_item_load_game")
+                }
+
                 if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
                     selectGameFile()
                 } else {
@@ -279,24 +291,43 @@ class GameSelectFragmentPhone : Fragment(),
                 }
             }
             R.id.menu_item_update_game_db -> {
-                refreshLevel = 3
+
+                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                    param("event", "menu_item_update_game_db")
+                }
+
                 if (checkStoragePermission() == 0) {
                     updateGameList()
                 }
             }
             R.id.menu_item_login -> if (item.title == getString(R.string.sign_out)) {
+
+                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                    param("event", "menu_item_login")
+                }
+
                 presenter.signOut()
                 item.setTitle(R.string.sign_in)
             } else {
                 presenter.signIn(signInActivityLauncher)
             }
             R.id.menu_privacy_policy -> {
+
+                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                    param("event", "menu_privacy_policy")
+                }
+
                 val uri =
                     Uri.parse("https://www.uoyabause.org/static_pages/privacy_policy.html")
                 val i = Intent(Intent.ACTION_VIEW, uri)
                 startActivity(i)
             }
             R.id.menu_item_login_to_other -> {
+
+                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                    param("event", "menu_item_login_to_other")
+                }
+
                 ShowPinInFragment.newInstance(presenter).show(childFragmentManager, "sample")
             }
         }
@@ -372,9 +403,19 @@ class GameSelectFragmentPhone : Fragment(),
     private var settingActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == GameSelectFragment.GAMELIST_NEED_TO_UPDATED) {
             if (checkStoragePermission() == 0) {
+
+                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                    param("event", "GAMELIST_NEED_TO_UPDATED")
+                }
+
                 updateGameList(3)
             }
         }else if (result.resultCode == GameSelectFragment.GAMELIST_NEED_TO_RESTART) {
+
+            firebaseAnalytics?.logEvent("Game Select Fragment"){
+                param("event", "GAMELIST_NEED_TO_RESTART")
+            }
+
             val intent = Intent(activity, StartupActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
@@ -383,6 +424,11 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     private var signInActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+
+        firebaseAnalytics?.logEvent("Game Select Fragment"){
+            param("event", "onSignIn")
+        }
+
         presenter.onSignIn(result.resultCode, result.data)
         if (presenter.currentUserName != null) {
             val m = navigationView!!.menu
@@ -392,6 +438,11 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     private var yabauseActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+
+        firebaseAnalytics?.logEvent("Game Select Fragment"){
+            param("event", "On Game Finished")
+        }
+
         if (BuildConfig.BUILD_TYPE != "pro") {
             val prefs = activity?.getSharedPreferences(
                 "private",
@@ -427,6 +478,11 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     override fun fileSelected(file: File?) {
+
+        firebaseAnalytics?.logEvent("Game Select Fragment"){
+            param("event", "fileSelected")
+        }
+
         if( file != null ) {
             presenter.fileSelected(file)
         }
@@ -549,11 +605,21 @@ class GameSelectFragmentPhone : Fragment(),
             }
 
             override fun onError(e: Throwable) {
+
+                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                    param("event", "updateGameList onError")
+                }
+
                 observer = null
                 dismissDialog()
             }
 
             override fun onComplete() {
+
+                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                    param("event", "updateGameList onComplete")
+                }
+
                 if (!isFront) {
                     observer = null
                     dismissDialog()
@@ -747,6 +813,11 @@ class GameSelectFragmentPhone : Fragment(),
 
     @SuppressLint("DefaultLocale")
     override fun onGameRemoved(item: GameInfo?) {
+
+        firebaseAnalytics?.logEvent("Game Select Fragment"){
+            param("event", "onGameRemoved")
+        }
+
         if (item == null) return
         val recentPage = gameListPages!!.find { it.pageTitle == "RECENT" }
         recentPage?.gameList?.removeItem(item.id)
