@@ -1621,7 +1621,7 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
    sh->regs.PC = MappedMemoryReadLong(0x06000900+(vector << 2),&cycle);
    //LOG("Interrupt from: %08X to %08X", old_pc, sh->regs.PC );
 
-   sh->cycles += 32;
+   sh->cycles += 34;
    SH2SetRegisters(sh, &sh->regs);
 }
 
