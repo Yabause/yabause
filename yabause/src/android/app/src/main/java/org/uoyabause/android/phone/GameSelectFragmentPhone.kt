@@ -487,8 +487,8 @@ class GameSelectFragmentPhone : Fragment(),
                             if (task.isSuccessful) {
                                 // We got the ReviewInfo object
                                 val reviewInfo = task.result
-                                val flow = manager.launchReviewFlow(requireActivity(), reviewInfo)
-                                flow.addOnCompleteListener { _ ->
+                                val flow = manager?.launchReviewFlow(requireActivity(), reviewInfo)
+                                flow?.addOnCompleteListener { _ ->
 
                                 }
                             } else {
