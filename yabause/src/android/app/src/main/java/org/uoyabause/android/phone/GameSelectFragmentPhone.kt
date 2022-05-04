@@ -59,28 +59,23 @@ import com.google.android.gms.analytics.Tracker
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
+import com.google.android.play.core.review.ReviewManager
+import com.google.android.play.core.review.ReviewManagerFactory
+import com.google.android.play.core.review.testing.FakeReviewManager
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.logEvent
-import com.google.firebase.ktx.Firebase
 import io.noties.markwon.Markwon
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
-import java.io.File
-import java.util.Locale
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.devmiyax.yabasanshiro.StartupActivity
-import org.uoyabause.android.AdActivity
-import org.uoyabause.android.FileDialog
+import org.uoyabause.android.*
 import org.uoyabause.android.FileDialog.FileSelectedListener
-import org.uoyabause.android.GameInfo
-import org.uoyabause.android.GameSelectPresenter
 import org.uoyabause.android.GameSelectPresenter.GameSelectPresenterListener
-import org.uoyabause.android.SettingsActivity
-import org.uoyabause.android.ShowPinInFragment
-import org.uoyabause.android.YabauseApplication
-import org.uoyabause.android.YabauseStorage
 import org.uoyabause.android.tv.GameSelectFragment
+import java.io.File
+import java.util.*
 
 internal class GameListPage(val pageTitle: String, var gameList: GameItemAdapter)
 
@@ -442,16 +437,16 @@ class GameSelectFragmentPhone : Fragment(),
         firebaseAnalytics?.logEvent("Game Select Fragment"){
             param("event", "On Game Finished")
         }
+        val prefs = requireActivity().getSharedPreferences(
+            "private",
+            Context.MODE_PRIVATE
+        )
+        val hasDonated = prefs?.getBoolean("donated", false)
 
-        if (BuildConfig.BUILD_TYPE != "pro") {
-            val prefs = activity?.getSharedPreferences(
-                "private",
-                Context.MODE_PRIVATE
-            )
-            val hasDonated = prefs?.getBoolean("donated", false)
-            if (hasDonated == false) {
+        if (BuildConfig.BUILD_TYPE != "pro" && hasDonated == false ) {
+
                 val rn = Math.random()
-                if (rn <= 0.5) {
+                if (rn <= 0.3) {
                     val uiModeManager =
                         activity?.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
                     if (uiModeManager.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION) {
@@ -466,13 +461,85 @@ class GameSelectFragmentPhone : Fragment(),
                             Intent(activity, AdActivity::class.java)
                         adActivityLauncher.launch(intent)
                     }
-                } else if (rn > 0.5) {
+                } else if (rn <= 0.6) {
                     val intent =
                         Intent(activity, AdActivity::class.java)
                     adActivityLauncher.launch(intent)
+                } else {
+
+                    val lastReviewDateTime = prefs.getInt("last_review_date_time",0)
+                    val unixTime = System.currentTimeMillis() / 1000L
+
+                    // ３ヶ月に一度レビューしてもらう
+                    if( (unixTime - lastReviewDateTime) > 60*60*24*30 ) {
+
+                        var manager : ReviewManager? = null
+                        if( BuildConfig.DEBUG ){
+                            manager = FakeReviewManager(requireContext())
+                        }else{
+                            val editor = prefs.edit()
+                            editor.putInt("last_review_date_time",lastReviewDateTime)
+                            editor.commit()
+                            manager = ReviewManagerFactory.create(requireContext())
+                        }
+                        val request = manager.requestReviewFlow()
+                        request.addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                // We got the ReviewInfo object
+                                val reviewInfo = task.result
+                                val flow = manager.launchReviewFlow(requireActivity(), reviewInfo)
+                                flow.addOnCompleteListener { _ ->
+
+                                }
+                            } else {
+                                task.getException()?.message?.let {
+                                        it1 -> Log.d( TAG, it1)
+                                }
+                            }
+                        }
+
+                    }else{
+                        val intent =
+                            Intent(activity, AdActivity::class.java)
+                        adActivityLauncher.launch(intent)
+                    }
+                }
+
+            updateRecent()
+
+        } else {
+
+            val rn = Math.random()
+            val lastReviewDateTime = prefs.getInt("last_review_date_time",0)
+            val unixTime = System.currentTimeMillis() / 1000L
+
+            // ３ヶ月に一度レビューしてもらう
+            if( rn < 0.3 && (unixTime - lastReviewDateTime) > 60*60*24*30 ){
+                var manager : ReviewManager? = null
+                if( BuildConfig.DEBUG ){
+                    manager = FakeReviewManager(requireContext())
+                }else{
+                    val editor = prefs.edit()
+                    editor.putInt("last_review_date_time",lastReviewDateTime)
+                    editor.commit()
+                    manager = ReviewManagerFactory.create(requireContext())
+                }
+                val request = manager.requestReviewFlow()
+                request.addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        // We got the ReviewInfo object
+                        val reviewInfo = task.result
+                        val flow = manager.launchReviewFlow(requireActivity(), reviewInfo)
+                        flow.addOnCompleteListener { _ ->
+
+                        }
+                    } else {
+                        task.getException()?.message?.let {
+                                it1 -> Log.d( TAG, it1)
+                        }
+                    }
                 }
             }
-        } else {
             updateRecent()
         }
     }

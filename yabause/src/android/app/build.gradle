@@ -241,9 +241,9 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics-ktx:20.1.2'
     implementation 'com.google.firebase:firebase-crashlytics-ndk:18.2.9'
     implementation 'net.cattaka:adapter-toolbox:0.5.2'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.0"
-    implementation 'net.nend.android:nend-sdk:5.2.0'
-    implementation "com.google.android.material:material:1.4.0-rc01"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20"
+    implementation "com.google.android.material:material:1.6.0-beta01"
+    implementation 'com.google.android.play:core-ktx:1.8.1'
 
     // Add the In-App Messaging dependency:
     implementation 'com.google.firebase:firebase-inappmessaging-display:20.1.2'
