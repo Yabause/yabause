@@ -1945,28 +1945,28 @@ const GLchar Yglprg_vdp2_drawfb_cram_less_line_dest_alpha_f[] =
 "  linepos.y = 0; \n "
 "  linepos.x = int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if( depth <= u_cctl ){ fragColor = (fragColor*lncol.a) + lncol*(1.0-lncol.a); } \n";
+"  if( depth <= u_cctl ){ fragColor = (fragColor*(1.0-lncol.a)) + lncol*lncol.a; } \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_equal_line_dest_alpha_f[] =
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
 "  linepos.x = int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if( depth == u_cctl ){ fragColor = (lncol*lncol.a) + fragColor*(1.0-lncol.a); } \n";
+"  if( depth == u_cctl ){ fragColor = (fragColor*(1.0-lncol.a)) + lncol*lncol.a; } \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_more_line_dest_alpha_f[] =
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
 "  linepos.x = int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if( depth >= u_cctl ){ fragColor =(fragColor*lncol.a) + lncol*(1.0-lncol.a); } \n";
+"  if( depth >= u_cctl ){ fragColor = (fragColor*(1.0-lncol.a)) + lncol*lncol.a; } \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_msb_line_dest_alpha_f[] =
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
 "  linepos.x = int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if( txcol.a != 0.0 ){ fragColor = (fragColor*lncol.a) + lncol*(1.0-lncol.a); }\n";
+"  if( txcol.a != 0.0 ){ fragColor = (fragColor*(1.0-lncol.a)) + lncol*lncol.a; }\n";
 
 const GLchar Yglprg_vdp2_drawfb_line_blend_fv[] =
 "  ivec2 linepos; \n "
