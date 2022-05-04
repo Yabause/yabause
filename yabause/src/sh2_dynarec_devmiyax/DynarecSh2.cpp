@@ -1589,10 +1589,16 @@ inline int DynarecSh2::Execute(){
         }
       }
       if (yabsys.emulatebios) {
+
+        const int cmd = (((GET_PC() - 0x200) >> 2) & 0xFF) ;
+        int rtn = 0;
+        if ( cmd == 0x40 || cmd == 0x44 || cmd == 0x50 || cmd == 0x51 ) {
+          rtn = IN_INFINITY_LOOP;
+        }
         ctx_->cycles = 0;
-         BiosHandleFunc(ctx_);
-         memcycle_ += ctx_->cycles;
-        return IN_INFINITY_LOOP;
+        BiosHandleFunc(ctx_);
+        memcycle_ += ctx_->cycles;
+        return rtn;
       }
       pBlock = m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1];
       if (pBlock == NULL)
