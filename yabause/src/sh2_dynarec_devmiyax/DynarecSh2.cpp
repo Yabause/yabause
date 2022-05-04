@@ -1592,7 +1592,7 @@ inline int DynarecSh2::Execute(){
         ctx_->cycles = 0;
          BiosHandleFunc(ctx_);
          memcycle_ += ctx_->cycles;
-        return 0;
+        return IN_INFINITY_LOOP;
       }
       pBlock = m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1];
       if (pBlock == NULL)

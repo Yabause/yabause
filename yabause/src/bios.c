@@ -185,7 +185,6 @@ static void FASTCALL BiosSetScuInterrupt(SH2_struct * sh)
       sh->cycles += 9;
    }
 
-   sh->cycles += 32;
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
 }
