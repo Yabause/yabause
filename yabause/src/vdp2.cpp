@@ -1451,6 +1451,12 @@ void Vdp2VBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void Vdp2UpdateHv( int hcnt, int line ){
+   Vdp2Regs->HCNT = (yabsys.Hcount*hcnt) << 2;
+   Vdp2Regs->VCNT = line;
+}
+
+
 void Vdp2SendExternalLatch(int hcnt, int vcnt)
 {
    Vdp2Regs->HCNT = hcnt << 1;
@@ -1501,6 +1507,7 @@ u16 FASTCALL Vdp2ReadWord(u32 addr) {
    case 0x006:
      return Vdp2Regs->VRSIZE;
    case 0x008:
+     LOG("HCNT = %d VCNT = %d\n", Vdp2Regs->HCNT, Vdp2Regs->VCNT);
      return Vdp2Regs->HCNT;
    case 0x00A:
      return Vdp2Regs->VCNT;
@@ -1953,6 +1960,34 @@ void FASTCALL Vdp2WriteWord(u32 addr, u16 val) {
       case 0x000:
          Vdp2Regs->TVMD = val;
          yabsys.VBlankLineCount = 225+(val & 0x30);
+
+         switch( val&0x07){
+           case 0:
+             yabsys.Hcount = 320 / 9;
+             break;
+           case 1:
+             yabsys.Hcount = 352 / 9;
+             break;
+           case 2:
+             yabsys.Hcount = 640 / 9;
+             break;
+           case 3:
+             yabsys.Hcount = 704 / 9;
+             break;
+           case 4:
+             yabsys.Hcount = 320 / 9;
+             break;
+           case 5:
+             yabsys.Hcount = 352 / 9;
+             break;
+           case 6:
+             yabsys.Hcount = 640 / 9;
+             break;
+           case 7:
+             yabsys.Hcount = 704 / 9;
+             break;
+         }
+         
          return;
       case 0x002:
          Vdp2Regs->EXTEN = val;

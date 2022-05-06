@@ -138,7 +138,9 @@ static INLINE u32 SWAP32(u32 v)
 
 void cache_memory_write_b(cache_enty *ca, u32 addr, u8 val, u32 *cycle)
 {
-
+  //if( (addr&0x0fffffff)==0x060ffca8 ) { 
+  //  LOG("[%s] %d Write %zu-byte write of 0x%08x to 0x%08x PC=%08X frame %d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, 1, val, addr , CurrentSH2->regs.PC,  yabsys.frame_count, yabsys.LineCount );
+  //}
   switch (addr & AREA_MASK)
   {
   case CACHE_USE:
@@ -196,7 +198,9 @@ void cache_memory_write_b(cache_enty *ca, u32 addr, u8 val, u32 *cycle)
 
 void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
 {
-
+  //if( (addr&0x0fffffff)==0x060ffca8 ) { 
+  //  LOG("[%s] Write %zu-byte write of 0x%08x to 0x%08x PC=%08X", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 2, val, addr , CurrentSH2->regs.PC);
+  //}
   switch (addr & AREA_MASK)
   {
   case CACHE_USE:
@@ -264,6 +268,11 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
 
 void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
 {
+
+  //if( (addr&0x0fffffff)==0x060f9604 ) { 
+  //  LOG("[%s] %d Write %zu-byte write of 0x%08x to 0x%08x PC=%08X frame=%d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M",  CurrentSH2->cycles, 4, val, addr , CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount );
+  //}
+
   switch (addr & AREA_MASK)
   {
   case CACHE_PURGE: // associative purge
@@ -526,7 +535,7 @@ u16 cache_memory_read_w(cache_enty *ca, u32 addr, u32 *cycle, u32 isInst)
     {
       const u16 rtn = MappedMemoryReadWordNocache(addr, cycle);
       //if (cycle != NULL) {
-      //LOG("[SH2-%s] %d+%d CACHE_THROUGH 2 addr:%08X val:%08X", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn);
+      //  LOG("[SH2-%s] %d+%d CACHE_THROUGH read 2 addr:%08X val:%08X", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn );
       //}
       return rtn;
     }
@@ -629,9 +638,10 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
   break;
   case CACHE_THROUGH:
     {
+ 
       const u32 rtn = MappedMemoryReadLongNocache(addr, cycle);
       //if (cycle != NULL) {
-      //LOG("[SH2-%s] %d+%d CACHE_THROUGH 4 addr:%08X val:%08X", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn);
+      // LOG("[SH2-%s] %d+%d Read 4-byte addr:%08X val:%08X PC:%08X frame:%d:%d", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount  );
       //}
       return rtn;
     }

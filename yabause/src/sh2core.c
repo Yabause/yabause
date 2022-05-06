@@ -202,6 +202,8 @@ void SH2Reset(SH2_struct *context)
    context->wdt.shift = 1;
    context->wdt.leftover = 0;
 
+   context->inputCaptureCount = 0;
+
    // Reset Interrupts
    memset((void *)context->interrupts, 0, sizeof(interrupt_struct) * MAX_INTERRUPTS);
    SH2Core->SetInterrupts(context, 0, context->interrupts);
@@ -1179,7 +1181,11 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
       case 0x010:
          return CurrentSH2->onchip.TIER;
       case 0x011:
-       // if (CurrentSH2->onchip.FTCSR & 0x80) { LOG("Read FTCSR = 0x80"); }
+         //if( CurrentSH2->inputCaptureCount > 0 ){
+         //   CurrentSH2->onchip.FTCSR |= 0x80;
+         //   CurrentSH2->inputCaptureCount--;
+         //} 
+         if (CurrentSH2->onchip.FTCSR & 0x80) { LOG("Read FTCSR = 0x80 cnt=%d", CurrentSH2->inputCaptureCount ); }
          return CurrentSH2->onchip.FTCSR;
       case 0x012:         
          //LOG("[FRCH] %02X",CurrentSH2->onchip.FRC.part.H);
@@ -1884,13 +1890,18 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
 
          CurrentSH2->onchip.CHCR0 = (val & ~2) | (CurrentSH2->onchip.CHCR0 & (val| CurrentSH2->onchip.CHCR0M) & 2);
 
+         if( CurrentSH2->onchip.CHCR0 & 0x10 ) {
+            LOG("Burst Mode!");
+         }
+
          // If the DMAOR DME bit is set and AE and NMIF bits are cleared,
          // and CHCR's DE bit is set and TE bit is cleared,
          // do a dma transfer
          if ((CurrentSH2->onchip.DMAOR & 7) == 1 && (val & 0x3) == 1) {
 
            CurrentSH2->dma_ch0.copy_clock = 0;
-
+           CurrentSH2->dma_ch0.penerly = 0;
+   
            LOG("[%s] DMA %d CHCR Write: CHCR=0x%04x(type=%d) SAR=0x%08x DAR=0x%08x TCR=0x%04x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 0,
              CurrentSH2->onchip.CHCR0,
              (CurrentSH2->onchip.CHCR0 & 0x0C00) >> 10,
@@ -1918,12 +1929,16 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
 
          CurrentSH2->onchip.CHCR1 = (val & ~2) | (CurrentSH2->onchip.CHCR1 & (val| CurrentSH2->onchip.CHCR1M) & 2);
 
+         if( CurrentSH2->onchip.CHCR1 & 0x10 ) {
+            LOG("Burst Mode!");
+         }
          // If the DMAOR DME bit is set and AE and NMIF bits are cleared,
          // and CHCR's DE bit is set and TE bit is cleared,
          // do a dma transfer
          if ((CurrentSH2->onchip.DMAOR & 7) == 1 && (CurrentSH2->onchip.CHCR1 & 0x3) == 1) {
 
            CurrentSH2->dma_ch1.copy_clock = 0;
+           CurrentSH2->dma_ch1.penerly = 0;
 
            LOG("[%s] DMA %d CHCR Write: CHCR=0x%04x(type:%d) SAR=0x%08x DAR=0x%08x TCR=0x%04x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 1,
              CurrentSH2->onchip.CHCR1,
@@ -2205,7 +2220,7 @@ int getEatClock(u32 src, u32 dst) {
       return 427;
       break;
     case 0x05E00000: // VDP2 RAM
-      return 1;
+      return 40;
       break;
     case 0x05F00000: // VDP2 REG
       return 50;
@@ -2233,7 +2248,7 @@ int getEatClock(u32 src, u32 dst) {
       return 570;
       break;
     case 0x05E00000: // VDP2 RAM
-      return 225;
+      return 50;
       break;
     case 0x05F00000: // VDP2 REG
       return 50;
@@ -2282,6 +2297,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
    u32 i = 0;
    int count;
    u32 cycle=0;
+   const int extbus_penalty = 18; 
 
    //LOG("sh2 dma src=%08X,dst=%08X,%d type:%d cycle:%d\n", *dmac->SAR, *dmac->DAR, *dmac->TCR, ((*dmac->CHCR & 0x0C00) >> 10), cycles);
 
@@ -2312,6 +2328,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
       switch (type) {
          case 0:
             while( dmac->copy_clock >= 0 )  {
+               dmac->penerly += extbus_penalty;
                dmac->copy_clock -= eat;
 				       MappedMemoryWriteByteNocache(*dmac->DAR, MappedMemoryReadByteNocache(*dmac->SAR,&cycle),&cycle);
                *dmac->SAR += srcInc;
@@ -2335,6 +2352,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
             destInc *= 2;
             srcInc *= 2;
             while (dmac->copy_clock >= 0) {
+              dmac->penerly += extbus_penalty;
               dmac->copy_clock -= eat;
 				      MappedMemoryWriteWordNocache(*dmac->DAR, MappedMemoryReadWordNocache(*dmac->SAR,&cycle),&cycle);
                *dmac->SAR += srcInc;
@@ -2358,6 +2376,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
             destInc *= 4;
             srcInc *= 4;
             while (dmac->copy_clock >= 0) {
+              dmac->penerly += extbus_penalty;
               dmac->copy_clock -= eat;
                u32 val = MappedMemoryReadLongNocache(*dmac->SAR,&cycle);
                //printf("CPU DMA src:%08X dst:%08X val:%08X\n", *SAR, *DAR, val);
@@ -2382,6 +2401,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
            destInc *= 4;
            srcInc *= 4;
            while (dmac->copy_clock >= 0) {
+              dmac->penerly += extbus_penalty;
              dmac->copy_clock -= (eat>>2);
              u32 val = MappedMemoryReadLongNocache(*dmac->SAR,&cycle);
              //printf("CPU DMA src:%08X dst:%08X val:%08X\n", *SAR, *DAR, val);
@@ -2518,7 +2538,9 @@ void FASTCALL MSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
    // Copy FRC register to FICR
    MSH2->onchip.FICR = MSH2->onchip.FRC.all;
 
-   //LOG("MSH2InputCapture\n");
+   //LOG("MSH2InputCapture");
+
+   MSH2->inputCaptureCount++;
 
    // Time for an Interrupt?
    if (MSH2->onchip.TIER & 0x80)
@@ -2557,11 +2579,14 @@ void FASTCALL SSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
    // Copy FRC register to FICR
    SSH2->onchip.FICR = SSH2->onchip.FRC.all;
 
-   //LOG("SSH2InputCapture\n");
+   LOG("[%s] %d pc = %08X SSH2InputCapture at frame %d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
+
+   SSH2->inputCaptureCount++;
 
    // Time for an Interrupt?
-   if (SSH2->onchip.TIER & 0x80)
+   if (SSH2->onchip.TIER & 0x80){
       SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
+   }
 
    // Sleeping? wake!
    u32 pc = SH2Core->GetPC(SSH2);

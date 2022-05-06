@@ -1477,6 +1477,17 @@ void DynarecSh2::ExecuteCount( u32 Count ) {
     return;
   }
 
+   if( CurrentSH2->dma_ch0.penerly != 0 ){
+      //LOG("[%s] %d  add DMA Penerlty %d",CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, context->dma_ch0.penerly);
+      m_pDynaSh2->SysReg[4] += CurrentSH2->dma_ch0.penerly;
+      CurrentSH2->dma_ch0.penerly = 0;
+   }
+
+   if( CurrentSH2->dma_ch1.penerly != 0 ){
+      m_pDynaSh2->SysReg[4] += CurrentSH2->dma_ch1.penerly;
+      CurrentSH2->dma_ch1.penerly = 0;
+   }   
+
 #if 0
   // Overflow
   if (targetcnt < m_pDynaSh2->SysReg[4]){

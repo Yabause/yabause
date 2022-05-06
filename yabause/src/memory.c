@@ -789,6 +789,9 @@ INLINE int getVramCycle(u32 addr) {
   case 0x05E00000: /* VDP2 RAM */ \
     *cycle = getVramCycle(addr); \
     break; \
+  case 0x05F00000: /* VDP2 REG */ \
+    *cycle = 4; \
+    break; \    
   case 0x06000000: /* High */ \
     *cycle = 2; \
     break; \
@@ -861,7 +864,12 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle)
       case 0x4:
       {
          // Cache/Non-Cached
-         return ReadByteList[(addr >> 16) & 0xFFF](addr);
+         u8 rtn = ReadByteList[(addr >> 16) & 0xFFF](addr);
+         //if( (addr&0xF0000000) == 0x20000000 ){
+         // LOG("[%s] %zu-byte read address=0x%08x value=0x%x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 1, addr, rtn);
+         //}
+         return rtn;
+
       }
 
       case 0x2:
@@ -931,7 +939,11 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle)
       case 0x4:
       {
          // Cache/Non-Cached
-         return ReadWordList[(addr >> 16) & 0xFFF](addr);
+         u16 rtn = ReadWordList[(addr >> 16) & 0xFFF](addr);
+         //if( (addr&0xF0000000) == 0x20000000 ){
+         //  LOG("[%s] %zu-byte read address=0x%08x value=0x%x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 2, addr, rtn);
+         //}
+         return rtn;
       }
 
       case 0x2:
@@ -983,6 +995,7 @@ u32 FASTCALL MappedMemoryReadLongNocache(u32 addr, u32 * cycle)
 u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle)
 #endif
 {
+
   if (cycle != NULL) { 
     //*cycle = getMemCycle(addr); 
     GET_MEM_CYCLE_R
@@ -994,7 +1007,11 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle)
       case 0x4:
       {
          // Cache/Non-Cached
-         return ReadLongList[(addr >> 16) & 0xFFF](addr);
+         u32 rtn = ReadLongList[(addr >> 16) & 0xFFF](addr);
+         //if( (addr&0xF0000000) == 0x20000000 ){
+         //   LOG("[%s] %zu-byte read address=0x%08x value=0x%x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 4, addr, rtn);
+         //}
+         return rtn;
       }
 
       case 0x2:

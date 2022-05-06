@@ -147,6 +147,7 @@ typedef struct
    u32 sync_shift;
    int use_cpu_affinity;
    int use_sh2_cache;
+   int Hcount;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

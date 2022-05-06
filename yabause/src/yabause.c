@@ -733,6 +733,7 @@ int YabauseEmulate(void) {
    SH2OnFrame(MSH2);
    SH2OnFrame(SSH2);
    u64 cpu_emutime = 0;
+   Vdp2UpdateHv(0,0);
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");
@@ -774,6 +775,8 @@ int YabauseEmulate(void) {
       cpu_emutime += (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq;
 #endif
        yabsys.DecilineCount++;
+       //Vdp2UpdateHv(yabsys.DecilineCount,yabsys.LineCount);
+       
        if(yabsys.DecilineCount == 9) {
          // HBlankIN
          PROFILE_START("hblankin");
@@ -966,6 +969,7 @@ void YabauseStartSlave(void) {
       MappedMemoryWriteByte(0xfffffe92, 0x00, NULL); // CCR
       MappedMemoryWriteByte(0xfffffe92, 0x40, NULL); // CCR
       MappedMemoryWriteByte(0xfffffe92, 0x80, NULL); // CCR
+      MappedMemoryWriteByte(0xfffffe92, 0x01, NULL); // CCR
 
       CurrentSH2 = MSH2;
 

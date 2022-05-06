@@ -197,9 +197,16 @@ void SH2HandleInterrupts(SH2_struct *context)
       context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2), NULL);
 
       int Vector = context->interrupts[context->NumberOfInterrupts - 1].vector;
-      //LOG("**** [%s] Exception vecnum=%s(%x), PC=%08X to %08X, level=%08X\n", (context->isslave) ? "S" : "M", ScuGetVectorString(Vector), Vector, oldpc, context->regs.PC, level);
+      //LOG("[%s] Exception vecnum=(%x), PC=%08X to %08X, level=%08X", (context->isslave) ? "S" : "M", Vector, oldpc, context->regs.PC, level);
 
-      //LOG("[%s] Exception vecnum=%s(%x), saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", ScuGetVectorString(context->interrupts[context->NumberOfInterrupts - 1].vector), context->interrupts[context->NumberOfInterrupts - 1].vector,oldpc, context->regs.PC);
+/*
+      LOG("[%s] %d Exception vecnum=%x, saved PC=0x%08x --- New PC=0x%08x\n", 
+        context->isslave?"SH2-S":"SH2-M", 
+        CurrentSH2->cycles, 
+        context->interrupts[context->NumberOfInterrupts - 1].vector,oldpc, 
+        context->regs.PC
+      );
+*/
       context->NumberOfInterrupts--;
       context->isIdle = 0;
       context->isSleeping = 0;
@@ -3068,7 +3075,18 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
     * printing a trace line */
    sh2_trace_add_cycles(-((s32)context->cycles));
 #endif
-   
+
+   if( context->dma_ch0.penerly != 0 ){
+      LOG("[%s] %d  add DMA Penerlty %d",CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, context->dma_ch0.penerly);
+      context->cycles += context->dma_ch0.penerly;
+      context->dma_ch0.penerly = 0;
+   }
+
+   if( context->dma_ch1.penerly != 0 ){
+      context->cycles += context->dma_ch1.penerly;
+      context->dma_ch1.penerly = 0;
+   }   
+
    SH2HandleInterrupts(context);
 
    while (context->cycles < target_cycle)
@@ -3159,6 +3177,18 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
   int target_cycle = context->cycles + cycles - context->pre_cycle;
+
+   if( context->dma_ch0.penerly != 0 ){
+      LOG("[%s] %d  add DMA Penerlty %d",CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, context->dma_ch0.penerly);
+      context->cycles += context->dma_ch0.penerly;
+      context->dma_ch0.penerly = 0;
+   }
+
+   if( context->dma_ch1.penerly != 0 ){
+      context->cycles += context->dma_ch1.penerly;
+      context->dma_ch1.penerly = 0;
+   }   
+    
   SH2HandleInterrupts(context);
 
 #ifndef EXEC_FROM_CACHE
