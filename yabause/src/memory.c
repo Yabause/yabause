@@ -1,4 +1,4 @@
-﻿/*  Copyright 2005 Guillaume Duhamel
+/*  Copyright 2005 Guillaume Duhamel
     Copyright 2005-2006 Theo Berkau
 
     This file is part of Yabause.
@@ -791,7 +791,7 @@ INLINE int getVramCycle(u32 addr) {
     break; \
   case 0x05F00000: /* VDP2 REG */ \
     *cycle = 4; \
-    break; \    
+    break; \
   case 0x06000000: /* High */ \
     *cycle = 2; \
     break; \
