@@ -963,6 +963,7 @@ void Cs2Exec(u32 timing) {
 
    if (Cs2Area->_statuscycles >= Cs2Area->_statustiming)
    {
+
       Cs2Area->_statuscycles -= Cs2Area->_statustiming;
       switch(Cs2Area->cdi->GetStatus())
       {
@@ -1116,7 +1117,11 @@ void Cs2Exec(u32 timing) {
       if (Cs2Area->_command)
          return;
 
-      Cs2Area->status |= CDB_STAT_PERI;
+      if( (Cs2Area->status&0x0F)  == CDB_STAT_BUSY ){
+         Cs2Area->status = Cs2Area->nextStatus;
+      }else{
+         Cs2Area->status |= CDB_STAT_PERI;
+      }
 
       // adjust registers appropriately here(fix me)
       doCDReport(Cs2Area->status);
@@ -1517,7 +1522,9 @@ void Cs2GetToc(void) {
   Cs2Area->reg.CR3 = 0x0;
   Cs2Area->reg.CR4 = 0x0; 
   Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
-  Cs2Area->status = CDB_STAT_PAUSE;
+  Cs2Area->status = CDB_STAT_BUSY;
+  Cs2Area->nextStatus = CDB_STAT_PAUSE;
+  LOG("Cs2GetToc %d",Cs2Area->cdwnum);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1539,7 +1546,9 @@ void Cs2GetSessionInfo(void) {
             break;
   }
 
-  Cs2Area->status = CDB_STAT_PAUSE;
+  Cs2Area->status = CDB_STAT_BUSY;
+  Cs2Area->nextStatus = CDB_STAT_PAUSE;
+
   Cs2Area->reg.CR1 = Cs2Area->status << 8;
   Cs2Area->reg.CR2 = 0;
 
@@ -1554,7 +1563,8 @@ void Cs2InitializeCDSystem(void) {
 
   if ((Cs2Area->status & 0xF) != CDB_STAT_OPEN && (Cs2Area->status & 0xF) != CDB_STAT_NODISC)
   {
-     Cs2Area->status = CDB_STAT_PAUSE;
+     Cs2Area->status = CDB_STAT_BUSY;
+     Cs2Area->nextStatus = CDB_STAT_PAUSE;
      Cs2Area->FAD = 150;
   }
 
@@ -1859,7 +1869,9 @@ void Cs2SeekDisc(void) {
 	// Stop
 	if ((Cs2Area->reg.CR1 & 0xFF) == 0x00 && Cs2Area->reg.CR2 == 0x0000){
 
-		Cs2Area->status = CDB_STAT_STANDBY;
+      Cs2Area->status = CDB_STAT_BUSY;
+      Cs2Area->nextStatus = CDB_STAT_STANDBY;
+
 		Cs2Area->options = 0xFF;
 		Cs2Area->repcnt = 0xFF;
 		Cs2Area->ctrladdr = 0xFF;
@@ -1867,13 +1879,16 @@ void Cs2SeekDisc(void) {
 		Cs2Area->index = 0xFF;
 		Cs2Area->FAD = 0xFFFFFFFF;
 
-      CDLOG("[CDB] Seek pos = CDB_STAT_STANDBY" );
+      CDLOG("[CDB] Seek pos = Stop" );
 
 	}
 	// Pause
 	else if ((Cs2Area->reg.CR1 & 0xFF) == 0xFF && Cs2Area->reg.CR2 == 0xFFFF){
 
-		Cs2Area->status = CDB_STAT_PAUSE;
+      CDLOG("[CDB] Seek pos = Pause" );
+      Cs2Area->status = CDB_STAT_BUSY;  
+      Cs2Area->nextStatus = CDB_STAT_PAUSE;
+
 	}
   else if (Cs2Area->reg.CR1 & 0x80)
   {
@@ -1884,7 +1899,8 @@ void Cs2SeekDisc(void) {
      sdFAD = ((Cs2Area->reg.CR1 & 0xFF) << 16) | Cs2Area->reg.CR2;
      sdFAD = (sdFAD & 0xFFFFF);
 
-    Cs2Area->status = CDB_STAT_PAUSE;
+    Cs2Area->status = CDB_STAT_BUSY;
+    Cs2Area->nextStatus = CDB_STAT_SEEK;
     for (i = 0; i < 99; i++){
        u32 tfad = Cs2Area->TOC[i] & 0x00FFFFFF;
        if (tfad >= sdFAD){
@@ -1903,7 +1919,8 @@ void Cs2SeekDisc(void) {
      if (Cs2Area->reg.CR2 >> 8)
      {
         // Seek by index
-        Cs2Area->status = CDB_STAT_PAUSE;
+        Cs2Area->status = CDB_STAT_BUSY;
+        Cs2Area->nextStatus = CDB_STAT_SEEK;
         Cs2SetupDefaultPlayStats((Cs2Area->reg.CR2 >> 8), 1);
         Cs2Area->index = Cs2Area->reg.CR2 & 0xFF;
 
@@ -1935,7 +1952,9 @@ void Cs2SeekDisc(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2ScanDisc(void) {
-   Cs2Area->status = CDB_STAT_SCAN;
+
+   Cs2Area->status = CDB_STAT_BUSY;
+   Cs2Area->nextStatus = CDB_STAT_SCAN;
 
    // finish me
    Cs2SetIRQ(CDB_HIRQ_CMOK);
@@ -2901,8 +2920,11 @@ void Cs2ReadFile(void) {
 
 void Cs2AbortFile(void) {
   if ((Cs2Area->status & 0xF) != CDB_STAT_OPEN &&
-      (Cs2Area->status & 0xF) != CDB_STAT_NODISC)
-     Cs2Area->status = CDB_STAT_PAUSE;
+      (Cs2Area->status & 0xF) != CDB_STAT_NODISC){
+      Cs2Area->status = CDB_STAT_BUSY;
+      Cs2Area->nextStatus = CDB_STAT_PAUSE;
+  }
+
   Cs2Area->isonesectorstored = 0;
   Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
   Cs2Area->cdwnum = 0;
@@ -3185,7 +3207,8 @@ void Cs2AuthenticateDevice(void) {
       (Cs2Area->status & 0xF) != CDB_STAT_OPEN)
   {
      // Set registers all to invalid values(aside from status)
-     Cs2Area->status = CDB_STAT_BUSY;
+     //Cs2Area->status = CDB_STAT_BUSY;
+ 
 
      Cs2Area->reg.CR1 = (Cs2Area->status << 8) | 0xFF;
      Cs2Area->reg.CR2 = 0xFFFF;
@@ -3206,8 +3229,9 @@ void Cs2AuthenticateDevice(void) {
      }
 
      // Set registers all back to normal values
+     Cs2Area->status = CDB_STAT_BUSY;
+     Cs2Area->nextStatus = CDB_STAT_PAUSE;
 
-     Cs2Area->status = CDB_STAT_PAUSE;
   }
   else
   {
