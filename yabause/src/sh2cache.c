@@ -269,9 +269,7 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
 void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
 {
 
-  //if( (addr&0x0fffffff)==0x060f9604 ) { 
-  //  LOG("[%s] %d Write %zu-byte write of 0x%08x to 0x%08x PC=%08X frame=%d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M",  CurrentSH2->cycles, 4, val, addr , CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount );
-  //}
+  //if(addr==0x060fffd8) LOG("[%s] %d Cache Write 4 PC=%08X ADDR=%08X VAL=%08X\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, CurrentSH2->regs.PC, val);
 
   switch (addr & AREA_MASK)
   {
@@ -432,7 +430,7 @@ u8 cache_memory_read_b(cache_enty *ca, u32 addr, u32 *cycle)
   case CACHE_THROUGH:
     {
       const u8 rtn = MappedMemoryReadByteNocache(addr, cycle);
-      //LOG("[SH2-%s] %d+%d CACHE_THROUGH 1 addr:%08X val:%08X", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn);
+      //if (cycle != NULL) { LOG("[SH2-%s] %d+%d CACHE_THROUGH 1 addr:%08X val:%08X", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn); }
       return rtn;
     }
     break;
@@ -534,9 +532,7 @@ u16 cache_memory_read_w(cache_enty *ca, u32 addr, u32 *cycle, u32 isInst)
   case CACHE_THROUGH:
     {
       const u16 rtn = MappedMemoryReadWordNocache(addr, cycle);
-      //if (cycle != NULL) {
-      //  LOG("[SH2-%s] %d+%d CACHE_THROUGH read 2 addr:%08X val:%08X", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn );
-      //}
+      //if (cycle != NULL && addr != 0x25890008 ) { LOG("[SH2-%s] %d+%d CACHE_THROUGH 2 addr:%08X val:%08X", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn); }
       return rtn;
     }
     break;
@@ -640,9 +636,7 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
     {
  
       const u32 rtn = MappedMemoryReadLongNocache(addr, cycle);
-      //if (cycle != NULL) {
-      // LOG("[SH2-%s] %d+%d Read 4-byte addr:%08X val:%08X PC:%08X frame:%d:%d", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount  );
-      //}
+      //if (cycle != NULL) { LOG("[SH2-%s] %d+%d CACHE_THROUGH 4 addr:%08X val:%08X", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn); }
       return rtn;
     }
     break;
