@@ -971,6 +971,8 @@ void YabauseStartSlave(void) {
       MappedMemoryWriteByte(0xfffffe92, 0x80, NULL); // CCR
       MappedMemoryWriteByte(0xfffffe92, 0x01, NULL); // CCR
 
+      SH2Core->AddCycle(SSH2,2000);
+
       CurrentSH2 = MSH2;
 
       SH2GetRegisters(SSH2, &SSH2->regs);

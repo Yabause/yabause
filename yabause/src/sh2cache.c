@@ -406,7 +406,7 @@ u8 cache_memory_read_b(cache_enty *ca, u32 addr, u32 *cycle)
       ca->way[entry].tag[lruway] = tagaddr;
       if (cycle)
       {
-        *cycle = 2;
+        *cycle = 1;
       }
 
       for (i = 0; i < 16; i += 4)
@@ -510,7 +510,7 @@ u16 cache_memory_read_w(cache_enty *ca, u32 addr, u32 *cycle, u32 isInst)
       ca->way[entry].tag[lruway] = tagaddr;
       if (cycle)
       {
-        *cycle = 2;
+        *cycle = 1;
       }
 
       for (i = 0; i < 16; i += 4)
@@ -612,7 +612,7 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
       ca->way[entry].tag[lruway] = tagaddr;
       if (cycle)
       {
-        *cycle = 2;
+        *cycle = 1;
       }
 
       for (i = 0; i < 16; i += 4)

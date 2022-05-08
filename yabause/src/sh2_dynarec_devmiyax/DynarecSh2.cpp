@@ -1464,7 +1464,7 @@ void DynarecSh2::ResetCPU(){
 }
 
 void DynarecSh2::ExecuteCount( u32 Count ) {
-  u32 targetcnt = 0;
+  int targetcnt = 0;
   
   m_pDynaSh2->SysReg[4] = 0;
     if (Count > pre_exe_count_) {
