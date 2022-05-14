@@ -484,12 +484,12 @@ static u32 GetDeviceStats(u32 device, u32 *size, u32 *addr, u32 *blocksize)
    {
       case 0:
         if (yabsys.extend_backup) {
-          *addr = tweak_backup_file_addr;
+          *addr = tweak_backup_file_addr | 0x20000000;
           *size = tweak_backup_file_size;
           *blocksize = 0x40;
         }
         else {
-          *addr      = 0x00180000;
+          *addr      = 0x20180000;
           *size      = 0x800;
           *blocksize = 0x40;
         }

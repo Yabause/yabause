@@ -1,4 +1,4 @@
-/*  Copyright 2005 Guillaume Duhamel
+﻿/*  Copyright 2005 Guillaume Duhamel
     Copyright 2005-2006 Theo Berkau
 
     This file is part of Yabause.
@@ -496,11 +496,19 @@ static u8 FASTCALL BupRamMemoryReadByte(u32 addr)
     return fgetc(pbackup);
   }
 #endif
-  if (yabsys.extend_backup) {
-    addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
-    if (addr >= tweak_backup_file_size) {
-      return 0;
-    }
+  if (yabsys.extend_backup ) {
+
+     if( yabsys.emulatebios == 1 ) {
+        addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
+        if (addr >= tweak_backup_file_size) {
+           return 0;
+        }
+     }else{
+        addr = (addr&0x0000FFFF );
+        if (addr >= tweak_backup_file_size) {
+           return 0;
+        }
+     }
   }
   else {
     addr = addr & 0x0000FFFF;
@@ -545,12 +553,18 @@ static void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
     BupRamWritten = 1;  
   }
 #endif
-
-  if (yabsys.extend_backup) {
-    addr = (addr & 0x0FFFFFFF) - tweak_backup_file_addr;
-    if (addr >= tweak_backup_file_size) {
-      return;
-    }
+  if (yabsys.extend_backup ) {
+     if( yabsys.emulatebios == 1 ) {
+        addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
+        if (addr >= tweak_backup_file_size) {
+           return 0;
+        }
+     }else{
+        addr = (addr&0x0000FFFF );
+        if (addr >= tweak_backup_file_size) {
+           return 0;
+        }
+     }
   }
   else {
     addr = addr & 0x0000FFFF;
@@ -1066,6 +1080,20 @@ void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val, u32 * cycle)
 void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle)
 #endif
 {
+/*   
+   if( (addr&0x0FFFFFFF) == 0x060c27F8 && val == 0x20 ){
+      val = (tweak_backup_file_addr >> 24) & 0xFF; 
+   }
+   if( (addr&0x0FFFFFFF) == 0x060c27F9 && val == 0x18 ){
+      val = (tweak_backup_file_addr >> 16) & 0xFF; 
+   }
+   if( (addr&0x0FFFFFFF) == 0x060c27FA && val == 0x00 ){
+      val = (tweak_backup_file_addr >> 8) & 0xFF; 
+   }
+   if( (addr&0x0FFFFFFF) == 0x060c27FB && val == 0x00 ){
+      val = (tweak_backup_file_addr >> 0) & 0xFF; 
+   }
+*/
   if (cycle != NULL) { 
     //*cycle = getMemCycle(addr); ]
     GET_MEM_CYCLE_W
@@ -1130,6 +1158,10 @@ void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val, u32 * cycle)
 void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle )
 #endif
 {
+   if( (addr&0x0FFFFFF0) == 0x060c27F0 ){
+      LOG("Write! %08X", val);
+   }
+
   if (cycle != NULL) { 
     //*cycle = getMemCycle(addr); 
     GET_MEM_CYCLE_W
@@ -1205,6 +1237,10 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val, u32 * cycle )
       }
    }
 #endif
+
+   if( (addr&0x0FFFFFFF) == 0x060c27F8 ){
+      val = tweak_backup_file_addr;
+   }
 
   if (cycle != NULL) { 
     //*cycle = getMemCycle(addr); 
