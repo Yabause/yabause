@@ -3077,13 +3077,13 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 #endif
 
    if( context->dma_ch0.penerly != 0 ){
-      LOG("[%s] %d  add DMA Penerlty %d",CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, context->dma_ch0.penerly);
-      context->cycles += context->dma_ch0.penerly;
+//      LOG("[%s] %d  add DMA Penerlty %d",CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, context->dma_ch0.penerly);
+      context->cycles += (context->dma_ch0.penerly>>1);
       context->dma_ch0.penerly = 0;
    }
 
    if( context->dma_ch1.penerly != 0 ){
-      context->cycles += context->dma_ch1.penerly;
+      context->cycles += (context->dma_ch1.penerly>>1);
       context->dma_ch1.penerly = 0;
    }   
 
@@ -3179,13 +3179,13 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
   int target_cycle = context->cycles + cycles - context->pre_cycle;
 
    if( context->dma_ch0.penerly != 0 ){
-      LOG("[%s] %d  add DMA Penerlty %d",CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, context->dma_ch0.penerly);
-      context->cycles += context->dma_ch0.penerly;
+//      LOG("[%s] %d  add DMA Penerlty %d",CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, context->dma_ch0.penerly);
+      context->cycles += (context->dma_ch0.penerly>>1);
       context->dma_ch0.penerly = 0;
    }
 
    if( context->dma_ch1.penerly != 0 ){
-      context->cycles += context->dma_ch1.penerly;
+      context->cycles += (context->dma_ch1.penerly>>1);
       context->dma_ch1.penerly = 0;
    }   
     

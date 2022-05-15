@@ -296,7 +296,7 @@ static void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
    if (!(sh->regs.R[4] & 0x8000)) // double check this
       MappedMemoryWriteLong(0x25FE00A8, 1,&cycle); // A-bus Interrupt Acknowledge
 
-   sh->cycles += 20;
+   sh->cycles += 100;
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
 }
@@ -1621,7 +1621,7 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
    sh->regs.PC = MappedMemoryReadLong(0x06000900+(vector << 2),&cycle);
    //LOG("Interrupt from: %08X to %08X", old_pc, sh->regs.PC );
 
-   sh->cycles += 34;
+   sh->cycles += 200;
    SH2SetRegisters(sh, &sh->regs);
 }
 
@@ -1671,7 +1671,7 @@ static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
 
    //LOG("Interrupt return PC = %08X\n", sh->regs.PC);
 
-   sh->cycles += 32;
+   sh->cycles += 200;
    SH2SetRegisters(sh, &sh->regs);
 }
 

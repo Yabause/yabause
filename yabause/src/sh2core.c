@@ -1185,7 +1185,9 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
          //   CurrentSH2->onchip.FTCSR |= 0x80;
          //   CurrentSH2->inputCaptureCount--;
          //} 
-         if (CurrentSH2->onchip.FTCSR & 0x80) { LOG("Read FTCSR = 0x80 cnt=%d", CurrentSH2->inputCaptureCount ); }
+         if (CurrentSH2->onchip.FTCSR & 0x80) { 
+           LOG("[SH2-%s] %d Read FTCSR = 0x80 cnt=%d", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, CurrentSH2->inputCaptureCount );
+         }
          return CurrentSH2->onchip.FTCSR;
       case 0x012:         
          //LOG("[FRCH] %02X",CurrentSH2->onchip.FRC.part.H);
@@ -2095,6 +2097,30 @@ void WDTExec(u32 cycles) {
 //////////////////////////////////////////////////////////////////////////////
 
 void DMAExec(void) {
+
+  if (CurrentSH2->onchip.TCR0 != 0) {
+    LOG("[%s] %d DMA Exec %d CHCR=0x%04x(type=%d) SAR=0x%08x DAR=0x%08x TCR=0x%04x", 
+      CurrentSH2->isslave ? "SH2-S" : "SH2-M",
+      CurrentSH2->cycles,
+      0,
+      CurrentSH2->onchip.CHCR0,
+      (CurrentSH2->onchip.CHCR0 & 0x0C00) >> 10,
+      CurrentSH2->onchip.SAR0,
+      CurrentSH2->onchip.DAR0,
+      CurrentSH2->onchip.TCR0);
+  }
+
+  if (CurrentSH2->onchip.TCR1 != 0) {
+    LOG("[%s] %d DMA Exec %d : CHCR=0x%04x(type=%d) SAR=0x%08x DAR=0x%08x TCR=0x%04x", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 
+      CurrentSH2->cycles,
+      1,
+      CurrentSH2->onchip.CHCR1,
+      (CurrentSH2->onchip.CHCR1 & 0x0C00) >> 10,
+      CurrentSH2->onchip.SAR1,
+      CurrentSH2->onchip.DAR1,
+      CurrentSH2->onchip.TCR1);
+  }
+
 #if OLD_DMA
    // If AE and NMIF bits are set, we can't continue
    if (CurrentSH2->onchip.DMAOR & 0x6)
@@ -2220,7 +2246,7 @@ int getEatClock(u32 src, u32 dst) {
       return 427;
       break;
     case 0x05E00000: // VDP2 RAM
-      return 40;
+      return 10;
       break;
     case 0x05F00000: // VDP2 REG
       return 50;
@@ -2297,6 +2323,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
    u32 i = 0;
    int count;
    u32 cycle=0;
+   u32 cycler= 0;
    const int extbus_penalty = 18; 
 
    //LOG("sh2 dma src=%08X,dst=%08X,%d type:%d cycle:%d\n", *dmac->SAR, *dmac->DAR, *dmac->TCR, ((*dmac->CHCR & 0x0C00) >> 10), cycles);
@@ -2306,10 +2333,12 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
       int destInc;
 
       int type = ((*dmac->CHCR & 0x0C00) >> 10);
-      int eat = getEatClock(*dmac->SAR, *dmac->DAR);
+      //int eat = getEatClock(*dmac->SAR, *dmac->DAR);
 
       dmac->copy_clock += cycles;
-      if (dmac->copy_clock < eat) return;
+      //if (dmac->copy_clock < eat) return;
+
+      if (dmac->copy_clock <= 0) return;
 
       switch(*dmac->CHCR & 0x3000) {
          case 0x0000: srcInc = 0; break;
@@ -2328,15 +2357,19 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
       switch (type) {
          case 0:
             while( dmac->copy_clock >= 0 )  {
-               dmac->penerly += extbus_penalty;
-               dmac->copy_clock -= eat;
-				       MappedMemoryWriteByteNocache(*dmac->DAR, MappedMemoryReadByteNocache(*dmac->SAR,&cycle),&cycle);
+               //dmac->penerly += extbus_penalty;
+				       MappedMemoryWriteByteNocache(*dmac->DAR, MappedMemoryReadByteNocache(*dmac->SAR,&cycler),&cycle);
+               dmac->penerly += cycle + cycler;
+               dmac->copy_clock -= (cycle + cycler +4);
                *dmac->SAR += srcInc;
                *dmac->DAR += destInc;
                *dmac->TCR -= 1;
                i++;
                if( *dmac->TCR <= 0 ){
-                  LOG("DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X", *dmac->SAR, *dmac->DAR, *dmac->TCR );
+                  LOG("[%s] %d DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X", 
+                    CurrentSH2->isslave ? "SH2-S" : "SH2-M",
+                    CurrentSH2->cycles,
+                    *dmac->SAR, *dmac->DAR, *dmac->TCR );
                   if (*dmac->CHCR & 0x4){
                      SH2SendInterrupt(CurrentSH2, *dmac->VCRDMA, (CurrentSH2->onchip.IPRA & 0xF00) >> 8);
                   }
@@ -2352,15 +2385,18 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
             destInc *= 2;
             srcInc *= 2;
             while (dmac->copy_clock >= 0) {
-              dmac->penerly += extbus_penalty;
-              dmac->copy_clock -= eat;
-				      MappedMemoryWriteWordNocache(*dmac->DAR, MappedMemoryReadWordNocache(*dmac->SAR,&cycle),&cycle);
+				      MappedMemoryWriteWordNocache(*dmac->DAR, MappedMemoryReadWordNocache(*dmac->SAR,&cycler),&cycle);
+              dmac->penerly += cycle + cycler;
+              dmac->copy_clock -= (cycle + cycler + 4);
                *dmac->SAR += srcInc;
                *dmac->DAR += destInc;
                *dmac->TCR -= 1;
                i++;
                if( *dmac->TCR <= 0 ){
-                  LOG("DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X", *dmac->SAR, *dmac->DAR, *dmac->TCR );
+                  LOG("[%s] %d DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X", 
+                    CurrentSH2->isslave ? "SH2-S" : "SH2-M",
+                    CurrentSH2->cycles,
+                    *dmac->SAR, *dmac->DAR, *dmac->TCR );
                   if (*dmac->CHCR & 0x4){
                      SH2SendInterrupt(CurrentSH2, *dmac->VCRDMA, (CurrentSH2->onchip.IPRA & 0xF00) >> 8);
                   }
@@ -2376,17 +2412,20 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
             destInc *= 4;
             srcInc *= 4;
             while (dmac->copy_clock >= 0) {
-              dmac->penerly += extbus_penalty;
-              dmac->copy_clock -= eat;
-               u32 val = MappedMemoryReadLongNocache(*dmac->SAR,&cycle);
-               //printf("CPU DMA src:%08X dst:%08X val:%08X\n", *SAR, *DAR, val);
+               u32 val = MappedMemoryReadLongNocache(*dmac->SAR,&cycler);
+               dmac->penerly += cycler;
 				       MappedMemoryWriteLongNocache(*dmac->DAR,val,&cycle);
+               dmac->penerly += cycle;
+               dmac->copy_clock -= (cycle + cycler + 4);
                *dmac->DAR += destInc;
                *dmac->SAR += srcInc;
                *dmac->TCR -= 1;
                i++;
                if( *dmac->TCR <= 0 ){
-                 LOG("DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X", *dmac->SAR, *dmac->DAR, *dmac->TCR );
+                 LOG("[%s] %d DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X",
+                   CurrentSH2->isslave ? "SH2-S" : "SH2-M",
+                   CurrentSH2->cycles,
+                   *dmac->SAR, *dmac->DAR, *dmac->TCR);
                   if (*dmac->CHCR & 0x4){
                      SH2SendInterrupt(CurrentSH2, *dmac->VCRDMA, (CurrentSH2->onchip.IPRA & 0xF00) >> 8);
                   }
@@ -2401,17 +2440,20 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
            destInc *= 4;
            srcInc *= 4;
            while (dmac->copy_clock >= 0) {
-              dmac->penerly += extbus_penalty;
-             dmac->copy_clock -= (eat>>2);
-             u32 val = MappedMemoryReadLongNocache(*dmac->SAR,&cycle);
-             //printf("CPU DMA src:%08X dst:%08X val:%08X\n", *SAR, *DAR, val);
+             u32 val = MappedMemoryReadLongNocache(*dmac->SAR,&cycler);
+             dmac->penerly += cycler;
              MappedMemoryWriteLongNocache(*dmac->DAR, val,&cycle);
+             dmac->penerly += cycle;
+             dmac->copy_clock -= (cycle + cycler + 4);
              *dmac->DAR += destInc;
              *dmac->SAR += srcInc;
              *dmac->TCR -= 1;
              i++;
              if (*dmac->TCR <= 0) {
-               LOG("DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X", *dmac->SAR, *dmac->DAR, *dmac->TCR );
+               LOG("[%s] %d DMA finished SAR:0x%08X, DAR:0x%08X, TCR:0x%08X",
+                 CurrentSH2->isslave ? "SH2-S" : "SH2-M",
+                 CurrentSH2->cycles,
+                 *dmac->SAR, *dmac->DAR, *dmac->TCR);
                if (*dmac->CHCR & 0x4) {
                  SH2SendInterrupt(CurrentSH2, *dmac->VCRDMA, (CurrentSH2->onchip.IPRA & 0xF00) >> 8);
                }
@@ -2553,20 +2595,16 @@ void FASTCALL MSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
       SH2Core->SetPC(MSH2, pc);
    }
 
-/*
    if (CurrentSH2->depth < 4) {
      CurrentSH2->depth++;
-     SH2_struct * tmpCurrentSH2 = CurrentSH2;
-     if (CurrentSH2->isslave) {
-       SH2Exec(MSH2, 32);
+     int syncCycle = CurrentSH2->cycles - MSH2->cycles;
+     if (syncCycle > 0) {
+       SH2_struct * tmpCurrentSH2 = CurrentSH2;
+       SH2Exec(MSH2, syncCycle);
+       CurrentSH2 = tmpCurrentSH2;
+       CurrentSH2->depth--;
      }
-     else {
-       SH2Exec(SSH2, 32);
-     }
-     CurrentSH2 = tmpCurrentSH2;
-     CurrentSH2->depth--;
    }
-*/
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2579,7 +2617,7 @@ void FASTCALL SSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
    // Copy FRC register to FICR
    SSH2->onchip.FICR = SSH2->onchip.FRC.all;
 
-   LOG("[%s] %d pc = %08X SSH2InputCapture at frame %d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
+   LOG("[%s] M%d S%d pc = %08X SSH2InputCapture at frame %d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, SSH2->cycles, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
 
    SSH2->inputCaptureCount++;
 
@@ -2595,18 +2633,16 @@ void FASTCALL SSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
      SH2Core->SetPC(SSH2,pc);
    }
 
-#if 0
+#if 1
    if (CurrentSH2->depth < 4) {
      CurrentSH2->depth++;
-     SH2_struct * tmpCurrentSH2 = CurrentSH2;
-     if (CurrentSH2->isslave) {
-       //SH2Exec(MSH2, 4);
+     int syncCycle = CurrentSH2->cycles - SSH2->cycles;
+     if (syncCycle > 0) {
+       SH2_struct * tmpCurrentSH2 = CurrentSH2;
+       SH2Exec(SSH2, syncCycle);
+       CurrentSH2 = tmpCurrentSH2;
+       CurrentSH2->depth--;
      }
-     else {
-       //SH2Exec(SSH2, 4);
-     }
-     CurrentSH2 = tmpCurrentSH2;
-     CurrentSH2->depth--;
    }
 #endif
 

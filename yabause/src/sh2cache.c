@@ -50,6 +50,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define CACHE_DATA_ARRAY ((0x06) << 29)
 #define CACHE_IO ((0x07) << 29)
 
+#define MAX_CACHE_MISS_CYCLE (30)
+
 FILE *cache_f = NULL;
 //#define COHERENCY_CHECK
 
@@ -406,19 +408,21 @@ u8 cache_memory_read_b(cache_enty *ca, u32 addr, u32 *cycle)
     {
       update_lru(lruway, &ca->lru[entry]);
       ca->way[entry].tag[lruway] = tagaddr;
+      u32 tmpcycle = 0;
       for (i = 0; i < 16; i += 4)
       {
         u32 odi = (addr + 4 + i) & 0xC;
-        u32 tmpcycle = 0;
-        ca->way[entry].data[lruway][odi] = MappedMemoryReadByteNocache( (addr & 0xFFFFFFF0) + odi, &tmpcycle);
-        if (cycle){
-          *cycle += tmpcycle;
-        }
+        u32 ccycle = 0;
+        ca->way[entry].data[lruway][odi] = MappedMemoryReadByteNocache( (addr & 0xFFFFFFF0) + odi, &ccycle);
+        tmpcycle += ccycle;
         ca->way[entry].data[lruway][odi + 1] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi + 1);
         ca->way[entry].data[lruway][odi + 2] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi + 2);
         ca->way[entry].data[lruway][odi + 3] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi + 3);
-        CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi, data);
+        //CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi);
       }
+      if (cycle) { *cycle = MIN(MAX_CACHE_MISS_CYCLE, tmpcycle);}
+
+      CACHE_LOG("[SH2-%s] %d+%d Cache miss read 1 %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, tmpcycle, addr);
 
       return ca->way[entry].data[lruway][addr & LINE_MASK];
     }
@@ -512,15 +516,18 @@ u16 cache_memory_read_w(cache_enty *ca, u32 addr, u32 *cycle, u32 isInst)
       update_lru(lruway, &ca->lru[entry]);
       ca->way[entry].tag[lruway] = tagaddr;
 
+      u32 tmpcycle = 0;
       for (i = 0; i < 16; i += 4)
       {
         u32 odi = (addr + 4 + i) & 0xC;
-        u32 tmpcycle = 0;
-        *(u16 *)(&ca->way[entry].data[lruway][odi]) = SWAP16(MappedMemoryReadWordNocache((addr & 0xFFFFFFF0) + odi, &tmpcycle));
-        if (cycle){ *cycle += tmpcycle; }        
+        u32 ccycle = 0;
+        *(u16 *)(&ca->way[entry].data[lruway][odi]) = SWAP16(MappedMemoryReadWordNocache((addr & 0xFFFFFFF0) + odi, &ccycle));
+        tmpcycle += ccycle;
         *(u16 *)(&ca->way[entry].data[lruway][odi + 2]) = SWAP16(ReadWordList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi + 2));
-        CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi, data);
+        //CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi);
       }
+      if (cycle) { *cycle = MIN(MAX_CACHE_MISS_CYCLE, tmpcycle);}
+      CACHE_LOG("[SH2-%s] %d+%d Cache miss read 2 %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, tmpcycle, addr);
       u16 rtn = SWAP16(*(u16 *)(&ca->way[entry].data[lruway][(addr & LINE_MASK)]));
       return rtn;
     }
@@ -613,16 +620,18 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
 
       update_lru(lruway, &ca->lru[entry]);
       ca->way[entry].tag[lruway] = tagaddr;
+      u32 tmpcycle = 0;
       for (i = 0; i < 16; i += 4)
       {
         u32 odi = (addr + 4 + i) & 0xC;
-        u32 tmpcycle = 0;
-        u32 data = MappedMemoryReadLongNocache((addr & 0xFFFFFFF0) + odi, &tmpcycle);
+        u32 ccycle = 0;
+        u32 data = MappedMemoryReadLongNocache((addr & 0xFFFFFFF0) + odi, &ccycle);
         *(u32 *)(&ca->way[entry].data[lruway][odi]) = SWAP32(data);
-        if (cycle) {*cycle += tmpcycle;}
-        CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi, data);
+        tmpcycle += ccycle;
+        //CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi, data);
       }
-
+      if (cycle) { *cycle = MIN(MAX_CACHE_MISS_CYCLE, tmpcycle);}
+      CACHE_LOG("[SH2-%s] %d+%d Cache miss read 4 %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, tmpcycle, addr);
       return SWAP32(*(u32 *)(&ca->way[entry].data[lruway][(addr & LINE_MASK)]));
     }
     else

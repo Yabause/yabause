@@ -762,23 +762,31 @@ INLINE int getVramCycle(u32 addr) {
 // gcc 4.9 bug
 #define GET_MEM_CYCLE_W \
   switch (addr & 0xDFF00000) { \
+  case 0x00000000: /* ROM */ \
+  case 0x00100000: /* Backup */ \
+    *cycle = 16; \
+    break; \
   case 0x00200000: /* Low */ \
     *cycle = 8;  \
     break; \
+  case 0x02000000: /* CS0 */ \
+  case 0x05800000: /* CS2 */ \
+    *cycle = 24; \
+    break; \
   case 0x05A00000: /* SOUND */ \
-    *cycle = 7;   \
+    *cycle = 50;   \
     break; \
   case 0x05C00000: /* VDP1 */ \
-    *cycle = 2; \
+    *cycle = 50; \
     break; \
   case 0x05e00000: /* VDP2 */ \
     *cycle = getVramCycle(addr); \
     break; \
   case 0x06000000: /* High */ \
-    *cycle = 2;  \
+    *cycle = 4;  \
     break; \
   default: \
-    *cycle = 0; \
+    *cycle = 1; \
     break; \
   } \
 
@@ -807,10 +815,10 @@ INLINE int getVramCycle(u32 addr) {
     *cycle = 4; \
     break; \
   case 0x06000000: /* High */ \
-    *cycle = 2; \
+    *cycle = 4; \
     break; \
   default: \
-    *cycle = 0; \
+    *cycle = 1; \
     break; \
   } \
 
@@ -1080,20 +1088,12 @@ void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val, u32 * cycle)
 void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle)
 #endif
 {
-/*   
-   if( (addr&0x0FFFFFFF) == 0x060c27F8 && val == 0x20 ){
-      val = (tweak_backup_file_addr >> 24) & 0xFF; 
-   }
-   if( (addr&0x0FFFFFFF) == 0x060c27F9 && val == 0x18 ){
-      val = (tweak_backup_file_addr >> 16) & 0xFF; 
-   }
-   if( (addr&0x0FFFFFFF) == 0x060c27FA && val == 0x00 ){
-      val = (tweak_backup_file_addr >> 8) & 0xFF; 
-   }
-   if( (addr&0x0FFFFFFF) == 0x060c27FB && val == 0x00 ){
-      val = (tweak_backup_file_addr >> 0) & 0xFF; 
-   }
-*/
+  if ((addr & 0x0FFFFFFF) == 0x060f9600) {
+    LOG("[%s] %d Write %zu-byte write of 0x%08x to 0x%08x PC=%08X frame=%d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, 1, val, addr, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
+    //if (slogp != NULL){
+    //   fprintf(slogp, "%08X: CPU write 0x%08X = %d(0x%08X)\n", CurrentSH2->regs.PC, addr, val,val );
+    //}
+  }
   if (cycle != NULL) { 
     //*cycle = getMemCycle(addr); ]
     GET_MEM_CYCLE_W
@@ -1158,10 +1158,6 @@ void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val, u32 * cycle)
 void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle )
 #endif
 {
-   if( (addr&0x0FFFFFF0) == 0x060c27F0 ){
-      LOG("Write! %08X", val);
-   }
-
   if (cycle != NULL) { 
     //*cycle = getMemCycle(addr); 
     GET_MEM_CYCLE_W
@@ -1230,17 +1226,14 @@ void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val , u32 * cycle)
 void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val, u32 * cycle )
 #endif
 {
-#if 0   
-   if( (addr & 0x0FFFFFFF) == 0x06091EE4 || (addr & 0x0FFFFFFF) == 0x06042C68 /*&& CurrentSH2->regs.PC == 0x0601DFFC*/ ){
-      if (slogp != NULL){
-         fprintf(slogp, "%08X: CPU write 0x%08X = %d(0x%08X)\n", CurrentSH2->regs.PC, addr, val,val );
-      }
+#if 1   
+   if( (addr & 0x0FFFFFFF) == 0x060f9600){
+     LOG("[%s] %d Write %zu-byte write of 0x%08x to 0x%08x PC=%08X frame=%d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, 4, val, addr, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
+      //if (slogp != NULL){
+      //   fprintf(slogp, "%08X: CPU write 0x%08X = %d(0x%08X)\n", CurrentSH2->regs.PC, addr, val,val );
+      //}
    }
 #endif
-
-   if( (addr&0x0FFFFFFF) == 0x060c27F8 ){
-      val = tweak_backup_file_addr;
-   }
 
   if (cycle != NULL) { 
     //*cycle = getMemCycle(addr); 
