@@ -557,12 +557,12 @@ static void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
      if( yabsys.emulatebios == 1 ) {
         addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
         if (addr >= tweak_backup_file_size) {
-           return 0;
+           return;
         }
      }else{
         addr = (addr&0x0000FFFF );
         if (addr >= tweak_backup_file_size) {
-           return 0;
+           return;
         }
      }
   }
