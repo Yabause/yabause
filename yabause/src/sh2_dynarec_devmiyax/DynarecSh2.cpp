@@ -1469,11 +1469,12 @@ void DynarecSh2::ExecuteCount( u32 Count ) {
   m_pDynaSh2->SysReg[4] = 0;
     if (Count > pre_exe_count_) {
     targetcnt = Count - pre_exe_count_;
+    pre_exe_count_ = 0;
   }
   else {
     // Just Onestep
     //Execute();
-    pre_exe_count_ = (pre_exe_count_ + m_pDynaSh2->SysReg[4]) - Count ;
+    pre_exe_count_ -= Count ;
     return;
   }
 
@@ -1563,6 +1564,8 @@ inline int DynarecSh2::Execute(){
   m_pCompiler->setShowCode( is_slave_ );
 #endif
 //#endif
+
+  //if( !this->is_slave_ ) LOG("Execute %08X", GET_PC());
 
   if ((GET_PC() & 0xFF000000) == 0xC0000000)
   {

@@ -237,7 +237,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
                   u32 WriteAddress, unsigned int WriteAdd,
                   u32 TransferSize)
 {
-  LOG("DoDMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n", ReadAddress, WriteAddress, TransferSize, ReadAdd, WriteAdd, yabsys.frame_count,yabsys.LineCount );
+  LOG("SCU Run DMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n", ReadAddress, WriteAddress, TransferSize, ReadAdd, WriteAdd, yabsys.frame_count,yabsys.LineCount );
    if (ReadAdd == 0) {
       // DMA fill
       // Is it a constant source or a register whose value can change from
@@ -1104,15 +1104,15 @@ void ScuSetAddValue(scudmainfo_struct * dmainfo) {
     }
   }
 
-  LOG("DoDMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n",
-    dmainfo->ReadAddress, dmainfo->WriteAddress, dmainfo->TransferNumber,
-    dmainfo->ReadAdd, dmainfo->WriteAdd, yabsys.frame_count, yabsys.LineCount);
+  //LOG("[SCU] Run DMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d",
+  //  dmainfo->ReadAddress, dmainfo->WriteAddress, dmainfo->TransferNumber,
+  //  dmainfo->ReadAdd, dmainfo->WriteAdd, yabsys.frame_count, yabsys.LineCount);
 
 }
 
 void SucDmaExec(scudmainfo_struct * dma, int * time ) {
-  //LOG("DoDMA src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d\n",
-  //  dma->ReadAddress, dma->WriteAddress, dma->TransferNumber, dma->ReadAdd, dma->WriteAdd, yabsys.frame_count, yabsys.LineCount);
+  LOG("[SCU] SucDmaExec src=%08X,dst=%08X,size=%d, ra:%d/wa:%d flame=%d:%d",
+    dma->ReadAddress, dma->WriteAddress, dma->TransferNumber, dma->ReadAdd, dma->WriteAdd, yabsys.frame_count, yabsys.LineCount);
   u32 cycle = 0;
   if (dma->ReadAdd == 0) {
     // DMA fill
@@ -1281,15 +1281,15 @@ void SucDmaCheck(scudmainfo_struct * dma, int time) {
           if (dma->ReadAddress & 0x80000000) {
             switch (dma->mode) {
             case 0:
-              //LOG("DMA0 Finished!");
+//              LOG("DMA0 Finished!");
               ScuSendLevel0DMAEnd();
               break;
             case 1:
-              //LOG("DMA1 Finished!");
+//              LOG("DMA1 Finished!");
               ScuSendLevel1DMAEnd();
               break;
             case 2:
-              //LOG("DMA2 Finished!");
+//              LOG("DMA2 Finished!");
               ScuSendLevel2DMAEnd();
               break;
             }
@@ -1311,15 +1311,15 @@ void SucDmaCheck(scudmainfo_struct * dma, int time) {
       if (dma->TransferNumber <= 0) {
         switch (dma->mode) {
         case 0:
-          //LOG("DMA0 Finished!");
+//          LOG("DMA0 Finished!");
           ScuSendLevel0DMAEnd();
           break;
         case 1:
-          //LOG("DMA1 Finished!");
+//          LOG("DMA1 Finished!");
           ScuSendLevel1DMAEnd();
           break;
         case 2:
-          //LOG("DMA2 Finished!");
+//          LOG("DMA2 Finished!");
           ScuSendLevel2DMAEnd();
           break;
         }

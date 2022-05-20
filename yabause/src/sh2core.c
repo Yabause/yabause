@@ -47,6 +47,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "memory.h"
 #include "yabause.h"
 
+#include "vdp2.h"
+
 #if defined(SH2_DYNAREC)
 #include "sh2_dynarec/sh2_dynarec.h"
 #endif
@@ -517,7 +519,7 @@ static u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
-			SH2DumpHistory(CurrentSH2);
+			      SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
@@ -553,7 +555,7 @@ static u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
-			SH2DumpHistory(CurrentSH2);
+			      SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
@@ -589,7 +591,7 @@ static u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
-			SH2DumpHistory(CurrentSH2);
+			      SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
@@ -625,7 +627,7 @@ static void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
-			SH2DumpHistory(CurrentSH2);
+			      SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
@@ -666,7 +668,7 @@ static void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
-			SH2DumpHistory(CurrentSH2);
+			      SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
@@ -707,7 +709,7 @@ static void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
-			SH2DumpHistory(CurrentSH2);
+			      SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
@@ -1735,7 +1737,7 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
 
 void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
 
-   LOG("[%s] OnchipWriteLong %08X@%08X %08X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC, val );
+   //LOG("[%s] OnchipWriteLong %08X@%08X %08X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC, val );
 
    switch (addr)
    {
@@ -2099,7 +2101,7 @@ void WDTExec(u32 cycles) {
 void DMAExec(void) {
 
   if (CurrentSH2->onchip.TCR0 != 0) {
-    LOG("[%s] %d DMA Exec %d CHCR=0x%04x(type=%d) SAR=0x%08x DAR=0x%08x TCR=0x%04x", 
+    LOG("[%s] %d DMA Exec %d CHCR=0x%04x(type=%d) SAR=0x%08x DAR=0x%08x TCR=0x%04x line=%d cpu_cycle_a=%d", 
       CurrentSH2->isslave ? "SH2-S" : "SH2-M",
       CurrentSH2->cycles,
       0,
@@ -2107,18 +2109,23 @@ void DMAExec(void) {
       (CurrentSH2->onchip.CHCR0 & 0x0C00) >> 10,
       CurrentSH2->onchip.SAR0,
       CurrentSH2->onchip.DAR0,
-      CurrentSH2->onchip.TCR0);
+      CurrentSH2->onchip.TCR0,
+      yabsys.LineCount,
+      Vdp2External.cpu_cycle_a);
   }
 
   if (CurrentSH2->onchip.TCR1 != 0) {
-    LOG("[%s] %d DMA Exec %d : CHCR=0x%04x(type=%d) SAR=0x%08x DAR=0x%08x TCR=0x%04x", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 
+    LOG("[%s] %d DMA Exec %d : CHCR=0x%04x(type=%d) SAR=0x%08x DAR=0x%08x TCR=0x%04x  line=%d  cpu_cycle_a=%d", 
+      CurrentSH2->isslave ? "SH2-S" : "SH2-M", 
       CurrentSH2->cycles,
       1,
       CurrentSH2->onchip.CHCR1,
       (CurrentSH2->onchip.CHCR1 & 0x0C00) >> 10,
       CurrentSH2->onchip.SAR1,
       CurrentSH2->onchip.DAR1,
-      CurrentSH2->onchip.TCR1);
+      CurrentSH2->onchip.TCR1,
+      yabsys.LineCount,
+      Vdp2External.cpu_cycle_a);
   }
 
 #if OLD_DMA
@@ -2326,7 +2333,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
    u32 cycler= 0;
    const int extbus_penalty = 18; 
 
-   //LOG("sh2 dma src=%08X,dst=%08X,%d type:%d cycle:%d\n", *dmac->SAR, *dmac->DAR, *dmac->TCR, ((*dmac->CHCR & 0x0C00) >> 10), cycles);
+   LOG("[%s] %d DMATransfer src=%08X,dst=%08X,%d type:%d cycle:%d\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles,*dmac->SAR, *dmac->DAR, *dmac->TCR, ((*dmac->CHCR & 0x0C00) >> 10), cycles);
 
    if (!(*dmac->CHCR & 0x2)) { // TE is not set
       int srcInc;

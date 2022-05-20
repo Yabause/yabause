@@ -748,15 +748,15 @@ void MappedMemoryInit()
 #else
 INLINE int getVramCycle(u32 addr) {
   if (yabsys.LineCount >= yabsys.VBlankLineCount) { 
-    return 2; 
+    return 16;
   }
   if ((addr & 0x000F0000) < 0x00040000) {
-    return Vdp2External.cpu_cycle_a>>1;
+    return Vdp2External.cpu_cycle_a;
   }
   else {
-    return Vdp2External.cpu_cycle_b>>1;
+    return Vdp2External.cpu_cycle_b;
   }
-  return 2;
+  return 16;
 }
 
 // gcc 4.9 bug
@@ -764,26 +764,26 @@ INLINE int getVramCycle(u32 addr) {
   switch (addr & 0xDFF00000) { \
   case 0x00000000: /* ROM */ \
   case 0x00100000: /* Backup */ \
-    *cycle = 16; \
-    break; \
   case 0x00200000: /* Low */ \
-    *cycle = 8;  \
+    *cycle = 22;  \
     break; \
   case 0x02000000: /* CS0 */ \
   case 0x05800000: /* CS2 */ \
-    *cycle = 24; \
+    *cycle = 30; \
     break; \
   case 0x05A00000: /* SOUND */ \
-    *cycle = 50;   \
-    break; \
+  case 0x05B00000: /* SOUND */ \
   case 0x05C00000: /* VDP1 */ \
     *cycle = 50; \
     break; \
   case 0x05e00000: /* VDP2 */ \
     *cycle = getVramCycle(addr); \
     break; \
+  case 0x05f00000: /* VDP2 reg*/ \
+    *cycle = 50; \
+    break; \
   case 0x06000000: /* High */ \
-    *cycle = 4;  \
+    *cycle = 14;  \
     break; \
   default: \
     *cycle = 1; \
@@ -794,28 +794,26 @@ INLINE int getVramCycle(u32 addr) {
   switch (addr & 0xDFF00000) { \
   case 0x00000000: /* ROM */ \
   case 0x00100000: /* Backup */ \
-    *cycle = 16; \
-    break; \
   case 0x00200000: /* Low */ \
-    *cycle = 8; \
+    *cycle = 22; \
     break; \
   case 0x02000000: /* CS0 */ \
   case 0x05800000: /* CS2 */ \
-    *cycle = 24; \
+    *cycle = 30; \
     break; \
   case 0x05A00000: /* SOUND RAM */ \
   case 0x05B00000: /* SOUND REG */ \
   case 0x05C00000: /* VDP1 RAM */ \
-    *cycle = 50; \
+    *cycle = 56; \
     break; \
   case 0x05E00000: /* VDP2 RAM */ \
     *cycle = getVramCycle(addr); \
     break; \
   case 0x05F00000: /* VDP2 REG */ \
-    *cycle = 4; \
+    *cycle = 60; \
     break; \
   case 0x06000000: /* High */ \
-    *cycle = 4; \
+    *cycle = 14; \
     break; \
   default: \
     *cycle = 1; \

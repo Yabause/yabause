@@ -149,7 +149,7 @@ void cache_memory_write_b(cache_enty *ca, u32 addr, u8 val, u32 *cycle)
   {
     if (ca->enable == 0)
     {
-      MappedMemoryWriteByteNocache(addr, val, cycle);
+      MappedMemoryWriteByteNocache(addr, val, NULL);
       return;
     }
     const u32 tagaddr = (addr & TAG_MASK) | 0x02;
@@ -186,14 +186,14 @@ void cache_memory_write_b(cache_enty *ca, u32 addr, u8 val, u32 *cycle)
     break;
   } // THROUGH TO CACHE_THROUGH
   case CACHE_THROUGH:
-    MappedMemoryWriteByteNocache(addr, val, cycle);
+    MappedMemoryWriteByteNocache(addr, val, NULL);
     break;
   case CACHE_ADDRES_ARRAY:
     CACHE_LOG("[%s] %zu-byte write to cache address array area; address=0x%08x value=0x%x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 1, addr, val);
     MappedMemoryWriteWordNocache(addr, val, cycle);
     break;
   default:
-    MappedMemoryWriteByteNocache(addr, val, cycle);
+    MappedMemoryWriteByteNocache(addr, val, NULL);
     break;
   }
 }
@@ -209,7 +209,7 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
   {
     if (ca->enable == 0)
     {
-      MappedMemoryWriteWordNocache(addr, val, cycle);
+      MappedMemoryWriteWordNocache(addr, val, NULL);
       return;
     }
 
@@ -255,7 +255,7 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
   } // THROUGH TO CACHE_THROUGH
   case CACHE_THROUGH:
   {
-    MappedMemoryWriteWordNocache(addr, val, cycle);
+    MappedMemoryWriteWordNocache(addr, val, NULL);
   }
   break;
   case CACHE_ADDRES_ARRAY:
@@ -263,7 +263,7 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
     MappedMemoryWriteWordNocache(addr, val, cycle);
     break;
   default:
-    MappedMemoryWriteWordNocache(addr, val, cycle);
+    MappedMemoryWriteWordNocache(addr, val, NULL);
     break;
   }
 }
@@ -344,10 +344,10 @@ void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
     break;
   } // THROUGH TO CACHE_THROUGH
   case CACHE_THROUGH:
-    MappedMemoryWriteLongNocache(addr, val, cycle);
+    MappedMemoryWriteLongNocache(addr, val, NULL);
     break;
   default:
-    MappedMemoryWriteLongNocache(addr, val, cycle);
+    MappedMemoryWriteLongNocache(addr, val, NULL);
     break;
   }
 }
