@@ -1383,6 +1383,7 @@ int YabauseQuickLoadGame(void)
       Vdp2ColorRamWriteWord(0xFF, 0x0000);
 
       // Enable Cache
+      CurrentSH2 = MSH2;
       MappedMemoryWriteByte(0xfffffe92, 0x11, NULL); // CCR
 
    }

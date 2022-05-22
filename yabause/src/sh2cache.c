@@ -50,7 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define CACHE_DATA_ARRAY ((0x06) << 29)
 #define CACHE_IO ((0x07) << 29)
 
-#define MAX_CACHE_MISS_CYCLE (30)
+#define MAX_CACHE_MISS_CYCLE (128)
 
 FILE *cache_f = NULL;
 //#define COHERENCY_CHECK
@@ -271,9 +271,13 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
 void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
 {
 
-  //if(  (addr&0x0FFFFFFF) ==0x060FFC44 || addr ==0x260E3CB8 ){
-  //  LOG("[%s] %d Write %zu-byte write of 0x%08x to 0x%08x PC=%08X frame=%d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M",  CurrentSH2->cycles, 4, val, addr , CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount );
-  //}
+  if(  (addr&0x0FFFFFFF) ==0x06043214 ){
+    LOG("[%s] %d Write %zu-byte %08x to %08x PC=%08X frame=%d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M",  CurrentSH2->cycles, 4, val, addr , CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount );
+    if (CurrentSH2->regs.PC == 0x060065BC) {
+      SH2DumpHistory(CurrentSH2);
+      exit(-1);
+    }
+  }
 
   switch (addr & AREA_MASK)
   {
@@ -562,7 +566,7 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
   {
     int i = 0;
     int lruway = 0;
-    if (ca->enable == 0)
+    if (ca->enable == 0 )
     {
       return MappedMemoryReadLongNocache(addr, cycle);
     }
@@ -608,6 +612,11 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
         LOG("[SH2-%s] %d Cache coherency ERROR 4 %08X %d:%d:%d cache = %08X real = %08X", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn, real);
     }
 #endif
+
+      //if ( (addr&0x0FFFFFFF) ==0x06043214) {
+      //  LOG("[SH2-%s] %d+%d Read 4-byte %08x from %08x  PC=%08X frame=%d:%d" , CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, rtn, addr,  CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
+      //}
+
       return rtn;
     }
 #ifdef CACHE_STATICS

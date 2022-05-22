@@ -1857,6 +1857,7 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
 
             CurrentSH2->onchip.DVDNTUL = CurrentSH2->onchip.DVDNTL;
             CurrentSH2->onchip.DVDNTUH = CurrentSH2->onchip.DVDNTH;
+
          }
          return;
       }
@@ -2326,9 +2327,9 @@ int getEatClock(u32 src, u32 dst) {
 }
 
 void DMATransferCycles(Dmac * dmac, int cycles ){
-   int size;
+//   int size;
    u32 i = 0;
-   int count;
+//   int count;
    u32 cycle=0;
    u32 cycler= 0;
    const int extbus_penalty = 18; 
