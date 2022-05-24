@@ -199,14 +199,14 @@ void SH2HandleInterrupts(SH2_struct *context)
       int Vector = context->interrupts[context->NumberOfInterrupts - 1].vector;
       //LOG("[%s] Exception vecnum=(%x), PC=%08X to %08X, level=%08X", (context->isslave) ? "S" : "M", Vector, oldpc, context->regs.PC, level);
 
-/*
+
       LOG("[%s] %d Exception vecnum=%x, saved PC=0x%08x --- New PC=0x%08x\n", 
         context->isslave?"SH2-S":"SH2-M", 
         CurrentSH2->cycles, 
         context->interrupts[context->NumberOfInterrupts - 1].vector,oldpc, 
         context->regs.PC
       );
-*/
+
       context->NumberOfInterrupts--;
       context->isIdle = 0;
       context->isSleeping = 0;

@@ -1396,7 +1396,7 @@ u32 FASTCALL OnchipReadLong(u32 addr) {
 
 void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
 
-LOG("[%s] OnchipWriteByte %08X@%08X %02X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC, val );
+//LOG("[%s] OnchipWriteByte %08X@%08X %02X", CurrentSH2->isslave?"SH2-S":"SH2-M", addr, CurrentSH2->regs.PC, val );
 
    switch(addr) {
       case 0x000:
@@ -1548,7 +1548,10 @@ LOG("[%s] OnchipWriteByte %08X@%08X %02X", CurrentSH2->isslave?"SH2-S":"SH2-M", 
          return;
       case 0x092:
          LOG(
-            "[SH2-%s] CCR changed: 0x%02x->0x%02x %s %s %s %s %s %s %s\n", CurrentSH2->isslave?"S":"M", CurrentSH2->onchip.CCR, val, 
+            "[SH2-%s] %d PC=%08X CCR changed: 0x%02x->0x%02x %s %s %s %s %s %s %s\n",
+             CurrentSH2->isslave?"S":"M", 
+             CurrentSH2->cycles, CurrentSH2->regs.PC,
+             CurrentSH2->onchip.CCR, val, 
             (val & CCR_CE) ? "(CACHE ENABLE)" : "(CACHE DISABLE)",
             (val & CCR_ID) ? "(Instruction Disable)" : "(Instruction Enable)",
             (val & CCR_OD) ? "(Data Disable)" : "(Data Enable)",

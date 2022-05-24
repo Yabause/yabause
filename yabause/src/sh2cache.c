@@ -188,9 +188,8 @@ void cache_memory_write_b(cache_enty *ca, u32 addr, u8 val, u32 *cycle)
   case CACHE_THROUGH:
     MappedMemoryWriteByteNocache(addr, val, NULL);
     break;
-  case CACHE_ADDRES_ARRAY:
-    CACHE_LOG("[%s] %zu-byte write to cache address array area; address=0x%08x value=0x%x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 1, addr, val);
-    MappedMemoryWriteWordNocache(addr, val, cycle);
+  case CACHE_DATA_ARRAY:
+    DataArrayWriteByte(addr, val);
     break;
   default:
     MappedMemoryWriteByteNocache(addr, val, NULL);
@@ -258,9 +257,8 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
     MappedMemoryWriteWordNocache(addr, val, NULL);
   }
   break;
-  case CACHE_ADDRES_ARRAY:
-    CACHE_LOG("[%s] %zu-byte write to cache address array area; address=0x%08x value=0x%x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 2, addr, val);
-    MappedMemoryWriteWordNocache(addr, val, cycle);
+  case CACHE_DATA_ARRAY:
+    DataArrayWriteWord(addr, val);
     break;
   default:
     MappedMemoryWriteWordNocache(addr, val, NULL);
@@ -270,15 +268,6 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
 
 void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
 {
-
-  if(  (addr&0x0FFFFFFF) ==0x06043214 ){
-    LOG("[%s] %d Write %zu-byte %08x to %08x PC=%08X frame=%d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M",  CurrentSH2->cycles, 4, val, addr , CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount );
-    if (CurrentSH2->regs.PC == 0x060065BC) {
-      SH2DumpHistory(CurrentSH2);
-      exit(-1);
-    }
-  }
-
   switch (addr & AREA_MASK)
   {
   case CACHE_PURGE: // associative purge
@@ -303,7 +292,7 @@ void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
   {
     if (ca->enable == 0)
     {
-      MappedMemoryWriteLongNocache(addr, val, cycle);
+      MappedMemoryWriteLongNocache(addr, val, NULL);
       return;
     }
 
@@ -349,6 +338,13 @@ void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
   } // THROUGH TO CACHE_THROUGH
   case CACHE_THROUGH:
     MappedMemoryWriteLongNocache(addr, val, NULL);
+    break;
+  case CACHE_ADDRES_ARRAY:
+    if (cycle != NULL) { *cycle = 14; }
+    AddressArrayWriteLong(addr, val);
+    break;
+  case CACHE_DATA_ARRAY:
+    DataArrayWriteLong(addr, val);
     break;
   default:
     MappedMemoryWriteLongNocache(addr, val, NULL);

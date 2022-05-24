@@ -786,7 +786,7 @@ INLINE int getVramCycle(u32 addr) {
     *cycle = 14;  \
     break; \
   default: \
-    *cycle = 1; \
+    *cycle = 0; \
     break; \
   } \
 
@@ -816,7 +816,7 @@ INLINE int getVramCycle(u32 addr) {
     *cycle = 14; \
     break; \
   default: \
-    *cycle = 1; \
+    *cycle = 0; \
     break; \
   } \
 
