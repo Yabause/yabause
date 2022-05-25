@@ -149,7 +149,7 @@ void cache_memory_write_b(cache_enty *ca, u32 addr, u8 val, u32 *cycle)
   {
     if (ca->enable == 0)
     {
-      MappedMemoryWriteByteNocache(addr, val, NULL);
+      MappedMemoryWriteByteNocache(addr, val, cycle);
       return;
     }
     const u32 tagaddr = (addr & TAG_MASK) | 0x02;
@@ -199,6 +199,11 @@ void cache_memory_write_b(cache_enty *ca, u32 addr, u8 val, u32 *cycle)
 
 void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
 {
+  if (0x060C8004 == (addr & 0x0FFFFFFF)) {
+    LOG("[%s] %d Cache Write 2 PC=%08X addr=%08X val=%08X", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, CurrentSH2->regs.PC, addr, val);
+  }
+
+
   //if( (addr&0x0fffffff)==0x060ffca8 ) { 
   //  LOG("[%s] Write %zu-byte write of 0x%08x to 0x%08x PC=%08X", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 2, val, addr , CurrentSH2->regs.PC);
   //}
@@ -208,7 +213,7 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
   {
     if (ca->enable == 0)
     {
-      MappedMemoryWriteWordNocache(addr, val, NULL);
+      MappedMemoryWriteWordNocache(addr, val, cycle);
       return;
     }
 
@@ -268,6 +273,11 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
 
 void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
 {
+
+  if ( 0x060C8004 == (addr & 0x0FFFFFFF)) {
+    LOG("[%s] %d Cache Write 4 PC=%08X addr=%08X val=%08X", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, CurrentSH2->regs.PC,  addr, val);
+  }
+
   switch (addr & AREA_MASK)
   {
   case CACHE_PURGE: // associative purge
@@ -292,7 +302,7 @@ void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
   {
     if (ca->enable == 0)
     {
-      MappedMemoryWriteLongNocache(addr, val, NULL);
+      MappedMemoryWriteLongNocache(addr, val, cycle);
       return;
     }
 

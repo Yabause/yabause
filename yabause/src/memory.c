@@ -810,7 +810,7 @@ INLINE int getVramCycle(u32 addr) {
     *cycle = getVramCycle(addr); \
     break; \
   case 0x05F00000: /* VDP2 REG */ \
-    *cycle = 60; \
+    *cycle = 50; \
     break; \
   case 0x06000000: /* High */ \
     *cycle = 14; \
