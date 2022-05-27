@@ -1839,7 +1839,7 @@ void ScuExec(u32 timing) {
                    default:
                      cycle = 4;
                    }
-                   ScuDsp->dsp_dma_wait = Counter >> cycle;
+                   ScuDsp->dsp_dma_wait = (Counter >> cycle) + 1;
                    LOG("Start DSP DMA RA=%08X WA=%08X inst=%08X count=%d wait = %d", ScuDsp->RA0M<<2, ScuDsp->WA0M<<2, ScuDsp->dsp_dma_instruction, Counter, ScuDsp->dsp_dma_wait );
                    break;
                   }
