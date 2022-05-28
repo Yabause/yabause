@@ -779,11 +779,11 @@ inline u32 getMemClock(u32 addr) {
 
   // B bus
   else if (addr >= 0x05A00000 && addr < 0x05E00000) {
-    return 50;
+    return 40;
   }
   else if (addr >= 0x05e00000 && addr < 0x05E80000) {
     if (yabsys.LineCount >= yabsys.VBlankLineCount) {
-      return 16;
+      return 40;
     }
     if ((addr & 0x000F0000) < 0x00040000) {
       return Vdp2External.cpu_cycle_a;
@@ -791,7 +791,7 @@ inline u32 getMemClock(u32 addr) {
     else {
       return Vdp2External.cpu_cycle_b;
     }
-    return 16;
+    return 40;
   }
   else if (addr >= 0x05f00000 && addr < 0x060000000) {
     return 16;
