@@ -1344,7 +1344,7 @@ void ScuExec(u32 timing) {
    int i;
 
    if ( ScuRegs->T1MD & 0x1 ){
-     if (ScuRegs->T1MD & 0x80 == 0) {
+     if ( (ScuRegs->T1MD & 0x80) == 0) {
        ScuTimer1Exec(timing);
      }
      else {
@@ -3028,7 +3028,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
 
 void ScuRemoveInterruptByCPU(u32 pre, u32 after) {
   for (int i = 0; i < 16; i++) {
-    if (((pre >> i) & 0x01) && ((after >> i) & 0x01 == 0)) {
+    if (((pre >> i) & 0x01) && (((after >> i) & 0x01) == 0)) {
       u32 ii, i2;
       int hit = -1;
       for (ii = 0; ii < ScuRegs->NumberOfInterrupts; ii++) {
