@@ -759,7 +759,7 @@ INLINE int getVramCycle(u32 addr) {
   return 16;
 }
 
-const int clock_shift = 0;
+const int clock_shift = 1;
 
 inline u32 getMemClock(u32 addr) {
   
