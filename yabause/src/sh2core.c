@@ -2393,6 +2393,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
                   SH2WriteNotify(destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  dmac->penerly = 0;
                   return;
                }
             }
@@ -2420,6 +2421,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
                   SH2WriteNotify(destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  dmac->penerly = 0;
                   return;
                }
             }
@@ -2447,6 +2449,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
                   SH2WriteNotify(destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  dmac->penerly = 0;
                   return;
                }
             }
@@ -2474,6 +2477,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
                *dmac->CHCR |= 0x2;
                *dmac->CHCRM |= 0x2;
                SH2WriteNotify(destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+               dmac->penerly = 0;
                return;
              }
            }

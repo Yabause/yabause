@@ -759,6 +759,7 @@ INLINE int getVramCycle(u32 addr) {
   return 16;
 }
 
+const int clock_shift = 0;
 
 inline u32 getMemClock(u32 addr) {
   
@@ -766,35 +767,35 @@ inline u32 getMemClock(u32 addr) {
 
   // CPU bus 1
   if (addr >= 0x06000000 && addr < 0x06100000) {
-    return 14;
+    return 19 >> clock_shift;
   }
   else if (addr >= 0x000000 && addr < 0x00300000) {
-    return 22;
+    return 22 >> clock_shift;
   }
 
   // A bus 
   else if (addr >= 0x02000000 && addr < 0x05800000) {
-    return 30;
+    return 80 >> clock_shift;
   }
 
   // B bus
   else if (addr >= 0x05A00000 && addr < 0x05E00000) {
-    return 40;
+    return 80 >> clock_shift;
   }
   else if (addr >= 0x05e00000 && addr < 0x05E80000) {
     if (yabsys.LineCount >= yabsys.VBlankLineCount) {
-      return 40;
+      return 80 >> clock_shift;
     }
     if ((addr & 0x000F0000) < 0x00040000) {
-      return Vdp2External.cpu_cycle_a;
+      return Vdp2External.cpu_cycle_a >> clock_shift;
     }
     else {
-      return Vdp2External.cpu_cycle_b;
+      return Vdp2External.cpu_cycle_b >> clock_shift;
     }
-    return 40;
+    return 80 >> clock_shift;
   }
   else if (addr >= 0x05f00000 && addr < 0x060000000) {
-    return 16;
+    return 16 >> clock_shift;
   }
   return 0;
 }
