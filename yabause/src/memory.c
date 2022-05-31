@@ -761,13 +761,14 @@ INLINE int getVramCycle(u32 addr) {
 
 const int clock_shift = 1;
 
+
 inline u32 getMemClock(u32 addr) {
   
   addr = addr & 0xDFFFFFFF;
 
   // CPU bus 1
   if (addr >= 0x06000000 && addr < 0x06100000) {
-    return 19 >> clock_shift;
+    return (16 >> clock_shift);
   }
   else if (addr >= 0x000000 && addr < 0x00300000) {
     return 22 >> clock_shift;
