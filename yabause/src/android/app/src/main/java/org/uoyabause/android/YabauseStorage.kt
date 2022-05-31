@@ -377,6 +377,25 @@ class YabauseStorage private constructor() {
         return null
     }
 */
+    fun checkAndRemoveDupe( gameinfo : GameInfo ){
+        try {
+            // No dupe is not allowed
+            var gameinfoInDb = Select()
+                .from(GameInfo::class.java)
+                .where("product_number = ? AND device_infomation = ?",
+                    gameinfo.product_number,
+                    gameinfo.device_infomation)
+                .executeSingle() as GameInfo?
+
+            if (gameinfoInDb != null) {
+                gameinfoInDb.delete()
+            }
+        }catch( e : Exception ){
+            Log.e("YabauseStorage","DB error ${e.localizedMessage}");
+        }
+    }
+
+
     fun getRealPathFromURI(contentUri: Uri): String? {
         var cursor: Cursor? = null
         return try {
@@ -430,8 +449,11 @@ class YabauseStorage private constructor() {
                         }
                         val gameinfo = GameInfo.genGameInfoFromCHD(apath)
                         if (gameinfo != null) {
+
                             gameinfo.file_path = file.uri.toString()
                             gameinfo.iso_file_path = uri.toString()
+
+                            checkAndRemoveDupe(gameinfo)
                             gameinfo.updateState()
                             gameinfo.save()
                             if (progress_emitter != null) {
@@ -472,6 +494,8 @@ class YabauseStorage private constructor() {
                                     if (gameinfo != null) {
                                         gameinfo.file_path = file.uri.toString()
                                         gameinfo.iso_file_path = uri.toString()
+
+                                        checkAndRemoveDupe(gameinfo)
                                         gameinfo.updateState()
                                         gameinfo.save()
                                         if (progress_emitter != null) {
@@ -502,6 +526,8 @@ class YabauseStorage private constructor() {
                             if (gameinfo != null) {
                                 gameinfo.file_path = file.uri.toString()
                                 gameinfo.iso_file_path = uri.toString()
+
+                                checkAndRemoveDupe(gameinfo)
                                 gameinfo.updateState()
                                 gameinfo.save()
                                 if (progress_emitter != null) {
@@ -555,6 +581,8 @@ class YabauseStorage private constructor() {
                     }
                 }
                 if (gameinfo != null) {
+
+                    checkAndRemoveDupe(gameinfo)
                     gameinfo.updateState()
                     gameinfo.save()
                     if (progress_emitter != null) {
@@ -574,6 +602,7 @@ class YabauseStorage private constructor() {
                     if (tmp == null) {
                         val gameinfo = GameInfo.genGameInfoFromIso(gamefile_name)
                         if (gameinfo != null) {
+                            checkAndRemoveDupe(gameinfo)
                             gameinfo.updateState()
                             gameinfo.save()
                         }
