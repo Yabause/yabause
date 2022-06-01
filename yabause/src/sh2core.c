@@ -2375,7 +2375,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
             while( dmac->copy_clock >= 0 )  {
                //dmac->penerly += extbus_penalty;
 				       MappedMemoryWriteByteNocache(*dmac->DAR, MappedMemoryReadByteNocache(*dmac->SAR,&cycler),&cycle);
-               dmac->penerly += cycler;
+               dmac->penerly += MAX(cycler, cycle);
                dmac->copy_clock -= MAX(cycler, cycle);
                *dmac->SAR += srcInc;
                *dmac->DAR += destInc;
@@ -2403,7 +2403,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
             srcInc *= 2;
             while (dmac->copy_clock >= 0) {
 				      MappedMemoryWriteWordNocache(*dmac->DAR, MappedMemoryReadWordNocache(*dmac->SAR,&cycler),&cycle);
-              dmac->penerly += cycler;
+              dmac->penerly += MAX(cycler, cycle);
               dmac->copy_clock -= MAX(cycler, cycle);
               *dmac->SAR += srcInc;
                *dmac->DAR += destInc;
@@ -2432,7 +2432,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
             while (dmac->copy_clock >= 0) {
                u32 val = MappedMemoryReadLongNocache(*dmac->SAR,&cycler);
 				       MappedMemoryWriteLongNocache(*dmac->DAR,val,&cycle);
-               dmac->penerly += cycler;
+               dmac->penerly += MAX(cycler, cycle);
                dmac->copy_clock -= MAX(cycler,cycle);
                *dmac->DAR += destInc;
                *dmac->SAR += srcInc;
@@ -2460,7 +2460,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
            while (dmac->copy_clock >= 0) {
              u32 val = MappedMemoryReadLongNocache(*dmac->SAR,&cycler);
              MappedMemoryWriteLongNocache(*dmac->DAR, val,&cycle);
-             dmac->penerly += cycler;
+             dmac->penerly += MAX(cycler, cycle);
              dmac->copy_clock -= MAX(cycler, cycle);
              *dmac->DAR += destInc;
              *dmac->SAR += srcInc;
