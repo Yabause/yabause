@@ -903,6 +903,9 @@ static void FASTCALL BiosBUPStatus(SH2_struct * sh)
    needsize = sh->regs.R[5];
    aftersize = (((blocksize - 6) * freeblocks) - 30) - needsize;
    if (aftersize < 0) aftersize = 0;
+   if ( aftersize > 0xFFFF) {
+     aftersize = 0xFFFF;
+   }
 
    MappedMemoryWriteLong(sh->regs.R[6], size,&cycle); // Size of Backup Ram (in bytes)
    MappedMemoryWriteLong(sh->regs.R[6]+0x4, size / blocksize,&cycle); // Size of Backup Ram (in blocks)
