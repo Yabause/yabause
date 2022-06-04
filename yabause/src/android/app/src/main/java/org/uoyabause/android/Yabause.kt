@@ -102,20 +102,6 @@ import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.InputStream
-import java.net.URLDecoder
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.Arrays
-import java.util.Date
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
@@ -132,7 +118,21 @@ import org.uoyabause.android.cheat.TabCheatFragment
 import org.uoyabause.android.game.BaseGame
 import org.uoyabause.android.game.GameUiEvent
 import org.uoyabause.android.game.SonicR
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.net.URLDecoder
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Arrays
+import java.util.Date
 import java.util.Locale
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 internal enum class TrayState {
     OPEN,
@@ -181,6 +181,8 @@ class Yabause : AppCompatActivity(),
 
     private val MENU_ID_LEADERBOARD = 0x8123
     private val OPEN_FILE = 0x1234
+
+    private var startTime : Long = 0L
 
     fun showDialog() {
         progressMessage.text = "Sending..."
@@ -231,6 +233,8 @@ class Yabause : AppCompatActivity(),
      */
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        startTime = System.currentTimeMillis() / 1000L;
 
         googleSignInClient = GoogleSignIn.getClient(this,
             GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).build())
@@ -1013,6 +1017,12 @@ class Yabause : AppCompatActivity(),
                     it.close()
                 }
                 subFileDescripters.clear()
+
+                val playTime = (System.currentTimeMillis() / 1000L) - startTime;
+                val resultIntent = Intent()
+                resultIntent.putExtra("playTime",playTime)
+                setResult(RESULT_OK, resultIntent)
+
                 finish()
                 killProcess(myPid())
             }
@@ -1155,6 +1165,12 @@ class Yabause : AppCompatActivity(),
     }
 
     public override fun onDestroy() {
+
+        val playTime = (System.currentTimeMillis() / 1000L) - startTime;
+        val resultIntent = Intent()
+        resultIntent.putExtra("playTime",playTime)
+        setResult(RESULT_OK, resultIntent)
+
         Log.v(TAG, "this is the end...")
         yabauseThread.destroy()
         super.onDestroy()

@@ -434,8 +434,13 @@ class GameSelectFragmentPhone : Fragment(),
 
     private var yabauseActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
 
+        val playtime = it.data?.getLongExtra("playTime",0) ?: 0L
+
+        Log.d(TAG, "Play time is ${playtime}")
+
         firebaseAnalytics?.logEvent("Game Select Fragment"){
             param("event", "On Game Finished")
+            param("playTime",playtime)
         }
         val prefs = requireActivity().getSharedPreferences(
             "private",
@@ -472,6 +477,9 @@ class GameSelectFragmentPhone : Fragment(),
 
                     // ３ヶ月に一度レビューしてもらう
                     if( (unixTime - lastReviewDateTime) > 60*60*24*30 ) {
+
+                        // 5分以上遊んだ？
+                        if( playtime < 5*60 ) return@registerForActivityResult
 
                         var manager : ReviewManager? = null
                         if( BuildConfig.DEBUG ){
@@ -515,6 +523,10 @@ class GameSelectFragmentPhone : Fragment(),
 
             // ３ヶ月に一度レビューしてもらう
             if( rn < 0.3 && (unixTime - lastReviewDateTime) > 60*60*24*30 ){
+
+                // 5分以上遊んだ？
+                if( playtime < 5*60 ) return@registerForActivityResult
+
                 var manager : ReviewManager? = null
                 if( BuildConfig.DEBUG ){
                     manager = FakeReviewManager(requireContext())
