@@ -466,7 +466,7 @@ extern "C" void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
 
       if (Vdp1External.manualerase == 0) {
-        VIDCore->Vdp1EraseWrite();
+        VIDCore->Vdp1EraseWrite(1);
       }
        
       Vdp1Regs->EDSR >>= 1;
@@ -1681,6 +1681,7 @@ void VIDDummyGetGlSize(int *width, int *height);
 void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 void VIDDummSetFilterMode(int typei,int a ){};
+void VIDDummErase(int i) {};
 void VIDDummSync(){};
 void VIDDummyGetNativeResolution(int *width, int * height, int *interlace);
 void VIDDummyVdp2DispOff(void);
@@ -1708,7 +1709,7 @@ VideoInterface_struct VIDDummy = {
 	VIDDummyVdp1LocalCoordinate,
 	VIDDummVdp1ReadFrameBuffer,
 	VIDDummVdp1WriteFrameBuffer,
-  VIDDummSync,
+  VIDDummErase,
   VIDDummSync,
 	VIDDummyVdp2Reset,
 	VIDDummyVdp2DrawStart,
