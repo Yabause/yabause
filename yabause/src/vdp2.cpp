@@ -686,23 +686,23 @@ void VDP2genVRamCyclePattern() {
   }
 
   if (cpu_cycle_a == 0) {
-    Vdp2External.cpu_cycle_a = 100;
+    Vdp2External.cpu_cycle_a = 120;
   }
   else if (Vdp2External.cpu_cycle_a == 1) {
-    Vdp2External.cpu_cycle_a = 100;
+    Vdp2External.cpu_cycle_a = 120;
   }
   else {
-    Vdp2External.cpu_cycle_a = 40;
+    Vdp2External.cpu_cycle_a = 80;
   }
 
   if (cpu_cycle_b == 0) {
-    Vdp2External.cpu_cycle_b = 100;
+    Vdp2External.cpu_cycle_b = 120;
   }
   else if (Vdp2External.cpu_cycle_a == 1) {
-    Vdp2External.cpu_cycle_b = 100;
+    Vdp2External.cpu_cycle_b = 120;
   }
   else {
-    Vdp2External.cpu_cycle_b = 40;
+    Vdp2External.cpu_cycle_b = 80;
   }
 }
 
@@ -762,6 +762,7 @@ void frameSkipAndLimit() {
 
     if ( autoframeskipenab && (onesecondticks + diffticks) > targetTime )
     {
+      LOG("Frame skip target:%lu current:%lu", targetTime, (onesecondticks + diffticks));
       // Skip the next frame
       skipnextframe = 1;
 
