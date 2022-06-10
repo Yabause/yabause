@@ -3212,7 +3212,7 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
   }
   else
    {
-      LOG("%s(%x) is Queued IMS=%08X %d:%d", ScuGetVectorString(vector), vector, ScuRegs->IMS, yabsys.frame_count, yabsys.LineCount);
+      //LOG("%s(%x) is Queued IMS=%08X %d:%d", ScuGetVectorString(vector), vector, ScuRegs->IMS, yabsys.frame_count, yabsys.LineCount);
       ScuQueueInterrupt(vector, level, mask, statusbit);
       ScuRegs->IST |= statusbit;
    }
