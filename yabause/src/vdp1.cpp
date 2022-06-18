@@ -464,13 +464,18 @@ extern "C" void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
 #else
     if (val == 1){
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-        Vdp1Regs->EDSR >>= 1;
-        Vdp1Draw(); 
-        VIDCore->Vdp1DrawEnd();
-        yabsys.wait_line_count = yabsys.LineCount + 50;
-        yabsys.wait_line_count %= yabsys.MaxLineCount;
-        //if (yabsys.wait_line_count == 2) { yabsys.wait_line_count = 3; } // it should not be the same line with render.
-        FRAMELOG("VDP1: end line is %d", yabsys.wait_line_count);
+
+      if (Vdp1External.manualerase == 0) {
+        VIDCore->Vdp1EraseWrite(1);
+      }
+       
+      Vdp1Regs->EDSR >>= 1;
+      Vdp1Draw(); 
+      VIDCore->Vdp1DrawEnd();
+      yabsys.wait_line_count = yabsys.LineCount + 50;
+      yabsys.wait_line_count %= yabsys.MaxLineCount;
+      //if (yabsys.wait_line_count == 2) { yabsys.wait_line_count = 3; } // it should not be the same line with render.
+      FRAMELOG("VDP1: end line is %d", yabsys.wait_line_count);
     }
 #endif
          break;
@@ -1676,6 +1681,7 @@ void VIDDummyGetGlSize(int *width, int *height);
 void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 void VIDDummSetFilterMode(int typei,int a ){};
+void VIDDummErase(int i) {};
 void VIDDummSync(){};
 void VIDDummyGetNativeResolution(int *width, int * height, int *interlace);
 void VIDDummyVdp2DispOff(void);
@@ -1703,7 +1709,7 @@ VideoInterface_struct VIDDummy = {
 	VIDDummyVdp1LocalCoordinate,
 	VIDDummVdp1ReadFrameBuffer,
 	VIDDummVdp1WriteFrameBuffer,
-  VIDDummSync,
+  VIDDummErase,
   VIDDummSync,
 	VIDDummyVdp2Reset,
 	VIDDummyVdp2DrawStart,

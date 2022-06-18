@@ -78,7 +78,7 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
     protected var mLayoutManager: RecyclerView.LayoutManager? = null
     protected lateinit var emptyView: View
     protected var mAdapter: StateItemAdapter? = null
-    var _state_items: ArrayList<StateItem>? = null
+    lateinit var _state_items: ArrayList<StateItem>
     var mHelper: ItemTouchHelper? = null
     var mSelectedItem = 0
     protected var _basepath = ""
@@ -103,7 +103,7 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
                         item._image_filename =
                             _basepath + "/" + filename.substring(0, point) + ".png"
                         item._savedate = Date(listOfFiles[i].lastModified())
-                        _state_items!!.add(item)
+                        _state_items.add(item)
                     }
                 }
                 // System.out.println("File " + listOfFiles[i].getName());
@@ -111,8 +111,9 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
                 // System.out.println("Directory " + listOfFiles[i].getName());
             }
         }
-        if (_state_items!!.size > 1) {
-            Collections.sort(_state_items, StateItemComparator())
+
+        if (_state_items.size > 1) {
+          Collections.sort(_state_items, StateItemComparator())
         }
     }
 
@@ -125,7 +126,7 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
         rootView.tag = TAG
         emptyView = rootView.findViewById(R.id.textView_empty)
         mRecyclerView = rootView.findViewById<View>(R.id.recyclerView) as RecyclerView
-        if (_state_items!!.size == 0) {
+        if (_state_items.size == 0) {
             mRecyclerView!!.visibility = View.GONE
             return rootView
         }
@@ -134,18 +135,21 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
         mAdapter!!.setStateItems(_state_items)
         mAdapter!!.setOnItemClickListener(this)
         mRecyclerView!!.adapter = mAdapter
+/*
         var scrollPosition = 0
         // If a layout manager has already been set, get current scroll position.
         if (mRecyclerView!!.layoutManager != null) {
             scrollPosition = (mRecyclerView!!.layoutManager as LinearLayoutManager?)
                 ?.findFirstCompletelyVisibleItemPosition() ?: 0
         }
+ */
         mLayoutManager = LinearLayoutManager(activity)
         mRecyclerView!!.layoutManager = mLayoutManager
         selectItem(0)
         rootView.isFocusableInTouchMode = true
         rootView.requestFocus()
         rootView.setOnKeyListener(this)
+/*
         val callback: ItemTouchHelper.SimpleCallback = object :
             ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
             override fun onMove(
@@ -167,14 +171,12 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
                 }
             }
         }
+ */
         mHelper = ItemTouchHelper(object : ItemTouchHelper.Callback() {
             override fun getMovementFlags(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder
             ): Int {
-// ここでドラッグ動作、Swipe動作を指定します
-// ドラッグさせたくないとか、Swipeさせたくない場合はここで分岐してアクションを指定しないことでドラッグできない行などを指定できます
-// ドラッグは長押しで自動的に開始されます
                 return makeFlag(ItemTouchHelper.ACTION_STATE_IDLE,
                     ItemTouchHelper.RIGHT) or makeFlag(ItemTouchHelper.ACTION_STATE_SWIPE,
                     ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) or
@@ -243,16 +245,16 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
     }
 
     private fun selectItem(position: Int) {
-        var position = position
-        if (position < 0) position = 0
-        if (position >= mAdapter!!.itemCount) position = mAdapter!!.itemCount - 1
+        var lposition = position
+        if (lposition < 0) lposition = 0
+        if (lposition >= mAdapter!!.itemCount) lposition = mAdapter!!.itemCount - 1
         val pre = mSelectedItem
-        mSelectedItem = position
+        mSelectedItem = lposition
         mAdapter!!.setSelected(mSelectedItem)
         mAdapter!!.notifyItemChanged(pre)
         mAdapter!!.notifyItemChanged(mSelectedItem)
         mRecyclerView!!.stopScroll()
-        mRecyclerView!!.smoothScrollToPosition(position)
+        mRecyclerView!!.smoothScrollToPosition(lposition)
 
 /*
         mRecyclerView.post(new Runnable() {
@@ -274,20 +276,20 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
         if (event.action != KeyEvent.ACTION_DOWN) {
             return false
         }
-        if (_state_items!!.size == 0) {
+        if (_state_items.size == 0) {
             return false
         }
         when (keyCode) {
             KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_BUTTON_A -> {
                 val main = activity as Yabause?
-                main?.loadState(_state_items!![mSelectedItem]._filename)
+                main?.loadState(_state_items[mSelectedItem]._filename)
             }
             KeyEvent.KEYCODE_BUTTON_X -> AlertDialog.Builder(activity)
                 .setMessage(getString(R.string.delete_confirm))
-                .setPositiveButton(getString(R.string.ok)) { dialog, which ->
+                .setPositiveButton(getString(R.string.ok)) { _, _ ->
                     mAdapter!!.remove(mSelectedItem)
                     if (mAdapter!!.itemCount == 0) {
-                        emptyView!!.visibility = View.VISIBLE
+                        emptyView.visibility = View.VISIBLE
                         mRecyclerView!!.visibility = View.GONE
                     } else {
                         var newsel = mSelectedItem
@@ -319,7 +321,7 @@ class StateListFragment : Fragment(), StateItemAdapter.OnItemClickListener, View
         const val TAG = "StateListFragment"
         fun checkMaxFileCount(basepath: String) {
             val state_items = ArrayList<StateItem>()
-            val folder = File(basepath) ?: return
+            val folder = File(basepath)
             val listOfFiles = folder.listFiles() ?: return
             for (i in listOfFiles.indices) {
                 if (listOfFiles[i].isFile) {

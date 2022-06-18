@@ -303,7 +303,7 @@ protected:
   int m_ClockCounter;
   bool m_bIntruptSort;
   bool one_step_;
-  u32 pre_exe_count_;
+  int pre_exe_count_;
   bool is_slave_ = false;
   u32 pre_PC_;
   SH2_struct *ctx_;
@@ -350,7 +350,7 @@ public:
 
   void AddCycle(u32 cycle)
   {
-    addcycle_ += cycle;
+    pre_exe_count_ += cycle;
   }
 
   u32 addcycle_ = 0;

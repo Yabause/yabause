@@ -113,8 +113,9 @@ class StateItemAdapter : RecyclerView.Adapter<StateItemAdapter.ViewHolder>(), Vi
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         Log.d(TAG, "Element $position set.")
-        viewHolder.textView.text = SimpleDateFormat(DATE_PATTERN).format(
-            _state_items!![position]._savedate)
+        viewHolder.textView.text = _state_items!![position]._savedate?.let {
+            SimpleDateFormat(DATE_PATTERN).format(it)
+        }
         // viewHolder.getToolBar().setTitle(new SimpleDateFormat(DATE_PATTERN).format(_state_items.get(position)._savedate));
         val cx = viewHolder.imageView.context
         Glide.with(cx)
@@ -138,9 +139,9 @@ class StateItemAdapter : RecyclerView.Adapter<StateItemAdapter.ViewHolder>(), Vi
 
     fun remove(position: Int) {
         var file = File(_state_items!![position]._filename)
-        file?.delete()
+        file.delete()
         file = File(_state_items!![position]._image_filename)
-        file?.delete()
+        file.delete()
         _state_items!!.removeAt(position)
         notifyItemRemoved(position)
     }

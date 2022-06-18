@@ -59,8 +59,8 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
 
             if (Build.VERSION.SDK_INT > 23) {
                 var card = rootview.findViewById<View>(R.id.card_view_main) as CardView
-                card?.setCardBackgroundColor(rootview.context.getColorStateList(R.color.card_view_selectable))
-                card?.isFocusable = true
+                card.setCardBackgroundColor(rootview.context.getColorStateList(R.color.card_view_selectable))
+                card.isFocusable = true
                 card.setOnCreateContextMenuListener(this)
             }
 
@@ -74,13 +74,13 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
             */
         }
 
-        override fun onCreateContextMenu(
+       override fun onCreateContextMenu(
             menu: ContextMenu?,
             v: View?,
             menuInfo: ContextMenu.ContextMenuInfo?
         ) {
-            val myActionItem: MenuItem = menu!!.add("Some menu item")
         }
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GameViewHolder {
@@ -118,14 +118,14 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
                 rate += " " + game.device_infomation
             }
             textViewVersion.text = rate
-            if (game.image_url != "") { // try {
-                if (game.image_url.startsWith("http")) {
+            if (game.image_url != null && game.image_url != "") { // try {
+                if (game.image_url!!.startsWith("http")) {
                     Glide.with(ctx)
                         .load(game.image_url)
                         .into(imageView)
                 } else {
                     Glide.with(holder.rootview.context)
-                        .load(File(game.image_url))
+                        .load(game.image_url?.let { File(it) })
                         .into(imageView)
                 }
             } else {
@@ -176,27 +176,25 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
                     } else {
 
  */
-                    Log.d("textext", "R.id.delete is selected")
-                    AlertDialog.Builder(view.context)
-                        .setTitle(R.string.delete_confirm_title)
-                        .setMessage(R.string.delete_confirm)
-                        .setPositiveButton(R.string.ok) { dialog, which ->
+                        Log.d("textext", "R.id.delete is selected")
+                        AlertDialog.Builder(view.context)
+                                .setTitle(R.string.delete_confirm_title)
+                                .setMessage(R.string.delete_confirm)
+                                .setPositiveButton(R.string.ok) { _, _ ->
 
-                            var game_info = dataSet?.get(position)!!
+                                    var game_info = dataSet?.get(position)!!
 
-                            dataSet?.removeAt(position)
+                                    dataSet.removeAt(position)
 
-                            if (game_info != null) {
-                                mListener?.onGameRemoved(game_info)
-                                game_info.removeInstance()
-                            }
+                                    mListener?.onGameRemoved(game_info)
+                                    game_info.removeInstance()
 
-                            notifyItemRemoved(position)
-                        }
-                        .setNegativeButton(R.string.no) { dialog, which ->
-                        }
-                        .show()
-                }
+                                    notifyItemRemoved(position)
+                                }
+                                .setNegativeButton(R.string.no) { _, _ ->
+                                }
+                                .show()
+                    }
                 else -> {
                     Log.d("textext", "Unknown value (value = $it.itemId)")
                 }

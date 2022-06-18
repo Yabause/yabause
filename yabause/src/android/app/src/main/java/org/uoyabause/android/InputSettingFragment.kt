@@ -23,6 +23,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.util.TypedValue
 import android.view.InputDevice
@@ -35,13 +36,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import java.io.*
+import java.util.*
 import org.devmiyax.yabasanshiro.R
 import org.json.JSONException
 import org.json.JSONObject
 import org.uoyabause.android.PadManager.Companion.padManager
 import org.uoyabause.android.YabauseStorage.Companion.storage
-import java.io.*
-import java.util.*
 
 class InputSettingPresenter : DialogInterface.OnKeyListener,
 OnGenericMotionListener, View.OnClickListener {
@@ -57,7 +58,7 @@ OnGenericMotionListener, View.OnClickListener {
   private var playerid = 0
   private var isLTriggerAnalog = true
   private var isRTriggerAnalog = true
-  lateinit var parentDialog:Dialog
+  lateinit var parentDialog: Dialog
 
   var listener_: InputSettingListener? = null
   fun setListener(listener: InputSettingListener?) {
@@ -103,9 +104,9 @@ OnGenericMotionListener, View.OnClickListener {
     map!!.add(PadEvent.PERANALOG_AXIS_RTRIGGER) // right trigger
     map!!.add(PadEvent.MENU) // right trigger
 
-    //setDialogTitle(R.string.input_the_key);
-    //setPositiveButtonText(null);  // OKボタンを非表示にする
-    //setDialogLayoutResource(R.layout.keymap);
+    // setDialogTitle(R.string.input_the_key);
+    // setPositiveButtonText(null);  // OKボタンを非表示にする
+    // setDialogLayoutResource(R.layout.keymap);
     motions = ArrayList()
     motions!!.add(MotionMap(MotionEvent.AXIS_X))
     motions!!.add(MotionMap(MotionEvent.AXIS_Y))
@@ -151,7 +152,7 @@ OnGenericMotionListener, View.OnClickListener {
     motions!!.add(MotionMap(MotionEvent.AXIS_GENERIC_16))
   }
 
-  fun onCreateDialog( context: Context, dlg:Dialog, view:View) {
+  fun onCreateDialog(context: Context, dlg: Dialog, view: View) {
     InitObjects(context)
     val res = context.resources
     dlg.setOnKeyListener(this)
@@ -253,15 +254,14 @@ OnGenericMotionListener, View.OnClickListener {
   fun setKeymap(padkey: Int): Boolean {
     if (keystate_ != 0) return true
     keystate_ = 1
-    h = Handler()
-    Thread { h!!.postDelayed({ keystate_ = 0 }, 300) }.start()
+    Thread {  Handler(Looper.getMainLooper()).postDelayed({ keystate_ = 0 }, 300) }.start()
     Keymap!![padkey] = map!!.get(index)
     Log.d("setKeymap", "index =" + map!![index] + ": pad = " + padkey)
     index++
     if (index >= map!!.size) {
       saveSettings()
       listener_?.onFinishInputSetting()
-      parentDialog!!.dismiss()
+      parentDialog.dismiss()
       return true
     }
     val res = context_m!!.resources
@@ -301,10 +301,10 @@ OnGenericMotionListener, View.OnClickListener {
   var onkey = false
 
   override fun onKey(dialogInterface: DialogInterface?, keyCode: Int, event: KeyEvent?): Boolean {
-    var keyCode = keyCode
+    var lkeyCode = keyCode
     if (event?.deviceId != _selected_device_id) return false
-    if (event?.source and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD ||
-      event?.source and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK
+    if (event.source and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD ||
+      event.source and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK
     ) {
       val dev = InputDevice.getDevice(_selected_device_id)
       if (dev.name.contains("HuiJia")) {
@@ -312,12 +312,12 @@ OnGenericMotionListener, View.OnClickListener {
           return false
         }
       }
-      Log.d("Yabause", "onKey: ${keyCode} ${event.action} value: ${event.action}")
+      Log.d("Yabause", "onKey: $lkeyCode ${event.action} value: ${event.action}")
       if (event.repeatCount == 0 && event.action == KeyEvent.ACTION_UP) {
         if (onkey) {
           onkey = false
-          if (keyCode == 0) {
-            keyCode = event.scanCode
+          if (lkeyCode == 0) {
+            lkeyCode = event.scanCode
           }
           if (map!![index] == PadEvent.PERANALOG_AXIS_LTRIGGER) {
             isLTriggerAnalog = false
@@ -326,11 +326,10 @@ OnGenericMotionListener, View.OnClickListener {
             isRTriggerAnalog = false
           }
 
-          if (map!!.get(index) == PadEvent.PERANALOG_AXIS_X || map!!.get(index) == PadEvent.PERANALOG_AXIS_Y){
+          if (map!!.get(index) == PadEvent.PERANALOG_AXIS_X || map!!.get(index) == PadEvent.PERANALOG_AXIS_Y) {
             setKeymap(65535)
-          }else {
-            val PadKey = Keymap!![keyCode]
-            setKeymap(keyCode)
+          } else {
+            setKeymap(lkeyCode)
           }
         }
         return true
@@ -338,27 +337,18 @@ OnGenericMotionListener, View.OnClickListener {
       if (event.repeatCount == 0 && event.action == KeyEvent.ACTION_DOWN) {
         onkey = true
         return true
-
-        // Accept AnalogInput
-/*
-        if (map.get(index) == PadEvent.PERANALOG_AXIS_X || map.get(index) == PadEvent.PERANALOG_AXIS_Y ||
-                map.get(index) == PadEvent.PERANALOG_AXIS_LTRIGGER || map.get(index) == PadEvent.PERANALOG_AXIS_RTRIGGER) {
-          return true;
-        }
-*/
       }
     }
     return false
   }
 
-
   override fun onGenericMotion(view: View?, event: MotionEvent?): Boolean {
 
-    //Log.d("Yabause", "onGenericMotion: ${event} ")
+    // Log.d("Yabause", "onGenericMotion: ${event} ")
 
     if (event?.deviceId != _selected_device_id) return false
-    //if (onkey == false) return false
-    if (event?.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
+    // if (onkey == false) return false
+    if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
       for (i in motions!!.indices) {
         val value = event.getAxisValue(motions!![i].id)
         if (value.toDouble() != 0.0) {
@@ -381,43 +371,36 @@ OnGenericMotionListener, View.OnClickListener {
               isRTriggerAnalog = true
             }
             onkey = false
-            val PadKey = Keymap!!.get(motions!!.get(i).id)
             setKeymap(motions!!.get(i).id or -0x70000000)
             return true
           }
-
       } else {
 
           if (java.lang.Float.compare(value, -1.0f) <= 0) {
             motions!![i].oldval = value
             onkey = false
-            val PadKey = Keymap!![motions!![i].id or 0x8000 or -0x80000000]
             return setKeymap(motions!![i].id or 0x8000 or -0x80000000)
           }
           if (java.lang.Float.compare(value, 1.0f) >= 0) {
             onkey = false
             motions!![i].oldval = value
-            val PadKey = Keymap!![motions!![i].id or -0x80000000]
             return setKeymap(motions!![i].id or -0x80000000)
           }
-
         }
       }
     }
     return false
   }
-
 }
-
 
 interface InputSettingListener {
   fun onFinishInputSetting()
   fun onCancel()
 }
 
-class InputSettingFragment() : DialogFragment(){
+class InputSettingFragment() : DialogFragment() {
 
-  val presenter : InputSettingPresenter =  InputSettingPresenter()
+  val presenter: InputSettingPresenter = InputSettingPresenter()
 
   var listener_: InputSettingListener? = null
   fun setListener(listener: InputSettingListener?) {
@@ -426,19 +409,18 @@ class InputSettingFragment() : DialogFragment(){
   }
 
   fun setPlayerAndFilename(playerid: Int, fname: String) {
-    presenter.setPlayerAndFilename(playerid,fname)
+    presenter.setPlayerAndFilename(playerid, fname)
   }
 
   override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
     val dialogBuilder = AlertDialog.Builder(requireActivity())
     val view = layoutInflater.inflate(R.layout.keymap, null, false)
     dialogBuilder.setView(view)
-    dialogBuilder.setNegativeButton("Cancel") { dialog, whichButton ->
+    dialogBuilder.setNegativeButton("Cancel") { _, _ ->
       listener_?.onCancel()
     }
     val dlg: Dialog = dialogBuilder.create()
-    presenter.onCreateDialog(requireActivity(),dlg,view)
+    presenter.onCreateDialog(requireActivity(), dlg, view)
     return dlg
   }
-
 }

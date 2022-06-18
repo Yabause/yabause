@@ -296,8 +296,7 @@ static void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
    if (!(sh->regs.R[4] & 0x8000)) // double check this
       MappedMemoryWriteLong(0x25FE00A8, 1,&cycle); // A-bus Interrupt Acknowledge
 
-   sh->cycles += 20;
-
+   sh->cycles += 100;
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
 }
@@ -485,12 +484,12 @@ static u32 GetDeviceStats(u32 device, u32 *size, u32 *addr, u32 *blocksize)
    {
       case 0:
         if (yabsys.extend_backup) {
-          *addr = tweak_backup_file_addr;
+          *addr = tweak_backup_file_addr | 0x20000000;
           *size = tweak_backup_file_size;
           *blocksize = 0x40;
         }
         else {
-          *addr      = 0x00180000;
+          *addr      = 0x20180000;
           *size      = 0x800;
           *blocksize = 0x40;
         }
@@ -904,6 +903,9 @@ static void FASTCALL BiosBUPStatus(SH2_struct * sh)
    needsize = sh->regs.R[5];
    aftersize = (((blocksize - 6) * freeblocks) - 30) - needsize;
    if (aftersize < 0) aftersize = 0;
+   if ( aftersize > 0xFFFF) {
+     aftersize = 0xFFFF;
+   }
 
    MappedMemoryWriteLong(sh->regs.R[6], size,&cycle); // Size of Backup Ram (in bytes)
    MappedMemoryWriteLong(sh->regs.R[6]+0x4, size / blocksize,&cycle); // Size of Backup Ram (in blocks)
@@ -1622,7 +1624,7 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
    sh->regs.PC = MappedMemoryReadLong(0x06000900+(vector << 2),&cycle);
    //LOG("Interrupt from: %08X to %08X", old_pc, sh->regs.PC );
 
-   sh->cycles += 32;
+   sh->cycles += 200;
    SH2SetRegisters(sh, &sh->regs);
 }
 
@@ -1672,7 +1674,7 @@ static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
 
    //LOG("Interrupt return PC = %08X\n", sh->regs.PC);
 
-   sh->cycles += 32;
+   sh->cycles += 200;
    SH2SetRegisters(sh, &sh->regs);
 }
 
@@ -2452,4 +2454,5 @@ int BiosBUPStatusMem( int device, devicestatus_struct * status )
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
 

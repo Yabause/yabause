@@ -23,8 +23,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.graphics.Point
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.text.method.LinkMovementMethod
 import android.util.DisplayMetrics
 import android.util.Log
@@ -32,68 +34,38 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.preference.ListPreference
 import androidx.preference.PreferenceManager
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.BillingClientStateListener
-import com.android.billingclient.api.BillingResult
-import com.android.billingclient.api.PurchasesUpdatedListener
-import com.google.android.gms.analytics.Tracker
+import androidx.window.layout.WindowMetricsCalculator
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
-import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import org.uoyabause.android.phone.GameSelectActivityPhone
 import org.uoyabause.android.tv.GameSelectActivity
-import org.uoyabause.util.IabHelper
-
 
 class StartupActivity : AppCompatActivity() {
     val TAG = "StartupActivity"
-    var mHelper: IabHelper? = null
+
     private var mFirebaseRemoteConfig: FirebaseRemoteConfig? = null
-
-    private val purchasesUpdatedListener =
-        PurchasesUpdatedListener { billingResult, purchases ->
-            // To be implemented in a later section.
-        }
-
-    lateinit private var billingClient : BillingClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_startup)
 
-
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
-        //boolean lock_landscape = sharedPref.getBoolean("pref_landscape", false);
-        //if( lock_landscape == true ){
-        //    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        //}else{
-        //    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-        //}
-
-        // Set the proper aspect rate for running device at first time
-        val aspectRateSetting = sharedPref.getString("pref_aspect_rate","BAD")
-        if( aspectRateSetting == "BAD" ){
+        val aspectRateSetting = sharedPref.getString("pref_aspect_rate", "BAD")
+        if (aspectRateSetting == "BAD") {
             val editor = sharedPref.edit()
-
-            val displayMetrics = DisplayMetrics()
-            windowManager.defaultDisplay.getMetrics(displayMetrics)
-            val height = displayMetrics.heightPixels
-            val width = displayMetrics.widthPixels
+            val windowMetrics = WindowMetricsCalculator.getOrCreate().computeCurrentWindowMetrics(this)
+            val currentBounds = windowMetrics.bounds
+            val width = currentBounds.width()
+            val height = currentBounds.height()
             val arate = width.toDouble() / height.toDouble()
-
-            if( arate >= 1.21 && arate <= 1.34 ){
-                // for 4:3 display force default setting is fullscreen
+            if (arate >= 1.21 && arate <= 1.34) {
                 editor.putString("pref_aspect_rate", "3")
-            }else{
+            } else {
                 editor.putString("pref_aspect_rate", "0")
             }
-
             editor.apply()
         }
 
@@ -103,7 +75,7 @@ class StartupActivity : AppCompatActivity() {
         if (resultCode != ConnectionResult.SUCCESS) {
             Log.e(TAG, "This device is not supported.")
         }
-        Log.d(TAG, "InstanceID token: " + FirebaseInstanceId.getInstance().token)
+        // Log.d(TAG, "InstanceID token: " + FirebaseInstanceId.getInstance().token)
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser != null) {
             // already signed in
@@ -111,58 +83,20 @@ class StartupActivity : AppCompatActivity() {
             // not signed in
         }
 
-        val handler = Handler()
         val r = Runnable {
-
             mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
-            val configSettings = FirebaseRemoteConfigSettings.Builder()
-                .setDeveloperModeEnabled(BuildConfig.DEBUG)
-                .build()
-            mFirebaseRemoteConfig!!.setConfigSettings(configSettings)
-            mFirebaseRemoteConfig!!.setDefaults(R.xml.config)
-            var cacheExpiration: Long = 3600 // 1 hour in seconds.
-            // If your app is using developer mode, cacheExpiration is set to 0, so each fetch will
-            // retrieve values from the service.
-            if (mFirebaseRemoteConfig!!.info.configSettings.isDeveloperModeEnabled) {
-                cacheExpiration = 0
-            }
+            mFirebaseRemoteConfig!!.setDefaultsAsync(R.xml.config)
+            val cacheExpiration: Long = 3600 // 1 hour in seconds.
             mFirebaseRemoteConfig!!.fetch(cacheExpiration)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        //Toast.makeText(GameSelectActivity.this, "Fetch Succeeded",
-                        //        Toast.LENGTH_SHORT).show();
-
-                        // After config data is successfully fetched, it must be activated before newly fetched
-                        // values are returned.
-                        mFirebaseRemoteConfig!!.activateFetched()
-                    } else {
-                        //Toast.makeText(GameSelectActivity.this, "Fetch Failed",
-                        //        Toast.LENGTH_SHORT).show();
-                    }
-                    //displayWelcomeMessage();
-                }
-
-
-            billingClient = BillingClient.newBuilder(this)
-                .setListener(purchasesUpdatedListener)
-                .enablePendingPurchases()
-                .build()
-
-            billingClient.startConnection(object : BillingClientStateListener {
-                override fun onBillingSetupFinished(billingResult: BillingResult) {
-                    if (billingResult.responseCode ==  BillingClient.BillingResponseCode.OK) {
-                        // The BillingClient is ready. You can query purchases here.
+                        mFirebaseRemoteConfig!!.fetchAndActivate()
                     }
                 }
-                override fun onBillingServiceDisconnected() {
-                    // Try to restart the connection on the next request to
-                    // Google Play by calling the startConnection() method.
-                }
-            })
 
             val uiModeManager = getSystemService(UI_MODE_SERVICE) as UiModeManager
-            val sharedPref = PreferenceManager.getDefaultSharedPreferences(this@StartupActivity)
-            val tvmode = sharedPref.getBoolean("pref_force_androidtv_mode", false)
+            val sharedPrefLocal = PreferenceManager.getDefaultSharedPreferences(this@StartupActivity)
+            val tvmode = sharedPrefLocal.getBoolean("pref_force_androidtv_mode", false)
             val i: Intent
             if (uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION || tvmode) {
                 i = Intent(this@StartupActivity, GameSelectActivity::class.java)
@@ -192,9 +126,9 @@ class StartupActivity : AppCompatActivity() {
         val agreed = prefs.getBoolean("agreed", false)
 
         val v = findViewById<View>(R.id.agree)
-        val any = if (agreed) {
+        if (agreed) {
             v.visibility = View.GONE
-            handler.postDelayed(r, 2000)
+            Handler(Looper.getMainLooper()).postDelayed(r, 2000)
         } else {
 
             val t2 = findViewById<TextView>(R.id.agree_text)
@@ -204,14 +138,13 @@ class StartupActivity : AppCompatActivity() {
             b.requestFocus()
             b.setOnClickListener {
                 prefs.edit().apply {
-                    putBoolean("agreed",true)
+                    putBoolean("agreed", true)
                     commit()
                 }
                 v.visibility = View.GONE
-                handler.postDelayed(r, 1)
+                Handler(Looper.getMainLooper()).postDelayed(r, 1)
             }
             v.visibility = View.VISIBLE
         }
     }
-
 }

@@ -138,7 +138,7 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-        <activity android:name="org.uoyabause.android.YabauseSettings" />
+
         <activity
             android:name="org.uoyabause.android.PadTestActivity"
             android:configChanges="orientation|keyboardHidden" />
@@ -173,20 +173,7 @@
                 <action android:name="org.uoyabause.download.FAILED" />
             </intent-filter>
         </receiver>
-        <receiver android:name="org.uoyabause.android.download.StopReceiver">
-            <intent-filter>
-                <action android:name="org.uoyabause.android.download.STOP" />
-            </intent-filter>
-        </receiver>
 
-        <service
-            android:name="org.uoyabause.android.download.MediaDownloadService"
-            android:exported="false" />
-
-        <activity
-            android:name="org.uoyabause.android.download.IsoDownload"
-            android:label="@string/title_activity_iso_download"
-            android:theme="@style/AppTheme" />
         <activity
             android:name="org.uoyabause.android.phone.GameSelectActivityPhone"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"

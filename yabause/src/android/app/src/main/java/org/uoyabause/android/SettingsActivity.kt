@@ -14,29 +14,23 @@ import android.os.Bundle
 import android.os.storage.StorageManager
 import android.os.storage.StorageVolume
 import android.text.InputType
-import android.util.DisplayMetrics
-import android.view.Display
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat.getExternalFilesDirs
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.fragment.app.DialogFragment
 import androidx.preference.CheckBoxPreference
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
+import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
-import androidx.preference.PreferenceCategory
-import net.nend.android.a.g.p
+import java.util.ArrayList
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.YabauseStorage.Companion.storage
 import org.uoyabause.android.tv.GameSelectFragment
-import java.util.ArrayList
-
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -94,10 +88,9 @@ class SettingsActivity : AppCompatActivity() {
 
         fun setUpInstall() {
 
-            val prefs: SharedPreferences? = YabauseApplication.appContext.getSharedPreferences("private",  Context.MODE_PRIVATE)
-            var hasDonated = false
+            val prefs: SharedPreferences? = YabauseApplication.appContext.getSharedPreferences("private", Context.MODE_PRIVATE)
             if (prefs != null) {
-                hasDonated = prefs.getBoolean("donated", false)
+                var hasDonated = prefs.getBoolean("donated", false)
                 if (BuildConfig.BUILD_TYPE == "pro" || hasDonated) {
                     return
                 }
@@ -105,11 +98,10 @@ class SettingsActivity : AppCompatActivity() {
                 val preferenceCategory = findPreference("game_select_screen") as PreferenceCategory?
                 val preference = Preference(preferenceScreen.context)
                 preference.title = getString(R.string.remaining_installation_count)
-                val count = prefs?.getInt("InstallCount", 3)
+                val count = prefs.getInt("InstallCount", 3)
                 preference.summary = count.toString()
                 preferenceCategory?.addPreference(preference)
             }
-
         }
         override fun onInputDeviceAdded(id: Int) {
             PadManager.updatePadManager()
@@ -134,21 +126,21 @@ class SettingsActivity : AppCompatActivity() {
             setPreferencesFromResource(R.xml.preferences, rootKey)
 
             var dir = findPreference("pref_game_directory") as Preference?
-            if ( dir != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (dir != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             //    dir.isVisible = false
             }
 
             var installLocation = findPreference("pref_install_location") as ListPreference?
-            if ( installLocation != null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (installLocation != null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 installLocation.isVisible = false
-            }else{
+            } else {
 
                 val labels: MutableList<CharSequence> = ArrayList()
                 val values: MutableList<CharSequence> = ArrayList()
 
                 val sm = requireActivity().getSystemService(STORAGE_SERVICE) as StorageManager
                 val map: Map<String, String> = when {
-                    Build.VERSION.SDK_INT>= Build.VERSION_CODES.R -> {
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
                         // Android 11- (API 30)
                         sm.storageVolumes.mapNotNull { volume ->
                             val path = volume.directory?.absolutePath ?: return@mapNotNull null
@@ -178,20 +170,17 @@ class SettingsActivity : AppCompatActivity() {
                     }
                 }
 
-
                 var index = 0
-                map.forEach() { path,label ->
+                map.forEach() { _, label ->
                     labels.add(label)
                     values.add(index.toString())
                     index++
                 }
 
                 installLocation!!.entries = labels.toTypedArray()
-                installLocation!!.entryValues = values.toTypedArray()
-                installLocation!!.summary = installLocation!!.entry
-
+                installLocation.entryValues = values.toTypedArray()
+                installLocation.summary = installLocation.entry
             }
-
 
             var inputsetting1 = findPreference("pref_player1_inputdef_file") as InputSettingPreference?
             inputsetting1!!.setPlayerAndFilename(0, "keymap")
@@ -286,8 +275,7 @@ class SettingsActivity : AppCompatActivity() {
             video_labels.add(res.getString(R.string.software_video_interface))
             video_values.add("2")
 
-
-            if( requireActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL) ) {
+            if (requireActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL)) {
                 video_labels.add(res.getString(R.string.vulkan_video_interface))
                 video_values.add("4")
             }
@@ -316,7 +304,7 @@ class SettingsActivity : AppCompatActivity() {
             val polygon_setting =
                 preferenceManager.findPreference("pref_polygon_generation") as ListPreference?
             polygon_setting!!.summary = polygon_setting.entry
-            polygon_setting.isEnabled = (video_cart.value == "1" || video_cart.value == "4" )
+            polygon_setting.isEnabled = (video_cart.value == "1" || video_cart.value == "4")
 
             if (deviceSupportsAEP == false) {
                 polygon_setting.entries =
@@ -326,17 +314,15 @@ class SettingsActivity : AppCompatActivity() {
 
             val r_setting =
                 preferenceManager.findPreference("pref_use_compute_shader") as CheckBoxPreference?
-            if(video_cart.value == "4" ){
-                r_setting?.isEnabled = false;
-                r_setting?.isChecked = true;
-            }else if(video_cart.value == "1" ){
-                r_setting?.isEnabled = true;
-            }else{
-                r_setting?.isEnabled = false;
-                r_setting?.isChecked = false;
+            if (video_cart.value == "4") {
+                r_setting?.isEnabled = false
+                r_setting?.isChecked = true
+            } else if (video_cart.value == "1") {
+                r_setting?.isEnabled = true
+            } else {
+                r_setting?.isEnabled = false
+                r_setting?.isChecked = false
             }
-
-
 
             val onscreen_pad =
                 findPreference("on_screen_pad") as PreferenceScreen?
@@ -391,16 +377,11 @@ class SettingsActivity : AppCompatActivity() {
                 it.inputType = InputType.TYPE_CLASS_NUMBER
             }
 
-
             val frameLimitSetting =
                 preferenceManager.findPreference("pref_frameLimit") as ListPreference?
             frameLimitSetting!!.summary = frameLimitSetting.entry
 
-
-            setUpInstall();
-
-
-
+            setUpInstall()
         }
 
         override fun onDisplayPreferenceDialog(preference: Preference) {
@@ -428,7 +409,6 @@ class SettingsActivity : AppCompatActivity() {
                     f = GameDirectoriesDialogFragment.newInstance(preference.getKey())
                 }
                 */
-
             } else {
                 f = null
             }
@@ -488,10 +468,10 @@ class SettingsActivity : AppCompatActivity() {
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
 
-            if (key == "pref_bios" || key == "scsp_time_sync_mode" || key == "pref_cart" || key == "pref_video"
-                || key == "pref_cpu" || key == "pref_filter" || key == "pref_polygon_generation"
-                || key == "pref_sound_engine" || key == "pref_resolution" || key == "pref_rbg_resolution"
-                || key == "pref_cpu_sync_per_line" || key == "pref_aspect_rate" || key == "pref_frameLimit" || key == "pref_install_location"
+            if (key == "pref_bios" || key == "scsp_time_sync_mode" || key == "pref_cart" || key == "pref_video" ||
+                key == "pref_cpu" || key == "pref_filter" || key == "pref_polygon_generation" ||
+                key == "pref_sound_engine" || key == "pref_resolution" || key == "pref_rbg_resolution" ||
+                key == "pref_cpu_sync_per_line" || key == "pref_aspect_rate" || key == "pref_frameLimit" || key == "pref_install_location"
             ) {
                 val pref = findPreference(key) as ListPreference?
                 pref!!.summary = pref.entry
@@ -502,18 +482,18 @@ class SettingsActivity : AppCompatActivity() {
                     val polygon_setting =
                         preferenceManager.findPreference("pref_polygon_generation") as ListPreference?
                     polygon_setting!!.summary = polygon_setting.entry
-                    polygon_setting.isEnabled = (pref.value == "1" || pref.value == "4" )
+                    polygon_setting.isEnabled = (pref.value == "1" || pref.value == "4")
 
                     val r_setting =
                         preferenceManager.findPreference("pref_use_compute_shader") as CheckBoxPreference?
-                    if(pref.value == "4" ){
-                        r_setting?.isEnabled = false;
-                        r_setting?.isChecked = true;
-                    }else if(pref.value == "1" ){
-                        r_setting?.isEnabled = true;
-                    }else{
-                        r_setting?.isEnabled = false;
-                        r_setting?.isChecked = false;
+                    if (pref.value == "4") {
+                        r_setting?.isEnabled = false
+                        r_setting?.isChecked = true
+                    } else if (pref.value == "1") {
+                        r_setting?.isEnabled = true
+                    } else {
+                        r_setting?.isEnabled = false
+                        r_setting?.isChecked = false
                     }
                 }
             } else if (key == "pref_player1_inputdevice") {
@@ -528,13 +508,11 @@ class SettingsActivity : AppCompatActivity() {
                 syncInputDevice("player2")
             }
 
-
             val install =
                 preferenceManager.findPreference("pref_install_location") as ListPreference?
             if (install != null) {
                 install.summary = install.entry
             }
-
 
             val download =
                 preferenceManager.findPreference("pref_game_download_directory") as ListPreference?
@@ -548,9 +526,8 @@ class SettingsActivity : AppCompatActivity() {
 
                 var synccount = 0
                 try {
-                    synccount = sval.toInt()
-                } catch( e: Exception ){
-
+                    synccount = sval!!.toInt()
+                } catch (e: Exception) {
                 }
 
                 if (synccount <= 0) {
@@ -591,6 +568,5 @@ class SettingsActivity : AppCompatActivity() {
                 requireActivity().setResult(0, resultIntent)
             }
         }
-
     }
 }

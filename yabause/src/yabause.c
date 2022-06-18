@@ -733,6 +733,7 @@ int YabauseEmulate(void) {
    SH2OnFrame(MSH2);
    SH2OnFrame(SSH2);
    u64 cpu_emutime = 0;
+   Vdp2UpdateHv(0,0);
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");
@@ -774,6 +775,8 @@ int YabauseEmulate(void) {
       cpu_emutime += (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq;
 #endif
        yabsys.DecilineCount++;
+       //Vdp2UpdateHv(yabsys.DecilineCount,yabsys.LineCount);
+       
        if(yabsys.DecilineCount == 9) {
          // HBlankIN
          PROFILE_START("hblankin");
@@ -962,6 +965,15 @@ void YabauseStartSlave(void) {
       MappedMemoryWriteLong(0xFFFFFFA0, 0x0000006D, NULL); // VCRDMA0
       MappedMemoryWriteLong(0xFFFFFF0C, 0x0000006E, NULL); // VCRDIV
       MappedMemoryWriteLong(0xFFFFFE10, 0x00000081, NULL); // TIER
+
+      MappedMemoryWriteByte(0xfffffe92, 0x00, NULL); // CCR
+      MappedMemoryWriteByte(0xfffffe92, 0x40, NULL); // CCR
+      MappedMemoryWriteByte(0xfffffe92, 0x80, NULL); // CCR
+      MappedMemoryWriteByte(0xfffffe92, 0x01, NULL); // CCR
+
+      SSH2->cycles = 0;
+      SH2Core->AddCycle(SSH2,2000);
+
       CurrentSH2 = MSH2;
 
       SH2GetRegisters(SSH2, &SSH2->regs);
@@ -1369,6 +1381,11 @@ int YabauseQuickLoadGame(void)
       Vdp2ColorRamWriteWord(0x1C, 0xF39C);
       Vdp2ColorRamWriteWord(0x1E, 0xFBDE);
       Vdp2ColorRamWriteWord(0xFF, 0x0000);
+
+      // Enable Cache
+      CurrentSH2 = MSH2;
+      MappedMemoryWriteByte(0xfffffe92, 0x11, NULL); // CCR
+
    }
    else
    {

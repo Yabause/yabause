@@ -489,7 +489,7 @@ void Vdp1Renderer::drawStart(void) {
 
 }
 
-void Vdp1Renderer::erase() {
+void Vdp1Renderer::erase( int isDraw ) {
 
   VkDevice device = vulkan->getDevice();
 
@@ -576,9 +576,14 @@ void Vdp1Renderer::erase() {
   clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
   clearValues[1].depthStencil = { 1.0f, 0 };
 
+  int targetFrame = readframe;
+  if (isDraw) {
+    targetFrame = drawframe;
+  }
+
   VkRenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
   renderPassBeginInfo.renderPass = offscreenPass.renderPass;
-  renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer[readframe];
+  renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer[targetFrame];
   renderPassBeginInfo.renderArea.extent.width = offscreenPass.width;
   renderPassBeginInfo.renderArea.extent.height = offscreenPass.height;
   renderPassBeginInfo.clearValueCount = 2;

@@ -39,7 +39,6 @@ package org.uoyabause.android
 import android.app.Activity
 import android.app.ActivityManager
 import android.app.Dialog
-import android.app.UiModeManager
 import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.Intent
@@ -79,6 +78,7 @@ import com.activeandroid.util.IOUtils
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.AuthUI.IdpConfig.GoogleBuilder
 import com.firebase.ui.auth.IdpResponse
+import com.frybits.harmony.getHarmonySharedPreferences
 import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -106,7 +106,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
-import org.apache.commons.io.FilenameUtils
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.json.JSONObject
@@ -119,7 +118,6 @@ import org.uoyabause.android.cheat.TabCheatFragment
 import org.uoyabause.android.game.BaseGame
 import org.uoyabause.android.game.GameUiEvent
 import org.uoyabause.android.game.SonicR
-import org.uoyabause.android.phone.GameSelectFragmentPhone
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -132,12 +130,9 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Arrays
 import java.util.Date
+import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import android.util.DisplayMetrics
-
-
-
 
 internal enum class TrayState {
     OPEN,
@@ -170,7 +165,7 @@ class Yabause : AppCompatActivity(),
     private var waitingResult = false
     private var tracker: Tracker? = null
     private var trayState: TrayState = TrayState.CLOSE
-    //private var adView: AdView? = null
+    // private var adView: AdView? = null
     private var firebaseAnalytics: FirebaseAnalytics? = null
     private var inputManager: InputManager? = null
     private val returnCodeSignIn = 0x8010
@@ -187,14 +182,7 @@ class Yabause : AppCompatActivity(),
     private val MENU_ID_LEADERBOARD = 0x8123
     private val OPEN_FILE = 0x1234
 
-    fun showWaitDialog(message: String) {
-        progressMessage.text = message
-        progressBar.visibility = View.VISIBLE
-    }
-
-    fun dismissWaitDialog() {
-        progressBar.visibility = View.GONE
-    }
+    private var startTime : Long = 0L
 
     fun showDialog() {
         progressMessage.text = "Sending..."
@@ -245,6 +233,8 @@ class Yabause : AppCompatActivity(),
      */
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        startTime = System.currentTimeMillis() / 1000L;
 
         googleSignInClient = GoogleSignIn.getClient(this,
             GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).build())
@@ -351,7 +341,7 @@ class Yabause : AppCompatActivity(),
         val uriString: String? = intent.getStringExtra("org.uoyabause.android.FileNameUri")
         if (uriString != null) {
             val fnameIndex = uriString.lastIndexOf("%2F", ignoreCase = true)
-            val fname = uriString.substring(fnameIndex+3)
+            val fname = uriString.substring(fnameIndex + 3)
             val uri = Uri.parse(uriString)
             var apath = ""
             try {
@@ -359,7 +349,7 @@ class Yabause : AppCompatActivity(),
                     if (mParcelFileDescriptor != null) {
                         val fd: Int? = mParcelFileDescriptor?.getFd()
                         if (fd != null) {
-                            apath = "/proc/self/fd/$fd;${fname}"
+                            apath = "/proc/self/fd/$fd;$fname"
                         }
                     }
             } catch (e: Exception) {
@@ -377,9 +367,9 @@ class Yabause : AppCompatActivity(),
         }
 
         val dirString: String? = intent.getStringExtra("org.uoyabause.android.FileDir")
-        if( dirString != null ){
+        if (dirString != null) {
             currentDocumentUri = Uri.parse(dirString)
-        }else{
+        } else {
             currentDocumentUri = null
         }
 
@@ -393,17 +383,17 @@ class Yabause : AppCompatActivity(),
         if (gameCode != null) {
             this.gameCode = gameCode
         } else {
-            var gameinfo = GameInfo.getFromFileName(gamePath)
+            var gameinfo: GameInfo? = GameInfo.getFromFileName(gamePath)
             if (gameinfo != null) {
                 this.gameCode = gameinfo.product_number
             } else {
-                gameinfo = if (gamePath!!.toUpperCase().endsWith("CUE")) {
+                gameinfo = if (gamePath!!.uppercase(Locale.getDefault()).endsWith("CUE")) {
                     GameInfo.genGameInfoFromCUE(gamePath)
-                } else if (gamePath!!.toUpperCase().endsWith("MDS")) {
+                } else if (gamePath!!.uppercase(Locale.getDefault()).endsWith("MDS")) {
                     GameInfo.genGameInfoFromMDS(gamePath)
-                } else if (gamePath!!.toUpperCase().endsWith("CCD")) {
+                } else if (gamePath!!.uppercase(Locale.getDefault()).endsWith("CCD")) {
                     GameInfo.genGameInfoFromMDS(gamePath)
-                } else if (gamePath!!.toUpperCase().endsWith("CHD")) {
+                } else if (gamePath!!.uppercase(Locale.getDefault()).endsWith("CHD")) {
                     GameInfo.genGameInfoFromCHD(gamePath)
                 } else {
                     GameInfo.genGameInfoFromIso(gamePath)
@@ -420,24 +410,29 @@ class Yabause : AppCompatActivity(),
         if (this.gameCode != null) {
             readPreferences(this.gameCode)
             if (this.gameCode == "GS-9170" || this.gameCode == "MK-81800") {
-                var c = SonicR()
+                val c = SonicR()
                 c.uievent = this
-                var menu = navigationView.menu
-                var submenu = menu.addSubMenu(Menu.NONE,
+                val lmenu = navigationView.menu
+                val submenu = lmenu.addSubMenu(Menu.NONE,
                     MENU_ID_LEADERBOARD,
                     Menu.NONE,
                     "Leader Board")
                 c.leaderBoards?.forEach {
-                    var lmenu = submenu.add(it.title)
-                    lmenu.setIcon(R.drawable.baseline_list_24)
-                    lmenu.setOnMenuItemClickListener { item ->
+                    val lbmenu = submenu.add(it.title)
+                    lbmenu.setIcon(R.drawable.baseline_list_24)
+                    lbmenu.setOnMenuItemClickListener { _ ->
                         waitingResult = true
-                        Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
-                            .getLeaderboardIntent(it!!.id)
-                            .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
-                                startActivityForResult(intent,
-                                    MENU_ID_LEADERBOARD)
-                            })
+                        val account = GoogleSignIn.getLastSignedInAccount(this)
+                        if (account != null) {
+                            Games.getLeaderboardsClient(this, account)
+                                .getLeaderboardIntent(it.id)
+                                .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
+                                    startActivityForResult(
+                                        intent,
+                                        MENU_ID_LEADERBOARD
+                                    )
+                                })
+                        }
                         true
                     }
                 }
@@ -453,10 +448,10 @@ class Yabause : AppCompatActivity(),
 
         padManager = PadManager.padManager!!
         padManager.loadSettings()
-        padManager.showMenulistener = this //setShowMenulistener(this)
+        padManager.showMenulistener = this // setShowMenulistener(this)
         waitingResult = false
-        val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
 /*
+        val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
         if (uiModeManager.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION && BuildConfig.BUILD_TYPE != "pro") {
             val prefs = getSharedPreferences("private", Context.MODE_PRIVATE)
             val hasDonated = prefs.getBoolean("donated", false)
@@ -479,7 +474,6 @@ class Yabause : AppCompatActivity(),
         }
  */
         yabauseThread = YabauseRunnable(this)
-
     }
 
     private fun isSignedIn(): Boolean {
@@ -578,7 +572,7 @@ class Yabause : AppCompatActivity(),
         return 0
     }
 
-    fun setSaveStateObserver(saveStateObserver: Observer<String?>) {
+    fun setSaveStateObserver(saveStateObserver: Observer<String?>) =
         Observable.create(ObservableOnSubscribe<String?> { emitter ->
             val auth = FirebaseAuth.getInstance()
             val user = auth.currentUser
@@ -588,36 +582,41 @@ class Yabause : AppCompatActivity(),
             }
             val save_path = YabauseStorage.storage.stateSavePath
             val current_gamecode = YabauseRunnable.getCurrentGameCode()
-            val save_root = File(YabauseStorage.storage.stateSavePath, current_gamecode)
-            if (!save_root.exists()) save_root.mkdir()
-            val save_filename = YabauseRunnable.savestate_compress(save_path + current_gamecode)
-            if (save_filename != "") {
-                val storage = FirebaseStorage.getInstance()
-                val storage_ref = storage.reference
-                val base = storage_ref.child(user.uid)
-                val backup = base.child("state")
-                val fileref = backup.child(current_gamecode)
-                val file = Uri.fromFile(File(save_filename))
-                val tsk = fileref.putFile(file)
-                tsk.addOnFailureListener { exception ->
-                    val stateFile = File(save_filename)
-                    if (stateFile.exists()) {
-                        stateFile.delete()
+            if (current_gamecode != null) {
+                val save_root = File(YabauseStorage.storage.stateSavePath, current_gamecode)
+                if (!save_root.exists()) save_root.mkdir()
+                val save_filename = YabauseRunnable.savestate_compress(save_path + current_gamecode)
+                if (save_filename != "") {
+                    val storage = FirebaseStorage.getInstance()
+                    val storage_ref = storage.reference
+                    val base = storage_ref.child(user.uid)
+                    val backup = base.child("state")
+                    val fileref = backup.child(current_gamecode)
+                    val file = Uri.fromFile(save_filename?.let { File(it) })
+                    val tsk = fileref.putFile(file)
+                    tsk.addOnFailureListener { exception ->
+                        val stateFile = save_filename?.let { File(it) }
+                        if (stateFile != null) {
+                            if (stateFile.exists()) {
+                                stateFile.delete()
+                            }
+                        }
+                        emitter.onError(exception)
+                    }.addOnSuccessListener {
+                        val stateFile = save_filename?.let { it1 -> File(it1) }
+                        if (stateFile != null) {
+                            if (stateFile.exists()) {
+                                stateFile.delete()
+                            }
+                        }
+                        emitter.onNext("OK")
+                        emitter.onComplete()
                     }
-                    emitter.onError(exception)
-                }.addOnSuccessListener {
-                    val stateFile = File(save_filename)
-                    if (stateFile.exists()) {
-                        stateFile.delete()
-                    }
-                    emitter.onNext("OK")
-                    emitter.onComplete()
                 }
             }
         }).subscribeOn(Schedulers.computation())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(saveStateObserver)
-    }
 
     fun setLoadStateObserver(loadStateObserver: Observer<String?>) {
         Observable.create(ObservableOnSubscribe<String?> { emitter ->
@@ -632,28 +631,30 @@ class Yabause : AppCompatActivity(),
             val storage_ref = storage.reference
             val base = storage_ref.child(user.uid)
             val backup = base.child("state")
-            val fileref = backup.child(current_gamecode)
-            try {
-                val localFile = File.createTempFile("currentstate", "bin.z")
-                fileref.getFile(localFile).addOnSuccessListener(OnSuccessListener {
-                    try {
-                        if (localFile.exists()) {
-                            YabauseRunnable.loadstate_compress(localFile.absolutePath)
-                            localFile.delete()
+            if (current_gamecode != null) {
+                val fileref = backup.child(current_gamecode)
+                try {
+                    val localFile = File.createTempFile("currentstate", "bin.z")
+                    fileref.getFile(localFile).addOnSuccessListener(OnSuccessListener {
+                        try {
+                            if (localFile.exists()) {
+                                YabauseRunnable.loadstate_compress(localFile.absolutePath)
+                                localFile.delete()
+                            }
+                            emitter.onNext("OK")
+                            emitter.onComplete()
+                        } catch (e: Exception) {
+                            emitter.onError(e)
+                            return@OnSuccessListener
                         }
-                        emitter.onNext("OK")
-                        emitter.onComplete()
-                    } catch (e: Exception) {
-                        emitter.onError(e)
-                        return@OnSuccessListener
-                    }
-                }).addOnFailureListener(OnFailureListener { exception ->
-                    localFile.delete()
-                    emitter.onError(exception)
-                    return@OnFailureListener
-                })
-            } catch (e: IOException) {
-                emitter.onError(e)
+                    }).addOnFailureListener(OnFailureListener { exception ->
+                        localFile.delete()
+                        emitter.onError(exception)
+                        return@OnFailureListener
+                    })
+                } catch (e: IOException) {
+                    emitter.onError(e)
+                }
             }
         }).subscribeOn(Schedulers.computation())
             .observeOn(AndroidSchedulers.mainThread())
@@ -709,10 +710,13 @@ class Yabause : AppCompatActivity(),
             R.id.save_state -> {
                 val save_path = YabauseStorage.storage.stateSavePath
                 val current_gamecode = YabauseRunnable.getCurrentGameCode()
-                val save_root = File(YabauseStorage.storage.stateSavePath, current_gamecode)
-                if (!save_root.exists()) save_root.mkdir()
+                val save_root =
+                    current_gamecode?.let { File(YabauseStorage.storage.stateSavePath, it) }
+                if (save_root != null) {
+                    if (!save_root.exists()) save_root.mkdir()
+                }
                 var save_filename = YabauseRunnable.savestate(save_path + current_gamecode)
-                if (save_filename != "") {
+                if (save_filename != null) {
                     val point = save_filename.lastIndexOf(".")
                     if (point != -1) {
                         save_filename = save_filename.substring(0, point)
@@ -872,7 +876,7 @@ class Yabause : AppCompatActivity(),
             R.id.menu_item_backup -> {
                 waitingResult = true
                 val transaction = supportFragmentManager.beginTransaction()
-                val fragment = TabBackupFragment.newInstance("hoge", "hoge")
+                val fragment = TabBackupFragment.newInstance()
                 // fragment.setBasePath(basepath);
                 transaction.replace(R.id.ext_fragment, fragment, TabBackupFragment.TAG)
                 transaction.show(fragment)
@@ -889,7 +893,7 @@ class Yabause : AppCompatActivity(),
                 waitingResult = true
                 if (padManager.getPlayer1InputDevice() == -1) { // Using pad?
                     val transaction = supportFragmentManager.beginTransaction()
-                    val fragment = PadTestFragment.newInstance("hoge", "hoge")
+                    val fragment = PadTestFragment.newInstance()
                     fragment.setListener(this)
                     transaction.replace(R.id.ext_fragment, fragment, PadTestFragment.TAG)
                     transaction.show(fragment)
@@ -940,7 +944,7 @@ class Yabause : AppCompatActivity(),
                         intent.addCategory(Intent.CATEGORY_OPENABLE)
                         intent.type = "*/*"
                         startActivityForResult(intent, OPEN_FILE)
-                    }else {
+                    } else {
                         val fd = FileDialog(this@Yabause, path)
                         fd.addFileListener(this@Yabause)
                         fd.showDialog()
@@ -1013,6 +1017,12 @@ class Yabause : AppCompatActivity(),
                     it.close()
                 }
                 subFileDescripters.clear()
+
+                val playTime = (System.currentTimeMillis() / 1000L) - startTime;
+                val resultIntent = Intent()
+                resultIntent.putExtra("playTime",playTime)
+                setResult(RESULT_OK, resultIntent)
+
                 finish()
                 killProcess(myPid())
             }
@@ -1020,6 +1030,12 @@ class Yabause : AppCompatActivity(),
                 waitingResult = true
                 val transaction = supportFragmentManager.beginTransaction()
                 val currentGameCode = YabauseRunnable.getCurrentGameCode()
+                if (currentGameCode == null) {
+                    waitingResult = false
+                    YabauseRunnable.resume()
+                    audio.unmute(audio.SYSTEM)
+                    return true
+                }
                 val fragment = InGamePreference(currentGameCode)
                 val observer: Observer<String?> = object : Observer<String?> {
                     // GithubRepositoryApiCompleteEventEntity eventResult = new GithubRepositoryApiCompleteEventEntity();
@@ -1058,7 +1074,7 @@ class Yabause : AppCompatActivity(),
                             gamePreference.getString("pref_polygon_generation", "0")?.toInt()
                         YabauseRunnable.setPolygonGenerationMode(sKa!!)
 
-                        val aspect = gamePreference.getString("pref_aspect_rate","0")?.toInt()
+                        val aspect = gamePreference.getString("pref_aspect_rate", "0")?.toInt()
                         YabauseRunnable.setAspectRateMode(aspect!!)
 
                         val resolution_setting = gamePreference.getString("pref_resolution", "0")?.toInt()
@@ -1119,9 +1135,11 @@ class Yabause : AppCompatActivity(),
     }
 
     // after disc change event
-    override fun fileSelected(file: File) {
-        gamePath = file.absolutePath
-        YabauseRunnable.closeTray()
+    override fun fileSelected(file: File?) {
+        if (file != null) {
+            gamePath = file.absolutePath
+            YabauseRunnable.closeTray()
+        }
     }
 
     public override fun onPause() {
@@ -1147,6 +1165,12 @@ class Yabause : AppCompatActivity(),
     }
 
     public override fun onDestroy() {
+
+        val playTime = (System.currentTimeMillis() / 1000L) - startTime;
+        val resultIntent = Intent()
+        resultIntent.putExtra("playTime",playTime)
+        setResult(RESULT_OK, resultIntent)
+
         Log.v(TAG, "this is the end...")
         yabauseThread.destroy()
         super.onDestroy()
@@ -1220,17 +1244,17 @@ class Yabause : AppCompatActivity(),
 
     @JvmField
     var _report_status = REPORT_STATE_INIT
-    var cheat_codes: Array<String>? = null
-    fun updateCheatCode(cheat_codes: Array<String>?) {
+    var cheat_codes: Array<String?>? = null
+    fun updateCheatCode(cheat_codes: Array<String?>?) {
         this.cheat_codes = cheat_codes
         if (cheat_codes == null || cheat_codes.size == 0) {
             YabauseRunnable.updateCheat(null)
         } else {
             val send_codes = ArrayList<String>()
             for (i in cheat_codes.indices) {
-                val tmp = cheat_codes[i].split("\n".toRegex()).dropLastWhile { it.isEmpty() }
-                    .toTypedArray()
-                for (j in tmp.indices) {
+                val tmp = cheat_codes[i]?.split("\n".toRegex())?.dropLastWhile { it.isEmpty() }
+                    ?.toTypedArray()
+                for (j in tmp?.indices!!) {
                     send_codes.add(tmp[j])
                 }
             }
@@ -1316,11 +1340,13 @@ class Yabause : AppCompatActivity(),
         }
         val save_path = YabauseStorage.storage.stateSavePath
         val current_gamecode = YabauseRunnable.getCurrentGameCode()
-        val save_root = File(YabauseStorage.storage.stateSavePath, current_gamecode)
-        if (!save_root.exists()) save_root.mkdir()
+        val save_root = current_gamecode?.let { File(YabauseStorage.storage.stateSavePath, it) }
+        if (save_root != null) {
+            if (!save_root.exists()) save_root.mkdir()
+        }
         val save_filename = YabauseRunnable.savestate(save_path + current_gamecode)
         val files = arrayOfNulls<File>(1)
-        files[0] = File(save_filename)
+        files[0] = save_filename?.let { File(it) }
         var zos: ZipOutputStream? = null
         try {
             zos = ZipOutputStream(BufferedOutputStream(FileOutputStream(File(zippath))))
@@ -1344,7 +1370,11 @@ class Yabause : AppCompatActivity(),
             )
             val url = "https://www.uoyabause.org/api/"
             scope.launch {
-                asyncTask.report(url, YabauseRunnable.getCurrentGameCode())
+
+                val cg = YabauseRunnable.getCurrentGameCode()
+                if (cg != null) {
+                    asyncTask.report(url, cg)
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, e.localizedMessage!!)
@@ -1364,20 +1394,20 @@ class Yabause : AppCompatActivity(),
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
             OPEN_FILE -> {
-                if( resultCode == Activity.RESULT_OK && data != null && data.data != null ) {
+                if (resultCode == Activity.RESULT_OK && data != null && data.data != null) {
                     val tmpParcelFileDescriptor = contentResolver.openFileDescriptor(data.data!!, "r")
                     if (tmpParcelFileDescriptor != null) {
-                        gamePath = "/proc/self/fd/${tmpParcelFileDescriptor.getFd()};${data.data.toString()}"
+                        gamePath = "/proc/self/fd/${tmpParcelFileDescriptor.getFd()};${data.data}"
                         mParcelFileDescriptor?.close()
                         mParcelFileDescriptor = tmpParcelFileDescriptor
-                    }else{
+                    } else {
                         Snackbar.make(
                             drawerLayout,
                             "Failed to Open file",
                             Snackbar.LENGTH_SHORT
                         ).show()
                     }
-                }else{
+                } else {
                     Snackbar.make(
                         drawerLayout,
                         "Failed to Open file",
@@ -1481,7 +1511,7 @@ class Yabause : AppCompatActivity(),
         // Log.d("dispatchKeyEvent","device:" + event.getDeviceId() + ",action:" + action +",keyCoe:" + keyCode );
         if (action == KeyEvent.ACTION_UP) {
             val rtn = padManager.onKeyUp(keyCode, event)
-            if( rtn == PadManager.TOGGLE_MENU){
+            if (rtn == PadManager.TOGGLE_MENU) {
                 toggleMenu()
             }
             if (rtn != PadManager.NO_ACTION_MAPPED) {
@@ -1563,7 +1593,7 @@ class Yabause : AppCompatActivity(),
         }
     }
 
-    //private var errmsg: String? = null
+    // private var errmsg: String? = null
     fun errorMsg(msg: String) {
         val errmsg = msg
         Log.d(TAG, "errorMsg $msg")
@@ -1575,7 +1605,7 @@ class Yabause : AppCompatActivity(),
                 .setPositiveButton(R.string.exit) { _, _ -> finish() }
                 .show()
 
-            //Snackbar.make(drawerLayout, errmsg!!, Snackbar.LENGTH_SHORT).show()
+            // Snackbar.make(drawerLayout, errmsg!!, Snackbar.LENGTH_SHORT).show()
         }
     }
 
@@ -1612,7 +1642,7 @@ class Yabause : AppCompatActivity(),
         val sKa: Int? = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
         YabauseRunnable.setPolygonGenerationMode(sKa!!)
 
-        val aspect = gamePreference.getString("pref_aspect_rate","0")?.toInt()
+        val aspect = gamePreference.getString("pref_aspect_rate", "0")?.toInt()
         YabauseRunnable.setAspectRateMode(aspect!!)
 
         val resolution_setting: Int? = gamePreference.getString("pref_resolution", "0")?.toInt()
@@ -1646,7 +1676,6 @@ class Yabause : AppCompatActivity(),
 
         val sh2Cache = sharedPref.getBoolean("pref_use_sh2_cache", true)
         YabauseRunnable.setUseSh2Cache(if (sh2Cache) 1 else 0)
-
 
         val ifilter: Int? = sharedPref.getString("pref_filter", "0")?.toInt()
         YabauseRunnable.setFilter(ifilter!!)
@@ -1696,7 +1725,6 @@ class Yabause : AppCompatActivity(),
         YabauseRunnable.setCpuSyncPerLine(cpu_sync!!)
         val scsp_time_sync: Int? = sharedPref.getString("scsp_time_sync_mode", "1")?.toInt()!!
         YabauseRunnable.setScspSyncTimeMode(scsp_time_sync!!)
-
 
         updateInputDevice()
     }
@@ -1828,7 +1856,7 @@ class Yabause : AppCompatActivity(),
     }
 
     override fun onDeviceUpdated(target: Int) {}
-    override fun onSelected(target: Int, name: String, id: String) {
+    override fun onSelected(target: Int, name: String?, id: String?) {
         val pad = findViewById<View>(R.id.yabause_pad) as YabausePad
         val navigationView = findViewById<View>(R.id.nav_view) as NavigationView
         val menu = navigationView.menu
@@ -1911,30 +1939,30 @@ class Yabause : AppCompatActivity(),
         toggleMenu()
     }
 
-    var currentDocumentUri : Uri? = null
-    fun getFileDescriptorPath( fileName: String?):String?{
+    var currentDocumentUri: Uri? = null
+    fun getFileDescriptorPath(fileName: String?): String? {
 
-        if( fileName == null ){
+        if (fileName == null) {
             return null
         }
 
         val decodedResult: String = URLDecoder.decode(fileName, "UTF-8")
 
-        if( currentDocumentUri == null ){
+        if (currentDocumentUri == null) {
             return null
         }
 
-        val dir = DocumentFile.fromTreeUri(YabauseApplication.appContext,currentDocumentUri!!)
-        if( dir == null ){
+        val dir = DocumentFile.fromTreeUri(YabauseApplication.appContext, currentDocumentUri!!)
+        if (dir == null) {
             return null
         }
 
-        //for (file in dir!!.listFiles()) {
+        // for (file in dir!!.listFiles()) {
         //    Log.d("Yabause", "Found file " + file.name + " with size " + file.length())
-        //}
+        // }
 
         val files = dir.findFile(decodedResult)
-        if( files == null ){
+        if (files == null) {
             return null
         }
 
@@ -1960,13 +1988,18 @@ class Yabause : AppCompatActivity(),
                 "Congratulations for the New Record!",
                 Snackbar.LENGTH_LONG)
             snackbar.setAction("Check Leader board"
-            ) { view: View? ->
-                Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
-                    .getLeaderboardIntent(leaderBoardId)
-                    .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
-                        startActivityForResult(intent,
-                            3)
-                    })
+            ) { _: View? ->
+                var account = GoogleSignIn.getLastSignedInAccount(this)
+                if (account != null) {
+                    Games.getLeaderboardsClient(this, account)
+                        .getLeaderboardIntent(leaderBoardId)
+                        .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
+                            startActivityForResult(
+                                intent,
+                                3
+                            )
+                        })
+                }
             }
             snackbar.show()
         }

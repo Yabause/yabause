@@ -54,20 +54,20 @@ class YabauseView : SurfaceView, SurfaceHolder.Callback {
 
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
         _context = context
-        init(false, 0, 0)
+        init()
     }
 
     constructor(context: Context) : super(context) {
         _context = context
-        init(false, 0, 0)
+        init()
     }
-
+/*
     constructor(context: Context, translucent: Boolean, depth: Int, stencil: Int) : super(context) {
         _context = context
-        init(translucent, depth, stencil)
+        init()
     }
-
-    private fun init(translucent: Boolean, depth: Int, stencil: Int) {
+*/
+    private fun init() {
         holder.addCallback(this)
         // getHolder().setType(SurfaceHolder.SURFACE_TYPE_GPU);
     }
@@ -78,7 +78,8 @@ class YabauseView : SurfaceView, SurfaceHolder.Callback {
         YabauseRunnable.unlockGL()
     }
 
-    override fun surfaceCreated(holder: SurfaceHolder) {}
+    override fun surfaceCreated(holder: SurfaceHolder) {
+    }
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         YabauseRunnable.lockGL()
         YabauseRunnable.initViewport(null, 0, 0)

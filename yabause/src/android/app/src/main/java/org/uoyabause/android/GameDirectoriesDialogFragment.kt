@@ -4,31 +4,24 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.OpenableColumns
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.BaseAdapter
+import android.widget.Button
+import android.widget.ListAdapter
+import android.widget.ListView
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceDialogFragmentCompat
+import java.io.File
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.FileDialog.DirectorySelectedListener
 import org.uoyabause.android.YabauseStorage.Companion.storage
-import org.uoyabause.android.tv.GameSelectFragment
-import org.uoyabause.android.tv.GameSelectFragment.Companion.READ_REQUEST_CODE
-import java.io.File
-import java.io.UnsupportedEncodingException
-import java.net.URLDecoder
-import java.util.*
-import androidx.documentfile.provider.DocumentFile
-import com.google.common.io.Files.getFileExtension
-import android.provider.DocumentsContract
-import android.provider.DocumentsContract.Root.FLAG_SUPPORTS_IS_CHILD
-
 
 class DirectoryListAdapter(private val context: Context) : BaseAdapter(), ListAdapter {
   var list = ArrayList<String>()
@@ -47,7 +40,7 @@ class DirectoryListAdapter(private val context: Context) : BaseAdapter(), ListAd
   }
 
   override fun getItemId(position: Int): Long {
-    return position.toLong() //_directoryList.get(position).getId();
+    return position.toLong() // _directoryList.get(position).getId();
   }
 
   fun addDirectory(path: String) {
@@ -65,12 +58,9 @@ class DirectoryListAdapter(private val context: Context) : BaseAdapter(), ListAd
     val deleteBtn = view.findViewById<View>(R.id.button_delete) as Button
     deleteBtn.tag = position
     deleteBtn.setOnClickListener { v ->
-      val position = v.tag as Int
-      if (position != null) {
-        list.removeAt(position) //or some other task
-        notifyDataSetChanged()
-        //GameSelectPresenter.refresh_level_ = 3
-      }
+      val clickPosition = v.tag as Int
+      list.removeAt(clickPosition)
+      notifyDataSetChanged()
     }
     return view
   }
@@ -122,7 +112,6 @@ class GameDirectoriesDialogFragment : PreferenceDialogFragmentCompat(), View.OnC
     }
   }
 
-
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
     if (requestCode == 111 && resultCode == Activity.RESULT_OK) {
@@ -133,18 +122,14 @@ class GameDirectoriesDialogFragment : PreferenceDialogFragmentCompat(), View.OnC
 
       var cursor: Cursor? = null
       try {
-
-        val pickedDir = DocumentFile.fromTreeUri(YabauseApplication.appContext, data!!.data!!)
+        val pickedDir = DocumentFile.fromTreeUri(YabauseApplication.appContext, data.data!!)
         for (file in pickedDir!!.listFiles()) {
           Log.d("Yabause", "Found file " + file.name + " with size " + file.length())
         }
-
         adapter!!.addDirectory(data.data!!.toString())
         adapter!!.notifyDataSetChanged()
-        //GameSelectPresenter.refresh_level_ = 3
-
-      } catch( e :Exception){
-        Log.e("Yabause",e.localizedMessage)
+      } catch (e: Exception) {
+        e.localizedMessage?.let { Log.e("Yabause", it) }
       } finally {
         cursor?.close()
       }
@@ -155,14 +140,13 @@ class GameDirectoriesDialogFragment : PreferenceDialogFragmentCompat(), View.OnC
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 
       val rtn = YabauseApplication.checkDonated(requireActivity(), "")
-      if ( rtn == 0) {
+      if (rtn == 0) {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
           flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
         }
         startActivityForResult(intent, 111)
       }
-
-    }else {
+    } else {
       val fd = FileDialog(requireActivity(), "")
       fd.setSelectDirectoryOption(true)
       fd.addDirectoryListener(this)
@@ -170,10 +154,11 @@ class GameDirectoriesDialogFragment : PreferenceDialogFragmentCompat(), View.OnC
     }
   }
 
-  override fun directorySelected(directory: File) {
-    adapter!!.addDirectory(directory.absolutePath)
-    adapter!!.notifyDataSetChanged()
-    //GameSelectPresenter.refresh_level_ = 3
+  override fun directorySelected(directory: File?) {
+    if (directory != null) {
+      adapter!!.addDirectory(directory.absolutePath)
+      adapter!!.notifyDataSetChanged()
+    }
   }
 
   companion object {

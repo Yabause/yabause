@@ -20,16 +20,16 @@ class InputSettingPreference : DialogPreference {
     defStyleAttr
   ) {
   }
-
-  constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {}
+*/
+  // constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {}
 
   override fun onGetDefaultValue(arr: TypedArray, index: Int): Any {
     return arr.getString(index)!!
   }
 
   override fun onSetInitialValue(defaultValueObj: Any?) {
-    //String colorName = getPersistedString((String) defaultValueObj);
-    //setSummary( colorName );
+    // String colorName = getPersistedString((String) defaultValueObj);
+    // setSummary( colorName );
   }
 
   /** 現在のPreferenceの値を返す  */
@@ -41,12 +41,12 @@ class InputSettingPreference : DialogPreference {
     persistString("yabause/" + save_filename + "_v2.json")
     notifyChanged()
   }
-  //is.saveFilename("yabause/" + save_filename + ".json")
+  // is.saveFilename("yabause/" + save_filename + ".json")
   /** Preferenceに値を設定＆反映させる  */
   fun saveFilename(filename: String?) {
     persistString(filename)
     notifyChanged()
-    //setSummary( filename );
+    // setSummary( filename );
   }
 
   var save_filename = "keymap"

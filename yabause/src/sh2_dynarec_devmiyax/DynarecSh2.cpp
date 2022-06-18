@@ -1464,18 +1464,30 @@ void DynarecSh2::ResetCPU(){
 }
 
 void DynarecSh2::ExecuteCount( u32 Count ) {
-  u32 targetcnt = 0;
+  int targetcnt = 0;
   
   m_pDynaSh2->SysReg[4] = 0;
     if (Count > pre_exe_count_) {
     targetcnt = Count - pre_exe_count_;
+    pre_exe_count_ = 0;
   }
   else {
     // Just Onestep
     //Execute();
-    pre_exe_count_ = (pre_exe_count_ + m_pDynaSh2->SysReg[4]) - Count ;
+    pre_exe_count_ -= Count ;
     return;
   }
+
+   if( CurrentSH2->dma_ch0.penerly != 0 ){
+      //LOG("[%s] %d  add DMA Penerlty %d",CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, CurrentSH2->dma_ch0.penerly);
+      m_pDynaSh2->SysReg[4] += (CurrentSH2->dma_ch0.penerly>>1);
+      CurrentSH2->dma_ch0.penerly = 0;
+   }
+
+   if( CurrentSH2->dma_ch1.penerly != 0 ){
+      m_pDynaSh2->SysReg[4] += (CurrentSH2->dma_ch1.penerly>>1);
+      CurrentSH2->dma_ch1.penerly = 0;
+   }   
 
 #if 0
   // Overflow
@@ -1553,6 +1565,8 @@ inline int DynarecSh2::Execute(){
 #endif
 //#endif
 
+  //if( !this->is_slave_ ) LOG("Execute %08X", GET_PC());
+
   if ((GET_PC() & 0xFF000000) == 0xC0000000)
   {
     pBlock = m_pCompiler->LookupTableC[(GET_PC() & 0x000FFFFF) >> 1];
@@ -1589,10 +1603,16 @@ inline int DynarecSh2::Execute(){
         }
       }
       if (yabsys.emulatebios) {
+
+        const int cmd = (((GET_PC() - 0x200) >> 2) & 0xFF) ;
+        int rtn = 0;
+        if ( cmd == 0x40 || cmd == 0x44 || cmd == 0x50 || cmd == 0x51 ) {
+          rtn = IN_INFINITY_LOOP;
+        }
         ctx_->cycles = 0;
-         BiosHandleFunc(ctx_);
-         memcycle_ += ctx_->cycles;
-        return 0;
+        BiosHandleFunc(ctx_);
+        memcycle_ += ctx_->cycles;
+        return rtn;
       }
       pBlock = m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1];
       if (pBlock == NULL)

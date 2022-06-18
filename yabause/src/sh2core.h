@@ -579,6 +579,7 @@ typedef struct {
   u32 * CHCRM;
   u32 * VCRDMA;
   int copy_clock;
+  int penerly;
 } Dmac;
 
 
@@ -644,6 +645,7 @@ typedef struct
    Dmac dma_ch0;
    Dmac dma_ch1;
    u32 pre_cycle;
+   u32 inputCaptureCount;
    void * ext;  
 
 } SH2_struct;

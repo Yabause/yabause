@@ -31,16 +31,14 @@
  */
 package org.uoyabause.android.tv
 
-import androidx.fragment.app.FragmentActivity
-import android.os.Bundle
-import org.devmiyax.yabasanshiro.R
 import android.app.UiModeManager
 import android.content.res.Configuration
 import android.os.Build
+import android.os.Bundle
 import android.view.InputDevice
 import android.view.KeyEvent
-import java.lang.Runnable
-import org.uoyabause.android.tv.TvUtil
+import androidx.fragment.app.FragmentActivity
+import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.phone.GameSelectFragmentPhone
 
 /*
@@ -72,14 +70,13 @@ class GameSelectActivity : FragmentActivity() {
             // Use the recommendations row API
         }
 
-
 /*
         SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean("donated", false);
         editor.apply();
 */
-        //CheckDonated();
+        // CheckDonated();
     }
 
     public override fun onSaveInstanceState(outState: Bundle) {

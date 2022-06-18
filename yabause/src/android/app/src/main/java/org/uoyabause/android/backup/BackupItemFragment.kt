@@ -32,6 +32,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.tasks.OnSuccessListener
@@ -50,7 +51,6 @@ import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.json.JSONException
 import org.json.JSONObject
-import org.uoyabause.android.AuthFragment
 import org.uoyabause.android.YabauseRunnable
 import org.uoyabause.android.backup.BackupItemFragment.OnListFragmentInteractionListener
 
@@ -133,7 +133,7 @@ class BackupItem {
  * Activities containing this fragment MUST implement the [OnListFragmentInteractionListener]
  * interface.
  */
-class BackupItemFragment : AuthFragment(),
+class BackupItemFragment : Fragment(),
     BackupItemRecyclerViewAdapter.OnItemClickListener {
     internal var backup_devices_: MutableList<BackupDevice>? = null
     private var mListener: OnListFragmentInteractionListener? =
@@ -162,18 +162,20 @@ class BackupItemFragment : AuthFragment(),
         if (arguments != null) {
             currentpage_ = requireArguments().getInt("position")
         }
-        val jsonstr: String
+        val jsonstr: String?
         jsonstr = YabauseRunnable.getDevicelist()
         backup_devices_ = mutableListOf()
         try {
-            val json = JSONObject(jsonstr)
-            val array = json.getJSONArray("devices")
-            for (i in 0 until array.length()) {
-                val data = array.getJSONObject(i)
-                val tmp = BackupDevice()
-                tmp.name_ = data.getString("name")
-                tmp.id_ = data.getInt("id")
-                backup_devices_?.add(tmp)
+            val json = jsonstr?.let { JSONObject(it) }
+            if( json != null ) {
+                val array = json.getJSONArray("devices")
+                for (i in 0 until array.length()) {
+                    val data = array.getJSONObject(i)
+                    val tmp = BackupDevice()
+                    tmp.name_ = data.getString("name")
+                    tmp.id_ = data.getInt("id")
+                    backup_devices_?.add(tmp)
+                }
             }
             val tmp = BackupDevice()
             tmp.name_ = "cloud"
@@ -213,12 +215,8 @@ class BackupItemFragment : AuthFragment(),
         mListener = null
     }
 
-    override fun OnAuthAccepted() {
-        updateSaveListCloud()
-    }
-
     fun updateSaveListCloud() {
-        val auth = checkAuth() ?: return
+        val auth = FirebaseAuth.getInstance()
         if (auth.currentUser == null) {
             return
         }
@@ -245,13 +243,13 @@ class BackupItemFragment : AuthFragment(),
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.hasChildren()) {
                     backup_list_count_ = dataSnapshot.childrenCount
-                    _items!!.clear()
+                    _items.clear()
                     var index = 0
                     for (child in dataSnapshot.children) {
                         val newitem = child.getValue(BackupItem::class.java)!!
                         newitem.index_ = index
                         index++
-                        _items!!.add(newitem)
+                        _items.add(newitem)
                     }
                     if (view_ != null) {
                         adapter_ = BackupItemRecyclerViewAdapter(
@@ -300,39 +298,49 @@ class BackupItemFragment : AuthFragment(),
         val jsonstr = YabauseRunnable.getFilelist(device)
         _items.clear()
         try {
-            val json = JSONObject(jsonstr)
-            totalsize_ = json.getJSONObject("status").getInt("totalsize")
-            freesize_ = json.getJSONObject("status").getInt("freesize")
-            val array = json.getJSONArray("saves")
-            for (i in 0 until array.length()) {
-                val data = array.getJSONObject(i)
-                val charset = Charsets.ISO_8859_1 // ToDO MS932
-                val tmp = BackupItem()
-                tmp.index_ = data.getInt("index")
-                var bfilename =
-                    Base64.decode(data.getString("filename"), 0) as ByteArray
-                try {
-                    tmp.filename = String(bfilename, 0, bfilename.size, charset("MS932")) // String(bfilename!!, "MS932")
-                } catch (e: Exception) {
-                    tmp.filename = data.getString("filename")
+            val json = jsonstr?.let { JSONObject(it) }
+            if( json != null ) {
+                totalsize_ = json.getJSONObject("status").getInt("totalsize")
+                freesize_ = json.getJSONObject("status").getInt("freesize")
+                val array = json.getJSONArray("saves")
+                for (i in 0 until array.length()) {
+                    val data = array.getJSONObject(i)
+                    val tmp = BackupItem()
+                    tmp.index_ = data.getInt("index")
+                    var bfilename =
+                        Base64.decode(data.getString("filename"), 0) as ByteArray
+                    try {
+                        tmp.filename = String(bfilename,
+                            0,
+                            bfilename.size,
+                            charset("MS932")) // String(bfilename!!, "MS932")
+                    } catch (e: Exception) {
+                        tmp.filename = data.getString("filename")
+                    }
+                    bfilename = Base64.decode(data.getString("comment"), 0) as ByteArray
+                    try {
+                        tmp.comment = String(bfilename,
+                            0,
+                            bfilename.size,
+                            charset("MS932")) // String(bfilename!!, "MS932")
+                    } catch (e: Exception) {
+                        tmp.comment = data.getString("comment")
+                    }
+                    tmp.datasize = data.getInt("datasize")
+                    tmp.blocksize = data.getInt("blocksize")
+                    var datestr = ""
+                    datestr += String.format("%04d", data.getInt("year") + 1980) + "/"
+                    datestr += String.format("%02d", data.getInt("month")) + "/"
+                    datestr += String.format("%02d", data.getInt("day"))
+                    datestr += " "
+                    datestr += String.format("%02d", data.getInt("hour")) + ":"
+                    datestr += String.format("%02d", data.getInt("minute")) + ":00"
+                    tmp.savedate = datestr
+                    _items.add(tmp)
                 }
-                bfilename = Base64.decode(data.getString("comment"), 0)as ByteArray
-                try {
-                    tmp.comment = String(bfilename, 0, bfilename.size, charset("MS932")) // String(bfilename!!, "MS932")
-                } catch (e: Exception) {
-                    tmp.comment = data.getString("comment")
-                }
-                tmp.datasize = data.getInt("datasize")
-                tmp.blocksize = data.getInt("blocksize")
-                var datestr = ""
-                datestr += String.format("%04d", data.getInt("year") + 1980) + "/"
-                datestr += String.format("%02d", data.getInt("month")) + "/"
-                datestr += String.format("%02d", data.getInt("day"))
-                datestr += " "
-                datestr += String.format("%02d", data.getInt("hour")) + ":"
-                datestr += String.format("%02d", data.getInt("minute")) + ":00"
-                tmp.savedate = datestr
-                _items!!.add(tmp)
+            }else{
+                totalsize_ = 0
+                freesize_ = 0
             }
             if (view_ != null) {
                 adapter_ = BackupItemRecyclerViewAdapter(currentpage_, _items, this)
@@ -403,8 +411,8 @@ class BackupItemFragment : AuthFragment(),
     override fun onItemClick(
         currentpage: Int,
         position: Int,
-        backupitem: BackupItem,
-        v: View
+        backupitem: BackupItem?,
+        v: View?
     ) {
         val popup = PopupMenu(activity, v)
         val inflate = popup.menuInflater
@@ -413,6 +421,8 @@ class BackupItemFragment : AuthFragment(),
         popupMenu.findItem(R.id.copy_to_internal).isVisible = false
         popupMenu.findItem(R.id.copy_to_cloud).isVisible = false
         popupMenu.findItem(R.id.copy_to_external).isVisible = false
+        if (backupitem == null) return
+        if (v == null) return
         for (i in backup_devices_!!.indices) {
             if (currentpage != i) {
                 if (backup_devices_!![i].id_ == 0) {
@@ -460,7 +470,7 @@ class BackupItemFragment : AuthFragment(),
                     .setTitle(R.string.deleting_file)
                     .setMessage(R.string.sure_delete)
                     .setNegativeButton(R.string.no, null)
-                    .setPositiveButton(R.string.yes) { dialog, which ->
+                    .setPositiveButton(R.string.yes) { _, _ ->
                         if (backup_devices_!![currentpage_].id_ == BackupDevice.DEVICE_CLOUD) {
                             deleteCloudItem(backupitem)
                         } else {
@@ -468,11 +478,11 @@ class BackupItemFragment : AuthFragment(),
                         }
                         // view_!!.clearFocus()
                         // view_!!.removeViewAt(position)
-                        _items!!.removeAt(position)
+                        _items.removeAt(position)
                         adapter_!!.notifyItemRemoved(position)
                         adapter_!!.notifyItemRangeChanged(
                             position,
-                            _items!!.size
+                            _items.size
                         )
                     }
                     .show()
@@ -493,10 +503,13 @@ class BackupItemFragment : AuthFragment(),
         httpsReference.getBytes(ONE_MEGABYTE)
             .addOnSuccessListener(OnSuccessListener { bytes ->
                 val jsonstr = YabauseRunnable.getFilelist(deviceid)
-                var freesize = 0
-                freesize = try {
-                    val json = JSONObject(jsonstr)
-                    json.getJSONObject("status").getInt("freesize")
+                var freesize = try {
+                    val json = jsonstr?.let { JSONObject(it) }
+                    if( json != null ) {
+                        json.getJSONObject("status").getInt("freesize")
+                    }else{
+                        0
+                    }
                 } catch (e: Exception) {
                     return@OnSuccessListener
                 }
@@ -544,7 +557,10 @@ class BackupItemFragment : AuthFragment(),
     }
 
     fun uploadToCloud(backupitemi: BackupItem) {
-        val jsonstr = YabauseRunnable.getFile(backupitemi.index_)
+        val jsonstr: String? = YabauseRunnable.getFile(backupitemi.index_)
+        if (jsonstr == null) {
+            return
+        }
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser == null) {
             return
@@ -579,16 +595,15 @@ class BackupItemFragment : AuthFragment(),
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
                             val max_count = dataSnapshot.getValue() as Long
                             if (count < max_count) {
-
-                                val baseurl = "/user-posts/" + auth.currentUser!!.uid + "/backup/"
-                                val baseref = FirebaseDatabase.getInstance().reference
-                                var db = baseref.child(baseurl)
+                                val backupUrl = "/user-posts/" + auth.currentUser!!.uid + "/backup/"
+                                val backupRef = FirebaseDatabase.getInstance().reference
+                                val db = backupRef.child(backupUrl)
                                 val newPostRef = db.push()
-                                val dbref = baseurl + newPostRef.key
+                                val backupDbRef = backupUrl + newPostRef.key
                                 backupitemi.key = newPostRef.key
                                 val postValues = backupitemi.toMap()
                                 newPostRef.setValue(postValues)
-                                uploadData(backupitemi, jsonstr, auth.currentUser!!.uid, dbref)
+                                uploadData(backupitemi, jsonstr, auth.currentUser!!.uid, backupDbRef)
                             } else {
 
                                 val v = this@BackupItemFragment.view
@@ -633,8 +648,8 @@ class BackupItemFragment : AuthFragment(),
                 .setCustomMetadata("date", backupitemi.savedate)
                 .build()
         val uploadTask = fileref.putBytes(data, metadata)
-        // Listen for state changes, errors, and completion of the upload.
-        val message =
+
+        //val message =
                 uploadTask.addOnProgressListener { taskSnapshot ->
                     val progress =
                             100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount
@@ -650,13 +665,13 @@ class BackupItemFragment : AuthFragment(),
                                     )
                                     .show()
                         }
-                        .addOnSuccessListener { taskSnapshot ->
+                        .addOnSuccessListener {
                             Snackbar
                                     .make(root_view_!!, "Success to upload ", Snackbar.LENGTH_SHORT)
                                     .show()
-                            val dbref = taskSnapshot.metadata!!.getCustomMetadata("dbref")
+                            //val dbref = taskSnapshot.metadata!!.getCustomMetadata("dbref")
                         }
-        val urlTask =
+        //val urlTask =
                 uploadTask.continueWithTask { task ->
                     if (!task.isSuccessful) {
                         throw task.exception!!
@@ -672,6 +687,7 @@ class BackupItemFragment : AuthFragment(),
                     } else {
                     }
                 }
+
     }
 
     companion object {
@@ -686,7 +702,7 @@ class BackupItemFragment : AuthFragment(),
             return f
         }
 
-        fun newInstance(columnCount: Int): BackupItemFragment {
+        fun newInstance(): BackupItemFragment {
             val fragment = BackupItemFragment()
             val args = Bundle()
             fragment.arguments = args

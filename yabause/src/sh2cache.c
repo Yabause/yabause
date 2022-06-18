@@ -50,6 +50,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define CACHE_DATA_ARRAY ((0x06) << 29)
 #define CACHE_IO ((0x07) << 29)
 
+#define MAX_CACHE_MISS_CYCLE (128)
+
 FILE *cache_f = NULL;
 //#define COHERENCY_CHECK
 
@@ -138,7 +140,9 @@ static INLINE u32 SWAP32(u32 v)
 
 void cache_memory_write_b(cache_enty *ca, u32 addr, u8 val, u32 *cycle)
 {
-
+  //if( (addr&0x0fffffff)==0x060ffca8 ) { 
+  //  LOG("[%s] %d Write %zu-byte write of 0x%08x to 0x%08x PC=%08X frame %d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, 1, val, addr , CurrentSH2->regs.PC,  yabsys.frame_count, yabsys.LineCount );
+  //}
   switch (addr & AREA_MASK)
   {
   case CACHE_USE:
@@ -182,21 +186,27 @@ void cache_memory_write_b(cache_enty *ca, u32 addr, u8 val, u32 *cycle)
     break;
   } // THROUGH TO CACHE_THROUGH
   case CACHE_THROUGH:
-    MappedMemoryWriteByteNocache(addr, val, cycle);
+    MappedMemoryWriteByteNocache(addr, val, NULL);
     break;
-  case CACHE_ADDRES_ARRAY:
-    CACHE_LOG("[%s] %zu-byte write to cache address array area; address=0x%08x value=0x%x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 1, addr, val);
-    MappedMemoryWriteWordNocache(addr, val, cycle);
+  case CACHE_DATA_ARRAY:
+    DataArrayWriteByte(addr, val);
     break;
   default:
-    MappedMemoryWriteByteNocache(addr, val, cycle);
+    MappedMemoryWriteByteNocache(addr, val, NULL);
     break;
   }
 }
 
 void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
 {
+  if (0x060C8004 == (addr & 0x0FFFFFFF)) {
+    LOG("[%s] %d Cache Write 2 PC=%08X addr=%08X val=%08X", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, CurrentSH2->regs.PC, addr, val);
+  }
 
+
+  //if( (addr&0x0fffffff)==0x060ffca8 ) { 
+  //  LOG("[%s] Write %zu-byte write of 0x%08x to 0x%08x PC=%08X", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 2, val, addr , CurrentSH2->regs.PC);
+  //}
   switch (addr & AREA_MASK)
   {
   case CACHE_USE:
@@ -249,21 +259,25 @@ void cache_memory_write_w(cache_enty *ca, u32 addr, u16 val, u32 *cycle)
   } // THROUGH TO CACHE_THROUGH
   case CACHE_THROUGH:
   {
-    MappedMemoryWriteWordNocache(addr, val, cycle);
+    MappedMemoryWriteWordNocache(addr, val, NULL);
   }
   break;
-  case CACHE_ADDRES_ARRAY:
-    CACHE_LOG("[%s] %zu-byte write to cache address array area; address=0x%08x value=0x%x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 2, addr, val);
-    MappedMemoryWriteWordNocache(addr, val, cycle);
+  case CACHE_DATA_ARRAY:
+    DataArrayWriteWord(addr, val);
     break;
   default:
-    MappedMemoryWriteWordNocache(addr, val, cycle);
+    MappedMemoryWriteWordNocache(addr, val, NULL);
     break;
   }
 }
 
 void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
 {
+
+  if ( 0x060C8004 == (addr & 0x0FFFFFFF)) {
+    LOG("[%s] %d Cache Write 4 PC=%08X addr=%08X val=%08X", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, CurrentSH2->regs.PC,  addr, val);
+  }
+
   switch (addr & AREA_MASK)
   {
   case CACHE_PURGE: // associative purge
@@ -333,10 +347,17 @@ void cache_memory_write_l(cache_enty *ca, u32 addr, u32 val, u32 *cycle)
     break;
   } // THROUGH TO CACHE_THROUGH
   case CACHE_THROUGH:
-    MappedMemoryWriteLongNocache(addr, val, cycle);
+    MappedMemoryWriteLongNocache(addr, val, NULL);
+    break;
+  case CACHE_ADDRES_ARRAY:
+    if (cycle != NULL) { *cycle = 14; }
+    AddressArrayWriteLong(addr, val);
+    break;
+  case CACHE_DATA_ARRAY:
+    DataArrayWriteLong(addr, val);
     break;
   default:
-    MappedMemoryWriteLongNocache(addr, val, cycle);
+    MappedMemoryWriteLongNocache(addr, val, NULL);
     break;
   }
 }
@@ -382,7 +403,7 @@ u8 cache_memory_read_b(cache_enty *ca, u32 addr, u32 *cycle)
       update_lru(way, &ca->lru[entry]);
       const u8 rtn = ca->way[entry].data[way][(addr & LINE_MASK)];
 #ifdef COHERENCY_CHECK
-      u8 real = MappedMemoryReadByteNocache(addr, cycle);
+      u8 real = MappedMemoryReadByteNocache(addr, NULL);
       if (real != rtn) {
         LOG("[SH2-%s] %d Cache coherency ERROR 1 %08X %d:%d:%d cache = %02X real = %02X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn,real);
       }
@@ -397,20 +418,21 @@ u8 cache_memory_read_b(cache_enty *ca, u32 addr, u32 *cycle)
     {
       update_lru(lruway, &ca->lru[entry]);
       ca->way[entry].tag[lruway] = tagaddr;
-      if (cycle)
-      {
-        *cycle = 2;
-      }
-
+      u32 tmpcycle = 0;
       for (i = 0; i < 16; i += 4)
       {
         u32 odi = (addr + 4 + i) & 0xC;
-        ca->way[entry].data[lruway][odi] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi);
+        u32 ccycle = 0;
+        ca->way[entry].data[lruway][odi] = MappedMemoryReadByteNocache( (addr & 0xFFFFFFF0) + odi, &ccycle);
+        tmpcycle = ccycle << 1;
         ca->way[entry].data[lruway][odi + 1] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi + 1);
         ca->way[entry].data[lruway][odi + 2] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi + 2);
         ca->way[entry].data[lruway][odi + 3] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi + 3);
-        CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi, data);
+        //CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi);
       }
+      if (cycle) { *cycle = MIN(MAX_CACHE_MISS_CYCLE, tmpcycle);}
+
+      CACHE_LOG("[SH2-%s] %d+%d Cache miss read 1 %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, tmpcycle, addr);
 
       return ca->way[entry].data[lruway][addr & LINE_MASK];
     }
@@ -421,7 +443,13 @@ u8 cache_memory_read_b(cache_enty *ca, u32 addr, u32 *cycle)
   }
   break;
   case CACHE_THROUGH:
-    return MappedMemoryReadByteNocache(addr, cycle);
+    {
+      const u8 rtn = MappedMemoryReadByteNocache(addr, cycle);
+      //if (cycle != NULL /*&& (  (addr&0x0FFFFFFF) ==0x060FFC44 || addr ==0x260E3CB8 )*/ ) { 
+      //  LOG("[SH2-%s] %d+%d Read 1-byte addr:%08X val:%08X PC=%08X frame=%d:%d" , CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount); 
+      //}
+      return rtn;
+    }
     break;
   default:
     return MappedMemoryReadByteNocache(addr, cycle);
@@ -479,7 +507,7 @@ u16 cache_memory_read_w(cache_enty *ca, u32 addr, u32 *cycle, u32 isInst)
       update_lru(way, &ca->lru[entry]);
       u16 rtn = SWAP16(*(u16 *)(&ca->way[entry].data[way][(addr & LINE_MASK)]));
 #ifdef COHERENCY_CHECK
-      u16 real = MappedMemoryReadWordNocache(addr, cycle);
+      u16 real = MappedMemoryReadWordNocache(addr, NULL);
       if (real != rtn) {
         LOG("[SH2-%s] %d Cache coherency ERROR 2 %08X %d:%d:%d cache = %04X real = %04X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn, real);
       }
@@ -497,18 +525,19 @@ u16 cache_memory_read_w(cache_enty *ca, u32 addr, u32 *cycle, u32 isInst)
     {
       update_lru(lruway, &ca->lru[entry]);
       ca->way[entry].tag[lruway] = tagaddr;
-      if (cycle)
-      {
-        *cycle = 2;
-      }
 
+      u32 tmpcycle = 0;
       for (i = 0; i < 16; i += 4)
       {
         u32 odi = (addr + 4 + i) & 0xC;
-        *(u16 *)(&ca->way[entry].data[lruway][odi]) = SWAP16(ReadWordList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi));
+        u32 ccycle = 0;
+        *(u16 *)(&ca->way[entry].data[lruway][odi]) = SWAP16(MappedMemoryReadWordNocache((addr & 0xFFFFFFF0) + odi, &ccycle));
+        tmpcycle = ccycle << 1;
         *(u16 *)(&ca->way[entry].data[lruway][odi + 2]) = SWAP16(ReadWordList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi + 2));
-        CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi, data);
+        //CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi);
       }
+      if (cycle) { *cycle = MIN(MAX_CACHE_MISS_CYCLE, tmpcycle);}
+      CACHE_LOG("[SH2-%s] %d+%d Cache miss read 2 %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, tmpcycle, addr);
       u16 rtn = SWAP16(*(u16 *)(&ca->way[entry].data[lruway][(addr & LINE_MASK)]));
       return rtn;
     }
@@ -519,7 +548,13 @@ u16 cache_memory_read_w(cache_enty *ca, u32 addr, u32 *cycle, u32 isInst)
   }
   break;
   case CACHE_THROUGH:
-    return MappedMemoryReadWordNocache(addr, cycle);
+    {
+      const u16 rtn = MappedMemoryReadWordNocache(addr, cycle);
+      //if (cycle != NULL /*&& (  (addr&0x0FFFFFFF) ==0x060FFC44 || addr ==0x260E3CB8 )*/ ) { 
+      //  LOG("[SH2-%s] %d+%d Read 2-byte addr:%08X val:%08X PC=%08X frame=%d:%d" , CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount); 
+      //}
+      return rtn;
+    }
     break;
   default:
     return MappedMemoryReadWordNocache(addr, cycle);
@@ -537,7 +572,7 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
   {
     int i = 0;
     int lruway = 0;
-    if (ca->enable == 0)
+    if (ca->enable == 0 )
     {
       return MappedMemoryReadLongNocache(addr, cycle);
     }
@@ -578,11 +613,16 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
       u32 rtn = SWAP32(*(u32 *)(&ca->way[entry].data[way][(addr & LINE_MASK)]));
 
 #ifdef COHERENCY_CHECK
-      u32 real = MappedMemoryReadLongNocache(addr, cycle);
+      u32 real = MappedMemoryReadLongNocache(addr, NULL);
       if (real != rtn) {
-        LOG("[SH2-%s] %d Cache coherency ERROR 4 %08X %d:%d:%d cache = %08X real = %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn, real);
+        LOG("[SH2-%s] %d Cache coherency ERROR 4 %08X %d:%d:%d cache = %08X real = %08X", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, way, (addr & LINE_MASK), rtn, real);
     }
 #endif
+
+      //if ( (addr&0x0FFFFFFF) ==0x06043214) {
+      //  LOG("[SH2-%s] %d+%d Read 4-byte %08x from %08x  PC=%08X frame=%d:%d" , CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, rtn, addr,  CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
+      //}
+
       return rtn;
     }
 #ifdef CACHE_STATICS
@@ -595,19 +635,18 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
 
       update_lru(lruway, &ca->lru[entry]);
       ca->way[entry].tag[lruway] = tagaddr;
-      if (cycle)
-      {
-        *cycle = 2;
-      }
-
+      u32 tmpcycle = 0;
       for (i = 0; i < 16; i += 4)
       {
         u32 odi = (addr + 4 + i) & 0xC;
-        u32 data = ReadLongList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + odi);
+        u32 ccycle = 0;
+        u32 data = MappedMemoryReadLongNocache((addr & 0xFFFFFFF0) + odi, &ccycle);
         *(u32 *)(&ca->way[entry].data[lruway][odi]) = SWAP32(data);
-        CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi, data);
+        tmpcycle = ccycle << 1;
+        //CACHE_LOG("[SH2-%s] %d Cache miss read %08X %d:%d:%d %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, addr, entry, lruway, odi, data);
       }
-
+      if (cycle) { *cycle = MIN(MAX_CACHE_MISS_CYCLE, tmpcycle);}
+      CACHE_LOG("[SH2-%s] %d+%d Cache miss read 4 %08X\n", CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, tmpcycle, addr);
       return SWAP32(*(u32 *)(&ca->way[entry].data[lruway][(addr & LINE_MASK)]));
     }
     else
@@ -618,7 +657,14 @@ u32 cache_memory_read_l(cache_enty *ca, u32 addr, u32 *cycle)
   }
   break;
   case CACHE_THROUGH:
-    return MappedMemoryReadLongNocache(addr, cycle);
+    {
+      const u32 rtn = MappedMemoryReadLongNocache(addr, cycle);
+      //PC=%08X frame=%d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M",  CurrentSH2->cycles, 4, val, addr , CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount );
+      //if (cycle != NULL /*&& (  (addr&0x0FFFFFFF) ==0x060FFC44 || addr ==0x260E3CB8 )*/ ) { 
+      //  LOG("[SH2-%s] %d+%d Read 4-byte addr:%08X val:%08X PC=%08X frame=%d:%d" , CurrentSH2->isslave ? "S" : "M", CurrentSH2->cycles, *cycle, addr, rtn, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount); 
+      //}
+      return rtn;
+    }
     break;
   default:
     return MappedMemoryReadLongNocache(addr, cycle);

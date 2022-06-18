@@ -642,6 +642,7 @@ void memSetByte(u32 addr , u8 data )
       block->LookupTableC[ (addr&0x000FFFFF)>>1] = NULL;
     }
   }
+  CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT();
   MappedMemoryWriteByte(addr, data, &cycle);
   DynarecSh2::CurrentContext->memcycle_ += cycle;
   dynaFree();
@@ -674,6 +675,7 @@ void memSetWord(u32 addr, u16 data )
       block->LookupTableC[ (addr&0x000FFFFF) >> 1] = NULL;
     }
   }
+  CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT();
   MappedMemoryWriteWord(addr, data, &cycle);
   DynarecSh2::CurrentContext->memcycle_ += cycle;
   dynaFree();
@@ -710,6 +712,7 @@ void memSetLong(u32 addr , u32 data )
       block->LookupTableC[ (addr&0x000FFFFF)>>1 ] = NULL;
     }
   }
+  CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT();
   MappedMemoryWriteLong(addr, data, &cycle);
   DynarecSh2::CurrentContext->memcycle_ += cycle;
   dynaFree();
@@ -776,8 +779,8 @@ int DelayEachClock() {
 
 int DebugDelayClock() {
   dynaLock();
-  CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT(); // ->SysReg[4];
-  CurrentSH2->regs.PC = DynarecSh2::CurrentContext->GET_PC();
+  //CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT(); // ->SysReg[4];
+  //CurrentSH2->regs.PC = DynarecSh2::CurrentContext->GET_PC();
   DynaCheckBreakPoint(DynarecSh2::CurrentContext->GET_PC());
   dynaFree();
   return 0;
@@ -791,8 +794,8 @@ int DebugEachClock() {
 
   //printf("PC:%08X\n",DynarecSh2::CurrentContext->GET_PC());
 
-  CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT(); // ->SysReg[4];
-  CurrentSH2->regs.PC = DynarecSh2::CurrentContext->GET_PC();
+  //CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT(); // ->SysReg[4];
+  //CurrentSH2->regs.PC = DynarecSh2::CurrentContext->GET_PC();
 
 #if 0
   u32 pc = DynarecSh2::CurrentContext->GET_PC();
@@ -870,7 +873,7 @@ if( pc == 0x060133C8 ) {
     dynaFree();
     return 1;
   }
-
+  
   CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT(); // ->SysReg[4];
   CurrentSH2->regs.PC = DynarecSh2::CurrentContext->GET_PC() + 2;
 
