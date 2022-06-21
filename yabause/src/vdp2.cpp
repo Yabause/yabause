@@ -534,9 +534,6 @@ extern "C" void * VdpProc( void *arg ){
     case VDPEV_DIRECT_DRAW:
       FrameProfileAdd("DirectDraw start");
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW(T)");
-      if (Vdp1External.manualerase == 0) {
-        VIDCore->Vdp1EraseWrite();
-      }
       Vdp1Draw();
       VIDCore->Vdp1DrawEnd();
       Vdp1External.frame_change_plot = 0;
@@ -1283,10 +1280,10 @@ void vdp2VBlankOUT(void) {
   VIDCore->Vdp2DrawStart();
 
   // VBlank Erase
-  if (Vdp1External.vbalnk_erase) {
-    VIDCore->Vdp1EraseWrite();
-  // One cycle mode
-  }else if ( (Vdp1Regs->FBCR & 0x3) == 0 && (Vdp1Regs->TVMR & 0x8) == 0 && Vdp1External.frame_change_plot != 0 ) { 
+  if ( Vdp1External.vbalnk_erase||  // VBlank Erace (VBE1) 
+    ( (Vdp1Regs->FBCR & 0x3) == 0 &&
+      (Vdp1Regs->TVMR & 0x8) == 0 && 
+      Vdp1External.frame_change_plot != 0 ) ){  // One cycle mode
      VIDCore->Vdp1EraseWrite();
   }
 

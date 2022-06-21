@@ -464,18 +464,13 @@ extern "C" void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
 #else
     if (val == 1){
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-
-      if (Vdp1External.manualerase == 0) {
-        VIDCore->Vdp1EraseWrite();
-      }
-       
-      Vdp1Regs->EDSR >>= 1;
-      Vdp1Draw(); 
-      VIDCore->Vdp1DrawEnd();
-      yabsys.wait_line_count = yabsys.LineCount + 50;
-      yabsys.wait_line_count %= yabsys.MaxLineCount;
-      //if (yabsys.wait_line_count == 2) { yabsys.wait_line_count = 3; } // it should not be the same line with render.
-      FRAMELOG("VDP1: end line is %d", yabsys.wait_line_count);
+        Vdp1Regs->EDSR >>= 1;
+        Vdp1Draw(); 
+        VIDCore->Vdp1DrawEnd();
+        yabsys.wait_line_count = yabsys.LineCount + 50;
+        yabsys.wait_line_count %= yabsys.MaxLineCount;
+        //if (yabsys.wait_line_count == 2) { yabsys.wait_line_count = 3; } // it should not be the same line with render.
+        FRAMELOG("VDP1: end line is %d", yabsys.wait_line_count);
     }
 #endif
          break;
