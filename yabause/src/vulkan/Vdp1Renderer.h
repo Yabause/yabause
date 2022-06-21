@@ -95,7 +95,7 @@ public:
   void SystemClipping(u8 * ram, Vdp1 * regs);
   void LocalCoordinate(u8 * ram, Vdp1 * regs);
 
-  void erase( int isDraw );
+  void erase();
   void change();
 
   void setTextureRatio(int vdp2widthratio, int vdp2heightratio);
