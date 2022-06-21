@@ -796,7 +796,7 @@ int YglGenerateAABuffer();
 int YglSetupWindow(YglProgram * prg);
 int YglCleanUpWindow(YglProgram * prg);
 
-void YglEraseWriteVDP1( int isDraw );
+void YglEraseWriteVDP1();
 void YglFrameChangeVDP1();
 
 #if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_) && !defined(__LIBRETRO__) &&  !defined(NX)
