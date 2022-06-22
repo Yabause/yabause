@@ -594,7 +594,25 @@ void Vdp1Renderer::erase() {
   VkViewport viewport = vks::initializers::viewport((float)offscreenPass.width, (float)offscreenPass.height, 0.0f, 1.0f);
   vkCmdSetViewport(cb, 0, 1, &viewport);
 
-  VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
+  float wrate = (float)offscreenPass.width / (float)vulkan->vdp2width;
+  float hrate = (float)offscreenPass.height / (float)vulkan->vdp2height;
+
+  if (Vdp1Regs->TVMR & 0x01) {
+    wrate *= 2.0f;
+  }
+
+
+  float interlace = 1.0;
+  if (Vdp1Regs->FBCR & 0x8) {
+    interlace *= 2.0f;
+  }
+
+  float bottom = (vulkan->vdp2height - ((Vdp1Regs->EWRR & 0x1FF) * vdp1hratio * interlace ))  * hrate;
+  float right = (((Vdp1Regs->EWRR >> 9) & 0x7F) << 3)  * vdp1wratio * wrate;
+  float top = (vulkan->vdp2height - ((Vdp1Regs->EWLR & 0x1FF) * vdp1hratio * interlace)) * hrate;
+  float left = (((Vdp1Regs->EWLR >> 9) & 0x7F) << 3) * vdp1wratio * wrate;
+   
+  VkRect2D scissor = vks::initializers::rect2D(right - left, top - bottom , left, bottom);
   vkCmdSetScissor(cb, 0, 1, &scissor);
 
   vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS,

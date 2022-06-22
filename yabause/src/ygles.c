@@ -2896,6 +2896,10 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
   return 0;
 }
 
+
+extern float vdp1wratio;
+extern float vdp1hratio;
+
 //////////////////////////////////////////////////////////////////////////////
 void YglEraseWriteVDP1(void) {
 
@@ -2955,6 +2959,27 @@ void YglEraseWriteVDP1(void) {
     alpha >>= 24;
   }
   //alpha |= priority;
+
+
+  float wrate = (float)_Ygl->width / (float)_Ygl->rwidth;
+  float hrate = (float)_Ygl->height / (float)_Ygl->rheight;
+
+  if (Vdp1Regs->TVMR & 0x01) {
+    wrate *= 2.0f;
+  }
+
+  float interlace = 1.0;
+  if (Vdp1Regs->FBCR & 0x8) {
+    interlace *= 2.0f;
+  }
+
+  float bottom = (_Ygl->rheight - ((Vdp1Regs->EWRR & 0x1FF) * vdp1hratio * interlace ))  * hrate;
+  float right = (((Vdp1Regs->EWRR>>9) & 0x7F)<<3)  * vdp1wratio * wrate;
+  float top = (_Ygl->rheight - ((Vdp1Regs->EWLR & 0x1FF) * vdp1hratio * interlace)) * hrate;
+  float left = (((Vdp1Regs->EWLR >> 9) & 0x7F)<<3) * vdp1wratio * wrate;
+
+  glEnable(GL_SCISSOR_TEST);
+  glScissor(left, bottom , right-left, top-bottom );
 
   glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
