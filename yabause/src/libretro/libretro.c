@@ -18,14 +18,12 @@
 
 #include "vdp1.h"
 #include "vdp2.h"
-//#include "scsp.h"
 #include "peripheral.h"
 #include "cdbase.h"
 #include "yabause.h"
 #include "yui.h"
 #include "cheat.h"
 
-//#include "m68kc68k.h"
 #include "cs0.h"
 #include "cs2.h"
 
@@ -851,7 +849,7 @@ static bool disk_replace_image_index(unsigned index, const struct retro_game_inf
    else
    {
       snprintf(disk_paths[index], sizeof(disk_paths[index]), "%s", info->path);
-      fill_short_pathname_representation(disk_labels[index], disk_paths[index], sizeof(disk_labels[index]));
+      fill_pathname(disk_labels[index], path_basename(disk_paths[index]), "", sizeof(disk_labels[index]));
    }
 
    return true;
@@ -969,7 +967,7 @@ static bool read_m3u(const char *file)
       if (line[0] != '\0')
       {
          snprintf(disk_paths[disk_total], sizeof(disk_paths[disk_total]), "%s%c%s", g_roms_dir, slash, line);
-         fill_short_pathname_representation(disk_labels[disk_total], disk_paths[disk_total], sizeof(disk_labels[disk_total]));
+         fill_pathname(disk_labels[disk_total], path_basename(disk_paths[disk_total]), "", sizeof(disk_labels[disk_total]));
          disk_total++;
       }
    }
@@ -1090,7 +1088,7 @@ bool retro_load_game(const struct retro_game_info *info)
    else
    {
       snprintf(disk_paths[disk_total], sizeof(disk_paths[disk_total]), "%s", info->path);
-      fill_short_pathname_representation(disk_labels[disk_total], disk_paths[disk_total], sizeof(disk_labels[disk_total]));
+      fill_pathname(disk_labels[disk_total], path_basename(disk_paths[disk_total]), "", sizeof(disk_labels[disk_total]));
       disk_total++;
    }
 
