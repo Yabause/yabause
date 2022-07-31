@@ -63,7 +63,6 @@ set(yabause_SOURCES
 	cd-web.cpp
 	PlayRecorder.cpp
 	sh2cache.c )
-	add_definitions(-DIMPROVED_SAVESTATES)
 
 if (ANDROID)
 	add_definitions(-D__ANDROID__)

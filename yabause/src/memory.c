@@ -1635,6 +1635,10 @@ int YabSaveStateStream(FILE *fp)
    ywrite(&check, (void *)&temp32, sizeof(u32), 1, fp);
    ywrite(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    ywrite(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
+   ywrite(&check, (void *)&yabsys.saved_scsp_cycles, sizeof(u32), 1, fp);
+   ywrite(&check, (void *)&yabsys.saved_m68k_cycles, sizeof(u64), 1, fp);
+   ywrite(&check, (void *)&yabsys.scsp_main_mode, sizeof(u32), 1, fp);
+
 
    VIDCore->GetGlSize(&outputwidth, &outputheight);
 
@@ -1886,6 +1890,9 @@ int YabLoadStateStream(FILE *fp)
    yread(&check, (void *)&temp32, sizeof(u32), 1, fp);
    yread(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    yread(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
+   yread(&check, (void *)&yabsys.saved_scsp_cycles, sizeof(u32), 1, fp);
+   yread(&check, (void *)&yabsys.saved_m68k_cycles, sizeof(u64), 1, fp);
+   yread(&check, (void *)&yabsys.scsp_main_mode, sizeof(u32), 1, fp);
    YabauseChangeTiming(yabsys.CurSH2FreqType);
    yabsys.UsecFrac = (temp32 << YABSYS_TIMING_BITS) * temp / 10;
 

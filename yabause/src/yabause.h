@@ -148,6 +148,9 @@ typedef struct
    int use_cpu_affinity;
    int use_sh2_cache;
    int Hcount;
+   u32 saved_scsp_cycles;//fixed point
+   volatile u64 saved_m68k_cycles;//fixed point
+   u32 scsp_main_mode;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;
