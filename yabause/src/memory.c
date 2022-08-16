@@ -785,7 +785,7 @@ inline u32 getMemClock(u32 addr) {
   }
   else if (addr >= 0x05e00000 && addr < 0x05E80000) {
     if (yabsys.LineCount >= yabsys.VBlankLineCount) {
-      return 80 >> clock_shift;
+      return 40 >> clock_shift;
     }
     if ((addr & 0x000F0000) < 0x00040000) {
       return Vdp2External.cpu_cycle_a >> clock_shift;
