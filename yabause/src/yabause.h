@@ -149,7 +149,7 @@ typedef struct
    int use_sh2_cache;
    int Hcount;
    u32 saved_scsp_cycles;//fixed point
-   volatile u64 saved_m68k_cycles;//fixed point
+   u64 saved_m68k_cycles;//fixed point
    u32 scsp_main_mode;
 } yabsys_struct;
 
@@ -157,8 +157,6 @@ extern yabsys_struct yabsys;
 
 int YabauseEmulate(void);
 
-extern u32 saved_scsp_cycles;
-extern volatile u64 saved_m68k_cycles;
 #define SCSP_FRACTIONAL_BITS 20
 u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line);
 u32 YabauseGetCpuTime();

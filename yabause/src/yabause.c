@@ -189,6 +189,9 @@ int YabauseInit(yabauseinit_struct *init)
    YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
   }
 
+  yabsys.saved_m68k_cycles = 0;
+  yabsys.saved_scsp_cycles = 0;
+
   yabsys.use_cpu_affinity = init->use_cpu_affinity;
 
   yabsys.use_sh2_cache = init->use_sh2_cache;
