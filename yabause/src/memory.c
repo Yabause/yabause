@@ -498,17 +498,17 @@ static u8 FASTCALL BupRamMemoryReadByte(u32 addr)
 #endif
   if (yabsys.extend_backup ) {
 
-     if( yabsys.emulatebios == 1 ) {
+     //if( yabsys.emulatebios == 1 ) {
         addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
         if (addr >= tweak_backup_file_size) {
            return 0;
         }
-     }else{
-        addr = (addr&0x0000FFFF );
-        if (addr >= tweak_backup_file_size) {
-           return 0;
-        }
-     }
+     //}else{
+    //    addr = (addr&0x0000FFFF );
+    //    if (addr >= tweak_backup_file_size) {
+    //       return 0;
+    //    }
+     //}
   }
   else {
     addr = addr & 0x0000FFFF;
@@ -554,17 +554,17 @@ static void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
   }
 #endif
   if (yabsys.extend_backup ) {
-     if( yabsys.emulatebios == 1 ) {
+     //if( yabsys.emulatebios == 1 ) {
         addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
         if (addr >= tweak_backup_file_size) {
            return;
         }
-     }else{
-        addr = (addr&0x0000FFFF );
-        if (addr >= tweak_backup_file_size) {
-           return;
-        }
-     }
+     //}else{
+     //   addr = (addr&0x0000FFFF );
+     //   if (addr >= tweak_backup_file_size) {
+     //      return;
+     //   }
+     //}
   }
   else {
     addr = addr & 0x0000FFFF;
