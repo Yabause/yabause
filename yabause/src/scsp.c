@@ -5512,7 +5512,7 @@ void ScspAsynMainCpuTime( void * p ){
   int frame = 0;
   int frame_count = 0;
   int i;
-  int frame_div = 1; // g_scsp_sync_count_per_frame;
+  int frame_div = g_scsp_sync_count_per_frame;
   int framecnt = 188160 / frame_div; // 11289600/60
   int hzcheck = 0;
 
@@ -5598,7 +5598,7 @@ void ScspAsynMainRealtime(void * p) {
   int frame = 0; 
   int frame_count = 0;
   int i;
-  int frame_div = 1; //g_scsp_sync_count_per_frame;
+  int frame_div = g_scsp_sync_count_per_frame;
   int framecnt = 188160 / frame_div; // 11289600/60
   int hzcheck = 0;
 
