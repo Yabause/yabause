@@ -1688,7 +1688,7 @@ inline int DynarecSh2::Execute(){
 #if defined(DEBUG_CPU) || defined(EXECUTE_STAT)
     u32 prepc = GET_PC();
   if (is_slave_) { //statics_trigger_ == COLLECTING) {
-    u64 pretime = YabauseGetTicks();
+    s64 pretime = YabauseGetTicks();
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
     compie_statics_[prepc].count++;
     compie_statics_[prepc].time += YabauseGetTicks() - pretime;

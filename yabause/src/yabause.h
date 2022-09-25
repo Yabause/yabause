@@ -112,7 +112,7 @@ void YabauseResetButton(void);
 int YabauseExec(void);
 void YabauseStartSlave(void);
 void YabauseStopSlave(void);
-u64 YabauseGetTicks(void);
+s64 YabauseGetTicks(void);
 void YabauseSetVideoFormat(int type);
 void YabauseSpeedySetup(void);
 int YabauseQuickLoadGame(void);

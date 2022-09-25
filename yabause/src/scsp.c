@@ -5004,34 +5004,7 @@ SoundRamReadLong (u32 addr)
   SyncSh2And68k();
 
   val = T2ReadLong(SoundRam, addr);
-  //LOG("SoundRamReadLong %08X:%08X time=%d PC=%08X R7=%08X", addr, val, MSH2->cycles, MSH2->regs.PC, MSH2->regs.R[7]);
-#if 0 // This is the workround
-  if (addr == 0x500) {
 
-    if (val == 0xFFFFFFFF ) {
-      char * code = Cs2GetCurrentGmaecode();
-      if (strcmp(code, "T-1229G") == 0 || strcmp(code, "T-1228G") == 0 ) {
-        u64 before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-        while (val == 0xFFFFFFFF) {
-          YabThreadUSleep(16666);
-          SyncSh2And68k();
-          val = T2ReadLong(SoundRam, addr);
-          LOG("read Addr val=%04X, %08X(%d)\n", val, YabauseGetFrameCount(), yabsys.LineCount);
-        }
-        while (val == 0x0) {
-          YabThreadUSleep(16666);
-          SyncSh2And68k();
-          val = T2ReadLong(SoundRam, addr);
-          LOG("read Addr val=%04X, %08X(%d)\n", val, YabauseGetFrameCount(), yabsys.LineCount);
-        }
-
-        u32 checktime = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-        LOG("Sync wait time =%d\n", (s32)(checktime - before));
-      }
-    }
-
-  }
-#endif
 
   return val;
 
@@ -5504,9 +5477,9 @@ void ScspExec(){
 
 void ScspAsynMainCpuTime( void * p ){
 
-  u64 before;
-  u64 now;
-  u64 difftime;
+  s64 before;
+  s64 now;
+  s64 difftime;
   const int samplecnt = 256; // 11289600/44100
   const int step = 16;
   int frame = 0;
@@ -5523,7 +5496,7 @@ void ScspAsynMainCpuTime( void * p ){
   if( yabsys.use_cpu_affinity ){
     YabThreadSetCurrentThreadAffinityMask( YabThreadGetFastestCpuIndex() );
   }
-  before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
+  before = YabauseGetTicks();
   u32 wait_clock = 0;
   u64 pre_m68k_cycle = 0;
   u64 m68k_inc = 0;
@@ -5575,7 +5548,7 @@ void ScspAsynMainCpuTime( void * p ){
         m68k_inc = 0;
         //LOG("[SCSP] WAIT SH2");
         YabWaitEventQueue(q_scsp_frame_start);
-        now = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
+        now = YabauseGetTicks();
         //LOG(" SCSPTIME = %d/16666666 %d/735", (s32)(now - before), hzcheck);
         hzcheck = 0;
         before = now;
@@ -5590,9 +5563,9 @@ void ScspAsynMainCpuTime( void * p ){
 
 void ScspAsynMainRealtime(void * p) {
 
-  u64 before;
-  u64 now;
-  u64 difftime;
+  s64 before;
+  s64 now;
+  s64 difftime;
   const int samplecnt = 256; // 11289600/44100
   const int step = 16;
   int frame = 0; 
@@ -5626,7 +5599,7 @@ void ScspAsynMainRealtime(void * p) {
     YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
   }
   
-  before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
+  before = YabauseGetTicks();
   u32 wait_clock = 0;
 
   now = 0;
@@ -5661,19 +5634,19 @@ void ScspAsynMainRealtime(void * p) {
       }
       s64 sleeptime = 0;
       s64 initsleeptime = 0;
-      u64 initnow = 0;
-      u64 initbefore = 0;
-      u64 checktime = 0;
-      u64 sleepchecktime = 0;
+      s64 initnow = 0;
+      s64 initbefore = 0;
+      s64 checktime = 0;
+      s64 sleepchecktime = 0;
       m68kcycle = 0;
       sh2_read_req = 0;
       do {
-        now = YabauseGetTicks() * 1000000000L / yabsys.tickfreq;
+        now = YabauseGetTicks();
         if (now >= before){
-          difftime = now - before;
+          difftime = (now - before) * 1000000000L / yabsys.tickfreq;
         }
         else {
-          difftime = now + (ULLONG_MAX - before);
+          difftime = (now + (LLONG_MAX - before)) * 1000000000L / yabsys.tickfreq;
         }
         sleeptime = ((16666666L / frame_div) - difftime);
         if(initsleeptime==0){
@@ -5752,7 +5725,7 @@ void ScspAsynMainRealtime(void * p) {
 #endif
       } while (sleeptime > 0);
 
-      checktime = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
+      checktime = YabauseGetTicks();
       //printf("vsynctime = %d(%d) %d(%d)\n", (s32)(checktime - before),16666666/frame_div,(s32)(checktime - initnow),(s32)initsleeptime);
       //printf("vsynctime = %d(%d) %"PRIu64"-%"PRIu64"=(%"PRId64")\n", (s32)(checktime - before),16666666/frame_div,now,before,initsleeptime);
       before = checktime;

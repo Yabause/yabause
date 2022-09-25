@@ -748,7 +748,7 @@ int YabauseEmulate(void) {
       yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
 
 #ifdef YAB_STATICS
-      u64 current_cpu_clock = YabauseGetTicks();
+      s64 current_cpu_clock = YabauseGetTicks();
 #endif
       if( sync_shift != 0 ){
         u32 i;
@@ -1008,13 +1008,13 @@ void YabauseStopSlave(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u64 YabauseGetTicks(void) {
+s64 YabauseGetTicks(void) {
 #ifdef WIN32
-   u64 ticks;
-   QueryPerformanceCounter((LARGE_INTEGER *)&ticks);
-   return ticks;
+  LARGE_INTEGER ticks;
+   QueryPerformanceCounter(&ticks);
+   return (s64)ticks.QuadPart;
 #elif defined(_arch_dreamcast)
-   return (u64) timer_ms_gettime64();
+   return (s64) timer_ms_gettime64();
 #elif defined(GEKKO)  
    return gettime();
 #elif defined(PSP)
@@ -1022,13 +1022,13 @@ u64 YabauseGetTicks(void) {
 #elif defined(ANDROID)
 	struct timespec clock_time;
 	clock_gettime(CLOCK_REALTIME , &clock_time);
-	return (u64)clock_time.tv_sec * 1000000 + clock_time.tv_nsec/1000;
+	return (s64)clock_time.tv_sec * 1000000 + clock_time.tv_nsec/1000;
 #elif defined(HAVE_GETTIMEOFDAY)
    struct timeval tv;
    gettimeofday(&tv, NULL);
-   return (u64)tv.tv_sec * 1000000 + tv.tv_usec;
+   return (s64)tv.tv_sec * 1000000 + tv.tv_usec;
 #elif defined(HAVE_LIBSDL)
-   return (u64)SDL_GetTicks();
+   return (s64)SDL_GetTicks();
 #endif
 }
 

@@ -3554,7 +3554,7 @@ void Vdp2DrawRotationThread(void * p) {
       difftime = now - before;
     }
     else {
-      difftime = now + (ULLONG_MAX - before);
+      difftime = now + (LLONG_MAX - before);
     }
     sprintf(str,"Vdp2DrawRotation_in = %d", difftime);
     DisplayMessage(str);

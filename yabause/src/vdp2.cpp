@@ -81,7 +81,7 @@ u32 skipped_frame = 0;
 u32 pre_swap_frame_buffer = 0;
 static int autoframeskipenab=0;
 static int throttlespeed=0;
-u64 lastticks=0;
+s64 lastticks=0;
 static int fps;
 int vdp2_is_odd_frame = 0;
 // Asyn rendering
@@ -89,7 +89,7 @@ YabEventQueue * evqueue = NULL; // Event Queue for async rendring
 YabEventQueue * rcv_evqueue = NULL;
 YabEventQueue * vdp1_rcv_evqueue = NULL;
 YabEventQueue * vout_rcv_evqueue = NULL;
-static u64 syncticks = 0;       // CPU time sync for real time.
+static s64 syncticks = 0;       // CPU time sync for real time.
 static int vdp_proc_running = 0;
 YabMutex * vrammutex = NULL;
 int g_frame_count = 0;
@@ -97,8 +97,8 @@ static int framestoskip = 0;
 static int framesskipped = 0;
 static int skipnextframe = 0;
 static int previous_skipped = 0;
-static u64 curticks = 0;
-static u64 diffticks = 0;
+static s64 curticks = 0;
+static s64 diffticks = 0;
 static u32 framecount = 0;
 static s64 onesecondticks = 0;
 static int enableFrameLimit = 1;
@@ -774,7 +774,7 @@ void frameSkipAndLimit() {
     {
 
       s64 sleeptime = (targetTime - (onesecondticks + diffticks));
-      u64 xcurticks = YabauseGetTicks();
+      s64 xcurticks = YabauseGetTicks();
       if (sleeptime-1000 > 0) {
         YabNanosleep(sleeptime-1000);
       }
@@ -1205,7 +1205,7 @@ void vdp2VBlankOUT(void) {
   static VideoInterface_struct * saved = NULL;
   int isrender = 0;
 #if PROFILE_RENDERING
-  u64 starttime = YabauseGetTicks();
+  s64 starttime = YabauseGetTicks();
 #endif
   VdpLockVram();
   FRAMELOG("***** VOUT(T) swap=%d,plot=%d,vdp1status=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot, Vdp1External.status );

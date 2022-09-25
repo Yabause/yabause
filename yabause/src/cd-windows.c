@@ -125,7 +125,7 @@ void SPTICDDeInit() {
 
 DWORD WINAPI __stdcall SPTICDThread(void *b)
 {
-	u64 curticks, lastticks = YabauseGetTicks();
+	s64 curticks, lastticks = YabauseGetTicks();
 
 	while (KillCDThread != 1)
 	{
