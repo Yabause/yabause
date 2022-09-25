@@ -721,20 +721,19 @@ x86op_desc asm_list[] =
 
 void CompileBlocks::Init()
 {
-  dCode = (Block*)ALLOCATE(sizeof(Block)*NUMOFBLOCKS);
   memset((void*)dCode, 0, sizeof(Block)*NUMOFBLOCKS);
-
   memset(LookupTable, 0, sizeof(LookupTable));
   memset(LookupTableRom, 0, sizeof(LookupTableRom));
   memset(LookupTableLow, 0, sizeof(LookupTableLow));
   memset(LookupTableC, 0, sizeof(LookupTableC));
-
   blockCount = 0;
   LastMakeBlock = 0;
-
   g_CompleBlock = dCode;
   for (int i = 0; i < NUMOFBLOCKS; i++ ) {
     g_CompleBlock[i].id = i;
+  }
+  for (int i = 0; i < (0x100000>>1) ; i++) {
+    LookupParentTable[i].clear();
   }
   return;
 }
