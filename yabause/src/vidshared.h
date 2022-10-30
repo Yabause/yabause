@@ -204,7 +204,9 @@ typedef struct
    u8  bEnWin1;     // Enable Window1
    u8  WindowArea0; // Window Area Mode 0
    u8  WindowArea1; // Window Area Mode 1
-   
+   u8  bEnSpriteWin;     // Enable Sprite Window
+   u8  WindowAreaSprite; // Sprite Window Area mode
+
    // Rotate Screen
    vdp2WindowInfo * pWinInfo;
    int WindwAreaMode;

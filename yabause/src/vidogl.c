@@ -2573,6 +2573,8 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   tile.WindowArea0 = info->WindowArea0;
   tile.bEnWin1 = info->bEnWin1;
   tile.WindowArea1 = info->WindowArea1;
+  tile.bEnSpriteWin = info->bEnSpriteWin;
+  tile.WindowAreaSprite = info->WindowAreaSprite;
   tile.LogicWin = info->LogicWin;
   tile.lineTexture = info->lineTexture;
   tile.id = info->id;
@@ -6732,6 +6734,8 @@ static void Vdp2DrawNBG0(void)
   info.bEnWin1 = (fixVdp2Regs->WCTLA >> 3) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLA >> 2) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLA >> 7) & 0x01;
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLA >> 5) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLA >> 4) & 0x01;
 
 
   ReadLineScrollData(&info, fixVdp2Regs->SCRCTL & 0xFF, fixVdp2Regs->LSTA0.all);
@@ -7038,7 +7042,8 @@ static void Vdp2DrawNBG1(void)
   info.bEnWin1 = (fixVdp2Regs->WCTLA >> 11) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLA >> 10) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLA >> 15) & 0x01;
-
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLA >> 13) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLA >> 12) & 0x01;
 
   ReadLineScrollData(&info, fixVdp2Regs->SCRCTL >> 8, fixVdp2Regs->LSTA1.all);
   info.lineinfo = lineNBG1;
@@ -7283,6 +7288,9 @@ static void Vdp2DrawNBG2(void)
   info.bEnWin1 = (fixVdp2Regs->WCTLB >> 3) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLB >> 2) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLB >> 7) & 0x01;
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLB >> 5) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLB >> 4) & 0x01;
+
 
   Vdp2SetGetColor(&info);
 
@@ -7445,6 +7453,8 @@ static void Vdp2DrawNBG3(void)
   info.bEnWin1 = (fixVdp2Regs->WCTLB >> 11) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLB >> 10) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLB >> 15) & 0x01;
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLB >> 13) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLB >> 12) & 0x01;
 
   Vdp2SetGetColor(&info);
 
@@ -7552,6 +7562,9 @@ static void Vdp2DrawRBG0(void)
   info->WindowArea1 = (fixVdp2Regs->WCTLC >> 2) & 0x01;
 
   info->LogicWin = (fixVdp2Regs->WCTLC >> 7) & 0x01;
+
+  info->bEnSpriteWin = (fixVdp2Regs->WCTLC >> 5) & 0x01;
+  info->WindowAreaSprite = (fixVdp2Regs->WCTLC >> 4) & 0x01;
 
   info->islinescroll = 0;
   info->linescrolltbl = 0;

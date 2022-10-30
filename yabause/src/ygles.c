@@ -2436,6 +2436,8 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
   program->logwin0 = input->WindowArea0;
   program->bwin1 = input->bEnWin1;
   program->logwin1 = input->WindowArea1;
+  program->bwinsp = input->bEnSpriteWin;
+  program->logwinsp = input->WindowAreaSprite;
   program->winmode = input->LogicWin;
   program->lineTexture = input->lineTexture;
   program->specialcolormode = input->specialcolormode;
@@ -2601,6 +2603,8 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
   program->logwin0 = input->WindowArea0;
   program->bwin1 = input->bEnWin1;
   program->logwin1 = input->WindowArea1;
+  program->bwinsp = input->bEnSpriteWin;
+  program->logwinsp = input->WindowAreaSprite;
   program->winmode = input->LogicWin;
   program->lineTexture = input->lineTexture;
   program->blendmode = input->blendmode;
@@ -2784,6 +2788,8 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
   program->logwin0 = input->WindowArea0;
   program->bwin1 = input->bEnWin1;
   program->logwin1 = input->WindowArea1;
+  program->bwinsp = input->bEnSpriteWin;
+  program->logwinsp = input->WindowAreaSprite;
   program->winmode = input->LogicWin;
   program->lineTexture = input->lineTexture;
   program->specialcolormode = input->specialcolormode;
@@ -2959,6 +2965,7 @@ void YglEraseWriteVDP1(void) {
     alpha >>= 24;
   }
   //alpha |= priority;
+
 
 
   float wrate = (float)_Ygl->width / (float)_Ygl->rwidth;
@@ -3146,7 +3153,7 @@ void YglSetVdp2Window()
 
     bwin0 = (Vdp2Regs->WCTLC >> 9) &0x01;
     bwin1 = (Vdp2Regs->WCTLC >> 11) &0x01;
-    bspwin = ((Vdp2Regs->WCTLC >> 13) & 0x01); // ((Vdp2Regs->SPCTL >> 4) & 0x03) == 0x01;
+    bspwin = ((Vdp2Regs->SPCTL >> 4) & 0x03) == 0x01;
    if( (_Ygl->win0_vertexcnt != 0 || _Ygl->win1_vertexcnt != 0 || bspwin) )
    {
 
@@ -4062,8 +4069,9 @@ int YglSetupWindow(YglProgram * prg){
     }
   }
 
+
   // Transparent Window
-  if (prg->bwin0 || prg->bwin1 || prg->bwinsp)
+  if (prg->bwin0 || prg->bwin1 || prg->bwinsp )
   {
     u8 bwin1 = prg->bwin1 << 1;
     u8 logwin1 = prg->logwin1 << 1;
@@ -4228,7 +4236,7 @@ void YglRenderDestinationAlpha(void) {
           glDisable(GL_BLEND);
         }
 
-        if ((level->prg[j].bwin0 != 0 || level->prg[j].bwin1 != 0) || (level->prg[j].blendmode != VDP2_CC_NONE && ccwindow)){
+        if ((level->prg[j].bwin0 != 0 || level->prg[j].bwin1 != 0 || level->prg[j].bwinsp != 0 ) || (level->prg[j].blendmode != VDP2_CC_NONE && ccwindow)){
           YglSetupWindow(&level->prg[j]);
         }
 
@@ -4238,7 +4246,7 @@ void YglRenderDestinationAlpha(void) {
         if (level->prg[j].vaid != 0) { glVertexAttribPointer(level->prg[j].vaid, 4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute); }
         glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
         
-        if (level->prg[j].bwin0 != 0 || level->prg[j].bwin1 != 0 || (level->prg[j].blendmode != VDP2_CC_NONE && ccwindow)){
+        if ( (level->prg[j].bwin0 != 0 || level->prg[j].bwin1 != 0 || level->prg[j].bwinsp != 0)  || (level->prg[j].blendmode != VDP2_CC_NONE && ccwindow)){
           level->prg[j].matrix = (GLfloat*)dmtx.m;
           YglCleanUpWindow(&level->prg[j]);
         }
