@@ -3185,6 +3185,8 @@ void YglSetVdp2Window()
         glStencilMask(0x04);
         glStencilFunc(GL_ALWAYS, 0x04, 0x04);
         YglRenderFrameBufferShadow();
+        glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
       }
 
       glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);

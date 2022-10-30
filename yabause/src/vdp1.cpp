@@ -1162,6 +1162,8 @@ void Vdp1DebugCommand(u32 number, char *outstring)
    // Only draw commands use CMDPMOD
    if (!(cmd.CMDCTRL & 0x0008))
    {
+      AddString(outstring, "CPMOD %08X\r\n", cmd.CMDPMOD);
+
       if (cmd.CMDPMOD & 0x8000)
       {
          AddString(outstring, "MSB set\r\n");

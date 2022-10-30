@@ -596,6 +596,9 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     sprite_window = 1;
   }
 
+  if (sprite_window == 1 && (cmd->CMDCOLR & 0x8000)) {
+    MSB_SHADOW = 1;
+  }
 
   addcolor = ((fixVdp2Regs->CCCTL & 0x540) == 0x140);
 
