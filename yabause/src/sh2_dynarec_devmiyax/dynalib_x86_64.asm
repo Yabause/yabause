@@ -36,12 +36,14 @@ struc tagSH2
 	CtrlReg:  resd 4
 	SysReg:  resd 3 
 endstruc
+
+extern memGetByte, memGetWord, memGetLong
+extern memSetByte, memSetWord, memSetLong
+extern EachClock, DelayEachClock, DebugEachClock, DebugDelayClock
+
 section .code
 
 ;Memory Functions
-extern _memGetByte, _memGetWord, _memGetLong
-extern _memSetByte, _memSetWord, _memSetLong
-extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 
 %macro pushaq 0
     push rax
@@ -66,23 +68,23 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 
 
 %macro opfunc 1
-	global _x86_%1
-	_x86_%1:
+	global x86_%1
+	x86_%1:
 %endmacro
 
 %macro opdesc 7
-	global _%1_size
-	_%1_size dw %2
-	global _%1_src
-	_%1_src db %3
-	global _%1_dest
-	_%1_dest db %4
-	global _%1_off1
-	_%1_off1 db %5
-	global _%1_imm
-	_%1_imm db %6
-	global _%1_off3
-	_%1_off3 db %7
+	global %1_size
+	%1_size dw %2
+	global %1_src
+	%1_src db %3
+	global %1_dest
+	%1_dest db %4
+	global %1_off1
+	%1_off1 db %5
+	global %1_imm
+	%1_imm db %6
+	global %1_off3
+	%1_off3 db %7
 %endmacro
 
 %macro ctrlreg_load 1	;5
@@ -107,8 +109,8 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 ; GenReg => edi
 ; SysReg => esi
 ; Size = 27 Bytes
-global _prologue
-_prologue:
+global prologue
+prologue:
 pushaq
 push dword 00      ;4 (JumpAddr)
 mov ebp,[esp+36+4] ;4
@@ -124,16 +126,16 @@ add edx,byte 12    ;3 (PC)
 ;-------------------------------------------------------
 ; normal part par instruction
 ;Size = 7 Bytes
-global _seperator_normal
-_seperator_normal:
+global seperator_normal
+seperator_normal:
 add dword [edx], byte 2   ;3 PC += 2
 add dword [edx+4], byte 1 ;4 Clock += 1
 
 ;------------------------------------------------------
 ; Delay slot part par instruction
 ;Size = 17 Bytes
-global _seperator_delay_slot
-_seperator_delay_slot:
+global seperator_delay_slot
+seperator_delay_slot:
 test dword [esp], 0xFFFFFFFF ; 7
 jnz   .continue               ; 2
 add dword [edx], byte 2      ; 3 PC += 2
@@ -151,8 +153,8 @@ mov  [edx],eax             ; 2
 ;------------------------------------------------------
 ; End part of delay slot
 ;Size = 24 Bytes
-global _seperator_delay_after
-_seperator_delay_after:
+global seperator_delay_after
+seperator_delay_after:
 add dword [edx], byte 2   ;3 PC += 2
 add dword [edx+4], byte 1 ;4 Clock += 1
 pop rax                  ; 1
@@ -162,8 +164,8 @@ ret                       ; 1
 ;-------------------------------------------------------
 ; End of block
 ; Size = 3 Bytes
-global _epilogue
-_epilogue:
+global epilogue
+epilogue:
 pop rax         ;1
 popaq           ;1
 ret             ;1
@@ -171,8 +173,8 @@ ret             ;1
 ;------------------------------------------------------
 ; Jump part
 ; Size = 17 Bytes
-global _PageFlip
-_PageFlip:
+global PageFlip
+PageFlip:
 test dword [esp], 0xFFFFFFFF ; 7
 jz   .continue               ; 2
 mov  eax,[esp]               ; 3
@@ -186,10 +188,10 @@ ret                          ; 1
 ;-------------------------------------------------------
 ; normal part par instruction( for debug build )
 ;Size = 24 Bytes
-global _seperator_d_normal
-_seperator_d_normal:
+global seperator_d_normal
+seperator_d_normal:
 add dword [edx+4],byte 1 ;4 Clock += 1
-mov  eax,_DebugEachClock ;5
+mov  eax,DebugEachClock ;5
 call rax                 ;2
 test eax, 0x01           ;5 finish 
 jz  NEXT_D_INST          ;2
@@ -202,9 +204,9 @@ add dword [edx],byte 2   ;3 PC += 2
 ;------------------------------------------------------
 ; Delay slot part par instruction( for debug build )
 ;Size = 34 Bytes
-global _seperator_d_delay
-_seperator_d_delay:
-mov  eax,_DebugDelayClock ;5
+global seperator_d_delay
+seperator_d_delay:
+mov  eax,DebugDelayClock ;5
 call rax                   ;2
 test dword [esp], 0xFFFFFFFF ; 7
 jnz   .continue               ; 2
@@ -246,7 +248,7 @@ or [ebx],byte 1
 opdesc SLEEP,	14,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc SLEEP
 add dword [edx+4],byte 1   ;4 
-mov  eax,_EachClock ;5
+mov  eax,EachClock ;5
 call rax            ;2
 pop rax             ;1
 popaq               ;1
@@ -499,7 +501,7 @@ mov  ebp,edi            ;2
 add  ebp,byte $00       ;3
 sub  qword [rbp],byte 4 ;4
 push qword [rbp]        ;3
-mov  rax,_memSetLong    ;5
+mov  rax,memSetLong    ;5
 call rax                ;2
 pop rax                ;1
 pop rax                ;1
@@ -514,7 +516,7 @@ mov  rbp,rdi            ;2
 add  rbp,byte $00       ;3
 sub  qword [rbp],byte 4 ;4
 push qword [rbp]        ;3
-mov  rax,_memSetLong    ;5
+mov  rax,memSetLong    ;5
 call rax                ;2
 pop rax                ;1
 pop rax                ;1
@@ -529,7 +531,7 @@ mov  rbp,rdi            ;2
 add  rbp,byte $00       ;3
 sub  qword [rbp],byte 4 ;4
 push qword [rbp]        ;3
-mov  rax,_memSetLong    ;5
+mov  rax,memSetLong    ;5
 call rax                ;2
 pop rax                ;1
 pop rax                ;1
@@ -543,7 +545,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov eax,[ebp]       ;3
 push rax            ;1
-mov rax,_memGetByte ;5
+mov rax,memGetByte ;5
 call rax            ;2
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -559,7 +561,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov eax,[ebp]       ;3
 push rax            ;1
-mov rax,_memGetWord ;5
+mov rax,memGetWord ;5
 call rax            ;2
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -573,7 +575,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov eax,[ebp]       ;3
 push rax            ;1
-mov rax,_memGetLong ;5
+mov rax,memGetLong ;5
 call rax            ;2
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -587,7 +589,7 @@ add ebp,byte $00    ;3
 mov eax,[ebp]       ;3
 inc dword [ebp]     ;3
 push rax            ;1
-mov rax,_memGetByte ;5
+mov rax,memGetByte ;5
 call rax            ;2
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -604,7 +606,7 @@ add ebp,byte $00    ;3
 mov eax,[ebp]       ;3
 add dword [ebp],byte 2 ;4
 push rax            ;1
-mov rax,_memGetWord ;5
+mov rax,memGetWord ;5
 call rax            ;2
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -619,7 +621,7 @@ add ebp,byte $00    ;3
 mov eax,[ebp]       ;3
 add dword [ebp],byte 4 ;4
 push rax            ;1
-mov rax,_memGetLong ;5
+mov rax,memGetLong ;5
 call rax            ;2
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -641,7 +643,7 @@ add eax,dword [esp] ;2
 add eax,byte 4      ;3
 push rdx            ;1
 push rax            ;1
-mov rax,_memGetWord ;3
+mov rax,memGetWord ;3
 call rax            ;3
 pop rdx             ;1
 cwde                ;1
@@ -662,7 +664,7 @@ add eax,dword [esp] ;2
 add eax,byte 4      ;3
 push rdx            ;1
 push rax            ;1
-mov rax,_memGetLong ;3
+mov rax,memGetLong ;3
 call rax            ;3
 pop rdx             ;1
 mov [ebp],eax       ;2
@@ -685,7 +687,7 @@ add ebp,byte $00     ;3
 mov eax,[ebp]        ;3
 add eax,[edi]        ;2
 push rax             ;1
-mov  rax,_memGetByte ;5
+mov  rax,memGetByte ;5
 call rax             ;2
 mov ebp,edi          ;2
 add ebp,byte $00     ;3
@@ -701,7 +703,7 @@ add ebp,byte $00     ;3
 mov eax,[ebp]        ;3
 add eax,[edi]        ;2
 push rax             ;1
-mov  rax,_memGetWord ;5
+mov  rax,memGetWord ;5
 call rax             ;2
 mov ebp,edi          ;2
 add ebp,byte $00     ;3
@@ -716,7 +718,7 @@ add ebp,byte $00     ;3
 mov eax,[ebp]        ;3
 add eax,[edi]        ;2
 push rax             ;1
-mov  rax,_memGetLong ;5
+mov  rax,memGetLong ;5
 call rax             ;2
 mov ebp,edi          ;2
 add ebp,byte $00     ;3
@@ -741,7 +743,7 @@ add  rbp,byte $00    ;3 n(8..11)
 mov  rax,[rbp]       ;3
 add  rax,[rdi]       ;2
 push rax             ;1
-mov  rax,_memSetByte ;5
+mov  rax,memSetByte ;5
 call rax             ;2
 pop rax             ;1
 pop rax             ;1
@@ -756,7 +758,7 @@ add  rbp,byte $00    ;3 n(8..11)
 mov  rax,[rbp]       ;3
 add  rax,[rdi]       ;2
 push rax             ;1
-mov  rax,_memSetWord ;5
+mov  rax,memSetWord ;5
 call rax             ;2
 pop rax             ;1
 pop rax             ;1
@@ -771,7 +773,7 @@ add  ebp,byte $00    ;3 n(8..11)
 mov  rax,[rbp]       ;3
 add  rax,[rdi]       ;2
 push rax             ;1
-mov  rax,_memSetLong ;5
+mov  rax,memSetLong ;5
 call rax             ;2
 pop rax             ;1
 pop rax             ;1
@@ -1049,13 +1051,13 @@ ctrlreg_load 1      ;5
 mov rax,[rbp]       ;3
 add rax, qword [rdi];3
 push rax            ;1
-mov rax, _memGetByte;5
+mov rax, memGetByte;5
 call rax            ;2
 pop rbp             ;1
 and al,byte $00     ;2
 push rax            ;1
 push rbp            ;1
-mov rax, _memSetByte;5
+mov rax, memSetByte;5
 call rax            ;2
 add esp, byte 8     ;3
 pop rdx             ;1
@@ -1069,12 +1071,12 @@ mov  rax, [rbp]       ;3 Get GBR
 add  rax, qword [rdi] ;2 ADD R0
 mov  rdx, rax         ;2 Save Dist addr
 push rax              ;1
-mov  rax, _memGetByte ;5
+mov  rax, memGetByte ;5
 call rax              ;2
 or   al,byte $00      ;2
 push rax              ;1 data
 push rdx              ;1 addr
-mov  rax, _memSetByte ;5
+mov  rax, memSetByte ;5
 call rax              ;2
 pop  rdx              ;1
 pop rax              ;1
@@ -1091,12 +1093,12 @@ mov  eax, [ebp]       ;3 Get GBR
 add  eax, dword [edi] ;2 ADD R0
 mov  edx, eax         ;2 Save Dist addr
 push rax              ;1
-mov  eax, _memGetByte ;5
+mov  eax, memGetByte ;5
 call rax              ;2
 xor   al,byte $00      ;2
 push rax              ;1 data
 push rdx              ;1 addr
-mov  eax, _memSetByte ;5
+mov  eax, memSetByte ;5
 call rax              ;2
 pop  rdx              ;1
 pop rax              ;1
@@ -1111,7 +1113,7 @@ ctrlreg_load 1        ;5
 mov  eax,[ebp]        ;3 Get GBR
 add  eax, dword [edi] ;2 Add R[0]
 push rax              ;1
-mov  eax, _memGetByte ;5
+mov  eax, memGetByte ;5
 call rax              ;2
 and  dword [ebx],0xFFFFFFFE ;6
 and  al,byte $00      ;2
@@ -1202,12 +1204,12 @@ opfunc RTE
 mov  rbp,rdi            ;2
 add  rbp,byte 60        ;3
 push qword [rbp]        ;3
-mov  rax,_memGetLong    ;5
+mov  rax,memGetLong    ;5
 call rax                ;2
 mov  qword [rsp+4],rax  ;4  Get PC
 add  qword [rbp],byte 4 ;4
 push qword [rbp]        ;3
-mov  rax,_memGetLong    ;5  
+mov  rax,memGetLong    ;5  
 call rax                ;2
 and  eax,0x000003f3     ;5  Get SR
 mov  [ebx],eax          ;2
@@ -1222,21 +1224,21 @@ add  rbp,byte 60      ;3
 sub  qword [rbp],4    ;7
 push qword [rbx]      ;2 SR
 push qword [rbp]      ;3
-mov  eax, _memSetLong ;5
+mov  eax, memSetLong ;5
 call rax              ;2
 sub  qword [rbp],4    ;7
 mov  eax,[edx]        ;3 PC
 add  eax,byte 2       ;3
 push rax              ;1
 push qword [rbp]      ;2
-mov  eax, _memSetLong ;5
+mov  eax, memSetLong ;5
 call rax              ;2
 xor  eax,eax          ;2
 mov  al,byte $00      ;2 Get Imm
 shl  eax,2            ;3
 add  eax,[ebx+8]      ;3 ADD VBR
 push rax              ;1
-mov  eax, _memGetLong ;5
+mov  eax, memGetLong ;5
 call rax              ;2
 mov  [edx],eax        ;3
 sub  dword [edx],byte 2     ;3
@@ -1333,7 +1335,7 @@ mov eax,[esi]     ;2
 push rax          ;1
 mov eax,[ebp]     ;2
 push rax          ;1
-mov rax,_memSetLong ;5
+mov rax,memSetLong ;5
 call rax          ;2
 pop rax ;1
 pop rax ;1
@@ -1354,7 +1356,7 @@ mov eax,[esi+4]   ;3
 push rax          ;1
 mov eax,[ebp]     ;2
 push rax          ;1
-mov rax,_memSetLong ;5
+mov rax,memSetLong ;5
 call rax          ;2
 pop rax ;1
 pop rax ;1
@@ -1384,7 +1386,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov eax,[ebp]       ;2
 push rax            ;1
-mov rax,_memGetLong ;5
+mov rax,memGetLong ;5
 call rax            ;2
 and eax,0x3f3       ;5
 mov dword [ebx],eax ;3
@@ -1407,7 +1409,7 @@ add  ebp,byte $00       ;3
 mov  eax,[ebp]          ;2
 add  dword [ebp],byte 4 ;3
 push rax                ;1
-mov  rax,_memGetLong    ;5
+mov  rax,memGetLong    ;5
 call rax                ;2
 mov  ebp,edi            ;2
 add  ebp,byte 68        ;3
@@ -1431,7 +1433,7 @@ add  ebp,byte $00       ;3
 mov  eax,[ebp]          ;2
 add  dword [ebp],byte 4 ;3
 push rax                ;1
-mov  rax,_memGetLong    ;5
+mov  rax,memGetLong    ;5
 call rax                ;2
 mov  ebp,edi            ;2
 add  ebp,byte 72        ;3
@@ -1454,7 +1456,7 @@ mov eax,[esi+8]   ;3
 push rax          ;1
 mov eax,[ebp]     ;2
 push rax          ;1
-mov rax,_memSetLong ;5
+mov rax,memSetLong ;5
 call rax          ;2
 pop rax           ;1
 pop rax           ;1
@@ -1472,7 +1474,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov eax,[ebp]       ;3
 push rax            ;1
-mov rax,_memGetLong ;5
+mov rax,memGetLong ;5
 call rax            ;2
 mov [esi+8],eax     ;3
 add dword [ebp],byte 4 ;4
@@ -1491,7 +1493,7 @@ mov ebp,edi            ;2
 add ebp,byte $00       ;3
 mov eax,[ebp]          ;2
 push rax               ;1
-mov rax,_memGetLong    ;5
+mov rax,memGetLong    ;5
 call rax               ;2
 mov [esi],eax          ;2
 add dword [ebp],byte 4 ;3
@@ -1511,7 +1513,7 @@ mov ebp,edi            ;2
 add ebp,byte $00       ;3
 mov eax,[ebp]          ;2
 push rax               ;1
-mov rax,_memGetLong    ;5
+mov rax,memGetLong    ;5
 call rax               ;2
 mov [esi+4],eax        ;3
 add dword [ebp],byte 4 ;3
@@ -1545,7 +1547,7 @@ shl ax,byte 1       ;1
 add eax,[edx]       ;2 
 add eax,byte 4      ;3
 push rax            ;1
-mov rax,_memGetWord ;5
+mov rax,memGetWord ;5
 call rax            ;2
 cwde                ;1
 mov [ebp],eax       ;3
@@ -1565,7 +1567,7 @@ add rcx,byte 4      ;3
 and rcx,0xFFFFFFFC  ;6
 add rax,rcx         ;2 
 push rax            ;1
-mov rax,_memGetLong ;5
+mov rax,memGetLong ;5
 call rax            ;2
 mov [rbp],rax       ;3
 pop rax             ;1
@@ -1579,7 +1581,7 @@ xor  eax,eax          ;2  Clear Eax
 mov  al,$00           ;2  Get Disp
 add  eax,[ebp]        ;3
 push rax              ;1  Set Func
-mov  rax,_memGetByte  ;5
+mov  rax,memGetByte  ;5
 call rax              ;2
 mov  ebp,edi          ;2  Get R0 adress
 cbw                   ;1  Sign extension byte -> word
@@ -1597,7 +1599,7 @@ mov  al,$00           ;2  Get Disp
 shl  ax, byte 1       ;3  << 1
 add  eax,[ebp]        ;2
 push rax              ;1  Set Func
-mov  rax,_memGetWord  ;5
+mov  rax,memGetWord  ;5
 call rax              ;2
 mov  ebp,edi          ;2  Get R0 adress
 cwde                  ;2  sign 
@@ -1614,7 +1616,7 @@ mov  al,$00           ;2  Get Disp
 shl  ax, byte 2       ;3  << 2
 add  eax,[ebp]        ;2
 push rax              ;1  Set Func
-mov  rax,_memGetLong  ;5
+mov  rax,memGetLong  ;5
 call rax              ;2
 mov  ebp,edi          ;2  Get R0 adress
 add  ebp,byte $00     ;3
@@ -1630,7 +1632,7 @@ and eax,00000000h   ;5  clear eax
 or  eax,byte $00    ;3  Get Disp value
 add rax,[rbp]       ;3  Add Disp value
 push rax            ;1  Set to Func
-mov rax,_memSetByte ;5
+mov rax,memSetByte ;5
 call rax            ;2  Call Func
 pop rax             ;1
 pop rax             ;1
@@ -1645,7 +1647,7 @@ or  eax,byte $00    ;3  Get Disp value
 shl eax,byte 1      ;3  Shift Left
 add eax,[rbp]       ;3  Add Disp value
 push rax            ;1  Set to Func
-mov rax,_memSetWord ;5
+mov rax,memSetWord ;5
 call rax            ;2  Call Func
 pop rax             ;1
 pop rax             ;1
@@ -1663,7 +1665,7 @@ xor  eax,eax         ;2
 or   eax,byte 0      ;3 Get Disp 0..3
 shl  eax,byte 2      ;3
 add  qword [rsp],rax ;2
-mov  rax,_memSetLong ;5
+mov  rax,memSetLong ;5
 call rax             ;2
 pop rax             ;1
 pop rax             ;1
@@ -1676,7 +1678,7 @@ xor  eax,eax           ;2  clear eax
 mov  al,00             ;2  Get Imidiate Value
 add  eax,dword [ebp+68];3  GBR + IMM( Adress for Get Value )
 push rax               ;1
-mov  rax,_memGetByte   ;5
+mov  rax,memGetByte   ;5
 call rax               ;2
 cbw                    ;1
 cwde                   ;1
@@ -1692,7 +1694,7 @@ mov  al,00             ;2  Get Imidiate Value
 shl  ax,byte 1         ;3  Shift left 2
 add  eax,dword [ebp+68];3  GBR + IMM( Adress for Get Value )
 push rax               ;1
-mov  rax,_memGetWord   ;5
+mov  rax,memGetWord   ;5
 call rax               ;2
 cwde                   ;1
 mov  [ebp],eax         ;3
@@ -1707,7 +1709,7 @@ mov  al,00             ;5  Get Imidiate Value
 shl  ax,byte 2         ;3  Shift left 2
 add  eax,dword [ebp+68];3  GBR + IMM( Adress for Get Value )
 push rax               ;1
-mov  rax,_memGetLong   ;5
+mov  rax,memGetLong   ;5
 call rax               ;2
 mov  [ebp],eax         ;3
 pop rax               ;1
@@ -1723,7 +1725,7 @@ mov  rcx,rdi         ;2  Get GBR adress
 add  rcx,byte 68     ;3 
 add  rax,qword [rcx] ;2  GBR + IMM( Adress for Get Value )
 push rax             ;1
-mov  rax,_memSetByte ;5
+mov  rax,memSetByte ;5
 call rax             ;2
 pop rax             ;1
 pop rax             ;1
@@ -1739,7 +1741,7 @@ mov  rcx,rdi         ;2  Get GBR adress
 add  rcx,byte 68     ;3 
 add  rax,qword [rcx] ;2  GBR + IMM( Adress for Get Value )
 push rax             ;1
-mov  rax,_memSetWord ;5
+mov  rax,memSetWord ;5
 call rax             ;2
 pop rax             ;1
 pop rax             ;1
@@ -1755,7 +1757,7 @@ mov  ecx,edi         ;2  Get GBR adress
 add  ecx,byte 68     ;3 
 add  rax,qword [rcx] ;2  GBR + IMM( Adress for Get Value )
 push rax             ;1
-mov  rax,_memSetLong ;5
+mov  rax,memSetLong ;5
 call rax             ;2
 pop rax             ;1
 pop rax             ;1
@@ -1769,7 +1771,7 @@ push qword [rbp]     ;3
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3
 push qword [rbp]     ;3
-mov  rax,_memSetByte ;5
+mov  rax,memSetByte ;5
 call rax             ;2
 pop rax             ;1
 pop rax             ;1
@@ -1783,7 +1785,7 @@ push qword [rbp]      ;3
 mov  rbp,rdi          ;2
 add  rbp,byte $00     ;3
 push qword [rbp]      ;3
-mov  rax,_memSetWord  ;5
+mov  rax,memSetWord  ;5
 call rax              ;2
 pop rax              ;1
 pop rax              ;1
@@ -1796,7 +1798,7 @@ push qword [rbp]     ;3
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3
 push qword [rbp]     ;3
-mov  rax,_memSetLong ;5
+mov  rax,memSetLong ;5
 call rax             ;2
 pop rax             ;1
 pop rax             ;1
@@ -1820,7 +1822,7 @@ mov  ebp,edi             ;2
 add  ebp,byte $00        ;3
 sub  qword [rbp],byte 1  ;4
 push qword [rbp]         ;3 Set addr
-mov  rax,_memSetByte     ;5
+mov  rax,memSetByte     ;5
 call rax                 ;2
 pop rax                 ;1
 pop rax                 ;1
@@ -1834,7 +1836,7 @@ mov  rbp,rdi             ;2
 add  rbp,byte $00        ;3
 sub  qword [rbp],byte 2  ;4
 push qword [rbp]         ;3 Set addr
-mov  rax,_memSetWord     ;5
+mov  rax,memSetWord     ;5
 call rax                 ;2
 pop rax                 ;1
 pop rax                 ;1
@@ -1850,7 +1852,7 @@ mov  rbp,rdi             ;2
 add  rbp,byte $00        ;3
 sub  qword [rbp],byte 4  ;4
 push qword [rbp]         ;3 Set addr
-mov  rax,_memSetLong     ;5
+mov  rax,memSetLong     ;5
 call rax                 ;2
 pop rax                 ;1
 pop rax                 ;1
@@ -1862,7 +1864,7 @@ opfunc TAS
 mov  rbp,rdi             ;2
 add  rbp,byte $00        ;3
 push qword [rbp]         ;3
-mov  rax,_memGetByte     ;5
+mov  rax,memGetByte     ;5
 call rax                 ;2
 and  eax,0x000000FF      ;5
 and  [rbx], byte 0xFE    ;3
@@ -1873,7 +1875,7 @@ NOT_ZERO:
 or   al, byte 0x80        ;3
 push rax                  ;1 
 push qword [rbp]          ;3
-mov  rax,_memSetByte      ;5
+mov  rax,memSetByte      ;5
 call rax                  ;2
 pop rax                   ;1
 pop rax                   ;1
@@ -2272,7 +2274,7 @@ mov  ebp,edi                  ;2
 add  ebp,byte $00             ;3 4..7
 mov  eax,dword [ebp]          ;3
 push rax                      ;1
-mov  rax,_memGetLong          ;5
+mov  rax,memGetLong          ;5
 call rax                      ;2
 mov  edx,eax                  ;2
 add  dword [ebp], 4           ;7 R[n] += 4
@@ -2280,7 +2282,7 @@ mov  ebp,edi                  ;2
 add  ebp,byte $00             ;3 8..11
 mov  eax,dword [ebp]          ;3
 push rax                      ;1
-mov  rax,_memGetLong          ;5 
+mov  rax,memGetLong          ;5 
 call rax                      ;2
 add  dword [ebp], 4           ;7 R[m] += 4 
 push rdi                      ;1 Save GenReg
@@ -2338,7 +2340,7 @@ mov  ebp,edi                  ;2
 add  ebp,byte $00             ;3 4..7
 mov  eax,dword [ebp]          ;3
 push rax                      ;1
-mov  rax,_memGetWord          ;5
+mov  rax,memGetWord          ;5
 call rax                      ;2
 movsx  edx,ax                 ;3
 add  dword [ebp], 2           ;7 R[n] += 2
@@ -2346,7 +2348,7 @@ mov  ebp,edi                  ;2
 add  ebp,byte $00             ;3 8..11
 mov  eax,dword [ebp]          ;3
 push rax                      ;1
-mov  rax,_memGetWord          ;5 
+mov  rax,memGetWord          ;5 
 call rax                      ;2
 add  dword [ebp], 2           ;7 R[m] += 2
 cwde                          ;1 Sigin extention

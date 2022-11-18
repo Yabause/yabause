@@ -418,11 +418,16 @@ extern "C"
 
 #ifdef _WINDOWS
 
+#ifdef _WIN64
+#define dynaLock()
+#define dynaFree()
+#else
 #define dynaLock() __asm {                         \
     __asm push edx /*__asm push ebx*/ \
 }
 #define dynaFree() __asm {/*__asm pop ebx*/          \
    __asm pop edx}
+#endif
 
 #else
 #define dynaLock()

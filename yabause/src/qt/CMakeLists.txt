@@ -29,9 +29,9 @@ if(Qt5_FOUND)
 	find_package(Qt5Multimedia REQUIRED)
 	add_definitions(-DHAVE_QT_MULTIMEDIA=1)
 
-	find_package(Qt5WebEngineWidgets REQUIRED)
-	include_directories(${Qt5WebEngineWidgets_INCLUDE_DIRS})
-	add_definitions(${Qt5WebEngineWidgets_DEFINITIONS}) 
+	#find_package(Qt5WebEngineWidgets REQUIRED)
+	#include_directories(${Qt5WebEngineWidgets_INCLUDE_DIRS})
+	#add_definitions(${Qt5WebEngineWidgets_DEFINITIONS}) 
 
 
     # Since Qt5's cmake script doesn't set it, we will have to
@@ -308,8 +308,13 @@ target_link_libraries( yabause-qt ${zlib_STATIC_LIBRARIES} )
 if(WIN32) 
 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/include )
-target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libssl-1_1.lib)
-target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libcrypto-1_1.lib)
+#target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libssl-1_1.lib)
+#target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libcrypto-1_1.lib)
+
+
+target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libssl.lib)
+target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libcrypto.lib)
+
 
 else()
 	
