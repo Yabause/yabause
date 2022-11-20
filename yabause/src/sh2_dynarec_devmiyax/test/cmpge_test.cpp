@@ -19,6 +19,7 @@ class CmpgeTest : public ::testing::Test {
   }
 
   virtual ~CmpgeTest() {
+    freeMemory();
     delete pctx_;    
   }   
 

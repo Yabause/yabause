@@ -22,6 +22,7 @@ class TrappaTest : public ::testing::Test {
   }
 
   virtual ~TrappaTest() {
+    freeMemory();
     delete pctx_;    
   }   
 

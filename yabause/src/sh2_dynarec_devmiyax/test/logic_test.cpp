@@ -19,6 +19,7 @@ class LogicTest : public ::testing::Test {
   }
 
   virtual ~LogicTest() {
+    freeMemory();
     delete pctx_;    
   }   
 
@@ -67,15 +68,16 @@ TEST_F(LogicTest, andb) {
   pctx_->GetGenRegPtr()[0]=0x000000250; //source
   pctx_->SET_GBR(0x06000000); //source
 
-  memSetWord( 0x06000000, 0xCD29 );
+  memSetWord( 0x06000000, 0xCD29 );  // and.b #0x29, @(r0, gbr)
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop
-  memSetLong( 0x06000250, 0xDEADCAFE );  // nop
+  memSetLong( 0x06000250, 0xDEADCAFE );  //  @(r0, gbr)
 
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0x08ADCAFE, memGetLong(0x06000250) );
+  u32 ans = memGetLong(0x06000250);
+  EXPECT_EQ( 0xde29cafe, ans );
 }
 
 TEST_F(LogicTest, not) {

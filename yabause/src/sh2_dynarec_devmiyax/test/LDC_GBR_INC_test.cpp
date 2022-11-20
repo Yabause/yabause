@@ -22,6 +22,7 @@ class LDC_GBR_INCTest : public ::testing::Test {
   }
 
   virtual ~LDC_GBR_INCTest() {
+    freeMemory();
     delete pctx_;    
   }   
 

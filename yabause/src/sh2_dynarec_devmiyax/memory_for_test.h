@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
  int initMemory();
+ int freeMemory();
  void setromlock( bool lock );
 
 extern SH2_struct *CurrentSH2;

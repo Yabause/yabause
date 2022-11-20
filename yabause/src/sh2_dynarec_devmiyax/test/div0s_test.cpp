@@ -19,6 +19,7 @@ class Div0sTest : public ::testing::Test {
   }
 
   virtual ~Div0sTest() {
+    freeMemory();
     delete pctx_;    
   }   
 

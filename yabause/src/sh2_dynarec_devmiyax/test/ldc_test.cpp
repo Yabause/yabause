@@ -19,6 +19,7 @@ class LdcTest : public ::testing::Test {
   }
 
   virtual ~LdcTest() {
+    freeMemory();
     delete pctx_;    
   }   
 
@@ -120,7 +121,7 @@ TEST_F(LdcTest, ldcvbr) {
   EXPECT_EQ( 0x06000250, pctx_->GET_VBR() );
 }
 
-TEST_F(LdcTest, ldcmvbr) {
+TEST_F(LdcTest, LDC_VBR_INC) {
 
   pctx_->GetGenRegPtr()[1]=0x06000250; //source
 

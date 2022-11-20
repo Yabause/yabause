@@ -314,7 +314,7 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/include )
 
 target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libssl.lib)
 target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libcrypto.lib)
-
+set_target_properties(yabause-qt PROPERTIES LINK_FLAGS "/LARGEADDRESSAWARE:NO")
 
 else()
 	

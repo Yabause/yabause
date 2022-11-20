@@ -22,6 +22,7 @@ class DmuluTest : public ::testing::Test {
   }
 
   virtual ~DmuluTest() {
+    freeMemory();
     delete pctx_;    
   }   
 

@@ -39,10 +39,10 @@ extern "C" {
 #if defined(WEBINTERFACE)
 #define DEBUG_CPU
 #endif
-//#define DEBUG_CPU
-//#define EXECUTE_STAT
-//#define BUILD_INFO
-//#define LOG printf
+#define DEBUG_CPU
+#define EXECUTE_STAT
+#define BUILD_INFO
+#define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
 DynarecSh2 * DynarecSh2::CurrentContext = NULL;
@@ -342,20 +342,41 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define opNULL			x86op_desc(0,0,0,0,0,0,0,0,0,0)
 
 #if defined(_WINDOWS)
-#define PROLOGSIZE		     27    
-#define EPILOGSIZE		      3
-#define SEPERATORSIZE	     10
-#define SEPERATORSIZE_NORMAL 7
-#define SEPERATORSIZE_DEBUG  24
-#define SEPERATORSIZE_DELAY  7
-#define SEPERATORSIZE_DELAY_SLOT  27
-#define SEPERATORSIZE_DELAY_AFTER  10 
-#define SEPERATORSIZE_DELAYD_DEBUG 34
-#define DELAYJUMPSIZE	     17
-#define DALAY_CLOCK_OFFSET 6
-#define DALAY_CLOCK_OFFSET_DEBUG 6
-#define NORMAL_CLOCK_OFFSET 6
-#define NORMAL_CLOCK_OFFSET_DEBUG 3
+
+#if defined(_WIN64)
+  #define PROLOGSIZE		     35    
+  #define SEPERATORSIZE_NORMAL 11
+  #define SEPERATORSIZE_DELAY  7
+  #define SEPERATORSIZE_DELAY_SLOT  38
+  #define SEPERATORSIZE_DELAY_AFTER  19 
+  #define EPILOGSIZE		      8
+  #define DELAYJUMPSIZE	     25
+  #define DALAY_CLOCK_OFFSET 10
+  #define NORMAL_CLOCK_OFFSET 10
+  #define DALAY_CLOCK_OFFSET_DEBUG 6
+  #define NORMAL_CLOCK_OFFSET_DEBUG 3
+  #define SEPERATORSIZE_DEBUG  24
+  #define SEPERATORSIZE_DELAYD_DEBUG 34
+
+#else // 32bit
+  #define PROLOGSIZE		     27    
+  #define EPILOGSIZE		      3
+  #define SEPERATORSIZE	     10
+  #define SEPERATORSIZE_NORMAL 7
+  #define SEPERATORSIZE_DEBUG  24
+  #define SEPERATORSIZE_DELAY  7
+  #define SEPERATORSIZE_DELAY_SLOT  27
+  #define SEPERATORSIZE_DELAY_AFTER  10 
+  #define SEPERATORSIZE_DELAYD_DEBUG 34
+  #define DELAYJUMPSIZE	     17
+  #define DALAY_CLOCK_OFFSET 6
+  #define DALAY_CLOCK_OFFSET_DEBUG 6
+  #define NORMAL_CLOCK_OFFSET 6
+  #define NORMAL_CLOCK_OFFSET_DEBUG 3
+
+
+#endif
+
 #elif defined(AARCH64)
 #define PROLOGSIZE		     (11*4)    
 #define SEPERATORSIZE_NORMAL (2*4)
@@ -1099,7 +1120,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     addr += 2;
 
 #ifdef BUILD_INFO
-    if(show_code_) DumpInstX( i, addr-2, op  );
+    DumpInstX( i, addr-2, op  );
 #endif
 
     instruction_counter++;
@@ -1687,11 +1708,11 @@ inline int DynarecSh2::Execute(){
 #if defined(DEBUG_CPU) || defined(EXECUTE_STAT)
     u32 prepc = GET_PC();
   if (is_slave_) { //statics_trigger_ == COLLECTING) {
-    s64 pretime = YabauseGetTicks();
+    //s64 pretime = YabauseGetTicks();
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
-    compie_statics_[prepc].count++;
-    compie_statics_[prepc].time += YabauseGetTicks() - pretime;
-    compie_statics_[prepc].end_addr = pBlock->e_addr;
+    //compie_statics_[prepc].count++;
+    //compie_statics_[prepc].time += YabauseGetTicks() - pretime;
+    //compie_statics_[prepc].end_addr = pBlock->e_addr;
   }
   else {
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
@@ -1853,7 +1874,7 @@ void DynarecSh2::ShowStatics(){
   case COLLECTING:
     statics_trigger_ = FINISHED;
     while (FINISHED == statics_trigger_) {
-      YabThreadUSleep(10000);
+      //YabThreadUSleep(10000);
     }
     break;
   case FINISHED:
@@ -1881,7 +1902,7 @@ int DynarecSh2::GetCurrentStatics(MapCompileStatics & buf){
 
   statics_trigger_ = REQUESTED;
   while (statics_trigger_!= FINISHED) {
-    YabThreadUSleep(10000);
+    //YabThreadUSleep(10000);
   }
   
   buf = compie_statics_;

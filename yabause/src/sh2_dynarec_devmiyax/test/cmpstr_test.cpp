@@ -19,6 +19,7 @@ class CmpStrTest : public ::testing::Test {
   }
 
   virtual ~CmpStrTest() {
+    freeMemory();
     delete pctx_;    
   }   
 

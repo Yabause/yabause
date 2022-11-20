@@ -19,6 +19,7 @@ class LdsTest : public ::testing::Test {
   }
 
   virtual ~LdsTest() {
+    freeMemory();
     delete pctx_;    
   }   
 
@@ -32,7 +33,7 @@ virtual void TearDown() {
 
 };
 
-TEST_F(LdsTest, ldsmach) {
+TEST_F(LdsTest, LDS_MACH) {
 
   pctx_->GetGenRegPtr()[1]=0x03216721;
 
@@ -49,7 +50,7 @@ TEST_F(LdsTest, ldsmach) {
   EXPECT_EQ( 0x03216721, pctx_->GET_MACH() );
 }
 
-TEST_F(LdsTest, ldsmmach) {
+TEST_F(LdsTest, LDS_MACH_INC) {
 
   pctx_->GetGenRegPtr()[1]=0x06000250;
 
@@ -66,7 +67,7 @@ TEST_F(LdsTest, ldsmmach) {
   EXPECT_EQ( 0x03216721, pctx_->GET_MACH() );
 }
 
-TEST_F(LdsTest, ldsmacl) {
+TEST_F(LdsTest, LDS_MACL) {
 
   pctx_->GetGenRegPtr()[1]=0x03216721;
 
@@ -83,7 +84,7 @@ TEST_F(LdsTest, ldsmacl) {
   EXPECT_EQ( 0x03216721, pctx_->GET_MACL() );
 }
 
-TEST_F(LdsTest, ldsmmacl) {
+TEST_F(LdsTest, LDS_MACL_INC) {
 
   pctx_->GetGenRegPtr()[1]=0x06000250;
 
@@ -100,7 +101,7 @@ TEST_F(LdsTest, ldsmmacl) {
   EXPECT_EQ( 0x03216721, pctx_->GET_MACL() );
 }
 
-TEST_F(LdsTest, ldspr) {
+TEST_F(LdsTest, LDS_PR) {
 
   pctx_->GetGenRegPtr()[1]=0x03216721;
 
@@ -117,7 +118,7 @@ TEST_F(LdsTest, ldspr) {
   EXPECT_EQ( 0x03216721, pctx_->GET_PR() );
 }
 
-TEST_F(LdsTest, ldsmpr) {
+TEST_F(LdsTest, LDS_PR_INC) {
 
   pctx_->GetGenRegPtr()[1]=0x06000250;
 

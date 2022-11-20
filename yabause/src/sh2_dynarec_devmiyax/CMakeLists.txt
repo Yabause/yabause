@@ -21,8 +21,16 @@ set(SOURCES
 if (MSVC)    
   add_definitions(-DHAVE_C99_VARIADIC_MACROS)
   link_directories(${CMAKE_CURRENT_SOURCE_DIR})
-  set (LIBRARIES  ${CMAKE_CURRENT_SOURCE_DIR}/dynalib.obj )
   set (CMAKE_EXE_LINKER_FLAGS /SAFESEH:NO )
+
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    # 64 bits
+    set (LIBRARIES  ${CMAKE_CURRENT_SOURCE_DIR}/dynalib_x86_64.obj )
+  elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    # 32 bits
+    set (LIBRARIES  ${CMAKE_CURRENT_SOURCE_DIR}/dynalib.obj )
+  endif()
+
 else (MSVC)
  set (LIBRARIES  ${CMAKE_CURRENT_SOURCE_DIR}/dynalib.obj )
 
@@ -35,7 +43,8 @@ else (MSVC)
 endif (MSVC)
 
 add_executable (dynalib_test main.cpp ${SOURCES})
-target_link_libraries(dynalib_test ${LIBRARIES} pthread )
+target_link_libraries(dynalib_test ${LIBRARIES} )
+set_target_properties( dynalib_test PROPERTIES LINK_FLAGS "/LARGEADDRESSAWARE:NO")
 
 #--------------------------------------------------------------
 # Google Unit Test Library
@@ -53,6 +62,7 @@ endif()
 
 ExternalProject_Add(googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.12.0
     CMAKE_ARGS -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG:PATH=DebugLibs
     -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE:PATH=ReleaseLibs
     -DCMAKE_CXX_FLAGS=${MSVC_COMPILER_DEFS}
@@ -70,7 +80,9 @@ set(GTEST_INCLUDE_DIRS ${source_dir}/googletest/include )
 
 # Specify MainTest's link libraries
 ExternalProject_Get_Property(googletest binary_dir)
-set(GTEST_LIBS_DIR ${binary_dir}/googlemock/gtest )
+set(GTEST_LIBS_DIR ${binary_dir}/googletest/DebugLibs/ )
+
+#"H:\GitHub\yabasanshiro_master\yabause\src\sh2_dynarec_devmiyax\buildwin64\src\googletest-build\googletest\DebugLibs\gtest_main.lib"
 
 # set runtime directory
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
@@ -88,14 +100,20 @@ file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${SOURCES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)
 
+target_link_libraries( ${PROJECT_TEST_NAME} ${LIBRARIES} )
+set_target_properties( ${PROJECT_TEST_NAME} PROPERTIES LINK_FLAGS "/LARGEADDRESSAWARE:NO")
+
 target_link_libraries(${PROJECT_TEST_NAME}
-    ${GTEST_LIBS_DIR}/libgtest.a
-   ${GTEST_LIBS_DIR}/libgtest_main.a
-   pthread
-   gcov
-   -fprofile-arcs -ftest-coverage 
+   ${GTEST_LIBS_DIR}/gtest_main.lib
+   ${GTEST_LIBS_DIR}/gtest.lib
+   #googletest
+   #pthread
+   #gcov
+   #-fprofile-arcs -ftest-coverage 
 )
         
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
+
+
 
 add_test(test1 ${PROJECT_TEST_NAME})

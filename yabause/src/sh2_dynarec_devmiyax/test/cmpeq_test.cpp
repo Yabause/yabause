@@ -19,6 +19,7 @@ class CmpeqTest : public ::testing::Test {
   }
 
   virtual ~CmpeqTest() {
+    freeMemory();
     delete pctx_;    
   }   
 
@@ -32,7 +33,7 @@ virtual void TearDown() {
 
 };
 
-TEST_F(CmpeqTest, normal) {
+TEST_F(CmpeqTest, CMP_EQ) {
 
  pctx_->GetGenRegPtr()[1]=0x7C; // m
  pctx_->GetGenRegPtr()[2]=0x7C; // m
