@@ -344,13 +344,13 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #if defined(_WINDOWS)
 
 #if defined(_WIN64)
-  #define PROLOGSIZE		     (0x23)    
+  #define PROLOGSIZE		     (0x28)    
   #define SEPERATORSIZE_NORMAL 11
   #define SEPERATORSIZE_DELAY  7
-  #define SEPERATORSIZE_DELAY_SLOT  38
-  #define SEPERATORSIZE_DELAY_AFTER  19 
-  #define EPILOGSIZE		      8
-  #define DELAYJUMPSIZE	     25
+  #define SEPERATORSIZE_DELAY_SLOT  37
+  #define SEPERATORSIZE_DELAY_AFTER  18 
+  #define EPILOGSIZE		      7
+  #define DELAYJUMPSIZE	     23
   #define DALAY_CLOCK_OFFSET 10
   #define NORMAL_CLOCK_OFFSET 10
   #define DALAY_CLOCK_OFFSET_DEBUG 6

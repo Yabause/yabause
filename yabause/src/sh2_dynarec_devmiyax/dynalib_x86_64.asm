@@ -31,7 +31,7 @@
 ; R11 揮発性
 ; R12 [PC] 不揮発性  
 ; R13 不揮発性  
-; R14 不揮発性  
+; R14 Jump Address 不揮発性 ここのアドレスが入っている場合、ジャンプする  
 ; R15 不揮発性
 
 ;最初の 4 つの整数またはポインター パラメーターは 、rcx、 rdx、 r8、r9 レジスタ で 渡されます。
@@ -124,7 +124,7 @@ section .code
 global prologue
 prologue:
 pushaq
-push qword 00      ;4 (JumpAddr)
+mov r14, 00      ;4 (JumpAddr)
 mov rdi,rcx        ;2 (GenReg)
 add rcx,byte 64    ;3
 mov rbx,rcx        ;2 (SR)
@@ -147,15 +147,14 @@ add dword [r12+4], byte 1 ;4 Clock += 1
 ;Size = 17 Bytes
 global seperator_delay_slot
 seperator_delay_slot:
-test dword [rsp], 0xFFFFFFFF ; 7
+test dword r14d, 0xFFFFFFFF ; 7
 jnz   .continue               ; 2
 add dword [r12], byte 2      ; 3 PC += 2
 add dword [r12+4], byte 1    ; 4 Clock += 1
-pop  rax                     ; 1
 popaq                        ; 1
 ret                          ; 1
 .continue
-mov  eax,[rsp]             ; 3
+mov  eax,r14d             ; 3
 sub  eax,byte 2            ; 3
 mov  [r12],eax             ; 2
 
@@ -168,7 +167,6 @@ global seperator_delay_after
 seperator_delay_after:
 add dword [r12], byte 2   ;3 PC += 2
 add dword [r12+4], byte 1 ;4 Clock += 1
-pop rax                  ; 1
 popaq                     ; 1
 ret                       ; 1
 
@@ -177,7 +175,6 @@ ret                       ; 1
 ; Size = 3 Bytes
 global epilogue
 epilogue:
-pop rax         ;1
 popaq           ;1
 ret             ;1
 
@@ -186,11 +183,10 @@ ret             ;1
 ; Size = 17 Bytes
 global PageFlip
 PageFlip:
-test dword [rsp], 0xFFFFFFFF ; 7
+test r14d, 0xFFFFFFFF ; 7
 jz   .continue               ; 2
-mov  eax,[rsp]               ; 3
+mov  eax,r14d               ; 3
 mov  [r12],eax               ; 2
-pop rax                     ; 1
 popaq                        ; 1
 ret                          ; 1
 .continue
@@ -206,7 +202,6 @@ mov  eax,DebugEachClock ;5
 call rax                 ;2
 test eax, 0x01           ;5 finish 
 jz  NEXT_D_INST          ;2
-pop rax                  ;1 
 popaq                    ;1
 ret                      ;1
 NEXT_D_INST:
@@ -219,15 +214,14 @@ global seperator_d_delay
 seperator_d_delay:
 mov  eax,DebugDelayClock ;5
 call rax                   ;2
-test dword [rsp], 0xFFFFFFFF ; 7
+test r14d, 0xFFFFFFFF ; 7
 jnz   .continue               ; 2
 add dword [r12], byte 2      ; 3 PC += 2
 add dword [r12+4], byte 1    ; 4 Clock += 1
-pop rax                     ; 1
 popaq                        ; 1
 ret                          ; 1
 .continue
-mov  eax,[rsp]             ; 3
+mov  eax,r14d             ; 3
 sub  eax,byte 2            ; 3
 mov  [r12],eax             ; 2
 
@@ -256,12 +250,11 @@ opdesc SETT,	4,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc SETT
 or [rbx],byte 1
 
-opdesc SLEEP,	21,0xFF,0xFF,0xFF,0xFF,0xFF
+opdesc SLEEP,	20,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc SLEEP
 add dword [r12+4],byte 1   ;4 
 mov  eax,EachClock ;5
 call rax            ;2
-pop rax             ;1
 popaq               ;1
 ret                 ;1
 
@@ -622,16 +615,17 @@ add rbp,byte $00    ;3
 mov [rbp],eax       ;3
 
 ;?????? need to check
-opdesc MOVW_A, 44,0xff,6,0xff,16,0xff
+opdesc MOVW_A, 47,0xff,6,0xff,16,0xff
 opfunc MOVW_A
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 mov ecx,[r12]       ;2
 and ecx,byte 0xfc   ;3
+mov r13d,ecx
 and ecx,byte 0      ;3
 mov cl,byte $00     ;3
 shl ecx,byte 2      ;3
-add ecx,dword [rsp] ;2
+add ecx,r13d		 ;2
 add ecx,byte 4      ;3
 mov rax,memGetWord ;3
 call rax            ;3
@@ -639,21 +633,21 @@ cwde                ;1
 mov [rbp],eax       ;2
 
 
-opdesc MOVL_A,	47,0xff,6,0xff,16,0xff
+opdesc MOVL_A,	54,0xff,6,0xff,16,0xff
 opfunc MOVL_A
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 mov eax,[r12]       ;2
 and eax,byte 0xfc   ;3
-push rax            ;1
+mov r13d, eax
 and eax,byte 0      ;3
 mov al,byte $00     ;3
 shl eax,byte 2      ;3
-add eax,dword [rsp] ;2
+add eax, r13d       ;2
 add eax,byte 4      ;3
-push r12            ;1
-push rax            ;1
-mov rax,memGetLong ;3
+mov edx, r12d        ;1
+mov ecx, eax        ;1
+mov rax,memGetLong  ;3
 call rax            ;3
 pop r12             ;1
 mov [rbp],eax       ;2
@@ -1090,7 +1084,7 @@ opfunc JMP
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 mov eax,[rbp]       ;2
-mov [rsp],eax       ;3
+mov r14d, eax       ;3
 
 opdesc JSR,		23,0xff,16,0xff,0xff,0xff
 opfunc JSR
@@ -1100,7 +1094,7 @@ mov [rsi+8],eax     ;3
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 mov eax,[rbp]       ;3
-mov [rsp],eax       ;3
+mov r14d, eax       ;3
 
 opdesc BRA,		31,0xff,0xff,0xff,0xff,5
 opfunc BRA
@@ -1113,7 +1107,7 @@ or eax,0xfffff000   ;5
 .continue
 add eax,byte 4      ;3
 add eax,dword [r12] ;2
-mov [rsp],eax       ;3
+mov r14d, eax       ;3
 
 opdesc BSR,		41,0xff,0xff,0xff,0xff,15
 opfunc BSR
@@ -1129,7 +1123,7 @@ or eax,0xfffff000   ;5
 .continue
 add eax,byte 4      ;3
 add eax,dword [r12] ;2
-mov [rsp],eax       ;3
+mov r14d, eax       ;3
 
 opdesc BSRF,		30,0xff,6,0xff,0xff,0xff
 opfunc BSRF
@@ -1141,7 +1135,7 @@ mov [rsi+8],eax     ;3
 mov eax,[r12]       ;3
 add eax,dword [rbp] ;3
 add eax,byte 4      ;3
-mov [rsp],eax       ;3
+mov r14d, eax       ;3
 
 opdesc BRAF,		20,0xff,6,0xff,0xff,0xff
 opfunc BRAF
@@ -1150,13 +1144,13 @@ add rbp,byte $00    ;3
 mov eax,[r12]       ;2
 add eax,dword [rbp] ;3
 add eax,byte 4      ;4
-mov [rsp],eax       ;3
+mov r14d, eax       ;3
 
 
 opdesc RTS,			6,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc RTS
 mov eax,[rsi+8]     ;3
-mov [rsp],eax       ;3
+mov r14d, eax       ;3
 
 opdesc RTE,			59,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc RTE
@@ -1173,7 +1167,7 @@ call rax                ;2
 and  eax,0x000003f3     ;5  Get SR
 mov  [rbx],eax          ;2
 add  [rbp],byte 4 ;4
-mov  [rsp],r13d  ;4  Set PC
+mov  r14d,r13d  ;4  Set PC
 
 opdesc TRAPA,	      77,0xFF,0xFF,0xFF,53,0xFF
 opfunc TRAPA
@@ -1203,7 +1197,7 @@ sub  dword [r12],byte 2     ;3
 
 opdesc BT,		32,0xFF,0xFF,0xFF,18,0xFF
 opfunc BT
-and [rsp],dword 0   ;7
+and r14d,dword 0   ;7
 bt dword [rbx],0    ;4
 jnc .continue       ;2
 and eax,byte 00     ;3
@@ -1211,12 +1205,12 @@ or  eax,byte 00     ;3
 shl eax,byte 1      ;3
 add eax,byte 4      ;3
 add eax,dword [r12] ;2
-mov [rsp],eax       ;3
+mov r14d,eax       ;3
 .continue
 
 opdesc BF,		32,0xFF,0xFF,0xFF,18,0xFF
 opfunc BF
-and [rsp],dword 0   ;7
+and r14d,dword 0   ;7
 bt dword [rbx],0    ;4
 jc .continue        ;2
 and eax,byte 00     ;3
@@ -1224,7 +1218,7 @@ or  eax,byte 00     ;3
 shl eax,byte 1      ;3
 add eax,byte 4      ;3
 add eax,dword [r12] ;2
-mov [rsp],eax       ;3
+mov r14d,eax       ;3
 .continue
 
 opdesc BF_S,		25,0xFF,0xFF,0xFF,11,0xFF
@@ -1236,7 +1230,7 @@ or eax,byte 00      ;3
 shl eax,byte 1      ;3
 add eax,byte 4      ;3
 add eax,dword [r12] ;2
-mov [rsp],eax       ;3
+mov r14d,eax       ;3
 .continue
 
 
