@@ -124,7 +124,7 @@ section .code
 global prologue
 prologue:
 pushaq
-push dword 00      ;4 (JumpAddr)
+push qword 00      ;4 (JumpAddr)
 mov rdi,rcx        ;2 (GenReg)
 add rcx,byte 64    ;3
 mov rbx,rcx        ;2 (SR)
@@ -266,7 +266,7 @@ popaq               ;1
 ret                 ;1
 
 
-opdesc SWAP_W,	21,6,16,0xff,0xff,0xff
+opdesc SWAP_W,	23,6,19,0xff,0xff,0xff
 opfunc SWAP_W
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -276,7 +276,7 @@ mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 mov [rbp],eax       ;2
 
-opdesc SWAP_B,	20,6,15,0xff,0xff,0xff
+opdesc SWAP_B,	22,6,18,0xff,0xff,0xff
 opfunc SWAP_B
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -287,21 +287,21 @@ add rbp,byte $00    ;3
 mov [rbp],eax       ;2
 
 
-opdesc TST,	32,6,13,0xff,0xff,0xff
+opdesc TST,	33,6,16,0xff,0xff,0xff
 opfunc TST
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 mov eax,[rbp]       ;2
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
-test [rbp],eax      ;2
+test dword [rbp],eax      ;2
 getflag 6           ;7
 and dword [rbx],byte 0xfe ;3
-or [rbx],eax        ;2
+or dword [rbx],eax        ;2
 
-opdesc TSTI,	26,0xff,0xff,0xff,7,0xff
+opdesc TSTI,	24,0xff,0xff,0xff,7,0xff
 opfunc TSTI
-mov  ebp,edi        ;2
+mov  rbp,rdi        ;2
 mov  eax,[rbp]      ;3
 test eax,$00        ;5  Imidiate Val
 getflag 6           ;7
@@ -339,7 +339,7 @@ getflag 6           ;7
 and dword [rbx], 0xFFFFFFE ;6
 or [rbx],eax        ;2 
 
-opdesc XTRCT,	26,6,13,0xff,0xff,0xff
+opdesc XTRCT,	27,6,16,0xff,0xff,0xff
 opfunc XTRCT
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -390,7 +390,7 @@ jno	 NO_OVER_FLO      ;2
 or   [rbx], byte 01   ;3
 NO_OVER_FLO
 
-opdesc SUBC,	34,6,13,0xff,0xff,0xff
+opdesc SUBC,	37,6,16,0xff,0xff,0xff
 opfunc SUBC
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -407,7 +407,7 @@ and dword [rbx],byte 0xfe ;3
 SUBC_END:
 
 
-opdesc SUB,		18,6,13,0xff,0xff,0xff
+opdesc SUB,		20,6,16,0xff,0xff,0xff
 opfunc SUB
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -417,7 +417,7 @@ add rbp,byte $00    ;3
 sub [rbp],eax       ;2
 
 
-opdesc NOT,		20,6,15,0xff,0xff,0xff
+opdesc NOT,		22,6,18,0xff,0xff,0xff
 opfunc NOT
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -427,7 +427,7 @@ mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 mov [rbp],eax       ;2
 
-opdesc NEG,		20,6,15,0xff,0xff,0xff
+opdesc NEG,		22,6,18,0xff,0xff,0xff
 opfunc NEG
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -437,7 +437,7 @@ mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 mov [rbp],eax       ;2
 
-opdesc NEGC,	58,6,15,0xff,0xff,0xff
+opdesc NEGC,	54,6,18,0xff,0xff,0xff
 opfunc NEGC
 mov rbp,rdi               ;2
 add rbp,byte $00          ;3
@@ -503,57 +503,50 @@ mov [rbp],eax       ;2
 ;Store Register Opcodes
 ;----------------------
 
-opdesc STC_SR_MEM,	30,0xff,7,0xff,0xff,0xff
+opdesc STC_SR_MEM,	28,0xff,6,0xff,0xff,0xff
 opfunc STC_SR_MEM
-push qword [rbx]        ;2
-mov  ebp,edi            ;2
-add  ebp,byte $00       ;3
-sub  qword [rbp],byte 4 ;4
-push qword [rbp]        ;3
+mov  rbp,rdi            ;2
+add  rbp,byte $00       ;3
+mov  edx, [rbx]        ;2
+sub  dword [rbp],byte 4 ;4
+mov  ecx, [rbp]        ;3
 mov  rax,memSetLong    ;5
 call rax                ;2
-pop rax                ;1
-pop rax                ;1
 
-opdesc STC_GBR_MEM,	41,0xff,18,0xff,0xff,0xff
+
+opdesc STC_GBR_MEM,	36,0xff,16,0xff,0xff,0xff
 opfunc STC_GBR_MEM
 mov  rbp,rdi            ;2
 add  rbp,byte 68        ;3
-mov  rax,[rbp]          ;3
-push rax                ;1
+mov  edx,[rbp]          ;3
 mov  rbp,rdi            ;2
 add  rbp,byte $00       ;3
-sub  qword [rbp],byte 4 ;4
-push qword [rbp]        ;3
+sub  dword [rbp],byte 4 ;4
+mov  ecx, [rbp]        ;3
 mov  rax,memSetLong    ;5
 call rax                ;2
-pop rax                ;1
-pop rax                ;1
 
-opdesc STC_VBR_MEM,	41,0xff,18,0xff,0xff,0xff
+
+opdesc STC_VBR_MEM,	36,0xff,16,0xff,0xff,0xff
 opfunc STC_VBR_MEM
 mov  rbp,rdi            ;2
 add  rbp,byte 72        ;3
-mov  rax,[rbp]          ;3
-push rax                ;1
+mov  edx,[rbp]          ;3
 mov  rbp,rdi            ;2
 add  rbp,byte $00       ;3
-sub  qword [rbp],byte 4 ;4
-push qword [rbp]        ;3
+sub  dword [rbp],byte 4 ;4
+mov  ecx, [rbp]        ;3
 mov  rax,memSetLong    ;5
 call rax                ;2
-pop rax                ;1
-pop rax                ;1
 
 
 ;------------------------------
 
-opdesc MOVBL,	35,6,26,0xff,0xff,0xff
+opdesc MOVBL,	35,6,28,0xff,0xff,0xff
 opfunc MOVBL
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
-mov eax,[rbp]       ;3
-push rax            ;1
+mov ecx,[rbp]       ;3
 mov rax,memGetByte ;5
 call rax            ;2
 mov rbp,rdi         ;2
@@ -561,43 +554,39 @@ add rbp,byte $00    ;3
 cbw                 ;1
 cwde                ;1
 mov [rbp],eax       ;3
-pop rax             ;1
 
 
-opdesc MOVWL,		33,6,26,0xff,0xff,0xff
+opdesc MOVWL,		33,6,28,0xff,0xff,0xff
 opfunc MOVWL
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
-mov eax,[rbp]       ;3
-push rax            ;1
+mov ecx,[rbp]       ;3
 mov rax,memGetWord ;5
 call rax            ;2
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 cwde                ;1
 mov [rbp],eax       ;3
-pop rax             ;1
 
-opdesc MOVL_MEM_REG,		32,6,26,0xff,0xff,0xff
+
+opdesc MOVL_MEM_REG,		32,6,28,0xff,0xff,0xff
 opfunc MOVL_MEM_REG
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
-mov eax,[rbp]       ;3
-push rax            ;1
+mov ecx,[rbp]       ;3
 mov rax,memGetLong ;5
 call rax            ;2
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 mov [rbp],eax       ;3
-pop rax             ;1
 
-opdesc MOVBP,	39,6,30,0xff,0xff,0xff
+
+opdesc MOVBP,	38,6,31,0xff,0xff,0xff
 opfunc MOVBP
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
-mov eax,[rbp]       ;3
+mov ecx,[rbp]       ;3
 inc dword [rbp]     ;3
-push rax            ;1
 mov rax,memGetByte ;5
 call rax            ;2
 mov rbp,rdi         ;2
@@ -605,59 +594,50 @@ add rbp,byte $00    ;3
 cbw                 ;1
 cwde                ;1
 mov [rbp],eax       ;3
-pop rax             ;1
 
-
-opdesc MOVWP,	38,6,31,0xff,0xff,0xff
+opdesc MOVWP,	37,6,32,0xff,0xff,0xff
 opfunc MOVWP
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
-mov eax,[rbp]       ;3
+mov ecx,[rbp]       ;3
 add dword [rbp],byte 2 ;4
-push rax            ;1
 mov rax,memGetWord ;5
 call rax            ;2
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 cwde                ;1
 mov [rbp],eax       ;3
-pop rax             ;1
 
-opdesc MOVLP,	37,6,31,0xff,0xff,0xff
+
+opdesc MOVLP,	36,6,32,0xff,0xff,0xff
 opfunc MOVLP
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
-mov eax,[rbp]       ;3
+mov ecx,[rbp]       ;3
 add dword [rbp],byte 4 ;4
-push rax            ;1
 mov rax,memGetLong ;5
 call rax            ;2
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 mov [rbp],eax       ;3
-pop rax             ;1
 
 ;?????? need to check
-opdesc MOVW_A, 48,0xff,6,0xff,16,0xff
+opdesc MOVW_A, 44,0xff,6,0xff,16,0xff
 opfunc MOVW_A
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
-mov eax,[r12]       ;2
-and eax,byte 0xfc   ;3
-push rax            ;1
-and eax,byte 0      ;3
-mov al,byte $00     ;3
-shl eax,byte 2      ;3
-add eax,dword [rsp] ;2
-add eax,byte 4      ;3
-push r12            ;1
-push rax            ;1
+mov ecx,[r12]       ;2
+and ecx,byte 0xfc   ;3
+and ecx,byte 0      ;3
+mov cl,byte $00     ;3
+shl ecx,byte 2      ;3
+add ecx,dword [rsp] ;2
+add ecx,byte 4      ;3
 mov rax,memGetWord ;3
 call rax            ;3
-pop r12             ;1
 cwde                ;1
 mov [rbp],eax       ;2
-pop rax             ;1
+
 
 opdesc MOVL_A,	47,0xff,6,0xff,16,0xff
 opfunc MOVL_A
@@ -679,7 +659,7 @@ pop r12             ;1
 mov [rbp],eax       ;2
 pop rax             ;1
 
-opdesc MOVI,	14,0xff,6,0xff,9,0xff
+opdesc MOVI,	15,0xff,6,0xff,11,0xff
 opfunc MOVI
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -689,13 +669,12 @@ mov [rbp],eax       ;3
 
 ;----------------------
 
-opdesc MOVBL0,	38,6,29,0xff,0xff,0xff
+opdesc MOVBL0,	38,6,31,0xff,0xff,0xff
 opfunc MOVBL0
 mov rbp,rdi          ;2
 add rbp,byte $00     ;3
-mov eax,[rbp]        ;3
-add eax,[edi]        ;2
-push rax             ;1
+mov ecx,[rbp]        ;3
+add ecx,[edi]        ;2
 mov  rax,memGetByte ;5
 call rax             ;2
 mov rbp,rdi          ;2
@@ -703,36 +682,33 @@ add rbp,byte $00     ;3
 cbw                  ;1
 cwde                 ;1
 mov [rbp],eax        ;3
-pop rax             ;1
 
-opdesc MOVWL0,	36,6,29,0xff,0xff,0xff
+opdesc MOVWL0,	36,6,31,0xff,0xff,0xff
 opfunc MOVWL0
 mov rbp,rdi          ;2
 add rbp,byte $00     ;3
-mov eax,[rbp]        ;3
-add eax,[edi]        ;2
-push rax             ;1
-mov  rax,memGetWord ;5
+mov ecx,[rbp]        ;3
+add ecx,[edi]        ;2
+mov rax,memGetWord ;5
 call rax             ;2
 mov rbp,rdi          ;2
 add rbp,byte $00     ;3
 cwde                 ;1
 mov [rbp],eax        ;3
-pop rax             ;1
 
-opdesc MOVLL0,	35,6,29,0xff,0xff,0xff
+
+opdesc MOVLL0,	35,6,31,0xff,0xff,0xff
 opfunc MOVLL0
 mov rbp,rdi          ;2
 add rbp,byte $00     ;3
-mov eax,[rbp]        ;3
-add eax,[edi]        ;2
-push rax             ;1
+mov ecx,[rbp]        ;3
+add ecx,[edi]        ;2
 mov  rax,memGetLong ;5
 call rax             ;2
 mov rbp,rdi          ;2
 add rbp,byte $00     ;3
 mov [rbp],eax        ;3
-pop rax             ;1
+
 
 opdesc MOVT,		17,0xff,6,0xff,0xff,0xff
 opfunc MOVT
@@ -742,56 +718,48 @@ mov eax,[rbx]       ;2
 and dword eax,1     ;5
 mov [rbp],eax       ;3
 
-opdesc MOVBS0,	39,6,16,0xff,0xff,0xff
+opdesc MOVBS0,	34,6,16,0xff,0xff,0xff
 opfunc MOVBS0
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3 m(4..7)
-push qword [rbp]     ;3
+mov  edx,[rbp]       ;3
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3 n(8..11)
-mov  rax,[rbp]       ;3
-add  rax,[rdi]       ;2
-push rax             ;1
-mov  rax,memSetByte ;5
+mov  ecx,[rbp]       ;3
+add  ecx,[rdi]       ;2
+mov  rax,memSetByte  ;5
 call rax             ;2
-pop rax             ;1
-pop rax             ;1
 
-opdesc MOVWS0, 39,6,16,0xff,0xff,0xff
+
+opdesc MOVWS0, 34,6,16,0xff,0xff,0xff
 opfunc MOVWS0
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3 m(4..7)
-push qword [rbp]     ;3
+mov  edx, [rbp]     ;3
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3 n(8..11)
-mov  rax,[rbp]       ;3
-add  rax,[rdi]       ;2
-push rax             ;1
+mov  ecx,[rbp]       ;3
+add  ecx,[rdi]       ;2
 mov  rax,memSetWord ;5
 call rax             ;2
-pop rax             ;1
-pop rax             ;1
 
-opdesc MOVLS0,	37,6,14,0xff,0xff,0xff
+opdesc MOVLS0,	34,6,16,0xff,0xff,0xff
 opfunc MOVLS0
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3 m(4..7)
-push qword [rbp]     ;3
-mov  ebp,edi         ;2
-add  ebp,byte $00    ;3 n(8..11)
-mov  rax,[rbp]       ;3
-add  rax,[rdi]       ;2
-push rax             ;1
+mov  edx, [rbp]     ;3
+mov  rbp,rdi         ;2
+add  rbp,byte $00    ;3 n(8..11)
+mov  ecx,[rbp]       ;3
+add  ecx,[rdi]       ;2
 mov  rax,memSetLong ;5
 call rax             ;2
-pop rax             ;1
-pop rax             ;1
 
 ;===========================================================================
 ;Verified Opcodes
 ;===========================================================================
 
-opdesc DT,		24,0xff,6,0xff,0xff,0xff
+opdesc DT,		22,0xff,6,0xff,0xff,0xff
 opfunc DT
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -887,7 +855,7 @@ jle .continue       ;2
 or [rbx],byte 1     ;3 
 .continue
 
-opdesc ROTL,	28,0xff,6,0xff,0xff,0xff
+opdesc ROTL,	25,0xff,6,0xff,0xff,0xff
 opfunc ROTL
 mov rbp,rdi               ;2
 add rbp,byte $00          ;3
@@ -898,7 +866,7 @@ or [rbx],eax              ;2
 shl dword [rbp],byte 1    ;4
 or [rbp],eax              ;2
 
-opdesc ROTR,	30,0xff,6,0xff,0xff,0xff
+opdesc ROTR,	27,0xff,6,0xff,0xff,0xff
 opfunc ROTR
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -910,7 +878,7 @@ shr dword [rbp],1   ;2
 shl eax,byte 31     ;3
 or [rbp],eax        ;2
 
-opdesc ROTCL,	36,0xff,6,0xff,0xff,0xff
+opdesc ROTCL,	32,0xff,6,0xff,0xff,0xff
 opfunc ROTCL
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -924,7 +892,7 @@ shl dword [rbp],byte 1 ;4
 or [rbp],eax        ;2
 
 
-opdesc ROTCR,	42,0xff,6,0xff,0xff,0xff
+opdesc ROTCR,	38,0xff,6,0xff,0xff,0xff
 opfunc ROTCR
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -938,7 +906,7 @@ or [rbx],ecx        ;2
 shr dword [rbp],byte 1 ;4
 or [rbp],eax        ;2
 
-opdesc SHL,		24,0xff,6,0xff,0xff,0xff
+opdesc SHL,		22,0xff,6,0xff,0xff,0xff
 opfunc SHL
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -948,7 +916,7 @@ and dword [rbx],byte 0xfe ;3
 or [rbx],eax        ;2
 shl dword [rbp],byte 1 ;4
 
-opdesc SHLR,	29,0xff,6,0xff,0xff,0xff
+opdesc SHLR,	27,0xff,6,0xff,0xff,0xff
 opfunc SHLR
 mov rbp,rdi                 ;2
 add rbp,byte $00            ;3
@@ -971,7 +939,7 @@ shr dword [rbp],byte 1      ;4
 ;shr dword [rbp],byte 1 ;4
 ;or [rbp],eax        ;2
 
-opdesc SHAR,	26,0xff,6,0xff,0xff,0xff
+opdesc SHAR,	24,0xff,6,0xff,0xff,0xff
 opfunc SHAR
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -983,37 +951,37 @@ sar dword [rbp],byte 1 ;4
 
 
 
-opdesc SHLL2,	10,0xff,6,0xff,0xff,0xff
+opdesc SHLL2,	11,0xff,6,0xff,0xff,0xff
 opfunc SHLL2
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 shl dword [rbp],byte 2 ;4
 
-opdesc SHLR2,	10,0xff,6,0xff,0xff,0xff
+opdesc SHLR2,	11,0xff,6,0xff,0xff,0xff
 opfunc SHLR2
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 shr dword [rbp],byte 2 ;4
 
-opdesc SHLL8,	10,0xff,6,0xff,0xff,0xff
+opdesc SHLL8,	11,0xff,6,0xff,0xff,0xff
 opfunc SHLL8
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 shl dword[rbp],byte 8  ;4
 
-opdesc SHLR8,	10,0xff,6,0xff,0xff,0xff
+opdesc SHLR8,	11,0xff,6,0xff,0xff,0xff
 opfunc SHLR8
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 shr dword [rbp],byte 8 ;4
 
-opdesc SHLL16,	10,0xff,6,0xff,0xff,0xff
+opdesc SHLL16,	11,0xff,6,0xff,0xff,0xff
 opfunc SHLL16
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 shl dword [rbp],byte 16 ;4
 
-opdesc SHLR16,	10,0xff,6,0xff,0xff,0xff
+opdesc SHLR16,	11,0xff,6,0xff,0xff,0xff
 opfunc SHLR16
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -1053,70 +1021,58 @@ add rbp,byte $00    ;3
 add dword [rbp],byte $00 ;4
 
 
-opdesc AND_B,	40,0xff,0xff,0xff,25,0xff
+opdesc AND_B,	42,0xff,0xff,0xff,26,0xff
 opfunc AND_B
-ctrlreg_load 1      ;5
+ctrlreg_load 1      ;5 GBR to rbp
 mov ecx,[rbp]       ;3
 add ecx, dword [rdi];3
+push rcx
 mov rax, memGetByte;5
 call rax            ;2
 and al,byte $00     ;2
-mov ecx,eax         ;3
+pop rcx             ;  第一引数アドレス
+mov edx,eax         ;3   第２引数値
 mov rax, memSetByte;5
 call rax            ;2
 
 
 
-opdesc OR_B,	49,0xff,0xff,0xff,30,0xff
+opdesc OR_B,	42,0xff,0xff,0xff,26,0xff
 opfunc OR_B
-push r12
-mov  ebp,edi          ;2
-add  ebp,byte 68      ;3
-mov  rax, [rbp]       ;3 Get GBR
-add  rax, qword [rdi] ;2 ADD R0
-mov  r12, rax         ;2 Save Dist addr
-push rax              ;1
+ctrlreg_load 1      ;5 GBR to rbp
+mov  ecx, [rbp]       ;3 Get GBR
+add  ecx, dword [rdi] ;2 ADD R0
+push rcx         ;2 Save Dist addr
 mov  rax, memGetByte ;5
 call rax              ;2
 or   al,byte $00      ;2
-push rax              ;1 data
-push r12              ;1 addr
+pop  rcx             ;  第一引数アドレス
+mov  edx,eax
 mov  rax, memSetByte ;5
 call rax              ;2
-pop  r12              ;1
-pop rax              ;1
-pop rax              ;1
-pop  r12              ;1
 
 
-opdesc XOR_B,	38,0xff,0xff,0xff,24,0xff
+opdesc XOR_B,	42,0xff,0xff,0xff,26,0xff
 opfunc XOR_B
-mov  ebp,edi          ;2
-add  ebp,byte 68      ;3
-mov  eax, [rbp]       ;3 Get GBR
-add  eax, dword [edi] ;2 ADD R0
-mov  edx, eax         ;2 Save Dist addr
-push rax              ;1
-mov  eax, memGetByte ;5
+ctrlreg_load 1      ;5 GBR to rbp
+mov  ecx, [rbp]       ;3 Get GBR
+add  ecx, dword [rdi] ;2 ADD R0
+push rcx         ;2 Save Dist addr
+mov  rax, memGetByte ;5
 call rax              ;2
-xor   al,byte $00      ;2
-push rax              ;1 data
-push r12              ;1 addr
-mov  eax, memSetByte ;5
+xor  al,byte $00      ;2
+pop  rcx             ;  第一引数アドレス
+mov  edx,eax
+mov  rax, memSetByte ;5
 call rax              ;2
-pop  r12              ;1
-pop rax              ;1
-pop rax              ;1
 
 
 
-
-opdesc TST_B,	38,0xff,0xff,0xff,28,0xff
+opdesc TST_B,	35,0xff,0xff,0xff,27,0xff
 opfunc TST_B
 ctrlreg_load 1        ;5
-mov  eax,[rbp]        ;3 Get GBR
-add  eax, dword [edi] ;2 Add R[0]
-push rax              ;1
+mov  ecx,[rbp]        ;3 Get GBR
+add  ecx, dword [edi] ;2 Add R[0]
 mov  eax, memGetByte ;5
 call rax              ;2
 and  dword [rbx],0xFFFFFFFE ;6
@@ -1125,7 +1081,6 @@ cmp  al,0             ;2
 jne .continue         ;2
 or dword [rbx],byte 1 ;3
 .continue
-pop rax               ;1
 
 ;Jump Opcodes
 ;------------
@@ -1203,58 +1158,50 @@ opfunc RTS
 mov eax,[rsi+8]     ;3
 mov [rsp],eax       ;3
 
-opdesc RTE,			62,0xFF,0xFF,0xFF,0xFF,0xFF
+opdesc RTE,			59,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc RTE
 mov  rbp,rdi            ;2
 add  rbp,byte 60        ;3
-push qword [rbp]        ;3
+mov  ecx, [rbp]        ;3
 mov  rax,memGetLong    ;5
 call rax                ;2
-mov  qword [rsp+4],rax  ;4  Get PC
-add  qword [rbp],byte 4 ;4
-push qword [rbp]        ;3
+mov  r13d,eax  ;4  Set PC
+add  [rbp],byte 4 ;4
+mov  ecx, [rbp]        ;3
 mov  rax,memGetLong    ;5  
 call rax                ;2
 and  eax,0x000003f3     ;5  Get SR
 mov  [rbx],eax          ;2
-add  qword [rbp],byte 4 ;4
-pop rax                ;1
-pop rax                ;1
+add  [rbp],byte 4 ;4
+mov  [rsp],r13d  ;4  Set PC
 
-opdesc TRAPA,	      83,0xFF,0xFF,0xFF,50,0xFF
+opdesc TRAPA,	      77,0xFF,0xFF,0xFF,53,0xFF
 opfunc TRAPA
 mov  rbp,rdi          ;2
 add  rbp,byte 60      ;3
-sub  qword [rbp],4    ;7
-push qword [rbx]      ;2 SR
-push qword [rbp]      ;3
+sub  dword [rbp],4    ;7
+mov edx, [rbx]      ;2 SR
+mov ecx, [rbp]      ;3
 mov  eax, memSetLong ;5
 call rax              ;2
-sub  qword [rbp],4    ;7
-mov  eax,[r12]        ;3 PC
-add  eax,byte 2       ;3
-push rax              ;1
-push qword [rbp]      ;2
+sub  dword [rbp],4    ;7
+mov  edx,[r12]        ;3 PC
+add  edx,byte 2       ;3
+mov ecx, [rbp]      ;2
 mov  eax, memSetLong ;5
 call rax              ;2
-xor  eax,eax          ;2
-mov  al,byte $00      ;2 Get Imm
-shl  eax,2            ;3
-add  eax,[ebx+8]      ;3 ADD VBR
-push rax              ;1
+xor  ecx,ecx          ;2
+mov  cl,byte $00      ;2 Get Imm
+shl  ecx,2            ;3
+add  ecx,[ebx+8]      ;3 ADD VBR
 mov  eax, memGetLong ;5
 call rax              ;2
 mov  [r12],eax        ;3
 sub  dword [r12],byte 2     ;3
-pop rax              ;1
-pop rax              ;1
-pop rax              ;1
-pop rax              ;1
-pop rax              ;1
 
 
 
-opdesc BT,		32,0xFF,0xFF,0xFF,17,0xFF
+opdesc BT,		32,0xFF,0xFF,0xFF,18,0xFF
 opfunc BT
 and [rsp],dword 0   ;7
 bt dword [rbx],0    ;4
@@ -1303,25 +1250,23 @@ add rbp,byte $00
 mov eax,[rbx]
 mov [rbp],eax
 
-opdesc STC_GBR,	22,0xFF,6,0xFF,0xFF,0xFF
+opdesc STC_GBR,	24,0xFF,6,0xFF,0xFF,0xFF
 opfunc STC_GBR
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
-push rbp            ;1
+mov r13,rbp            ;1
 ctrlreg_load 1      ;5
-mov rax,[rbp]       ;2
-pop rbp             ;1
-mov [rbp],rax       ;2
+mov eax,[rbp]       ;2
+mov [r13],eax       ;2
 
-opdesc STC_VBR,	22,0xFF,6,0xFF,0xFF,0xFF
+opdesc STC_VBR,	24,0xFF,6,0xFF,0xFF,0xFF
 opfunc STC_VBR
 mov rbp,rdi
 add rbp,byte $00
-push rbp
+mov r13,rbp            ;1
 ctrlreg_load 2
-mov rax,[rbp]
-pop rbp
-mov [rbp],rax
+mov eax,[rbp]
+mov [r13],eax
 
 opdesc STS_MACH, 12,0xFF,6,0xFF,0xFF,0xFF
 opfunc STS_MACH
@@ -1330,19 +1275,16 @@ add rbp,byte $00  ;3
 mov eax,[rsi]     ;2
 mov [rbp],eax     ;2
 
-opdesc STS_MACH_DEC,	33,0xFF,6,0xFF,0xFF,0xFF
+opdesc STS_MACH_DEC,	28,0xFF,6,0xFF,0xFF,0xFF
 opfunc STS_MACH_DEC
 mov rbp,rdi       ;2
 add rbp,byte $00  ;3
 sub dword [rbp],byte 4 ;3
-mov eax,[rsi]     ;2
-push rax          ;1
-mov eax,[rbp]     ;2
-push rax          ;1
+mov edx,[rsi]     ;2
+mov ecx,[rbp]     ;2
 mov rax,memSetLong ;5
 call rax          ;2
-pop rax ;1
-pop rax ;1
+
 
 opdesc STS_MACL, 13,0xFF,6,0xFF,0xFF,0xFF
 opfunc STS_MACL
@@ -1351,19 +1293,15 @@ add rbp,byte $00  ;3
 mov eax,[rsi+4]   ;3
 mov [rbp],eax     ;2
 
-opdesc STS_MACL_DEC,	34,0xFF,6,0xFF,0xFF,0xFF
+opdesc STS_MACL_DEC,	29,0xFF,6,0xFF,0xFF,0xFF
 opfunc STS_MACL_DEC
 mov rbp,rdi       ;2
 add rbp,byte $00  ;3
 sub dword [rbp],byte 4 ;3
-mov eax,[rsi+4]   ;3
-push rax          ;1
-mov eax,[rbp]     ;2
-push rax          ;1
+mov edx,[rsi+4]   ;3
+mov ecx,[rbp]     ;2
 mov rax,memSetLong ;5
 call rax          ;2
-pop rax ;1
-pop rax ;1
 
 
 ;opdesc LDC_SR,	9,0xFF,6,0xFF,0xFF,0xFF
@@ -1448,19 +1386,16 @@ add rbp,byte $00    ;3
 mov eax,[rsi+8]     ;3
 mov [rbp],eax       ;3
 
-opdesc STSMPR,	34,0xFF,6,0xFF,0xFF,0xFF
+opdesc STSMPR,	29,0xFF,6,0xFF,0xFF,0xFF
 opfunc STSMPR
 mov rbp,rdi       ;2
 add rbp,byte $00  ;3
 sub dword [rbp],byte 4 ;3
-mov eax,[rsi+8]   ;3
-push rax          ;1
-mov eax,[rbp]     ;2
-push rax          ;1
+mov edx,[rsi+8]   ;3
+mov ecx,[rbp]     ;2
 mov rax,memSetLong ;5
 call rax          ;2
-pop rax           ;1
-pop rax           ;1
+
 
 opdesc LDS_PR,		13,0xFF,6,0xFF,0xFF,0xFF
 opfunc LDS_PR
@@ -1505,7 +1440,7 @@ mov eax,[rbp]       ;2
 mov [rsi+4],eax     ;2
 
 
-opdesc LDS_MACL_INC,	31,0xFF,6,0xFF,0xFF,0xFF
+opdesc LDS_MACL_INC,	29,0xFF,6,0xFF,0xFF,0xFF
 opfunc LDS_MACL_INC
 mov rbp,rdi            ;2
 add rbp,byte $00       ;3
@@ -1519,46 +1454,42 @@ add dword [rbp],byte 4 ;3
 ;Mov Opcodes
 ;-----------
 
-opdesc MOVA,	28,0xFF,0xFF,0xFF,15,0xFF
+opdesc MOVA,	25,0xFF,0xFF,0xFF,16,0xFF
 opfunc MOVA
-mov rbp,rdi         ;2
 mov eax,[r12]       ;2
 add eax,byte 4      ;3
 and eax,byte 0xfc   ;3
-push rax            ;1
+mov r13d,eax
 xor eax,eax         ;2
 mov al,byte $00     ;3
 shl eax,byte 2      ;3
-add eax,dword [rsp] ;2
-mov [rbp],eax       ;2
-pop rax             ;1
+add eax,r13d        ;2
+mov [rdi],eax       ;2
 
 
-opdesc MOVWI,	38,0xFF,6,0xFF,8,0xFF
+
+opdesc MOVWI,	38,0xFF,6,0xFF,10,0xFF
 opfunc MOVWI
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
-xor eax,eax         ;2
-mov al,00           ;2
-shl ax,byte 1       ;1
-add eax,[r12]       ;2 
-add eax,byte 4      ;3
-push rax            ;1
+xor ecx,ecx         ;2
+mov cl,00           ;2
+shl cx,byte 1       ;1
+add ecx,[r12]       ;2 
+add ecx,byte 4      ;3
 mov rax,memGetWord ;5
 call rax            ;2
 cwde                ;1
 mov [rbp],eax       ;3
-pop rax             ;1
 
 
-opdesc MOVLI,       48,0xFF,6,0xFF,11,0xFF
+opdesc MOVLI,       46,0xFF,6,0xFF,11,0xFF
 opfunc MOVLI
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 xor rax,rax         ;2
 mov al,00           ;2
 shl ax,byte 2       ;3
-push rcx            ;1
 mov ecx,[r12]       ;2
 add ecx,byte 4      ;3
 and ecx,0xFFFFFFFC  ;6
@@ -1566,240 +1497,208 @@ add ecx,eax         ;2
 mov rax,memGetLong ;5
 call rax            ;2
 mov [rbp],eax       ;3
-pop rcx             ;1
 
-opdesc MOVBL4, 36,6,0xFF,8,0xFF,0xFF
+
+opdesc MOVBL4, 35,6,0xFF,10,0xFF,0xFF
 opfunc MOVBL4
-mov  ebp,edi          ;2  Get R0 adress
-add  ebp,byte $00     ;3
-xor  eax,eax          ;2  Clear Eax
-mov  al,$00           ;2  Get Disp
-add  eax,[rbp]        ;3
-push rax              ;1  Set Func
+mov  rbp,rdi          ;2  Get R0 adress
+add  rbp,byte $00     ;3
+xor  ecx,ecx          ;2  Clear Eax
+mov  cl,$00           ;2  Get Disp
+add  ecx,[rbp]        ;3
 mov  rax,memGetByte  ;5
 call rax              ;2
-mov  ebp,edi          ;2  Get R0 adress
+mov  rbp,rdi          ;2  Get R0 adress
 cbw                   ;1  Sign extension byte -> word
 cwde                  ;1  Sign extension word -> dword
 mov  [rbp],eax        ;3
-pop rax              ;1
 
 
-opdesc MOVWL4, 38,6,0xFF,8,0xFF,0xFF
+opdesc MOVWL4, 37,6,0xFF,10,0xFF,0xFF
 opfunc MOVWL4
-mov  ebp,edi          ;2  Get R0 adress
-add  ebp,byte $00     ;3
-xor  eax,eax          ;2  Clear Eax
-mov  al,$00           ;2  Get Disp
-shl  ax, byte 1       ;3  << 1
-add  eax,[rbp]        ;2
-push rax              ;1  Set Func
+mov  rbp,rdi          ;2  Get R0 adress
+add  rbp,byte $00     ;3
+xor  ecx,ecx          ;2  Clear Eax
+mov  cl,$00           ;2  Get Disp
+shl  cx, byte 1       ;3  << 1
+add  ecx,[rbp]        ;2
 mov  rax,memGetWord  ;5
 call rax              ;2
-mov  ebp,edi          ;2  Get R0 adress
+mov  rbp,rdi          ;2  Get R0 adress
 cwde                  ;2  sign 
 mov  [rbp],eax        ;3
-pop rax              ;1
 
 
-opdesc MOVLL4, 40,6,34,8,0xFF,0xFF
+opdesc MOVLL4, 40,6,36,10,0xFF,0xFF
 opfunc MOVLL4
-mov  ebp,edi          ;2  Get R0 adress
-add  ebp,byte $00     ;3
-xor  eax,eax          ;2  Clear Eax
-mov  al,$00           ;2  Get Disp
-shl  ax, byte 2       ;3  << 2
-add  eax,[rbp]        ;2
-push rax              ;1  Set Func
+mov  rbp,rdi          ;2  Get R0 adress
+add  rbp,byte $00     ;3
+xor  ecx,ecx          ;2  Clear Eax
+mov  cl,$00           ;2  Get Disp
+shl  cx, byte 2       ;3  << 2
+add  ecx,[rbp]        ;2
 mov  rax,memGetLong  ;5
 call rax              ;2
-mov  ebp,edi          ;2  Get R0 adress
-add  ebp,byte $00     ;3
+mov  rbp,rdi          ;2  Get R0 adress
+add  rbp,byte $00     ;3
 mov  [rbp],eax        ;3
-pop rax              ;1
+
  
-opdesc MOVBS4,	36,8,0xFF,16,0xFF,0xFF
+opdesc MOVBS4,	35,9,0xFF,18,0xFF,0xFF
 opfunc MOVBS4
 mov rbp,rdi         ;2  Get R0 address
-push qword [rbp]    ;3  Set to Func
+mov edx, [rbp]      ;3  Set to Func
 add rbp,byte $00    ;3  Get Imidiate value R[n]
-and eax,00000000h   ;5  clear eax
-or  eax,byte $00    ;3  Get Disp value
-add rax,[rbp]       ;3  Add Disp value
-push rax            ;1  Set to Func
-mov rax,memSetByte ;5
+and ecx,00000000h   ;5  clear eax
+or  ecx,byte $00    ;3  Get Disp value
+add rcx,[rbp]       ;3  Add Disp value
+mov rax,memSetByte  ;5
 call rax            ;2  Call Func
-pop rax             ;1
-pop rax             ;1
 
-opdesc MOVWS4,	38,8,0xFF,16,0xFF,0xFF
+opdesc MOVWS4,	37,9,0xFF,18,0xFF,0xFF
 opfunc MOVWS4
 mov rbp,rdi         ;2  Get R0 address
-push qword [rbp]    ;3  Set to Func
+mov edx, [rbp]      ;3  Set to Func
 add rbp,byte $00    ;3  Get Imidiate value R[n]
-and eax,00000000h   ;5  clear eax
-or  eax,byte $00    ;3  Get Disp value
-shl eax,byte 1      ;3  Shift Left
-add eax,[rbp]       ;3  Add Disp value
-push rax            ;1  Set to Func
+and ecx,00000000h   ;5  clear eax
+or  ecx,byte $00    ;3  Get Disp value
+shl ecx,byte 1      ;3  Shift Left
+add ecx,[rbp]       ;3  Add Disp value
 mov rax,memSetWord ;5
 call rax            ;2  Call Func
-pop rax             ;1
-pop rax             ;1
 
 
-opdesc MOVLS4,	46,6,16,24,0xFF,0xFF
+opdesc MOVLS4,	42,6,16,24,0xFF,0xFF
 opfunc MOVLS4
 mov  rbp,rdi         ;2 
 add  rbp,byte $00    ;3 Get m 4..7
-push qword [rbp]     ;3
+mov  edx, [rbp]     ;3
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3 Get n 8..11
-push qword [rbp]     ;3
+mov  ecx, [rbp]     ;3
 xor  eax,eax         ;2
 or   eax,byte 0      ;3 Get Disp 0..3
 shl  eax,byte 2      ;3
-add  qword [rsp],rax ;2
+add  ecx,eax ;2
 mov  rax,memSetLong ;5
 call rax             ;2
-pop rax             ;1
-pop rax             ;1
 
  
-opdesc MOVBLG,    31,0xFF,0xFF,0xFF,5,0xFF
+opdesc MOVBLG,    28,0xFF,0xFF,0xFF,6,0xFF
 opfunc MOVBLG
-mov  ebp,edi           ;2  Get R0 adress
-xor  eax,eax           ;2  clear eax
-mov  al,00             ;2  Get Imidiate Value
-add  eax,dword [ebp+68];3  GBR + IMM( Adress for Get Value )
-push rax               ;1
+mov  rbp,rdi           ;2  Get R0 adress
+xor  ecx,ecx           ;2  clear eax
+mov  cl,00             ;2  Get Imidiate Value
+add  ecx,dword [rbp+68];3  GBR + IMM( Adress for Get Value )
 mov  rax,memGetByte   ;5
 call rax               ;2
 cbw                    ;1
 cwde                   ;1
 mov  [rbp],eax         ;3
-pop rax               ;1
 
 
-opdesc MOVWLG,    33,0xFF,0xFF,0xFF,5,0xFF
+opdesc MOVWLG,    30,0xFF,0xFF,0xFF,6,0xFF
 opfunc MOVWLG
-mov  ebp,edi           ;2  Get R0 adress
-xor  eax,eax           ;2  clear eax
-mov  al,00             ;2  Get Imidiate Value
-shl  ax,byte 1         ;3  Shift left 2
-add  eax,dword [ebp+68];3  GBR + IMM( Adress for Get Value )
-push rax               ;1
+mov  rbp,rdi           ;2  Get R0 adress
+xor  ecx,ecx           ;2  clear eax
+mov  cl,00             ;2  Get Imidiate Value
+shl  cx,byte 1         ;3  Shift left 2
+add  ecx,dword [rbp+68];3  GBR + IMM( Adress for Get Value )
 mov  rax,memGetWord   ;5
 call rax               ;2
 cwde                   ;1
 mov  [rbp],eax         ;3
-pop rax               ;1
 
 
-opdesc MOVLLG,    32,0xFF,0xFF,0xFF,5,0xFF
+opdesc MOVLLG,    29,0xFF,0xFF,0xFF,6,0xFF
 opfunc MOVLLG
-mov  ebp,edi           ;2  Get R0 adress
-xor  eax,eax           ;2  clear eax
-mov  al,00             ;5  Get Imidiate Value
-shl  ax,byte 2         ;3  Shift left 2
-add  eax,dword [ebp+68];3  GBR + IMM( Adress for Get Value )
-push rax               ;1
+mov  rbp,rdi           ;2  Get R0 adress
+xor  ecx,ecx           ;2  clear eax
+mov  cl,00             ;5  Get Imidiate Value
+shl  cx,byte 2         ;3  Shift left 2
+add  ecx,dword [rbp+68];3  GBR + IMM( Adress for Get Value )
 mov  rax,memGetLong   ;5
 call rax               ;2
 mov  [rbp],eax         ;3
-pop rax               ;1
 
 
-opdesc MOVBSG,    35,0xFF,0xFF,0xFF,9,0xFF
+opdesc MOVBSG,    32,0xFF,0xFF,0xFF,9,0xFF
 opfunc MOVBSG
 mov  rbp,rdi         ;2  Get R0 adress
-push qword [rbp]     ;3
-xor  eax,eax         ;2  Clear Eax
-mov  al,00           ;5  Get Imidiate Value
-mov  rcx,rdi         ;2  Get GBR adress
-add  rcx,byte 68     ;3 
-add  rax,qword [rcx] ;2  GBR + IMM( Adress for Get Value )
-push rax             ;1
+mov  edx,[rbp]       ;3
+xor  ecx,ecx         ;2  Clear Eax
+mov  cl,00           ;5  Get Imidiate Value
+mov  rbp,rdi         ;2  Get GBR adress
+add  rbp,byte 68     ;3 
+add  ecx,dword [rbp] ;2  GBR + IMM( Adress for Get Value )
 mov  rax,memSetByte ;5
 call rax             ;2
-pop rax             ;1
-pop rax             ;1
 
-opdesc MOVWSG,    39,0xFF,0xFF,0xFF,9,0xFF
+opdesc MOVWSG,    36,0xFF,0xFF,0xFF,9,0xFF
 opfunc MOVWSG
 mov  rbp,rdi         ;2  Get R0 adress
-push qword [rbp]     ;3
-xor  eax,eax         ;2  Clear Eax
-mov  al,00           ;5  Get Imidiate Value
-shl  ax,byte 1       ;3  Shift left 2
-mov  rcx,rdi         ;2  Get GBR adress
-add  rcx,byte 68     ;3 
-add  rax,qword [rcx] ;2  GBR + IMM( Adress for Get Value )
-push rax             ;1
+mov  edx,[rbp]       ;3
+xor  ecx,ecx         ;2  Clear Eax
+mov  cl,00           ;5  Get Imidiate Value
+shl  cx,byte 1       ;3  Shift left 2
+mov  rbp,rdi         ;2  Get GBR adress
+add  rbp,byte 68     ;3 
+add  ecx,dword [rbp] ;2  GBR + IMM( Adress for Get Value )
 mov  rax,memSetWord ;5
 call rax             ;2
-pop rax             ;1
-pop rax             ;1
 
-opdesc MOVLSG,    37,0xFF,0xFF,0xFF,9,0xFF
+
+opdesc MOVLSG,    36,0xFF,0xFF,0xFF,9,0xFF
 opfunc MOVLSG
 mov  rbp,rdi         ;2  Get R0 adress
-push qword [rbp]     ;3
-xor  eax,eax         ;2  Clear Eax
-mov  al,00           ;5  Get Imidiate Value
-shl  ax,byte 2       ;3  Shift left 2
-mov  ecx,edi         ;2  Get GBR adress
-add  ecx,byte 68     ;3 
-add  rax,qword [rcx] ;2  GBR + IMM( Adress for Get Value )
-push rax             ;1
+mov  edx, [rbp]     ;3
+xor  ecx,ecx         ;2  Clear Eax
+mov  cl,00           ;5  Get Imidiate Value
+shl  cx,byte 2       ;3  Shift left 2
+mov  rbp,rdi         ;2  Get GBR adress
+add  rbp,byte 68     ;3 
+add  ecx,dword [rbp] ;2  GBR + IMM( Adress for Get Value )
 mov  rax,memSetLong ;5
 call rax             ;2
-pop rax             ;1
-pop rax             ;1
 
 
-opdesc MOVBS,	34,6,16,0xFF,0xFF,0xFF
+opdesc MOVBS,	32,6,16,0xFF,0xFF,0xFF
 opfunc MOVBS
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3
-push qword [rbp]     ;3
+mov  edx, [rbp]     ;3
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3
-push qword [rbp]     ;3
+mov  ecx, [rbp]     ;3
 mov  rax,memSetByte ;5
 call rax             ;2
-pop rax             ;1
-pop rax             ;1
 
 
-opdesc MOVWS,	34,6,16,0xFF,0xFF,0xFF
+opdesc MOVWS,	32,6,16,0xFF,0xFF,0xFF
 opfunc MOVWS
 mov  rbp,rdi          ;2
 add  rbp,byte $00     ;3
-push qword [rbp]      ;3
+mov  edx, [rbp]      ;3
 mov  rbp,rdi          ;2
 add  rbp,byte $00     ;3
-push qword [rbp]      ;3
+mov  ecx, [rbp]      ;3
 mov  rax,memSetWord  ;5
 call rax              ;2
-pop rax              ;1
-pop rax              ;1
 
-opdesc MOVLS,	34,6,16,0xFF,0xFF,0xFF
+
+opdesc MOVLS,	32,6,16,0xFF,0xFF,0xFF
 opfunc MOVLS
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3
-push qword [rbp]     ;3
+mov edx, [rbp]     ;3
 mov  rbp,rdi         ;2
 add  rbp,byte $00    ;3
-push qword [rbp]     ;3
+mov ecx, [rbp]     ;3
 mov  rax,memSetLong ;5
 call rax             ;2
-pop rax             ;1
-pop rax             ;1
 
 
-opdesc MOVR,		18,6,13,0xFF,0xFF,0xFF
+opdesc MOVR,		20,6,16,0xFF,0xFF,0xFF
 opfunc MOVR
 mov rbp,rdi         ;2
 add rbp,byte $00    ;3
@@ -1808,56 +1707,52 @@ mov rbp,rdi         ;2
 add rbp,byte $00    ;3
 mov [rbp],eax       ;3
 
-opdesc MOVBM,		37,6,14,0xFF,0xFF,0xFF
+opdesc MOVBM,		36,6,16,0xFF,0xFF,0xFF
 opfunc MOVBM
 mov  rbp,rdi             ;2
 add  rbp,byte $00        ;3  
-push qword [rbp]         ;3 Set data
-mov  ebp,edi             ;2
-add  ebp,byte $00        ;3
-sub  qword [rbp],byte 1  ;4
-push qword [rbp]         ;3 Set addr
+mov  edx, [rbp]         ;3 Set data
+mov  rbp,rdi             ;2
+add  rbp,byte $00        ;3
+sub  dword [rbp],byte 1  ;4
+mov  ecx, [rbp]         ;3 Set addr
 mov  rax,memSetByte     ;5
 call rax                 ;2
-pop rax                 ;1
-pop rax                 ;1
 
-opdesc MOVWM,		39,6,16,0xFF,0xFF,0xFF
+
+opdesc MOVWM,		36,6,16,0xFF,0xFF,0xFF
 opfunc MOVWM
 mov  rbp,rdi             ;2
 add  rbp,byte $00        ;3  
-push qword [rbp]         ;3 Set data
+mov  edx, [rbp]         ;3 Set data
 mov  rbp,rdi             ;2
 add  rbp,byte $00        ;3
-sub  qword [rbp],byte 2  ;4
-push qword [rbp]         ;3 Set addr
+sub  dword [rbp],byte 2  ;4
+mov  ecx, [rbp]         ;3 Set addr
 mov  rax,memSetWord     ;5
 call rax                 ;2
-pop rax                 ;1
-pop rax                 ;1
 
 
-opdesc MOVLM,		39,6,16,0xFF,0xFF,0xFF
+opdesc MOVLM,		36,6,16,0xFF,0xFF,0xFF
 opfunc MOVLM
 mov  rbp,rdi             ;2
 add  rbp,byte $00        ;3  
-push qword [rbp]         ;3 Set data
+mov  edx, [rbp]         ;3 Set data
 mov  rbp,rdi             ;2
 add  rbp,byte $00        ;3
-sub  qword [rbp],byte 4  ;4
-push qword [rbp]         ;3 Set addr
+sub  dword [rbp],byte 4  ;4
+mov  ecx, [rbp]         ;3 Set addr
 mov  rax,memSetLong     ;5
 call rax                 ;2
-pop rax                 ;1
-pop rax                 ;1
 
 ;------------- added ------------------
 
-opdesc TAS,  58,0xFF,6,0xFF,0xFF,0xFF
+opdesc TAS,  56,0xFF,6,0xFF,0xFF,0xFF
 opfunc TAS
 mov  rbp,rdi             ;2
 add  rbp,byte $00        ;3
-push qword [rbp]         ;3
+mov  rcx, [rbp]         ;3
+push rcx 
 mov  rax,memGetByte     ;5
 call rax                 ;2
 and  eax,0x000000FF      ;5
@@ -1867,27 +1762,24 @@ jne  NOT_ZERO            ;2
 or   [rbx], byte 01      ;3
 NOT_ZERO:              
 or   al, byte 0x80        ;3
-push rax                  ;1 
-push qword [rbp]          ;3
+mov  edx, eax                  ;1 
+pop  rcx          ;3
 mov  rax,memSetByte      ;5
 call rax                  ;2
-pop rax                   ;1
-pop rax                   ;1
-pop rax                   ;1
 
 
 ; sub with overflow check
-opdesc SUBV, 28,6,13,0xFF,0xFF,0xFF
+opdesc SUBV, 28,6,16,0xFF,0xFF,0xFF
 opfunc SUBV
-mov  ebp,edi          ;2
-add  ebp,byte $00     ;3 m 4...7
+mov  rbp,rdi          ;2
+add  rbp,byte $00     ;3 m 4...7
 mov  eax,[rbp]        ;3
-mov  ebp,edi          ;2
-add  ebp,byte $00     ;3 n 8...11
-and  [rbx], byte 0xFE ;3
-sub  [rbp],eax        ;3 R[n] = R[n] - R[m]
+mov  rbp,rdi          ;2
+add  rbp,byte $00     ;3 n 8...11
+and  dword [rbx], byte 0xFE ;3
+sub  dword [rbp],eax        ;3 R[n] = R[n] - R[m]
 jno	 NO_OVER_FLOS     ;2
-or   [rbx], byte 01   ;3
+or   dword [rbx], byte 01   ;3
 NO_OVER_FLOS
 
 
@@ -2202,27 +2094,27 @@ mov  dword [rsi+4],eax  ;3 store MACL
 
 ;--------------------------------------------------------------
 ; mull 32bit -> 32bit Multip
-opdesc MULL, 28,6,15,0xFF,0xFF,0xFF
+opdesc MULL, 25,6,16,0xFF,0xFF,0xFF
 opfunc MULL
-mov  ebp,edi            ;2  
-add  ebp,byte $00       ;3 4..7
+mov  rbp,rdi            ;2  
+add  rbp,byte $00       ;3 4..7
 mov  eax,dword [rbp]    ;3
-mov  ebp,edi            ;2
-add  ebp,byte $00       ;3 8..11
+mov  rbp,rdi            ;2
+add  rbp,byte $00       ;3 8..11
 mov  edx,dword [rbp]    ;3  
 imul edx                ;2
 mov  dword [rsi+4],eax  ;3 store MACL   
 
 ;--------------------------------------------------------------
 ; muls 16bit -> 32 bit Multip
-opdesc MULS, 41,6,18,0xFF,0xFF,0xFF
+opdesc MULS, 38,6,19,0xFF,0xFF,0xFF
 opfunc MULS
-mov  ebp,edi           ;2  
-add  ebp,byte $00      ;3 4..7
+mov  rbp,rdi           ;2  
+add  rbp,byte $00      ;3 4..7
 xor  eax,eax           ;2
 mov  ax,word [rbp]     ;3
-mov  ebp,edi           ;2
-add  ebp,byte $00      ;3 8..11
+mov  rbp,rdi           ;2
+add  rbp,byte $00      ;3 8..11
 xor  edx,edx           ;2
 mov  dx,word [rbp]     ;3  
 imul dx                ;2
@@ -2232,14 +2124,14 @@ mov  dword [rsi+4],edx ;3 store MACL
 
 ;--------------------------------------------------------------
 ; mulu 16bit -> 32 bit Multip
-opdesc MULU, 41,6,18,0xFF,0xFF,0xFF
+opdesc MULU, 38,6,19,0xFF,0xFF,0xFF
 opfunc MULU
-mov  ebp,edi           ;2  
-add  ebp,byte $00      ;3 4..7
+mov  rbp,rdi           ;2  
+add  rbp,byte $00      ;3 4..7
 xor  eax,eax           ;2
 mov  ax,word [rbp]     ;3
-mov  ebp,edi           ;2
-add  ebp,byte $00      ;3 8..11
+mov  rbp,rdi           ;2
+add  rbp,byte $00      ;3 8..11
 xor  edx,edx           ;2
 mov  dx,word [rbp]     ;3  
 mul  dx                ;2
@@ -2251,27 +2143,24 @@ mov  dword [rsi+4],edx ;3 store MACL
 ; MACL   ans = 32bit -> 64 bit MUL
 ;        (MACH << 32 + MACL)  + ans 
 ;-------------------------------------------------------------
-opdesc MAC_L, 164,5,37,0xFF,0xFF,0xFF 
+opdesc MAC_L, 153,6,38,0xFF,0xFF,0xFF 
 opfunc MAC_L
-mov  ebp,edi                  ;2  
-add  ebp,byte $00             ;3 4..7
-mov  eax,dword [rbp]          ;3
-push rax                      ;1
+mov  rbp,rdi                  ;2  
+add  rbp,byte $00             ;3 4..7
+mov  ecx,dword [rbp]          ;3
 mov  rax,memGetLong          ;5
 call rax                      ;2
-mov  edx,eax                  ;2
+mov  r13d,eax                  ;2
 add  dword [rbp], 4           ;7 R[n] += 4
-mov  ebp,edi                  ;2 
-add  ebp,byte $00             ;3 8..11
-mov  eax,dword [rbp]          ;3
-push rax                      ;1
+mov  rbp,rdi                  ;2 
+add  rbp,byte $00             ;3 8..11
+mov  ecx,dword [rbp]          ;3
 mov  rax,memGetLong          ;5 
 call rax                      ;2
 add  dword [rbp], 4           ;7 R[m] += 4 
-push rdi                      ;1 Save GenReg
 xor  ecx,ecx                  ;2
 or   ecx,[rsi+4]              ;3 load macl
-imul edx                      ;2 eax <- low, edx <- high
+imul r13d                      ;2 eax <- low, edx <- high
 mov  edi,[rsi]                ;3 load mach
 add  ecx,eax                  ;3 sum = a+b;
 adc  edi,edx                  ;2
@@ -2303,11 +2192,8 @@ MAXMIZE:
 or   ecx,0FFFFFFFFh           ;3 sum = 0x00007FFFFFFFFFFFULL;
 mov  edi,7FFFh                ;5
 END_PROC:
-mov         [rsi],edi         ; 3
-pop  rdi                      ; 1 Restore GenReg
-mov         [rsi+4],ecx       ; 3
-pop rax                      ;1
-pop rax                      ;1
+mov  [rsi],edi         ; 3
+mov  [rsi+4],ecx       ; 3
 
 
 
@@ -2315,20 +2201,18 @@ pop rax                      ;1
 ; MACW   ans = 32bit -> 64 bit MUL
 ;        (MACH << 32 + MACL)  + ans 
 ;-------------------------------------------------------------
-opdesc MAC_W, 143,5,38,0xFF,0xFF,0xFF
+opdesc MAC_W, 133,6,39,0xFF,0xFF,0xFF
 opfunc MAC_W
-mov  ebp,edi                  ;2  
-add  ebp,byte $00             ;3 4..7
-mov  eax,dword [rbp]          ;3
-push rax                      ;1
+mov  rbp,rdi                  ;2  
+add  rbp,byte $00             ;3 4..7
+mov  ecx,dword [rbp]          ;3
 mov  rax,memGetWord          ;5
 call rax                      ;2
 movsx  r13d,ax                 ;3
 add  dword [rbp], 2           ;7 R[n] += 2
-mov  ebp,edi                  ;2 
-add  ebp,byte $00             ;3 8..11
-mov  eax,dword [rbp]          ;3
-push rax                      ;1
+mov  rbp,rdi                  ;2 
+add  rbp,byte $00             ;3 8..11
+mov  ecx,dword [rbp]          ;3
 mov  rax,memGetWord          ;5 
 call rax                      ;2
 add  dword [rbp], 2           ;7 R[m] += 2
@@ -2362,8 +2246,8 @@ MACW_NO_CARRY:
   add dword [rsi],r13d           ;2 MACH = ansH + MACH
 
 END_MACW:
-pop rax                        ;1
-pop rax                        ;1
   
- 
+END_ALL:
+  nop
+
 end

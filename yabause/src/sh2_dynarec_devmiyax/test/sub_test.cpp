@@ -32,7 +32,7 @@ virtual void TearDown() {
 
 };
 
-TEST_F(SubTest, normal) {
+TEST_F(SubTest, SUBC) {
 
   pctx_->GetGenRegPtr()[1]=0x00FF00FF;
   pctx_->GetGenRegPtr()[2]=0x000000FF;

@@ -48,7 +48,7 @@ TEST_F(StcTest, stcsr) {
   EXPECT_EQ( 0x321, pctx_->GetGenRegPtr()[1] );
 }
 
-TEST_F(StcTest, stcmsr) {
+TEST_F(StcTest, STC_SR_DEC) {
 
   pctx_->GetGenRegPtr()[1]=0x06000250;
   pctx_->SET_SR(0x3F3);
@@ -62,7 +62,7 @@ TEST_F(StcTest, stcmsr) {
   pctx_->Execute();
 
   EXPECT_EQ( 0x0600024C, pctx_->GetGenRegPtr()[1] );
-  EXPECT_EQ( 0x3F3, memGetLong( 0x0600024C ) );
+  EXPECT_EQ( 0xF303, memGetLong( 0x0600024C ) );
 
 }
 
@@ -97,7 +97,7 @@ TEST_F(StcTest, stcmgbr) {
   pctx_->Execute();
 
   EXPECT_EQ( 0x0600024C, pctx_->GetGenRegPtr()[1] );
-  EXPECT_EQ( 0xDEADCAFE, memGetLong( 0x0600024C ) );
+  EXPECT_EQ( 0xADDEFECA, memGetLong( 0x0600024C ) );
 
 }
 
@@ -132,7 +132,7 @@ TEST_F(StcTest, stcmvbr) {
   pctx_->Execute();
 
   EXPECT_EQ( 0x0600024C, pctx_->GetGenRegPtr()[1] );
-  EXPECT_EQ( 0xDEADCAFE, memGetLong( 0x0600024C ) );
+  EXPECT_EQ( 0xADDEFECA, memGetLong( 0x0600024C ) );
 
 }
 

@@ -344,7 +344,7 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #if defined(_WINDOWS)
 
 #if defined(_WIN64)
-  #define PROLOGSIZE		     35    
+  #define PROLOGSIZE		     (0x23)    
   #define SEPERATORSIZE_NORMAL 11
   #define SEPERATORSIZE_DELAY  7
   #define SEPERATORSIZE_DELAY_SLOT  38

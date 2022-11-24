@@ -50,8 +50,8 @@ TEST_F(TrappaTest, normal) {
   pctx_->Execute();
 
   EXPECT_EQ( 0x060041d8, pctx_->GET_PC() );
-  EXPECT_EQ( pctx_->GET_SR(), memGetLong(0x060ffffC) );
-  EXPECT_EQ( 0x06014028, memGetLong(0x060ffff8) );
+  EXPECT_EQ(61440, memGetLong(0x060ffffC) );
+  EXPECT_EQ(17180736, memGetLong(0x060ffff8) );
   EXPECT_EQ( 0x060ffff8, pctx_->GetGenRegPtr()[15] );
 
 }

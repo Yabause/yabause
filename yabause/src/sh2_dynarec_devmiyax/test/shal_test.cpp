@@ -33,7 +33,7 @@ virtual void TearDown() {
 };
 
 
-TEST_F(ShalTest, normal) {
+TEST_F(ShalTest, SHL) {
 
   pctx_->GetGenRegPtr()[3]=0xC; // m
   pctx_->SET_SR(0x00000F1);

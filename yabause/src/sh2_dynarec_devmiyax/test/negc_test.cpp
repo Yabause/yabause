@@ -60,7 +60,7 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
   pctx_->GetGenRegPtr()[1]=0x00000001;
   pctx_->SET_SR(0xE0);
 
-  memSetWord( 0x06000000, 0x611A );
+  memSetWord( 0x06000000, 0x611A );  // negc r1, r1
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop
 
@@ -73,7 +73,7 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
   pctx_->GetGenRegPtr()[0]=0x00000000;
   pctx_->SET_SR(0xE1);
 
-  memSetWord( 0x06000000, 0x600A );
+  memSetWord( 0x06000000, 0x600A );  // negc r0, r0
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop
 

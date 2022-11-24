@@ -67,12 +67,12 @@ TEST_F(MovaTest, mova) {
 
 }
 
-TEST_F(MovaTest, mov) {
+TEST_F(MovaTest, MOVR) {
 
   pctx_->GetGenRegPtr()[7]=0xDEADDEAD;
   pctx_->GetGenRegPtr()[4]=0xCAFECAFE;
 
-  memSetWord( 0x0600024c, 0x6743 );  //MOVLI
+  memSetWord( 0x0600024c, 0x6743 );  //MOVR
   memSetWord( 0x0600024e, 0x000b );  // rts
   memSetWord( 0x06000250, 0x0009 );  // nop
 
@@ -163,7 +163,7 @@ TEST_F(MovaTest, movli) {
  EXPECT_EQ( 0xCAFECAFE, pctx_->GetGenRegPtr()[0] );
 }
 
-TEST_F(MovaTest, movll) {
+TEST_F(MovaTest, MOVL_MEM_REG) {
 
 //MOVLL
 
@@ -184,26 +184,29 @@ TEST_F(MovaTest, movll) {
  EXPECT_EQ( 0x06000270, pctx_->GetGenRegPtr()[7] );
 }
 
-TEST_F(MovaTest, movbs) {
-//MOVBS
-  pctx_->GetGenRegPtr()[0]=0x0600024C;
-  pctx_->GetGenRegPtr()[3]=0xDEADCAFE;
+TEST_F(MovaTest, MOVBS) {
+  //MOVBS
+  pctx_->GetGenRegPtr()[0] = 0x0600024C;
+  pctx_->GetGenRegPtr()[3] = 0xDEADCAFE;
 
-  memSetWord( 0x06000246, 0x2030);  
-  memSetWord( 0x06000248, 0x000b );  // rts
-  memSetWord( 0x0600024A, 0x0009 );  // nop
-  memSetLong( 0x0600024C, 0xFFFFFFFF ); 
+  memSetWord(0x06000246, 0x2030);  // MOVBS
+  memSetWord(0x06000248, 0x000b);  // rts
+  memSetWord(0x0600024A, 0x0009);  // nop
+  memSetLong(0x0600024C, 0xFFFFFFFF);
 
-  pctx_->SET_PC( 0x06000246 );
+  pctx_->SET_PC(0x06000246);
   pctx_->Execute();
 
- EXPECT_EQ( 0xFE, memGetByte(0x0600024C) );
- EXPECT_EQ( 0xFEFFFFFF, memGetLong(0x0600024C) );
+  EXPECT_EQ(0xFFFE, memGetWord(0x0600024C));
+  EXPECT_EQ(0xFFFEFFFF, memGetLong(0x0600024C));
 
+}
+
+TEST_F(MovaTest, MOVA2) {
 
   pctx_->GetGenRegPtr()[0]=0xFFFFFFFF;
 
-  memSetWord( 0x06000246, 0xC71C );  //MOVL_MEM_REG
+  memSetWord( 0x06000246, 0xC71C );  //MOVA
   memSetWord( 0x06000248, 0x000b );  // rts
   memSetWord( 0x0600024A, 0x0009 );  // nop
 
@@ -227,7 +230,11 @@ TEST_F(MovaTest, movls) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xDEADCAFE, memGetLong(0x0600024C) );
+  u32 rtn = memGetLong(0x0600024C);
+  EXPECT_EQ((char)0xCA, ((char*)&rtn)[0]);
+  EXPECT_EQ((char)0xFE, ((char*)&rtn)[1]);
+  EXPECT_EQ((char)0xDE, ((char*)&rtn)[2]);
+  EXPECT_EQ((char)0xAD, ((char*)&rtn)[3]);
 }
 
 TEST_F(MovaTest, movbp) {
@@ -243,7 +250,7 @@ TEST_F(MovaTest, movbp) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xFFFFFFCA, pctx_->GetGenRegPtr()[7] );
+ EXPECT_EQ( 0xFFFFFFFE, pctx_->GetGenRegPtr()[7] );
  EXPECT_EQ( 0x0600024D, pctx_->GetGenRegPtr()[1] );
 
   pctx_->GetGenRegPtr()[1]=0x0600024C;
@@ -257,8 +264,8 @@ TEST_F(MovaTest, movbp) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0x0000007A, pctx_->GetGenRegPtr()[7] );
- EXPECT_EQ( 0x0600024D, pctx_->GetGenRegPtr()[1] );
+ EXPECT_EQ(0xFFFFFFFE, pctx_->GetGenRegPtr()[7] );
+ EXPECT_EQ(0x0600024D, pctx_->GetGenRegPtr()[1] );
 }
 
 TEST_F(MovaTest, movwp) {
@@ -275,7 +282,7 @@ TEST_F(MovaTest, movwp) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xFFFFCAFE, pctx_->GetGenRegPtr()[7] );
+ EXPECT_EQ( 0xFFFFFECA, pctx_->GetGenRegPtr()[7] );
  EXPECT_EQ( 0x0600024E, pctx_->GetGenRegPtr()[1] );
 
 
@@ -290,7 +297,7 @@ TEST_F(MovaTest, movwp) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0x00007AFE, pctx_->GetGenRegPtr()[7] );
+ EXPECT_EQ( 0xFFFFFE7A, pctx_->GetGenRegPtr()[7] );
  EXPECT_EQ( 0x0600024E, pctx_->GetGenRegPtr()[1] );
 }
 
@@ -339,8 +346,8 @@ TEST_F(MovaTest, movbm) {
   pctx_->Execute();
 
  EXPECT_EQ( 0x0600024C, pctx_->GetGenRegPtr()[1] );
- EXPECT_EQ( 0xADFECAFE, memGetLong(0x0600024C) );
- EXPECT_EQ( 0xAD, memGetByte(0x0600024C) );
+ EXPECT_EQ( 0xCAADCAFE, memGetLong(0x0600024C) );
+ EXPECT_EQ( 0xCA, memGetByte(0x0600024C) );
 }
 
 TEST_F(MovaTest, movwm) {
@@ -358,8 +365,8 @@ TEST_F(MovaTest, movwm) {
   pctx_->Execute();
 
  EXPECT_EQ( 0x0600024C, pctx_->GetGenRegPtr()[1] );
- EXPECT_EQ( 0xDEADCAFE, memGetLong(0x0600024C) );
- EXPECT_EQ( 0xDEAD, memGetWord(0x0600024C) );
+ EXPECT_EQ( 0xADDECAFE, memGetLong(0x0600024C) );
+ EXPECT_EQ( 0xADDE, memGetWord(0x0600024C) );
 }
 
 TEST_F(MovaTest, movlm) {
@@ -376,7 +383,7 @@ TEST_F(MovaTest, movlm) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xDEADCAFE, memGetLong(0x0600024C) );
+ EXPECT_EQ( 0xADDEFECA, memGetLong(0x0600024C) );
  EXPECT_EQ( 0x0600024C, pctx_->GetGenRegPtr()[1] );
 }
 
@@ -393,7 +400,7 @@ TEST_F(MovaTest, movbl4) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xFFFFFFDE, pctx_->GetGenRegPtr()[0] );
+ EXPECT_EQ( 0xFFFFFFAD, pctx_->GetGenRegPtr()[0] );
  EXPECT_EQ( 0x06000246, pctx_->GetGenRegPtr()[1] );
 
   pctx_->GetGenRegPtr()[1]=0x06000246;
@@ -406,7 +413,7 @@ TEST_F(MovaTest, movbl4) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0x0000007E, pctx_->GetGenRegPtr()[0] );
+ EXPECT_EQ( 0xFFFFFFAD, pctx_->GetGenRegPtr()[0] );
  EXPECT_EQ( 0x06000246, pctx_->GetGenRegPtr()[1] );
 }
 
@@ -423,7 +430,7 @@ TEST_F(MovaTest, movwl4) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xFFFFDEAD, pctx_->GetGenRegPtr()[0] );
+ EXPECT_EQ( 0xFFFFADDE, pctx_->GetGenRegPtr()[0] );
  EXPECT_EQ( 0x06000246, pctx_->GetGenRegPtr()[1] );
 
   pctx_->GetGenRegPtr()[1]=0x06000246;
@@ -436,7 +443,7 @@ TEST_F(MovaTest, movwl4) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0x00007EAD, pctx_->GetGenRegPtr()[0] );
+ EXPECT_EQ( 0xFFFFAD7E, pctx_->GetGenRegPtr()[0] );
  EXPECT_EQ( 0x06000246, pctx_->GetGenRegPtr()[1] );
 }
 
@@ -488,8 +495,8 @@ TEST_F(MovaTest, movbs4) {
 
  EXPECT_EQ( 0xDEADDEAD, pctx_->GetGenRegPtr()[0] );
  EXPECT_EQ( 0x06000246, pctx_->GetGenRegPtr()[1] );
- EXPECT_EQ( 0xADFECAFE, memGetLong(0x06000250) );
- EXPECT_EQ( 0xAD, memGetByte(0x06000250) );
+ EXPECT_EQ( 0xCAADCAFE, memGetLong(0x06000250) );
+ EXPECT_EQ( 0xCA, memGetByte(0x06000250) );
 }
 
 TEST_F(MovaTest, movws4) {
@@ -508,8 +515,8 @@ TEST_F(MovaTest, movws4) {
 
  EXPECT_EQ( 0xDEADDEAD, pctx_->GetGenRegPtr()[0] );
  EXPECT_EQ( 0x06000246, pctx_->GetGenRegPtr()[1] );
- EXPECT_EQ( 0xDEADCAFE, memGetLong(0x06000250) );
- EXPECT_EQ( 0xDEAD, memGetWord(0x06000250) );
+ EXPECT_EQ( 0xADDECAFE, memGetLong(0x06000250) );
+ EXPECT_EQ( 0xADDE, memGetWord(0x06000250) );
 }
 
 TEST_F(MovaTest, movls4) {
@@ -528,7 +535,7 @@ TEST_F(MovaTest, movls4) {
 
  EXPECT_EQ( 0xDEADDEAD, pctx_->GetGenRegPtr()[2] );
  EXPECT_EQ( 0x06000246, pctx_->GetGenRegPtr()[1] );
- EXPECT_EQ( 0xDEADDEAD, memGetLong(0x0600025A) );
+ EXPECT_EQ( 0xADDEADDE, memGetLong(0x0600025A) );
 }
 
 TEST_F(MovaTest, movbl0) {
@@ -546,7 +553,7 @@ TEST_F(MovaTest, movbl0) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xFFFFFFCA, pctx_->GetGenRegPtr()[2] );
+ EXPECT_EQ( 0xFFFFFFFE, pctx_->GetGenRegPtr()[2] );
  EXPECT_EQ( 0x06000000, pctx_->GetGenRegPtr()[1] );
  EXPECT_EQ( 0x0000025A, pctx_->GetGenRegPtr()[0] );
 
@@ -562,7 +569,7 @@ TEST_F(MovaTest, movbl0) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0x0000007A, pctx_->GetGenRegPtr()[2] );
+ EXPECT_EQ( 0xFFFFFFFE, pctx_->GetGenRegPtr()[2] );
  EXPECT_EQ( 0x06000000, pctx_->GetGenRegPtr()[1] );
  EXPECT_EQ( 0x0000025A, pctx_->GetGenRegPtr()[0] );
 }
@@ -582,7 +589,7 @@ TEST_F(MovaTest, movwl0) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xFFFFCAFE, pctx_->GetGenRegPtr()[2] );
+ EXPECT_EQ( 0xFFFFFECA, pctx_->GetGenRegPtr()[2] );
  EXPECT_EQ( 0x06000000, pctx_->GetGenRegPtr()[1] );
  EXPECT_EQ( 0x0000025A, pctx_->GetGenRegPtr()[0] );
 
@@ -598,7 +605,7 @@ TEST_F(MovaTest, movwl0) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0x00007AFE, pctx_->GetGenRegPtr()[2] );
+ EXPECT_EQ( 0xFFFFFE7A, pctx_->GetGenRegPtr()[2] );
  EXPECT_EQ( 0x06000000, pctx_->GetGenRegPtr()[1] );
  EXPECT_EQ( 0x0000025A, pctx_->GetGenRegPtr()[0] );
 }
@@ -638,7 +645,7 @@ TEST_F(MovaTest, movbs0) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xADFECAFE, memGetLong(0x0600025A) );
+ EXPECT_EQ( 0xCAADCAFE, memGetLong(0x0600025A) );
  EXPECT_EQ( 0x06000000, pctx_->GetGenRegPtr()[1] );
  EXPECT_EQ( 0x0000025A, pctx_->GetGenRegPtr()[0] );
 }
@@ -658,7 +665,7 @@ TEST_F(MovaTest, movws0) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xDEADCAFE, memGetLong(0x0600025A) );
+ EXPECT_EQ( 0xADDECAFE, memGetLong(0x0600025A) );
  EXPECT_EQ( 0x06000000, pctx_->GetGenRegPtr()[1] );
  EXPECT_EQ( 0x0000025A, pctx_->GetGenRegPtr()[0] );
 }
@@ -678,7 +685,7 @@ TEST_F(MovaTest, movls0) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xDEADDEAD, memGetLong(0x0600025A) );
+ EXPECT_EQ( 0xADDEADDE, memGetLong(0x0600025A) );
  EXPECT_EQ( 0x06000000, pctx_->GetGenRegPtr()[1] );
  EXPECT_EQ( 0x0000025A, pctx_->GetGenRegPtr()[0] );
 }
@@ -697,7 +704,7 @@ TEST_F(MovaTest, movblg) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xFFFFFFCA, pctx_->GetGenRegPtr()[0] );
+ EXPECT_EQ( 0xFFFFFFFE, pctx_->GetGenRegPtr()[0] );
 
   pctx_->GetGenRegPtr()[0]=0xDEADDEAD;
   pctx_->SET_GBR(0x06000252);
@@ -710,7 +717,7 @@ TEST_F(MovaTest, movblg) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0x0000007A, pctx_->GetGenRegPtr()[0] );
+ EXPECT_EQ( 0xFFFFFFFE, pctx_->GetGenRegPtr()[0] );
 }
 
 TEST_F(MovaTest, movwlg) {
@@ -727,7 +734,7 @@ TEST_F(MovaTest, movwlg) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xFFFFCAFE, pctx_->GetGenRegPtr()[0] );
+ EXPECT_EQ( 0xFFFFFECA, pctx_->GetGenRegPtr()[0] );
 
   pctx_->GetGenRegPtr()[0]=0xDEADDEAD;
   pctx_->SET_GBR(0x06000252);
@@ -740,7 +747,7 @@ TEST_F(MovaTest, movwlg) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0x00007AFE, pctx_->GetGenRegPtr()[0] );
+ EXPECT_EQ( 0xFFFFFE7A, pctx_->GetGenRegPtr()[0] );
 }
 
 TEST_F(MovaTest, movllg) {
@@ -787,7 +794,7 @@ TEST_F(MovaTest, movbsg) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xADFECAFE, memGetLong( 0x0600025A ) );
+ EXPECT_EQ( 0xCAADCAFE, memGetLong( 0x0600025A ) );
 }
 
 TEST_F(MovaTest, movwsg) {
@@ -804,7 +811,7 @@ TEST_F(MovaTest, movwsg) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xDEADCAFE, memGetLong( 0x0600025A ) );
+ EXPECT_EQ( 0xADDECAFE, memGetLong( 0x0600025A ) );
 }
 
 TEST_F(MovaTest, movlsg) {
@@ -821,7 +828,7 @@ TEST_F(MovaTest, movlsg) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xDEADDEAD, memGetLong( 0x0600025A ) );
+ EXPECT_EQ( 0xADDEADDE, memGetLong( 0x0600025A ) );
 }
 
 TEST_F(MovaTest, movt) {
@@ -903,7 +910,7 @@ TEST_F(MovaTest, movbl) {
   pctx_->Execute();
 
  EXPECT_EQ( 0x0600024C, pctx_->GetGenRegPtr()[0] );
- EXPECT_EQ( 0xFFFFFFFE, pctx_->GetGenRegPtr()[1] );
+ EXPECT_EQ( 0xFFFFFFAD, pctx_->GetGenRegPtr()[1] );
 
   pctx_->GetGenRegPtr()[0]=0x0600024C;
   pctx_->GetGenRegPtr()[1]=0xDEADCAFE;
@@ -917,7 +924,7 @@ TEST_F(MovaTest, movbl) {
   pctx_->Execute();
 
  EXPECT_EQ( 0x0600024C, pctx_->GetGenRegPtr()[0] );
- EXPECT_EQ( 0x7E, pctx_->GetGenRegPtr()[1] );
+ EXPECT_EQ( 0xFFFFFFAD, pctx_->GetGenRegPtr()[1] );
 }
 
 TEST_F(MovaTest, movwl) {
@@ -933,7 +940,7 @@ TEST_F(MovaTest, movwl) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xFFFFDEAD, pctx_->GetGenRegPtr()[1] );
+ EXPECT_EQ( 0xFFFFADDE, pctx_->GetGenRegPtr()[1] );
 
   pctx_->GetGenRegPtr()[0]=0x06000250;
   pctx_->GetGenRegPtr()[1]=0xFFF00FFF;
@@ -946,7 +953,7 @@ TEST_F(MovaTest, movwl) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0x00007EAD, pctx_->GetGenRegPtr()[1] );
+ EXPECT_EQ( 0xFFFFAD7E, pctx_->GetGenRegPtr()[1] );
 }
 
 TEST_F(MovaTest, movwi) {
@@ -962,7 +969,7 @@ TEST_F(MovaTest, movwi) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0x00007EAD, pctx_->GetGenRegPtr()[0] );
+ EXPECT_EQ( 0xFFFFAD7E, pctx_->GetGenRegPtr()[0] );
 
   pctx_->GetGenRegPtr()[0]=0xDEADCAFE;
 
@@ -974,7 +981,7 @@ TEST_F(MovaTest, movwi) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xFFFFDEAD, pctx_->GetGenRegPtr()[0] );
+ EXPECT_EQ( 0xFFFFADDE, pctx_->GetGenRegPtr()[0] );
 }
 
 TEST_F(MovaTest, movws) {
@@ -991,7 +998,7 @@ TEST_F(MovaTest, movws) {
   pctx_->SET_PC( 0x06000246 );
   pctx_->Execute();
 
- EXPECT_EQ( 0xCAFE, memGetWord(0x06000256) );
+ EXPECT_EQ( 0xFECA, memGetWord(0x06000256) );
  EXPECT_EQ( 0xDEAD,  memGetWord(0x06000258) );
  EXPECT_EQ( 0x06000256, pctx_->GetGenRegPtr()[0] );
  EXPECT_EQ( 0xF0F0CAFE, pctx_->GetGenRegPtr()[2] );

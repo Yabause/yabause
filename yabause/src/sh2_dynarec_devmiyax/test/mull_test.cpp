@@ -42,8 +42,7 @@ TEST_F(MullTest, normal) {
   pctx_->SET_MACL(0xFFFFFFFF);
   pctx_->SET_MACH(0xDEADCAFE);
 
-  // macl r1, r3
-  memSetWord( 0x06000000, 0x0127 );
+  memSetWord( 0x06000000, 0x0127 );  // mul.l r2, r1
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop
 
@@ -58,8 +57,8 @@ TEST_F(MullTest, normal) {
   pctx_->SET_MACL(0xDEADCAFE);
   pctx_->SET_MACH(0xDEADCAFE);
 
-  // macl r1, r3
-  memSetWord( 0x06000000, 0x0127 );
+  
+  memSetWord( 0x06000000, 0x0127 );  // mul.l r2, r1
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop
 

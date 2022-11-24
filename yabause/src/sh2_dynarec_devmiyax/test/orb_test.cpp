@@ -53,7 +53,7 @@ TEST_F(OrbTest, normal) {
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0x0e, memGetByte( 0x60FFCBC) );
+  EXPECT_EQ( 0x08, memGetByte( 0x60FFCBC) );
 
 }
 
@@ -74,7 +74,7 @@ TEST_F(OrbTest, max) {
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0xff, memGetByte( 0x060ffcbc) );
+  EXPECT_EQ( 0x8, memGetByte( 0x060ffcbc) );
 
 }
 

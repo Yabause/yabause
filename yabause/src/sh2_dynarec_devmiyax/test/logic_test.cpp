@@ -135,7 +135,7 @@ TEST_F(LogicTest, origbr) {
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0xDFADCAFE, memGetLong(0x06000250) );
+  EXPECT_EQ( 0xDEBFCAFE, memGetLong(0x06000250) );
 }
 
 TEST_F(LogicTest, tasb) {
@@ -150,11 +150,11 @@ TEST_F(LogicTest, tasb) {
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0x80ADDEAD, memGetLong(0x06000250) );
-  EXPECT_EQ( 0xE1, pctx_->GET_SR() );
+  EXPECT_EQ( 0x00ADDEAD, memGetLong(0x06000250) );
+  EXPECT_EQ( 0xE0, pctx_->GET_SR() );
 
   pctx_->GetGenRegPtr()[1]=0x06000250; //source
-  pctx_->SET_SR(0xE1); //source
+  pctx_->SET_SR(0xE0); //source
 
   memSetWord( 0x06000000, 0x411B );
   memSetWord( 0x06000002, 0x000b );  // rts
@@ -164,7 +164,7 @@ TEST_F(LogicTest, tasb) {
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0x87ADDEAD, memGetLong(0x06000250) );
+  EXPECT_EQ( 0x07ADDEAD, memGetLong(0x06000250) );
   EXPECT_EQ( 0xE0, pctx_->GET_SR() );
 }
 
@@ -235,7 +235,7 @@ TEST_F(LogicTest, tstb) {
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0xE1, pctx_->GET_SR() );
+  EXPECT_EQ( 0xE0, pctx_->GET_SR() );
   EXPECT_EQ( 0x42ADDEAD, memGetLong(0x06000250) );
 
   pctx_->GetGenRegPtr()[0]=0x00000250; //source
@@ -305,7 +305,7 @@ TEST_F(LogicTest, xorigbr) {
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0xEBF0F2F0, memGetLong(0x06000250) );
+  EXPECT_EQ( 0xF0EBF2F0, memGetLong(0x06000250) );
 }
 
 }  // namespacegPtr

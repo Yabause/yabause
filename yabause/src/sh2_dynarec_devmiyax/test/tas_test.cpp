@@ -55,7 +55,7 @@ TEST_F(TasTest, normal) {
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0x80, memGetByte( 0x060fffb8) );
+  EXPECT_EQ( 0x0, memGetByte( 0x060fffb8) );
   EXPECT_EQ( 0x00000001, pctx_->GET_SR() );
 
 }
