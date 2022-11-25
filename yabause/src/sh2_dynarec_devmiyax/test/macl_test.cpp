@@ -22,6 +22,7 @@ class MaclTest : public ::testing::Test {
   }
 
   virtual ~MaclTest() {
+    freeMemory();
     delete pctx_;    
   }   
 

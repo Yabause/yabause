@@ -168,9 +168,13 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 	  sh2_dynarec_devmiyax/opcodes.h)
 
 		if (MSVC) # NASM
-	  	set(YABAUSE_LIBRARIES 
-			  ${YABAUSE_LIBRARIES} 
-			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib_x86_64 )
+		
+		if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+	  		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib_x86_64 )
+		else()			
+			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib )
+		endif()
+
 		else() # UNIX(GAS)
 			if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
 				enable_language(ASM-ATT)

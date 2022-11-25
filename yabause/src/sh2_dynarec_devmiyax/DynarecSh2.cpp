@@ -42,7 +42,7 @@ extern "C" {
 #define DEBUG_CPU
 #define EXECUTE_STAT
 #define BUILD_INFO
-#define LOG printf
+//#define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
 DynarecSh2 * DynarecSh2::CurrentContext = NULL;
@@ -353,10 +353,10 @@ void DumpInstX( int i, u32 pc, u16 op  )
   #define DELAYJUMPSIZE	     23
   #define DALAY_CLOCK_OFFSET 10
   #define NORMAL_CLOCK_OFFSET 10
-  #define DALAY_CLOCK_OFFSET_DEBUG 6
-  #define NORMAL_CLOCK_OFFSET_DEBUG 3
-  #define SEPERATORSIZE_DEBUG  24
-  #define SEPERATORSIZE_DELAYD_DEBUG 34
+  #define DALAY_CLOCK_OFFSET_DEBUG 10
+  #define NORMAL_CLOCK_OFFSET_DEBUG 5
+  #define SEPERATORSIZE_DEBUG  32
+  #define SEPERATORSIZE_DELAYD_DEBUG 44
 
 #else // 32bit
   #define PROLOGSIZE		     27    
@@ -1581,7 +1581,8 @@ inline int DynarecSh2::Execute(){
 
   m_pCompiler->exec_count_++;
 #if defined(EXECUTE_STAT)
-  m_pCompiler->setShowCode( is_slave_ );
+  //m_pCompiler->setShowCode( is_slave_ );
+  m_pCompiler->setShowCode(true);
 #endif
 //#endif
 

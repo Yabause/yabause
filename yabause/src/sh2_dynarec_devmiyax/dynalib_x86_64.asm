@@ -229,14 +229,14 @@ mov  [r12],eax             ; 2
 ;Begin x86 Opcodes
 ;=================
 
-opdesc CLRT,	4,0xFF,0xFF,0xFF,0xFF,0xFF
+opdesc CLRT,	3,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc CLRT
-and qword [rbx],byte 0xfe
+and dword [rbx],byte 0xfe
 
-opdesc CLRMAC,	9,0xFF,0xFF,0xFF,0xFF,0xFF
+opdesc CLRMAC,	7,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc CLRMAC
-and qword [rsi],byte 0   ;4
-and qword [rsi+4],byte 0 ;4
+and dword [rsi],byte 0   ;4
+and dword [rsi+4],byte 0 ;4
 
 opdesc NOP,		1,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc NOP
@@ -881,9 +881,9 @@ and dword eax,1     ;5
 mov ecx,[rbp]       ;2
 shr ecx,byte 31     ;3
 and dword [rbx],byte 0xfe ;3
-or [rbx],ecx        ;2
+or  dword [rbx],ecx        ;2
 shl dword [rbp],byte 1 ;4
-or [rbp],eax        ;2
+or  dword [rbp],eax        ;2
 
 
 opdesc ROTCR,	38,0xff,6,0xff,0xff,0xff
@@ -1152,7 +1152,7 @@ opfunc RTS
 mov eax,[rsi+8]     ;3
 mov r14d, eax       ;3
 
-opdesc RTE,			59,0xFF,0xFF,0xFF,0xFF,0xFF
+opdesc RTE,			58,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc RTE
 mov  rbp,rdi            ;2
 add  rbp,byte 60        ;3
@@ -1844,17 +1844,15 @@ continue3:
 ; 
 ; size = 69 + 135 + 132 + 38 = 374 
 ;===============================================================
-opdesc DIV1, 425,63,8,0xFF,0xFF,0xFF
+opdesc DIV1, 428,65,6,0xFF,0xFF,0xFF
 opfunc DIV1
 
 ; 69
-push r12                     ;1
-push rsi                     ;1
-mov  ebp,edi                 ;2 Get R[0] Adress 
+mov  rbp,rdi                 ;2 Get R[0] Adress 
 xor  eax,eax                 ;2 Clear esi
 mov  al, byte 00             ;3 save n(8-11)
-mov  esi,eax                 ;2
-add  ebp,esi                 ;2 Get R[n]
+mov  r15d,eax                 ;2
+add  rbp,r15                 ;2 Get R[n]
 mov  eax,[rbp]               ;3 R[n]
 mov  ecx,[rbx]               ;2 SR
 
@@ -1875,9 +1873,9 @@ or   [rbp],eax               ;3
 
 ;Get R[n],R[m]
 mov  eax,[rbp]               ;3 R[n]
-mov  ebp,edi                 ;2  
-add  ebp,byte $00            ;3 4...7
-mov  r12,[rbp]               ;3 R[m]
+mov  rbp,rdi                 ;2  
+add  rbp,byte $00            ;3 4...7
+mov  r13d,[rbp]               ;3 R[m]
 
 ;switch( old_q )
 test ecx,0x00000100          ;6 old_q == 1 ?
@@ -1894,8 +1892,8 @@ jne  NQ_M_FLG                ;2
 	; 62
 	NQ_NM_FLG:  
 	  mov rbp,rdi           ;2
-	  add ebp,esi           ;3
-	  sub [rbp],r12         ;3 sh2i->R[n] -= sh2i->R[m]
+	  add rbp,r15           ;3
+	  sub dword [rbp],r13d         ;3 sh2i->R[n] -= sh2i->R[m]
     
 	  test dword [rbx],0x00000100      ;6 Q == 1 
 	  jne NQ_NM_Q_FLG                  ;2
@@ -1930,9 +1928,9 @@ jmp Q_FLG; 3
 	;----------------------------------------------------  
 	NQ_M_FLG:
 	  mov rbp,rdi           ;
-	  add ebp,esi           ;
+	  add rbp,r15           ;
 
-	  add  [rbp],r12        ; sh2i->R[n] += sh2i->R[m]  
+	  add  dword [rbp],r13d        ; sh2i->R[n] += sh2i->R[m]  
 	  test dword [rbx],0x00000100 ; Q == 1 
 	  jne NQ_M_Q_FLG
 
@@ -1972,8 +1970,8 @@ jne  Q_M_FLG
 	;--------------------------------------------------
 	Q_NM_FLG:
 	  mov rbp,rdi           ;
-	  add ebp,esi           ;
-	  add [rbp],r12         ; sh2i->R[n] += sh2i->R[m]
+	  add rbp,r15           ;
+	  add dword [rbp],r13d         ; sh2i->R[n] += sh2i->R[m]
 	  test dword [rbx],0x00000100 ; Q == 1 
 	  jne Q_NM_Q_FLG
 
@@ -2004,8 +2002,8 @@ jne  Q_M_FLG
 	;----------------------------------------------------  
 	Q_M_FLG:
 	  mov rbp,rdi        ;
-	  add ebp,esi        ;
-	  sub [rbp],r12      ; sh2i->R[n] -= sh2i->R[m]  
+	  add rbp,r15        ;
+	  sub dword [rbp],r13d      ; sh2i->R[n] -= sh2i->R[m]  
 	  test dword [rbx],0x00000100 ; Q == 1 
 	  jne Q_M_Q_FLG
 
@@ -2043,16 +2041,16 @@ END_DIV1
 mov  eax,[rbx]                ;2 Get Q
 shr  eax,8                    ;3
 and  eax,1                    ;5 
-mov  r12d,[rbx]                ;2 Get M
-shr  r12d,9                    ;3    
-and  r12d,1                    ;6
+mov  r13d,[rbx]                ;2 Get M
+shr  r13d,9                    ;3    
+and  r13d,1                    ;6
 and  dword [rbx], 0xFFFFFFFE  ;6 Set T Flg
-cmp  eax,r12d                  ;2
+cmp  eax,r13d                  ;2
 jne  NO_Q_M                   ;2
 or   dword [rbx], 0x00000001  ;6 Set T Flg
 NO_Q_M:
-pop rsi ;1
-pop r12  ;1
+
+
 
 ;======================================================
 ; end of DIV1
@@ -2137,7 +2135,7 @@ mov  dword [rsi+4],edx ;3 store MACL
 ; MACL   ans = 32bit -> 64 bit MUL
 ;        (MACH << 32 + MACL)  + ans 
 ;-------------------------------------------------------------
-opdesc MAC_L, 153,6,38,0xFF,0xFF,0xFF 
+opdesc MAC_L, 160,6,38,0xFF,0xFF,0xFF 
 opfunc MAC_L
 mov  rbp,rdi                  ;2  
 add  rbp,byte $00             ;3 4..7
@@ -2155,38 +2153,38 @@ add  dword [rbp], 4           ;7 R[m] += 4
 xor  ecx,ecx                  ;2
 or   ecx,[rsi+4]              ;3 load macl
 imul r13d                      ;2 eax <- low, edx <- high
-mov  edi,[rsi]                ;3 load mach
+mov  r13d,[rsi]                ;3 load mach
 add  ecx,eax                  ;3 sum = a+b;
-adc  edi,edx                  ;2
+adc  r13d,edx                  ;2
 test dword [rbx], 0x00000002  ;6 check S flg
 je   END_PROC                 ;2 if( S == 0 ) goto 'no sign proc'
-cmp  edi,7FFFh                ;6
+cmp  r13d,7FFFh                ;6
 jb   END_PROC                 ;2 
 ja   COMP_MIN                ;2
 cmp  ecx,0FFFFFFFFh           ;3 
 jbe   END_PROC                ;2  = 88
 
 COMP_MIN:
-cmp   edi,0FFFF8000h          ;6
+cmp   r13d,0FFFF8000h          ;6
 ja   END_PROC                 ;2 
 jb   CHECK_AAA                ;2 
 test ecx,ecx                  ;2
 jae  END_PROC                ;2
 CHECK_AAA:
-test edx,edx                  ;2
+test edx,edx                ;2
 jg   MAXMIZE                  ;2
 jl   MINIMIZE                 ;2
 test eax,eax                  ;3
 jae MAXMIZE                   ;2
 MINIMIZE:
 xor ecx,ecx                   ;2
-mov edi,0FFFF8000h            ;5
+mov r13d,0FFFF8000h            ;5
 jmp END_PROC                 ;2
 MAXMIZE:
 or   ecx,0FFFFFFFFh           ;3 sum = 0x00007FFFFFFFFFFFULL;
-mov  edi,7FFFh                ;5
+mov  r13d,7FFFh                ;5
 END_PROC:
-mov  [rsi],edi         ; 3
+mov  [rsi],r13d         ; 3
 mov  [rsi+4],ecx       ; 3
 
 
