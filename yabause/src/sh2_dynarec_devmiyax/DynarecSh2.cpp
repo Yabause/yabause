@@ -344,19 +344,19 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #if defined(_WINDOWS)
 
 #if defined(_WIN64)
-  #define PROLOGSIZE		     (0x28)    
-  #define SEPERATORSIZE_NORMAL 11
-  #define SEPERATORSIZE_DELAY  7
-  #define SEPERATORSIZE_DELAY_SLOT  37
-  #define SEPERATORSIZE_DELAY_AFTER  18 
-  #define EPILOGSIZE		      7
-  #define DELAYJUMPSIZE	     23
+  #define PROLOGSIZE		     (0x31-0x00)    
+  #define SEPERATORSIZE_NORMAL (0x3c-0x31)
+  #define SEPERATORSIZE_DELAY_SLOT  (0x6a-0x3c)
+  #define SEPERATORSIZE_DELAY_AFTER  (0x85-0x6a) 
+  #define EPILOGSIZE		      (0x95-0x85)
+  #define DELAYJUMPSIZE	     (0xb5-0x95)
+
   #define DALAY_CLOCK_OFFSET 10
   #define NORMAL_CLOCK_OFFSET 10
   #define DALAY_CLOCK_OFFSET_DEBUG 10
   #define NORMAL_CLOCK_OFFSET_DEBUG 5
-  #define SEPERATORSIZE_DEBUG  32
-  #define SEPERATORSIZE_DELAYD_DEBUG 44
+  #define SEPERATORSIZE_DEBUG  (0xde-0xb5)
+  #define SEPERATORSIZE_DELAYD_DEBUG (0x113-0xde)
 
 #else // 32bit
   #define PROLOGSIZE		     27    
@@ -1575,9 +1575,11 @@ void DynarecSh2::Undecoded(){
   return;
 }
 
+
 inline int DynarecSh2::Execute(){
 
   Block * pBlock = NULL;
+
 
   m_pCompiler->exec_count_++;
 #if defined(EXECUTE_STAT)
@@ -1831,7 +1833,7 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
     }
     m_pDynaSh2->SysReg[3] = MappedMemoryReadLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2),NULL);
 
-    LOG("**** [%s] Exception vecnum=%s(%x), PC=%08X to %08X, level=%08X\n", (is_slave_ == false) ? "M" : "S", ScuGetVectorString(Vector), Vector,prepc, m_pDynaSh2->SysReg[3], level);
+    //LOG("**** [%s] Exception vecnum=%s(%x), PC=%08X to %08X, level=%08X\n", (is_slave_ == false) ? "M" : "S", ScuGetVectorString(Vector), Vector,prepc, m_pDynaSh2->SysReg[3], level);
 
 #if defined(DEBUG_CPU)
 //    LOG("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X\n", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level);
@@ -1860,7 +1862,7 @@ int DynarecSh2::Resume() {
 
 void DynarecSh2::ShowStatics(){
 #if defined(DEBUG_CPU)
-  LOG("\nExec cnt %d loopskip_cnt_ = %d, interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, loopskip_cnt_, interruput_chk_cnt_, interruput_cnt_ );
+  //LOG("\nExec cnt %d loopskip_cnt_ = %d, interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, loopskip_cnt_, interruput_chk_cnt_, interruput_cnt_ );
   pre_cnt_ = GET_COUNT();
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
