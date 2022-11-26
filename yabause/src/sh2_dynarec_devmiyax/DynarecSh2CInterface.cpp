@@ -684,7 +684,7 @@ void memSetWord(u32 addr, u16 data )
 void memSetLong(u32 addr , u32 data )
 {
   dynaLock();
-  //LOG("memSetLong %08X, %08X\n", addr, data);
+
   u32 cycle = 0;
 
   CompileBlocks * block = CompileBlocks::getInstance();
@@ -774,11 +774,21 @@ void DynaCheckBreakPoint(u32 pc) {
 
 
 int DelayEachClock() {
+
   return 0;
 }
 
 int DebugDelayClock() {
   dynaLock();
+
+#ifdef DMPHISTORY
+  CurrentSH2->pchistory_index++;
+  CurrentSH2->pchistory[CurrentSH2->pchistory_index & (MAX_DMPHISTORY - 1)] = DynarecSh2::CurrentContext->GET_PC();
+  CurrentSH2->pchistory_index++;
+  CurrentSH2->pchistory[CurrentSH2->pchistory_index & (MAX_DMPHISTORY - 1)] = DynarecSh2::CurrentContext->GET_PC() + 2;
+#endif
+
+
   //CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT(); // ->SysReg[4];
   //CurrentSH2->regs.PC = DynarecSh2::CurrentContext->GET_PC();
   DynaCheckBreakPoint(DynarecSh2::CurrentContext->GET_PC());
@@ -788,7 +798,6 @@ int DebugDelayClock() {
 
 int DebugEachClock() {
   dynaLock();
-
   #define INSTRUCTION_B(x) ((x & 0x0F00) >> 8)
   #define INSTRUCTION_C(x) ((x & 0x00F0) >> 4)
 
@@ -802,11 +811,11 @@ int DebugEachClock() {
   u16 inst = memGetWord(pc);
   s32 m = INSTRUCTION_C(inst);
   s32 n = INSTRUCTION_B(inst);
-
+  
   LOG("%08X: rotcrout R%d=%08X, SR=%08X\n", 
     DynarecSh2::CurrentContext->GET_PC(), 
-    n,DynarecSh2::CurrentContext->GetGenRegPtr()[n], 
-    DynarecSh2::CurrentContext->GET_SR());
+      n, DynarecSh2::CurrentContext->GetGenRegPtr()[n],
+      DynarecSh2::CurrentContext->GET_SR());
 #endif
 
 #if 0  

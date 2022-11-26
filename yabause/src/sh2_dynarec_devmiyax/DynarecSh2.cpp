@@ -344,19 +344,19 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #if defined(_WINDOWS)
 
 #if defined(_WIN64)
-  #define PROLOGSIZE		     (0x31-0x00)    
-  #define SEPERATORSIZE_NORMAL (0x3c-0x31)
-  #define SEPERATORSIZE_DELAY_SLOT  (0x6a-0x3c)
-  #define SEPERATORSIZE_DELAY_AFTER  (0x85-0x6a) 
-  #define EPILOGSIZE		      (0x95-0x85)
-  #define DELAYJUMPSIZE	     (0xb5-0x95)
+  #define PROLOGSIZE		     (0x36-0x00)    
+  #define SEPERATORSIZE_NORMAL (0x41-0x36)
+  #define SEPERATORSIZE_DELAY_SLOT  (0x6f-0x41)
+  #define SEPERATORSIZE_DELAY_AFTER  (0x8a-0x6f) 
+  #define EPILOGSIZE		      (0x9a-0x8a)
+  #define DELAYJUMPSIZE	     (0xba-0x9a)
 
   #define DALAY_CLOCK_OFFSET 10
   #define NORMAL_CLOCK_OFFSET 10
   #define DALAY_CLOCK_OFFSET_DEBUG 10
   #define NORMAL_CLOCK_OFFSET_DEBUG 5
-  #define SEPERATORSIZE_DEBUG  (0xde-0xb5)
-  #define SEPERATORSIZE_DELAYD_DEBUG (0x113-0xde)
+  #define SEPERATORSIZE_DEBUG  (0xe3-0xba)
+  #define SEPERATORSIZE_DELAYD_DEBUG (0x118-0xe3)
 
 #else // 32bit
   #define PROLOGSIZE		     27    

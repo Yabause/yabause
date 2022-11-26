@@ -62,18 +62,19 @@ section .code
 ;Memory Functions
 
 %macro pushaq 0
+	mov [RSP + 8], RCX
     push rbx
     push rbp
     push rdi	
     push rsi
 	push r12
 	push r14
-	sub rsp,0x20
+	sub rsp,0x40
 %endmacro # pushaq
 
 
 %macro popaq 0
-	add RSP,0x20
+	add RSP,0x40
     pop r14
 	pop r12
 	pop rsi
