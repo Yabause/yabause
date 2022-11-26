@@ -618,6 +618,8 @@ u32 memGetLongNoCache(u32 addr)
 
 void memSetByte(u32 addr , u8 data )
 {
+  LOG("Hello %d", addr);
+
   dynaLock();
   u32 cycle = 0;
   CompileBlocks * block = CompileBlocks::getInstance();
@@ -802,6 +804,9 @@ int DebugEachClock() {
   #define INSTRUCTION_C(x) ((x & 0x00F0) >> 4)
 
   //printf("PC:%08X\n",DynarecSh2::CurrentContext->GET_PC());
+
+  printf("PC:%08X\n", DynarecSh2::CurrentContext->GET_PC());
+  //LOG("PC:%08X\n", DynarecSh2::CurrentContext->GET_PC());
 
   //CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT(); // ->SysReg[4];
   //CurrentSH2->regs.PC = DynarecSh2::CurrentContext->GET_PC();

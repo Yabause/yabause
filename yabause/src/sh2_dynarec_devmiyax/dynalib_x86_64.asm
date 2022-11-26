@@ -62,19 +62,18 @@ section .code
 ;Memory Functions
 
 %macro pushaq 0
-	mov [RSP + 8], RCX
     push rbx
     push rbp
     push rdi	
     push rsi
 	push r12
 	push r14
-	sub rsp,0x40
+	sub rsp,64
 %endmacro # pushaq
 
 
 %macro popaq 0
-	add RSP,0x40
+	add RSP,64
     pop r14
 	pop r12
 	pop rsi
@@ -203,7 +202,7 @@ ret                          ; 1
 global seperator_d_normal
 seperator_d_normal:
 add dword [r12+4],byte 1 ;4 Clock += 1
-mov  eax,DebugEachClock ;5
+mov  rax,DebugEachClock ;5
 call rax                 ;2
 test eax, 0x01           ;5 finish 
 jz  NEXT_D_INST          ;2
@@ -217,7 +216,7 @@ add dword [r12],byte 2   ;3 PC += 2
 ;Size = 34 Bytes
 global seperator_d_delay
 seperator_d_delay:
-mov  eax,DebugDelayClock ;5
+mov  rax,DebugDelayClock ;5
 call rax                   ;2
 test r14d, 0xFFFFFFFF ; 7
 jnz   .continue               ; 2
@@ -255,10 +254,10 @@ opdesc SETT,	4,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc SETT
 or [rbx],byte 1
 
-opdesc SLEEP,	20,0xFF,0xFF,0xFF,0xFF,0xFF
+opdesc SLEEP,	34,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc SLEEP
 add dword [r12+4],byte 1   ;4 
-mov  eax,EachClock ;5
+mov  rax,EachClock ;5
 call rax            ;2
 popaq               ;1
 ret                 ;1
@@ -1065,12 +1064,12 @@ call rax              ;2
 
 
 
-opdesc TST_B,	35,0xff,0xff,0xff,27,0xff
+opdesc TST_B,	40,0xff,0xff,0xff,32,0xff
 opfunc TST_B
 ctrlreg_load 1        ;5
 mov  ecx,[rbp]        ;3 Get GBR
 add  ecx, dword [edi] ;2 Add R[0]
-mov  eax, memGetByte ;5
+mov  rax, memGetByte ;5
 call rax              ;2
 and  dword [rbx],0xFFFFFFFE ;6
 and  al,byte $00      ;2
@@ -1172,26 +1171,26 @@ mov  [rbx],eax          ;2
 add  dword [rbp], 4 ;4
 mov  r14d,r13d  ;4  Set PC
 
-opdesc TRAPA,	      77,0xFF,0xFF,0xFF,53,0xFF
+opdesc TRAPA,	      92,0xFF,0xFF,0xFF,63,0xFF
 opfunc TRAPA
 mov  rbp,rdi          ;2
 add  rbp,byte 60      ;3
 sub  dword [rbp],4    ;7
 mov edx, [rbx]      ;2 SR
 mov ecx, [rbp]      ;3
-mov  eax, memSetLong ;5
+mov  rax, memSetLong ;5
 call rax              ;2
 sub  dword [rbp],4    ;7
 mov  edx,[r12]        ;3 PC
 add  edx,byte 2       ;3
 mov ecx, [rbp]      ;2
-mov  eax, memSetLong ;5
+mov  rax, memSetLong ;5
 call rax              ;2
 xor  ecx,ecx          ;2
 mov  cl,byte $00      ;2 Get Imm
 shl  ecx,2            ;3
 add  ecx,[ebx+8]      ;3 ADD VBR
-mov  eax, memGetLong ;5
+mov  rax, memGetLong ;5
 call rax              ;2
 mov  [r12],eax        ;3
 sub  dword [r12],byte 2     ;3

@@ -336,27 +336,28 @@ void DumpInstX( int i, u32 pc, u16 op  )
   return;
 }
 
-
 #define opdesc(op, y, c, d)	x86op_desc(x86_##op, &op##_size, &op##_src, &op##_dest, &op##_off1, &op##_imm, &op##_off3, y, c, d)
 
 #define opNULL			x86op_desc(0,0,0,0,0,0,0,0,0,0)
 
 #if defined(_WINDOWS)
 
+
+
 #if defined(_WIN64)
-  #define PROLOGSIZE		     (0x36-0x00)    
-  #define SEPERATORSIZE_NORMAL (0x41-0x36)
-  #define SEPERATORSIZE_DELAY_SLOT  (0x6f-0x41)
-  #define SEPERATORSIZE_DELAY_AFTER  (0x8a-0x6f) 
-  #define EPILOGSIZE		      (0x9a-0x8a)
-  #define DELAYJUMPSIZE	     (0xba-0x9a)
+  #define PROLOGSIZE		     (0x31)    
+  #define SEPERATORSIZE_NORMAL (0x3c-0x31)
+  #define SEPERATORSIZE_DELAY_SLOT  (0x6a-0x3c)
+  #define SEPERATORSIZE_DELAY_AFTER  (0x85-0x6a) 
+  #define EPILOGSIZE		      (0x95-0x85)
+  #define DELAYJUMPSIZE	     (0xb5-0x95)
 
   #define DALAY_CLOCK_OFFSET 10
   #define NORMAL_CLOCK_OFFSET 10
   #define DALAY_CLOCK_OFFSET_DEBUG 10
   #define NORMAL_CLOCK_OFFSET_DEBUG 5
-  #define SEPERATORSIZE_DEBUG  (0xe3-0xba)
-  #define SEPERATORSIZE_DELAYD_DEBUG (0x118-0xe3)
+  #define SEPERATORSIZE_DEBUG  (0x113-0xe3)
+  #define SEPERATORSIZE_DELAYD_DEBUG (0x11d-0x113)
 
 #else // 32bit
   #define PROLOGSIZE		     27    
@@ -562,7 +563,6 @@ opinit(TRAPA);
 opinit(DIV1);
 opinit(MAC_W);
 
-
 void prologue(void);
 void epilogue(void);
 void seperator(void);
@@ -570,12 +570,11 @@ void seperator_normal(void);
 void seperator_delay(void);
 void seperator_delay_slot(void);
 void seperator_delay_after(void);
-
 void seperator_d_normal(void);
 void seperator_d_delay(void);
-
 void PageJump(void); // jumps to a different page
 void PageFlip(void); // "flips" the page
+
 
 #if defined(AARCH64)
 void internal_jmp(void);
