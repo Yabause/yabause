@@ -311,11 +311,11 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/include )
 
 # 64bit
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-	target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libssl.lib)
-	target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libcrypto.lib)
+	target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/x64/libssl.lib)
+	target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/x64/libcrypto.lib)
 else()
-	target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libssl-1_1.lib)
-	target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/libcrypto-1_1.lib)
+	target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/x86/libssl-1_1.lib)
+	target_link_libraries( yabause-qt ${CMAKE_CURRENT_SOURCE_DIR}/lib/x86/libcrypto-1_1.lib)
 endif()
 
 
