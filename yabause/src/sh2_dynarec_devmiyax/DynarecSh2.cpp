@@ -356,8 +356,8 @@ void DumpInstX( int i, u32 pc, u16 op  )
   #define NORMAL_CLOCK_OFFSET 10
   #define DALAY_CLOCK_OFFSET_DEBUG 10
   #define NORMAL_CLOCK_OFFSET_DEBUG 5
-  #define SEPERATORSIZE_DEBUG  (0x113-0xe3)
-  #define SEPERATORSIZE_DELAYD_DEBUG (0x11d-0x113)
+  #define SEPERATORSIZE_DEBUG  (0xe3-0xb5)
+  #define SEPERATORSIZE_DELAYD_DEBUG (0x11d-0xe3)
 
 #else // 32bit
   #define PROLOGSIZE		     27    
@@ -1579,6 +1579,9 @@ inline int DynarecSh2::Execute(){
 
   Block * pBlock = NULL;
 
+#if defined(BUILD_INFO)
+  m_pCompiler->setShowCode(true);
+#endif
 
   m_pCompiler->exec_count_++;
 #if defined(EXECUTE_STAT)

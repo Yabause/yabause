@@ -68,12 +68,12 @@ section .code
     push rsi
 	push r12
 	push r14
-	sub rsp,64
+	sub rsp,0x28
 %endmacro # pushaq
 
 
 %macro popaq 0
-	add RSP,64
+	add RSP,0x28
     pop r14
 	pop r12
 	pop rsi
@@ -146,12 +146,13 @@ seperator_normal:
 add dword [r12], byte 2   ;3 PC += 2
 add dword [r12+4], byte 1 ;4 Clock += 1
 
+
 ;------------------------------------------------------
 ; Delay slot part par instruction
 ;Size = 17 Bytes
 global seperator_delay_slot
 seperator_delay_slot:
-test dword r14d, 0xFFFFFFFF ; 7
+test r14d, 0xFFFFFFFF; 7
 jnz   .continue               ; 2
 add dword [r12], byte 2      ; 3 PC += 2
 add dword [r12+4], byte 1    ; 4 Clock += 1
@@ -218,7 +219,7 @@ global seperator_d_delay
 seperator_d_delay:
 mov  rax,DebugDelayClock ;5
 call rax                   ;2
-test r14d, 0xFFFFFFFF ; 7
+test r14d, 0xFFFFFFFF; 7
 jnz   .continue               ; 2
 add dword [r12], byte 2      ; 3 PC += 2
 add dword [r12+4], byte 1    ; 4 Clock += 1
@@ -246,7 +247,7 @@ opdesc NOP,		1,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc NOP
 nop
 
-opdesc DIV0U,	7,0xFF,0xFF,0xFF,0xFF,0xFF
+opdesc DIV0U,	6,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc DIV0U
 and dword [rbx],0xfffffcfe
 
@@ -1811,7 +1812,7 @@ ENDPROC:
 
 ;-------------------------------------------------------------
 ;div0s 
-opdesc DIV0S, 82,39,6,0xFF,0xFF,0xFF
+opdesc DIV0S, 84,41,6,0xFF,0xFF,0xFF
 opfunc DIV0S
 mov  rbp,rdi                 ;2 SetQ
 add  rbp,byte $00            ;3 8..11
@@ -1825,8 +1826,8 @@ or   dword [rbx],0x00000100  ;6 Set Q Flg
 inc  eax                     ;1 
 
 continue:
-mov  ebp,edi                 ;2 SetM
-add  ebp,byte $00            ;3 4..7
+mov  rbp,rdi                 ;2 SetM
+add  rbp,byte $00            ;3 4..7
 and  dword [rbx],0xFFFFFDFF  ;6 Clear M Flg
 test dword [rbp],0x80000000  ;7 Test sign
 je   continue2               ;2 if ZF = 1 then goto NO_SIGN
