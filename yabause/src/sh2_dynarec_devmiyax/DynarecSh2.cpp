@@ -39,9 +39,9 @@ extern "C" {
 #if defined(WEBINTERFACE)
 #define DEBUG_CPU
 #endif
-#define DEBUG_CPU
-#define EXECUTE_STAT
-#define BUILD_INFO
+//#define DEBUG_CPU
+//#define EXECUTE_STAT
+//#define BUILD_INFO
 //#define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
