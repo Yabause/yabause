@@ -2196,7 +2196,7 @@ mov  [rsi+4],ecx       ; 3
 ; MACW   ans = 32bit -> 64 bit MUL
 ;        (MACH << 32 + MACL)  + ans 
 ;-------------------------------------------------------------
-opdesc MAC_W, 133,6,39,0xFF,0xFF,0xFF
+opdesc MAC_W, 132,6,39,0xFF,0xFF,0xFF
 opfunc MAC_W
 mov  rbp,rdi                  ;2  
 add  rbp,byte $00             ;3 4..7
@@ -2236,13 +2236,14 @@ MACW_S_FLG:
 MACW_NO_S_FLG:
   add dword [rsi+4],eax         ;3 MACL = ansL + MACL
   jnc MACW_NO_CARRY             ;2 Check Carry
-  inc r13d                       ;1
+  inc edx                       ;1
 MACW_NO_CARRY: 
-  add dword [rsi],r13d           ;2 MACH = ansH + MACH
+  add dword [rsi],edx           ;2 MACH = ansH + MACH
 
 END_MACW:
-  
-END_ALL:
+  nop
+
+END_size:
   nop
 
 end

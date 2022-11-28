@@ -618,8 +618,6 @@ u32 memGetLongNoCache(u32 addr)
 
 void memSetByte(u32 addr , u8 data )
 {
-  LOG("Hello %d", addr);
-
   dynaLock();
   u32 cycle = 0;
   CompileBlocks * block = CompileBlocks::getInstance();
@@ -805,12 +803,14 @@ int DebugEachClock() {
 
   //printf("PC:%08X\n",DynarecSh2::CurrentContext->GET_PC());
 
-  printf("PC:%08X\n", DynarecSh2::CurrentContext->GET_PC());
   //LOG("PC:%08X\n", DynarecSh2::CurrentContext->GET_PC());
 
   //CurrentSH2->cycles = DynarecSh2::CurrentContext->GET_COUNT(); // ->SysReg[4];
   //CurrentSH2->regs.PC = DynarecSh2::CurrentContext->GET_PC();
 
+  
+
+  u32 pc = DynarecSh2::CurrentContext->GET_PC();
 #if 0
   u32 pc = DynarecSh2::CurrentContext->GET_PC();
   u16 inst = memGetWord(pc);
@@ -831,19 +831,89 @@ int DebugEachClock() {
     DynarecSh2::CurrentContext->GET_SR());
 #endif
 
+#if 0 // These code is useful to confrim dynarec cpu 
+  static FILE * dfp = NULL;
+  if (dfp == NULL) {
+    dfp = fopen("instest.txt","w");
+  }
+  u16 inst = memGetWord(pc);
+
 #if 0
-if( DynarecSh2::CurrentContext->GET_PC() >= 0x0602E3C2 &&  DynarecSh2::CurrentContext->GET_PC() < 0x0602E468 ) {
-   u32 addrn = DynarecSh2::CurrentContext->GetGenRegPtr()[6]-4;
-   u32 addrm = DynarecSh2::CurrentContext->GetGenRegPtr()[7]-4;
-   printf("%08X: MACL R[%d]=%08X@%08X,R[%d]=%08X@%08X,MACH=%08X,MACL=%08X\n",
-      DynarecSh2::CurrentContext->GET_PC(),
-      6,addrn,MappedMemoryReadLong(addrn),
-      7,addrm,MappedMemoryReadLong(addrm),
+  if ((inst & 0xf00f) == 0x300d) {
+    s32 m = INSTRUCTION_C(inst);
+    s32 n = INSTRUCTION_B(inst);
+
+    fprintf(dfp, "%08X: dmuls.l R[%d]=%08X,R[%d]=%08X,MACH=%08X,MACL=%08X\n",
+      pc,
+      m,DynarecSh2::CurrentContext->GetGenRegPtr()[m],
+      n,DynarecSh2::CurrentContext->GetGenRegPtr()[n],
       DynarecSh2::CurrentContext->GET_MACH(),
       DynarecSh2::CurrentContext->GET_MACL()
-   );
-}
+    );
+  }
 #endif
+  if (!DynarecSh2::CurrentContext->IsSlave()) {
+
+    s32 m = INSTRUCTION_C(inst);
+    s32 n = INSTRUCTION_B(inst);
+#if 0
+    if ((inst & 0xf00f) == 0x000f) {
+      u32 addrn = DynarecSh2::CurrentContext->GetGenRegPtr()[n] - 4;
+      u32 addrm = DynarecSh2::CurrentContext->GetGenRegPtr()[m] - 4;
+      fprintf(dfp, "%08X: MACL R[%d]=%08X@%08X,R[%d]=%08X@%08X,MACH=%08X,MACL=%08X\n",
+        pc,
+        n, addrn, MappedMemoryReadLong(addrn, NULL),
+        m, addrm, MappedMemoryReadLong(addrm, NULL),
+        DynarecSh2::CurrentContext->GET_MACH(),
+        DynarecSh2::CurrentContext->GET_MACL()
+      );
+      fflush(dfp);
+    }
+#endif
+
+    // MACW
+    if ((inst & 0xf00f) == 0x400f) {
+      u32 addrn = DynarecSh2::CurrentContext->GetGenRegPtr()[n] - 2;
+      u32 addrm = DynarecSh2::CurrentContext->GetGenRegPtr()[m] - 2;
+      fprintf(dfp, "%08X: MACW R[%d]=%08X@%08X,R[%d]=%08X@%08X,MACH=%08X,MACL=%08X\n",
+        pc,
+        n, addrn, MappedMemoryReadWord(addrn, NULL),
+        m, addrm, MappedMemoryReadWord(addrm, NULL),
+        DynarecSh2::CurrentContext->GET_MACH(),
+        DynarecSh2::CurrentContext->GET_MACL()
+      );
+      fflush(dfp);
+    }
+#if 0
+    // SHAR
+    if ((inst & 0xf0ff) == 0x4021) {
+      fprintf(dfp, "%08X: shar R[%d]=%08X,SR=%08X\n",
+        pc,
+        n, DynarecSh2::CurrentContext->GetGenRegPtr()[n],
+        DynarecSh2::CurrentContext->GET_SR()
+      );
+      fflush(dfp);
+    }
+#endif
+    if ((inst & 0xf00f) == 0x200d) {
+      fprintf(dfp, "%08X: xtract R[%d]=%08X,R[%d]=%08X\n",
+        pc,
+        m, DynarecSh2::CurrentContext->GetGenRegPtr()[m],
+        n, DynarecSh2::CurrentContext->GetGenRegPtr()[n]
+      );
+      fflush(dfp);
+    }
+#if 1
+    if (pc == 0x06021588 && 
+      DynarecSh2::CurrentContext->GetGenRegPtr()[1] == 0x0000318C &&
+      DynarecSh2::CurrentContext->GetGenRegPtr()[2] == 0x318C2108 ) {
+      SH2DumpHistory(CurrentSH2);
+      exit(0);
+    }
+#endif
+  }
+#endif
+
 
 #if 0
   #define INSTRUCTION_B(x) ((x & 0x0F00) >> 8)
