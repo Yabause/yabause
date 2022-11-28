@@ -1065,11 +1065,11 @@ call rax              ;2
 
 
 
-opdesc TST_B,	40,0xff,0xff,0xff,32,0xff
+opdesc TST_B,	39,0xff,0xff,0xff,31,0xff
 opfunc TST_B
 ctrlreg_load 1        ;5
 mov  ecx,[rbp]        ;3 Get GBR
-add  ecx, dword [edi] ;2 Add R[0]
+add  ecx, dword [rdi] ;2 Add R[0]
 mov  rax, memGetByte ;5
 call rax              ;2
 and  dword [rbx],0xFFFFFFFE ;6
@@ -1172,7 +1172,7 @@ mov  [rbx],eax          ;2
 add  dword [rbp], 4 ;4
 mov  r14d,r13d  ;4  Set PC
 
-opdesc TRAPA,	      92,0xFF,0xFF,0xFF,63,0xFF
+opdesc TRAPA,	      91,0xFF,0xFF,0xFF,63,0xFF
 opfunc TRAPA
 mov  rbp,rdi          ;2
 add  rbp,byte 60      ;3
@@ -1190,7 +1190,7 @@ call rax              ;2
 xor  ecx,ecx          ;2
 mov  cl,byte $00      ;2 Get Imm
 shl  ecx,2            ;3
-add  ecx,[ebx+8]      ;3 ADD VBR
+add  ecx,[rbx+8]      ;3 ADD VBR
 mov  rax, memGetLong ;5
 call rax              ;2
 mov  [r12],eax        ;3
