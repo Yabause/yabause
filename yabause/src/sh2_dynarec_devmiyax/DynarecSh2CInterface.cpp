@@ -870,6 +870,68 @@ int DebugEachClock() {
       fflush(dfp);
     }
 #endif
+  if (!DynarecSh2::CurrentContext->IsSlave()) {
+
+    s32 m = INSTRUCTION_C(inst);
+    s32 n = INSTRUCTION_B(inst);
+#if 0
+    if ((inst & 0xf00f) == 0x000f) {
+      u32 addrn = DynarecSh2::CurrentContext->GetGenRegPtr()[n] - 4;
+      u32 addrm = DynarecSh2::CurrentContext->GetGenRegPtr()[m] - 4;
+      fprintf(dfp, "%08X: MACL R[%d]=%08X@%08X,R[%d]=%08X@%08X,MACH=%08X,MACL=%08X\n",
+        pc,
+        n, addrn, MappedMemoryReadLong(addrn, NULL),
+        m, addrm, MappedMemoryReadLong(addrm, NULL),
+        DynarecSh2::CurrentContext->GET_MACH(),
+        DynarecSh2::CurrentContext->GET_MACL()
+      );
+      fflush(dfp);
+    }
+#endif
+
+    // MACW
+    if ((inst & 0xf00f) == 0x400f) {
+      u32 addrn = DynarecSh2::CurrentContext->GetGenRegPtr()[n] - 2;
+      u32 addrm = DynarecSh2::CurrentContext->GetGenRegPtr()[m] - 2;
+      fprintf(dfp, "%08X: MACW R[%d]=%08X@%08X,R[%d]=%08X@%08X,MACH=%08X,MACL=%08X\n",
+        pc,
+        n, addrn, MappedMemoryReadWord(addrn, NULL),
+        m, addrm, MappedMemoryReadWord(addrm, NULL),
+        DynarecSh2::CurrentContext->GET_MACH(),
+        DynarecSh2::CurrentContext->GET_MACL()
+      );
+      fflush(dfp);
+    }
+#if 0
+    // SHAR
+    if ((inst & 0xf0ff) == 0x4021) {
+      fprintf(dfp, "%08X: shar R[%d]=%08X,SR=%08X\n",
+        pc,
+        n, DynarecSh2::CurrentContext->GetGenRegPtr()[n],
+        DynarecSh2::CurrentContext->GET_SR()
+      );
+      fflush(dfp);
+    }
+#endif
+    if ((inst & 0xf00f) == 0x200d) {
+      fprintf(dfp, "%08X: xtract R[%d]=%08X,R[%d]=%08X\n",
+        pc,
+        m, DynarecSh2::CurrentContext->GetGenRegPtr()[m],
+        n, DynarecSh2::CurrentContext->GetGenRegPtr()[n]
+      );
+      fflush(dfp);
+    }
+#if 1
+    if (pc == 0x06021588 && 
+      DynarecSh2::CurrentContext->GetGenRegPtr()[1] == 0x0000318C &&
+      DynarecSh2::CurrentContext->GetGenRegPtr()[2] == 0x318C2108 ) {
+      SH2DumpHistory(CurrentSH2);
+      exit(0);
+    }
+#endif
+  }
+#endif
+
 
     // MACW
     if ((inst & 0xf00f) == 0x400f) {
