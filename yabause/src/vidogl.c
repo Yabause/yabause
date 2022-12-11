@@ -70,6 +70,7 @@ FILE *ppfp = NULL;
 #ifndef ANDROID
 int yprintf(const char * fmt, ...)
 {
+#if 0
   static FILE * dbugfp = NULL;
   if (dbugfp == NULL) {
     dbugfp = fopen("debug.txt", "w");
@@ -81,6 +82,7 @@ int yprintf(const char * fmt, ...)
     va_end(ap);
     fflush(dbugfp);
   }
+#endif
   return 0;
 }
 #endif

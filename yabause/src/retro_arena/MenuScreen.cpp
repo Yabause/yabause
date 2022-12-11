@@ -1,4 +1,4 @@
-/*
+﻿/*
         Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
 This file is part of YabaSanshiro.
@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <nanogui/button.h>
 #include <nanogui/popupbutton.h>
 #include <nanogui/messagedialog.h>
+#include "GameListPanel.h"
 #include <nanogui/combobox.h>
 #include <nanogui/vscrollpanel.h>
 #include "../config.h"
@@ -48,6 +49,8 @@ using namespace std;
 
 #include "Preference.h"
 
+#include "GameInfo.h"
+
 #include "yabause.h"
 
 //#define MENU_LOG
@@ -59,9 +62,60 @@ int MenuScreen::onShow(){
   //setupPlayerPsuhButton( 1, player2, "Player2 Input Settings", &p2cb );
 }
 
+#include <thread>
+
+void MenuScreen::refreshGameListAsync(const vector<string> & base_path_array) {
+  bFileSearchCancled = false;
+
+  MessageDialog * dlg = new MessageDialog(this, MessageDialog::Type::Warning, "Searching games", "", "Cancel");
+  evm->setEvent("updateFile", [this, dlg](int code, void * data1, void * data2) {
+    if (!bFileSearchCancled) {
+      string msg((char*)data1);
+      Label * pl = dlg->messageLabel();
+      pl->setCaption(msg);
+      delete data1;
+    }
+  });
+
+
+  std::thread *t = new std::thread([this, base_path_array]() {
+    int indent = 0;
+    for (int i = 0; i < base_path_array.size(); i++) {
+      listdir(base_path_array[i], indent, games);
+    }
+    if (!bFileSearchCancled) {
+      evm->postEvent("showFileSelectDialog");
+    }
+  });
+
+  dlg->setCallback([this, t](int result) {
+    bFileSearchCancled = true;
+    t->join();
+    delete t;
+    games.clear();
+    MENU_LOG("Cancel\n");
+    //void * datax = malloc(256 * sizeof(char));
+    //strcpy((char*)datax, "");
+    //evm->postEvent("close tray", datax);
+  });
+
+  evm->setEvent("showFileSelectDialog", [this, dlg, t, base_path_array](int code, void * data1, void * data2) {
+    t->join();
+    delete t;
+    dlg->dispose();
+    showFileSelectDialog(tools, bCdTray, base_path_array);
+  });
+
+
+}
+
 MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std::string & fname, const std::string & game )
 : nanogui::Screen( pwindow, Eigen::Vector2i(rwidth, rheight), "Menu Screen"){
   
+
+  gameInfoManager = new GameInfoManager();
+  gameInfoManager->getAll(games);
+
   mFocus = nullptr;
   config_file_ = fname;
   current_game_path_ = game;
@@ -170,6 +224,19 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
             SDL_PushEvent(&event);               
             */
 
+            Preference pref("default");
+            vector<string> base_path_array = pref.getStringArray("game directories");
+            if (base_path_array.size() >= 0) {
+              base_path = base_path_array[0];
+            }
+
+            if (games.size() == 0) {
+              refreshGameListAsync(base_path_array);
+            }
+            else {
+              showFileSelectDialog(tools, bCdTray, base_path_array);
+            }
+           
           }else{
             MENU_LOG("Open CD Tray\n"); 
             bCdTray->setCaption("Close CD Tray");
@@ -487,81 +554,290 @@ void MenuScreen::showLoadStateDialog( Popup *popup ){
 
 }
 
+void MenuScreen::listdir(const string & dirname, int indent, vector<shared_ptr<GameInfo>> & files )
+{
+  DIR *dir;
+  struct dirent *entry;
+
+  if (!(dir = opendir(dirname.c_str())))
+    return;
+
+  while ((entry = readdir(dir)) != NULL) {
+
+    if ( bFileSearchCancled ) {
+      return;
+    }
+
+    if (entry->d_type == DT_DIR) {
+      char path[1024];
+      if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        continue;
+      snprintf(path, sizeof(path), "%s/%s", dirname.c_str(), entry->d_name);
+      printf("%*s[%s]\n", indent, "", entry->d_name);
+      listdir(string(path), indent + 2, files);
+    }
+    else {
+      printf("%*s- %s\n", indent, "", entry->d_name);
+      string dname = dirname + "/" + entry->d_name;
+      std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
+      //if (ends_with(dname, ".cue") || ends_with(dname, ".mdf") || ends_with(dname, ".ccd") || ends_with(dname, ".chd")) {
+      //  files.push_back(dname);
+      //}
+
+      if (ends_with(dname, ".cue") ) {
+        shared_ptr<GameInfo> p = GameInfo::genGameInfoFromCUE(dname);
+        if (p != nullptr) {
+          files.push_back(p);
+          gameInfoManager->insert(p);
+        }
+        else {
+          cout << "Fail to generate " << dname << endl;
+        }
+      }
+
+      if (ends_with(dname, ".chd")) {
+        shared_ptr<GameInfo> p = GameInfo::genGameInfoFromCHD(dname);
+        if (p != nullptr) {
+          files.push_back(p);
+          gameInfoManager->insert(p);
+        }
+        else {
+          cout << "Fail to generate " << dname << endl;
+        }
+      }
+
+      void * data = new char[dname.length()+1];
+      strcpy((char*)data, dname.c_str());
+      evm->postEvent("updateFile", data);
+
+    }
+  }
+  closedir(dir);
+}
+
+
+void MenuScreen::checkdir(const string & dirname, int indent, vector<string> & files)
+{
+  DIR *dir;
+  struct dirent *entry;
+
+  if (!(dir = opendir(dirname.c_str())))
+    return;
+
+  while ((entry = readdir(dir)) != NULL) {
+    if (entry->d_type == DT_DIR) {
+      char path[1024];
+      if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        continue;
+      snprintf(path, sizeof(path), "%s/%s", dirname.c_str(), entry->d_name);
+      printf("%*s[%s]\n", indent, "", entry->d_name);
+      checkdir(string(path), indent + 2, files);
+      if (files.size() != 0) {
+        closedir(dir);
+        return;
+      }
+    }
+    else {
+      printf("%*s- %s\n", indent, "", entry->d_name);
+      string dname = dirname + "/" + entry->d_name;
+      std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
+      if (ends_with(dname, ".cue") || ends_with(dname, ".mdf") || ends_with(dname, ".ccd") || ends_with(dname, ".chd")) {
+        files.push_back(dname);
+        closedir(dir);
+        return;
+      }
+    }
+  }
+  closedir(dir);
+}
+
+void MenuScreen::checkGameFiles(Widget * parent, const vector<std::string> & base_paths) {
+  DIR *dir;
+  struct dirent *ent;
+  int filecount = 0;
+
+  vector<string> files;
+  int indent = 0;
+  for (int i = 0; i < base_paths.size(); i++) {
+    checkdir(base_paths[i], indent, files);
+    filecount = files.size();
+    if (filecount != 0) {
+      break;
+    }
+  }
+
+#if 0
+  if ((dir = opendir(base_path.c_str())) != NULL) {
+    /* print all the files and directories within directory */
+    while ((ent = readdir(dir)) != NULL) {
+      string dname = ent->d_name;
+      std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
+      if (ends_with(dname, ".cue") || ends_with(dname, ".mdf") || ends_with(dname, ".ccd") || ends_with(dname, ".chd")) {
+        filecount++;
+        break;
+      }
+    }
+  }
+#endif
+
+  if (filecount == 0) {
+    string message;
+    message = "No games are found in \"";
+    message += base_paths[0] + "\" folder. ";
+    message += "Place cue or ccd or chd files there.";
+    auto dlg = new MessageDialog(this, MessageDialog::Type::Warning, "Game not found", message.c_str() );
+    nanogui::Button* btn = (nanogui::Button*)mFocus;
+    mFocus->mouseEnterEvent(mFocus->position(), false);
+
+    auto preFocus = mFocus;
+    dlg->setCallback([this, preFocus](int result) { 
+      mFocus = preFocus;
+      preFocus->mouseEnterEvent(preFocus->position(), true); 
+    });
+    dlg->requestFocus();
+
+    mFocus = dlg->getOkBottn();
+    MENU_LOG("%s is selected\n", ((nanogui::Button*)mFocus)->caption().c_str());
+    mFocus->mouseEnterEvent(mFocus->position(), true);
+  }
+}
 
 void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const std::string & base_path ){
   const int dialog_width = 512;
   const int dialog_height = this->size()[1] - 20 ;
-    swindow = new Window(this, "Select File");
+    swindow = new Window(this, "Select Game");
     swindow->setPosition(Vector2i(  this->size()[0]/2 - (dialog_width/2) ,   this->size()[1]/2 - (dialog_height/2) ));
     swindow->setFixedSize({dialog_width, dialog_height});
     //swindow->setLayout(new GroupLayout());
 
     auto vscroll = new VScrollPanel(swindow);
-    vscroll->setFixedSize({dialog_width, dialog_height });
+    vscroll->setPosition(Vector2i(0, 20));
+    vscroll->setFixedSize({dialog_width, dialog_height - 28});
+    
     auto wrapper = new Widget(vscroll);
     wrapper->setFixedSize({dialog_width, dialog_height });
     wrapper->setLayout(new GroupLayout());
-
-    //pushActiveMenu(parent,toback);
-
-    DIR *dir;
-    struct dirent *ent;
-    bool first_object = true;
-    if ((dir = opendir (base_path.c_str())) != NULL) {
-      /* print all the files and directories within directory */
-      while ((ent = readdir (dir)) != NULL) {
-        string dname = ent->d_name;
-        std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
-        if( ends_with(dname, ".cue") || ends_with(dname, ".mdf") || ends_with(dname, ".ccd") || ends_with(dname, ".chd") ){
-            Button *tmp = new Button(wrapper, ent->d_name );
-            string path = base_path + "/" + string(ent->d_name);
-            tmp->setCallback([this,path]() { 
-              MENU_LOG("CD Close: %s\n", path.c_str() ); 
-              SDL_Event event = {};
-              event.type = close_tray_;
-              event.user.code = 0;
-              event.user.data1 = malloc( (path.size()+1) * sizeof(char) );
-              strcpy( (char*)event.user.data1, path.c_str() );
-              event.user.data2 = 0;
-              SDL_PushEvent(&event);
-              this->popActiveMenu();
-              this->swindow->dispose();
-              this->swindow = nullptr;
-            });  
-            if( first_object ){
-              first_object = false;
-              pushActiveMenu(wrapper,toback);
-            }
-        }
-      }
-      closedir (dir);
-    } else {
-    }
     
-    Button *b0 = new Button(wrapper, "Cancel");
-    if( first_object ){
-       first_object = false;
-       pushActiveMenu(wrapper,toback);
-    }    
-    b0->setCallback([this]() { 
-      MENU_LOG("Cancel\n"); 
-      SDL_Event event = {};
-      event.type = close_tray_;
-      event.user.code = 0;
-      //event.user.data1 = malloc( 256* sizeof(char) );
-      //strcpy( (char*)event.user.data1, "filename" );
-      //event.user.data2 = 0;
-      //SDL_PushEvent(&event);
+
+    bool first_object = true;
+
+    Button *b1 = new Button(wrapper, "refresh");
+    if (first_object) {
+      first_object = false;
+      pushActiveMenu(wrapper, toback);
+    }
+
+    b1->setCallback([this]() {
+      MENU_LOG("refresh\n");
+
       this->popActiveMenu();
       swindow->dispose();
       swindow = nullptr;
-     //this->performLayout();
+
+      gameInfoManager->clearAll();
+      games.clear();
+
+      Preference pref("default");
+      vector<string> base_path_array = pref.getStringArray("game directories");
+      refreshGameListAsync(base_path_array);
+
     });
 
-    //new Label(swindow,"Push key for " + key, "sans", 64);
-    //swindow->center();
-    swindow->setModal(true);
-    swindow->requestFocus();
+
+
+    Button *b0 = new Button(wrapper, "Cancel");
+    if (first_object) {
+      first_object = false;
+      pushActiveMenu(wrapper, toback);
+    }
+
+    b0->setCallback([this]() {
+      MENU_LOG("Cancel\n");
+      void * data1 = malloc(256 * sizeof(char));
+      strcpy((char*)data1, "");
+      evm->postEvent("close tray", data1);
+      this->popActiveMenu();
+      swindow->dispose();
+      swindow = nullptr;
+    });
+
+    int file_count = 0;
+    int indent = 0;
+    if (games.size() == 0) {
+      gameInfoManager->clearAll();
+      for (int i = 0; i < base_paths.size(); i++) {
+        listdir(base_paths[i], indent, games);
+      }
+    }
+
+    file_count = games.size();
+
+    
+    vector<pair<int, string>> icons;
+    for (int i = 0; i < games.size(); i++) {
+
+      printf("%d, %s\n",i, games[i]->imageUrl.c_str());
+
+      ImageButton *tmp = new ImageButton(wrapper, games[i]->gameTitle, i);
+      string path = games[i]->filePath;
+
+      tmp->setOnImageRequested([this,vscroll](int id, int x, int y, int w, int h) {
+
+        float pos = vscroll->getScrollPos();
+
+        const int bx = vscroll->position().x();
+        const int by = vscroll->position().y() + int(pos);
+        const int bw = vscroll->size().x();
+        const int bh = vscroll->size().y();
+
+        // 交差してる?
+        if ( x < bx + bw && bx < x + w &&
+             y < by + bh && by < y + h) {
+
+          int imageid = imageCache->get(id);
+
+          if (imageid == -1) {
+            int img = nvgCreateImage(mNVGContext, games[id]->imageUrl.c_str(), 0);
+            int removed = imageCache->set(id,img);
+            if (removed != -1) {
+              nvgDeleteImage(mNVGContext, removed);
+            }
+            return img;
+          }
+          return imageid;
+        }
+        return -1;
+
+      });
+
+      tmp->setCallback([this, path]() {
+        MENU_LOG("CD Close: %s\n", path.c_str());
+        void * data1 = malloc((path.size() + 1) * sizeof(char));
+        strcpy((char*)data1, path.c_str());
+        evm->postEvent("close tray", data1);
+
+        this->popActiveMenu();
+        this->swindow->dispose();
+        this->swindow = nullptr;
+      });
+
+      if (first_object) {
+        first_object = false;
+        pushActiveMenu(wrapper, toback);
+      }
+
+    }
+
+
+
+    if (file_count == 0) {
+      swindow->setModal(true);
+      checkGameFiles(this, base_paths);
+    }
+    else {
+      swindow->setModal(true);
+      swindow->requestFocus();
+    }
 
     this->performLayout();
 
@@ -935,7 +1211,7 @@ int MenuScreen::onRawInputEvent( InputManager & imp, const std::string & deviceg
 
 bool MenuScreen::keyboardEvent( std::string & keycode , int scancode, int action, int modifiers){
 
-  if( swindow != nullptr && swindow->title() != "Select File"){ return false; }
+  if( swindow != nullptr && swindow->title() != "Select Game"){ return false; }
 
   MENU_LOG("%s %d %d\n",keycode.c_str(),scancode,action);
   if (action != 0) {
@@ -953,9 +1229,9 @@ bool MenuScreen::keyboardEvent( std::string & keycode , int scancode, int action
           auto vscroll = wrapper->parent();
           if( vscroll != nullptr && dynamic_cast<VScrollPanel*>(vscroll) != nullptr  ){
               MENU_LOG("pos=%d vpod = %f\n",mFocus->position().y(),((VScrollPanel*)vscroll)->getScrollPos()  );
-              if( mFocus->position().y() - ((VScrollPanel*)vscroll)->getScrollPos() > vscroll->height() ){
+              if( (mFocus->position().y() + mFocus->size().y())  - ((VScrollPanel*)vscroll)->getScrollPos() > vscroll->height() ){
                 Vector2i p(0,0);
-                Vector2f rel(0.0,-1.0);
+                Vector2f rel(0.0, -(1.0 / (games.size()) * 20) );
                 (VScrollPanel*)vscroll->scrollEvent(p,rel);
             }
         }
@@ -973,9 +1249,9 @@ bool MenuScreen::keyboardEvent( std::string & keycode , int scancode, int action
           auto vscroll = wrapper->parent();
           if( vscroll != nullptr ){
               MENU_LOG("pos=%d vpod = %f\n",mFocus->position().y(),((VScrollPanel*)vscroll)->getScrollPos()  );
-              if( mFocus->position().y() - ((VScrollPanel*)vscroll)->getScrollPos() < 0 ){
+              if((mFocus->position().y()) - ((VScrollPanel*)vscroll)->getScrollPos() < 0 ){
                 Vector2i p(0,0);
-                Vector2f rel(0.0,1.0);
+                Vector2f rel(0.0, (1.0 / (games.size()) * 20) );
                 (VScrollPanel*)vscroll->scrollEvent(p,rel);
             }
         }
