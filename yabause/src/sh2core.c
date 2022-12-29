@@ -54,6 +54,9 @@ SH2Interface_struct *SH1Core=NULL;
 SH2Interface_struct *SH2Core=NULL;
 extern SH2Interface_struct *SH2CoreList[];
 
+FILE* ProfilerLogFile = NULL;
+const char* ProfilerLogFilename = "yabause_performance.csv";
+
 void OnchipReset(SH2_struct *context);
 void FRTExec(SH2_struct *sh, u32 cycles);
 void WDTExec(SH2_struct *sh, u32 cycles);
@@ -146,6 +149,12 @@ int SH2Init(int coreid)
    if (SH2TrackInfLoopInit(MSH2) != 0)
       return -1;
 
+   if (SH2NightzProfilerInitResetFile() != 0)
+     return -1;
+
+   if (SH2NightzProfilerInit(MSH2) != 0)
+      return -1;
+
    MSH2->onchip.BCR1 = 0x0000;
    MSH2->isslave = 0;
    MSH2->model = SHMT_SH2;
@@ -157,6 +166,9 @@ int SH2Init(int coreid)
       return -1;
 
    if (SH2TrackInfLoopInit(SSH2) != 0)
+      return -1;
+
+   if (SH2NightzProfilerInit(SSH2) != 0)
       return -1;
 
    SSH2->onchip.BCR1 = 0x8000;
@@ -213,11 +225,13 @@ void SH2DeInit()
 {
    if (SH2Core)
       SH2Core->DeInit();
-   SH2Core = NULL;
 
+   SH2Core = NULL;
+      
    if (MSH2)
    {
       SH2TrackInfLoopDeInit(MSH2);
+      SH2NightzProfilerDeInit(MSH2);
       free(MSH2);
    }
    MSH2 = NULL;
@@ -225,8 +239,11 @@ void SH2DeInit()
    if (SSH2)
    {
       SH2TrackInfLoopDeInit(SSH2);
+      SH2NightzProfilerDeInit(SSH2);
       free(SSH2);
    }
+   
+   SH2NightzProfilerDeInitResetFile();
    SSH2 = NULL;
 }
 
@@ -429,6 +446,73 @@ void SH2TrackInfLoopClear(SH2_struct *context)
 {
    memset(context->trackInfLoop.match, 0, sizeof(tilInfo_struct) * context->trackInfLoop.maxNum);
    context->trackInfLoop.num = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SH2NightzProfilerInitResetFile()
+{
+  ProfilerLogFile = fopen(ProfilerLogFilename, "w");
+  if (ProfilerLogFile != NULL)
+  {
+    fprintf(ProfilerLogFile, "Count,Time(ms),Ptr(H)\n");
+    return 0;
+  }
+  else
+  {
+    return -1;
+  }
+}
+
+int SH2NightzProfilerDeInitResetFile()
+{
+  if (ProfilerLogFile)
+  {
+    fclose(ProfilerLogFile);
+    ProfilerLogFile = NULL;
+  }
+
+  return 0;
+}
+
+int SH2NightzProfilerInit(SH2_struct* context)
+{
+  if (context)
+  {
+    context->profilerInfo.stackPos = -1;
+    memset(context->profilerInfo.profile, 0,
+      PROFILE_NUM_INFOS * sizeof(struct SH2_ProfilerInfo));
+
+    memset(context->profilerInfo.stack, 0,
+      PROFILE_STACK_SIZE * sizeof(struct SH2_ProfilerStackInfo));
+
+    return 0;
+  }
+  else
+  {
+    return -1;
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2NightzProfilerDeInit(SH2_struct *context)
+{
+  if (!context)
+    return;
+
+  if (ProfilerLogFile)
+  {
+    for (u32 i = 0; i < PROFILE_NUM_INFOS; ++i)
+    {
+      struct SH2_ProfilerInfo* info = &context->profilerInfo.profile[i];
+      if (info->count > 0)
+      {
+        fprintf(ProfilerLogFile, "%d,%d,%x\n",
+          info->count, info->time, PROFILE_START_ADDRESS + i);
+      }
+    }
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////

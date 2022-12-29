@@ -357,6 +357,25 @@ typedef struct
 typedef struct SH2Interface_struct SH2Interface_struct;
 
 #include "sh2_jit.h"
+#include <time.h>
+
+struct SH2_ProfilerStackInfo
+{
+  u32 address;
+  clock_t startTime;
+  long totalTime;
+};
+
+struct SH2_ProfilerInfo
+{
+  long time;
+  u32 count;
+};
+
+#define PROFILE_STACK_SIZE 4096
+#define PROFILE_NUM_INFOS 0xFFFF
+#define PROFILE_START_ADDRESS 0x06004000
+#define PROFILE_END_ADDRESS 0x0600FFFF
 
 struct SH2_struct
 {
@@ -434,6 +453,11 @@ struct SH2_struct
       int maxNum;
    } trackInfLoop;
 
+   struct {
+     struct SH2_ProfilerInfo profile[PROFILE_NUM_INFOS];
+     struct SH2_ProfilerStackInfo stack[PROFILE_STACK_SIZE];
+     s32 stackPos;
+   } profilerInfo;
 };
 
 struct SH2Interface_struct
@@ -498,6 +522,11 @@ void SH2TrackInfLoopDeInit(SH2_struct *context);
 void SH2TrackInfLoopStart(SH2_struct *context);
 void SH2TrackInfLoopStop(SH2_struct *context);
 void SH2TrackInfLoopClear(SH2_struct *context);
+
+int SH2NightzProfilerInitResetFile();
+int SH2NightzProfilerDeInitResetFile();
+int SH2NightzProfilerInit(SH2_struct *context);
+void SH2NightzProfilerDeInit(SH2_struct *context);
 
 void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r);
 void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r);

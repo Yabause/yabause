@@ -39,6 +39,8 @@
 #include "sh2trace.h"
 #endif
 
+#include <assert.h>
+
 SH2Interface_struct SH2Interpreter = {
    SH2CORE_INTERPRETER,
    "SH2 Interpreter",
@@ -110,6 +112,55 @@ SH2Interface_struct SH2DebugInterpreter = {
 
    NULL  // SH2WriteNotify not used
 };
+
+static u8 FASTCALL nightzTrackAddr(u32 addr)
+{
+  return addr >= PROFILE_START_ADDRESS
+    && addr < PROFILE_END_ADDRESS;
+}
+
+static void FASTCALL nightzTrack(SH2_struct* sh)
+{
+  const u32 pcAddr = sh->regs.PC;
+  if (nightzTrackAddr(pcAddr))
+  {
+    assert(pcAddr >= PROFILE_START_ADDRESS);
+
+    const u32 addr = pcAddr - PROFILE_START_ADDRESS;
+    assert(addr < PROFILE_NUM_INFOS);
+
+    if (sh->profilerInfo.stackPos < PROFILE_STACK_SIZE)
+    {
+      sh->profilerInfo.stackPos++;
+      assert(sh->profilerInfo.stackPos >= 0);
+      assert(sh->profilerInfo.stackPos < PROFILE_STACK_SIZE);
+
+      struct SH2_ProfilerStackInfo* info =
+        &sh->profilerInfo.stack[sh->profilerInfo.stackPos];
+
+      info->address = addr;
+      info->startTime = clock();
+    }
+  }
+}
+
+static void FASTCALL nightzStopTrack(SH2_struct* sh)
+{
+  const s32 stackPos = sh->profilerInfo.stackPos;
+  if (stackPos >= 0)
+  {
+    struct SH2_ProfilerStackInfo* stackInfo =
+      &sh->profilerInfo.stack[stackPos];
+    
+    struct SH2_ProfilerInfo* info =
+      &sh->profilerInfo.profile[stackInfo->address];
+
+    info->time += clock() - stackInfo->startTime;
+    info->count++;
+    sh->profilerInfo.stackPos--;
+  }
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -452,6 +503,8 @@ static void FASTCALL SH2bsr(SH2_struct * sh)
    if ((disp&0x800) != 0) disp |= 0xFFFFF000;
    sh->regs.PR = sh->regs.PC + 4;
    sh->regs.PC = sh->regs.PC+(disp<<1) + 4;
+   
+   nightzTrack(sh);
 
    sh->cycles += 2;
    SH2delay(sh, temp + 2);
@@ -465,6 +518,9 @@ static void FASTCALL SH2bsrf(SH2_struct * sh)
    sh->regs.PR = sh->regs.PC + 4;
    sh->regs.PC += sh->regs.R[INSTRUCTION_B(sh->instruction)] + 4;
    sh->cycles += 2;
+
+   nightzTrack(sh);
+
    SH2delay(sh, temp + 2);
 }
 
@@ -951,6 +1007,9 @@ static void FASTCALL SH2jsr(SH2_struct * sh)
    sh->regs.PR = sh->regs.PC + 4;
    sh->regs.PC = sh->regs.R[m];
    sh->cycles += 2;
+
+   nightzTrack(sh);
+
    SH2delay(sh, temp + 2);
 }
 
@@ -1882,6 +1941,9 @@ static void FASTCALL SH2rte(SH2_struct * sh)
 {
    u32 temp;
    temp=sh->regs.PC;
+
+   nightzStopTrack(sh);
+
    sh->regs.PC = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
    sh->regs.SR.all = sh->MappedMemoryReadLong(sh, sh->regs.R[15]) & 0x000003F3;
@@ -1898,6 +1960,8 @@ static void FASTCALL SH2rts(SH2_struct * sh)
 
    temp = sh->regs.PC;
    sh->regs.PC = sh->regs.PR;
+     
+   nightzStopTrack(sh);
 
    sh->cycles += 2;
    SH2delay(sh, temp + 2);

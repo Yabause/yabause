@@ -366,7 +366,7 @@ void UIDebugSH2::updateCodePage(u32 evaluateAddress)
       if (addr2line.isEmpty())
         codeBrowser->setText("addr2line utility is not configured properly, source not available.");
       else
-        codeBrowser->setText("Source not found or available.");
+        codeBrowser->setText(QString("Source not found or available. Stdout was:\n") + pstdout);
     }
   }
 }
