@@ -21,8 +21,8 @@ if __name__ == '__main__':
       print('Please provide Crowdin API Token and core name!')
       raise e
 
-   DIR_PATH = t.os.path.dirname(t.os.path.realpath(__file__))
-   YAML_PATH = t.os.path.join(DIR_PATH, 'crowdin.yaml')
+   DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+   YAML_PATH = os.path.join(DIR_PATH, 'crowdin.yaml')
 
    # Apply Crowdin API Key
    with open(YAML_PATH, 'r') as crowdin_config_file:
@@ -39,22 +39,22 @@ if __name__ == '__main__':
    try:
       # Download Crowdin CLI
       jar_name = 'crowdin-cli.jar'
-      jar_path = t.os.path.join(DIR_PATH, jar_name)
+      jar_path = os.path.join(DIR_PATH, jar_name)
       crowdin_cli_file = 'crowdin-cli.zip'
       crowdin_cli_url = 'https://downloads.crowdin.com/cli/v3/' + crowdin_cli_file
-      crowdin_cli_path = t.os.path.join(DIR_PATH, crowdin_cli_file)
+      crowdin_cli_path = os.path.join(DIR_PATH, crowdin_cli_file)
 
-      if not os.path.isfile(t.os.path.join(DIR_PATH, jar_name)):
+      if not os.path.isfile(os.path.join(DIR_PATH, jar_name)):
          print('download crowdin-cli.jar')
          urllib.request.urlretrieve(crowdin_cli_url, crowdin_cli_path)
          with zipfile.ZipFile(crowdin_cli_path, 'r') as zip_ref:
-            jar_dir = t.os.path.join(DIR_PATH, zip_ref.namelist()[0])
+            jar_dir = os.path.join(DIR_PATH, zip_ref.namelist()[0])
             for file in zip_ref.namelist():
                if file.endswith(jar_name):
                   jar_file = file
                   break
             zip_ref.extract(jar_file, path=DIR_PATH)
-            os.rename(t.os.path.join(DIR_PATH, jar_file), jar_path)
+            os.rename(os.path.join(DIR_PATH, jar_file), jar_path)
             os.remove(crowdin_cli_path)
             shutil.rmtree(jar_dir)
 
