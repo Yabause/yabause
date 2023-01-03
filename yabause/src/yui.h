@@ -248,6 +248,8 @@ int YuiRevokeOGLOnThisThread();
    current status 
 */
 
+const char * YuiGetShaderCachePath();
+
 #if defined (__cplusplus)
 }
 #endif

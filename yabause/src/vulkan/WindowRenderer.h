@@ -116,6 +116,8 @@ public:
   VkImageView getImageView() { return offscreenPass.color.view; }
   VkSampler getSampler() { return offscreenPass.sampler; }
 
+  bool isReady(){ return ready; }
+
 protected:
   VdpPipelineFactory * pipleLineFactory;
   uint32_t vdp2width;
@@ -123,4 +125,5 @@ protected:
   VIDVulkan * vulkan;
   Vdp2Window window[2];
   void prepareOffscreen();
+  bool ready = false;
 };

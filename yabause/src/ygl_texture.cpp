@@ -38,6 +38,9 @@ extern "C" {
 
 #define YGLDEBUG LOG
 
+// debug Color
+//imageStore(outSurface,texel,vec4( float(32u&0xFFu)/255.0, float((32u>>8) &0xFFu)/255.0, float((32u>>16) &0xFFu)/255.0, 1.0)); return;
+
 const char prg_generate_rbg_base[] =
 #if defined(_OGLES3_)
 "#version 310 es \n"
@@ -2527,7 +2530,7 @@ public:
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
     //glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, (void*)Vdp2Ram);
-    if (mapped_vram == nullptr) mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+    if (mapped_vram == nullptr) mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, GL_MAP_WRITE_BIT );
     memcpy(mapped_vram, Vdp2Ram, 0x80000);
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     mapped_vram = nullptr;
@@ -2634,7 +2637,7 @@ public:
   void onFinish() {
     if (ssbo_vram_ != 0 && mapped_vram == nullptr) {
       glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
-      mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+      mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, GL_MAP_WRITE_BIT );
       glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
   }
@@ -2914,10 +2917,12 @@ void RBGGeneratorVulkan::resize(int width, int height) {
   imageCreateInfo.arrayLayers = 1;
   imageCreateInfo.tiling = vk::ImageTiling::eOptimal;
   imageCreateInfo.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage;
-  imageCreateInfo.sharingMode = vk::SharingMode::eConcurrent;
-  imageCreateInfo.queueFamilyIndexCount = 2;
-  uint32_t indexes[] = { vulkan->getVulkanGraphicsQueueFamilyIndex(),vulkan->getVulkanComputeQueueFamilyIndex() };
-  imageCreateInfo.pQueueFamilyIndices = indexes;
+  //imageCreateInfo.sharingMode = vk::SharingMode::eConcurrent;
+  //imageCreateInfo.queueFamilyIndexCount = 2;
+  //uint32_t indexes[] = { vulkan->getVulkanGraphicsQueueFamilyIndex(),vulkan->getVulkanComputeQueueFamilyIndex() };
+  //imageCreateInfo.pQueueFamilyIndices = indexes;
+  imageCreateInfo.sharingMode = vk::SharingMode::eExclusive; //VK_SHARING_MODE_EXCLUSIVE;
+  imageCreateInfo.pQueueFamilyIndices	= nullptr;
 
   for (int i = 0; i < 2; i++) {
     VK_CHECK_RESULT(d.createImage(&imageCreateInfo, nullptr, &tex_surface[i].image));
@@ -2944,6 +2949,10 @@ void RBGGeneratorVulkan::resize(int width, int height) {
   updateDescriptorSets(0);
 }
 
+#include <functional>
+#include <fstream>
+#include <iostream>
+
 vk::Pipeline RBGGeneratorVulkan::compile_color_dot(
   const char * base[], int size, const char * color, const char * dot) {
   
@@ -2960,23 +2969,73 @@ vk::Pipeline RBGGeneratorVulkan::compile_color_dot(
   target += color;
   target += dot;
 
-  Compiler compiler;
-  CompileOptions options;
-  options.SetOptimizationLevel(shaderc_optimization_level_performance);
-  //options.SetOptimizationLevel(shaderc_optimization_level_zero);
-  SpvCompilationResult result = compiler.CompileGlslToSpv(
-    target,
-    shaderc_compute_shader,
-    "RBG",
-    options);
+  std::vector<uint32_t> data;
+  std::vector<char> buffer;
+  SpvCompilationResult result;
 
-  printf("%s%d\n", " erros: ", (int)result.GetNumErrors());
-  if (result.GetNumErrors() != 0) {
-    printf("%s", target.c_str());
-    printf("%s%s\n", "messages", result.GetErrorMessage().c_str());
-    throw std::runtime_error("failed to create shader module!");
+  std::size_t hash_value = std::hash<std::string>()(target);
+  // Serach from file
+  string mempath = YuiGetShaderCachePath();
+  std::string hashval = std::to_string(hash_value);
+  string file_path = mempath + hashval + ".spv";
+
+  // バイナリファイルを読み込む
+  std::ifstream file(file_path, std::ios::binary);
+  if (file) {
+
+    // ファイルサイズを取得する
+    file.seekg(0, std::ios::end);
+    std::size_t file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // ファイルの内容を読み込む
+    buffer.resize(file_size);
+    file.read(buffer.data(), file_size);
+
+    for( int i=0; i<file_size; i+= 4 ){
+      uint32_t value = static_cast<uint32_t>(buffer[i+0])
+                   | (static_cast<uint32_t>(buffer[i+1]) << 8)
+                   | (static_cast<uint32_t>(buffer[i+2]) << 16)
+                   | (static_cast<uint32_t>(buffer[i+3]) << 24);
+      data.push_back(value);
+    }
+    file.close();
+
+  }else{
+
+    Compiler compiler;
+    CompileOptions options;
+    options.SetOptimizationLevel(shaderc_optimization_level_performance);
+    //options.SetOptimizationLevel(shaderc_optimization_level_zero);
+    result = compiler.CompileGlslToSpv(
+      target,
+      shaderc_compute_shader,
+      "RBG",
+      options);
+
+    printf("%s%d\n", " erros: ", (int)result.GetNumErrors());
+    if (result.GetNumErrors() != 0) {
+      printf("%s", target.c_str());
+      printf("%s%s\n", "messages", result.GetErrorMessage().c_str());
+      throw std::runtime_error("failed to create shader module!");
+    }
+    data = { result.cbegin(), result.cend() };
+
+    std::ofstream file(file_path, std::ios::binary);
+    if (!file) {
+        std::cerr << "Error: Failed to open file." << std::endl;
+        throw std::runtime_error("failed to create shader module!");
+    }
+
+    // データを書き込む
+    file.write((const char*)data.data(), data.size()* sizeof(uint32_t));
+
+    // ファイルを閉じる
+    file.close();
+
+
   }
-  std::vector<uint32_t> data = { result.cbegin(), result.cend() };
+
 
   VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -4319,8 +4378,8 @@ void RBGGeneratorVulkan::update(VIDVulkan::RBGDrawInfo * rbg, const vdp2rotation
   queue.submit(computeSubmitInfo, {});
   
   
-  //vulkan->transitionImageLayout(VkImage(tex_surface[0].image), 
-  //  VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  //vulkan->transitionImageLayout(VkImage(tex_surface[texindex].image), 
+  //  VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
   }
 

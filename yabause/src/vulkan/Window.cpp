@@ -128,6 +128,7 @@ int Window::BeginRender()
 void Window::EndRender( std::vector<VkSemaphore> wait_semaphores )
 {
 	VkResult present_result = VkResult::VK_RESULT_MAX_ENUM;
+	VkResult funcResult;
 
 	VkPresentInfoKHR present_info {};
 	present_info.sType					= VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -138,8 +139,12 @@ void Window::EndRender( std::vector<VkSemaphore> wait_semaphores )
 	present_info.pImageIndices			= &_active_swapchain_image_id;
 	present_info.pResults				= &present_result;
 
-	ErrorCheck( vkQueuePresentKHR( _renderer->GetVulkanQueue(), &present_info ) );
+	funcResult = vkQueuePresentKHR( _renderer->GetVulkanQueue(), &present_info );
+	ErrorCheck( funcResult );
 	ErrorCheck( present_result );
+	if( funcResult == VK_SUBOPTIMAL_KHR ){
+		cleanupSwapChain();
+	}
 }
 
 VkRenderPass Window::GetVulkanRenderPass()
@@ -182,11 +187,31 @@ void Window::_InitSurface()
 
 	LOGI("%s","vkGetPhysicalDeviceSurfaceCapabilitiesKHR in");
 	ErrorCheck( vkGetPhysicalDeviceSurfaceCapabilitiesKHR( gpu, _surface, &_surface_capabilities ) );
+
+	/*
+	uint32_t width = _surface_capabilities.currentExtent.width;
+	uint32_t height = _surface_capabilities.currentExtent.height;
+	if (_surface_capabilities.currentTransform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+		_surface_capabilities.currentTransform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+		_surface_capabilities.currentExtent.height = width;
+		_surface_capabilities.currentExtent.width = height;
+	}
+	*/		
 	if( _surface_capabilities.currentExtent.width < UINT32_MAX ) {
 		_surface_size_x			= _surface_capabilities.currentExtent.width;
 		_surface_size_y			= _surface_capabilities.currentExtent.height;
 	}
-	LOGI("%s %d,%d","vkGetPhysicalDeviceSurfaceCapabilitiesKHR out",_surface_size_x,_surface_size_y );
+
+	uint32_t width = _surface_capabilities.currentExtent.width;
+	uint32_t height = _surface_capabilities.currentExtent.height;
+	if (_surface_capabilities.currentTransform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+		_surface_capabilities.currentTransform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+		// Swap to get identity width and height
+		_surface_capabilities.currentExtent.height = width;
+		_surface_capabilities.currentExtent.width = height;
+	}
+
+	LOGI("%s %d,%d,%08X","vkGetPhysicalDeviceSurfaceCapabilitiesKHR out",_surface_size_x,_surface_size_y, _surface_capabilities.currentTransform  );
 
 	{
 		uint32_t format_count = 0;
@@ -250,15 +275,19 @@ void Window::_InitSwapchain()
 	swapchain_create_info.minImageCount				= _swapchain_image_count;
 	swapchain_create_info.imageFormat				= _surface_format.format;
 	swapchain_create_info.imageColorSpace			= _surface_format.colorSpace;
-	swapchain_create_info.imageExtent.width			= _surface_size_x;
-	swapchain_create_info.imageExtent.height		= _surface_size_y;
+	swapchain_create_info.imageExtent.width			= _surface_capabilities.currentExtent.width; //_surface_size_x;
+	swapchain_create_info.imageExtent.height		= _surface_capabilities.currentExtent.height; //_surface_size_y;
 	swapchain_create_info.imageArrayLayers			= 1;
 	swapchain_create_info.imageUsage				= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	swapchain_create_info.imageSharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 	swapchain_create_info.queueFamilyIndexCount		= 0;
 	swapchain_create_info.pQueueFamilyIndices		= nullptr;
-	swapchain_create_info.preTransform				= VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-	swapchain_create_info.compositeAlpha			= VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	swapchain_create_info.preTransform				= _surface_capabilities.currentTransform;
+	if( _surface_capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR ){
+		swapchain_create_info.compositeAlpha			= VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	}else{
+		swapchain_create_info.compositeAlpha			= VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+	}
 	swapchain_create_info.presentMode				= present_mode;
 	swapchain_create_info.clipped					= VK_TRUE;
 	swapchain_create_info.oldSwapchain				= VK_NULL_HANDLE;
@@ -345,8 +374,8 @@ void Window::_InitDepthStencilImage()
 	image_create_info.flags					= 0;
 	image_create_info.imageType				= VK_IMAGE_TYPE_2D;
 	image_create_info.format				= _depth_stencil_format;
-	image_create_info.extent.width			= _surface_size_x;
-	image_create_info.extent.height			= _surface_size_y;
+	image_create_info.extent.width			= _surface_capabilities.currentExtent.width; //_surface_size_x;
+	image_create_info.extent.height			= _surface_capabilities.currentExtent.height; //_surface_size_y;
 	image_create_info.extent.depth			= 1;
 	image_create_info.mipLevels				= 1;
 	image_create_info.arrayLayers			= 1;
@@ -394,8 +423,8 @@ void Window::_InitDepthStencilImage()
 void Window::_DeInitDepthStencilImage()
 {
 	vkDestroyImageView( _renderer->GetVulkanDevice(), _depth_stencil_image_view, nullptr );
-	vkFreeMemory( _renderer->GetVulkanDevice(), _depth_stencil_image_memory, nullptr );
 	vkDestroyImage( _renderer->GetVulkanDevice(), _depth_stencil_image, nullptr );
+	vkFreeMemory( _renderer->GetVulkanDevice(), _depth_stencil_image_memory, nullptr );
 }
 
 void Window::_InitRenderPass()
@@ -447,8 +476,8 @@ void Window::_InitRenderPass()
 
 	ErrorCheck( vkCreateRenderPass( _renderer->GetVulkanDevice(), &render_pass_create_info, nullptr, &_render_pass ) );
 
-  attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-  attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+  attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 
   ErrorCheck(vkCreateRenderPass(_renderer->GetVulkanDevice(), &render_pass_create_info, nullptr, &_render_pass_keep));
 
@@ -465,16 +494,16 @@ void Window::_InitFramebuffers()
 	_framebuffers.resize( _swapchain_image_count );
 	for( uint32_t i=0; i < _swapchain_image_count; ++i ) {
 		std::array<VkImageView, 2> attachments {};
-    attachments[0] = _swapchain_image_views[i];
-		attachments[ 1 ]	= _depth_stencil_image_view;
+        attachments[0] = _swapchain_image_views[i];
+		attachments[1] = _depth_stencil_image_view;
 
 		VkFramebufferCreateInfo framebuffer_create_info {};
 		framebuffer_create_info.sType			= VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebuffer_create_info.renderPass		= _render_pass;
 		framebuffer_create_info.attachmentCount	= attachments.size();
 		framebuffer_create_info.pAttachments	= attachments.data();
-		framebuffer_create_info.width			= _surface_size_x;
-		framebuffer_create_info.height			= _surface_size_y;
+		framebuffer_create_info.width			=  _surface_capabilities.currentExtent.width;  //_surface_size_x;
+		framebuffer_create_info.height			= _surface_capabilities.currentExtent.height; //_surface_size_y;
 		framebuffer_create_info.layers			= 1;
 
 		ErrorCheck( vkCreateFramebuffer( _renderer->GetVulkanDevice(), &framebuffer_create_info, nullptr, &_framebuffers[ i ] ) );

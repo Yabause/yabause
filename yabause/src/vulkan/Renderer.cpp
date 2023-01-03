@@ -43,19 +43,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "VulkanTools.h"
 
+#define ENABLE_VULKAN_DEBUG 0
+
 Renderer::Renderer()
 {
   LOGI("InitPlatform in");
   InitPlatform();
   LOGI("InitPlatform out");
   _SetupLayersAndExtensions();
-#if 0 //_DEBUG
+#if  ENABLE_VULKAN_DEBUG //_DEBUG
   _SetupDebug();
 #endif
   LOGI("_InitInstance in");
   _InitInstance();
   LOGI("_InitInstance out");
-#if 0 //_DEBUG
+#if ENABLE_VULKAN_DEBUG //_DEBUG
   _InitDebug();
 #endif
   LOGI("_InitDevice in");
@@ -68,7 +70,7 @@ Renderer::~Renderer()
   delete _window;
 
   _DeInitDevice();
-#if 0 //_DEBUG
+#if ENABLE_VULKAN_DEBUG //_DEBUG
   _DeInitDebug();
 #endif
   _DeInitInstance();
@@ -244,6 +246,7 @@ void Renderer::_InitDevice()
       features.tessellationShader = VK_TRUE;
       features.geometryShader = VK_TRUE;
     }
+    //features.robustBufferAccess = VK_TRUE;
 
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -278,6 +281,7 @@ void Renderer::_InitDevice()
       features.tessellationShader = VK_TRUE;
       features.geometryShader = VK_TRUE;
     }
+    //features.robustBufferAccess = VK_TRUE;
 
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -301,6 +305,8 @@ void Renderer::_DeInitDevice()
 }
 
 #if BUILD_ENABLE_VULKAN_DEBUG
+
+void backtraceToLogcat();
 
 VKAPI_ATTR VkBool32 VKAPI_CALL
 VulkanDebugCallback(
@@ -337,6 +343,7 @@ VulkanDebugCallback(
 
 #if defined(ANDROID)
   LOGE("%s", stream.str().c_str());
+  backtraceToLogcat();
 #endif
 
 #if defined( _WIN32 )

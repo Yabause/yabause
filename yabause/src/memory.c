@@ -762,7 +762,7 @@ INLINE int getVramCycle(u32 addr) {
 const int clock_shift = 1;
 
 
-inline u32 getMemClock(u32 addr) {
+u32 getMemClock(u32 addr) {
   
   addr = addr & 0xDFFFFFFF;
 

@@ -331,7 +331,7 @@ protected:
 
   void generateSubRenderTarget(int width, int height);
   void freeSubRenderTarget();
-  void blitSubRenderTarget(VkCommandBuffer commandBuffer);
+  void blitSubRenderTarget(VkCommandBuffer commandBuffer, const glm::vec4 & viewportData );
 
 
   struct OffscreenPass {

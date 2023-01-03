@@ -176,6 +176,7 @@ WindowRenderer::WindowRenderer(int width, int height, VIDVulkan * vulkan)
   vdp2width = width;
   vdp2height = height;
   this->vulkan = vulkan;
+  ready = false;
 
 }
 
@@ -239,6 +240,40 @@ void WindowRenderer::flush(VkCommandBuffer commandbuffer) {
 
 
 void WindowRenderer::draw(VkCommandBuffer commandBuffer) {
+
+  if( ready != true ){
+
+    VkDevice device = vulkan->getDevice();
+
+    std::array<VkClearValue, 2> clear_values{};
+    clear_values[1].depthStencil.depth = 0.0f;
+    clear_values[1].depthStencil.stencil = 0;
+    clear_values[0].color.float32[0] = 0.0f;
+    clear_values[0].color.float32[1] = 0.0f;
+    clear_values[0].color.float32[2] = 0.0f;
+    clear_values[0].color.float32[3] = 0.0f;
+
+    VkRenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+    renderPassBeginInfo.renderPass = offscreenPass.renderPass;
+    renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer;
+    renderPassBeginInfo.renderArea.extent.width = offscreenPass.width;
+    renderPassBeginInfo.renderArea.extent.height = offscreenPass.height;
+    renderPassBeginInfo.clearValueCount = clear_values.size();
+    renderPassBeginInfo.pClearValues = clear_values.data();
+    VkCommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+
+    vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    VkViewport viewport = vks::initializers::viewport((float)vdp2width, (float)vdp2height, 0.0f, 1.0f);
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+    VkRect2D scissor = vks::initializers::rect2D(vdp2width, vdp2height, 0, 0);
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    vkCmdEndRenderPass(commandBuffer);
+    ready = true;
+  }
+
   if (window[0].isNeedDraw() || window[1].isNeedDraw()) {
     VkDevice device = vulkan->getDevice();
 
@@ -274,6 +309,33 @@ void WindowRenderer::draw(VkCommandBuffer commandBuffer) {
 
     vkCmdEndRenderPass(commandBuffer);
 
+#if 0
+    VkImageMemoryBarrier barrier = {};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = offscreenPass.color.image;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    //barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    //barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+
+    vkCmdPipelineBarrier(
+      commandBuffer,
+      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+      0,
+      0, nullptr,
+      0, nullptr,
+      1, &barrier
+    );
+
+    LOGE("set Barrier for %lx", (uintptr_t)offscreenPass.color.image );
+#endif
   }
 }
 

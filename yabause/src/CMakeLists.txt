@@ -946,10 +946,10 @@ else ()
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
 endif ()
 
-set(ENABLE_SANITIZER OFF CACHE STRING "Enable/Disable Sanitizer" )
+set(ENABLE_SANITIZER OFF CACHE BOOL "Enable/Disable Sanitizer" )
 if(ENABLE_SANITIZER)
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address  -fsanitize=leak" )
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address  -fsanitize=leak" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address  -fsanitize=leak -fsanitize-recover=address" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address  -fsanitize=leak -fsanitize-recover=address" )
 endif()
 
 if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )

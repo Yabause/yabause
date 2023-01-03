@@ -64,6 +64,10 @@ public:
   VkFormat getColorFormat() {
     return _surface_format.format;
   }
+
+  VkSurfaceTransformFlagBitsKHR GetPreTransFlag(){
+    return _surface_capabilities.currentTransform;
+  }
 #if defined(__ANDROID__)  
   void setNativeWindow(void * nativeWindow) {
     window = (ANativeWindow*)nativeWindow;

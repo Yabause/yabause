@@ -66,6 +66,7 @@ std::string ShaderManager::get_shader_header() {
 #endif
 }
 
+
 VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, int type) {
     const VkDevice device = vulkan->getDevice();
 
@@ -73,23 +74,72 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
 
     string target = get_shader_header() + code;
 
-    Compiler compiler;
-    CompileOptions options;
-    options.SetOptimizationLevel(shaderc_optimization_level_performance);
-    //options.SetOptimizationLevel(shaderc_optimization_level_zero);
-    SpvCompilationResult result = compiler.CompileGlslToSpv(
-      target,
-      (shaderc_shader_kind)type,
-      "VdpPipeline",
-      options);
+    std::vector<uint32_t> data;
+    std::vector<char> buffer;
+    SpvCompilationResult result;
 
-    LOGI("%s%d", "erros: ", (int)result.GetNumErrors());
-    if (result.GetNumErrors() != 0) {
-      LOGI("%s%s", "messages: ", result.GetErrorMessage().c_str());
-      cout << target;
-      throw std::runtime_error("failed to create shader module!");
+    std::size_t hash_value = std::hash<std::string>()(target);
+    
+    // Serach from file
+    string mempath = YuiGetShaderCachePath();
+    std::string hashval = std::to_string(hash_value);
+    string file_path = mempath + hashval + ".spv";
+
+    // バイナリファイルを読み込む
+    std::ifstream file(file_path, std::ios::binary);
+    if (file) {
+
+      // ファイルサイズを取得する
+      file.seekg(0, std::ios::end);
+      std::size_t file_size = file.tellg();
+      file.seekg(0, std::ios::beg);
+
+      // ファイルの内容を読み込む
+      buffer.resize(file_size);
+      file.read(buffer.data(), file_size);
+
+      for( int i=0; i<file_size; i+= 4 ){
+        uint32_t value = static_cast<uint32_t>(buffer[i+0])
+                    | (static_cast<uint32_t>(buffer[i+1]) << 8)
+                    | (static_cast<uint32_t>(buffer[i+2]) << 16)
+                    | (static_cast<uint32_t>(buffer[i+3]) << 24);
+        data.push_back(value);
+      }
+      file.close();
+
+    }else{    
+
+      Compiler compiler;
+      CompileOptions options;
+      options.SetOptimizationLevel(shaderc_optimization_level_performance);
+      //options.SetOptimizationLevel(shaderc_optimization_level_zero);
+      SpvCompilationResult result = compiler.CompileGlslToSpv(
+        target,
+        (shaderc_shader_kind)type,
+        "VdpPipeline",
+        options);
+
+      LOGI("%s%d", "erros: ", (int)result.GetNumErrors());
+      if (result.GetNumErrors() != 0) {
+        LOGI("%s%s", "messages: ", result.GetErrorMessage().c_str());
+        cout << target;
+        throw std::runtime_error("failed to create shader module!");
+      }
+      data = { result.cbegin(), result.cend() };
+
+      std::ofstream file(file_path, std::ios::binary);
+      if (!file) {
+          std::cerr << "Error: Failed to open file." << std::endl;
+          throw std::runtime_error("failed to create shader module!");
+      }
+
+      // データを書き込む
+      file.write((const char*)data.data(), data.size()* sizeof(uint32_t));
+
+      // ファイルを閉じる
+      file.close();
+
     }
-    std::vector<uint32_t> data = { result.cbegin(), result.cend() };
 
     VkShaderModuleCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

@@ -39,7 +39,6 @@ using shaderc::SpvCompilationResult;
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-
 #include <math.h>
 #define EPSILON (1e-10 )
 
@@ -298,7 +297,7 @@ void Vdp1Renderer::prepareOffscreen() {
   // Color attachment
   attchmentDescriptions[0].format = FB_COLOR_FORMAT;
   attchmentDescriptions[0].samples = VK_SAMPLE_COUNT_1_BIT;
-  attchmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+  attchmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attchmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   attchmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attchmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -309,12 +308,12 @@ void Vdp1Renderer::prepareOffscreen() {
   attchmentDescriptions[1].samples = VK_SAMPLE_COUNT_1_BIT;
   attchmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attchmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  attchmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+  attchmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attchmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
   attchmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   attchmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-  VkAttachmentReference colorReference = { 0, VK_IMAGE_LAYOUT_GENERAL/*VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL*/ };
+  VkAttachmentReference colorReference = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL/*VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL*/ };
   VkAttachmentReference depthReference = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
   VkSubpassDescription subpassDescription = {};
@@ -447,6 +446,7 @@ void Vdp1Renderer::drawStart(void) {
   piplelines.clear();
   currentPipeLine = nullptr;
 
+  vkQueueWaitIdle(vulkan->getVulkanQueue());
   vkResetCommandPool(vulkan->getDevice(),this->_command_pool,0);
   tm->reset();
   vm->reset();
@@ -1956,19 +1956,67 @@ void Vdp1Renderer::genClearPipeline() {
     throw std::runtime_error("failed to create shader module!");
   }
 
-  result = compiler.CompileGlslToSpv(
-    get_shader_header() + fragmentShaderName,
-    shaderc_fragment_shader,
-    "clear fragment",
-    options);
+  std::vector<uint32_t> fshaderData;
+  std::vector<char> buffer;
 
-  std::cout << " erros: " << result.GetNumErrors() << std::endl;
-  if (result.GetNumErrors() != 0) {
-    std::cout << "messages: " << result.GetErrorMessage() << std::endl;
-    throw std::runtime_error(result.GetErrorMessage());
+  std::size_t hash_value = std::hash<std::string>()(get_shader_header() + fragmentShaderName);
+  // Serach from file
+  string mempath = YuiGetShaderCachePath();
+  std::string hashval = std::to_string(hash_value);
+  string file_path = mempath + hashval + ".spv";
+
+  // バイナリファイルを読み込む
+  std::ifstream file(file_path, std::ios::binary);
+  if (file) {
+
+    // ファイルサイズを取得する
+    file.seekg(0, std::ios::end);
+    std::size_t file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // ファイルの内容を読み込む
+    buffer.resize(file_size);
+    file.read(buffer.data(), file_size);
+
+    for( int i=0; i<file_size; i+= 4 ){
+      uint32_t value = static_cast<uint32_t>(buffer[i+0])
+                   | (static_cast<uint32_t>(buffer[i+1]) << 8)
+                   | (static_cast<uint32_t>(buffer[i+2]) << 16)
+                   | (static_cast<uint32_t>(buffer[i+3]) << 24);
+      fshaderData.push_back(value);
+    }
+    file.close();
+
+  }else{
+
+    result = compiler.CompileGlslToSpv(
+      get_shader_header() + fragmentShaderName,
+      shaderc_fragment_shader,
+      "clear fragment",
+      options);
+
+    std::cout << " erros: " << result.GetNumErrors() << std::endl;
+    if (result.GetNumErrors() != 0) {
+      std::cout << "messages: " << result.GetErrorMessage() << std::endl;
+      throw std::runtime_error(result.GetErrorMessage());
+    }
+
+    fshaderData = { result.cbegin(), result.cend() };
+
+    std::ofstream file(file_path, std::ios::binary);
+    if (!file) {
+        std::cerr << "Error: Failed to open file." << std::endl;
+        throw std::runtime_error("failed to create shader module!");
+    }
+
+    // データを書き込む
+    file.write((const char*)fshaderData.data(), fshaderData.size()* sizeof(uint32_t));
+
+    // ファイルを閉じる
+    file.close();
+
   }
 
-  std::vector<uint32_t> fshaderData = { result.cbegin(), result.cend() };
   VkShaderModuleCreateInfo fcreateInfo = {};
   fcreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   fcreateInfo.codeSize = fshaderData.size() * sizeof(uint32_t);

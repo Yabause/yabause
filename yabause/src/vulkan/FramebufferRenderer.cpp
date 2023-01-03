@@ -394,11 +394,11 @@ void FramebufferRenderer::updateVdp2Reg(Vdp2 * fixVdp2Regs) {
 }
 
 
-void FramebufferRenderer::drawWithDestAlphaMode(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to) {
+void FramebufferRenderer::drawWithDestAlphaMode(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat) {
 
   const VkDevice device = vulkan->getDevice();
   glm::mat4 m4(1.0f);
-  ubo.matrix = m4;
+  ubo.matrix = m4 * pre_rotate_mat;
   VkPipeline pgid;
 
 
@@ -507,12 +507,13 @@ void FramebufferRenderer::drawWithDestAlphaMode(Vdp2 * fixVdp2Regs, VkCommandBuf
   }
 }
 
-void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to) {
+void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat ) {
 
   const VkDevice device = vulkan->getDevice();
 
   glm::mat4 m4(1.0f);
-  ubo.matrix = m4; // glm::ortho(0.0f, (float)352, (float)224, 0.0f, 10.0f, 0.0f);
+
+  ubo.matrix = m4 * pre_rotate_mat; // glm::ortho(0.0f, (float)352, (float)224, 0.0f, 10.0f, 0.0f);
   ubo.from = from / 10.0f;
   ubo.to = to / 10.0f;
 
@@ -728,12 +729,12 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
 }
 
 
-void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to) {
+void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat) {
 
   const VkDevice device = vulkan->getDevice();
 
   glm::mat4 m4(1.0f);
-  ubo.matrix = m4; // glm::ortho(0.0f, (float)352, (float)224, 0.0f, 10.0f, 0.0f);
+  ubo.matrix = m4 * pre_rotate_mat; // glm::ortho(0.0f, (float)352, (float)224, 0.0f, 10.0f, 0.0f);
   ubo.from = from / 10.0f;
   ubo.to = to / 10.0f;
 
@@ -892,6 +893,10 @@ static std::vector<char> readFile(const std::string& filename) {
   return buffer;
 }
 
+#include <functional>
+#include <fstream>
+#include <iostream>
+
 VkPipeline FramebufferRenderer::compileShader(const char * code, const char * name, enum ColorClacMode c) {
 
   VkDevice device = vulkan->getDevice();
@@ -917,23 +922,71 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
 
 
   LOGI("%s%s", "compiling: ", name);
+  std::vector<uint32_t> data;
+  std::vector<char> buffer;
+  SpvCompilationResult result;
 
-  Compiler compiler;
-  CompileOptions options;
-  options.SetOptimizationLevel(shaderc_optimization_level_performance);
-  //options.SetOptimizationLevel(shaderc_optimization_level_zero);
-  SpvCompilationResult result = compiler.CompileGlslToSpv(
-    target,
-    shaderc_fragment_shader,
-    name,
-    options);
+  std::size_t hash_value = std::hash<std::string>()(target);
+  
+  // Serach from file
+  string mempath = YuiGetShaderCachePath();
+  std::string hashval = std::to_string(hash_value);
+  string file_path = mempath + hashval + ".spv";
 
-  LOGI("%s%d\n", " erros: ", (int)result.GetNumErrors());
-  if (result.GetNumErrors() != 0) {
-    LOGI("%s%s\n", "messages", result.GetErrorMessage().c_str());
-    throw std::runtime_error("failed to create shader module!");
+  // バイナリファイルを読み込む
+  std::ifstream file(file_path, std::ios::binary);
+  if (file) {
+
+    // ファイルサイズを取得する
+    file.seekg(0, std::ios::end);
+    std::size_t file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // ファイルの内容を読み込む
+    buffer.resize(file_size);
+    file.read(buffer.data(), file_size);
+
+    for( int i=0; i<file_size; i+= 4 ){
+      uint32_t value = static_cast<uint32_t>(buffer[i+0])
+                   | (static_cast<uint32_t>(buffer[i+1]) << 8)
+                   | (static_cast<uint32_t>(buffer[i+2]) << 16)
+                   | (static_cast<uint32_t>(buffer[i+3]) << 24);
+      data.push_back(value);
+    }
+    file.close();
+
+  }else{
+
+    Compiler compiler;
+    CompileOptions options;
+    options.SetOptimizationLevel(shaderc_optimization_level_performance);
+    //options.SetOptimizationLevel(shaderc_optimization_level_zero);
+    SpvCompilationResult result = compiler.CompileGlslToSpv(
+      target,
+      shaderc_fragment_shader,
+      name,
+      options);
+
+    LOGI("%s%d\n", " erros: ", (int)result.GetNumErrors());
+    if (result.GetNumErrors() != 0) {
+      LOGI("%s%s\n", "messages", result.GetErrorMessage().c_str());
+      throw std::runtime_error("failed to create shader module!");
+    }
+    data = { result.cbegin(), result.cend() };
+
+    std::ofstream file(file_path, std::ios::binary);
+    if (!file) {
+        std::cerr << "Error: Failed to open file." << std::endl;
+        throw std::runtime_error("failed to create shader module!");
+    }
+
+    // データを書き込む
+    file.write((const char*)data.data(), data.size()* sizeof(uint32_t));
+
+    // ファイルを閉じる
+    file.close();
+        
   }
-  std::vector<uint32_t> data = { result.cbegin(), result.cend() };
 
   VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -1144,22 +1197,71 @@ void FramebufferRenderer::createDescriptorSets() {
     }
   }
 
-  Compiler compiler;
-  CompileOptions options;
-  options.SetOptimizationLevel(shaderc_optimization_level_performance);
-  //options.SetOptimizationLevel(shaderc_optimization_level_zero);
-  SpvCompilationResult result = compiler.CompileGlslToSpv(
-    get_shader_header() + vertexShaderName,
-    shaderc_vertex_shader,
-    "framebuffer",
-    options);
 
-  std::cout << " erros: " << result.GetNumErrors() << std::endl;
-  if (result.GetNumErrors() != 0) {
-    std::cout << "messages: " << result.GetErrorMessage() << std::endl;
-    throw std::runtime_error("failed to create shader module!");
+  std::vector<uint32_t> data;
+  std::vector<char> buffer;
+  SpvCompilationResult result;
+
+  std::size_t hash_value = std::hash<std::string>()(get_shader_header() + vertexShaderName);
+
+  // Serach from file
+  string mempath = YuiGetShaderCachePath();
+  std::string hashval = std::to_string(hash_value);
+  string file_path = mempath + hashval + ".spv";
+
+  // バイナリファイルを読み込む
+  std::ifstream file(file_path, std::ios::binary);
+  if (file) {
+
+    // ファイルサイズを取得する
+    file.seekg(0, std::ios::end);
+    std::size_t file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // ファイルの内容を読み込む
+    buffer.resize(file_size);
+    file.read(buffer.data(), file_size);
+
+    for( int i=0; i<file_size; i+= 4 ){
+      uint32_t value = static_cast<uint32_t>(buffer[i+0])
+                   | (static_cast<uint32_t>(buffer[i+1]) << 8)
+                   | (static_cast<uint32_t>(buffer[i+2]) << 16)
+                   | (static_cast<uint32_t>(buffer[i+3]) << 24);
+      data.push_back(value);
+    }
+    file.close();
+
+  }else{
+
+    Compiler compiler;
+    CompileOptions options;
+    options.SetOptimizationLevel(shaderc_optimization_level_performance);
+    //options.SetOptimizationLevel(shaderc_optimization_level_zero);
+    SpvCompilationResult result = compiler.CompileGlslToSpv(
+      get_shader_header() + vertexShaderName,
+      shaderc_vertex_shader,
+      "framebuffer",
+      options);
+
+    std::cout << " erros: " << result.GetNumErrors() << std::endl;
+    if (result.GetNumErrors() != 0) {
+      std::cout << "messages: " << result.GetErrorMessage() << std::endl;
+      throw std::runtime_error("failed to create shader module!");
+    }
+    data = { result.cbegin(), result.cend() };
+
+    std::ofstream file(file_path, std::ios::binary);
+    if (!file) {
+        std::cerr << "Error: Failed to open file." << std::endl;
+        throw std::runtime_error("failed to create shader module!");
+    }
+
+    // データを書き込む
+    file.write((const char*)data.data(), data.size()* sizeof(uint32_t));
+
+    // ファイルを閉じる
+    file.close();    
   }
-  std::vector<uint32_t> data = { result.cbegin(), result.cend() };
 
   VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
