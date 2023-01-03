@@ -39,8 +39,6 @@ const int VdpPipeline::bindIdFbo = 2;
 const int VdpPipeline::bindIdLine = 3;
 const int VdpPipeline::bindIdWindow = 4;
 
-
-
 VkShaderModule ShaderManager::getShader(uint32_t id) {
     auto it = shaders.find(id);
     if (it == shaders.end()) {
@@ -154,6 +152,8 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
 }
 
 ShaderManager * ShaderManager::instance = nullptr;
+
+VkPipelineCache VdpPipeline::threadPipelineCache = VK_NULL_HANDLE;
 
 
 VdpPipeline::VdpPipeline(
@@ -309,6 +309,7 @@ VdpPipeline::~VdpPipeline() {
     vkDestroyPipeline(device, _graphicsPipeline, nullptr);
     _graphicsPipeline = VK_NULL_HANDLE;
   }
+
 }
 
 std::string VdpPipeline::get_shader_header() {
@@ -550,7 +551,7 @@ void VdpPipeline::createGraphicsPipeline() {
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
   pipelineInfo.basePipelineIndex = -1; // Optional
 
-  if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_graphicsPipeline) != VK_SUCCESS) {
+  if (vkCreateGraphicsPipelines(device, VdpPipeline::threadPipelineCache, 1, &pipelineInfo, nullptr, &_graphicsPipeline) != VK_SUCCESS) {
     throw std::runtime_error("failed to create graphics pipeline!");
   }
 

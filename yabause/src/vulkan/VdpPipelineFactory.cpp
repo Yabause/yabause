@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "VdpPipeline.h"
 #include "VIDVulkan.h"
 
+#include <iostream>
+#include <fstream>
 
 VdpPipelineFactory::VdpPipelineFactory() {
 
@@ -34,6 +36,77 @@ VdpPipelineFactory::~VdpPipelineFactory() {
   dicardAllPielines();
 }
 
+void VdpPipelineFactory::initPipeLineCache( VkDevice device ){
+
+    char* data = nullptr;
+
+		VkPipelineCacheCreateInfo pipelineCachCI = {};
+		pipelineCachCI.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+		
+    string mempath = YuiGetShaderCachePath();
+    std::ifstream cacheFile(mempath + "/pipelineCache.bin", std::ios::binary | std::ios::in);
+    if( cacheFile ){
+      cacheFile.seekg(0, std::ios::end);
+      size_t dataSize = cacheFile.tellg();
+      cacheFile.seekg(0, std::ios::beg);
+      data = (char*)malloc(dataSize);
+      cacheFile.read(data, dataSize);
+      cacheFile.close();
+      //pipelineCachCI.flags = ;
+      pipelineCachCI.initialDataSize = dataSize;
+      pipelineCachCI.pInitialData = (void*)data;
+    }
+
+    if( VK_SUCCESS != vkCreatePipelineCache(device, &pipelineCachCI, nullptr, &threadPipelineCache) ){
+      std::cerr << "Error: vkCreatePipelineCache" << std::endl;
+      throw std::runtime_error("vkCreatePipelineCache failed");        
+    }
+    VdpPipeline::threadPipelineCache = threadPipelineCache;
+
+    if( data != nullptr) {
+      free(data);
+    }
+}
+
+void VdpPipelineFactory::flushPipeLineCache( VkDevice device  ){
+
+  VkResult res;
+  char* data;
+  size_t dataSize;
+
+  res = vkGetPipelineCacheData(device, threadPipelineCache, &dataSize, nullptr);
+  if (res != VK_SUCCESS) {
+      std::cerr << "Error: Failed to vkGetPipelineCacheData to get size." << std::endl;
+      throw std::runtime_error("flushPipeLineCache");
+  }
+  data = (char *)malloc(sizeof(char) * dataSize);
+  if (!data) {
+      std::cerr << "Error: Failed to malloc data." << std::endl;
+      throw std::runtime_error("flushPipeLineCache");
+  }
+
+  res = vkGetPipelineCacheData(device,  threadPipelineCache, &dataSize, data);
+  if (res != VK_SUCCESS) {
+       std::cerr << "Error: Failed to vkGetPipelineCacheData to get data." << std::endl;
+       throw std::runtime_error("flushPipeLineCache");
+  }
+
+  string mempath = YuiGetShaderCachePath();
+  
+  std::ofstream file(mempath + "/pipelineCache.bin", std::ios::binary);
+  if (!file) {
+      std::cerr << "Error: Failed to open file." << std::endl;
+      throw std::runtime_error("failed to create shader module!");
+  }
+
+  file.write((const char*)data, dataSize);
+  file.close();
+
+  free(data);
+
+  vkDestroyPipelineCache(device, threadPipelineCache, nullptr);
+
+}
 
 VdpPipeline * VdpPipelineFactory::getPipeline(
   YglPipelineId id,

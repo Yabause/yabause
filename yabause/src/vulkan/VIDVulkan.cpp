@@ -224,6 +224,7 @@ int VIDVulkan::init(void)
 
   crammutex = YabThreadCreateMutex();
   pipleLineFactory = new VdpPipelineFactory();
+  pipleLineFactory->initPipeLineCache( this->getDevice() );
 
   cram.create(this, 2048, 1);
   lineColor.create(this, 512, 9);
@@ -279,6 +280,8 @@ int VIDVulkan::init(void)
 
 void VIDVulkan::deInit(void)
 {
+  pipleLineFactory->flushPipeLineCache( this->getDevice() );
+
   if (vdp1 != nullptr)
   {
     delete vdp1;

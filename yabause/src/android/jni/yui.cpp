@@ -851,6 +851,13 @@ extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_enab
     return 0;
 }
 
+static int s_isRunning = 0;
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_isRunning()
+{
+    return s_isRunning;
+}
+
+
 extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_lockGL()
 {
     pthread_mutex_lock(&g_mtxGlLock);
@@ -1178,6 +1185,8 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, job
 
     if (initEGLFunc() == -1)
         return -1;
+
+    s_isRunning = 1;
 
     yabause = env->NewGlobalRef(yab);
 
@@ -1668,12 +1677,14 @@ int destroy()
 {
     YabauseDeInit();
 
-    eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    eglDestroyContext(g_Display, g_Context_Sub);
-    eglDestroyContext(g_Display, g_Context);
-    eglDestroySurface(g_Display, g_Surface);
-    eglDestroySurface(g_Display, g_Pbuffer);
-    eglTerminate(g_Display);
+    if (s_vidcoretype != VIDCORE_VULKAN){
+        eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        eglDestroyContext(g_Display, g_Context_Sub);
+        eglDestroyContext(g_Display, g_Context);
+        eglDestroySurface(g_Display, g_Surface);
+        eglDestroySurface(g_Display, g_Pbuffer);
+        eglTerminate(g_Display);
+    }
 
     g_window = 0;
     g_Display = EGL_NO_DISPLAY;
@@ -2410,6 +2421,8 @@ void renderLoop()
 
     if (context != NULL)
         crashlytics_free(&context);
+
+    s_isRunning = 0;
 }
 
 void *threadStartCallback(void *myself)

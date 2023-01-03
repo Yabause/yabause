@@ -47,12 +47,18 @@ public:
   }
   void garbage(VdpPipeline * p);
 
+  void initPipeLineCache(VkDevice device);
+  void flushPipeLineCache(VkDevice device);
+
   void dicardAllPielines();
 
 protected:
+
+  VkPipelineCache threadPipelineCache{ VK_NULL_HANDLE };
 
   VdpPipeline * findInGarbage(YglPipelineId id);
   vector<VdpPipeline*> garbageCollction;
 
   VkRenderPass renderPass;
 };
+

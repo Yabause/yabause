@@ -93,6 +93,8 @@ private:
 class VdpPipeline {
 public:
 
+  static VkPipelineCache threadPipelineCache;
+
   VdpPipeline(
     VIDVulkan * vulkan,
     TextureManager * tm,

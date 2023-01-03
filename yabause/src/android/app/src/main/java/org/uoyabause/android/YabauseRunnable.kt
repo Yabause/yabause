@@ -38,6 +38,8 @@ class YabauseRunnable(yabause: Yabause?) : Runnable {
 
     companion object {
         @JvmStatic
+        external fun isRunning(): Int
+        @JvmStatic
         external fun init(yabause: Yabause?): Int
         @JvmStatic
         external fun deinit()

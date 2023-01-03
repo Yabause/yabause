@@ -1009,7 +1009,14 @@ class Yabause : AppCompatActivity(),
             R.id.exit -> {
                 YabauseRunnable.deinit()
                 try {
-                    Thread.sleep(1000)
+                    var timeOutCount = 0;
+                    while( YabauseRunnable.isRunning() == 1 ) {
+                        Thread.sleep(100)
+                        timeOutCount++;
+                        if( timeOutCount > 40 ){
+                            break;
+                        }
+                    }
                 } catch (e: InterruptedException) {
                 }
                 mParcelFileDescriptor?.close()
