@@ -5457,7 +5457,7 @@ M68KClearCodeBreakpoints ()
 //////////////////////////////////////////////////////////////////////////////
 
 int
-SoundSaveState (FILE *fp)
+SoundSaveState (void ** stream)
 {
   int i;
   u32 temp;
@@ -5465,37 +5465,37 @@ SoundSaveState (FILE *fp)
   u8 nextphase;
   IOCheck_struct check = { 0, 0 };
 
-  offset = StateWriteHeader (fp, "SCSP", 2);
+  offset = MemStateWriteHeader(stream, "SCSP", 2);
 
   // Save 68k registers first
-  ywrite (&check, (void *)&IsM68KRunning, 1, 1, fp);
+  MemStateWrite((void *)&IsM68KRunning, 1, 1, stream);
 
 #ifdef IMPROVED_SAVESTATES
-  M68K->SaveState(fp);
+  M68K->SaveState(stream);
 #else
   for (i = 0; i < 8; i++)
     {
       temp = M68K->GetDReg (i);
-      ywrite (&check, (void *)&temp, 4, 1, fp);
+      MemStateWrite((void *)&temp, 4, 1, stream);
     }
 
   for (i = 0; i < 8; i++)
     {
       temp = M68K->GetAReg (i);
-      ywrite (&check, (void *)&temp, 4, 1, fp);
+      MemStateWrite((void *)&temp, 4, 1, stream);
     }
 
   temp = M68K->GetSR ();
-  ywrite (&check, (void *)&temp, 4, 1, fp);
+  MemStateWrite((void *)&temp, 4, 1, stream);
   temp = M68K->GetPC ();
-  ywrite (&check, (void *)&temp, 4, 1, fp);
+  MemStateWrite((void *)&temp, 4, 1, stream);
 #endif
 
   // Now for the SCSP registers
-  ywrite (&check, (void *)scsp_reg, 0x1000, 1, fp);
+  MemStateWrite((void *)scsp_reg, 0x1000, 1, stream);
 
   // Sound RAM is important
-  ywrite (&check, (void *)SoundRam, 0x80000, 1, fp);
+  MemStateWrite((void *)SoundRam, 0x80000, 1, stream);
 
   // Write slot internal variables
   for (i = 0; i < 32; i++)
@@ -5503,25 +5503,25 @@ SoundSaveState (FILE *fp)
       s32 einc;
 
 #ifdef IMPROVED_SAVESTATES
-      ywrite(&check, (void *)&scsp.slot[i].swe, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].sdir, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].pcm8b, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].sbctl, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].ssctl, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].lpctl, sizeof(u8), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].swe, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].sdir, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].pcm8b, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].sbctl, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].ssctl, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].lpctl, sizeof(u8), 1, stream);
 #endif
-      ywrite (&check, (void *)&scsp.slot[i].key, 1, 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].key, 1, 1, stream);
 #ifdef IMPROVED_SAVESTATES
-      ywrite(&check, (void *)&scsp.slot[i].keyx, sizeof(u8), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].keyx, sizeof(u8), 1, stream);
 #endif
       //buf8,16 get regenerated on state load
 
-      ywrite (&check, (void *)&scsp.slot[i].fcnt, 4, 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].fcnt, 4, 1, stream);
 #ifdef IMPROVED_SAVESTATES
-      ywrite(&check, (void *)&scsp.slot[i].finc, sizeof(u32), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].finct, sizeof(u32), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].finc, sizeof(u32), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].finct, sizeof(u32), 1, stream);
 #endif
-      ywrite (&check, (void *)&scsp.slot[i].ecnt, 4, 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].ecnt, 4, 1, stream);
 
       if (scsp.slot[i].einc == &scsp.slot[i].einca)
         einc = 0;
@@ -5534,14 +5534,14 @@ SoundSaveState (FILE *fp)
       else
         einc = 4;
 
-      ywrite (&check, (void *)&einc, 4, 1, fp);
+      MemStateWrite((void *)&einc, 4, 1, stream);
 
       //einca,eincd,eincs,eincr
 
-      ywrite (&check, (void *)&scsp.slot[i].ecmp, 4, 1, fp);
-      ywrite (&check, (void *)&scsp.slot[i].ecurp, 4, 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].ecmp, 4, 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].ecurp, 4, 1, stream);
 #ifdef IMPROVED_SAVESTATES
-      ywrite(&check, (void *)&scsp.slot[i].env, sizeof(s32), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].env, sizeof(s32), 1, stream);
 #endif
       if (scsp.slot[i].enxt == scsp_env_null_next)
         nextphase = 0;
@@ -5553,96 +5553,96 @@ SoundSaveState (FILE *fp)
         nextphase = 3;
       else if (scsp.slot[i].enxt == scsp_attack_next)
         nextphase = 4;
-      ywrite (&check, (void *)&nextphase, 1, 1, fp);
+      MemStateWrite((void *)&nextphase, 1, 1, stream);
 
-      ywrite (&check, (void *)&scsp.slot[i].lfocnt, 4, 1, fp);
-      ywrite (&check, (void *)&scsp.slot[i].lfoinc, 4, 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].lfocnt, 4, 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].lfoinc, 4, 1, stream);
 #ifdef IMPROVED_SAVESTATES
-      ywrite(&check, (void *)&scsp.slot[i].sa, sizeof(u32), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].lsa, sizeof(u32), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].lea , sizeof(u32), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].sa, sizeof(u32), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].lsa, sizeof(u32), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].lea , sizeof(u32), 1, stream);
 
-      ywrite(&check, (void *)&scsp.slot[i].tl, sizeof(s32), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].sl, sizeof(s32), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].tl, sizeof(s32), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].sl, sizeof(s32), 1, stream);
 
-      ywrite(&check, (void *)&scsp.slot[i].ar, sizeof(s32), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].dr, sizeof(s32), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].sr, sizeof(s32), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].rr, sizeof(s32), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].ar, sizeof(s32), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].dr, sizeof(s32), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].sr, sizeof(s32), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].rr, sizeof(s32), 1, stream);
 
       //arp
       //drp
       //srp
       //rrp
 
-      ywrite(&check, (void *)&scsp.slot[i].krs, sizeof(u32), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].krs, sizeof(u32), 1, stream);
 
       //lfofmw
       //lfoemw
 
-      ywrite(&check, (void *)&scsp.slot[i].lfofms, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].lfoems, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].fsft, sizeof(u8), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].lfofms, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].lfoems, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].fsft, sizeof(u8), 1, stream);
 
-      ywrite(&check, (void *)&scsp.slot[i].mdl, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].mdx, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].mdy, sizeof(u8), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].mdl, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].mdx, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].mdy, sizeof(u8), 1, stream);
 
-      ywrite(&check, (void *)&scsp.slot[i].imxl, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].disll, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].dislr, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].efsll, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].efslr, sizeof(u8), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].imxl, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].disll, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].dislr, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].efsll, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].efslr, sizeof(u8), 1, stream);
 
-      ywrite(&check, (void *)&scsp.slot[i].eghold, sizeof(u8), 1, fp);
-      ywrite(&check, (void *)&scsp.slot[i].lslnk, sizeof(u8), 1, fp);
+      MemStateWrite((void *)&scsp.slot[i].eghold, sizeof(u8), 1, stream);
+      MemStateWrite((void *)&scsp.slot[i].lslnk, sizeof(u8), 1, stream);
 #endif
     }
 
   // Write main internal variables
-  ywrite (&check, (void *)&scsp.mem4b, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.mvol, 4, 1, fp);
+  MemStateWrite((void *)&scsp.mem4b, 4, 1, stream);
+  MemStateWrite((void *)&scsp.mvol, 4, 1, stream);
 
-  ywrite (&check, (void *)&scsp.rbl, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.rbp, 4, 1, fp);
+  MemStateWrite((void *)&scsp.rbl, 4, 1, stream);
+  MemStateWrite((void *)&scsp.rbp, 4, 1, stream);
 
-  ywrite (&check, (void *)&scsp.mslc, 4, 1, fp);
+  MemStateWrite((void *)&scsp.mslc, 4, 1, stream);
 
-  ywrite (&check, (void *)&scsp.dmea, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.drga, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.dmfl, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.dmlen, 4, 1, fp);
+  MemStateWrite((void *)&scsp.dmea, 4, 1, stream);
+  MemStateWrite((void *)&scsp.drga, 4, 1, stream);
+  MemStateWrite((void *)&scsp.dmfl, 4, 1, stream);
+  MemStateWrite((void *)&scsp.dmlen, 4, 1, stream);
 
-  ywrite (&check, (void *)scsp.midinbuf, 1, 4, fp);
-  ywrite (&check, (void *)scsp.midoutbuf, 1, 4, fp);
-  ywrite (&check, (void *)&scsp.midincnt, 1, 1, fp);
-  ywrite (&check, (void *)&scsp.midoutcnt, 1, 1, fp);
-  ywrite (&check, (void *)&scsp.midflag, 1, 1, fp);
+  MemStateWrite((void *)scsp.midinbuf, 1, 4, stream);
+  MemStateWrite((void *)scsp.midoutbuf, 1, 4, stream);
+  MemStateWrite((void *)&scsp.midincnt, 1, 1, stream);
+  MemStateWrite((void *)&scsp.midoutcnt, 1, 1, stream);
+  MemStateWrite((void *)&scsp.midflag, 1, 1, stream);
 
-  ywrite (&check, (void *)&scsp.timacnt, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.timasd, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.timbcnt, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.timbsd, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.timccnt, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.timcsd, 4, 1, fp);
+  MemStateWrite((void *)&scsp.timacnt, 4, 1, stream);
+  MemStateWrite((void *)&scsp.timasd, 4, 1, stream);
+  MemStateWrite((void *)&scsp.timbcnt, 4, 1, stream);
+  MemStateWrite((void *)&scsp.timbsd, 4, 1, stream);
+  MemStateWrite((void *)&scsp.timccnt, 4, 1, stream);
+  MemStateWrite((void *)&scsp.timcsd, 4, 1, stream);
 
-  ywrite (&check, (void *)&scsp.scieb, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.scipd, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.scilv0, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.scilv1, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.scilv2, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.mcieb, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.mcipd, 4, 1, fp);
+  MemStateWrite((void *)&scsp.scieb, 4, 1, stream);
+  MemStateWrite((void *)&scsp.scipd, 4, 1, stream);
+  MemStateWrite((void *)&scsp.scilv0, 4, 1, stream);
+  MemStateWrite((void *)&scsp.scilv1, 4, 1, stream);
+  MemStateWrite((void *)&scsp.scilv2, 4, 1, stream);
+  MemStateWrite((void *)&scsp.mcieb, 4, 1, stream);
+  MemStateWrite((void *)&scsp.mcipd, 4, 1, stream);
 
-  ywrite (&check, (void *)scsp.stack, 4, 32 * 2, fp);
+  MemStateWrite((void *)scsp.stack, 4, 32 * 2, stream);
 
-  return StateFinishHeader (fp, offset);
+  return MemStateFinishHeader(stream, offset);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 int
-SoundLoadState (FILE *fp, int version, int size)
+SoundLoadState (const void * stream, int version, int size)
 {
   int i, i2;
   u32 temp;
@@ -5650,34 +5650,34 @@ SoundLoadState (FILE *fp, int version, int size)
   IOCheck_struct check = { 0, 0 };
 
   // Read 68k registers first
-  yread (&check, (void *)&IsM68KRunning, 1, 1, fp);
+  MemStateRead((void *)&IsM68KRunning, 1, 1, stream);
 
 #ifdef IMPROVED_SAVESTATES
-  M68K->LoadState(fp);
+  M68K->LoadState(stream);
 #else
   for (i = 0; i < 8; i++)
     {
-      yread (&check, (void *)&temp, 4, 1, fp);
+      MemStateRead((void *)&temp, 4, 1, stream);
       M68K->SetDReg (i, temp);
     }
 
   for (i = 0; i < 8; i++)
     {
-      yread (&check, (void *)&temp, 4, 1, fp);
+      MemStateRead((void *)&temp, 4, 1, stream);
       M68K->SetAReg (i, temp);
     }
 
-  yread (&check, (void *)&temp, 4, 1, fp);
+  MemStateRead((void *)&temp, 4, 1, stream);
   M68K->SetSR (temp);
-  yread (&check, (void *)&temp, 4, 1, fp);
+  MemStateRead((void *)&temp, 4, 1, stream);
   M68K->SetPC (temp);
 #endif
 
   // Now for the SCSP registers
-  yread (&check, (void *)scsp_reg, 0x1000, 1, fp);
+  MemStateRead((void *)scsp_reg, 0x1000, 1, stream);
 
   // Lastly, sound ram
-  yread (&check, (void *)SoundRam, 0x80000, 1, fp);
+  MemStateRead((void *)SoundRam, 0x80000, 1, stream);
 
   if (version > 1)
     {
@@ -5695,28 +5695,28 @@ SoundLoadState (FILE *fp, int version, int size)
         {
           s32 einc;
 #ifdef IMPROVED_SAVESTATES
-          yread(&check, (void *)&scsp.slot[i].swe, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].sdir, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].pcm8b, sizeof(u8), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].swe, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].sdir, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].pcm8b, sizeof(u8), 1, stream);
 
-          yread(&check, (void *)&scsp.slot[i].sbctl, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].ssctl, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].lpctl, sizeof(u8), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].sbctl, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].ssctl, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].lpctl, sizeof(u8), 1, stream);
 #endif
-          yread (&check, (void *)&scsp.slot[i].key, 1, 1, fp);
+          MemStateRead((void *)&scsp.slot[i].key, 1, 1, stream);
 #ifdef IMPROVED_SAVESTATES
-          yread(&check, (void *)&scsp.slot[i].keyx, sizeof(u8), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].keyx, sizeof(u8), 1, stream);
 #endif
           //buf8,16 regenerated at end
 
-          yread (&check, (void *)&scsp.slot[i].fcnt, 4, 1, fp);
+          MemStateRead((void *)&scsp.slot[i].fcnt, 4, 1, stream);
 #ifdef IMPROVED_SAVESTATES
-          yread(&check, (void *)&scsp.slot[i].finc, sizeof(u32), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].finct, sizeof(u32), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].finc, sizeof(u32), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].finct, sizeof(u32), 1, stream);
 #endif
-          yread (&check, (void *)&scsp.slot[i].ecnt, 4, 1, fp);
+          MemStateRead((void *)&scsp.slot[i].ecnt, 4, 1, stream);
 
-          yread (&check, (void *)&einc, 4, 1, fp);
+          MemStateRead((void *)&einc, 4, 1, stream);
           switch (einc)
             {
             case 0:
@@ -5738,12 +5738,12 @@ SoundLoadState (FILE *fp, int version, int size)
 
           //einca,eincd,eincs,eincr
 
-          yread (&check, (void *)&scsp.slot[i].ecmp, 4, 1, fp);
-          yread (&check, (void *)&scsp.slot[i].ecurp, 4, 1, fp);
+          MemStateRead((void *)&scsp.slot[i].ecmp, 4, 1, stream);
+          MemStateRead((void *)&scsp.slot[i].ecurp, 4, 1, stream);
 #ifdef IMPROVED_SAVESTATES
-          yread(&check, (void *)&scsp.slot[i].env, sizeof(s32), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].env, sizeof(s32), 1, stream);
 #endif
-          yread (&check, (void *)&nextphase, 1, 1, fp);
+          MemStateRead((void *)&nextphase, 1, 1, stream);
           switch (nextphase)
             {
             case 0:
@@ -5764,48 +5764,48 @@ SoundLoadState (FILE *fp, int version, int size)
             default: break;
             }
 
-          yread (&check, (void *)&scsp.slot[i].lfocnt, 4, 1, fp);
-          yread (&check, (void *)&scsp.slot[i].lfoinc, 4, 1, fp);
+          MemStateRead((void *)&scsp.slot[i].lfocnt, 4, 1, stream);
+          MemStateRead((void *)&scsp.slot[i].lfoinc, 4, 1, stream);
 
 #ifdef IMPROVED_SAVESTATES
-          yread(&check, (void *)&scsp.slot[i].sa, sizeof(u32), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].lsa, sizeof(u32), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].lea, sizeof(u32), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].sa, sizeof(u32), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].lsa, sizeof(u32), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].lea, sizeof(u32), 1, stream);
 
-          yread(&check, (void *)&scsp.slot[i].tl, sizeof(s32), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].sl, sizeof(s32), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].tl, sizeof(s32), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].sl, sizeof(s32), 1, stream);
 
-          yread(&check, (void *)&scsp.slot[i].ar, sizeof(s32), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].dr, sizeof(s32), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].sr, sizeof(s32), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].rr, sizeof(s32), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].ar, sizeof(s32), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].dr, sizeof(s32), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].sr, sizeof(s32), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].rr, sizeof(s32), 1, stream);
 
           //arp
           //drp
           //srp
           //rrp
 
-          yread(&check, (void *)&scsp.slot[i].krs, sizeof(u32), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].krs, sizeof(u32), 1, stream);
 
           //lfofmw
           //lfoemw
 
-          yread(&check, (void *)&scsp.slot[i].lfofms, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].lfoems, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].fsft, sizeof(u8), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].lfofms, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].lfoems, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].fsft, sizeof(u8), 1, stream);
 
-          yread(&check, (void *)&scsp.slot[i].mdl, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].mdx, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].mdy, sizeof(u8), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].mdl, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].mdx, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].mdy, sizeof(u8), 1, stream);
 
-          yread(&check, (void *)&scsp.slot[i].imxl, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].disll, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].dislr, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].efsll, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].efslr, sizeof(u8), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].imxl, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].disll, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].dislr, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].efsll, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].efslr, sizeof(u8), 1, stream);
 
-          yread(&check, (void *)&scsp.slot[i].eghold, sizeof(u8), 1, fp);
-          yread(&check, (void *)&scsp.slot[i].lslnk, sizeof(u8), 1, fp);
+          MemStateRead((void *)&scsp.slot[i].eghold, sizeof(u8), 1, stream);
+          MemStateRead((void *)&scsp.slot[i].lslnk, sizeof(u8), 1, stream);
 #endif
 
           // depends on pcm8b, sa, lea being loaded first
@@ -5829,41 +5829,41 @@ SoundLoadState (FILE *fp, int version, int size)
         }
 
       // Read main internal variables
-      yread (&check, (void *)&scsp.mem4b, 4, 1, fp);
-      yread (&check, (void *)&scsp.mvol, 4, 1, fp);
+      MemStateRead((void *)&scsp.mem4b, 4, 1, stream);
+      MemStateRead((void *)&scsp.mvol, 4, 1, stream);
 
-      yread (&check, (void *)&scsp.rbl, 4, 1, fp);
-      yread (&check, (void *)&scsp.rbp, 4, 1, fp);
+      MemStateRead((void *)&scsp.rbl, 4, 1, stream);
+      MemStateRead((void *)&scsp.rbp, 4, 1, stream);
 
-      yread (&check, (void *)&scsp.mslc, 4, 1, fp);
+      MemStateRead((void *)&scsp.mslc, 4, 1, stream);
 
-      yread (&check, (void *)&scsp.dmea, 4, 1, fp);
-      yread (&check, (void *)&scsp.drga, 4, 1, fp);
-      yread (&check, (void *)&scsp.dmfl, 4, 1, fp);
-      yread (&check, (void *)&scsp.dmlen, 4, 1, fp);
+      MemStateRead((void *)&scsp.dmea, 4, 1, stream);
+      MemStateRead((void *)&scsp.drga, 4, 1, stream);
+      MemStateRead((void *)&scsp.dmfl, 4, 1, stream);
+      MemStateRead((void *)&scsp.dmlen, 4, 1, stream);
 
-      yread (&check, (void *)scsp.midinbuf, 1, 4, fp);
-      yread (&check, (void *)scsp.midoutbuf, 1, 4, fp);
-      yread (&check, (void *)&scsp.midincnt, 1, 1, fp);
-      yread (&check, (void *)&scsp.midoutcnt, 1, 1, fp);
-      yread (&check, (void *)&scsp.midflag, 1, 1, fp);
+      MemStateRead((void *)scsp.midinbuf, 1, 4, stream);
+      MemStateRead((void *)scsp.midoutbuf, 1, 4, stream);
+      MemStateRead((void *)&scsp.midincnt, 1, 1, stream);
+      MemStateRead((void *)&scsp.midoutcnt, 1, 1, stream);
+      MemStateRead((void *)&scsp.midflag, 1, 1, stream);
 
-      yread (&check, (void *)&scsp.timacnt, 4, 1, fp);
-      yread (&check, (void *)&scsp.timasd, 4, 1, fp);
-      yread (&check, (void *)&scsp.timbcnt, 4, 1, fp);
-      yread (&check, (void *)&scsp.timbsd, 4, 1, fp);
-      yread (&check, (void *)&scsp.timccnt, 4, 1, fp);
-      yread (&check, (void *)&scsp.timcsd, 4, 1, fp);
+      MemStateRead((void *)&scsp.timacnt, 4, 1, stream);
+      MemStateRead((void *)&scsp.timasd, 4, 1, stream);
+      MemStateRead((void *)&scsp.timbcnt, 4, 1, stream);
+      MemStateRead((void *)&scsp.timbsd, 4, 1, stream);
+      MemStateRead((void *)&scsp.timccnt, 4, 1, stream);
+      MemStateRead((void *)&scsp.timcsd, 4, 1, stream);
 
-      yread (&check, (void *)&scsp.scieb, 4, 1, fp);
-      yread (&check, (void *)&scsp.scipd, 4, 1, fp);
-      yread (&check, (void *)&scsp.scilv0, 4, 1, fp);
-      yread (&check, (void *)&scsp.scilv1, 4, 1, fp);
-      yread (&check, (void *)&scsp.scilv2, 4, 1, fp);
-      yread (&check, (void *)&scsp.mcieb, 4, 1, fp);
-      yread (&check, (void *)&scsp.mcipd, 4, 1, fp);
+      MemStateRead((void *)&scsp.scieb, 4, 1, stream);
+      MemStateRead((void *)&scsp.scipd, 4, 1, stream);
+      MemStateRead((void *)&scsp.scilv0, 4, 1, stream);
+      MemStateRead((void *)&scsp.scilv1, 4, 1, stream);
+      MemStateRead((void *)&scsp.scilv2, 4, 1, stream);
+      MemStateRead((void *)&scsp.mcieb, 4, 1, stream);
+      MemStateRead((void *)&scsp.mcipd, 4, 1, stream);
 
-      yread (&check, (void *)scsp.stack, 4, 32 * 2, fp);
+      MemStateRead((void *)scsp.stack, 4, 32 * 2, stream);
     }
 
   return size;

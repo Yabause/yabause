@@ -379,30 +379,30 @@ int PlayMovie(const char *filename) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SaveMovieInState(FILE* fp, IOCheck_struct check) {
+void SaveMovieInState(void ** stream) {
 
 	struct MovieBufferStruct tempbuffer;
-
-	fseek(fp, 0, SEEK_END);
 
 	if(Movie.Status == Recording || Movie.Status == Playback) {
 		tempbuffer=ReadMovieIntoABuffer(Movie.fp);
 
-		fwrite(&tempbuffer.size, 4, 1, fp);
-		fwrite(tempbuffer.data, tempbuffer.size, 1, fp);
+		MemStateWrite(&tempbuffer.size, 4, 1, stream);
+		MemStateWrite(tempbuffer.data, tempbuffer.size, 1, stream);
+
+		free(tempbuffer.data);
 	}
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void MovieReadState(FILE* fp) {
+void MovieReadState(const void * stream) {
 
-	ReadMovieInState(fp);
+	ReadMovieInState(stream);
 	MovieLoadState();//file pointer and truncation
 
 }
 
-void ReadMovieInState(FILE* fp) {
+void ReadMovieInState(const void * stream) {
 
 	struct MovieBufferStruct tempbuffer;
 	int fpos;
@@ -411,7 +411,7 @@ void ReadMovieInState(FILE* fp) {
 	//overwrite the main movie on disk if we are recording or read+write playback
 	if(Movie.Status == Recording || (Movie.Status == Playback && Movie.ReadOnly == 0)) {
 
-		fpos=ftell(fp);//where we are in the savestate
+		fpos=MemStateGetOffset();//where we are in the savestate
 
       if (fpos < 0)
       {
@@ -419,13 +419,13 @@ void ReadMovieInState(FILE* fp) {
          return;
       }
 
-      num_read = fread(&tempbuffer.size, 4, 1, fp);//size
+      MemStateRead(&tempbuffer.size, 4, 1, stream);//size
 		if ((tempbuffer.data = (char *)malloc(tempbuffer.size)) == NULL)
 		{
 			return;
 		}
-      num_read = fread(tempbuffer.data, 1, tempbuffer.size, fp);//movie
-		fseek(fp, fpos, SEEK_SET);//reset savestate position
+      MemStateRead(tempbuffer.data, 1, tempbuffer.size, stream);//movie
+		MemStateSetOffset(fpos);//reset savestate position
 
 		rewind(Movie.fp);
 		fwrite(tempbuffer.data, 1, tempbuffer.size, Movie.fp);

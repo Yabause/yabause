@@ -178,8 +178,8 @@ void Vdp1Draw(void);
 void Vdp1NoDraw(void);
 void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram);
 
-int Vdp1SaveState(FILE *fp);
-int Vdp1LoadState(FILE *fp, int version, int size);
+int Vdp1SaveState(void ** stream);
+int Vdp1LoadState(const void * stream, int version, int size);
 
 void Vdp1DebugGetCommandNumberName(u32 number, char *outstring);
 void Vdp1DebugCommand(u32 number, char *outstring);

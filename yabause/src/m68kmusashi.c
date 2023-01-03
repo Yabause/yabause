@@ -165,10 +165,10 @@ static void M68KMusashiSetWriteW(M68K_WRITE *Func) {
    rw_funcs.w_16 = Func;
 }
 
-static void M68KMusashiSaveState(FILE *fp) {
+static void M68KMusashiSaveState(void ** stream) {
 }
 
-static void M68KMusashiLoadState(FILE *fp) {
+static void M68KMusashiLoadState(const void * stream) {
 }
 
 M68K_struct M68KMusashi = {
