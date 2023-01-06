@@ -171,6 +171,9 @@ VdpPipeline::VdpPipeline(
   logwinsp = 0;
   winmode = -1;
 
+  ubuffer.resize(MAX_DS_SIZE);
+  memset(_descriptorSet, 0, sizeof(VkDescriptorSet) * MAX_DS_SIZE);
+
   vdp2Uniform = R"u(
   layout(binding = 0) uniform UniformBufferObject {
     mat4 mvp;
@@ -333,11 +336,15 @@ void VdpPipeline::moveToVertexBuffer(const vector<Vertex> & vertices, const vect
 }
 
 void VdpPipeline::setUBO(const void * ubo, int size) {
+  dsIndex++;
+  if( dsIndex >= MAX_DS_SIZE ){
+    dsIndex = 0;
+  }  
   const VkDevice device = vulkan->getDevice();
   void* data;
-  vkMapMemory(device, _uniformBufferMemory, 0, size, 0, &data);
+  vkMapMemory(device, ubuffer[dsIndex]._uniformBufferMemory, 0, size, 0, &data);
   memcpy(data, ubo, size);
-  vkUnmapMemory(device, _uniformBufferMemory);
+  vkUnmapMemory(device, ubuffer[dsIndex]._uniformBufferMemory);
   uboSize = size;
   if (MAX_UBO_SIZE < uboSize) {
     throw std::runtime_error("MAX_UBO_SIZE over!!");
@@ -368,9 +375,15 @@ void VdpPipeline::createGraphicsPipeline() {
 
   VkDevice device = vulkan->getDevice();
 
-  vulkan->createBuffer(MAX_UBO_SIZE,
-    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    _uniformBuffer, _uniformBufferMemory);
+  //vulkan->createBuffer(MAX_UBO_SIZE,
+  //  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+  //  _uniformBuffer, _uniformBufferMemory);
+
+  for (UniformBuffer & u : ubuffer) {
+    vulkan->createBuffer(MAX_UBO_SIZE,
+      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      u._uniformBuffer, u._uniformBufferMemory);
+  }
 
 
   initDescriptorSets(bindid);
@@ -854,13 +867,13 @@ void VdpPipeline::initDescriptorSets(const vector<int> & bindid) {
 
   VkDescriptorPoolSize uni;
   uni.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  uni.descriptorCount = 1;
+  uni.descriptorCount = MAX_DS_SIZE;
   poolSizes.push_back(uni);
 
   for (int i = 0; i < bindid.size(); i++) {
     VkDescriptorPoolSize pool = {};
     pool.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    pool.descriptorCount = 1;
+    pool.descriptorCount = MAX_DS_SIZE;
     poolSizes.push_back(pool);
   }
 
@@ -868,7 +881,7 @@ void VdpPipeline::initDescriptorSets(const vector<int> & bindid) {
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
   poolInfo.pPoolSizes = poolSizes.data();
-  poolInfo.maxSets = 1;
+  poolInfo.maxSets = MAX_DS_SIZE;
 
   if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &_descriptorPool) != VK_SUCCESS) {
     throw std::runtime_error("failed to create descriptor pool!");
@@ -880,28 +893,31 @@ void VdpPipeline::initDescriptorSets(const vector<int> & bindid) {
   allocInfo.descriptorPool = _descriptorPool;
   allocInfo.descriptorSetCount = 1;
   allocInfo.pSetLayouts = layouts;
-  if (vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet) != VK_SUCCESS) {
-    throw std::runtime_error("failed to allocate descriptor set!");
+
+  for (int i = 0; i < MAX_DS_SIZE; i++) {
+    if (vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[i]) != VK_SUCCESS) {
+      throw std::runtime_error("failed to allocate descriptor set!");
+    }
   }
 
 }
 
 void VdpPipeline::updateDescriptorSets()
 {
+  //LOGD("updateDescriptorSets %d", this->prgid );
 
   VkDevice device = vulkan->getDevice();
 
   std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-
   VkDescriptorBufferInfo bufferInfo = {};
-  bufferInfo.buffer = _uniformBuffer;
+  bufferInfo.buffer = ubuffer[dsIndex]._uniformBuffer;
   bufferInfo.offset = 0;
   bufferInfo.range = uboSize;
 
   VkWriteDescriptorSet descriptorWrite = {};
   descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptorWrite.dstSet = _descriptorSet;
+  descriptorWrite.dstSet = _descriptorSet[dsIndex];
   descriptorWrite.dstBinding = 0;
   descriptorWrite.dstArrayElement = 0;
   descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -918,7 +934,7 @@ void VdpPipeline::updateDescriptorSets()
 
     VkWriteDescriptorSet descriptorWrite = {};
     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = _descriptorSet;
+    descriptorWrite.dstSet = _descriptorSet[dsIndex];
     descriptorWrite.dstBinding = bindid[i];
     descriptorWrite.dstArrayElement = 0;
     descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1121,7 +1137,7 @@ VdpPipelineCram::VdpPipelineCram(
     layout(binding = 2) uniform highp sampler2D s_color;
     layout(binding = 4) uniform highp sampler2D windowSampler;
     layout(location = 0) out vec4 fragColor;
-    layout(location = 1) out float fargDepth;
+    //layout(location = 1) out float fargDepth;
   )S" +
     fragFuncCheckWindow
     + R"s(

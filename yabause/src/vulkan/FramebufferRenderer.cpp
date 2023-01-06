@@ -224,7 +224,7 @@ void FramebufferRenderer::setup() {
 }
 
 void FramebufferRenderer::onStartFrame(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer) {
-  renderCount = 0;
+  //renderCount = 0;
   updateVdp2Reg(fixVdp2Regs);
   if (lineTexture != VK_NULL_HANDLE) {
     perline.update(vulkan, commandBuffer);
@@ -503,6 +503,9 @@ void FramebufferRenderer::drawWithDestAlphaMode(Vdp2 * fixVdp2Regs, VkCommandBuf
     vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
     renderCount++;
+    if( renderCount >= MAX_RENDER_COUNT ){
+      renderCount = 0;
+    }
 
   }
 }
@@ -726,6 +729,10 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
   vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
   renderCount++;
+  if( renderCount >= MAX_RENDER_COUNT ){
+    renderCount = 0;
+  }
+
 }
 
 
@@ -810,6 +817,10 @@ void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer command
   vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
   renderCount++;
+  if( renderCount >= MAX_RENDER_COUNT ){
+    renderCount = 0;
+  }
+
 }
 
 

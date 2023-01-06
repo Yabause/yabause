@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <unordered_map>
 #include <vulkan/vulkan.h>
 #include <functional>
+#include <vector>
 
 class CharTexture {
 public:
@@ -37,6 +38,8 @@ public:
 };
 
 class VIDVulkan;
+
+#define TX_COMMANDBUFFER_COUNT (4)
 
 class TextureManager {
 protected:
@@ -98,7 +101,8 @@ public:
   void* imageBuffer;
 
   VkCommandPool commandPool;
-  VkCommandBuffer commandBuffer;
+  std::vector<VkCommandBuffer> commandBuffers;
+  int updateCount = 0;
 
   VkSemaphore complete;
 

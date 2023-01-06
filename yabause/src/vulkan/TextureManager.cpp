@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "TextureManager.h"
 #include "VIDVulkan.h"
+#include <vulkan/Shared.h>
 #include "vulkan/vulkan.hpp"
 
 TextureManager::~TextureManager() {
@@ -35,7 +36,7 @@ TextureManager::~TextureManager() {
   vkFreeMemory(device, _textureImageMemory, nullptr);
 
 
-  vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+  vkFreeCommandBuffers(device, commandPool, commandBuffers.size(), commandBuffers.data());
   vkDestroyCommandPool(device, commandPool, nullptr);
 }
 
@@ -51,7 +52,7 @@ int TextureManager::init(unsigned int w, unsigned int h) {
 
   VkCommandPoolCreateInfo pool_create_info{};
   pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  pool_create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  pool_create_info.flags = /*VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |*/ VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   pool_create_info.queueFamilyIndex = vulkan->getVulkanGraphicsQueueFamilyIndex();
   vkCreateCommandPool(device, &pool_create_info, nullptr, &commandPool);
 
@@ -59,10 +60,12 @@ int TextureManager::init(unsigned int w, unsigned int h) {
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-  allocInfo.commandPool = commandPool;
-  allocInfo.commandBufferCount = 1;
+  commandBuffers.resize(TX_COMMANDBUFFER_COUNT);
 
-  vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+  allocInfo.commandPool = commandPool;
+  allocInfo.commandBufferCount = commandBuffers.size();
+
+  vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data());
 
   VkSemaphoreCreateInfo semaphore_create_info{};
   semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -291,7 +294,10 @@ void TextureManager::updateTextureImage(const std::function<void(VkCommandBuffer
 
   const VkDevice device = vulkan->getDevice();
   if (device == VK_NULL_HANDLE) return;
+  if (this->_yMax <= 0) return;
 
+  int ci = updateCount & (TX_COMMANDBUFFER_COUNT-1);
+  updateCount++;
 
   VkDeviceSize imageSize = _width * _height * 4;
 
@@ -301,7 +307,9 @@ void TextureManager::updateTextureImage(const std::function<void(VkCommandBuffer
   VkCommandBufferBeginInfo beginInfo = {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   //beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-  vkBeginCommandBuffer(commandBuffer, &beginInfo);
+  //vkResetCommandPool(device, this->commandPool ,0);
+  vkResetCommandBuffer(commandBuffers[ci],0);
+  vkBeginCommandBuffer(commandBuffers[ci], &beginInfo);
 
   //------------------------------------------------------------------------
   if (this->_yMax > 0) {
@@ -330,7 +338,7 @@ void TextureManager::updateTextureImage(const std::function<void(VkCommandBuffer
     destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
     vkCmdPipelineBarrier(
-      commandBuffer,
+      commandBuffers[ci],
       sourceStage, destinationStage,
       0,
       0, nullptr,
@@ -355,7 +363,7 @@ void TextureManager::updateTextureImage(const std::function<void(VkCommandBuffer
       1
     };
     vkCmdCopyBufferToImage(
-      commandBuffer,
+      commandBuffers[ci],
       stagingBuffer,
       _textureImage,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -374,7 +382,7 @@ void TextureManager::updateTextureImage(const std::function<void(VkCommandBuffer
     destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
     vkCmdPipelineBarrier(
-      commandBuffer,
+      commandBuffers[ci],
       sourceStage, destinationStage,
       0,
       0, nullptr,
@@ -383,17 +391,17 @@ void TextureManager::updateTextureImage(const std::function<void(VkCommandBuffer
     );
   }
 
-  f(commandBuffer);
+  f(commandBuffers[ci]);
 
 
-  vkEndCommandBuffer(commandBuffer);
+  vkEndCommandBuffer(commandBuffers[ci]);
   VkSubmitInfo submitInfo = {};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffer;
+  submitInfo.pCommandBuffers = &commandBuffers[ci];
   submitInfo.signalSemaphoreCount = 0; //1;
   submitInfo.pSignalSemaphores = nullptr; // (VkSemaphore*)&complete;
-  vkQueueSubmit(vulkan->getVulkanQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+  ErrorCheck(vkQueueSubmit(vulkan->getVulkanQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 //  vkQueueWaitIdle(vulkan->getVulkanQueue());
   //vkDeviceWaitIdle(device);

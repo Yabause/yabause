@@ -51,6 +51,8 @@ static std::vector<char> readFile(const std::string& filename) {
 
 VulkanScene::VulkanScene()
 {
+  _command_buffers.clear();
+  _command_pool = VK_NULL_HANDLE;
 }
 
 
@@ -90,10 +92,10 @@ void VulkanScene::deInit(void)
     _command_buffers.clear();
   }
   vkDestroyCommandPool(device, _command_pool, nullptr);
+  _command_pool = VK_NULL_HANDLE;
 
   vkDestroySemaphore(device, _render_complete_semaphore, nullptr);
   _render_complete_semaphore = VK_NULL_HANDLE;
-  _command_pool = VK_NULL_HANDLE;
 
 
 }
@@ -156,30 +158,41 @@ void VulkanScene::createCommandPool()
   const VkDevice device = _renderer->GetVulkanDevice();
   if (device == VK_NULL_HANDLE) return;
 
+  
   if (_command_buffers.size() != 0) {
     vkFreeCommandBuffers(device, _command_pool, _command_buffers.size(), _command_buffers.data());
   }
+
   if (_command_pool != VK_NULL_HANDLE) vkDestroyCommandPool(device, _command_pool, nullptr);
 
+    VkCommandPoolCreateInfo pool_create_info{};
+    pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    pool_create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    pool_create_info.queueFamilyIndex = _renderer->GetVulkanGraphicsQueueFamilyIndex();
+    vkCreateCommandPool(_renderer->GetVulkanDevice(), &pool_create_info, nullptr, &_command_pool);
 
-  VkCommandPoolCreateInfo pool_create_info{};
-  pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  pool_create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  pool_create_info.queueFamilyIndex = _renderer->GetVulkanGraphicsQueueFamilyIndex();
-  vkCreateCommandPool(_renderer->GetVulkanDevice(), &pool_create_info, nullptr, &_command_pool);
+    _command_buffers.resize(MAX_COMMANDBUFFER_COUNT);
 
-  _command_buffers.resize(_renderer->getWindow()->GetFrameBufferCount());
+    VkCommandBufferAllocateInfo	command_buffer_allocate_info{};
+    command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    command_buffer_allocate_info.commandPool = _command_pool;
+    command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    command_buffer_allocate_info.commandBufferCount = _command_buffers.size();
+    vkAllocateCommandBuffers(_renderer->GetVulkanDevice(), &command_buffer_allocate_info, _command_buffers.data());
 
-  VkCommandBufferAllocateInfo	command_buffer_allocate_info{};
-  command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  command_buffer_allocate_info.commandPool = _command_pool;
-  command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  command_buffer_allocate_info.commandBufferCount = _command_buffers.size();
-  vkAllocateCommandBuffers(_renderer->GetVulkanDevice(), &command_buffer_allocate_info, _command_buffers.data());
+    VkSemaphoreCreateInfo semaphore_create_info{};
+    semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    vkCreateSemaphore(_renderer->GetVulkanDevice(), &semaphore_create_info, nullptr, &_render_complete_semaphore);
 
-  VkSemaphoreCreateInfo semaphore_create_info{};
-  semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-  vkCreateSemaphore(_renderer->GetVulkanDevice(), &semaphore_create_info, nullptr, &_render_complete_semaphore);
+    commandFence.resize(MAX_COMMANDBUFFER_COUNT);
+
+    for( int i=0; i<commandFence.size(); i++  ){
+      VkFenceCreateInfo fence_create_info {};
+	    fence_create_info.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	    vkCreateFence( device, &fence_create_info, nullptr, &commandFence[i] );
+    }
+
+
 }
 
 void VulkanScene::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {

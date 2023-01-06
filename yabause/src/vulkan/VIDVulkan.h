@@ -47,7 +47,6 @@ class WindowRenderer;
 
 #define ATLAS_BIAS (0.025f)
 
-
 struct UniformBufferObject {
   glm::mat4 mvp;
   glm::vec4 color_offset;
@@ -198,6 +197,10 @@ protected:
   POLYGONMODE polygonMode;
   int rebuildPipelines = 0;
 
+  int getCurrentCommandIndex(){
+    return frameCount & (MAX_COMMANDBUFFER_COUNT-1);
+  }
+
   VdpPipelineFactory * pipleLineFactory;
 
   VdpPipeline * pipleLineNBG0;
@@ -344,6 +347,7 @@ protected:
     VkRenderPass renderPass = VK_NULL_HANDLE;
     VkSampler sampler = VK_NULL_HANDLE;
     VkDescriptorImageInfo descriptor;
+    FrameBufferAttachment depth;
   };
 
   OffscreenPass offscreenPass;

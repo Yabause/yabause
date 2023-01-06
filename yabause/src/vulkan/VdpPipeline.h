@@ -47,7 +47,7 @@ class TextureManager;
 class VertexManager;
 
 #define MAX_UBO_SIZE (256)
-
+#define MAX_DS_SIZE (4)
 
 class ShaderManager {
 
@@ -116,12 +116,18 @@ public:
   vector<Vertex> vertices;
   vector<uint16_t> indices;
 
-  VkBuffer ubo;
+  struct UniformBuffer {
+    VkBuffer _uniformBuffer;  
+    VkDeviceMemory _uniformBufferMemory = 0;
+  };
+  std::vector<UniformBuffer> ubuffer;
+  int dsIndex = 0;
+
   uint32_t uboSize;
   void setUBO(const void * ubo, int size);
 
-  VkBuffer _uniformBuffer;
-  VkDeviceMemory _uniformBufferMemory;
+  
+  
 
 
   struct SamplerSet {
@@ -180,9 +186,9 @@ public:
 
   VkPipelineLayout getPipelineLayout() { return _pipelineLayout; }
   VkPipeline getGraphicsPipeline() { return _graphicsPipeline; }
-  VkDescriptorSet getDescriptorSete() { return _descriptorSet; }
+  VkDescriptorSet * getDescriptorSet() { return &_descriptorSet[dsIndex]; }
 
-  VkDescriptorSet _descriptorSet;
+  VkDescriptorSet _descriptorSet[MAX_DS_SIZE];
 
   std::string get_shader_header();
   VkShaderModule compileShader(const string & code, int type);

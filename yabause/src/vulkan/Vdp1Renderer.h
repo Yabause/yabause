@@ -210,14 +210,15 @@ protected:
   VkDeviceMemory _indexBufferMemory;
   VkBuffer _clearUniformBuffer;
   VkDeviceMemory _clearUniformBufferMemory;
-  VkDescriptorSet _descriptorSet;
+  VkDescriptorSet _descriptorSet[2];
   VkDescriptorSetLayout _descriptorSetLayout;
   VkDescriptorPool _descriptorPool;
   VkShaderModule _vertShaderModule;
   VkShaderModule _fragShaderModule;
   VkPipelineLayout _pipelineLayout;
   VkPipeline _graphicsPipeline;
-
+  VkFence clearFence[2];
+  uint64_t clearCount = 0;
   Vdp2 baseVdp2Regs;
   void * frameBuffer;
 

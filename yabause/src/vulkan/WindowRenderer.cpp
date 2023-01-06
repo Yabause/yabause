@@ -135,7 +135,7 @@ int Vdp2Window::draw(VkCommandBuffer commandBuffer) {
   if (vertexcnt <= 0) return 1;
 
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-    pipeline->getPipelineLayout(), 0, 1, &pipeline->_descriptorSet, 0, nullptr);
+    pipeline->getPipelineLayout(), 0, 1, pipeline->getDescriptorSet(), 0, nullptr);
 
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getGraphicsPipeline());
 

@@ -120,7 +120,7 @@ int Window::BeginRender()
 		&_active_swapchain_image_id ) );
 	ErrorCheck( vkWaitForFences( _renderer->GetVulkanDevice(), 1, &_swapchain_image_available, VK_TRUE, UINT64_MAX ) );
 	ErrorCheck( vkResetFences( _renderer->GetVulkanDevice(), 1, &_swapchain_image_available ) );
-	ErrorCheck( vkQueueWaitIdle( _renderer->GetVulkanQueue() ) );
+	//ErrorCheck( vkQueueWaitIdle( _renderer->GetVulkanQueue() ) );
 
   return _active_swapchain_image_id;
 }
@@ -140,6 +140,7 @@ void Window::EndRender( std::vector<VkSemaphore> wait_semaphores )
 	present_info.pResults				= &present_result;
 
 	funcResult = vkQueuePresentKHR( _renderer->GetVulkanQueue(), &present_info );
+	//ErrorCheck( vkQueueWaitIdle( _renderer->GetVulkanQueue() ) );
 	ErrorCheck( funcResult );
 	ErrorCheck( present_result );
 	if( funcResult == VK_SUBOPTIMAL_KHR ){
@@ -265,7 +266,7 @@ void Window::_InitSwapchain()
 		std::vector<VkPresentModeKHR> present_mode_list( present_mode_count );
 		ErrorCheck( vkGetPhysicalDeviceSurfacePresentModesKHR( _renderer->GetVulkanPhysicalDevice(), _surface, &present_mode_count, present_mode_list.data() ) );
 		for( auto m : present_mode_list ) {
-			if( m == VK_PRESENT_MODE_MAILBOX_KHR ) present_mode = m;
+			if( m == VK_PRESENT_MODE_FIFO_KHR ) present_mode = m;
 		}
 	}
 

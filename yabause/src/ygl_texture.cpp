@@ -32,6 +32,7 @@ extern "C" {
 
 #if defined(HAVE_VULKAN)
 #include "vulkan/VIDVulkan.h"
+#include "vulkan/VulkanTools.h"
 #include "vulkan/vulkan.hpp"
 #endif
 
@@ -2648,7 +2649,7 @@ public:
 
 #include "vulkan/RBGGeneratorVulkan.h"
 #include <iostream>
-
+/*
 #define VK_CHECK_RESULT(f)																				\
 {																										\
 	vk::Result res = (f);																					\
@@ -2658,6 +2659,7 @@ public:
 		assert(res == vk::Result::eSuccess);																		\
 	}																									\
 }
+*/
 
 #include "shaderc/shaderc.hpp"
 using shaderc::Compiler;
@@ -2687,10 +2689,16 @@ void RBGGeneratorVulkan::init(VIDVulkan * vulkan, int width, int height) {
   snprintf(prg_generate_rbg,length,prg_generate_rbg_base,16,16);
 
   //queue = vk::Queue(vulkan->getVulkanQueue()); //d.getQueue(vulkan->getVulkanComputeQueueFamilyIndex(), 0);
-  queue = d.getQueue(vulkan->getVulkanComputeQueueFamilyIndex(), 0);
+  //queue = d.getQueue(vulkan->getVulkanComputeQueueFamilyIndex(), vulkan->getVulkanComputeQueue());
 
-  semaphores.ready = d.createSemaphore({});
-  semaphores.complete = d.createSemaphore({});
+  queue = vk::Queue(vulkan->getVulkanComputeQueue());
+
+  for( int i=0; i<MAX_RBG_RENDER; i++ ){
+    semaphores[i].ready = d.createSemaphore({});
+    semaphores[i].complete = d.createSemaphore({});
+    commandfence[i] = d.createFence( vk::FenceCreateInfo() );
+    commandfence[i] = d.createFence( vk::FenceCreateInfo() );
+  }
 
   //vk::SubmitInfo computeSubmitInfo;
   //computeSubmitInfo.signalSemaphoreCount = 1;
@@ -2699,7 +2707,10 @@ void RBGGeneratorVulkan::init(VIDVulkan * vulkan, int width, int height) {
   
   //commandPool = d.createCommandPool({ vk::CommandPoolCreateFlagBits::eResetCommandBuffer, vulkan->getVulkanGraphicsQueueFamilyIndex() /*vulkan->getVulkanComputeQueueFamilyIndex()*/ });
   commandPool = d.createCommandPool({ vk::CommandPoolCreateFlagBits::eResetCommandBuffer, vulkan->getVulkanComputeQueueFamilyIndex() });
-  command = d.allocateCommandBuffers({ commandPool, vk::CommandBufferLevel::ePrimary, 1 })[0];
+
+  for( int i=0; i<MAX_RBG_RENDER; i++ ){
+    command[i] = d.allocateCommandBuffers({ commandPool, vk::CommandBufferLevel::ePrimary, 1 })[0];
+  }
   
   // Create sampler
   vk::SamplerCreateInfo sampler;
@@ -2725,8 +2736,10 @@ void RBGGeneratorVulkan::init(VIDVulkan * vulkan, int width, int height) {
   VkDeviceMemory m;
   vulkan->createBuffer(allocatedSize,
     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, u, m);
-  rbgUniform.buf = vk::Buffer(u);
-  rbgUniform.mem = vk::DeviceMemory(m);
+  for (int i = 0; i < MAX_RBG_RENDER; i++) {
+    rbgUniform[i].buf = vk::Buffer(u);
+    rbgUniform[i].mem = vk::DeviceMemory(m);
+  }
 
   allocatedSize = getAllainedSize(0x80000);
   vulkan->createBuffer(allocatedSize,
@@ -2755,13 +2768,12 @@ void RBGGeneratorVulkan::init(VIDVulkan * vulkan, int width, int height) {
   ssbo_cram_.mem = vk::DeviceMemory(m);
 
   std::vector<vk::DescriptorPoolSize> poolSizes = {
-      vk::DescriptorPoolSize{ vk::DescriptorType::eStorageImage, 1 },
-      vk::DescriptorPoolSize{ vk::DescriptorType::eStorageBuffer, 1 },
-      vk::DescriptorPoolSize{ vk::DescriptorType::eStorageBuffer, 1 },
-      vk::DescriptorPoolSize{ vk::DescriptorType::eUniformBuffer, 1 },
-      vk::DescriptorPoolSize{ vk::DescriptorType::eStorageBuffer, 1 },
-      vk::DescriptorPoolSize{ vk::DescriptorType::eStorageBuffer, 1 },
-
+      vk::DescriptorPoolSize{ vk::DescriptorType::eStorageImage, MAX_RBG_RENDER },
+      vk::DescriptorPoolSize{ vk::DescriptorType::eStorageBuffer, MAX_RBG_RENDER },
+      vk::DescriptorPoolSize{ vk::DescriptorType::eStorageBuffer, MAX_RBG_RENDER },
+      vk::DescriptorPoolSize{ vk::DescriptorType::eUniformBuffer, MAX_RBG_RENDER },
+      vk::DescriptorPoolSize{ vk::DescriptorType::eStorageBuffer, MAX_RBG_RENDER },
+      vk::DescriptorPoolSize{ vk::DescriptorType::eStorageBuffer, MAX_RBG_RENDER },
   };
 
   descriptorPool = d.createDescriptorPool(vk::DescriptorPoolCreateInfo{ {}, 6, (uint32_t)poolSizes.size(), poolSizes.data() });
@@ -2775,7 +2787,9 @@ void RBGGeneratorVulkan::init(VIDVulkan * vulkan, int width, int height) {
   };
 
   descriptorSetLayout = d.createDescriptorSetLayout({ {}, (uint32_t)setLayoutBindings.size(), setLayoutBindings.data() });
-  descriptorSet = d.allocateDescriptorSets({ descriptorPool, 1, &descriptorSetLayout })[0];
+  for (int i = 0; i < MAX_RBG_RENDER; i++) {
+    descriptorSet[i] = d.allocateDescriptorSets({ descriptorPool, 1, &descriptorSetLayout })[0];
+  }
   updateDescriptorSets(0);
 
   std::string target;
@@ -2827,10 +2841,10 @@ void RBGGeneratorVulkan::updateDescriptorSets( int texindex ) {
   VkDevice device = vulkan->getDevice();
   vk::Device d(device);
 
-  if (descriptorSet == (vk::DescriptorSet)nullptr) return;
+  if (descriptorSet[0] == (vk::DescriptorSet)nullptr) return;
 
   vk::DescriptorBufferInfo descriptor;
-  descriptor.buffer = rbgUniform.buf;
+  descriptor.buffer = rbgUniform[currentIndex].buf;
   descriptor.range = VK_WHOLE_SIZE;
   descriptor.offset = 0;
 
@@ -2860,12 +2874,12 @@ void RBGGeneratorVulkan::updateDescriptorSets( int texindex ) {
 
 
   std::vector<vk::WriteDescriptorSet> computeWriteDescriptorSets{
-    { descriptorSet, 0, 0, 1, vk::DescriptorType::eStorageImage, &texDescriptor },
-    { descriptorSet, 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &descriptor2 },
-    { descriptorSet, 2, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &descriptor3 },
-    { descriptorSet, 3, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &descriptor },
-    { descriptorSet, 4, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &descriptor4 },
-    { descriptorSet, 5, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &descriptor5 },
+    { descriptorSet[currentIndex], 0, 0, 1, vk::DescriptorType::eStorageImage, &texDescriptor },
+    { descriptorSet[currentIndex], 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &descriptor2 },
+    { descriptorSet[currentIndex], 2, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &descriptor3 },
+    { descriptorSet[currentIndex], 3, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &descriptor },
+    { descriptorSet[currentIndex], 4, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &descriptor4 },
+    { descriptorSet[currentIndex], 5, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &descriptor5 },
   };
 
   
@@ -2925,7 +2939,7 @@ void RBGGeneratorVulkan::resize(int width, int height) {
   imageCreateInfo.pQueueFamilyIndices	= nullptr;
 
   for (int i = 0; i < 2; i++) {
-    VK_CHECK_RESULT(d.createImage(&imageCreateInfo, nullptr, &tex_surface[i].image));
+    VK_CHECK_RESULT( VkResult(d.createImage(&imageCreateInfo, nullptr, &tex_surface[i].image)) );
 
     vk::MemoryRequirements memReqs = d.getImageMemoryRequirements(tex_surface[i].image);
     vk::MemoryAllocateInfo memAllocInfo;
@@ -2944,6 +2958,8 @@ void RBGGeneratorVulkan::resize(int width, int height) {
     tex_surface[i].view = d.createImageView(view);
 
     vulkan->transitionImageLayout(VkImage(tex_surface[i].image), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+    vulkan->transitionImageLayout(VkImage(tex_surface[i].image), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
   }
 
   updateDescriptorSets(0);
@@ -4300,88 +4316,114 @@ void RBGGeneratorVulkan::update(VIDVulkan::RBGDrawInfo * rbg, const vdp2rotation
   }
   rbgUniformParam->hires_shift = rbg->info.hres_shift;
 
-  data = d.mapMemory(rbgUniform.mem, 0, sizeof(*rbgUniformParam));
+  currentIndex = drawCounter&(MAX_RBG_RENDER-1);
+
+  data = d.mapMemory(rbgUniform[currentIndex].mem, 0, sizeof(*rbgUniformParam));
   memcpy(data, rbgUniformParam, sizeof(*rbgUniformParam));
-  d.unmapMemory(rbgUniform.mem);
+  d.unmapMemory(rbgUniform[currentIndex].mem);
 
-  queue.waitIdle();
-
-  //vk::CommandBufferUsageFlagBits::eSimultaneousUse
-
-  updateDescriptorSets(texindex);
-
-  auto c = vk::CommandBuffer(command);
-  c.begin({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
-  
-  vk::ImageMemoryBarrier barrierBegin;
-  barrierBegin.oldLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-  barrierBegin.newLayout = vk::ImageLayout::eGeneral;
-  barrierBegin.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrierBegin.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrierBegin.image = tex_surface[texindex].image;
-  barrierBegin.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
-  barrierBegin.subresourceRange.baseMipLevel = 0;
-  barrierBegin.subresourceRange.levelCount = 1;
-  barrierBegin.subresourceRange.baseArrayLayer = 0;
-  barrierBegin.subresourceRange.layerCount = 1;
-  barrierBegin.srcAccessMask = vk::AccessFlagBits::eShaderRead;
-  barrierBegin.dstAccessMask = vk::AccessFlags();
-
-  c.pipelineBarrier(
-    vk::PipelineStageFlagBits::eComputeShader,
-    vk::PipelineStageFlagBits::eComputeShader,
-    vk::DependencyFlags(),
-    0, nullptr,
-    0, nullptr,
-    1, &barrierBegin);
-  
-
-  c.bindPipeline(vk::PipelineBindPoint::eCompute, CurrentPipeline);
-  c.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipelineLayout, 0, descriptorSet, nullptr);
-  c.dispatch(tex_width_ / 16, tex_height_ / 16, 1);
-
-  vk::ImageMemoryBarrier barrier;
-  barrier.oldLayout = vk::ImageLayout::eGeneral;
-  barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.image = tex_surface[texindex].image;
-  barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
-  barrier.subresourceRange.baseMipLevel = 0;
-  barrier.subresourceRange.levelCount = 1;
-  barrier.subresourceRange.baseArrayLayer = 0;
-  barrier.subresourceRange.layerCount = 1;
-  barrier.srcAccessMask = vk::AccessFlags();
-  barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-  c.pipelineBarrier(
-    vk::PipelineStageFlagBits::eComputeShader,
-    vk::PipelineStageFlagBits::eComputeShader,
-    vk::DependencyFlags(),
-    0, nullptr,
-    0, nullptr,
-    1, &barrier);
-
-  c.end();
+  try{
+    auto c = vk::CommandBuffer(command[currentIndex]);
     
-  static const std::vector<vk::PipelineStageFlags> waitStages{ vk::PipelineStageFlagBits::eComputeShader };
-  // Submit compute commands
-  vk::SubmitInfo computeSubmitInfo;
-  computeSubmitInfo.commandBufferCount = 1;
-  computeSubmitInfo.pCommandBuffers = &c;
-  //computeSubmitInfo.waitSemaphoreCount = 1;
-  //computeSubmitInfo.pWaitSemaphores = &semaphores.ready;
-  //computeSubmitInfo.pWaitDstStageMask = waitStages.data();
-  computeSubmitInfo.signalSemaphoreCount = 1;
-  computeSubmitInfo.pSignalSemaphores = &semaphores.complete;
-  tex_surface[texindex].rendered = true;
-  queue.submit(computeSubmitInfo, {});
-  
+    vk::Result result;
+    if( drawCounter > 1 ){
+      result = d.waitForFences( commandfence[currentIndex], true, UINT64_MAX );
+      if ( result != vk::Result::eSuccess )
+      {
+          LOGE("Timeout!");
+          //exit( -1 );
+      }  
+      d.resetFences( commandfence[currentIndex] );
+    }
+
+    queue.waitIdle();
+    updateDescriptorSets(texindex);
+    c.reset();
+    c.begin({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+    
+    vk::ImageMemoryBarrier barrierBegin;
+    barrierBegin.oldLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+    barrierBegin.newLayout = vk::ImageLayout::eGeneral;
+    barrierBegin.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrierBegin.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrierBegin.image = tex_surface[texindex].image;
+    barrierBegin.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+    barrierBegin.subresourceRange.baseMipLevel = 0;
+    barrierBegin.subresourceRange.levelCount = 1;
+    barrierBegin.subresourceRange.baseArrayLayer = 0;
+    barrierBegin.subresourceRange.layerCount = 1;
+    barrierBegin.srcAccessMask = vk::AccessFlagBits::eShaderRead;
+    barrierBegin.dstAccessMask = vk::AccessFlags();
+
+    c.pipelineBarrier(
+      vk::PipelineStageFlagBits::eComputeShader,
+      vk::PipelineStageFlagBits::eComputeShader,
+      vk::DependencyFlags(),
+      0, nullptr,
+      0, nullptr,
+      1, &barrierBegin);
+    
+
+    c.bindPipeline(vk::PipelineBindPoint::eCompute, CurrentPipeline);
+    c.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipelineLayout, 0, descriptorSet[currentIndex], nullptr);
+    c.dispatch(tex_width_ / 16, tex_height_ / 16, 1);
+
+    vk::ImageMemoryBarrier barrier;
+    barrier.oldLayout = vk::ImageLayout::eGeneral;
+    barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = tex_surface[texindex].image;
+    barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.srcAccessMask = vk::AccessFlags();
+    barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+    c.pipelineBarrier(
+      vk::PipelineStageFlagBits::eComputeShader,
+      vk::PipelineStageFlagBits::eComputeShader,
+      vk::DependencyFlags(),
+      0, nullptr,
+      0, nullptr,
+      1, &barrier);
+
+    c.end();
+      
+    static const std::vector<vk::PipelineStageFlags> waitStages{ vk::PipelineStageFlagBits::eComputeShader };
+    // Submit compute commands
+    vk::SubmitInfo computeSubmitInfo;
+    computeSubmitInfo.commandBufferCount = 1;
+    computeSubmitInfo.pCommandBuffers = &c;
+    //computeSubmitInfo.waitSemaphoreCount = 1;
+    //computeSubmitInfo.pWaitSemaphores = &semaphores.ready;
+    //computeSubmitInfo.pWaitDstStageMask = waitStages.data();
+    computeSubmitInfo.signalSemaphoreCount = 1;
+    computeSubmitInfo.pSignalSemaphores = &semaphores[currentIndex].complete;
+    tex_surface[texindex].rendered = true;
+    queue.submit(computeSubmitInfo, commandfence[currentIndex]);
+  }
+  catch ( vk::SystemError & err )
+  {
+    LOGE("vk::SystemError: %s",err.what());
+  }
+  catch ( std::exception & err )
+  {
+    LOGE("std::exception: %s",err.what());
+  }
+  catch ( ... )
+  {
+    LOGE("unknown error\n");
+  }
+    
+  drawCounter++;
   
   //vulkan->transitionImageLayout(VkImage(tex_surface[texindex].image), 
   //  VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  }
+}
 
 VkImageView RBGGeneratorVulkan::getTexture(int id) {
   return static_cast<VkImageView>(tex_surface[id].view);

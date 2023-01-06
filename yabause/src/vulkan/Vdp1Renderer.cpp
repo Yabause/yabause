@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "Vdp1Renderer.h"
 #include "VIDVulkan.h"
 #include "VulkanInitializers.hpp"
+#include "Shared.h"
 #include "VulkanTools.h"
 #include "TextureManager.h"
 #include "VertexManager.h"
@@ -416,7 +417,7 @@ void Vdp1Renderer::createCommandPool() {
 
   VkCommandPoolCreateInfo pool_create_info{};
   pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  pool_create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   pool_create_info.queueFamilyIndex = vulkan->getVulkanGraphicsQueueFamilyIndex();
   vkCreateCommandPool(device, &pool_create_info, nullptr, &_command_pool);
 
@@ -446,8 +447,6 @@ void Vdp1Renderer::drawStart(void) {
   piplelines.clear();
   currentPipeLine = nullptr;
 
-  vkQueueWaitIdle(vulkan->getVulkanQueue());
-  vkResetCommandPool(vulkan->getDevice(),this->_command_pool,0);
   tm->reset();
   vm->reset();
 
@@ -553,24 +552,29 @@ void Vdp1Renderer::erase() {
   vkMapMemory(device, _clearUniformBufferMemory, 0, sizeof(clearUbo), 0, &data);
   memcpy(data, &clearUbo, sizeof(clearUbo));
   vkUnmapMemory(device, _clearUniformBufferMemory);
-  /*
-    VkDescriptorBufferInfo bufferInfo = {};
-    bufferInfo.buffer = _clearUniformBuffer;
-    bufferInfo.offset = 0;
-    bufferInfo.range = sizeof(ClearUbo);
+  
+  VkDescriptorBufferInfo bufferInfo = {};
+  bufferInfo.buffer = _clearUniformBuffer;
+  bufferInfo.offset = 0;
+  bufferInfo.range = sizeof(ClearUbo);
 
-    std::array<VkWriteDescriptorSet, 1> descriptorWrites = {};
+  std::array<VkWriteDescriptorSet, 1> descriptorWrites = {};
 
-    descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrites[0].dstSet = _descriptorSet;
-    descriptorWrites[0].dstBinding = 0;
-    descriptorWrites[0].dstArrayElement = 0;
-    descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptorWrites[0].descriptorCount = 1;
-    descriptorWrites[0].pBufferInfo = &bufferInfo;
+  descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrites[0].dstSet = _descriptorSet[readframe];
+  descriptorWrites[0].dstBinding = 0;
+  descriptorWrites[0].dstArrayElement = 0;
+  descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrites[0].descriptorCount = 1;
+  descriptorWrites[0].pBufferInfo = &bufferInfo;
 
-    vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-  */
+  
+  if( clearCount > 1 ){
+	  ErrorCheck( vkWaitForFences( device, 1, &clearFence[readframe], VK_TRUE, UINT64_MAX ) );
+	  ErrorCheck( vkResetFences( device, 1, &clearFence[readframe] ) );
+  }
+
+  vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 
   VkClearValue clearValues[2];
   clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
@@ -587,7 +591,6 @@ void Vdp1Renderer::erase() {
   VkCommandBuffer cb = getNextCommandBuffer();
 
   VkCommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
-  //vkQueueWaitIdle(vulkan->getVulkanQueue());
   vkBeginCommandBuffer(cb, &cmdBufInfo);
   vkCmdBeginRenderPass(cb, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -607,16 +610,30 @@ void Vdp1Renderer::erase() {
     interlace *= 2.0f;
   }
 
-  float bottom = (vulkan->vdp2height - ((Vdp1Regs->EWRR & 0x1FF) * vdp1hratio * interlace ))  * hrate;
+  float bottom = (vulkan->vdp2height - ((Vdp1Regs->EWLR & 0x1FF) * vdp1hratio * interlace ))  * hrate;
   float right = (((Vdp1Regs->EWRR >> 9) & 0x7F) << 3)  * vdp1wratio * wrate;
-  float top = (vulkan->vdp2height - ((Vdp1Regs->EWLR & 0x1FF) * vdp1hratio * interlace)) * hrate;
+  float top = (vulkan->vdp2height - ((Vdp1Regs->EWRR & 0x1FF) * vdp1hratio * interlace)) * hrate;
   float left = (((Vdp1Regs->EWLR >> 9) & 0x7F) << 3) * vdp1wratio * wrate;
+
+  if( top < 0 ) top = 0;
+  if( bottom < 0 ) bottom = 0;
+  if( right < 0 ) right = 0;
+  if( left < 0 ) left = 0;
+
+  int width = right - left;
+  int height = top - bottom;
+  if( width <= 0 ) width = 1;
+  if( height <= 0 ) height = 1;
+  if( width >= offscreenPass.width ) width = offscreenPass.width;
+  if( height >= offscreenPass.height ) height = offscreenPass.height;
    
-  VkRect2D scissor = vks::initializers::rect2D(right - left, top - bottom , left, bottom);
+  //VkRect2D scissor = vks::initializers::rect2D(width, height , left, bottom);
+  VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
   vkCmdSetScissor(cb, 0, 1, &scissor);
 
+
   vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS,
-    _pipelineLayout, 0, 1, &_descriptorSet, 0, nullptr);
+    _pipelineLayout, 0, 1, &_descriptorSet[readframe], 0, nullptr);
 
   vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline);
 
@@ -635,15 +652,24 @@ void Vdp1Renderer::erase() {
   vkCmdEndRenderPass(cb);
   vkEndCommandBuffer(cb);
 
+  vector<VkSemaphore> waitSem;
+
+  VkSemaphore texSem = tm->getCompleteSemaphore();
+  if (texSem != VK_NULL_HANDLE) {
+    waitSem.push_back(texSem);
+  }  
+
+  VkPipelineStageFlags graphicsWaitStageMasks[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
   VkSubmitInfo submit_info{};
   submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submit_info.waitSemaphoreCount = 0;
-  submit_info.pWaitSemaphores = nullptr;
-  submit_info.pWaitDstStageMask = nullptr;
-  submit_info.pWaitDstStageMask = nullptr;
+  submit_info.waitSemaphoreCount = waitSem.size();;
+  submit_info.pWaitSemaphores = waitSem.data();
+  submit_info.pWaitDstStageMask = graphicsWaitStageMasks;
   submit_info.commandBufferCount = 1;
   submit_info.pCommandBuffers = &cb;
-  vkQueueSubmit(vulkan->getVulkanQueue(), 1, &submit_info, VK_NULL_HANDLE);
+  ErrorCheck(vkQueueSubmit(vulkan->getVulkanQueue(), 1, &submit_info, clearFence[readframe]));
+  clearCount++;
   //vkQueueWaitIdle(vulkan->getVulkanQueue());
   //vkDeviceWaitIdle(device);
 }
@@ -655,7 +681,7 @@ void Vdp1Renderer::change() {
   readframe = current_drawframe;
 }
 
-#define TESS_COUNT (8)
+#define VTESS_COUNT (4)
 
 void Vdp1Renderer::drawEnd(void) {
 
@@ -673,8 +699,8 @@ void Vdp1Renderer::drawEnd(void) {
   ubo.texsize.y = tm->texheight;
   ubo.u_fbowidth = width;
   ubo.u_fbohegiht = height;
-  ubo.TessLevelInner = TESS_COUNT;
-  ubo.TessLevelOuter = TESS_COUNT;
+  ubo.TessLevelInner = VTESS_COUNT;
+  ubo.TessLevelOuter = VTESS_COUNT;
 
   void* data;
   vkMapMemory(device, _uniformBufferMemory, 0, sizeof(vdp1Ubo), 0, &data);
@@ -770,7 +796,7 @@ void Vdp1Renderer::drawEnd(void) {
       }
 
       vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS,
-        piplelines[i]->getPipelineLayout(), 0, 1, &piplelines[i]->_descriptorSet, 0, nullptr);
+        piplelines[i]->getPipelineLayout(), 0, 1, piplelines[i]->getDescriptorSet(), 0, nullptr);
       vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, piplelines[i]->getGraphicsPipeline());
 
       VkBuffer vertexBuffers[] = { vm->getVertexBuffer(piplelines[i]->vectexBlock) };
@@ -815,12 +841,12 @@ void Vdp1Renderer::drawEnd(void) {
   submit_info.pCommandBuffers = &cb;
   submit_info.signalSemaphoreCount = 0; //1;
   submit_info.pSignalSemaphores = nullptr; // &offscreenPass.color[fi]._render_complete_semaphore;
-  vkQueueSubmit(vulkan->getVulkanQueue(), 1, &submit_info, VK_NULL_HANDLE);
+  ErrorCheck(vkQueueSubmit(vulkan->getVulkanQueue(), 1, &submit_info, VK_NULL_HANDLE));
   offscreenPass.color[drawframe].updated = true;
   offscreenPass.color[drawframe].readed = false;
 
-  //vkQueueWaitIdle(vulkan->getVulkanQueue());
-  //vkDeviceWaitIdle(device);
+  vkQueueWaitIdle(vulkan->getVulkanQueue());
+  vkDeviceWaitIdle(device);
 
   //transitionImageLayout(offscreenPass.color.image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -1796,6 +1822,12 @@ void Vdp1Renderer::genClearPipeline() {
 
   VkDevice device = vulkan->getDevice();
 
+	VkFenceCreateInfo fence_create_info {};
+	fence_create_info.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	vkCreateFence( device, &fence_create_info, nullptr, &clearFence[0] );
+  vkCreateFence( device, &fence_create_info, nullptr, &clearFence[1] );
+
+
   std::vector<Vertex> vertices;
   std::vector<uint16_t> indices;
 
@@ -1908,13 +1940,13 @@ void Vdp1Renderer::genClearPipeline() {
 
   std::array<VkDescriptorPoolSize, 1> poolSizes = {};
   poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  poolSizes[0].descriptorCount = 1;
+  poolSizes[0].descriptorCount = 2;
 
   VkDescriptorPoolCreateInfo poolInfo = {};
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
   poolInfo.pPoolSizes = poolSizes.data();
-  poolInfo.maxSets = 1;
+  poolInfo.maxSets = 2;
 
   if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &_descriptorPool) != VK_SUCCESS) {
     throw std::runtime_error("failed to create descriptor pool!");
@@ -1927,9 +1959,8 @@ void Vdp1Renderer::genClearPipeline() {
   allocInfo.descriptorSetCount = 1;
   allocInfo.pSetLayouts = layouts;
 
-  if (vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet) != VK_SUCCESS) {
-    throw std::runtime_error("failed to allocate descriptor set!");
-  }
+  ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[0]));
+  ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[1]));
 
   Compiler compiler;
   CompileOptions options;
@@ -2150,15 +2181,23 @@ void Vdp1Renderer::genClearPipeline() {
   bufferInfo.offset = 0;
   bufferInfo.range = sizeof(ClearUbo);
 
-  std::array<VkWriteDescriptorSet, 1> descriptorWrites = {};
+  std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
 
   descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptorWrites[0].dstSet = _descriptorSet;
+  descriptorWrites[0].dstSet = _descriptorSet[0];
   descriptorWrites[0].dstBinding = 0;
   descriptorWrites[0].dstArrayElement = 0;
   descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   descriptorWrites[0].descriptorCount = 1;
   descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+  descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrites[1].dstSet = _descriptorSet[1];
+  descriptorWrites[1].dstBinding = 0;
+  descriptorWrites[1].dstArrayElement = 0;
+  descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrites[1].descriptorCount = 1;
+  descriptorWrites[1].pBufferInfo = &bufferInfo;
 
   vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 
