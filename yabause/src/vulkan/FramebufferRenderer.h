@@ -38,7 +38,7 @@ using std::string;
 #include <map>
 using std::map;
 
-#define MAX_RENDER_COUNT 256
+#define MAX_RENDER_COUNT 32
 
 class FramebufferRenderer {
 public:

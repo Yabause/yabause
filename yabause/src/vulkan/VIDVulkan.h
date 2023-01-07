@@ -196,6 +196,8 @@ protected:
   uint64_t frameCount;
   POLYGONMODE polygonMode;
   int rebuildPipelines = 0;
+  int frameLimitMode = 0;
+  int rebuildSwapChain = 0;
 
   int getCurrentCommandIndex(){
     return frameCount & (MAX_COMMANDBUFFER_COUNT-1);

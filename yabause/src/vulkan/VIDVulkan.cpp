@@ -41,30 +41,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "VulkanTools.h"
 
 #if defined(__ANDROID__)
-#define VK_CHECK_RESULT(f)                                                     \
-  {                                                                            \
-    VkResult res = (f);                                                        \
-    if (res != VK_SUCCESS) {                                                   \
-      LOGE("Fatal : VkResult is \" %s \" in %s at line %d",                    \
-           vks::tools::errorString(res).c_str(), __FILE__, __LINE__);          \
-      assert(res == VK_SUCCESS);                                               \
-    }                                                                          \
+#define VK_CHECK_RESULT(f)                                                                                             \
+  {                                                                                                                    \
+    VkResult res = (f);                                                                                                \
+    if (res != VK_SUCCESS) {                                                                                           \
+      LOGE("Fatal : VkResult is \" %s \" in %s at line %d", vks::tools::errorString(res).c_str(), __FILE__, __LINE__); \
+      assert(res == VK_SUCCESS);                                                                                       \
+    }                                                                                                                  \
   }
 #else
 #include <iostream>
-#define VK_CHECK_RESULT(f)                                                     \
-  {                                                                            \
-    VkResult res = (f);                                                        \
-    if (res != VK_SUCCESS) {                                                   \
-      std::cout << "Fatal : VkResult is \"" << vks::tools::errorString(res)    \
-                << "\" in " << __FILE__ << " at line " << __LINE__ << "\n";    \
-      assert(res == VK_SUCCESS);                                               \
-    }                                                                          \
+#define VK_CHECK_RESULT(f)                                                                                             \
+  {                                                                                                                    \
+    VkResult res = (f);                                                                                                \
+    if (res != VK_SUCCESS) {                                                                                           \
+      std::cout << "Fatal : VkResult is \"" << vks::tools::errorString(res) << "\" in " << __FILE__ << " at line "     \
+                << __LINE__ << "\n";                                                                                   \
+      assert(res == VK_SUCCESS);                                                                                       \
+    }                                                                                                                  \
   }
 #endif
 
-int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu,
-                           VkRenderPass renderPass, VkCommandBuffer cmdBuffer);
+int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer);
 
 VIDVulkan *VIDVulkan::_instance = nullptr;
 
@@ -81,14 +79,10 @@ extern "C" {
 
 int VIDVulkanInit(void) { return VIDVulkan::getInstance()->init(); }
 void VIDVulkanDeInit(void) { VIDVulkan::getInstance()->deInit(); }
-void VIDVulkanResize(int originx, int originy, unsigned int w, unsigned int h,
-                     int on, int aspect_rate_mode) {
-  VIDVulkan::getInstance()->resize(originx, originy, w, h, on,
-                                   aspect_rate_mode);
+void VIDVulkanResize(int originx, int originy, unsigned int w, unsigned int h, int on, int aspect_rate_mode) {
+  VIDVulkan::getInstance()->resize(originx, originy, w, h, on, aspect_rate_mode);
 }
-int VIDVulkanIsFullscreen(void) {
-  return VIDVulkan::getInstance()->isFullscreen();
-}
+int VIDVulkanIsFullscreen(void) { return VIDVulkan::getInstance()->isFullscreen(); }
 int VIDVulkanVdp1Reset(void) { return VIDVulkan::getInstance()->Vdp1Reset(); }
 void VIDVulkanVdp1DrawStart(void) { VIDVulkan::getInstance()->Vdp1DrawStart(); }
 void VIDVulkanVdp1DrawEnd(void) { VIDVulkan::getInstance()->Vdp1DrawEnd(); }
@@ -98,10 +92,8 @@ void VIDVulkanVdp1NormalSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
 void VIDVulkanVdp1ScaledSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   VIDVulkan::getInstance()->Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer);
 }
-void VIDVulkanVdp1DistortedSpriteDraw(u8 *ram, Vdp1 *regs,
-                                      u8 *back_framebuffer) {
-  VIDVulkan::getInstance()->Vdp1DistortedSpriteDraw(ram, regs,
-                                                    back_framebuffer);
+void VIDVulkanVdp1DistortedSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
+  VIDVulkan::getInstance()->Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer);
 }
 void VIDVulkanVdp1PolygonDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   VIDVulkan::getInstance()->Vdp1PolygonDraw(ram, regs, back_framebuffer);
@@ -112,53 +104,31 @@ void VIDVulkanVdp1PolylineDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
 void VIDVulkanVdp1LineDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   VIDVulkan::getInstance()->Vdp1LineDraw(ram, regs, back_framebuffer);
 }
-void VIDVulkanVdp1UserClipping(u8 *ram, Vdp1 *regs) {
-  VIDVulkan::getInstance()->Vdp1UserClipping(ram, regs);
-}
-void VIDVulkanVdp1SystemClipping(u8 *ram, Vdp1 *regs) {
-  VIDVulkan::getInstance()->Vdp1SystemClipping(ram, regs);
-}
-void VIDVulkanVdp1LocalCoordinate(u8 *ram, Vdp1 *regs) {
-  VIDVulkan::getInstance()->Vdp1LocalCoordinate(ram, regs);
-}
+void VIDVulkanVdp1UserClipping(u8 *ram, Vdp1 *regs) { VIDVulkan::getInstance()->Vdp1UserClipping(ram, regs); }
+void VIDVulkanVdp1SystemClipping(u8 *ram, Vdp1 *regs) { VIDVulkan::getInstance()->Vdp1SystemClipping(ram, regs); }
+void VIDVulkanVdp1LocalCoordinate(u8 *ram, Vdp1 *regs) { VIDVulkan::getInstance()->Vdp1LocalCoordinate(ram, regs); }
 int VIDVulkanVdp2Reset(void) { return VIDVulkan::getInstance()->Vdp2Reset(); }
 void VIDVulkanVdp2DrawStart(void) { VIDVulkan::getInstance()->Vdp2DrawStart(); }
 void VIDVulkanVdp2DrawEnd(void) { VIDVulkan::getInstance()->Vdp2DrawEnd(); }
-void VIDVulkanVdp2DrawScreens(void) {
-  VIDVulkan::getInstance()->Vdp2DrawScreens();
-}
-void VIDVulkanVdp2SetResolution(u16 TVMD) {
-  VIDVulkan::getInstance()->Vdp2SetResolution(TVMD);
-}
-void VIDGetGlSize(int *width, int *height) {
-  VIDVulkan::getInstance()->GetGlSize(width, height);
-}
+void VIDVulkanVdp2DrawScreens(void) { VIDVulkan::getInstance()->Vdp2DrawScreens(); }
+void VIDVulkanVdp2SetResolution(u16 TVMD) { VIDVulkan::getInstance()->Vdp2SetResolution(TVMD); }
+void VIDGetGlSize(int *width, int *height) { VIDVulkan::getInstance()->GetGlSize(width, height); }
 void VIDVulkanVdp1ReadFrameBuffer(u32 type, u32 addr, void *out) {
   VIDVulkan::getInstance()->Vdp1ReadFrameBuffer(type, addr, out);
 }
-void VIDVulkanSetFilterMode(int type) {
-  VIDVulkan::getInstance()->SetFilterMode(type);
-}
+void VIDVulkanSetFilterMode(int type) { VIDVulkan::getInstance()->SetFilterMode(type); }
 void VIDVulkanSync() { VIDVulkan::getInstance()->Sync(); }
 void VIDVulkanVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val) {
   VIDVulkan::getInstance()->Vdp1WriteFrameBuffer(type, addr, val);
 }
-void VIDVulkanVdp1EraseWrite(void) {
-  VIDVulkan::getInstance()->Vdp1EraseWrite();
-}
-void VIDVulkanVdp1FrameChange(void) {
-  VIDVulkan::getInstance()->Vdp1FrameChange();
-}
-void VIDVulkanSetSettingValue(int type, int value) {
-  VIDVulkan::getInstance()->SetSettingValue(type, value);
-}
+void VIDVulkanVdp1EraseWrite(void) { VIDVulkan::getInstance()->Vdp1EraseWrite(); }
+void VIDVulkanVdp1FrameChange(void) { VIDVulkan::getInstance()->Vdp1FrameChange(); }
+void VIDVulkanSetSettingValue(int type, int value) { VIDVulkan::getInstance()->SetSettingValue(type, value); }
 void VIDVulkanGetNativeResolution(int *width, int *height, int *interlace) {
   VIDVulkan::getInstance()->GetNativeResolution(width, height, interlace);
 }
 void VIDVulkanVdp2DispOff(void) { VIDVulkan::getInstance()->Vdp2DispOff(); }
-void VIDVulkanOnUpdateColorRamWord(u32 addr) {
-  VIDVulkan::getInstance()->onUpdateColorRamWord(addr);
-}
+void VIDVulkanOnUpdateColorRamWord(u32 addr) { VIDVulkan::getInstance()->onUpdateColorRamWord(addr); }
 void VIDVulkanGetScreenshot(void **outbuf, int *width, int *height) {
   VIDVulkan::getInstance()->getScreenshot(outbuf, *width, *height);
 }
@@ -199,38 +169,22 @@ VideoInterface_struct CVIDVulkan = {VIDCORE_VULKAN,
 
 extern int YglCalcTextureQ(float *pnts, float *q);
 
-vdp2rotationparameter_struct *FASTCALL
-vdp2rGetKValue2W(vdp2rotationparameter_struct *param, int index);
-vdp2rotationparameter_struct *FASTCALL
-vdp2rGetKValue1W(vdp2rotationparameter_struct *param, int index);
-vdp2rotationparameter_struct *FASTCALL
-vdp2rGetKValue2Wm3(vdp2rotationparameter_struct *param, int index);
-vdp2rotationparameter_struct *FASTCALL
-vdp2rGetKValue1Wm3(vdp2rotationparameter_struct *param, int index);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode00NoK(vdp2draw_struct *info, int h, int v);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode00WithK(vdp2draw_struct *info, int h, int v);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode01NoK(vdp2draw_struct *info, int h, int v);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode01WithK(vdp2draw_struct *info, int h, int v);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode02NoK(vdp2draw_struct *info, int h, int v);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode02WithKA(vdp2draw_struct *info, int h, int v);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode02WithKAWithKB(vdp2draw_struct *info, int h, int v);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode02WithKB(vdp2draw_struct *info, int h, int v);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode03NoK(vdp2draw_struct *info, int h, int v);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode03WithKA(vdp2draw_struct *info, int h, int v);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode03WithKB(vdp2draw_struct *info, int h, int v);
-vdp2rotationparameter_struct *FASTCALL
-vdp2RGetParamMode03WithK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_struct *param, int index);
+vdp2rotationparameter_struct *FASTCALL vdp2rGetKValue1W(vdp2rotationparameter_struct *param, int index);
+vdp2rotationparameter_struct *FASTCALL vdp2rGetKValue2Wm3(vdp2rotationparameter_struct *param, int index);
+vdp2rotationparameter_struct *FASTCALL vdp2rGetKValue1Wm3(vdp2rotationparameter_struct *param, int index);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode00NoK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode00WithK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode01NoK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode01WithK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode02NoK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode02WithKA(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode02WithKAWithKB(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode02WithKB(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode03WithK(vdp2draw_struct *info, int h, int v);
 int Vdp2SetGetColor(vdp2draw_struct *info);
 
 extern Vdp2 *fixVdp2Regs;
@@ -315,10 +269,8 @@ int VIDVulkan::init(void) {
 
   const VkDevice device = _renderer->GetVulkanDevice();
   vkCmdSetStencilTestEnable =
-      (PFN_vkCmdSetStencilTestEnableEXT)vkGetDeviceProcAddr(
-          device, "vkCmdSetStencilTestEnableEXT");
-  vkCmdSetStencilOp = (PFN_vkCmdSetStencilOpEXT)vkGetDeviceProcAddr(
-      device, "vkCmdSetStencilOpEXT");
+      (PFN_vkCmdSetStencilTestEnableEXT)vkGetDeviceProcAddr(device, "vkCmdSetStencilTestEnableEXT");
+  vkCmdSetStencilOp = (PFN_vkCmdSetStencilOpEXT)vkGetDeviceProcAddr(device, "vkCmdSetStencilOpEXT");
 
   generateOffscreenRenderer();
 
@@ -414,8 +366,7 @@ void VIDVulkan::deInit(void) {
   _instance = nullptr;
 }
 
-void VIDVulkan::resize(int originx, int originy, unsigned int w, unsigned int h,
-                       int on, int aspect_rate_mode) {
+void VIDVulkan::resize(int originx, int originy, unsigned int w, unsigned int h, int on, int aspect_rate_mode) {
   this->_renderer->getWindow()->resize(w, h);
   _device_width = w;
   _device_height = h;
@@ -448,18 +399,15 @@ void VIDVulkan::Vdp1DrawStart(void) {
 
 void VIDVulkan::Vdp1DrawEnd(void) { vdp1->drawEnd(); }
 
-void VIDVulkan::Vdp1NormalSpriteDraw(u8 *ram, Vdp1 *regs,
-                                     u8 *back_framebuffer) {
+void VIDVulkan::Vdp1NormalSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   vdp1->NormalSpriteDraw(ram, regs, back_framebuffer);
 }
 
-void VIDVulkan::Vdp1ScaledSpriteDraw(u8 *ram, Vdp1 *regs,
-                                     u8 *back_framebuffer) {
+void VIDVulkan::Vdp1ScaledSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   vdp1->ScaledSpriteDraw(ram, regs, back_framebuffer);
 }
 
-void VIDVulkan::Vdp1DistortedSpriteDraw(u8 *ram, Vdp1 *regs,
-                                        u8 *back_framebuffer) {
+void VIDVulkan::Vdp1DistortedSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   vdp1->DistortedSpriteDraw(ram, regs, back_framebuffer);
 }
 
@@ -471,25 +419,27 @@ void VIDVulkan::Vdp1PolylineDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   vdp1->PolylineDraw(ram, regs, back_framebuffer);
 }
 
-void VIDVulkan::Vdp1LineDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
-  vdp1->LineDraw(ram, regs, back_framebuffer);
-}
+void VIDVulkan::Vdp1LineDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) { vdp1->LineDraw(ram, regs, back_framebuffer); }
 
-void VIDVulkan::Vdp1UserClipping(u8 *ram, Vdp1 *regs) {
-  vdp1->UserClipping(ram, regs);
-}
+void VIDVulkan::Vdp1UserClipping(u8 *ram, Vdp1 *regs) { vdp1->UserClipping(ram, regs); }
 
-void VIDVulkan::Vdp1SystemClipping(u8 *ram, Vdp1 *regs) {
-  vdp1->SystemClipping(ram, regs);
-}
+void VIDVulkan::Vdp1SystemClipping(u8 *ram, Vdp1 *regs) { vdp1->SystemClipping(ram, regs); }
 
-void VIDVulkan::Vdp1LocalCoordinate(u8 *ram, Vdp1 *regs) {
-  vdp1->LocalCoordinate(ram, regs);
-}
+void VIDVulkan::Vdp1LocalCoordinate(u8 *ram, Vdp1 *regs) { vdp1->LocalCoordinate(ram, regs); }
 
 int VIDVulkan::Vdp2Reset(void) { return 0; }
 
 void VIDVulkan::Vdp2DrawStart(void) {
+
+  if(rebuildSwapChain){
+    LOGI("rebuild frame buffer");
+    vkQueueWaitIdle(_renderer->GetVulkanQueue());
+    vkDeviceWaitIdle(_renderer->GetVulkanDevice());
+    this->_renderer->getWindow()->cleanupSwapChain();
+    rebuildSwapChain = 0;
+  }
+
+
   fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
   if (fixVdp2Regs == NULL)
     fixVdp2Regs = Vdp2Regs;
@@ -500,7 +450,7 @@ void VIDVulkan::Vdp2DrawStart(void) {
   if (rebuildFrameBuffer) {
     LOGI("rebuild frame buffer");
     vkQueueWaitIdle(_renderer->GetVulkanQueue());
-    //createCommandPool();
+    // createCommandPool();
     vdp1->changeResolution(renderWidth, renderHeight);
     vdp1->setVdp2Resolution(vdp2width, vdp2height);
     windowRenderer->changeResolution(vdp2width, vdp2height);
@@ -512,8 +462,8 @@ void VIDVulkan::Vdp2DrawStart(void) {
       generateSubRenderTarget(renderWidth, renderHeight);
     }
     rebuildFrameBuffer = 0;
-    //vkQueueWaitIdle(_renderer->GetVulkanQueue());
-    //vkDeviceWaitIdle(_renderer->GetVulkanDevice());
+    // vkQueueWaitIdle(_renderer->GetVulkanQueue());
+    // vkDeviceWaitIdle(_renderer->GetVulkanDevice());
   }
   // vkQueueWaitIdle(_renderer->GetVulkanQueue());
   tm->reset();
@@ -530,45 +480,31 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
   int ci = getCurrentCommandIndex();
   int fi = _renderer->getWindow()->BeginRender();
-  //LOGD("====== commandBuffer is %d/%d/%d ========", ci,fi,frameCount);
+  // LOGD("====== commandBuffer is %d/%d/%d ========", ci,fi,frameCount);
 
-  if( frameCount >= MAX_COMMANDBUFFER_COUNT ){
-	  ErrorCheck( vkWaitForFences( device, 1, &commandFence[ci], VK_TRUE, UINT64_MAX ) );
-	  ErrorCheck( vkResetFences( device, 1, &commandFence[ci] ) );
+  if (frameCount >= MAX_COMMANDBUFFER_COUNT) {
+    ErrorCheck(vkWaitForFences(device, 1, &commandFence[ci], VK_TRUE, UINT64_MAX));
+    ErrorCheck(vkResetFences(device, 1, &commandFence[ci]));
   }
 
-
-#if 1  
-  backPiepline->moveToVertexBuffer(backPiepline->vertices,
-                                   backPiepline->indices);
-  backPiepline->setSampler(VdpPipeline::bindIdTexture, backColor.imageView,
-                           backColor.sampler);
+#if 1
+  backPiepline->moveToVertexBuffer(backPiepline->vertices, backPiepline->indices);
+  backPiepline->setSampler(VdpPipeline::bindIdTexture, backColor.imageView, backColor.sampler);
 
   for (uint32_t i = 0; i < layers.size(); i++) {
     for (uint32_t j = 0; j < layers[i].size(); j++) {
-      layers[i][j]->moveToVertexBuffer(layers[i][j]->vertices,
-                                       layers[i][j]->indices);
+      layers[i][j]->moveToVertexBuffer(layers[i][j]->vertices, layers[i][j]->indices);
 
       if (layers[i][j]->interuput_texture != VK_NULL_HANDLE) {
-        layers[i][j]->setSampler(VdpPipeline::bindIdTexture,
-                                 layers[i][j]->interuput_texture,
-                                 tm->getTextureSampler());
-        layers[i][j]->setSampler(VdpPipeline::bindIdLine,
-                                 tm->geTextureImageView(),
-                                 tm->getTextureSampler());
+        layers[i][j]->setSampler(VdpPipeline::bindIdTexture, layers[i][j]->interuput_texture, tm->getTextureSampler());
+        layers[i][j]->setSampler(VdpPipeline::bindIdLine, tm->geTextureImageView(), tm->getTextureSampler());
       } else {
-        layers[i][j]->setSampler(VdpPipeline::bindIdTexture,
-                                 tm->geTextureImageView(),
-                                 tm->getTextureSampler());
-        layers[i][j]->setSampler(VdpPipeline::bindIdLine, lineColor.imageView,
-                                 lineColor.sampler);
+        layers[i][j]->setSampler(VdpPipeline::bindIdTexture, tm->geTextureImageView(), tm->getTextureSampler());
+        layers[i][j]->setSampler(VdpPipeline::bindIdLine, lineColor.imageView, lineColor.sampler);
       }
-      layers[i][j]->setSampler(VdpPipeline::bindIdColorRam, getCramImageView(),
-                               getCramSampler());
+      layers[i][j]->setSampler(VdpPipeline::bindIdColorRam, getCramImageView(), getCramSampler());
 
-      layers[i][j]->setSampler(VdpPipeline::bindIdWindow,
-                               windowRenderer->getImageView(),
-                               windowRenderer->getSampler());
+      layers[i][j]->setSampler(VdpPipeline::bindIdWindow, windowRenderer->getImageView(), windowRenderer->getSampler());
     }
   }
 
@@ -604,9 +540,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
   static auto startTime = std::chrono::high_resolution_clock::now();
   auto currentTime = std::chrono::high_resolution_clock::now();
-  float time = std::chrono::duration<float, std::chrono::seconds::period>(
-                   currentTime - startTime)
-                   .count();
+  float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 #endif
   VkCommandBufferBeginInfo command_buffer_begin_info{};
   command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -618,15 +552,11 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   render_area.offset.y = 0;
   if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
       pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
-    render_area.extent.width =
-        _renderer->getWindow()->GetVulkanSurfaceSize().height;
-    render_area.extent.height =
-        _renderer->getWindow()->GetVulkanSurfaceSize().width;
+    render_area.extent.width = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+    render_area.extent.height = _renderer->getWindow()->GetVulkanSurfaceSize().width;
   } else {
-    render_area.extent.width =
-        _renderer->getWindow()->GetVulkanSurfaceSize().width;
-    render_area.extent.height =
-        _renderer->getWindow()->GetVulkanSurfaceSize().height;
+    render_area.extent.width = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+    render_area.extent.height = _renderer->getWindow()->GetVulkanSurfaceSize().height;
   }
 
   std::array<VkClearValue, 2> clear_values{};
@@ -639,17 +569,14 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
   VkRenderPassBeginInfo render_pass_begin_info{};
   render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  render_pass_begin_info.renderPass =
-      _renderer->getWindow()->GetVulkanRenderPass();
-  render_pass_begin_info.framebuffer =
-      _renderer->getWindow()->GetVulkanActiveFramebuffer();
+  render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanRenderPass();
+  render_pass_begin_info.framebuffer = _renderer->getWindow()->GetVulkanActiveFramebuffer();
   render_pass_begin_info.renderArea = render_area;
   render_pass_begin_info.clearValueCount = clear_values.size();
   render_pass_begin_info.pClearValues = clear_values.data();
 
-
   VkCommandBuffer commandBuffer = _command_buffers[ci];
-  //vkQueueWaitIdle(_renderer->GetVulkanQueue());
+  // vkQueueWaitIdle(_renderer->GetVulkanQueue());
   vkResetCommandBuffer(commandBuffer, 0);
   vkBeginCommandBuffer(commandBuffer, &command_buffer_begin_info);
 
@@ -658,19 +585,16 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   if ((Vdp2Regs->TVMD & 0x8000) == 0) {
     VkRenderPassBeginInfo render_pass_begin_info{};
     render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_begin_info.renderPass =
-        _renderer->getWindow()->GetVulkanRenderPass();
-    render_pass_begin_info.framebuffer =
-        _renderer->getWindow()->GetVulkanActiveFramebuffer();
+    render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanRenderPass();
+    render_pass_begin_info.framebuffer = _renderer->getWindow()->GetVulkanActiveFramebuffer();
     render_pass_begin_info.renderArea = render_area;
     render_pass_begin_info.clearValueCount = clear_values.size();
     render_pass_begin_info.pClearValues = clear_values.data();
-    vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info,
-                         VK_SUBPASS_CONTENTS_INLINE);
-    //NanovgVulkanSetDevices(device, this->getPhysicalDevice(),
-    //                       _renderer->getWindow()->GetVulkanRenderPass(),
-    //                       commandBuffer);
-    //OSDDisplayMessages(NULL, 0, 0);
+    vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+     NanovgVulkanSetDevices(device, this->getPhysicalDevice(),
+                            _renderer->getWindow()->GetVulkanRenderPass(),
+                            commandBuffer);
+     OSDDisplayMessages(NULL, 0, 0);
     vkCmdEndRenderPass(commandBuffer);
   } else {
     windowRenderer->draw(commandBuffer);
@@ -683,18 +607,15 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       tmp_render_area.extent.height = renderHeight;
 
       VkRenderPassBeginInfo tmp_render_pass_begin_info{};
-      tmp_render_pass_begin_info.sType =
-          VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      tmp_render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
       tmp_render_pass_begin_info.renderPass = subRenderTarget.renderPass;
       tmp_render_pass_begin_info.framebuffer = subRenderTarget.frameBuffer;
       tmp_render_pass_begin_info.renderArea = tmp_render_area;
       tmp_render_pass_begin_info.clearValueCount = clear_values.size();
       tmp_render_pass_begin_info.pClearValues = clear_values.data();
-      vkCmdBeginRenderPass(commandBuffer, &tmp_render_pass_begin_info,
-                           VK_SUBPASS_CONTENTS_INLINE);
+      vkCmdBeginRenderPass(commandBuffer, &tmp_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
     } else {
-      vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info,
-                           VK_SUBPASS_CONTENTS_INLINE);
+      vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
     }
 
     glm::vec4 viewportData;
@@ -704,17 +625,14 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     if (resolutionMode != RES_NATIVE) {
       switch (pretransformFlag) {
       case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
-        viewportData = {deviceHeight - finalHeight - originy, originx,
-                        finalHeight, finalWidth};
+        viewportData = {deviceHeight - finalHeight - originy, originx, finalHeight, finalWidth};
         break;
       case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
-        viewportData = {deviceHeight - finalWidth - originx,
-                        deviceWidth - finalHeight - originy, finalWidth,
+        viewportData = {deviceHeight - finalWidth - originx, deviceWidth - finalHeight - originy, finalWidth,
                         finalHeight};
         break;
       case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
-        viewportData = {originy, deviceWidth - finalWidth - originx,
-                        finalHeight, finalWidth};
+        viewportData = {originy, deviceWidth - finalWidth - originx, finalHeight, finalWidth};
         break;
       default:
         viewportData = {originx, originy, finalWidth, finalHeight};
@@ -723,17 +641,14 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     } else {
       switch (pretransformFlag) {
       case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
-        viewportData = {deviceHeight - renderHeight - originy, originx,
-                        renderHeight, renderWidth};
+        viewportData = {deviceHeight - renderHeight - originy, originx, renderHeight, renderWidth};
         break;
       case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
-        viewportData = {deviceHeight - renderWidth - originx,
-                        deviceWidth - renderHeight - originy, renderWidth,
+        viewportData = {deviceHeight - renderWidth - originx, deviceWidth - renderHeight - originy, renderWidth,
                         renderHeight};
         break;
       case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
-        viewportData = {originy, deviceWidth - renderWidth - originx,
-                        renderHeight, renderWidth};
+        viewportData = {originy, deviceWidth - renderWidth - originx, renderHeight, renderWidth};
         break;
       default:
         viewportData = {originx, originy, renderWidth, renderHeight};
@@ -788,22 +703,18 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
     glm::mat4 m4(1.0f);
     glm::mat4 model = m4;
-    glm::mat4 proj = glm::ortho(0.0f, (float)vdp2width, 0.0f, (float)vdp2height,
-                                10.0f, 0.0f);
+    glm::mat4 proj = glm::ortho(0.0f, (float)vdp2width, 0.0f, (float)vdp2height, 10.0f, 0.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0));
 
     glm::mat4 pre_rotate_mat = glm::mat4(1.0f);
     glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, 1.0f);
 
     if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR) {
-      pre_rotate_mat =
-          glm::rotate(pre_rotate_mat, glm::radians(90.0f), rotation_axis);
+      pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(90.0f), rotation_axis);
     } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
-      pre_rotate_mat =
-          glm::rotate(pre_rotate_mat, glm::radians(270.0f), rotation_axis);
+      pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(270.0f), rotation_axis);
     } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR) {
-      pre_rotate_mat =
-          glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
+      pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
     }
 
     model = model * pre_rotate_mat;
@@ -815,22 +726,18 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       ubo.blendmode = backPiepline->blendmode;
       backPiepline->setUBO(&ubo, sizeof(ubo));
       backPiepline->updateDescriptorSets();
-      vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              backPiepline->getPipelineLayout(), 0, 1,
+      vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, backPiepline->getPipelineLayout(), 0, 1,
                               backPiepline->getDescriptorSet(), 0, nullptr);
 
-      vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        backPiepline->getGraphicsPipeline());
+      vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, backPiepline->getGraphicsPipeline());
 
-      VkBuffer vertexBuffers[] = {
-          vm->getVertexBuffer(backPiepline->vectexBlock)};
+      VkBuffer vertexBuffers[] = {vm->getVertexBuffer(backPiepline->vectexBlock)};
       VkDeviceSize offsets[] = {backPiepline->vertexOffset};
 
       vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-      vkCmdBindIndexBuffer(commandBuffer,
-                           vm->getIndexBuffer(backPiepline->vectexBlock),
-                           backPiepline->indexOffset, VK_INDEX_TYPE_UINT16);
+      vkCmdBindIndexBuffer(commandBuffer, vm->getIndexBuffer(backPiepline->vectexBlock), backPiepline->indexOffset,
+                           VK_INDEX_TYPE_UINT16);
 
       vkCmdDrawIndexed(commandBuffer, backPiepline->indexSize, 1, 0, 0, 0);
     }
@@ -852,11 +759,9 @@ void VIDVulkan::Vdp2DrawEnd(void) {
             to = i;
             if (Vdp1External.disptoggle & 0x01) {
               if (isDestinationAlpha) {
-                fbRender->drawWithDestAlphaMode(fixVdp2Regs, commandBuffer,
-                                                from, to, pre_rotate_mat);
+                fbRender->drawWithDestAlphaMode(fixVdp2Regs, commandBuffer, from, to, pre_rotate_mat);
               } else {
-                fbRender->draw(fixVdp2Regs, commandBuffer, from, to,
-                               pre_rotate_mat);
+                fbRender->draw(fixVdp2Regs, commandBuffer, from, to, pre_rotate_mat);
               }
             }
             from = to;
@@ -934,8 +839,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
           }
 
           // per line color calculation mode
-          else if (layers[i][j]->lineTexture != VK_NULL_HANDLE &&
-                   layers[i][j]->specialPriority == 0) {
+          else if (layers[i][j]->lineTexture != VK_NULL_HANDLE && layers[i][j]->specialPriority == 0) {
 
             UniformBufferObject ubomini = ubo;
             ubomini.offsetx = 0;
@@ -953,14 +857,11 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
             VdpPipeline *p;
             if (isDestinationAlpha) {
-              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA_DST,
-                                                this, this->tm, this->vm);
+              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA_DST, this, this->tm, this->vm);
             } else {
-              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA, this,
-                                                this->tm, this->vm);
+              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA, this, this->tm, this->vm);
             }
-            renderWithLineEffectToMainTarget(p, commandBuffer, ubo,
-                                             layers[i][j]->lineTexture);
+            renderWithLineEffectToMainTarget(p, commandBuffer, ubo, layers[i][j]->lineTexture);
             onFramePipelines.push_back(p);
           }
 
@@ -968,34 +869,26 @@ void VIDVulkan::Vdp2DrawEnd(void) {
           else {
 
             if (layers[i][j]->lineTexture != VK_NULL_HANDLE) {
-              layers[i][j]->setSampler(VdpPipeline::bindIdLine,
-                                       layers[i][j]->lineTexture,
-                                       lineColor.sampler);
+              layers[i][j]->setSampler(VdpPipeline::bindIdLine, layers[i][j]->lineTexture, lineColor.sampler);
             }
 
             layers[i][j]->setUBO(&ubo, sizeof(ubo));
             layers[i][j]->updateDescriptorSets();
 
-            vkCmdBindDescriptorSets(
-                commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                layers[i][j]->getPipelineLayout(), 0, 1,
-                layers[i][j]->getDescriptorSet(), 0, nullptr);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layers[i][j]->getPipelineLayout(),
+                                    0, 1, layers[i][j]->getDescriptorSet(), 0, nullptr);
 
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              layers[i][j]->getGraphicsPipeline());
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layers[i][j]->getGraphicsPipeline());
 
-            VkBuffer vertexBuffers[] = {
-                vm->getVertexBuffer(layers[i][j]->vectexBlock)};
+            VkBuffer vertexBuffers[] = {vm->getVertexBuffer(layers[i][j]->vectexBlock)};
             VkDeviceSize offsets[] = {layers[i][j]->vertexOffset};
 
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-            vkCmdBindIndexBuffer(
-                commandBuffer, vm->getIndexBuffer(layers[i][j]->vectexBlock),
-                layers[i][j]->indexOffset, VK_INDEX_TYPE_UINT16);
+            vkCmdBindIndexBuffer(commandBuffer, vm->getIndexBuffer(layers[i][j]->vectexBlock),
+                                 layers[i][j]->indexOffset, VK_INDEX_TYPE_UINT16);
 
-            vkCmdDrawIndexed(commandBuffer, layers[i][j]->indexSize, 1, 0, 0,
-                             0);
+            vkCmdDrawIndexed(commandBuffer, layers[i][j]->indexSize, 1, 0, 0, 0);
           }
         }
       }
@@ -1003,8 +896,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     }
     if (Vdp1External.disptoggle & 0x01) {
       if (isDestinationAlpha) {
-        fbRender->drawWithDestAlphaMode(fixVdp2Regs, commandBuffer, from, 10,
-                                        pre_rotate_mat);
+        fbRender->drawWithDestAlphaMode(fixVdp2Regs, commandBuffer, from, 10, pre_rotate_mat);
       } else {
         fbRender->draw(fixVdp2Regs, commandBuffer, from, 10, pre_rotate_mat);
       }
@@ -1014,14 +906,12 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       this->pipleLineFactory->garbage(onFramePipelines[i]);
     }
 
-    if ((fixVdp2Regs->SDCTL & 0xFF) != 0 ||
-        this->vdp1->getMsbShadowCount() != 0) {
+    if ((fixVdp2Regs->SDCTL & 0xFF) != 0 || this->vdp1->getMsbShadowCount() != 0) {
       fbRender->drawShadow(fixVdp2Regs, commandBuffer, 0, 10, pre_rotate_mat);
     }
 
     if (resolutionMode == RES_NATIVE) {
-      NanovgVulkanSetDevices(device, this->getPhysicalDevice(),
-                             _renderer->getWindow()->GetVulkanRenderPass(),
+      NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(),
                              commandBuffer);
       OSDDisplayMessages(NULL, 0, 0);
     }
@@ -1029,8 +919,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     vkCmdEndRenderPass(commandBuffer);
 
     if (resolutionMode != RES_NATIVE) {
-      vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info,
-                           VK_SUBPASS_CONTENTS_INLINE);
+      vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
       auto c = vk::CommandBuffer(commandBuffer);
       vk::Viewport viewport;
       vk::Rect2D scissor;
@@ -1048,8 +937,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       c.setScissor(0, 1, &scissor);
       vkCmdEndRenderPass(commandBuffer);
       blitSubRenderTarget(commandBuffer, viewportData);
-      NanovgVulkanSetDevices(device, this->getPhysicalDevice(),
-                             _renderer->getWindow()->GetVulkanRenderPass(),
+      NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(),
                              commandBuffer);
       OSDDisplayMessages(NULL, 0, 0);
     }
@@ -1076,9 +964,8 @@ ENDEND:
       waitSem.push_back(fbSem);
     }
   */
-  VkPipelineStageFlags graphicsWaitStageMasks[] = {
-      VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  VkPipelineStageFlags graphicsWaitStageMasks[] = {VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                                                   VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
   VkSemaphore graphicsWaitSemaphores[] = {rbgGenerator->getCompleteSemaphore()};
 
   // Submit command buffer
@@ -1091,8 +978,7 @@ ENDEND:
   submit_info.pCommandBuffers = &commandBuffer;
   submit_info.signalSemaphoreCount = 1;
   submit_info.pSignalSemaphores = &_render_complete_semaphore;
-  ErrorCheck(vkQueueSubmit(_renderer->GetVulkanQueue(), 1, &submit_info,
-                           commandFence[ci]));
+  ErrorCheck(vkQueueSubmit(_renderer->GetVulkanQueue(), 1, &submit_info, commandFence[ci]));
 
   // vkQueueWaitIdle(getVulkanQueue());
   // vkDeviceWaitIdle(device);
@@ -1152,8 +1038,7 @@ ENDEND:
   frameCount++;
 }
 
-void VIDVulkan::readVdp2ColorOffset(Vdp2 *regs, vdp2draw_struct *info,
-                                    int mask) {
+void VIDVulkan::readVdp2ColorOffset(Vdp2 *regs, vdp2draw_struct *info, int mask) {
   if (regs->CLOFEN & mask) {
     // color offset enable
     if (regs->CLOFSL & mask) {
@@ -1225,8 +1110,7 @@ void VIDVulkan::updateBackColor() {
     } else {
       a = ((~fixVdp2Regs->CCRLB & 0x1F00) >> 5) + 0x7;
     }
-    *back_pixel_data++ =
-        (a << 24) | ((b & 0xFF) << 16) | ((g & 0xFF) << 8) | (r & 0xFF);
+    *back_pixel_data++ = (a << 24) | ((b & 0xFF) << 16) | ((g & 0xFF) << 8) | (r & 0xFF);
   }
   genPolygonBack();
 }
@@ -1382,17 +1266,13 @@ void VIDVulkan::GetGlSize(int *width, int *height) {
   *height = this->renderHeight;
 }
 
-void VIDVulkan::Vdp1ReadFrameBuffer(u32 type, u32 addr, void *out) {
-  this->vdp1->readFrameBuffer(type, addr, out);
-}
+void VIDVulkan::Vdp1ReadFrameBuffer(u32 type, u32 addr, void *out) { this->vdp1->readFrameBuffer(type, addr, out); }
 
 void VIDVulkan::SetFilterMode(int type) {}
 
 void VIDVulkan::Sync() {}
 
-void VIDVulkan::Vdp1WriteFrameBuffer(u32 type, u32 addr, u32 val) {
-  this->vdp1->writeFrameBuffer(type, addr, val);
-}
+void VIDVulkan::Vdp1WriteFrameBuffer(u32 type, u32 addr, u32 val) { this->vdp1->writeFrameBuffer(type, addr, val); }
 
 void VIDVulkan::Vdp1EraseWrite(void) { vdp1->erase(); }
 
@@ -1427,8 +1307,7 @@ void VIDVulkan::SetSettingValue(int type, int value) {
     break;
   case VDP_SETTING_POLYGON_MODE:
     if (polygonMode != value) {
-      if (!this->_renderer->isTessellationAvailable() &&
-          value == GPU_TESSERATION) {
+      if (!this->_renderer->isTessellationAvailable() && value == GPU_TESSERATION) {
         polygonMode = PERSPECTIVE_CORRECTION;
         YuiErrorMsg("This device does not support GPU Tesseration.");
         return;
@@ -1440,6 +1319,20 @@ void VIDVulkan::SetSettingValue(int type, int value) {
     // case VDP_SETTING_ROTATE_SCREEN:
     //_Ygl->rotate_screen = value;
     //  break;
+  case VDP_SETTING_FRAMELIMIT_MODE:  
+    if( frameLimitMode != value ){
+        frameLimitMode = value;
+
+        if( value == 0 ){
+          this->_renderer->getWindow()->setPresentpMode(VK_PRESENT_MODE_FIFO_KHR);
+        }else{
+          this->_renderer->getWindow()->setPresentpMode(VK_PRESENT_MODE_MAILBOX_KHR);
+        }
+        //this->_renderer->getWindow()->cleanupSwapChain();
+        rebuildSwapChain = 1; // rebuild frame buffers at the top of frame
+    }
+  default:
+    break;
   }
 }
 
@@ -1588,9 +1481,8 @@ void VIDVulkan::SetSaturnResolution(int width, int height) {
 // float * colors ���_���Ƃ̐F VDP2�ł͎g��Ȃ�
 // TextureCache * c �L���b�V�����W
 // int cash_flg 1�̏ꍇ c�̃L���b�V�����W���X�V����
-int VIDVulkan::genPolygon(VdpPipeline **pipleLine, vdp2draw_struct *input,
-                          CharTexture *output, float *colors, TextureCache *c,
-                          int cash_flg) {
+int VIDVulkan::genPolygon(VdpPipeline **pipleLine, vdp2draw_struct *input, CharTexture *output, float *colors,
+                          TextureCache *c, int cash_flg) {
   unsigned int x, y;
   VdpPipeline *program;
   // texturecoordinate_struct *tmp;
@@ -1600,8 +1492,7 @@ int VIDVulkan::genPolygon(VdpPipeline **pipleLine, vdp2draw_struct *input,
   float *pos;
   // float * vtxa;
 
-  const int CCRTMD =
-      ((fixVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
+  const int CCRTMD = ((fixVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
 
   if (input->colornumber >= 3) {
 
@@ -1730,24 +1621,18 @@ int VIDVulkan::genPolygon(VdpPipeline **pipleLine, vdp2draw_struct *input,
   }
 
   if (input->flipfunction & 0x1) {
-    tmp[0].texCoord[0] = tmp[3].texCoord[0] =
-        (float)((x + input->cellw) - ATLAS_BIAS);
+    tmp[0].texCoord[0] = tmp[3].texCoord[0] = (float)((x + input->cellw) - ATLAS_BIAS);
     tmp[1].texCoord[0] = tmp[2].texCoord[0] = (float)((x) + ATLAS_BIAS);
   } else {
     tmp[0].texCoord[0] = tmp[3].texCoord[0] = (float)((x) + ATLAS_BIAS);
-    tmp[1].texCoord[0] = tmp[2].texCoord[0] =
-        (float)((x + input->cellw) - ATLAS_BIAS);
+    tmp[1].texCoord[0] = tmp[2].texCoord[0] = (float)((x + input->cellw) - ATLAS_BIAS);
   }
   if (input->flipfunction & 0x2) {
-    tmp[0].texCoord[1] = tmp[1].texCoord[1] =
-        (float)((y + input->cellh - input->cy) - ATLAS_BIAS);
-    tmp[2].texCoord[1] = tmp[3].texCoord[1] =
-        (float)((y - input->cy) + ATLAS_BIAS);
+    tmp[0].texCoord[1] = tmp[1].texCoord[1] = (float)((y + input->cellh - input->cy) - ATLAS_BIAS);
+    tmp[2].texCoord[1] = tmp[3].texCoord[1] = (float)((y - input->cy) + ATLAS_BIAS);
   } else {
-    tmp[0].texCoord[1] = tmp[1].texCoord[1] =
-        (float)((y + input->cy) + ATLAS_BIAS);
-    tmp[2].texCoord[1] = tmp[3].texCoord[1] =
-        (float)((y + input->cy + input->cellh) - ATLAS_BIAS);
+    tmp[0].texCoord[1] = tmp[1].texCoord[1] = (float)((y + input->cy) + ATLAS_BIAS);
+    tmp[2].texCoord[1] = tmp[3].texCoord[1] = (float)((y + input->cy + input->cellh) - ATLAS_BIAS);
   }
 
   if (c != NULL && cash_flg == 1) {
@@ -1853,8 +1738,7 @@ void VIDVulkan::genPolygonBack() {
   return;
 }
 
-int VIDVulkan::genPolygonRbg0(VdpPipeline **pipleLine, vdp2draw_struct *input,
-                              CharTexture *output, TextureCache *c,
+int VIDVulkan::genPolygonRbg0(VdpPipeline **pipleLine, vdp2draw_struct *input, CharTexture *output, TextureCache *c,
                               TextureCache *line, int rbg_type) {
   unsigned int x, y;
   VdpPipeline *program;
@@ -1865,8 +1749,7 @@ int VIDVulkan::genPolygonRbg0(VdpPipeline **pipleLine, vdp2draw_struct *input,
   float *pos;
   // float * vtxa;
 
-  const int CCRTMD =
-      ((fixVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
+  const int CCRTMD = ((fixVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
 
   if (input->colornumber >= 3) {
     prg = PG_NORMAL;
@@ -1889,8 +1772,7 @@ int VIDVulkan::genPolygonRbg0(VdpPipeline **pipleLine, vdp2draw_struct *input,
       }
     }
 
-    if (input->lineTexture !=
-        0) { // Line color blend screen blend is done in 2nd path
+    if (input->lineTexture != 0) { // Line color blend screen blend is done in 2nd path
       prg = PG_VDP2_NOBLEND;
     }
 
@@ -1943,8 +1825,7 @@ int VIDVulkan::genPolygonRbg0(VdpPipeline **pipleLine, vdp2draw_struct *input,
         }
       }
 
-      if (input->lineTexture !=
-          0) { // Line color blend screen blend is done in 2nd path
+      if (input->lineTexture != 0) { // Line color blend screen blend is done in 2nd path
         prg = PG_VDP2_NOBLEND_CRAM;
       }
     }
@@ -2017,18 +1898,14 @@ int VIDVulkan::genPolygonRbg0(VdpPipeline **pipleLine, vdp2draw_struct *input,
     y = c->y;
 
     tmp[0].texCoord[0] = tmp[3].texCoord[0] = (float)((x) + ATLAS_BIAS);
-    tmp[1].texCoord[0] = tmp[2].texCoord[0] =
-        (float)((x + input->cellw) - ATLAS_BIAS);
+    tmp[1].texCoord[0] = tmp[2].texCoord[0] = (float)((x + input->cellw) - ATLAS_BIAS);
     tmp[0].texCoord[1] = tmp[1].texCoord[1] = (float)((y) + ATLAS_BIAS);
-    tmp[2].texCoord[1] = tmp[3].texCoord[1] =
-        (float)((y + input->cellh) - ATLAS_BIAS);
+    tmp[2].texCoord[1] = tmp[3].texCoord[1] = (float)((y + input->cellh) - ATLAS_BIAS);
   }
 
   if (line == NULL) {
-    tmp[0].texCoord[2] = tmp[1].texCoord[2] = tmp[2].texCoord[2] =
-        tmp[3].texCoord[2] = 0;
-    tmp[0].texCoord[3] = tmp[1].texCoord[3] = tmp[2].texCoord[3] =
-        tmp[3].texCoord[3] = 0;
+    tmp[0].texCoord[2] = tmp[1].texCoord[2] = tmp[2].texCoord[2] = tmp[3].texCoord[2] = 0;
+    tmp[0].texCoord[3] = tmp[1].texCoord[3] = tmp[2].texCoord[3] = tmp[3].texCoord[3] = 0;
   } else {
     tmp[0].texCoord[2] = (float)(line->x) + ATLAS_BIAS;
     tmp[0].texCoord[3] = (float)(line->y) + ATLAS_BIAS;
@@ -2215,8 +2092,7 @@ void VIDVulkan::drawNBG0() {
     else
       info.coordincy = (float)65536 / (fixVdp2Regs->ZMYN0.all & 0x7FF00);
 
-    info.PlaneAddr =
-        (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2NBG0PlaneAddr;
+    info.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2NBG0PlaneAddr;
   } else {
     return;
   }
@@ -2251,9 +2127,8 @@ void VIDVulkan::drawNBG0() {
     if (fixVdp2Regs->CCCTL & 0x100) { // Add Color
       info.blendmode |= VDP2_CC_ADD;
       info.alpha = 0xFF;
-    } else { // Use Color calculation ratio
-      if (info.specialcolormode != 0 &&
-          dest_alpha) { // Just currently not supported
+    } else {                                          // Use Color calculation ratio
+      if (info.specialcolormode != 0 && dest_alpha) { // Just currently not supported
         info.blendmode |= VDP2_CC_NONE;
       } else {
         info.blendmode |= VDP2_CC_RATE;
@@ -2318,8 +2193,7 @@ void VIDVulkan::drawNBG0() {
   if (info.enable == 1) {
     // NBG0 draw
     if (info.isbitmap) {
-      if (info.coordincx != 1.0f || info.coordincy != 1.0f ||
-          VDPLINE_SZ(info.islinescroll)) {
+      if (info.coordincx != 1.0f || info.coordincy != 1.0f || VDPLINE_SZ(info.islinescroll)) {
         info.sh = (fixVdp2Regs->SCXIN0 & 0x7FF);
         info.sv = (fixVdp2Regs->SCYIN0 & 0x7FF);
         info.x = 0;
@@ -2585,9 +2459,7 @@ void VIDVulkan::drawNBG1() {
   info.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2NBG1PlaneAddr;
 
   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
-      (fixVdp2Regs->BGON & 0x1 &&
-       (fixVdp2Regs->CHCTLA & 0x70) >> 4 ==
-           4)) // If NBG0 16M mode is enabled, don't draw
+      (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 == 4)) // If NBG0 16M mode is enabled, don't draw
     return;
 
   // Window Mode
@@ -2929,8 +2801,7 @@ void VIDVulkan::drawNBG2() {
 
   if (/*!(info.enable & Vdp2External.disptoggle) ||*/ (info.priority == 0) ||
       (fixVdp2Regs->BGON & 0x1 &&
-       (fixVdp2Regs->CHCTLA & 0x70) >> 4 >=
-           2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
+       (fixVdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
     return;
 
   // Window Mode
@@ -3090,12 +2961,9 @@ void VIDVulkan::drawNBG3() {
   info.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2NBG3PlaneAddr;
 
   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
-      (fixVdp2Regs->BGON & 0x1 &&
-       (fixVdp2Regs->CHCTLA & 0x70) >> 4 ==
-           4) || // If NBG0 16M mode is enabled, don't draw
+      (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 == 4) || // If NBG0 16M mode is enabled, don't draw
       (fixVdp2Regs->BGON & 0x2 &&
-       (fixVdp2Regs->CHCTLA & 0x3000) >> 12 >=
-           2)) // If NBG1 2048/32786 is enabled, don't draw
+       (fixVdp2Regs->CHCTLA & 0x3000) >> 12 >= 2)) // If NBG1 2048/32786 is enabled, don't draw
     return;
 
   // Window Mode
@@ -3321,15 +3189,13 @@ void VIDVulkan::drawRBG0() {
     // Parameter A
     info->rotatenum = 0;
     info->rotatemode = 0;
-    info->PlaneAddr =
-        (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2ParameterAPlaneAddr;
+    info->PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2ParameterAPlaneAddr;
     break;
   case 1:
     // Parameter B
     info->rotatenum = 1;
     info->rotatemode = 0;
-    info->PlaneAddr =
-        (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2ParameterBPlaneAddr;
+    info->PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2ParameterBPlaneAddr;
     break;
   case 2:
     // Parameter A+B switched via coefficients
@@ -3340,8 +3206,7 @@ void VIDVulkan::drawRBG0() {
     // FIX ME(need to figure out which Parameter is being used)
     info->rotatenum = 0;
     info->rotatemode = 1 + (fixVdp2Regs->RPMD & 0x1);
-    info->PlaneAddr =
-        (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2ParameterAPlaneAddr;
+    info->PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2ParameterAPlaneAddr;
     break;
   }
 
@@ -3654,8 +3519,7 @@ void VIDVulkan::drawRotation(RBGDrawInfo *rbg, VdpPipeline **pipleLine) {
   rbg->line_texture.textdata = NULL;
   if (info->LineColorBase != 0) {
     rbg->line_info.blendmode = 0;
-    rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) &
-                               0x7FF); // +info->coloroffset;
+    rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF); // +info->coloroffset;
 
     u64 cacheaddr = 0xA0000000DAD;
     tm->allocate(&rbg->line_texture, rbg->vres, 1, &x, &y);
@@ -3676,8 +3540,7 @@ void VIDVulkan::drawRotation(RBGDrawInfo *rbg, VdpPipeline **pipleLine) {
   rbg->info.cellw = rbg->hres;
   rbg->info.cellh = rbg->vres;
   rbg->info.flipfunction = 0;
-  genPolygonRbg0(pipleLine, &rbg->info, NULL, &rbg->c, &rbg->cline,
-                 rbg->rgb_type);
+  genPolygonRbg0(pipleLine, &rbg->info, NULL, &rbg->c, &rbg->cline, rbg->rgb_type);
   //}
   // else {
   //  curret_rbg = rbg;
@@ -3689,25 +3552,20 @@ void VIDVulkan::drawRotation(RBGDrawInfo *rbg, VdpPipeline **pipleLine) {
 
 #define ceilf(a) ((a) + 0.99999f)
 
-static inline int vdp2rGetKValue(vdp2rotationparameter_struct *parameter,
-                                 float i) {
+static inline int vdp2rGetKValue(vdp2rotationparameter_struct *parameter, float i) {
   float kval;
   int kdata;
   int h = ceilf(parameter->KtablV + (parameter->deltaKAx * i));
   if (parameter->coefdatasize == 2) {
     if (parameter->k_mem_type == 0) { // vram
-      kdata = T1ReadWord(Vdp2Ram,
-                         (parameter->coeftbladdr + (int)(h << 1)) & 0x7FFFF);
+      kdata = T1ReadWord(Vdp2Ram, (parameter->coeftbladdr + (int)(h << 1)) & 0x7FFFF);
     } else { // cram
-      kdata = Vdp2ColorRamReadWord(
-          ((parameter->coeftbladdr + (int)(h << 1)) & 0x7FF) + 0x800);
+      kdata = Vdp2ColorRamReadWord(((parameter->coeftbladdr + (int)(h << 1)) & 0x7FF) + 0x800);
     }
     if (kdata & 0x8000) {
       return 0;
     }
-    kval =
-        (float)(signed)((kdata & 0x7FFF) | (kdata & 0x4000 ? 0x8000 : 0x0000)) /
-        1024.0f;
+    kval = (float)(signed)((kdata & 0x7FFF) | (kdata & 0x4000 ? 0x8000 : 0x0000)) / 1024.0f;
     switch (parameter->coefmode) {
     case 0:
       parameter->kx = kval;
@@ -3724,19 +3582,15 @@ static inline int vdp2rGetKValue(vdp2rotationparameter_struct *parameter,
     }
   } else {
     if (parameter->k_mem_type == 0) { // vram
-      kdata = T1ReadLong(Vdp2Ram,
-                         (parameter->coeftbladdr + (int)(h << 2)) & 0x7FFFF);
+      kdata = T1ReadLong(Vdp2Ram, (parameter->coeftbladdr + (int)(h << 2)) & 0x7FFFF);
     } else { // cram
-      kdata = Vdp2ColorRamReadLong(
-          ((parameter->coeftbladdr + (int)(h << 2)) & 0x7FF) + 0x800);
+      kdata = Vdp2ColorRamReadLong(((parameter->coeftbladdr + (int)(h << 2)) & 0x7FF) + 0x800);
     }
     parameter->lineaddr = (kdata >> 24) & 0x7F;
     if (kdata & 0x80000000) {
       return 0;
     }
-    kval = (float)(int)((kdata & 0x00FFFFFF) |
-                        (kdata & 0x00800000 ? 0xFF800000 : 0x00000000)) /
-           (65536.0f);
+    kval = (float)(int)((kdata & 0x00FFFFFF) | (kdata & 0x00800000 ? 0xFF800000 : 0x00000000)) / (65536.0f);
     switch (parameter->coefmode) {
     case 0:
       parameter->kx = kval;
@@ -3786,16 +3640,14 @@ inline void setSpecialPriority(vdp2draw_struct *info, u8 dot, u32 *cramindex) {
   }
 }
 
-static inline u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y,
-                                         int cellw) {
+static inline u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, int cellw) {
   u32 dot;
   u32 cramindex;
   u32 alpha = info->alpha;
   u8 lowdot = 0x00;
   switch (info->colornumber) {
   case 0: // 4 BPP
-    dot = T1ReadByte(Vdp2Ram,
-                     ((info->charaddr + (((y * cellw) + x) >> 1)) & 0x7FFFF));
+    dot = T1ReadByte(Vdp2Ram, ((info->charaddr + (((y * cellw) + x) >> 1)) & 0x7FFFF));
     if (!(x & 0x1))
       dot >>= 4;
     if (!(dot & 0xF) && info->transparencyenable)
@@ -3857,8 +3709,7 @@ static inline u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y,
       return cramindex | alpha << 24;
     }
   case 2: // 16 BPP(palette)
-    dot = T1ReadWord(Vdp2Ram,
-                     ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
+    dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
     if ((dot == 0) && info->transparencyenable)
       return 0x00000000;
     else {
@@ -3888,15 +3739,13 @@ static inline u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y,
       return cramindex | alpha << 24;
     }
   case 3: // 16 BPP(RGB)
-    dot = T1ReadWord(Vdp2Ram,
-                     ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
+    dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
     if (!(dot & 0x8000) && info->transparencyenable)
       return 0x00000000;
     else
       return SAT2YAB1(alpha, dot);
   case 4: // 32 BPP
-    dot = T1ReadLong(Vdp2Ram,
-                     ((info->charaddr + ((y * cellw) + x) * 4) & 0x7FFFF));
+    dot = T1ReadLong(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 4) & 0x7FFFF));
     if (!(dot & 0x80000000) && info->transparencyenable)
       return 0x00000000;
     else
@@ -3953,23 +3802,19 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo *rbg) {
   if (rgb_type == 0) {
     paraA.dx = paraA.A * paraA.deltaX + paraA.B * paraA.deltaY;
     paraA.dy = paraA.D * paraA.deltaX + paraA.E * paraA.deltaY;
-    paraA.Xp = paraA.A * (paraA.Px - paraA.Cx) +
-               paraA.B * (paraA.Py - paraA.Cy) +
-               paraA.C * (paraA.Pz - paraA.Cz) + paraA.Cx + paraA.Mx;
-    paraA.Yp = paraA.D * (paraA.Px - paraA.Cx) +
-               paraA.E * (paraA.Py - paraA.Cy) +
-               paraA.F * (paraA.Pz - paraA.Cz) + paraA.Cy + paraA.My;
+    paraA.Xp = paraA.A * (paraA.Px - paraA.Cx) + paraA.B * (paraA.Py - paraA.Cy) + paraA.C * (paraA.Pz - paraA.Cz) +
+               paraA.Cx + paraA.Mx;
+    paraA.Yp = paraA.D * (paraA.Px - paraA.Cx) + paraA.E * (paraA.Py - paraA.Cy) + paraA.F * (paraA.Pz - paraA.Cz) +
+               paraA.Cy + paraA.My;
   }
 
   if (rbg->useb) {
     paraB.dx = paraB.A * paraB.deltaX + paraB.B * paraB.deltaY;
     paraB.dy = paraB.D * paraB.deltaX + paraB.E * paraB.deltaY;
-    paraB.Xp = paraB.A * (paraB.Px - paraB.Cx) +
-               paraB.B * (paraB.Py - paraB.Cy) +
-               paraB.C * (paraB.Pz - paraB.Cz) + paraB.Cx + paraB.Mx;
-    paraB.Yp = paraB.D * (paraB.Px - paraB.Cx) +
-               paraB.E * (paraB.Py - paraB.Cy) +
-               paraB.F * (paraB.Pz - paraB.Cz) + paraB.Cy + paraB.My;
+    paraB.Xp = paraB.A * (paraB.Px - paraB.Cx) + paraB.B * (paraB.Py - paraB.Cy) + paraB.C * (paraB.Pz - paraB.Cz) +
+               paraB.Cx + paraB.Mx;
+    paraB.Yp = paraB.D * (paraB.Px - paraB.Cx) + paraB.E * (paraB.Py - paraB.Cy) + paraB.F * (paraB.Pz - paraB.Cz) +
+               paraB.Cy + paraB.My;
   }
 
   paraA.over_pattern_name = fixVdp2Regs->OVPNRA;
@@ -3987,8 +3832,7 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo *rbg) {
       }
       for (int jj = 0; jj < lvres; jj++) {
         if ((fixVdp2Regs->LCTA.part.U & 0x8000) != 0) {
-          rbg->LineColorRamAdress =
-              T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc * (int)(j));
+          rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc * (int)(j));
           *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
           line_texture->textdata++;
           if (vres >= 480) {
@@ -4025,12 +3869,10 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo *rbg) {
       }
 #endif
       paraA.Xsp = paraA.A * ((paraA.Xst + paraA.deltaXst * j) - paraA.Px) +
-                  paraA.B * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) +
-                  paraA.C * (paraA.Zst - paraA.Pz);
+                  paraA.B * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) + paraA.C * (paraA.Zst - paraA.Pz);
 
       paraA.Ysp = paraA.D * ((paraA.Xst + paraA.deltaXst * j) - paraA.Px) +
-                  paraA.E * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) +
-                  paraA.F * (paraA.Zst - paraA.Pz);
+                  paraA.E * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) + paraA.F * (paraA.Zst - paraA.Pz);
 
       paraA.KtablV = paraA.deltaKAst * j;
     }
@@ -4055,20 +3897,17 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo *rbg) {
       }
 #endif
       paraB.Xsp = paraB.A * ((paraB.Xst + paraB.deltaXst * j) - paraB.Px) +
-                  paraB.B * ((paraB.Yst + paraB.deltaYst * j) - paraB.Py) +
-                  paraB.C * (paraB.Zst - paraB.Pz);
+                  paraB.B * ((paraB.Yst + paraB.deltaYst * j) - paraB.Py) + paraB.C * (paraB.Zst - paraB.Pz);
 
       paraB.Ysp = paraB.D * ((paraB.Xst + paraB.deltaXst * j) - paraB.Px) +
-                  paraB.E * ((paraB.Yst + paraB.deltaYst * j) - paraB.Py) +
-                  paraB.F * (paraB.Zst - paraB.Pz);
+                  paraB.E * ((paraB.Yst + paraB.deltaYst * j) - paraB.Py) + paraB.F * (paraB.Zst - paraB.Pz);
 
       paraB.KtablV = paraB.deltaKAst * j;
     }
 
     if (info->LineColorBase != 0) {
       if ((fixVdp2Regs->LCTA.part.U & 0x8000) != 0) {
-        rbg->LineColorRamAdress =
-            T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc * (int)(j));
+        rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc * (int)(j));
         *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
         line_texture->textdata++;
       } else {
@@ -4144,10 +3983,8 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo *rbg) {
         continue;
       }
 
-      float fh = (parameter->kx * (parameter->Xsp + parameter->dx * i) +
-                  parameter->Xp);
-      float fv = (parameter->ky * (parameter->Ysp + parameter->dy * i) +
-                  parameter->Yp);
+      float fh = (parameter->kx * (parameter->Xsp + parameter->dx * i) + parameter->Xp);
+      float fv = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
       h = fh;
       v = fv;
 
@@ -4188,31 +4025,26 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo *rbg) {
         int planenum;
         switch (parameter->screenover) {
         case OVERMODE_TRANSE:
-          if ((h < 0) || (h >= parameter->MaxH) || (v < 0) ||
-              (v >= parameter->MaxV)) {
+          if ((h < 0) || (h >= parameter->MaxH) || (v < 0) || (v >= parameter->MaxV)) {
             *(texture->textdata++) = 0x00;
             i += hstep;
             continue;
           }
           x = h;
           y = v;
-          if ((x >> rbg->patternshift) != oldcellx ||
-              (y >> rbg->patternshift) != oldcelly) {
+          if ((x >> rbg->patternshift) != oldcellx || (y >> rbg->patternshift) != oldcelly) {
             oldcellx = x >> rbg->patternshift;
             oldcelly = y >> rbg->patternshift;
 
             // Calculate which plane we're dealing with
-            planenum = (x >> parameter->ShiftPaneX) +
-                       ((y >> parameter->ShiftPaneY) << 2);
+            planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
             x &= parameter->MskH;
             y &= parameter->MskV;
             info->addr = parameter->PlaneAddrv[planenum];
 
             // Figure out which page it's on(if plane size is not 1x1)
-            info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
-                           ((x >> 9) * rbg->pagesize) +
-                           (((y & 511) >> rbg->patternshift) * info->pagewh) +
-                           ((x & 511) >> rbg->patternshift))
+            info->addr += (((y >> 9) * rbg->pagesize * info->planew) + ((x >> 9) * rbg->pagesize) +
+                           (((y & 511) >> rbg->patternshift) * info->pagewh) + ((x & 511) >> rbg->patternshift))
                           << info->patterndatasize;
 
             getPatternAddr(info); // Heh, this could be optimized
@@ -4226,23 +4058,19 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo *rbg) {
           }
           x = h;
           y = v;
-          if ((x >> rbg->patternshift) != oldcellx ||
-              (y >> rbg->patternshift) != oldcelly) {
+          if ((x >> rbg->patternshift) != oldcellx || (y >> rbg->patternshift) != oldcelly) {
             oldcellx = x >> rbg->patternshift;
             oldcelly = y >> rbg->patternshift;
 
             // Calculate which plane we're dealing with
-            planenum = (x >> parameter->ShiftPaneX) +
-                       ((y >> parameter->ShiftPaneY) << 2);
+            planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
             x &= parameter->MskH;
             y &= parameter->MskV;
             info->addr = parameter->PlaneAddrv[planenum];
 
             // Figure out which page it's on(if plane size is not 1x1)
-            info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
-                           ((x >> 9) * rbg->pagesize) +
-                           (((y & 511) >> rbg->patternshift) * info->pagewh) +
-                           ((x & 511) >> rbg->patternshift))
+            info->addr += (((y >> 9) * rbg->pagesize * info->planew) + ((x >> 9) * rbg->pagesize) +
+                           (((y & 511) >> rbg->patternshift) * info->pagewh) + ((x & 511) >> rbg->patternshift))
                           << info->patterndatasize;
 
             getPatternAddr(info); // Heh, this could be optimized
@@ -4253,23 +4081,19 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo *rbg) {
           v &= (parameter->MaxV - 1);
           x = h;
           y = v;
-          if ((x >> rbg->patternshift) != oldcellx ||
-              (y >> rbg->patternshift) != oldcelly) {
+          if ((x >> rbg->patternshift) != oldcellx || (y >> rbg->patternshift) != oldcelly) {
             oldcellx = x >> rbg->patternshift;
             oldcelly = y >> rbg->patternshift;
 
             // Calculate which plane we're dealing with
-            planenum = (x >> parameter->ShiftPaneX) +
-                       ((y >> parameter->ShiftPaneY) << 2);
+            planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
             x &= parameter->MskH;
             y &= parameter->MskV;
             info->addr = parameter->PlaneAddrv[planenum];
 
             // Figure out which page it's on(if plane size is not 1x1)
-            info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
-                           ((x >> 9) * rbg->pagesize) +
-                           (((y & 511) >> rbg->patternshift) * info->pagewh) +
-                           ((x & 511) >> rbg->patternshift))
+            info->addr += (((y >> 9) * rbg->pagesize * info->planew) + ((x >> 9) * rbg->pagesize) +
+                           (((y & 511) >> rbg->patternshift) * info->pagewh) + ((x & 511) >> rbg->patternshift))
                           << info->patterndatasize;
 
             getPatternAddr(info); // Heh, this could be optimized
@@ -4278,28 +4102,22 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo *rbg) {
         case OVERMODE_SELPATNAME: {
           x = h;
           y = v;
-          if ((x >> rbg->patternshift) != oldcellx ||
-              (y >> rbg->patternshift) != oldcelly) {
+          if ((x >> rbg->patternshift) != oldcellx || (y >> rbg->patternshift) != oldcelly) {
             oldcellx = x >> rbg->patternshift;
             oldcelly = y >> rbg->patternshift;
 
-            if ((h < 0) || (h >= parameter->MaxH) || (v < 0) ||
-                (v >= parameter->MaxV)) {
+            if ((h < 0) || (h >= parameter->MaxH) || (v < 0) || (v >= parameter->MaxV)) {
               x &= parameter->MskH;
               y &= parameter->MskV;
-              getPatternAddrUsingPatternname(info,
-                                             parameter->over_pattern_name);
+              getPatternAddrUsingPatternname(info, parameter->over_pattern_name);
             } else {
-              planenum = (x >> parameter->ShiftPaneX) +
-                         ((y >> parameter->ShiftPaneY) << 2);
+              planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
               x &= parameter->MskH;
               y &= parameter->MskV;
               info->addr = parameter->PlaneAddrv[planenum];
               // Figure out which page it's on(if plane size is not 1x1)
-              info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
-                             ((x >> 9) * rbg->pagesize) +
-                             (((y & 511) >> rbg->patternshift) * info->pagewh) +
-                             ((x & 511) >> rbg->patternshift))
+              info->addr += (((y >> 9) * rbg->pagesize * info->planew) + ((x >> 9) * rbg->pagesize) +
+                             (((y & 511) >> rbg->patternshift) * info->pagewh) + ((x & 511) >> rbg->patternshift))
                             << info->patterndatasize;
               getPatternAddr(info); // Heh, this could be optimized
             }
@@ -4355,12 +4173,10 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo *rbg) {
         color = Vdp2RotationFetchPixel(info, x, y, 8);
       }
 
-      if (info->LineColorBase != 0 &&
-          VDP2_CC_NONE != (info->blendmode & 0x03)) {
+      if (info->LineColorBase != 0 && VDP2_CC_NONE != (info->blendmode & 0x03)) {
         if ((color & 0xFF000000) != 0) {
           color |= 0x8000;
-          if (parameter->linecoefenab && parameter->lineaddr != 0xFFFFFFFF &&
-              parameter->lineaddr != 0x000000) {
+          if (parameter->linecoefenab && parameter->lineaddr != 0xFFFFFFFF && parameter->lineaddr != 0x000000) {
             color |= ((parameter->lineaddr & 0x7F) | 0x80) << 16;
           }
         }
@@ -4393,8 +4209,7 @@ void VIDVulkan::genLineinfo(vdp2draw_struct *info) {
   for (i = 0; i < vdp2height; i += info->lineinc) {
     index = 0;
     if (VDPLINE_SX(info->islinescroll)) {
-      info->lineinfo[lineindex].LineScrollValH = T1ReadWord(
-          Vdp2Ram, info->linescrolltbl + (i / info->lineinc) * bound);
+      info->lineinfo[lineindex].LineScrollValH = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc) * bound);
       if ((info->lineinfo[lineindex].LineScrollValH & 0x400))
         info->lineinfo[lineindex].LineScrollValH |= 0xF800;
       else
@@ -4405,8 +4220,8 @@ void VIDVulkan::genLineinfo(vdp2draw_struct *info) {
     }
 
     if (VDPLINE_SY(info->islinescroll)) {
-      info->lineinfo[lineindex].LineScrollValV = T1ReadWord(
-          Vdp2Ram, info->linescrolltbl + (i / info->lineinc) * bound + index);
+      info->lineinfo[lineindex].LineScrollValV =
+          T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc) * bound + index);
       if ((info->lineinfo[lineindex].LineScrollValV & 0x400))
         info->lineinfo[lineindex].LineScrollValV |= 0xF800;
       else
@@ -4417,12 +4232,9 @@ void VIDVulkan::genLineinfo(vdp2draw_struct *info) {
     }
 
     if (VDPLINE_SZ(info->islinescroll)) {
-      val1 = T1ReadWord(Vdp2Ram, info->linescrolltbl +
-                                     (i / info->lineinc) * bound + index);
-      val2 = T1ReadWord(Vdp2Ram, info->linescrolltbl +
-                                     (i / info->lineinc) * bound + index + 2);
-      info->lineinfo[lineindex].CoordinateIncH =
-          (((int)((val1)&0x07) << 8) | (int)((val2) >> 8));
+      val1 = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc) * bound + index);
+      val2 = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc) * bound + index + 2);
+      info->lineinfo[lineindex].CoordinateIncH = (((int)((val1)&0x07) << 8) | (int)((val2) >> 8));
       index += 4;
     } else {
       info->lineinfo[lineindex].CoordinateIncH = 0x0100;
@@ -4464,29 +4276,19 @@ void VIDVulkan::generatePerLineColorCalcuration(vdp2draw_struct *info, int id) {
 
           switch (id) {
           case NBG0:
-            linebuf[line] =
-                (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) << 3) + 0x7)
-                << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) << 3) + 0x7) << 24;
             break;
           case NBG1:
-            linebuf[line] =
-                (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 5) + 0x7)
-                << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 5) + 0x7) << 24;
             break;
           case NBG2:
-            linebuf[line] =
-                (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F) << 3) + 0x7)
-                << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F) << 3) + 0x7) << 24;
             break;
           case NBG3:
-            linebuf[line] =
-                (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 5) + 0x7)
-                << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 5) + 0x7) << 24;
             break;
           case RBG0:
-            linebuf[line] =
-                (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) << 3) + 0x7)
-                << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) << 3) + 0x7) << 24;
             break;
           }
         } else {
@@ -4618,8 +4420,7 @@ void VIDVulkan::drawBitmap(vdp2draw_struct *info, CharTexture *texture) {
   }
 }
 
-void VIDVulkan::drawBitmapLineScroll(vdp2draw_struct *info,
-                                     CharTexture *texture) {
+void VIDVulkan::drawBitmapLineScroll(vdp2draw_struct *info, CharTexture *texture) {
   int i, j;
   int height = vdp2height;
 
@@ -4729,8 +4530,7 @@ void VIDVulkan::drawBitmapLineScroll(vdp2draw_struct *info,
   }
 }
 
-void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info,
-                                        CharTexture *texture) {
+void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info, CharTexture *texture) {
   u32 color;
   int i, j;
 
@@ -4781,8 +4581,7 @@ void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info,
     case 0:
       for (j = 0; j < vdp2width; j++) {
         u32 h = ((j * inch) >> 8);
-        u32 addr = ((sh + h) & (info->cellw - 1) + (sv * info->cellw)) >>
-                   1; // Not confrimed!
+        u32 addr = ((sh + h) & (info->cellw - 1) + (sv * info->cellw)) >> 1; // Not confrimed!
         if (addr >= 0x80000) {
           *texture->textdata++ = 0x0000;
         } else {
@@ -4810,8 +4609,7 @@ void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info,
               }
               break;
             case 3:
-              if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) ==
-                   0)) {
+              if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) {
                 alpha = 0xFF;
               }
               break;
@@ -4851,8 +4649,7 @@ void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info,
             }
             break;
           case 3:
-            if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) ==
-                 0)) {
+            if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) {
               alpha = 0xFF;
             }
             break;
@@ -4866,8 +4663,7 @@ void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info,
       // baseaddr += ((sh + sv * info->cellw) << 1);
       for (j = 0; j < vdp2width; j++) {
         int h = ((j * inch) >> 8);
-        u32 addr = (((sh + h) & (info->cellw - 1)) + sv * info->cellw)
-                   << 1; // Not confrimed
+        u32 addr = (((sh + h) & (info->cellw - 1)) + sv * info->cellw) << 1; // Not confrimed
         *texture->textdata++ = getPixel16bpp(info, baseaddr + addr);
       }
       break;
@@ -4875,8 +4671,7 @@ void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info,
       // baseaddr += ((sh + sv * info->cellw) << 1);
       for (j = 0; j < vdp2width; j++) {
         int h = ((j * inch) >> 8);
-        u32 addr = (((sh + h) & (info->cellw - 1)) + sv * info->cellw)
-                   << 1; // Not confrimed
+        u32 addr = (((sh + h) & (info->cellw - 1)) + sv * info->cellw) << 1; // Not confrimed
         *texture->textdata++ = getPixel16bppbmp(info, baseaddr + addr);
       }
       break;
@@ -4884,8 +4679,7 @@ void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info,
       // baseaddr += ((sh + sv * info->cellw) << 2);
       for (j = 0; j < vdp2width; j++) {
         int h = (j * inch >> 8);
-        u32 addr = (((sh + h) & (info->cellw - 1)) + sv * info->cellw)
-                   << 2; // Not confrimed
+        u32 addr = (((sh + h) & (info->cellw - 1)) + sv * info->cellw) << 2; // Not confrimed
         *texture->textdata++ = getPixel32bppbmp(info, baseaddr + addr);
       }
       break;
@@ -4894,8 +4688,7 @@ void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info,
   }
 }
 
-void VIDVulkan::drawMapPerLineNbg23(vdp2draw_struct *info, CharTexture *texture,
-                                    int id, int xoffset) {
+void VIDVulkan::drawMapPerLineNbg23(vdp2draw_struct *info, CharTexture *texture, int id, int xoffset) {
 
   int sx; //, sy;
   int mapx, mapy;
@@ -4993,8 +4786,7 @@ void VIDVulkan::drawMapPerLineNbg23(vdp2draw_struct *info, CharTexture *texture,
       if (pagex < 0)
         pagex = info->pagewh - 1 + pagex;
 
-      if (planex != preplanex || pagex != prepagex || planey != preplaney ||
-          pagey != prepagey) {
+      if (planex != preplanex || pagex != prepagex || planey != preplaney || pagey != prepagey) {
         getPalAndCharAddr(info, planex, pagex, planey, pagey);
         preplanex = planex;
         preplaney = planey;
@@ -5082,8 +4874,7 @@ void VIDVulkan::drawMap(vdp2draw_struct *info, CharTexture *texture) {
 
   // info->coordincx = 1.0f;
 
-  for (v = -info->patternpixelwh; v < info->drawh + info->patternpixelwh;
-       v += info->patternpixelwh) {
+  for (v = -info->patternpixelwh; v < info->drawh + info->patternpixelwh; v += info->patternpixelwh) {
     int targetv = 0;
     sx = info->x;
 
@@ -5110,13 +4901,10 @@ void VIDVulkan::drawMap(vdp2draw_struct *info, CharTexture *texture) {
       cell_count = 0;
     }
 
-    for (h = -info->patternpixelwh; h < info->draww + info->patternpixelwh;
-         h += info->patternpixelwh) {
+    for (h = -info->patternpixelwh; h < info->draww + info->patternpixelwh; h += info->patternpixelwh) {
 
       if (info->isverticalscroll) {
-        targetv =
-            info->y + v +
-            (T1ReadLong(Vdp2Ram, info->verticalscrolltbl + cell_count) >> 16);
+        targetv = info->y + v + (T1ReadLong(Vdp2Ram, info->verticalscrolltbl + cell_count) >> 16);
         cell_count += info->verticalscrollinc;
         // determine which chara shoud be used.
         // mapy   = (v+sy) / (512 * info->planeh);
@@ -5230,8 +5018,7 @@ void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
     }
 
     if (VDPLINE_SY(info->islinescroll)) {
-      targetv = info->sv + (v & linemask) +
-                info->lineinfo[lineindex << res_shift].LineScrollValV;
+      targetv = info->sv + (v & linemask) + info->lineinfo[lineindex << res_shift].LineScrollValV;
     } else {
       targetv = info->sv + ((v * incv) >> 8);
     }
@@ -5245,8 +5032,7 @@ void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
     }
 
     if (VDPLINE_SZ(info->islinescroll)) {
-      info->coordincx =
-          info->lineinfo[lineindex << res_shift].CoordinateIncH / 256.0f;
+      info->coordincx = info->lineinfo[lineindex << res_shift].CoordinateIncH / 256.0f;
       if (info->coordincx == 0) {
         info->coordincx = vdp2width;
       } else {
@@ -5305,8 +5091,7 @@ void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
       if (pagex < 0)
         pagex = info->pagewh - 1 + pagex;
 
-      if (planex != preplanex || pagex != prepagex || planey != preplaney ||
-          pagey != prepagey) {
+      if (planex != preplanex || pagex != prepagex || planey != preplaney || pagey != prepagey) {
         getPalAndCharAddr(info, planex, pagex, planey, pagey);
         preplanex = planex;
         preplaney = planey;
@@ -5368,16 +5153,14 @@ void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
   }
 }
 
-void VIDVulkan::getPatternAddrUsingPatternname(vdp2draw_struct *info,
-                                               u16 paternname) {
+void VIDVulkan::getPatternAddrUsingPatternname(vdp2draw_struct *info, u16 paternname) {
   u16 tmp = paternname;
   info->specialfunction = (info->supplementdata >> 9) & 0x1;
   info->specialcolorfunction = (info->supplementdata >> 8) & 0x1;
 
   switch (info->colornumber) {
   case 0: // in 16 colors
-    info->paladdr =
-        ((tmp & 0xF000) >> 12) | ((info->supplementdata & 0xE0) >> 1);
+    info->paladdr = ((tmp & 0xF000) >> 12) | ((info->supplementdata & 0xE0) >> 1);
     break;
   default: // not in 16 colors
     info->paladdr = (tmp & 0x7000) >> 8;
@@ -5393,8 +5176,7 @@ void VIDVulkan::getPatternAddrUsingPatternname(vdp2draw_struct *info,
       info->charaddr = (tmp & 0x3FF) | ((info->supplementdata & 0x1F) << 10);
       break;
     case 2:
-      info->charaddr = ((tmp & 0x3FF) << 2) | (info->supplementdata & 0x3) |
-                       ((info->supplementdata & 0x1C) << 10);
+      info->charaddr = ((tmp & 0x3FF) << 2) | (info->supplementdata & 0x3) | ((info->supplementdata & 0x1C) << 10);
       break;
     }
     break;
@@ -5406,8 +5188,7 @@ void VIDVulkan::getPatternAddrUsingPatternname(vdp2draw_struct *info,
       info->charaddr = (tmp & 0xFFF) | ((info->supplementdata & 0x1C) << 10);
       break;
     case 2:
-      info->charaddr = ((tmp & 0xFFF) << 2) | (info->supplementdata & 0x3) |
-                       ((info->supplementdata & 0x10) << 10);
+      info->charaddr = ((tmp & 0xFFF) << 2) | (info->supplementdata & 0x3) | ((info->supplementdata & 0x10) << 10);
       break;
     }
     break;
@@ -5431,8 +5212,7 @@ void VIDVulkan::getPatternAddr(vdp2draw_struct *info) {
 
     switch (info->colornumber) {
     case 0: // in 16 colors
-      info->paladdr =
-          ((tmp & 0xF000) >> 12) | ((info->supplementdata & 0xE0) >> 1);
+      info->paladdr = ((tmp & 0xF000) >> 12) | ((info->supplementdata & 0xE0) >> 1);
       break;
     default: // not in 16 colors
       info->paladdr = (tmp & 0x7000) >> 8;
@@ -5448,8 +5228,7 @@ void VIDVulkan::getPatternAddr(vdp2draw_struct *info) {
         info->charaddr = (tmp & 0x3FF) | ((info->supplementdata & 0x1F) << 10);
         break;
       case 2:
-        info->charaddr = ((tmp & 0x3FF) << 2) | (info->supplementdata & 0x3) |
-                         ((info->supplementdata & 0x1C) << 10);
+        info->charaddr = ((tmp & 0x3FF) << 2) | (info->supplementdata & 0x3) | ((info->supplementdata & 0x1C) << 10);
         break;
       }
       break;
@@ -5461,8 +5240,7 @@ void VIDVulkan::getPatternAddr(vdp2draw_struct *info) {
         info->charaddr = (tmp & 0xFFF) | ((info->supplementdata & 0x1C) << 10);
         break;
       case 2:
-        info->charaddr = ((tmp & 0xFFF) << 2) | (info->supplementdata & 0x3) |
-                         ((info->supplementdata & 0x10) << 10);
+        info->charaddr = ((tmp & 0xFFF) << 2) | (info->supplementdata & 0x3) | ((info->supplementdata & 0x10) << 10);
         break;
       }
       break;
@@ -5496,12 +5274,10 @@ void VIDVulkan::getPatternAddr(vdp2draw_struct *info) {
   info->charaddr *= 0x20; // thanks Runik
 }
 
-void VIDVulkan::getPalAndCharAddr(vdp2draw_struct *info, int planex, int x,
-                                  int planey, int y) {
-  u32 addr = info->addr +
-             (info->pagewh * info->pagewh * info->planew * planey +
-              info->pagewh * info->pagewh * planex + info->pagewh * y + x) *
-                 info->patterndatasize * 2;
+void VIDVulkan::getPalAndCharAddr(vdp2draw_struct *info, int planex, int x, int planey, int y) {
+  u32 addr = info->addr + (info->pagewh * info->pagewh * info->planew * planey + info->pagewh * info->pagewh * planex +
+                           info->pagewh * y + x) *
+                              info->patterndatasize * 2;
 
   switch (info->patterndatasize) {
   case 1: {
@@ -5512,8 +5288,7 @@ void VIDVulkan::getPalAndCharAddr(vdp2draw_struct *info, int planex, int x,
 
     switch (info->colornumber) {
     case 0: // in 16 colors
-      info->paladdr =
-          ((tmp & 0xF000) >> 12) | ((info->supplementdata & 0xE0) >> 1);
+      info->paladdr = ((tmp & 0xF000) >> 12) | ((info->supplementdata & 0xE0) >> 1);
       break;
     default: // not in 16 colors
       info->paladdr = (tmp & 0x7000) >> 8;
@@ -5529,8 +5304,7 @@ void VIDVulkan::getPalAndCharAddr(vdp2draw_struct *info, int planex, int x,
         info->charaddr = (tmp & 0x3FF) | ((info->supplementdata & 0x1F) << 10);
         break;
       case 2:
-        info->charaddr = ((tmp & 0x3FF) << 2) | (info->supplementdata & 0x3) |
-                         ((info->supplementdata & 0x1C) << 10);
+        info->charaddr = ((tmp & 0x3FF) << 2) | (info->supplementdata & 0x3) | ((info->supplementdata & 0x1C) << 10);
         break;
       }
       break;
@@ -5542,8 +5316,7 @@ void VIDVulkan::getPalAndCharAddr(vdp2draw_struct *info, int planex, int x,
         info->charaddr = (tmp & 0xFFF) | ((info->supplementdata & 0x1C) << 10);
         break;
       case 2:
-        info->charaddr = ((tmp & 0xFFF) << 2) | (info->supplementdata & 0x3) |
-                         ((info->supplementdata & 0x10) << 10);
+        info->charaddr = ((tmp & 0xFFF) << 2) | (info->supplementdata & 0x3) | ((info->supplementdata & 0x10) << 10);
         break;
       }
       break;
@@ -5576,12 +5349,9 @@ void VIDVulkan::getPalAndCharAddr(vdp2draw_struct *info, int planex, int x,
   info->charaddr *= 0x20; // thanks Runik
 }
 
-void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x,
-                            int y, int cx, int cy) {
-  u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) |
-                  info->charaddr | info->transparencyenable |
-                  ((info->patternpixelwh >> 4) << 1) |
-                  (((u64)(info->coloroffset >> 8) & 0x07) << 32);
+void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x, int y, int cx, int cy) {
+  u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr | info->transparencyenable |
+                  ((info->patternpixelwh >> 4) << 1) | (((u64)(info->coloroffset >> 8) & 0x07) << 32);
 
   TextureCache c;
   vdp2draw_struct tile = {};
@@ -5614,9 +5384,7 @@ void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x,
   // else
   tile.priority = info->priority;
   if (info->specialprimode == 1) {
-    tile.priorityOffset =
-        (int)((info->priority & 0xFFFFFFFE) | info->specialfunction) -
-        (int)info->priority;
+    tile.priorityOffset = (int)((info->priority & 0xFFFFFFFE) | info->specialfunction) - (int)info->priority;
   } else {
     tile.priorityOffset = 0;
   }
@@ -5689,9 +5457,8 @@ void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x,
   }
 }
 
-void VIDVulkan::genQuadVertex(vdp2draw_struct *input, CharTexture *output,
-                              YglCache *c, int cx, int cy, float sx, float sy,
-                              int cash_flg) {
+void VIDVulkan::genQuadVertex(vdp2draw_struct *input, CharTexture *output, YglCache *c, int cx, int cy, float sx,
+                              float sy, int cash_flg) {
   unsigned int x, y;
   if (output != NULL) {
     tm->allocate(output, input->cellw, input->cellh, &x, &y);
@@ -5764,8 +5531,7 @@ void VIDVulkan::drawCell(vdp2draw_struct *info, CharTexture *texture) {
   }
 }
 
-u32 VIDVulkan::getPixel4bpp(vdp2draw_struct *info, u32 addr,
-                            CharTexture *texture) {
+u32 VIDVulkan::getPixel4bpp(vdp2draw_struct *info, u32 addr, CharTexture *texture) {
 
   u32 cramindex;
   u16 dotw = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
@@ -5818,8 +5584,7 @@ u32 VIDVulkan::getPixel4bpp(vdp2draw_struct *info, u32 addr,
   return 0;
 }
 
-u32 VIDVulkan::getPixel8bpp(vdp2draw_struct *info, u32 addr,
-                            CharTexture *texture) {
+u32 VIDVulkan::getPixel8bpp(vdp2draw_struct *info, u32 addr, CharTexture *texture) {
 
   u32 cramindex;
   u16 dotw = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
@@ -5887,9 +5652,8 @@ u32 VIDVulkan::getPixel32bppbmp(vdp2draw_struct *info, u32 addr) {
 
 u32 VIDVulkan::getAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex) {
   u32 alpha = info->alpha;
-  const int CCMD =
-      ((fixVdp2Regs->CCCTL >> 8) & 0x01); // hard/vdp2/hon/p12_14.htm#CCMD_
-  if (CCMD == 0) {                        // Calculate Rate mode
+  const int CCMD = ((fixVdp2Regs->CCCTL >> 8) & 0x01); // hard/vdp2/hon/p12_14.htm#CCMD_
+  if (CCMD == 0) {                                     // Calculate Rate mode
     switch (info->specialcolormode) {
     case 1:
       if (info->specialcolorfunction == 0) {
@@ -5968,27 +5732,20 @@ void DynamicTexture::create(VIDVulkan *vulkan, int texWidth, int texHeight) {
   memset(pixels, 0, texWidth * texHeight * 4);
 
   vulkan->createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                       stagingBuffer, stagingBufferMemory);
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
+                       stagingBufferMemory);
 
-  vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0,
-              (void **)&dynamicBuf);
+  vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, (void **)&dynamicBuf);
   memcpy(dynamicBuf, pixels, static_cast<size_t>(imageSize));
   vkUnmapMemory(device, stagingBufferMemory);
 
-  vulkan->createImage(
-      texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
-      VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, memory);
-  vulkan->transitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM,
-                                VK_IMAGE_LAYOUT_UNDEFINED,
+  vulkan->createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
+                      VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                      image, memory);
+  vulkan->transitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  vulkan->copyBufferToImage(stagingBuffer, image,
-                            static_cast<uint32_t>(texWidth),
-                            static_cast<uint32_t>(texHeight));
-  vulkan->transitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM,
-                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+  vulkan->copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+  vulkan->transitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
   // vkDestroyBuffer(device, stagingBuffer, nullptr);
   // vkFreeMemory(device, stagingBufferMemory, nullptr);
@@ -6030,8 +5787,7 @@ void DynamicTexture::create(VIDVulkan *vulkan, int texWidth, int texHeight) {
     throw std::runtime_error("failed to create texture sampler!");
   }
 
-  vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0,
-              (void **)&dynamicBuf);
+  vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, (void **)&dynamicBuf);
 }
 
 void VIDVulkan::onUpdateColorRamWord(u32 addr) {
@@ -6103,8 +5859,7 @@ void DynamicTexture::update(VIDVulkan *vulkan, VkCommandBuffer commandBuffer) {
   sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
   destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-  vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0,
-                       nullptr, 0, nullptr, 1, &barrier);
+  vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
   //------------------------------------------------------------------------
   VkBufferImageCopy region = {};
@@ -6119,8 +5874,7 @@ void DynamicTexture::update(VIDVulkan *vulkan, VkCommandBuffer commandBuffer) {
 
   region.imageOffset = {0, 0, 0};
   region.imageExtent = {(uint32_t)width, (uint32_t)height, 1};
-  vkCmdCopyBufferToImage(commandBuffer, stagingBuffer, image,
-                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+  vkCmdCopyBufferToImage(commandBuffer, stagingBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
   VkImageMemoryBarrier destbarrier = {};
   destbarrier = barrier;
@@ -6132,11 +5886,9 @@ void DynamicTexture::update(VIDVulkan *vulkan, VkCommandBuffer commandBuffer) {
   sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
   destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-  vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0,
-                       nullptr, 0, nullptr, 1, &destbarrier);
+  vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &destbarrier);
   VkDeviceSize imageSize = width * height * 4;
-  vkMapMemory(vulkan->getDevice(), stagingBufferMemory, 0, imageSize, 0,
-              (void **)&dynamicBuf);
+  vkMapMemory(vulkan->getDevice(), stagingBufferMemory, 0, imageSize, 0, (void **)&dynamicBuf);
 }
 
 /*
@@ -6180,8 +5932,7 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   image.samples = VK_SAMPLE_COUNT_1_BIT;
   image.tiling = VK_IMAGE_TILING_OPTIMAL;
   // We will sample directly from the color attachment
-  image.usage =
-      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+  image.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
   VkMemoryAllocateInfo memAlloc = {};
   memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -6191,12 +5942,9 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.image));
   vkGetImageMemoryRequirements(device, offscreenPass.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
-  memAlloc.memoryTypeIndex = findMemoryType(
-      memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  VK_CHECK_RESULT(
-      vkAllocateMemory(device, &memAlloc, nullptr, &offscreenPass.mem));
-  VK_CHECK_RESULT(
-      vkBindImageMemory(device, offscreenPass.image, offscreenPass.mem, 0));
+  memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &offscreenPass.mem));
+  VK_CHECK_RESULT(vkBindImageMemory(device, offscreenPass.image, offscreenPass.mem, 0));
 
   VkImageViewCreateInfo colorImageView = {};
   colorImageView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -6209,9 +5957,7 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   colorImageView.subresourceRange.baseArrayLayer = 0;
   colorImageView.subresourceRange.layerCount = 1;
   colorImageView.image = offscreenPass.image;
-  VK_CHECK_RESULT(
-      vkCreateImageView(device, &colorImageView, nullptr, &offscreenPass.view));
-
+  VK_CHECK_RESULT(vkCreateImageView(device, &colorImageView, nullptr, &offscreenPass.view));
 
   // Create sampler to sample from the attachment in the fragment shader
   VkSamplerCreateInfo samplerInfo = {};
@@ -6227,45 +5973,35 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   samplerInfo.minLod = 0.0f;
   samplerInfo.maxLod = 1.0f;
   samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-  VK_CHECK_RESULT(
-      vkCreateSampler(device, &samplerInfo, nullptr, &offscreenPass.sampler));
+  VK_CHECK_RESULT(vkCreateSampler(device, &samplerInfo, nullptr, &offscreenPass.sampler));
 
   VkFormat fbDepthFormat;
-  VkBool32 validDepthFormat =
-      vks::tools::getSupportedDepthFormat(physicalDevice, &fbDepthFormat);
+  VkBool32 validDepthFormat = vks::tools::getSupportedDepthFormat(physicalDevice, &fbDepthFormat);
   assert(validDepthFormat);
 
   // Depth stencil attachment ------------------------------------------------------
   image.format = fbDepthFormat;
   image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
-  VK_CHECK_RESULT(
-      vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
+  VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
   vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
-  memAlloc.memoryTypeIndex = findMemoryType(
-      memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  VK_CHECK_RESULT(
-      vkAllocateMemory(device, &memAlloc, nullptr, &offscreenPass.depth.mem));
-  VK_CHECK_RESULT(vkBindImageMemory(device, offscreenPass.depth.image,
-                                    offscreenPass.depth.mem, 0));  
+  memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &offscreenPass.depth.mem));
+  VK_CHECK_RESULT(vkBindImageMemory(device, offscreenPass.depth.image, offscreenPass.depth.mem, 0));
 
-  VkImageViewCreateInfo depthStencilView =
-      vks::initializers::imageViewCreateInfo();
+  VkImageViewCreateInfo depthStencilView = vks::initializers::imageViewCreateInfo();
   depthStencilView.viewType = VK_IMAGE_VIEW_TYPE_2D;
   depthStencilView.format = fbDepthFormat;
   depthStencilView.flags = 0;
   depthStencilView.subresourceRange = {};
-  depthStencilView.subresourceRange.aspectMask =
-      VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+  depthStencilView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
   depthStencilView.subresourceRange.baseMipLevel = 0;
   depthStencilView.subresourceRange.levelCount = 1;
   depthStencilView.subresourceRange.baseArrayLayer = 0;
   depthStencilView.subresourceRange.layerCount = 1;
   depthStencilView.image = offscreenPass.depth.image;
-  VK_CHECK_RESULT(vkCreateImageView(device, &depthStencilView, nullptr,
-                                    &offscreenPass.depth.view));                                    
-
+  VK_CHECK_RESULT(vkCreateImageView(device, &depthStencilView, nullptr, &offscreenPass.depth.view));
 
   std::array<VkAttachmentDescription, 2> attchmentDescriptions = {};
   // Color attachment
@@ -6286,600 +6022,10 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   attchmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attchmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   attchmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  attchmentDescriptions[1].finalLayout =
-      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  attchmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-  VkAttachmentReference colorReference = {
-      0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
-  VkAttachmentReference depthReference = {
-      1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
-
-  VkSubpassDescription subpassDescription = {};
-  subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpassDescription.colorAttachmentCount = 1;
-  subpassDescription.pColorAttachments = &colorReference;
-  subpassDescription.pDepthStencilAttachment = &depthReference;
-
-  // Use subpass dependencies for layout transitions
-  std::array<VkSubpassDependency, 3> dependencies;
-
-  dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-  dependencies[0].dstSubpass = 0;
-  dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-  dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-  dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-  dependencies[1].srcSubpass = 0;
-  dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-  dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-  dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-  dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-  dependencies[2].srcSubpass = 0;
-  dependencies[2].dstSubpass = 0;
-  dependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependencies[2].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  dependencies[2].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;  
-
-  // Create the actual renderpass
-  VkRenderPassCreateInfo renderPassInfo = {};
-  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  renderPassInfo.attachmentCount =
-      static_cast<uint32_t>(attchmentDescriptions.size());
-  renderPassInfo.pAttachments = attchmentDescriptions.data();
-
-  // renderPassInfo.subpassCount = 0;
-  // renderPassInfo.pSubpasses = VK_NULL_HANDLE; // Optional
-
-  renderPassInfo.subpassCount = 1;
-  renderPassInfo.pSubpasses = &subpassDescription;
-  renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
-  renderPassInfo.pDependencies = dependencies.data();
-
-  VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr,
-                                     &offscreenPass.renderPass));
-
-  VkImageView attachments[2];
-  attachments[0] = offscreenPass.view;
-  attachments[1] = offscreenPass.depth.view;
-
-  VkFramebufferCreateInfo fbufCreateInfo = {};
-  fbufCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  fbufCreateInfo.renderPass = offscreenPass.renderPass;
-  fbufCreateInfo.attachmentCount = 2;
-  fbufCreateInfo.pAttachments = attachments;
-  fbufCreateInfo.width = offscreenPass.width;
-  fbufCreateInfo.height = offscreenPass.height;
-  fbufCreateInfo.layers = 1;
-  VK_CHECK_RESULT(vkCreateFramebuffer(device, &fbufCreateInfo, nullptr,
-                                      &offscreenPass.frameBuffer));
-
-#if 0
-  VkSemaphoreCreateInfo semaphore_create_info{};
-  semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-  vkCreateSemaphore(device, &semaphore_create_info, nullptr, &offscreenPass.color[0]._render_complete_semaphore);
-  vkCreateSemaphore(device, &semaphore_create_info, nullptr, &offscreenPass.color[1]._render_complete_semaphore);
-#endif
-
-  // Fill a descriptor for later use in a descriptor set
-  offscreenPass.descriptor.imageLayout =
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  offscreenPass.descriptor.imageView = offscreenPass.view;
-  offscreenPass.descriptor.sampler = offscreenPass.sampler;
-}
-
-void VIDVulkan::generateOffscreenRenderer() {
-  std::vector<Vertex> vertices;
-  std::vector<uint16_t> indices;
-
-  Vertex a(glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f),
-           glm::vec4(0.0f, 0.0f, 0.0f, 0.0f),
-           glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-  vertices.push_back(a);
-  Vertex b(glm::vec4(1.0f, -1.0f, 0.0f, 1.0f),
-           glm::vec4(0.0f, 0.0f, 0.0f, 0.0f),
-           glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-  vertices.push_back(b);
-  Vertex c(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f),
-           glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
-  vertices.push_back(c);
-  Vertex d(glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f),
-           glm::vec4(0.0f, 0.0f, 0.0f, 0.0f),
-           glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
-  vertices.push_back(d);
-
-  indices.push_back(0);
-  indices.push_back(1);
-  indices.push_back(2);
-  indices.push_back(2);
-  indices.push_back(3);
-  indices.push_back(0);
-
-  const VkDevice device = getDevice();
-
-  // VertexBuffer
-  VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-
-  VkBuffer stagingBuffer;
-  VkDeviceMemory stagingBufferMemory;
-  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               stagingBuffer, stagingBufferMemory);
-
-  void *data;
-  vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-  memcpy(data, vertices.data(), (size_t)bufferSize);
-  vkUnmapMemory(device, stagingBufferMemory);
-
-  createBuffer(
-      bufferSize,
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, offscreenRenderer.vertexBuffer,
-      offscreenRenderer.vertexBufferMemory);
-
-  copyBuffer(stagingBuffer, offscreenRenderer.vertexBuffer, bufferSize);
-
-  vkDestroyBuffer(device, stagingBuffer, nullptr);
-  vkFreeMemory(device, stagingBufferMemory, nullptr);
-
-  // IndexBuffer
-  bufferSize = sizeof(indices[0]) * indices.size();
-
-  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               stagingBuffer, stagingBufferMemory);
-
-  vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-  memcpy(data, indices.data(), (size_t)bufferSize);
-  vkUnmapMemory(device, stagingBufferMemory);
-
-  createBuffer(
-      bufferSize,
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, offscreenRenderer.indexBuffer,
-      offscreenRenderer.indexBufferMemory);
-
-  copyBuffer(stagingBuffer, offscreenRenderer.indexBuffer, bufferSize);
-
-  vkDestroyBuffer(device, stagingBuffer, nullptr);
-  vkFreeMemory(device, stagingBufferMemory, nullptr);
-
-  offscreenRenderer.blit = new VdpPipelineBlit(this, tm, vm);
-  offscreenRenderer.blit->setRenderPass(
-      _renderer->getWindow()->GetVulkanKeepRenderPass());
-  offscreenRenderer.blit->createGraphicsPipeline();
-
-  offscreenRenderer.mosaic = new VdpPipelineMosaic(this, tm, vm);
-  offscreenRenderer.mosaic->setRenderPass(
-      _renderer->getWindow()->GetVulkanKeepRenderPass());
-  offscreenRenderer.mosaic->createGraphicsPipeline();
-
-#if 0
-  offscreenRenderer.perline = new VdpPipelinePerLine(this, tm, vm);
-  offscreenRenderer.perline->setRenderPass(_renderer->getWindow()->GetVulkanKeepRenderPass());
-  offscreenRenderer.perline->createGraphicsPipeline();
-
-  offscreenRenderer.perlineDestination = new VdpPipelinePerLineDst(this, tm, vm);
-  offscreenRenderer.perlineDestination->setRenderPass(_renderer->getWindow()->GetVulkanKeepRenderPass());
-  offscreenRenderer.perlineDestination->createGraphicsPipeline();
-#endif
-}
-
-void VIDVulkan::deleteOfscreenPath() {
-  VkDevice device = getDevice();
-  if (offscreenPass.frameBuffer != VK_NULL_HANDLE) {
-    vkDestroySampler(device, offscreenPass.sampler, nullptr);
-    offscreenPass.sampler = VK_NULL_HANDLE;
-    vkDestroyImage(device, offscreenPass.image, nullptr);
-    offscreenPass.image = VK_NULL_HANDLE;
-    vkFreeMemory(device, offscreenPass.mem, nullptr);
-    offscreenPass.mem = VK_NULL_HANDLE;
-    vkDestroyImageView(device, offscreenPass.view, nullptr);
-    offscreenPass.view = VK_NULL_HANDLE;
-    vkDestroyFramebuffer(device, offscreenPass.frameBuffer, nullptr);
-    offscreenPass.frameBuffer = VK_NULL_HANDLE;
-  }
-}
-
-void VIDVulkan::renderToOffecreenTarget(VkCommandBuffer commandBuffer,
-                                        VdpPipeline *render) {
-
-  std::array<VkClearValue, 2> clear_values{};
-  clear_values[1].depthStencil.depth = 0.0f;
-  clear_values[1].depthStencil.stencil = 0;
-  clear_values[0].color.float32[0] = 0.0;
-  clear_values[0].color.float32[1] = 0.0;
-  clear_values[0].color.float32[2] = 0.0;
-  clear_values[0].color.float32[3] = 0.0f;
-
-  VkRenderPassBeginInfo renderPassBeginInfo = {};
-  renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  renderPassBeginInfo.renderPass = offscreenPass.renderPass;
-  renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer;
-  renderPassBeginInfo.renderArea.extent.width = offscreenPass.width;
-  renderPassBeginInfo.renderArea.extent.height = offscreenPass.height;
-  renderPassBeginInfo.clearValueCount = clear_values.size();
-  renderPassBeginInfo.pClearValues = clear_values.data();
-
-  vkCmdEndRenderPass(commandBuffer);
-
-  vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo,
-                       VK_SUBPASS_CONTENTS_INLINE);
-
-  auto c = vk::CommandBuffer(commandBuffer);
-  vk::Viewport viewport;
-  vk::Rect2D scissor;
-
-  viewport.width = offscreenPass.width;
-  viewport.height = offscreenPass.height;
-  viewport.x = 0;
-  viewport.y = 0;
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-  c.setViewport(0, 1, &viewport);
-
-  scissor.extent.width = offscreenPass.width;
-  scissor.extent.height = offscreenPass.height;
-  scissor.offset.x = 0;
-  scissor.offset.y = 0;
-  c.setScissor(0, 1, &scissor);
-
-  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          render->getPipelineLayout(), 0, 1,
-                          render->getDescriptorSet(), 0, nullptr);
-
-  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    render->getGraphicsPipeline());
-
-  VkBuffer vertexBuffers[] = {vm->getVertexBuffer(render->vectexBlock)};
-  VkDeviceSize offsets[] = {render->vertexOffset};
-
-  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-  vkCmdBindIndexBuffer(commandBuffer, vm->getIndexBuffer(render->vectexBlock),
-                       render->indexOffset, VK_INDEX_TYPE_UINT16);
-
-  vkCmdDrawIndexed(commandBuffer, render->indexSize, 1, 0, 0, 0);
-
-  c.endRenderPass();
-}
-
-void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p,
-                                                 VkCommandBuffer commandBuffer,
-                                                 const UniformBufferObject &ubo,
-                                                 VkImageView lineinfo) {
-
-  UniformBufferObject ubomini = ubo;
-  int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
-  VkRect2D render_area{};
-  render_area.offset.x = 0;
-  render_area.offset.y = 0;
-  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
-      pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
-    render_area.extent.width =
-        _renderer->getWindow()->GetVulkanSurfaceSize().height;
-    render_area.extent.height =
-        _renderer->getWindow()->GetVulkanSurfaceSize().width;
-  } else {
-    render_area.extent.width =
-        _renderer->getWindow()->GetVulkanSurfaceSize().width;
-    render_area.extent.height =
-        _renderer->getWindow()->GetVulkanSurfaceSize().height;
-  }
-
-
-  VkRenderPassBeginInfo render_pass_begin_info{};
-  render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  render_pass_begin_info.renderPass =
-      _renderer->getWindow()->GetVulkanKeepRenderPass();
-  render_pass_begin_info.framebuffer =
-      _renderer->getWindow()->GetVulkanActiveFramebuffer();
-  render_pass_begin_info.renderArea = render_area;
-  render_pass_begin_info.clearValueCount = 0;
-  render_pass_begin_info.pClearValues = nullptr;
-
-  vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info,
-                       VK_SUBPASS_CONTENTS_INLINE);
-
-  auto c = vk::CommandBuffer(commandBuffer);
-  vk::Viewport viewport;
-  vk::Rect2D scissor;
-  if (resolutionMode != RES_NATIVE) {
-    viewport.width = renderWidth;
-    viewport.height = renderHeight;
-    viewport.x = 0;
-    viewport.y = 0;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    c.setViewport(0, 1, &viewport);
-
-    scissor.extent.width = renderWidth;
-    scissor.extent.height = renderHeight;
-    scissor.offset.x = 0;
-    scissor.offset.y = 0;
-    c.setScissor(0, 1, &scissor);
-  } else {
-    viewport.width = renderWidth;
-    viewport.height = renderHeight;
-    viewport.x = originx;
-    viewport.y = originy;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    c.setViewport(0, 1, &viewport);
-
-    scissor.extent.width = renderWidth;
-    scissor.extent.height = renderHeight;
-    scissor.offset.x = originx;
-    scissor.offset.y = originy;
-    c.setScissor(0, 1, &scissor);
-  }
-
-  p->setUBO(&ubomini, sizeof(ubomini));
-  p->setSampler(VdpPipeline::bindIdTexture, offscreenPass.view,
-                offscreenPass.sampler);
-  p->setSampler(VdpPipeline::bindIdLine, lineinfo, offscreenPass.sampler);
-  p->setSampler(VdpPipeline::bindIdWindow, windowRenderer->getImageView(),
-                windowRenderer->getSampler());
-  p->updateDescriptorSets();
-
-  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          p->getPipelineLayout(), 0, 1, p->getDescriptorSet(),
-                          0, nullptr);
-
-  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    p->getGraphicsPipeline());
-
-  VkBuffer vertexBuffers[] = {offscreenRenderer.vertexBuffer};
-  VkDeviceSize offsets[] = {0};
-
-  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-  vkCmdBindIndexBuffer(commandBuffer, offscreenRenderer.indexBuffer, 0,
-                       VK_INDEX_TYPE_UINT16);
-
-  vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
-}
-
-void VIDVulkan::renderEffectToMainTarget(VkCommandBuffer commandBuffer,
-                                         const UniformBufferObject &ubo,
-                                         int mode) {
-
-  VkRect2D render_area{};
-  render_area.offset.x = 0;
-  render_area.offset.y = 0;
-  render_area.extent = _renderer->getWindow()->GetVulkanSurfaceSize();
-
-  VkRenderPassBeginInfo render_pass_begin_info{};
-  render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  render_pass_begin_info.renderPass =
-      _renderer->getWindow()->GetVulkanKeepRenderPass();
-  render_pass_begin_info.framebuffer =
-      _renderer->getWindow()->GetVulkanActiveFramebuffer();
-  render_pass_begin_info.renderArea = render_area;
-  render_pass_begin_info.clearValueCount = 0;
-  render_pass_begin_info.pClearValues = nullptr;
-
-  vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info,
-                       VK_SUBPASS_CONTENTS_INLINE);
-
-  auto c = vk::CommandBuffer(commandBuffer);
-  vk::Viewport viewport;
-  vk::Rect2D scissor;
-  if (resolutionMode != RES_NATIVE) {
-    viewport.width = renderWidth;
-    viewport.height = renderHeight;
-    viewport.x = 0;
-    viewport.y = 0;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    c.setViewport(0, 1, &viewport);
-
-    scissor.extent.width = renderWidth;
-    scissor.extent.height = renderHeight;
-    scissor.offset.x = 0;
-    scissor.offset.y = 0;
-    c.setScissor(0, 1, &scissor);
-  } else {
-    viewport.width = renderWidth;
-    viewport.height = renderHeight;
-    viewport.x = originx;
-    viewport.y = originy;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    c.setViewport(0, 1, &viewport);
-
-    scissor.extent.width = renderWidth;
-    scissor.extent.height = renderHeight;
-    scissor.offset.x = originx;
-    scissor.offset.y = originy;
-    c.setScissor(0, 1, &scissor);
-  }
-
-  if (mode == 0) {
-    int dmyubo = 0;
-    offscreenRenderer.blit->setUBO(&dmyubo, sizeof(dmyubo));
-    offscreenRenderer.blit->setSampler(
-        VdpPipeline::bindIdTexture, offscreenPass.view, offscreenPass.sampler);
-
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            offscreenRenderer.blit->getPipelineLayout(), 0, 1,
-                            offscreenRenderer.blit->getDescriptorSet(), 0,
-                            nullptr);
-
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                      offscreenRenderer.blit->getGraphicsPipeline());
-  } else if (mode == 1) {
-
-    offscreenRenderer.mosaic->setUBO(&ubo, sizeof(ubo));
-    offscreenRenderer.mosaic->setSampler(
-        VdpPipeline::bindIdTexture, offscreenPass.view, offscreenPass.sampler);
-    offscreenRenderer.mosaic->setSampler(VdpPipeline::bindIdWindow,
-                                         windowRenderer->getImageView(),
-                                         windowRenderer->getSampler());
-    offscreenRenderer.mosaic->updateDescriptorSets();
-
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            offscreenRenderer.mosaic->getPipelineLayout(), 0, 1,
-                            offscreenRenderer.mosaic->getDescriptorSet(), 0,
-                            nullptr);
-
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                      offscreenRenderer.mosaic->getGraphicsPipeline());
-  }
-
-  VkBuffer vertexBuffers[] = {offscreenRenderer.vertexBuffer};
-  VkDeviceSize offsets[] = {0};
-
-  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-  vkCmdBindIndexBuffer(commandBuffer, offscreenRenderer.indexBuffer, 0,
-                       VK_INDEX_TYPE_UINT16);
-
-  vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
-}
-
-void VIDVulkan::generateSubRenderTarget(int width, int height) {
-
-  VkDevice device = getDevice();
-  VkPhysicalDevice physicalDevice = getPhysicalDevice();
-
-  subRenderTarget.width = width;
-  subRenderTarget.height = height;
-
-  // Find a suitable depth format
-  VkFormat fbDepthFormat;
-  VkBool32 validDepthFormat =
-      vks::tools::getSupportedDepthFormat(physicalDevice, &fbDepthFormat);
-  assert(validDepthFormat);
-
-  // Color attachment
-  VkImageCreateInfo image = vks::initializers::imageCreateInfo();
-  image.imageType = VK_IMAGE_TYPE_2D;
-  image.format = VK_FORMAT_R8G8B8A8_UNORM;
-  image.extent.width = subRenderTarget.width;
-  image.extent.height = subRenderTarget.height;
-  image.extent.depth = 1;
-  image.mipLevels = 1;
-  image.arrayLayers = 1;
-  image.samples = VK_SAMPLE_COUNT_1_BIT;
-  image.tiling = VK_IMAGE_TILING_OPTIMAL;
-  // We will sample directly from the color attachment
-  image.usage =
-      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-  VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
-  VkMemoryRequirements memReqs;
-
-  VK_CHECK_RESULT(
-      vkCreateImage(device, &image, nullptr, &subRenderTarget.color.image));
-  vkGetImageMemoryRequirements(device, subRenderTarget.color.image, &memReqs);
-  memAlloc.allocationSize = memReqs.size;
-  memAlloc.memoryTypeIndex = findMemoryType(
-      memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-  VK_CHECK_RESULT(
-      vkAllocateMemory(device, &memAlloc, nullptr, &subRenderTarget.color.mem));
-  VK_CHECK_RESULT(vkBindImageMemory(device, subRenderTarget.color.image,
-                                    subRenderTarget.color.mem, 0));
-
-  VkImageViewCreateInfo colorImageView =
-      vks::initializers::imageViewCreateInfo();
-  colorImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  colorImageView.format = VK_FORMAT_R8G8B8A8_UNORM;
-  colorImageView.subresourceRange = {};
-  colorImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  colorImageView.subresourceRange.baseMipLevel = 0;
-  colorImageView.subresourceRange.levelCount = 1;
-  colorImageView.subresourceRange.baseArrayLayer = 0;
-  colorImageView.subresourceRange.layerCount = 1;
-  colorImageView.image = subRenderTarget.color.image;
-  VK_CHECK_RESULT(vkCreateImageView(device, &colorImageView, nullptr,
-                                    &subRenderTarget.color.view));
-
-  // Create sampler to sample from the attachment in the fragment shader
-  VkSamplerCreateInfo samplerInfo = vks::initializers::samplerCreateInfo();
-  samplerInfo.magFilter = VK_FILTER_NEAREST;
-  samplerInfo.minFilter = VK_FILTER_NEAREST;
-  samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-  samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-  samplerInfo.addressModeV = samplerInfo.addressModeU;
-  samplerInfo.addressModeW = samplerInfo.addressModeU;
-  samplerInfo.mipLodBias = 0.0f;
-  samplerInfo.maxAnisotropy = 1.0f;
-  samplerInfo.minLod = 0.0f;
-  samplerInfo.maxLod = 1.0f;
-  samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-  VK_CHECK_RESULT(
-      vkCreateSampler(device, &samplerInfo, nullptr, &subRenderTarget.sampler));
-
-  // Depth stencil attachment
-  image.format = fbDepthFormat;
-  image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-
-  VK_CHECK_RESULT(
-      vkCreateImage(device, &image, nullptr, &subRenderTarget.depth.image));
-  vkGetImageMemoryRequirements(device, subRenderTarget.depth.image, &memReqs);
-  memAlloc.allocationSize = memReqs.size;
-  memAlloc.memoryTypeIndex = findMemoryType(
-      memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  VK_CHECK_RESULT(
-      vkAllocateMemory(device, &memAlloc, nullptr, &subRenderTarget.depth.mem));
-  VK_CHECK_RESULT(vkBindImageMemory(device, subRenderTarget.depth.image,
-                                    subRenderTarget.depth.mem, 0));
-
-  VkImageViewCreateInfo depthStencilView =
-      vks::initializers::imageViewCreateInfo();
-  depthStencilView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  depthStencilView.format = fbDepthFormat;
-  depthStencilView.flags = 0;
-  depthStencilView.subresourceRange = {};
-  depthStencilView.subresourceRange.aspectMask =
-      VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-  depthStencilView.subresourceRange.baseMipLevel = 0;
-  depthStencilView.subresourceRange.levelCount = 1;
-  depthStencilView.subresourceRange.baseArrayLayer = 0;
-  depthStencilView.subresourceRange.layerCount = 1;
-  depthStencilView.image = subRenderTarget.depth.image;
-  VK_CHECK_RESULT(vkCreateImageView(device, &depthStencilView, nullptr,
-                                    &subRenderTarget.depth.view));
-
-  // Create a separate render pass for the offscreen rendering as it may differ
-  // from the one used for scene rendering
-
-  std::array<VkAttachmentDescription, 2> attchmentDescriptions = {};
-  // Color attachment
-  attchmentDescriptions[0].format = VK_FORMAT_R8G8B8A8_UNORM;
-  attchmentDescriptions[0].samples = VK_SAMPLE_COUNT_1_BIT;
-  attchmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  attchmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  attchmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  attchmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  attchmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  attchmentDescriptions[0].finalLayout =
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  // Depth attachment
-  attchmentDescriptions[1].format = fbDepthFormat;
-  attchmentDescriptions[1].samples = VK_SAMPLE_COUNT_1_BIT;
-  attchmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  attchmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  attchmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-  attchmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-  attchmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  attchmentDescriptions[1].finalLayout =
-      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-  VkAttachmentReference colorReference = {
-      0, VK_IMAGE_LAYOUT_GENERAL /*VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL*/};
-  VkAttachmentReference depthReference = {
-      1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+  VkAttachmentReference colorReference = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+  VkAttachmentReference depthReference = {1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
   VkSubpassDescription subpassDescription = {};
   subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -6917,8 +6063,7 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   // Create the actual renderpass
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  renderPassInfo.attachmentCount =
-      static_cast<uint32_t>(attchmentDescriptions.size());
+  renderPassInfo.attachmentCount = static_cast<uint32_t>(attchmentDescriptions.size());
   renderPassInfo.pAttachments = attchmentDescriptions.data();
 
   // renderPassInfo.subpassCount = 0;
@@ -6929,32 +6074,541 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
   renderPassInfo.pDependencies = dependencies.data();
 
-  VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr,
-                                     &subRenderTarget.renderPass));
+  VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr, &offscreenPass.renderPass));
+
+  VkImageView attachments[2];
+  attachments[0] = offscreenPass.view;
+  attachments[1] = offscreenPass.depth.view;
+
+  VkFramebufferCreateInfo fbufCreateInfo = {};
+  fbufCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+  fbufCreateInfo.renderPass = offscreenPass.renderPass;
+  fbufCreateInfo.attachmentCount = 2;
+  fbufCreateInfo.pAttachments = attachments;
+  fbufCreateInfo.width = offscreenPass.width;
+  fbufCreateInfo.height = offscreenPass.height;
+  fbufCreateInfo.layers = 1;
+  VK_CHECK_RESULT(vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &offscreenPass.frameBuffer));
+
+#if 0
+  VkSemaphoreCreateInfo semaphore_create_info{};
+  semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+  vkCreateSemaphore(device, &semaphore_create_info, nullptr, &offscreenPass.color[0]._render_complete_semaphore);
+  vkCreateSemaphore(device, &semaphore_create_info, nullptr, &offscreenPass.color[1]._render_complete_semaphore);
+#endif
+
+  // Fill a descriptor for later use in a descriptor set
+  offscreenPass.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  offscreenPass.descriptor.imageView = offscreenPass.view;
+  offscreenPass.descriptor.sampler = offscreenPass.sampler;
+}
+
+void VIDVulkan::generateOffscreenRenderer() {
+  std::vector<Vertex> vertices;
+  std::vector<uint16_t> indices;
+
+  Vertex a(glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  vertices.push_back(a);
+  Vertex b(glm::vec4(1.0f, -1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+  vertices.push_back(b);
+  Vertex c(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+  vertices.push_back(c);
+  Vertex d(glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+  vertices.push_back(d);
+
+  indices.push_back(0);
+  indices.push_back(1);
+  indices.push_back(2);
+  indices.push_back(2);
+  indices.push_back(3);
+  indices.push_back(0);
+
+  const VkDevice device = getDevice();
+
+  // VertexBuffer
+  VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+  VkBuffer stagingBuffer;
+  VkDeviceMemory stagingBufferMemory;
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
+               stagingBufferMemory);
+
+  void *data;
+  vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+  memcpy(data, vertices.data(), (size_t)bufferSize);
+  vkUnmapMemory(device, stagingBufferMemory);
+
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, offscreenRenderer.vertexBuffer,
+               offscreenRenderer.vertexBufferMemory);
+
+  copyBuffer(stagingBuffer, offscreenRenderer.vertexBuffer, bufferSize);
+
+  vkDestroyBuffer(device, stagingBuffer, nullptr);
+  vkFreeMemory(device, stagingBufferMemory, nullptr);
+
+  // IndexBuffer
+  bufferSize = sizeof(indices[0]) * indices.size();
+
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
+               stagingBufferMemory);
+
+  vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+  memcpy(data, indices.data(), (size_t)bufferSize);
+  vkUnmapMemory(device, stagingBufferMemory);
+
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, offscreenRenderer.indexBuffer, offscreenRenderer.indexBufferMemory);
+
+  copyBuffer(stagingBuffer, offscreenRenderer.indexBuffer, bufferSize);
+
+  vkDestroyBuffer(device, stagingBuffer, nullptr);
+  vkFreeMemory(device, stagingBufferMemory, nullptr);
+
+  offscreenRenderer.blit = new VdpPipelineBlit(this, tm, vm);
+  offscreenRenderer.blit->setRenderPass(_renderer->getWindow()->GetVulkanKeepRenderPass());
+  offscreenRenderer.blit->createGraphicsPipeline();
+
+  offscreenRenderer.mosaic = new VdpPipelineMosaic(this, tm, vm);
+  offscreenRenderer.mosaic->setRenderPass(_renderer->getWindow()->GetVulkanKeepRenderPass());
+  offscreenRenderer.mosaic->createGraphicsPipeline();
+
+#if 0
+  offscreenRenderer.perline = new VdpPipelinePerLine(this, tm, vm);
+  offscreenRenderer.perline->setRenderPass(_renderer->getWindow()->GetVulkanKeepRenderPass());
+  offscreenRenderer.perline->createGraphicsPipeline();
+
+  offscreenRenderer.perlineDestination = new VdpPipelinePerLineDst(this, tm, vm);
+  offscreenRenderer.perlineDestination->setRenderPass(_renderer->getWindow()->GetVulkanKeepRenderPass());
+  offscreenRenderer.perlineDestination->createGraphicsPipeline();
+#endif
+}
+
+void VIDVulkan::deleteOfscreenPath() {
+  VkDevice device = getDevice();
+  if (offscreenPass.frameBuffer != VK_NULL_HANDLE) {
+    vkDestroySampler(device, offscreenPass.sampler, nullptr);
+    offscreenPass.sampler = VK_NULL_HANDLE;
+    vkDestroyImage(device, offscreenPass.image, nullptr);
+    offscreenPass.image = VK_NULL_HANDLE;
+    vkFreeMemory(device, offscreenPass.mem, nullptr);
+    offscreenPass.mem = VK_NULL_HANDLE;
+    vkDestroyImageView(device, offscreenPass.view, nullptr);
+    offscreenPass.view = VK_NULL_HANDLE;
+    vkDestroyFramebuffer(device, offscreenPass.frameBuffer, nullptr);
+    offscreenPass.frameBuffer = VK_NULL_HANDLE;
+  }
+}
+
+void VIDVulkan::renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeline *render) {
+
+  std::array<VkClearValue, 2> clear_values{};
+  clear_values[1].depthStencil.depth = 0.0f;
+  clear_values[1].depthStencil.stencil = 0;
+  clear_values[0].color.float32[0] = 0.0;
+  clear_values[0].color.float32[1] = 0.0;
+  clear_values[0].color.float32[2] = 0.0;
+  clear_values[0].color.float32[3] = 0.0f;
+
+  VkRenderPassBeginInfo renderPassBeginInfo = {};
+  renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  renderPassBeginInfo.renderPass = offscreenPass.renderPass;
+  renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer;
+  renderPassBeginInfo.renderArea.extent.width = offscreenPass.width;
+  renderPassBeginInfo.renderArea.extent.height = offscreenPass.height;
+  renderPassBeginInfo.clearValueCount = clear_values.size();
+  renderPassBeginInfo.pClearValues = clear_values.data();
+
+  vkCmdEndRenderPass(commandBuffer);
+
+  vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+  auto c = vk::CommandBuffer(commandBuffer);
+  vk::Viewport viewport;
+  vk::Rect2D scissor;
+
+  viewport.width = offscreenPass.width;
+  viewport.height = offscreenPass.height;
+  viewport.x = 0;
+  viewport.y = 0;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+  c.setViewport(0, 1, &viewport);
+
+  scissor.extent.width = offscreenPass.width;
+  scissor.extent.height = offscreenPass.height;
+  scissor.offset.x = 0;
+  scissor.offset.y = 0;
+  c.setScissor(0, 1, &scissor);
+
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, render->getPipelineLayout(), 0, 1,
+                          render->getDescriptorSet(), 0, nullptr);
+
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, render->getGraphicsPipeline());
+
+  VkBuffer vertexBuffers[] = {vm->getVertexBuffer(render->vectexBlock)};
+  VkDeviceSize offsets[] = {render->vertexOffset};
+
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+  vkCmdBindIndexBuffer(commandBuffer, vm->getIndexBuffer(render->vectexBlock), render->indexOffset,
+                       VK_INDEX_TYPE_UINT16);
+
+  vkCmdDrawIndexed(commandBuffer, render->indexSize, 1, 0, 0, 0);
+
+  c.endRenderPass();
+}
+
+void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer commandBuffer,
+                                                 const UniformBufferObject &ubo, VkImageView lineinfo) {
+
+  UniformBufferObject ubomini = ubo;
+  int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
+  VkRect2D render_area{};
+  render_area.offset.x = 0;
+  render_area.offset.y = 0;
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+      pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+    render_area.extent.width = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+    render_area.extent.height = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+  } else {
+    render_area.extent.width = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+    render_area.extent.height = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+  }
+
+  VkRenderPassBeginInfo render_pass_begin_info{};
+  render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanKeepRenderPass();
+  render_pass_begin_info.framebuffer = _renderer->getWindow()->GetVulkanActiveFramebuffer();
+  render_pass_begin_info.renderArea = render_area;
+  render_pass_begin_info.clearValueCount = 0;
+  render_pass_begin_info.pClearValues = nullptr;
+
+  vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+  auto c = vk::CommandBuffer(commandBuffer);
+  vk::Viewport viewport;
+  vk::Rect2D scissor;
+  if (resolutionMode != RES_NATIVE) {
+    viewport.width = renderWidth;
+    viewport.height = renderHeight;
+    viewport.x = 0;
+    viewport.y = 0;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    c.setViewport(0, 1, &viewport);
+
+    scissor.extent.width = renderWidth;
+    scissor.extent.height = renderHeight;
+    scissor.offset.x = 0;
+    scissor.offset.y = 0;
+    c.setScissor(0, 1, &scissor);
+  } else {
+    viewport.width = renderWidth;
+    viewport.height = renderHeight;
+    viewport.x = originx;
+    viewport.y = originy;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    c.setViewport(0, 1, &viewport);
+
+    scissor.extent.width = renderWidth;
+    scissor.extent.height = renderHeight;
+    scissor.offset.x = originx;
+    scissor.offset.y = originy;
+    c.setScissor(0, 1, &scissor);
+  }
+
+  p->setUBO(&ubomini, sizeof(ubomini));
+  p->setSampler(VdpPipeline::bindIdTexture, offscreenPass.view, offscreenPass.sampler);
+  p->setSampler(VdpPipeline::bindIdLine, lineinfo, offscreenPass.sampler);
+  p->setSampler(VdpPipeline::bindIdWindow, windowRenderer->getImageView(), windowRenderer->getSampler());
+  p->updateDescriptorSets();
+
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, p->getPipelineLayout(), 0, 1,
+                          p->getDescriptorSet(), 0, nullptr);
+
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, p->getGraphicsPipeline());
+
+  VkBuffer vertexBuffers[] = {offscreenRenderer.vertexBuffer};
+  VkDeviceSize offsets[] = {0};
+
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+  vkCmdBindIndexBuffer(commandBuffer, offscreenRenderer.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+  vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+}
+
+void VIDVulkan::renderEffectToMainTarget(VkCommandBuffer commandBuffer, const UniformBufferObject &ubo, int mode) {
+
+  VkRect2D render_area{};
+  render_area.offset.x = 0;
+  render_area.offset.y = 0;
+  render_area.extent = _renderer->getWindow()->GetVulkanSurfaceSize();
+
+  VkRenderPassBeginInfo render_pass_begin_info{};
+  render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanKeepRenderPass();
+  render_pass_begin_info.framebuffer = _renderer->getWindow()->GetVulkanActiveFramebuffer();
+  render_pass_begin_info.renderArea = render_area;
+  render_pass_begin_info.clearValueCount = 0;
+  render_pass_begin_info.pClearValues = nullptr;
+
+  vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+  auto c = vk::CommandBuffer(commandBuffer);
+  vk::Viewport viewport;
+  vk::Rect2D scissor;
+  if (resolutionMode != RES_NATIVE) {
+    viewport.width = renderWidth;
+    viewport.height = renderHeight;
+    viewport.x = 0;
+    viewport.y = 0;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    c.setViewport(0, 1, &viewport);
+
+    scissor.extent.width = renderWidth;
+    scissor.extent.height = renderHeight;
+    scissor.offset.x = 0;
+    scissor.offset.y = 0;
+    c.setScissor(0, 1, &scissor);
+  } else {
+    viewport.width = renderWidth;
+    viewport.height = renderHeight;
+    viewport.x = originx;
+    viewport.y = originy;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    c.setViewport(0, 1, &viewport);
+
+    scissor.extent.width = renderWidth;
+    scissor.extent.height = renderHeight;
+    scissor.offset.x = originx;
+    scissor.offset.y = originy;
+    c.setScissor(0, 1, &scissor);
+  }
+
+  if (mode == 0) {
+    int dmyubo = 0;
+    offscreenRenderer.blit->setUBO(&dmyubo, sizeof(dmyubo));
+    offscreenRenderer.blit->setSampler(VdpPipeline::bindIdTexture, offscreenPass.view, offscreenPass.sampler);
+
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, offscreenRenderer.blit->getPipelineLayout(),
+                            0, 1, offscreenRenderer.blit->getDescriptorSet(), 0, nullptr);
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, offscreenRenderer.blit->getGraphicsPipeline());
+  } else if (mode == 1) {
+
+    offscreenRenderer.mosaic->setUBO(&ubo, sizeof(ubo));
+    offscreenRenderer.mosaic->setSampler(VdpPipeline::bindIdTexture, offscreenPass.view, offscreenPass.sampler);
+    offscreenRenderer.mosaic->setSampler(VdpPipeline::bindIdWindow, windowRenderer->getImageView(),
+                                         windowRenderer->getSampler());
+    offscreenRenderer.mosaic->updateDescriptorSets();
+
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            offscreenRenderer.mosaic->getPipelineLayout(), 0, 1,
+                            offscreenRenderer.mosaic->getDescriptorSet(), 0, nullptr);
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, offscreenRenderer.mosaic->getGraphicsPipeline());
+  }
+
+  VkBuffer vertexBuffers[] = {offscreenRenderer.vertexBuffer};
+  VkDeviceSize offsets[] = {0};
+
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+  vkCmdBindIndexBuffer(commandBuffer, offscreenRenderer.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+  vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+}
+
+void VIDVulkan::generateSubRenderTarget(int width, int height) {
+
+  VkDevice device = getDevice();
+  VkPhysicalDevice physicalDevice = getPhysicalDevice();
+
+  subRenderTarget.width = width;
+  subRenderTarget.height = height;
+
+  // Find a suitable depth format
+  VkFormat fbDepthFormat;
+  VkBool32 validDepthFormat = vks::tools::getSupportedDepthFormat(physicalDevice, &fbDepthFormat);
+  assert(validDepthFormat);
+
+  // Color attachment
+  VkImageCreateInfo image = vks::initializers::imageCreateInfo();
+  image.imageType = VK_IMAGE_TYPE_2D;
+  image.format = VK_FORMAT_R8G8B8A8_UNORM;
+  image.extent.width = subRenderTarget.width;
+  image.extent.height = subRenderTarget.height;
+  image.extent.depth = 1;
+  image.mipLevels = 1;
+  image.arrayLayers = 1;
+  image.samples = VK_SAMPLE_COUNT_1_BIT;
+  image.tiling = VK_IMAGE_TILING_OPTIMAL;
+  // We will sample directly from the color attachment
+  image.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+  VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+  VkMemoryRequirements memReqs;
+
+  VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &subRenderTarget.color.image));
+  vkGetImageMemoryRequirements(device, subRenderTarget.color.image, &memReqs);
+  memAlloc.allocationSize = memReqs.size;
+  memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &subRenderTarget.color.mem));
+  VK_CHECK_RESULT(vkBindImageMemory(device, subRenderTarget.color.image, subRenderTarget.color.mem, 0));
+
+  VkImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
+  colorImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  colorImageView.format = VK_FORMAT_R8G8B8A8_UNORM;
+  colorImageView.subresourceRange = {};
+  colorImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  colorImageView.subresourceRange.baseMipLevel = 0;
+  colorImageView.subresourceRange.levelCount = 1;
+  colorImageView.subresourceRange.baseArrayLayer = 0;
+  colorImageView.subresourceRange.layerCount = 1;
+  colorImageView.image = subRenderTarget.color.image;
+  VK_CHECK_RESULT(vkCreateImageView(device, &colorImageView, nullptr, &subRenderTarget.color.view));
+
+  // Create sampler to sample from the attachment in the fragment shader
+  VkSamplerCreateInfo samplerInfo = vks::initializers::samplerCreateInfo();
+  samplerInfo.magFilter = VK_FILTER_NEAREST;
+  samplerInfo.minFilter = VK_FILTER_NEAREST;
+  samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+  samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  samplerInfo.addressModeV = samplerInfo.addressModeU;
+  samplerInfo.addressModeW = samplerInfo.addressModeU;
+  samplerInfo.mipLodBias = 0.0f;
+  samplerInfo.maxAnisotropy = 1.0f;
+  samplerInfo.minLod = 0.0f;
+  samplerInfo.maxLod = 1.0f;
+  samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+  VK_CHECK_RESULT(vkCreateSampler(device, &samplerInfo, nullptr, &subRenderTarget.sampler));
+
+  // Depth stencil attachment
+  image.format = fbDepthFormat;
+  image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+  VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &subRenderTarget.depth.image));
+  vkGetImageMemoryRequirements(device, subRenderTarget.depth.image, &memReqs);
+  memAlloc.allocationSize = memReqs.size;
+  memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &subRenderTarget.depth.mem));
+  VK_CHECK_RESULT(vkBindImageMemory(device, subRenderTarget.depth.image, subRenderTarget.depth.mem, 0));
+
+  VkImageViewCreateInfo depthStencilView = vks::initializers::imageViewCreateInfo();
+  depthStencilView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  depthStencilView.format = fbDepthFormat;
+  depthStencilView.flags = 0;
+  depthStencilView.subresourceRange = {};
+  depthStencilView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+  depthStencilView.subresourceRange.baseMipLevel = 0;
+  depthStencilView.subresourceRange.levelCount = 1;
+  depthStencilView.subresourceRange.baseArrayLayer = 0;
+  depthStencilView.subresourceRange.layerCount = 1;
+  depthStencilView.image = subRenderTarget.depth.image;
+  VK_CHECK_RESULT(vkCreateImageView(device, &depthStencilView, nullptr, &subRenderTarget.depth.view));
+
+  // Create a separate render pass for the offscreen rendering as it may differ
+  // from the one used for scene rendering
+
+  std::array<VkAttachmentDescription, 2> attchmentDescriptions = {};
+  // Color attachment
+  attchmentDescriptions[0].format = VK_FORMAT_R8G8B8A8_UNORM;
+  attchmentDescriptions[0].samples = VK_SAMPLE_COUNT_1_BIT;
+  attchmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attchmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attchmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attchmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  attchmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attchmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  // Depth attachment
+  attchmentDescriptions[1].format = fbDepthFormat;
+  attchmentDescriptions[1].samples = VK_SAMPLE_COUNT_1_BIT;
+  attchmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attchmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  attchmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+  attchmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attchmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attchmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentReference colorReference = {0, VK_IMAGE_LAYOUT_GENERAL /*VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL*/};
+  VkAttachmentReference depthReference = {1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+
+  VkSubpassDescription subpassDescription = {};
+  subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpassDescription.colorAttachmentCount = 1;
+  subpassDescription.pColorAttachments = &colorReference;
+  subpassDescription.pDepthStencilAttachment = &depthReference;
+
+  // Use subpass dependencies for layout transitions
+  std::array<VkSubpassDependency, 3> dependencies;
+
+  dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependencies[0].dstSubpass = 0;
+  dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+  dependencies[1].srcSubpass = 0;
+  dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+  dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+  dependencies[2].srcSubpass = 0;
+  dependencies[2].dstSubpass = 0;
+  dependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependencies[2].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependencies[2].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+  // Create the actual renderpass
+  VkRenderPassCreateInfo renderPassInfo = {};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  renderPassInfo.attachmentCount = static_cast<uint32_t>(attchmentDescriptions.size());
+  renderPassInfo.pAttachments = attchmentDescriptions.data();
+
+  // renderPassInfo.subpassCount = 0;
+  // renderPassInfo.pSubpasses = VK_NULL_HANDLE; // Optional
+
+  renderPassInfo.subpassCount = 1;
+  renderPassInfo.pSubpasses = &subpassDescription;
+  renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+  renderPassInfo.pDependencies = dependencies.data();
+
+  VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr, &subRenderTarget.renderPass));
 
   VkImageView attachments[2];
   attachments[0] = subRenderTarget.color.view;
   attachments[1] = subRenderTarget.depth.view;
 
-  VkFramebufferCreateInfo fbufCreateInfo =
-      vks::initializers::framebufferCreateInfo();
+  VkFramebufferCreateInfo fbufCreateInfo = vks::initializers::framebufferCreateInfo();
   fbufCreateInfo.renderPass = subRenderTarget.renderPass;
   fbufCreateInfo.attachmentCount = 2;
   fbufCreateInfo.pAttachments = attachments;
   fbufCreateInfo.width = subRenderTarget.width;
   fbufCreateInfo.height = subRenderTarget.height;
   fbufCreateInfo.layers = 1;
-  VK_CHECK_RESULT(vkCreateFramebuffer(device, &fbufCreateInfo, nullptr,
-                                      &subRenderTarget.frameBuffer));
+  VK_CHECK_RESULT(vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &subRenderTarget.frameBuffer));
 
   VkSemaphoreCreateInfo semaphore_create_info{};
   semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-  vkCreateSemaphore(device, &semaphore_create_info, nullptr,
-                    &subRenderTarget.color._render_complete_semaphore);
+  vkCreateSemaphore(device, &semaphore_create_info, nullptr, &subRenderTarget.color._render_complete_semaphore);
 
   // Fill a descriptor for later use in a descriptor set
-  subRenderTarget.descriptor.imageLayout =
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  subRenderTarget.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   subRenderTarget.descriptor.imageView = subRenderTarget.color.view;
   subRenderTarget.descriptor.sampler = subRenderTarget.sampler;
 }
@@ -7003,25 +6657,21 @@ void VIDVulkan::freeSubRenderTarget() {
   }
 }
 
-void VIDVulkan::blitSubRenderTarget(VkCommandBuffer commandBuffer,
-                                    const glm::vec4 &viewportData) {
+void VIDVulkan::blitSubRenderTarget(VkCommandBuffer commandBuffer, const glm::vec4 &viewportData) {
   VkDevice device = getDevice();
   VkImage dstImage = _renderer->getWindow()->getCurrentImage();
 
   // Transition destination image to transfer destination layout
-  vks::tools::insertImageMemoryBarrier(
-      commandBuffer, dstImage, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
-      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+  vks::tools::insertImageMemoryBarrier(commandBuffer, dstImage, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                                       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                       VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                       VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
   // Transition swapchain image from present to transfer source layout
   vks::tools::insertImageMemoryBarrier(
-      commandBuffer, subRenderTarget.color.image, VK_ACCESS_MEMORY_READ_BIT,
-      VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+      commandBuffer, subRenderTarget.color.image, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
   // Define the region to blit (we will blit the whole swapchain image)
   VkImageBlit imageBlitRegion{};
@@ -7040,25 +6690,19 @@ void VIDVulkan::blitSubRenderTarget(VkCommandBuffer commandBuffer,
   imageBlitRegion.dstOffsets[1].z = 1;
 
   // Issue the blit command
-  vkCmdBlitImage(commandBuffer, subRenderTarget.color.image,
-                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage,
-                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlitRegion,
-                 VK_FILTER_NEAREST);
+  vkCmdBlitImage(commandBuffer, subRenderTarget.color.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage,
+                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlitRegion, VK_FILTER_NEAREST);
 
   // Transition destination image to general layout, which is the required
   // layout for mapping the image memory later on
-  vks::tools::insertImageMemoryBarrier(
-      commandBuffer, dstImage, VK_ACCESS_TRANSFER_WRITE_BIT,
-      VK_ACCESS_MEMORY_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+  vks::tools::insertImageMemoryBarrier(commandBuffer, dstImage, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT,
+                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+                                       VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                       VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
   // Transition back the swap chain image after the blit is done
   vks::tools::insertImageMemoryBarrier(
-      commandBuffer, subRenderTarget.color.image, VK_ACCESS_TRANSFER_READ_BIT,
-      VK_ACCESS_MEMORY_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+      commandBuffer, subRenderTarget.color.image, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_MEMORY_READ_BIT,
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 }

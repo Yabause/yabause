@@ -732,6 +732,7 @@ void VDP2SetFrameLimit(int mode) {
     lastticks = YabauseGetTicks();
     break;
   }
+  VideoSetSetting(VDP_SETTING_FRAMELIMIT_MODE, mode);
 }
 
 void frameSkipAndLimit() {
