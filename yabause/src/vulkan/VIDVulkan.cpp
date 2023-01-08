@@ -582,41 +582,6 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
   fbRender->onStartFrame(fixVdp2Regs, commandBuffer);
 
-  if ((Vdp2Regs->TVMD & 0x8000) == 0) {
-    VkRenderPassBeginInfo render_pass_begin_info{};
-    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanRenderPass();
-    render_pass_begin_info.framebuffer = _renderer->getWindow()->GetVulkanActiveFramebuffer();
-    render_pass_begin_info.renderArea = render_area;
-    render_pass_begin_info.clearValueCount = clear_values.size();
-    render_pass_begin_info.pClearValues = clear_values.data();
-    vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-     NanovgVulkanSetDevices(device, this->getPhysicalDevice(),
-                            _renderer->getWindow()->GetVulkanRenderPass(),
-                            commandBuffer);
-     OSDDisplayMessages(NULL, 0, 0);
-    vkCmdEndRenderPass(commandBuffer);
-  } else {
-    windowRenderer->draw(commandBuffer);
-
-    if (resolutionMode != RES_NATIVE) {
-      VkRect2D tmp_render_area{};
-      tmp_render_area.offset.x = 0;
-      tmp_render_area.offset.y = 0;
-      tmp_render_area.extent.width = renderWidth;
-      tmp_render_area.extent.height = renderHeight;
-
-      VkRenderPassBeginInfo tmp_render_pass_begin_info{};
-      tmp_render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-      tmp_render_pass_begin_info.renderPass = subRenderTarget.renderPass;
-      tmp_render_pass_begin_info.framebuffer = subRenderTarget.frameBuffer;
-      tmp_render_pass_begin_info.renderArea = tmp_render_area;
-      tmp_render_pass_begin_info.clearValueCount = clear_values.size();
-      tmp_render_pass_begin_info.pClearValues = clear_values.data();
-      vkCmdBeginRenderPass(commandBuffer, &tmp_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-    } else {
-      vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-    }
 
     glm::vec4 viewportData;
     int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
@@ -666,13 +631,12 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       viewport.y = 0;
       viewport.minDepth = 0.0f;
       viewport.maxDepth = 1.0f;
-      c.setViewport(0, 1, &viewport);
 
       scissor.extent.width = renderWidth;
       scissor.extent.height = renderHeight;
       scissor.offset.x = 0;
       scissor.offset.y = 0;
-      c.setScissor(0, 1, &scissor);
+
     } else {
       viewport.width = viewportData.z;
       viewport.height = viewportData.w;
@@ -680,14 +644,52 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       viewport.y = viewportData.y;
       viewport.minDepth = 0.0f;
       viewport.maxDepth = 1.0f;
-      c.setViewport(0, 1, &viewport);
-
+      
       scissor.extent.width = viewportData.z;
       scissor.extent.height = viewportData.w;
       scissor.offset.x = viewportData.x;
       scissor.offset.y = viewportData.y;
-      c.setScissor(0, 1, &scissor);
+  }  
+
+  if ((Vdp2Regs->TVMD & 0x8000) == 0) {
+    VkRenderPassBeginInfo render_pass_begin_info{};
+    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanRenderPass();
+    render_pass_begin_info.framebuffer = _renderer->getWindow()->GetVulkanActiveFramebuffer();
+    render_pass_begin_info.renderArea = render_area;
+    render_pass_begin_info.clearValueCount = clear_values.size();
+    render_pass_begin_info.pClearValues = clear_values.data();
+    vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+    c.setViewport(0, 1, &viewport);
+    c.setScissor(0, 1, &scissor);
+    NanovgVulkanSetDevices(device, this->getPhysicalDevice(),
+                            _renderer->getWindow()->GetVulkanRenderPass(),
+                            commandBuffer);
+    OSDDisplayMessages(NULL, 0, 0);
+    vkCmdEndRenderPass(commandBuffer);
+  } else {
+    windowRenderer->draw(commandBuffer);
+
+    if (resolutionMode != RES_NATIVE) {
+      VkRect2D tmp_render_area{};
+      tmp_render_area.offset.x = 0;
+      tmp_render_area.offset.y = 0;
+      tmp_render_area.extent.width = renderWidth;
+      tmp_render_area.extent.height = renderHeight;
+
+      VkRenderPassBeginInfo tmp_render_pass_begin_info{};
+      tmp_render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      tmp_render_pass_begin_info.renderPass = subRenderTarget.renderPass;
+      tmp_render_pass_begin_info.framebuffer = subRenderTarget.frameBuffer;
+      tmp_render_pass_begin_info.renderArea = tmp_render_area;
+      tmp_render_pass_begin_info.clearValueCount = clear_values.size();
+      tmp_render_pass_begin_info.pClearValues = clear_values.data();
+      vkCmdBeginRenderPass(commandBuffer, &tmp_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+    } else {
+      vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
     }
+    c.setViewport(0, 1, &viewport);
+    c.setScissor(0, 1, &scissor);
 
     UniformBufferObject ubo = {};
     ubo.emu_height = (float)vdp2height / (float)renderHeight;
