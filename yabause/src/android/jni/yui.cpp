@@ -323,6 +323,31 @@ const char *GetBiosPath()
     return rtn;
 }
 
+const char *GetShaderPath()
+{
+    jclass yclass;
+    jmethodID getBiosPath;
+    jstring message;
+    jboolean dummy;
+    JNIEnv *env;
+    const char *rtn;
+
+    if (yvm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
+        return NULL;
+    }
+
+    yclass = env->GetObjectClass(yabause);
+    getBiosPath = env->GetMethodID(yclass, "getShaderPath", "()Ljava/lang/String;");
+    message = (jstring)env->CallObjectMethod(yabause, getBiosPath);
+    if (env->GetStringLength(message) == 0)
+        rtn = NULL;
+    else
+        rtn = env->GetStringUTFChars(message, &dummy);
+    return rtn;
+}
+
+
 char *GetPlayDataDir()
 {
     jclass yclass;
@@ -1198,9 +1223,8 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, job
     s_carttype = GetCartridgeType();
     s_player2Enable = GetPlayer2Device();
     s_playdatadir = GetPlayDataDir();
-
-    shaderCachePath = s_buppath;
-
+    shaderCachePath = string(GetShaderPath());
+/*
     std::size_t pos = shaderCachePath.rfind("/");
     if (pos != std::string::npos) {
         shaderCachePath = shaderCachePath.substr(0,pos+1);
@@ -1208,7 +1232,7 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, job
     } else {
         YUI_LOG("YabauseRunnable_init s_buppath is invalid");
     }
-
+*/
 
     GetFileDescriptorPath("test");
 

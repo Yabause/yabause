@@ -1828,6 +1828,10 @@ class Yabause : AppCompatActivity(),
         YabauseRunnable.setScspSyncTimeMode(scsp_time_sync!!)
     }
 
+    val shaderPath: String
+        get() = YabauseStorage.storage.shaderPath
+
+
     val testPath: String?
         get() = if (testCase == null) {
             null
