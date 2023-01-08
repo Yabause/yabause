@@ -37,6 +37,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.DrawableImageViewTarget
 import com.frybits.harmony.getHarmonySharedPreferences
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.GameInfo
@@ -101,7 +102,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
         // keep in mind that parent is RecyclerView in this case
         //val height = 10;
         //view.minimumHeight = height
-
+/*
         if (parent?.resources?.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             try {
                 val lp: GridLayoutManager.LayoutParams =
@@ -127,7 +128,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
             }
 
         }
-
+*/
         return GameViewHolder(view)
     }
 
@@ -160,6 +161,8 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
             }
             textViewVersion.text = rate
             if (game.image_url != null && game.image_url != "") { // try {
+
+
                 if (game.image_url!!.startsWith("http")) {
                     Glide.with(ctx)
                         .load(game.image_url)

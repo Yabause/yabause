@@ -64,7 +64,7 @@ class GameListFragment : Fragment() {
         rootview_ = inflater.inflate(R.layout.content_game_select_list_phone, container, false)
         if (rootview_ != null) {
             recyclerView = rootview_!!.findViewById<View>(R.id.my_recycler_view) as RecyclerView
-            recyclerView.setHasFixedSize(true)
+            //recyclerView.setHasFixedSize(true)
             recyclerView.itemAnimator = DefaultItemAnimator()
 
             if (activity?.resources?.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE) {
