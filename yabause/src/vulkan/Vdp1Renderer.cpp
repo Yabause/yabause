@@ -298,7 +298,7 @@ void Vdp1Renderer::prepareOffscreen() {
   // Color attachment
   attchmentDescriptions[0].format = FB_COLOR_FORMAT;
   attchmentDescriptions[0].samples = VK_SAMPLE_COUNT_1_BIT;
-  attchmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attchmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
   attchmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   attchmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attchmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -307,7 +307,7 @@ void Vdp1Renderer::prepareOffscreen() {
   // Depth attachment
   attchmentDescriptions[1].format = fbDepthFormat;
   attchmentDescriptions[1].samples = VK_SAMPLE_COUNT_1_BIT;
-  attchmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attchmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
   attchmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   attchmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attchmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -621,14 +621,14 @@ void Vdp1Renderer::erase() {
   if( left < 0 ) left = 0;
 
   int width = right - left;
-  int height = top - bottom;
+  int height = bottom - top  ;
   if( width <= 0 ) width = 1;
   if( height <= 0 ) height = 1;
   if( width >= offscreenPass.width ) width = offscreenPass.width;
   if( height >= offscreenPass.height ) height = offscreenPass.height;
    
-  //VkRect2D scissor = vks::initializers::rect2D(width, height , left, bottom);
-  VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
+  VkRect2D scissor = vks::initializers::rect2D(width, height , left, top);
+  //VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
   vkCmdSetScissor(cb, 0, 1, &scissor);
 
 
@@ -845,8 +845,8 @@ void Vdp1Renderer::drawEnd(void) {
   offscreenPass.color[drawframe].updated = true;
   offscreenPass.color[drawframe].readed = false;
 
-  vkQueueWaitIdle(vulkan->getVulkanQueue());
-  vkDeviceWaitIdle(device);
+  //vkQueueWaitIdle(vulkan->getVulkanQueue());
+  //vkDeviceWaitIdle(device);
 
   //transitionImageLayout(offscreenPass.color.image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -1263,6 +1263,7 @@ void Vdp1Renderer::ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuffer
 
 void Vdp1Renderer::DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuffer) {
 
+
   vdp1cmd_struct cmd;
   YglSprite sprite;
   CharTexture texture;
@@ -1503,6 +1504,7 @@ void Vdp1Renderer::DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuf
 
 void Vdp1Renderer::SystemClipping(u8 * ram, Vdp1 * regs) {
 
+
   YglSprite sprite = {};
 
   Vdp1Regs->systemclipX1 = 0;
@@ -1571,6 +1573,7 @@ void Vdp1Renderer::UserClipping(u8 * ram, Vdp1 * regs) {
 
 
 void Vdp1Renderer::PolygonDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuffer) {
+
   u16 color;
   u16 CMDPMOD;
   u8 alpha;
