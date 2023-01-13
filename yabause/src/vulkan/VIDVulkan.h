@@ -369,7 +369,7 @@ protected:
   void generateOffscreenRenderer();
   void renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeline * render);
   void renderEffectToMainTarget(VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, int mode);
-  void renderWithLineEffectToMainTarget(VdpPipeline * p, VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, VkImageView lineinfo);
+  void renderWithLineEffectToMainTarget(VdpPipeline * p, VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, VkImageView lineinfo, const glm::vec4 & viewportData);
   void deleteOfscreenPath();
   int checkCharAccessPenalty(int char_access, int ptn_access);
 

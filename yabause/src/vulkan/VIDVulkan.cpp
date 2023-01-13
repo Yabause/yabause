@@ -863,7 +863,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
             } else {
               p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA, this, this->tm, this->vm);
             }
-            renderWithLineEffectToMainTarget(p, commandBuffer, ubo, layers[i][j]->lineTexture);
+            renderWithLineEffectToMainTarget(p, commandBuffer, ubo, layers[i][j]->lineTexture, viewportData);
             onFramePipelines.push_back(p);
           }
 
@@ -3447,7 +3447,7 @@ void VIDVulkan::drawRotation(RBGDrawInfo *rbg, VdpPipeline **pipleLine) {
   if (regs)
     readVdp2ColorOffset(regs, info, info->linecheck_mask);
 
-  if (info->lineTexture != 0) {
+  if (info->lineTexture != 0 && info->specialprimode == 0) {
     info->cor = 0;
     info->cog = 0;
     info->cob = 0;
@@ -6223,7 +6223,6 @@ void VIDVulkan::renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeli
   renderPassBeginInfo.pClearValues = clear_values.data();
 
   vkCmdEndRenderPass(commandBuffer);
-
   vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   auto c = vk::CommandBuffer(commandBuffer);
@@ -6263,7 +6262,7 @@ void VIDVulkan::renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeli
 }
 
 void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer commandBuffer,
-                                                 const UniformBufferObject &ubo, VkImageView lineinfo) {
+                                                 const UniformBufferObject &ubo, VkImageView lineinfo, const glm::vec4 & viewportData) {
 
   UniformBufferObject ubomini = ubo;
   int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
@@ -6307,18 +6306,19 @@ void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer
     scissor.offset.y = 0;
     c.setScissor(0, 1, &scissor);
   } else {
-    viewport.width = renderWidth;
-    viewport.height = renderHeight;
-    viewport.x = originx;
-    viewport.y = originy;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    c.setViewport(0, 1, &viewport);
+	viewport.width = viewportData.z;
+	viewport.height = viewportData.w;
+	viewport.x = viewportData.x;
+	viewport.y = viewportData.y;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
 
-    scissor.extent.width = renderWidth;
-    scissor.extent.height = renderHeight;
-    scissor.offset.x = originx;
-    scissor.offset.y = originy;
+	scissor.extent.width = viewportData.z;
+	scissor.extent.height = viewportData.w;
+	scissor.offset.x = viewportData.x;
+	scissor.offset.y = viewportData.y;
+
+    c.setViewport(0, 1, &viewport);
     c.setScissor(0, 1, &scissor);
   }
 
