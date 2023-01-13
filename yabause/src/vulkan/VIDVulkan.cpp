@@ -2787,7 +2787,6 @@ void VIDVulkan::drawNBG2() {
 
   info.coloroffset = fixVdp2Regs->CRAOFA & 0x700;
   readVdp2ColorOffset(fixVdp2Regs, &info, 0x4);
-
   if (info.lineTexture != 0) {
     info.linescreen = 2;
     info.cor = 0;

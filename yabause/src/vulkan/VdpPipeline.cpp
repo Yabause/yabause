@@ -75,7 +75,7 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
     std::vector<uint32_t> data;
     std::vector<char> buffer;
     SpvCompilationResult result;
-
+#if !defined(_WINDOWS)
     std::size_t hash_value = std::hash<std::string>()(target);
     
     // Serach from file
@@ -106,12 +106,12 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
       file.close();
 
     }else{    
-
+#endif
       Compiler compiler;
       CompileOptions options;
       options.SetOptimizationLevel(shaderc_optimization_level_performance);
       //options.SetOptimizationLevel(shaderc_optimization_level_zero);
-      SpvCompilationResult result = compiler.CompileGlslToSpv(
+      result = compiler.CompileGlslToSpv(
         target,
         (shaderc_shader_kind)type,
         "VdpPipeline",
@@ -124,7 +124,7 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
         throw std::runtime_error("failed to create shader module!");
       }
       data = { result.cbegin(), result.cend() };
-
+#if !defined(_WINDOWS)
       std::ofstream file(file_path, std::ios::binary);
       if (!file) {
           std::cerr << "Error: Failed to open file." << std::endl;
@@ -138,7 +138,7 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
       file.close();
 
     }
-
+#endif
     VkShaderModuleCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = data.size() * sizeof(uint32_t);

@@ -1,9 +1,9 @@
 include(ExternalProject)
-find_package(GLM QUIET)
+#find_package(GLM QUIET)
 
-if(GLM_FOUND)
-    message(STATUS "Found GLM")
-else()
+#if(GLM_FOUND)
+#    message(STATUS "Found GLM")
+#else()
     message(STATUS "GLM not found - will build from source")
 
     ExternalProject_Add(glm PREFIX glm
@@ -17,6 +17,6 @@ else()
 
     ExternalProject_Get_Property(glm SOURCE_DIR)
     set(GLM_INCLUDE_DIRS ${SOURCE_DIR})
-endif()
+#endif()
 
 set(GLM_INCLUDE_DIRS ${GLM_INCLUDE_DIRS} CACHE STRING "")

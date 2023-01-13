@@ -2988,7 +2988,7 @@ vk::Pipeline RBGGeneratorVulkan::compile_color_dot(
   std::vector<uint32_t> data;
   std::vector<char> buffer;
   SpvCompilationResult result;
-
+#if !defined(_WINDOWS)
   std::size_t hash_value = std::hash<std::string>()(target);
   // Serach from file
   string mempath = YuiGetShaderCachePath();
@@ -3018,7 +3018,7 @@ vk::Pipeline RBGGeneratorVulkan::compile_color_dot(
     file.close();
 
   }else{
-
+#endif
     Compiler compiler;
     CompileOptions options;
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
@@ -3036,7 +3036,7 @@ vk::Pipeline RBGGeneratorVulkan::compile_color_dot(
       throw std::runtime_error("failed to create shader module!");
     }
     data = { result.cbegin(), result.cend() };
-
+#if !defined(_WINDOWS)
     std::ofstream file(file_path, std::ios::binary);
     if (!file) {
         std::cerr << "Error: Failed to open file." << std::endl;
@@ -3048,10 +3048,8 @@ vk::Pipeline RBGGeneratorVulkan::compile_color_dot(
 
     // ファイルを閉じる
     file.close();
-
-
   }
-
+#endif
 
   VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

@@ -158,6 +158,10 @@ QMap<uint, PerMouse_struct*> mPort2MouseBits;
 QMap<uint, PerAnalog_struct*> mPort1AnalogBits;
 QMap<uint, PerAnalog_struct*> mPort2AnalogBits;
 
+const char * YuiGetShaderCachePath() {
+	return "./";
+}
+
 extern "C" 
 {
 	void YuiErrorMsg(const char *string)

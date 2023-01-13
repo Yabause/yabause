@@ -936,7 +936,7 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
   std::vector<uint32_t> data;
   std::vector<char> buffer;
   SpvCompilationResult result;
-
+#if !defined(_WINDOWS)
   std::size_t hash_value = std::hash<std::string>()(target);
   
   // Serach from file
@@ -967,12 +967,12 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
     file.close();
 
   }else{
-
+#endif
     Compiler compiler;
     CompileOptions options;
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
     //options.SetOptimizationLevel(shaderc_optimization_level_zero);
-    SpvCompilationResult result = compiler.CompileGlslToSpv(
+    result = compiler.CompileGlslToSpv(
       target,
       shaderc_fragment_shader,
       name,
@@ -984,7 +984,7 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
       throw std::runtime_error("failed to create shader module!");
     }
     data = { result.cbegin(), result.cend() };
-
+#if !defined(_WINDOWS)
     std::ofstream file(file_path, std::ios::binary);
     if (!file) {
         std::cerr << "Error: Failed to open file." << std::endl;
@@ -996,8 +996,8 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
 
     // ファイルを閉じる
     file.close();
-        
   }
+#endif
 
   VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -1212,7 +1212,7 @@ void FramebufferRenderer::createDescriptorSets() {
   std::vector<uint32_t> data;
   std::vector<char> buffer;
   SpvCompilationResult result;
-
+#if !defined(_WINDOWS)
   std::size_t hash_value = std::hash<std::string>()(get_shader_header() + vertexShaderName);
 
   // Serach from file
@@ -1243,12 +1243,12 @@ void FramebufferRenderer::createDescriptorSets() {
     file.close();
 
   }else{
-
+#endif
     Compiler compiler;
     CompileOptions options;
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
     //options.SetOptimizationLevel(shaderc_optimization_level_zero);
-    SpvCompilationResult result = compiler.CompileGlslToSpv(
+    result = compiler.CompileGlslToSpv(
       get_shader_header() + vertexShaderName,
       shaderc_vertex_shader,
       "framebuffer",
@@ -1260,7 +1260,7 @@ void FramebufferRenderer::createDescriptorSets() {
       throw std::runtime_error("failed to create shader module!");
     }
     data = { result.cbegin(), result.cend() };
-
+#if !defined(_WINDOWS)
     std::ofstream file(file_path, std::ios::binary);
     if (!file) {
         std::cerr << "Error: Failed to open file." << std::endl;
@@ -1273,7 +1273,7 @@ void FramebufferRenderer::createDescriptorSets() {
     // ファイルを閉じる
     file.close();    
   }
-
+#endif
   VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   createInfo.codeSize = data.size() * sizeof(uint32_t);
