@@ -1113,10 +1113,10 @@ VdpBack::VdpBack(
         switch(dir){
           case 1: // 90
             return int((u_vheight - gl_FragCoord.x-u_viewport_offset) * u_emu_height);
-          break;
+            break;
           case 2: // 270
             return int((gl_FragCoord.x-u_viewport_offset) * u_emu_height);
-          break;
+            break;
           case 3: // 180
             return int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);
             break;

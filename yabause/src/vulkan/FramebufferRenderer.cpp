@@ -246,9 +246,9 @@ void FramebufferRenderer::onStartFrame(Vdp2 * fixVdp2Regs, VkCommandBuffer comma
   }else{
       ubo.dir = 0;
   }
-  ubo.emu_height = (float)vulkan->vdp2height / (float)viewport.height;
-  ubo.vheight = (float)viewport.height;
-  ubo.viewport_offset = 0;
+  ubo.emu_height = (float)vulkan->vdp2height / (float)vulkan->renderHeight;
+  ubo.vheight = (float)vulkan->renderHeight;
+  ubo.viewport_offset = vulkan->originy;
 
 }
 

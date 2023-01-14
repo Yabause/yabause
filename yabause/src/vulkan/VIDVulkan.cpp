@@ -611,13 +611,13 @@ void VIDVulkan::Vdp2DrawEnd(void) {
         viewportData = {deviceHeight - renderHeight - originy, originx, renderHeight, renderWidth};
         u_dir = 1;
         break;
+      case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+        viewportData = {originy, deviceWidth - renderWidth - originx, renderHeight, renderWidth};
+        u_dir = 2;
+        break;
       case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
         viewportData = {deviceHeight - renderWidth - originx, deviceWidth - renderHeight - originy, renderWidth,
                         renderHeight};
-        u_dir = 2;
-        break;
-      case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
-        viewportData = {originy, deviceWidth - renderWidth - originx, renderHeight, renderWidth};
         u_dir = 3;
         break;
       default:
@@ -700,9 +700,9 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     c.setScissor(0, 1, &scissor);
 
     UniformBufferObject ubo = {};
-    ubo.emu_height = (float)vdp2height / (float)viewport.height;
-    ubo.vheight = viewport.height;
-    ubo.viewport_offset = viewport.y;
+    ubo.emu_height = (float)vdp2height / (float)renderHeight;
+    ubo.vheight = renderHeight;
+    ubo.viewport_offset = originy;
     ubo.u_dir = u_dir;
 
     int from = 0;
@@ -728,11 +728,10 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
     }
 
-    model = model * pre_rotate_mat;
-
+    
     // Draw Back Color
     if (backPiepline->vertices.size() > 0) {
-      glm::mat4 MVP = model * proj;
+      glm::mat4 MVP = model * proj; // no need to rotate
       ubo.mvp = MVP;
       ubo.blendmode = backPiepline->blendmode;
       backPiepline->setUBO(&ubo, sizeof(ubo));
@@ -752,6 +751,8 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
       vkCmdDrawIndexed(commandBuffer, backPiepline->indexSize, 1, 0, 0, 0);
     }
+
+    model = model * pre_rotate_mat;
 
     for (uint32_t i = 0; i < layers.size(); i++) {
 
