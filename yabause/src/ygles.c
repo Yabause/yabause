@@ -3356,6 +3356,7 @@ void YglUpdateVdp2Reg() {
     _Ygl->fbu_.u_sprite_window = 0;  
   }
   
+  _Ygl->fbu_.u_dir = 0;
 
   if (_Ygl->framebuffer_uniform_id_ == 0) {
     glGenBuffers(1, &_Ygl->framebuffer_uniform_id_);
