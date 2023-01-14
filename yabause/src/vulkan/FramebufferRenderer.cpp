@@ -180,6 +180,7 @@ FramebufferRenderer::FramebufferRenderer(VIDVulkan * vulkan) {
      int u_sprite_window;
      float u_from;
      float u_to;
+     int dir;
     } ubo;
 
     layout(location = 0) in vec4 a_position;
@@ -223,12 +224,32 @@ void FramebufferRenderer::setup() {
   setupShaders();
 }
 
-void FramebufferRenderer::onStartFrame(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer) {
+void FramebufferRenderer::onStartFrame(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, const  vk::Viewport & viewport, int resolutionMode) {
   //renderCount = 0;
   updateVdp2Reg(fixVdp2Regs);
   if (lineTexture != VK_NULL_HANDLE) {
     perline.update(vulkan, commandBuffer);
   }
+
+  int pretransformFlag = vulkan->getPreTransFlag();
+
+  if (resolutionMode == RES_NATIVE) {
+    if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR) {
+      ubo.dir = 1;
+    } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+      ubo.dir = 2;
+    } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR) {
+      ubo.dir = 3;
+    }else{
+      ubo.dir = 0;
+    }
+  }else{
+      ubo.dir = 0;
+  }
+  ubo.emu_height = (float)vulkan->vdp2height / (float)viewport.height;
+  ubo.vheight = (float)viewport.height;
+  ubo.viewport_offset = 0;
+
 }
 
 void FramebufferRenderer::onEndFrame() {
@@ -369,14 +390,11 @@ void FramebufferRenderer::updateVdp2Reg(Vdp2 * fixVdp2Regs) {
   ubo.coloroffset[3] = 0.0f;
 
   // For Line Color insersion
-  ubo.emu_height = (float)vulkan->vdp2height / (float)vulkan->renderHeight;
-  ubo.vheight = (float)vulkan->renderHeight;
   ubo.color_ram_offset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
   //if (vulkan->resolutionMode == RES_NATIVE) {
   //  _Ygl->fbu_.u_viewport_offset = (float)_Ygl->originy;
   //}
   //else {
-  ubo.viewport_offset = 0.0f;
   //}
 
   // Check if transparent sprite window
@@ -389,7 +407,6 @@ void FramebufferRenderer::updateVdp2Reg(Vdp2 * fixVdp2Regs) {
   else {
     ubo.sprite_window = 0;
   }
-
 
 }
 
@@ -777,6 +794,7 @@ void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer command
     " int u_sprite_window; \n"
     " float u_from;\n"
     " float u_to;\n"
+    " int dir;\n"
     "}; \n"
     "layout(binding = 1) uniform highp sampler2D s_vdp1FrameBuffer;\n"
     "layout(binding = 2) uniform sampler2D s_color; \n"
@@ -980,7 +998,7 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
 
     LOGI("%s%d\n", " erros: ", (int)result.GetNumErrors());
     if (result.GetNumErrors() != 0) {
-      LOGI("%s%s\n", "messages", result.GetErrorMessage().c_str());
+      LOGE("%s%s\n", "messages", result.GetErrorMessage().c_str());
       throw std::runtime_error("failed to create shader module!");
     }
     data = { result.cbegin(), result.cend() };

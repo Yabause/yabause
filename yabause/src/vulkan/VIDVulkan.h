@@ -67,6 +67,7 @@ struct UniformBufferObject {
   int u_mosaic_y;
   int specialPriority;
   int u_specialColorFunc;
+  int u_dir;
 };
 
 class DynamicTexture {
@@ -367,9 +368,9 @@ protected:
 
   void generateOffscreenPath(int width, int height);
   void generateOffscreenRenderer();
-  void renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeline * render);
-  void renderEffectToMainTarget(VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, int mode);
-  void renderWithLineEffectToMainTarget(VdpPipeline * p, VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, VkImageView lineinfo, const glm::vec4 & viewportData);
+  void renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeline * render,int ofIndex);
+  void renderEffectToMainTarget(VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, int mode, const glm::vec4 & viewportData, int ofIndex);
+  void renderWithLineEffectToMainTarget(VdpPipeline * p, VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, VkImageView lineinfo, const glm::vec4 & viewportData, int ofIndex );
   void deleteOfscreenPath();
   int checkCharAccessPenalty(int char_access, int ptn_access);
 

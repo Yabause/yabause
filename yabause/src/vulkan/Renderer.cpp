@@ -355,7 +355,10 @@ VulkanDebugCallback(
 #if defined(ANDROID)
   LOGE("%s", stream.str().c_str());
   backtraceToLogcat();
-  abort();
+
+  if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
+    abort();
+  }
 #endif
 
 #if defined( _WIN32 )

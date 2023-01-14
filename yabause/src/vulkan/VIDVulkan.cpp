@@ -559,6 +559,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     render_area.extent.height = _renderer->getWindow()->GetVulkanSurfaceSize().height;
   }
 
+  int offcount = 0;
   std::array<VkClearValue, 2> clear_values{};
   clear_values[1].depthStencil.depth = 0.0f;
   clear_values[1].depthStencil.stencil = 0;
@@ -580,12 +581,13 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   vkResetCommandBuffer(commandBuffer, 0);
   vkBeginCommandBuffer(commandBuffer, &command_buffer_begin_info);
 
-  fbRender->onStartFrame(fixVdp2Regs, commandBuffer);
 
 
     glm::vec4 viewportData;
     int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
     int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+
+    int u_dir = 0;
 
     if (resolutionMode != RES_NATIVE) {
       switch (pretransformFlag) {
@@ -607,16 +609,20 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       switch (pretransformFlag) {
       case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
         viewportData = {deviceHeight - renderHeight - originy, originx, renderHeight, renderWidth};
+        u_dir = 1;
         break;
       case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
         viewportData = {deviceHeight - renderWidth - originx, deviceWidth - renderHeight - originy, renderWidth,
                         renderHeight};
+        u_dir = 2;
         break;
       case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
         viewportData = {originy, deviceWidth - renderWidth - originx, renderHeight, renderWidth};
+        u_dir = 3;
         break;
       default:
         viewportData = {originx, originy, renderWidth, renderHeight};
+        u_dir = 0;
         break;
       }
     }
@@ -650,6 +656,8 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       scissor.offset.x = viewportData.x;
       scissor.offset.y = viewportData.y;
   }  
+
+  fbRender->onStartFrame(fixVdp2Regs, commandBuffer, viewport, resolutionMode);
 
   if ((Vdp2Regs->TVMD & 0x8000) == 0) {
     VkRenderPassBeginInfo render_pass_begin_info{};
@@ -692,9 +700,10 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     c.setScissor(0, 1, &scissor);
 
     UniformBufferObject ubo = {};
-    ubo.emu_height = (float)vdp2height / (float)renderHeight;
-    ubo.vheight = renderHeight;
+    ubo.emu_height = (float)vdp2height / (float)viewport.height;
+    ubo.vheight = viewport.height;
     ubo.viewport_offset = viewport.y;
+    ubo.u_dir = u_dir;
 
     int from = 0;
     int to = 0;
@@ -830,18 +839,22 @@ void VIDVulkan::Vdp2DrawEnd(void) {
             ubomini.windowHeight = offscreenPass.height;
             layers[i][j]->setUBO(&ubomini, sizeof(ubomini));
             layers[i][j]->updateDescriptorSets();
-            renderToOffecreenTarget(commandBuffer, layers[i][j]);
+            renderToOffecreenTarget(commandBuffer, layers[i][j], offcount);
 
             ubo.u_tw = vdp2width;
             ubo.u_th = vdp2height;
             ubo.vheight = (i / 10.0f);
             ubo.u_mosaic_x = layers[i][j]->mosaic[0];
             ubo.u_mosaic_y = layers[i][j]->mosaic[1];
-            renderEffectToMainTarget(commandBuffer, ubo, 1);
+            renderEffectToMainTarget(commandBuffer, ubo, 1, viewportData,offcount);
+            offcount++;
           }
 
           // per line color calculation mode
           else if (layers[i][j]->lineTexture != VK_NULL_HANDLE && layers[i][j]->specialPriority == 0) {
+
+            LOGE("offcount = %d",offcount);
+            
 
             UniformBufferObject ubomini = ubo;
             ubomini.offsetx = 0;
@@ -850,7 +863,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
             ubomini.windowHeight = offscreenPass.height;
             layers[i][j]->setUBO(&ubomini, sizeof(ubomini));
             layers[i][j]->updateDescriptorSets();
-            renderToOffecreenTarget(commandBuffer, layers[i][j]);
+            renderToOffecreenTarget(commandBuffer, layers[i][j], offcount);
 
             ubo.u_tw = vdp2width;
             ubo.u_th = vdp2height;
@@ -863,8 +876,9 @@ void VIDVulkan::Vdp2DrawEnd(void) {
             } else {
               p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA, this, this->tm, this->vm);
             }
-            renderWithLineEffectToMainTarget(p, commandBuffer, ubo, layers[i][j]->lineTexture, viewportData);
+            renderWithLineEffectToMainTarget(p, commandBuffer, ubo, layers[i][j]->lineTexture, viewportData,offcount);
             onFramePipelines.push_back(p);
+            offcount++;
           }
 
           // Normal mode
@@ -6203,7 +6217,7 @@ void VIDVulkan::deleteOfscreenPath() {
   }
 }
 
-void VIDVulkan::renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeline *render) {
+void VIDVulkan::renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeline *render, int ofIndex) {
 
   std::array<VkClearValue, 2> clear_values{};
   clear_values[1].depthStencil.depth = 0.0f;
@@ -6259,10 +6273,27 @@ void VIDVulkan::renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeli
   vkCmdDrawIndexed(commandBuffer, render->indexSize, 1, 0, 0, 0);
 
   c.endRenderPass();
+
 }
 
 void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer commandBuffer,
-                                                 const UniformBufferObject &ubo, VkImageView lineinfo, const glm::vec4 & viewportData) {
+                                                 const UniformBufferObject &ubo, VkImageView lineinfo, const glm::vec4 & viewportData, int ofIndex) {
+
+  VkImageMemoryBarrier barrier = {};
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.image = offscreenPass.image;
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+  barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
   UniformBufferObject ubomini = ubo;
   int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
@@ -6286,6 +6317,7 @@ void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer
   render_pass_begin_info.clearValueCount = 0;
   render_pass_begin_info.pClearValues = nullptr;
 
+  
   vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
   auto c = vk::CommandBuffer(commandBuffer);
@@ -6306,17 +6338,17 @@ void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer
     scissor.offset.y = 0;
     c.setScissor(0, 1, &scissor);
   } else {
-	viewport.width = viewportData.z;
-	viewport.height = viewportData.w;
-	viewport.x = viewportData.x;
-	viewport.y = viewportData.y;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
+    viewport.width = viewportData.z;
+    viewport.height = viewportData.w;
+    viewport.x = viewportData.x;
+    viewport.y = viewportData.y;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
 
-	scissor.extent.width = viewportData.z;
-	scissor.extent.height = viewportData.w;
-	scissor.offset.x = viewportData.x;
-	scissor.offset.y = viewportData.y;
+    scissor.extent.width = viewportData.z;
+    scissor.extent.height = viewportData.w;
+    scissor.offset.x = viewportData.x;
+    scissor.offset.y = viewportData.y;
 
     c.setViewport(0, 1, &viewport);
     c.setScissor(0, 1, &scissor);
@@ -6343,7 +6375,7 @@ void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer
   vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
 }
 
-void VIDVulkan::renderEffectToMainTarget(VkCommandBuffer commandBuffer, const UniformBufferObject &ubo, int mode) {
+void VIDVulkan::renderEffectToMainTarget(VkCommandBuffer commandBuffer, const UniformBufferObject &ubo, int mode, const glm::vec4 & viewportData, int ofIndex) {
 
   VkRect2D render_area{};
   render_area.offset.x = 0;
@@ -6549,7 +6581,7 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   subpassDescription.pDepthStencilAttachment = &depthReference;
 
   // Use subpass dependencies for layout transitions
-  std::array<VkSubpassDependency, 3> dependencies;
+  std::array<VkSubpassDependency, 2> dependencies;
 
   dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
   dependencies[0].dstSubpass = 0;
@@ -6566,7 +6598,7 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
   dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
   dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
+#if 0
   dependencies[2].srcSubpass = 0;
   dependencies[2].dstSubpass = 0;
   dependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -6574,7 +6606,7 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
   dependencies[2].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
   dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
+#endif
   // Create the actual renderpass
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;

@@ -226,11 +226,12 @@ void * TextureManager::createTextureImage(int texWidth, int texHeight) {
 
 void * TextureManager::reallocTextureImage(void * pixels, int texWidth, int texHeight) {
 
+
   std::cout << "reallocTextureImage height:" << texHeight << std::endl;
 
   const VkDevice device = vulkan->getDevice();
   if (device == VK_NULL_HANDLE) return NULL;
-
+  vkDeviceWaitIdle(device);
 
   VkDeviceSize imageSize = texWidth * texHeight * 4;
 

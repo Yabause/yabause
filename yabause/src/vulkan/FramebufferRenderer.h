@@ -31,6 +31,7 @@ extern "C" {
 }
 
 #include "VIDVulkan.h"
+#include "vulkan/vulkan.hpp"
 
 #include <string>
 using std::string;
@@ -83,7 +84,7 @@ public:
   }
 
 
-  void onStartFrame(Vdp2 * fixVdp2Reg, VkCommandBuffer commandBuffer);
+  void onStartFrame(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, const  vk::Viewport & viewport, int resolutionMode);
   void draw(Vdp2 * fixVdp2Reg, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat );
   void drawWithDestAlphaMode(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat);
   void drawShadow(Vdp2 * fixVdp2Reg, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat);
@@ -127,6 +128,7 @@ protected:
     int sprite_window;
     float from;
     float to;
+    int   dir;
   } ubo;
 
   struct UniformBuffer {

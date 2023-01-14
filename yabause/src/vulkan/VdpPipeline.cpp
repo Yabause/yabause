@@ -195,6 +195,7 @@ VdpPipeline::VdpPipeline(
     int u_mosaic_y;
     int specialPriority;
     int u_specialColorFunc;
+    int u_dir;
   };
   )u";
 
@@ -781,17 +782,35 @@ VdpLineBase::VdpLineBase(VIDVulkan * vulkan, TextureManager * tm, VertexManager 
 
     )S" + fragFuncCheckWindow
 
-    + R"s(  void main() {
-      checkWindow();
-      ivec2 addr;
-      addr.x = int(v_texcoord.x);
-      addr.y = int(v_texcoord.y);
-      ivec2 linepos;
-      linepos.y = 0;
-      linepos.x = int( (gl_FragCoord.y-u_viewport_offset) * u_emu_height);
-      vec4 txcol = texelFetch( s_texture, addr,0 );
-      vec4 lncol = texelFetch( s_line, linepos,0 );
-      if(txcol.a > 0.0){
+    + R"s(  
+      int getLinePos( int dir ){      
+        switch(dir){
+          case 1: // 90
+            return int((u_vheight - gl_FragCoord.x-u_viewport_offset) * u_emu_height);
+          break;
+          case 2: // 270
+            return int((gl_FragCoord.x-u_viewport_offset) * u_emu_height);
+          break;
+          case 3: // 180
+            return int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);
+            break;
+          default:
+            return int((gl_FragCoord.y-u_viewport_offset) * u_emu_height);
+            break;
+        }
+        return 0;
+      }
+      void main() {
+        checkWindow();
+        ivec2 addr;
+        addr.x = int(v_texcoord.x);
+        addr.y = int(v_texcoord.y);
+        ivec2 linepos;
+        linepos.y = 0;
+        linepos.x = getLinePos(u_dir);
+        vec4 txcol = texelFetch( s_texture, addr,0 );
+        vec4 lncol = texelFetch( s_line, linepos,0 );
+        if(txcol.a > 0.0){
   )s";
 
 }

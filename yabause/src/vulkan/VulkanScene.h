@@ -132,6 +132,9 @@ public:
   const VkQueue getVulkanQueue() {
     return _renderer->GetVulkanQueue();
   }
+  const int getPreTransFlag() {
+    return _renderer->getWindow()->GetPreTransFlag();
+  }
 
   //const VkCommandPool getCommandPool() {
   //  return _command_pool;
