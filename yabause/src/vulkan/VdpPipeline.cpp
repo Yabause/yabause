@@ -1108,6 +1108,25 @@ VdpBack::VdpBack(
     layout(location = 0) in vec4 v_texcoord;
     layout(binding = 1) uniform highp sampler2D s_texture;
     layout(location = 0) out vec4 fragColor;
+
+      int getLinePos( int dir ){      
+        switch(dir){
+          case 1: // 90
+            return int((u_vheight - gl_FragCoord.x-u_viewport_offset) * u_emu_height);
+          break;
+          case 2: // 270
+            return int((gl_FragCoord.x-u_viewport_offset) * u_emu_height);
+          break;
+          case 3: // 180
+            return int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);
+            break;
+          default:
+            return int((gl_FragCoord.y-u_viewport_offset) * u_emu_height);
+            break;
+        }
+        return 0;
+      }
+
   void main() {
     if( u_blendmode == 0 ){
       fragColor = texelFetch( s_texture, ivec2(0,0) ,0 );
@@ -1115,7 +1134,7 @@ VdpBack::VdpBack(
     }else{
       ivec2 linepos;
       linepos.y = 0; 
-      linepos.x = int( (gl_FragCoord.y-u_viewport_offset) * u_emu_height);
+      linepos.x = getLinePos(u_dir);
       fragColor = texelFetch( s_texture, linepos,0 );
       return;
     }
