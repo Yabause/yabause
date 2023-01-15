@@ -295,7 +295,7 @@ void TextureManager::updateTextureImage(const std::function<void(VkCommandBuffer
 
   const VkDevice device = vulkan->getDevice();
   if (device == VK_NULL_HANDLE) return;
-  if (this->_yMax <= 0) return;
+  //if (this->_yMax <= 0 ) return;
 
   int ci = updateCount & (TX_COMMANDBUFFER_COUNT-1);
   updateCount++;

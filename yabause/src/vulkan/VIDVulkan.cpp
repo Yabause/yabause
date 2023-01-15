@@ -5846,6 +5846,7 @@ void VIDVulkan::updateColorRam(VkCommandBuffer commandBuffer) {
   YabThreadLock(crammutex);
   if (Vdp2ColorRamUpdated) {
     cram.update(this, commandBuffer);
+	Vdp2ColorRamUpdated = 0;
   }
   YabThreadUnLock(crammutex);
 }
