@@ -448,6 +448,7 @@ typedef struct  {
  int u_sprite_window;
  float u_from;
  float u_to;
+ int u_dir;
 } UniformFrameBuffer;
 
 /*
