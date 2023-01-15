@@ -41,6 +41,8 @@ class VdpPipeline;
 #include <vector>  
 using std::vector;
 
+#include <queue> 
+
 class Vdp1Renderer {
 
 
@@ -52,6 +54,7 @@ class Vdp1Renderer {
     VkSemaphore _render_complete_semaphore;
     bool updated;
     bool readed;
+    std::queue<VkFence> renderFences;
   };
   struct OffscreenPass {
     int32_t width, height;
@@ -99,11 +102,9 @@ public:
   void change();
 
   void setTextureRatio(int vdp2widthratio, int vdp2heightratio);
+  
+  VkImageView getFrameBufferImage();
 
-  VkImageView getFrameBufferImage() {
-    blitCpuWrittenFramebuffer(readframe);
-    return offscreenPass.color[readframe].view;
-  }
   VkSemaphore getFrameBufferSem() {
     if (offscreenPass.color[readframe].updated) {
       offscreenPass.color[readframe].updated = false;
@@ -217,7 +218,7 @@ protected:
   VkShaderModule _fragShaderModule;
   VkPipelineLayout _pipelineLayout;
   VkPipeline _graphicsPipeline;
-  VkFence clearFence[2];
+  //VkFence clearFence[2];
   uint64_t clearCount = 0;
   Vdp2 baseVdp2Regs;
   void * frameBuffer;

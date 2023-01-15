@@ -568,11 +568,6 @@ void Vdp1Renderer::erase() {
   descriptorWrites[0].descriptorCount = 1;
   descriptorWrites[0].pBufferInfo = &bufferInfo;
 
-  
-  if( clearCount > 1 ){
-	  ErrorCheck( vkWaitForFences( device, 1, &clearFence[readframe], VK_TRUE, UINT64_MAX ) );
-	  ErrorCheck( vkResetFences( device, 1, &clearFence[readframe] ) );
-  }
 
   vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 
@@ -661,6 +656,17 @@ void Vdp1Renderer::erase() {
 
   VkPipelineStageFlags graphicsWaitStageMasks[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
+	VkFenceCreateInfo fence_create_info {};
+	fence_create_info.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  VkFence fence;
+  VK_CHECK_RESULT(vkCreateFence(device, &fence_create_info, nullptr, &fence));  
+  
+  while( offscreenPass.color[readframe].renderFences.size() > 0 ){
+	  ErrorCheck( vkWaitForFences( device, 1, &offscreenPass.color[readframe].renderFences.front() , VK_TRUE, UINT64_MAX ) );
+    vkDestroyFence(device, offscreenPass.color[readframe].renderFences.front(), nullptr);
+    offscreenPass.color[readframe].renderFences.pop();
+  }
+
   VkSubmitInfo submit_info{};
   submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submit_info.waitSemaphoreCount = waitSem.size();;
@@ -668,7 +674,9 @@ void Vdp1Renderer::erase() {
   submit_info.pWaitDstStageMask = graphicsWaitStageMasks;
   submit_info.commandBufferCount = 1;
   submit_info.pCommandBuffers = &cb;
-  ErrorCheck(vkQueueSubmit(vulkan->getVulkanQueue(), 1, &submit_info, clearFence[readframe]));
+  ErrorCheck(vkQueueSubmit(vulkan->getVulkanQueue(), 1, &submit_info, fence));
+  offscreenPass.color[readframe].renderFences.push(fence);
+
   clearCount++;
   //vkQueueWaitIdle(vulkan->getVulkanQueue());
   //vkDeviceWaitIdle(device);
@@ -735,6 +743,7 @@ void Vdp1Renderer::drawEnd(void) {
 
   //if(piplelines.size() != 0)
   //  blitCpuWrittenFramebuffer(fi);
+
 
   VkCommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
   vkBeginCommandBuffer(cb, &cmdBufInfo);
@@ -831,6 +840,17 @@ void Vdp1Renderer::drawEnd(void) {
 
   VkPipelineStageFlags graphicsWaitStageMasks[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
+	VkFenceCreateInfo fence_create_info {};
+	fence_create_info.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  VkFence fence;
+  VK_CHECK_RESULT(vkCreateFence(device, &fence_create_info, nullptr, &fence));  
+/*
+  while( offscreenPass.color[drawframe].renderFences.size() > 0 ){
+	  ErrorCheck( vkWaitForFences( device, 1, &offscreenPass.color[drawframe].renderFences.front() , VK_TRUE, UINT64_MAX ) );
+    vkDestroyFence(device, offscreenPass.color[drawframe].renderFences.front(), nullptr);
+    offscreenPass.color[drawframe].renderFences.pop();
+  }
+*/
   // Submit command buffer
   VkSubmitInfo submit_info{};
   submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -841,9 +861,19 @@ void Vdp1Renderer::drawEnd(void) {
   submit_info.pCommandBuffers = &cb;
   submit_info.signalSemaphoreCount = 0; //1;
   submit_info.pSignalSemaphores = nullptr; // &offscreenPass.color[fi]._render_complete_semaphore;
-  ErrorCheck(vkQueueSubmit(vulkan->getVulkanQueue(), 1, &submit_info, VK_NULL_HANDLE));
+  ErrorCheck(vkQueueSubmit(vulkan->getVulkanQueue(), 1, &submit_info, fence));
+  offscreenPass.color[drawframe].renderFences.push(fence);
   offscreenPass.color[drawframe].updated = true;
   offscreenPass.color[drawframe].readed = false;
+
+  while( offscreenPass.color[drawframe].renderFences.size() > 0 ){
+	  ErrorCheck( vkWaitForFences( device, 1, &offscreenPass.color[drawframe].renderFences.front() , VK_TRUE, UINT64_MAX ) );
+    vkDestroyFence(device, offscreenPass.color[drawframe].renderFences.front(), nullptr);
+    offscreenPass.color[drawframe].renderFences.pop();
+  }
+
+  //vkQueueWaitIdle(vulkan->getVulkanQueue());
+  //vkDeviceWaitIdle(device);
 
   //vkQueueWaitIdle(vulkan->getVulkanQueue());
   //vkDeviceWaitIdle(device);
@@ -1825,10 +1855,10 @@ void Vdp1Renderer::genClearPipeline() {
 
   VkDevice device = vulkan->getDevice();
 
-	VkFenceCreateInfo fence_create_info {};
-	fence_create_info.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	vkCreateFence( device, &fence_create_info, nullptr, &clearFence[0] );
-  vkCreateFence( device, &fence_create_info, nullptr, &clearFence[1] );
+	//VkFenceCreateInfo fence_create_info {};
+	//fence_create_info.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	//vkCreateFence( device, &fence_create_info, nullptr, &clearFence[0] );
+  //vkCreateFence( device, &fence_create_info, nullptr, &clearFence[1] );
 
 
   std::vector<Vertex> vertices;
@@ -3568,6 +3598,21 @@ u32 Vdp1Renderer::readPolygonColor(vdp1cmd_struct *cmd)
   }
   return color;
 }
+
+
+VkImageView Vdp1Renderer::getFrameBufferImage() {
+    blitCpuWrittenFramebuffer(readframe);
+    VkDevice device = vulkan->getDevice();
+#if 0    
+    while( offscreenPass.color[readframe].renderFences.size() > 0 ){
+      ErrorCheck( vkWaitForFences( device, 1, &offscreenPass.color[readframe].renderFences.front() , VK_TRUE, UINT64_MAX ) );
+      vkDestroyFence(device, offscreenPass.color[readframe].renderFences.front(), nullptr);
+      offscreenPass.color[readframe].renderFences.pop();
+    }
+#endif          
+    return offscreenPass.color[readframe].view;
+  }
+
 
 
 int Vdp1Renderer::genPolygon(YglSprite * input, CharTexture * output, float * colors, TextureCache * c, int cash_flg) {
