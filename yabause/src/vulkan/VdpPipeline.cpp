@@ -119,7 +119,7 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
 
       LOGI("%s%d", "erros: ", (int)result.GetNumErrors());
       if (result.GetNumErrors() != 0) {
-        LOGI("%s%s", "messages: ", result.GetErrorMessage().c_str());
+        LOGE("%s%s", "messages: ", result.GetErrorMessage().c_str());
         cout << target;
         throw std::runtime_error("failed to create shader module!");
       }
@@ -179,10 +179,10 @@ VdpPipeline::VdpPipeline(
     mat4 mvp;
     vec4 u_color_offset;
     int u_blendmode;
-    int offsetx;
-    int offsety;
-    int windowWidth;
-    int windowHeight;
+    float offsetx;
+    float offsety;
+    float windowWidth;
+    float windowHeight;
     int winmask;
     int winflag;
     int winmode;
@@ -213,9 +213,38 @@ VdpPipeline::VdpPipeline(
   )s";
 
   fragFuncCheckWindow = R"S(
+  vec2 getEmuPos( int dir ){
+    switch(dir){
+      case 1: // 90
+        return vec2(
+          (gl_FragCoord.y-offsetx) / windowWidth,
+          (windowHeight+offsety - gl_FragCoord.x) / windowHeight
+        );
+        break;
+      case 2: // 270
+        return vec2( 
+          (windowWidth+offsetx - gl_FragCoord.y) /float(windowWidth),
+          (gl_FragCoord.x-offsety) / windowHeight
+        );
+        break;
+      case 3: // 180
+        return vec2( 
+          (windowWidth + offsetx  - gl_FragCoord.x) /windowWidth,
+          (windowHeight + offsety  - gl_FragCoord.y) /windowHeight
+        );
+        break;
+      default: // 0
+        return vec2( 
+          (gl_FragCoord.x-offsetx) / windowWidth,
+          (gl_FragCoord.y-offsety) / windowHeight
+        );
+        break;
+    }
+    return vec2(0.0,0.0);
+  }    
   void checkWindow() {
     if( winmode != -1 ){
-      vec2 winaddr = vec2( (gl_FragCoord.x-float(offsetx)) /float(windowWidth), (gl_FragCoord.y-float(offsety)) /float(windowHeight));
+      vec2 winaddr = getEmuPos(u_dir);
       vec4 wintexture = texture(windowSampler,winaddr);
       int winvalue = int(wintexture.r * 255.0);
 

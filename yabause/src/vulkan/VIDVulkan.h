@@ -51,10 +51,10 @@ struct UniformBufferObject {
   glm::mat4 mvp;
   glm::vec4 color_offset;
   int blendmode;
-  int offsetx;
-  int offsety;
-  int windowWidth;
-  int windowHeight;
+  float offsetx;
+  float offsety;
+  float windowWidth;
+  float windowHeight;
   int winmask;
   int winflag;
   int winmode;

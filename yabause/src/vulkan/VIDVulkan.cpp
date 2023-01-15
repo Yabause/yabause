@@ -696,8 +696,9 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     } else {
       vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
     }
+
     c.setViewport(0, 1, &viewport);
-    c.setScissor(0, 1, &scissor);
+    c.setScissor(0, 1, &scissor);    
 
     UniformBufferObject ubo = {};
     ubo.emu_height = (float)vdp2height / (float)renderHeight;
@@ -818,10 +819,10 @@ void VIDVulkan::Vdp2DrawEnd(void) {
             ubo.winmode = prg->winmode;
             ubo.winmask = winmask;
             ubo.winflag = winflag;
-            ubo.offsetx = viewport.x;
-            ubo.offsety = viewport.y;
-            ubo.windowWidth = viewport.width;
-            ubo.windowHeight = viewport.height;
+            ubo.offsetx = originx;
+            ubo.offsety = originy;
+            ubo.windowWidth = renderWidth;
+            ubo.windowHeight = renderHeight;
           } else {
             ubo.winmode = -1;
             ubo.winmask = -1;
