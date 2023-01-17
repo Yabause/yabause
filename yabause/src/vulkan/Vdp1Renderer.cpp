@@ -786,9 +786,12 @@ void Vdp1Renderer::drawEnd(void) {
         vkCmdSetScissor(_command_buffers[fi], 0, 1, &scissor);
         */
 
+		// https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/pipeline_barriers/pipeline_barriers.cpp
         VkImageMemoryBarrier imageMemoryBarrier = vks::initializers::imageMemoryBarrier();
-        imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
-        imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+        imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		imageMemoryBarrier.srcAccessMask = 0;
+		imageMemoryBarrier.dstAccessMask = 0;
         imageMemoryBarrier.image = offscreenPass.color[drawframe].image;
         imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
@@ -798,8 +801,10 @@ void Vdp1Renderer::drawEnd(void) {
 
         vkCmdPipelineBarrier(
           cb,
-          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+          //VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+          //VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		  VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
           VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
       }
