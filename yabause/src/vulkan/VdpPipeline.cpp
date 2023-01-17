@@ -1042,6 +1042,25 @@ VdpPipelinePerLine::VdpPipelinePerLine(VIDVulkan * vulkan, TextureManager * tm, 
   )S" +
     fragFuncCheckWindow
     + R"s(
+
+      int getLinePosInTexture( int dir ){      
+        switch(dir){
+          case 1: // 90
+            return int((1.0 - v_texcoord.x) * u_tw);
+            break;
+          case 2: // 270
+            return int(v_texcoord.x * u_tw);
+            break;
+          case 3: // 180
+            return int((1.0 - v_texcoord.y) * u_th);
+            break;
+          default:
+            return int(u_th * v_texcoord.y);
+            break;
+        }
+        return 0;
+      }
+
   void main() {
     checkWindow();
     ivec2 addr;
@@ -1049,7 +1068,7 @@ VdpPipelinePerLine::VdpPipelinePerLine(VIDVulkan * vulkan, TextureManager * tm, 
     addr.y = int(u_th * v_texcoord.y);
     vec4 txcol = texelFetch( s_texture, addr,0 ) ;
     if(txcol.a > 0.0){
-      addr.x = int(u_th * v_texcoord.y);
+      addr.x = getLinePosInTexture(u_dir);
       addr.y = 0;
       if(u_specialColorFunc == 0 ) {
           txcol.a = texelFetch( s_line, addr,0 ).a;
@@ -2053,58 +2072,44 @@ VdpRbgCramLinePipeline::VdpRbgCramLinePipeline(VIDVulkan * vulkan, TextureManage
   prgid = PG_VDP2_RBG_CRAM_LINE;
 
   fragShaderName =
-    vdp2Uniform +
-    "layout(location = 0) in vec4 v_texcoord;\n"
-    "layout(binding = 1) uniform highp sampler2D s_texture;\n"
-    "layout(binding = 2) uniform highp sampler2D s_color;\n"
-    "layout(binding = 3) uniform highp sampler2D s_line_texture;\n"
-    "layout(binding = 4) uniform highp sampler2D windowSampler;"
-    "layout (location = 0) out vec4 fragColor;\n"
-    "void main()\n"
-    "{\n"
-    "    if (winmode != -1) { \n"
-    "      vec2 winaddr = vec2(gl_FragCoord.x / float(windowWidth), gl_FragCoord.y / float(windowHeight)); \n"
-    "      vec4 wintexture = texture(windowSampler, winaddr); \n"
-    "      int winvalue = int(wintexture.r * 255.0); \n"
-    "      // and \n"
-    "      if (winmode == 0) {    \n"
-    "       if ((winvalue & winmask) != winflag) { \n"
-    "         discard; \n"
-    "       } \n"
-    "       // or \n"
-    "     } \n"
-    "     else { \n"
-    "       if ((winvalue & winmask) == winflag) { \n"
-    "         discard; \n"
-    "       } \n"
-    "     } \n"
-    "   } \n"
-    "  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );         \n"
-    "  if(txindex.a > 0.0) {\n"
-    "    highp int highg = int(txindex.g*255.0);"
-    "    vec4 txcol = texelFetch( s_color, ivec2( ((highg&0x7F)<<8) | int(txindex.r*255.0) , 0 ) , 0 );\n"
-    "    txcol.a = txindex.a; \n"
-    "    if( (highg & 0x80)  != 0) {\n"
-    "      int coef = int(txindex.b*255.0);\n"
-    "      vec4 linecol;\n"
-    "      vec4 lineindex = texelFetch( s_line_texture,  ivec2( int(v_texcoord.z),int(v_texcoord.w))  ,0 );\n"
-    "      int lineparam = ((int(lineindex.g*255.0) & 0x7F)<<8) | int(lineindex.r*255.0); \n"
-    "      if( (coef & 0x80) != 0 ){\n"
-    "        int caddr = (lineparam&0x780) | (coef&0x7F);\n "
-    "        linecol = texelFetch( s_color, ivec2( caddr,0  ) , 0 );\n"
-    "      }else{\n"
-    "        linecol = texelFetch( s_color, ivec2( lineparam , 0 ) , 0 );\n"
-    "      }\n"
-    "      if( u_blendmode == 1 ) { \n"
-    "        txcol = mix(txcol,  linecol , 1.0-txindex.a); txcol.a = txindex.a + 0.25;\n"
-    "      }else if( u_blendmode == 2 ) {\n"
-    "        txcol = clamp(txcol+linecol,vec4(0.0),vec4(1.0)); txcol.a = txindex.a; \n"
-    "      }\n"
-    "    }\n"
-    "    fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n"
-    "  }else \n"
-    "    discard;\n"
-    "}\n";
-
+    vdp2Uniform + R"S(
+    layout(location = 0) in vec4 v_texcoord;
+    layout(binding = 1) uniform highp sampler2D s_texture;
+    layout(binding = 2) uniform highp sampler2D s_color;
+    layout(binding = 3) uniform highp sampler2D s_line_texture;
+    layout(binding = 4) uniform highp sampler2D windowSampler;
+    layout (location = 0) out vec4 fragColor;
+    )S" + fragFuncCheckWindow +
+    
+    R"S(
+    void main(){
+      checkWindow();
+      vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );
+      if(txindex.a > 0.0) {
+        highp int highg = int(txindex.g*255.0);
+        vec4 txcol = texelFetch( s_color, ivec2( ((highg&0x7F)<<8) | int(txindex.r*255.0) , 0 ) , 0 );
+        txcol.a = txindex.a;
+        if( (highg & 0x80)  != 0) {
+          int coef = int(txindex.b*255.0);
+          vec4 linecol;
+          vec4 lineindex = texelFetch( s_line_texture,  ivec2( int(v_texcoord.z),int(v_texcoord.w))  ,0 );
+          int lineparam = ((int(lineindex.g*255.0) & 0x7F)<<8) | int(lineindex.r*255.0);
+          if( (coef & 0x80) != 0 ){
+            int caddr = (lineparam&0x780) | (coef&0x7F);
+            linecol = texelFetch( s_color, ivec2( caddr,0  ) , 0 );
+          }else{
+            linecol = texelFetch( s_color, ivec2( lineparam , 0 ) , 0 );
+          }
+          if( u_blendmode == 1 ) { 
+            txcol = mix(txcol,  linecol , 1.0-txindex.a); txcol.a = txindex.a + 0.25;
+          }else if( u_blendmode == 2 ) {
+            txcol = clamp(txcol+linecol,vec4(0.0),vec4(1.0)); txcol.a = txindex.a;
+          }
+        }
+        fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));
+      }else 
+        discard;
+    }
+    )S";
 }
 

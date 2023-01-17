@@ -857,18 +857,15 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
             LOGE("offcount = %d",offcount);
             
-
             UniformBufferObject ubomini = ubo;
-            ubomini.offsetx = 0;
-            ubomini.offsety = 0;
-            ubomini.windowWidth = offscreenPass.width;
-            ubomini.windowHeight = offscreenPass.height;
+            ubomini.winmode = -1;
+           
             layers[i][j]->setUBO(&ubomini, sizeof(ubomini));
             layers[i][j]->updateDescriptorSets();
             renderToOffecreenTarget(commandBuffer, layers[i][j], offcount);
 
-            ubo.u_tw = vdp2width;
-            ubo.u_th = vdp2height;
+            ubo.u_tw = offscreenPass.width;
+            ubo.u_th = offscreenPass.height;
             ubo.vheight = (i / 10.0f);
             ubo.u_specialColorFunc = prg->specialcolormode;
 
@@ -5929,13 +5926,28 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   VkDevice device = getDevice();
   VkPhysicalDevice physicalDevice = getPhysicalDevice();
 
-  if (offscreenPass.width == width && offscreenPass.height == height)
-    return;
-
   deleteOfscreenPath();
 
+  if( resolutionMode == RES_NATIVE ){
+    int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
+    if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+        pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+      if (offscreenPass.height == width && offscreenPass.width == height)
+        return;
+      offscreenPass.width = height;
+      offscreenPass.height = width;
+    } else {
+  if (offscreenPass.width == width && offscreenPass.height == height)
+    return;
   offscreenPass.width = width;
   offscreenPass.height = height;
+    }
+  }else{
+    if (offscreenPass.width == width && offscreenPass.height == height)
+      return;
+    offscreenPass.width = width;
+    offscreenPass.height = height;      
+  }
 
   // Color attachment
   VkImageCreateInfo image = {};
