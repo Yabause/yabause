@@ -17,9 +17,19 @@
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#include "Settings.h"
 #include "UIDebugSH2.h"
 #include "../CommonDialogs.h"
 #include "UIYabause.h"
+#include "VolatileSettings.h"
+#include <QProcess>
+#include <QRegularExpression>
+#include <QTextBlock>
+#include <QTextBlockFormat>
+#include <iomanip>
+#include <fstream>
+#include <sstream>
+#include <filesystem>
 
 int SH2Dis(SH2_struct *context, u32 addr, char *string)
 {
@@ -109,14 +119,24 @@ UIDebugSH2::UIDebugSH2(UIDebugCPU::PROCTYPE proc, YabauseThread *mYabauseThread,
       pbReserved1->setText(QtYabause::translate("Loop Track Stop"));
    else
       pbReserved1->setText(QtYabause::translate("Loop Track Start"));
-   pbReserved2->setText(QtYabause::translate("Loop Track Clear"));
+  pbReserved2->setText(QtYabause::translate("Loop Track Clear"));
 	pbReserved3->setText(QtYabause::translate("Inline Assembly"));
 
-   pbStepOver->setVisible( true );
-   pbStepOut->setVisible( true );
-   pbReserved1->setVisible( true );
-   pbReserved2->setVisible( true );
+  pbStepOver->setVisible( true );
+  pbStepOut->setVisible( true );
+  pbReserved1->setVisible( true );
+  pbReserved2->setVisible( true );
 	pbReserved3->setVisible( true );
+  pbLoadCode->setVisible( true );
+	connect( pbLoadCode, SIGNAL( clicked() ), this, SLOT( loadCodeAddress() ) );
+
+  restoreAddr2line();
+}
+   
+void UIDebugSH2::restoreAddr2line()
+{
+  Settings* settings = QtYabause::settings();
+  addr2line = settings->value( "Debug/Addr2Line" ).toString();
 }
 
 void UIDebugSH2::updateRegList()
@@ -207,6 +227,150 @@ void UIDebugSH2::updateTrackInfLoop()
    }
 }
 
+void UIDebugSH2::loadCodeAddress()
+{
+  sh2regs_struct sh2regs;
+  SH2GetRegisters(debugSH2, &sh2regs);
+
+  std::stringstream currentAddress;
+  currentAddress << std::hex << sh2regs.PC;
+
+	bool ok = false;
+  const std::string newAddress = QInputDialog::getText(this, tr("Input code address"),
+		tr("Address (hex):"), QLineEdit::Normal,
+    QString::fromStdString(currentAddress.str()), &ok).toStdString();
+        
+	if (ok)
+    updateCodePage(static_cast<uint32_t>(std::stoull(newAddress, nullptr, 16)));
+}
+   
+void UIDebugSH2::updateCodePage(u32 evaluateAddress)
+{
+  DebugPrintf(MainLog, __FILE__, __LINE__, "Address to inspect %x\n", evaluateAddress);
+  if (addr2line.isEmpty())
+    restoreAddr2line();
+
+  const QString program{ addr2line };
+  std::filesystem::path elfPath;
+		
+  VolatileSettings *vs = QtYabause::volatileSettings();
+	if ( vs->value( "General/CdRom" ) != CDCORE_ISO )
+  {
+    DebugPrintf(MainLog, __FILE__, __LINE__, "Not using ISO, ignoring code\n");
+    return;
+  }
+  else
+  {
+    const QString isoPathString{ vs->value( "General/CdRomISO" ).toString() };
+    const std::filesystem::path isoPath{ isoPathString.toStdString() };
+
+    // Search first at the './build/' directory
+    const std::filesystem::path folder{ isoPath.parent_path() };
+    const std::string elfFilename{ isoPath.filename().stem().string() + ".elf" };
+    const std::filesystem::path atBuildFolder{ folder / "build" / elfFilename };
+    const std::filesystem::path atLocalFolder{ folder / elfFilename };
+    
+    if ( std::filesystem::exists( atBuildFolder ) )
+      elfPath = atBuildFolder;
+    else if ( std::filesystem::exists( atLocalFolder ) )
+      elfPath = atLocalFolder;
+  }
+
+  if ( elfPath.empty() )
+  {
+    DebugPrintf(MainLog, __FILE__, __LINE__, "Could not find elf file, ignoring code\n");
+    return;
+  }
+
+  std::stringstream hexAddress;
+  hexAddress << std::setfill('0') << std::setw(8) << std::hex
+             << evaluateAddress;
+
+  QStringList arguments;
+  arguments.push_back("-a");
+  arguments.push_back(QString::fromStdString(hexAddress.str()));
+  arguments.push_back("-p");
+  arguments.push_back("-i");
+  arguments.push_back("-f");
+  arguments.push_back("-C");
+  arguments.push_back("-e");
+  arguments.push_back(QString::fromStdString(elfPath.string()));
+
+  QProcess addr2lineProgram;
+  addr2lineProgram.start(program, arguments);
+  addr2lineProgram.waitForFinished();
+
+  std::string commandString;
+  commandString += program.toStdString() + " " + arguments.join(" ").toStdString();
+
+  const QByteArray pstdout = addr2lineProgram.readAllStandardOutput();
+  if (addr2lineProgram.exitCode() != 0) {
+    const QByteArray pstderr = addr2lineProgram.readAllStandardError();
+    const std::string outputString =
+        pstdout.toStdString() + " / " + pstderr.toStdString();
+
+    DebugPrintf(MainLog, __FILE__, __LINE__, "Cmd: %s\n",
+                commandString.c_str());
+    DebugPrintf(MainLog, __FILE__, __LINE__, "Output (%d): %s\n",
+                addr2lineProgram.exitCode(), outputString.c_str());
+  
+    codeBrowser->setText(QString::fromStdString(outputString));
+  } else {
+
+    // QRegularExpression re("(0x[0-9a-fA-F]+):\\s*(.+?(?= at )) at (.+?(?=:[0-9]+)):([0-9]+)");
+    QRegularExpression re("(0x[0-9a-fA-F]+):\\s*(.+?(?= at )) at (.+?(?=:[0-9]+)):([0-9]+)"
+      "(\\s*\\(inlined by\\)\\s*(.+?(?= at )) at (.+?(?=:[0-9]+)):([0-9]+))?");
+
+    QRegularExpressionMatch match = re.match(pstdout);
+    bool hasMatch = match.hasMatch();
+    
+    if (match.hasMatch())
+    {
+      const int filenameGroup = match.lastCapturedIndex() == 8 ? 7 : 3;
+      const int lineGroup = match.lastCapturedIndex() == 8 ? 8 : 4;
+
+      const std::filesystem::path filename{match.captured(filenameGroup).toStdString()};
+      const int line{ std::stoi(match.captured(lineGroup).toStdString()) };
+
+      std::ifstream inputFile(filename, std::ios_base::in);
+      inputFile.seekg(0, std::ios_base::end);
+      const size_t fileSize = inputFile.tellg();
+      inputFile.seekg(0, std::ios_base::beg);
+
+      std::string tmpString(fileSize, '\0');
+      inputFile.read(&tmpString[0], fileSize);
+
+      const std::string tooltip{ filename.string() + ":" + std::to_string(line) };
+      
+      codeTab->setTabText(1, QString::fromStdString(filename.filename().string()));
+      codeTab->setTabToolTip(1, QString::fromStdString(tooltip));
+      codeBrowser->setText(QString::fromStdString(tmpString));
+
+      QTextBlock lineBlock = codeBrowser->document()->findBlockByLineNumber(line - 1);
+      codeBrowser->moveCursor(QTextCursor::End);
+      codeBrowser->setTextCursor(QTextCursor(lineBlock));
+
+      QTextBlockFormat highlightFormat;
+      highlightFormat.setBackground(Qt::yellow);
+      highlightFormat.setNonBreakableLines(true);
+      highlightFormat.setPageBreakPolicy(QTextFormat::PageBreak_AlwaysBefore);
+
+      QTextCursor newCursor(codeBrowser->textCursor());
+      newCursor.setPosition(lineBlock.position());
+      newCursor.select(QTextCursor::LineUnderCursor);
+      newCursor.setBlockFormat(highlightFormat);
+    }
+    else
+    {
+      codeTab->setTabText(1, "Source");
+      if (addr2line.isEmpty())
+        codeBrowser->setText("addr2line utility is not configured properly, source not available.");
+      else
+        codeBrowser->setText(QString("Source not found or available. Stdout was:\n") + pstdout);
+    }
+  }
+}
+
 void UIDebugSH2::updateAll()
 {
    updateRegList();
@@ -218,6 +382,7 @@ void UIDebugSH2::updateAll()
       updateCodeList(sh2regs.PC);
       updateBackTrace();
       updateTrackInfLoop();
+      updateCodePage(sh2regs.PC);
    }
 }
 

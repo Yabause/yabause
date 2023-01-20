@@ -22,6 +22,8 @@
 #define YABAUSEGL_H
 
 #include <QGLWidget>
+#include <QtCore/qmutex.h>
+#include <QPair>
 
 class YabauseGL : public QGLWidget
 {
@@ -29,10 +31,22 @@ class YabauseGL : public QGLWidget
 	
 public:
 	YabauseGL( QWidget* parent = 0 );
+	~YabauseGL();
 	
+	void updatePausedView( const QSize& size = QSize() );
 	void updateView( const QSize& size = QSize() );
+	void snapshotView();
+
+	void paintGL() override;
+	void setPaused(bool isPaused);
+	QPair<uint32_t*, QMutex*> getOverlayPausedImage();
 
 protected:
+	bool paused;
+	uint32_t* lastRenderedScreen;
+	uint32_t* overlayPauseImage;
+	QMutex overlayMutex;
+
 	virtual void showEvent( QShowEvent* event );
 	virtual void resizeGL( int w, int h );
 };

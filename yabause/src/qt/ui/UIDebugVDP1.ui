@@ -78,6 +78,18 @@
               <height>0</height>
              </size>
             </property>
+            <property name="styleSheet">
+             <string notr="true">background-color: transparent;</string>
+            </property>
+            <property name="backgroundBrush">
+             <brush brushstyle="NoBrush">
+              <color alpha="0">
+               <red>0</red>
+               <green>0</green>
+               <blue>0</blue>
+              </color>
+             </brush>
+            </property>
            </widget>
           </item>
           <item>
@@ -116,6 +128,13 @@
              </widget>
             </item>
             <item>
+             <widget class="QPushButton" name="pbSaveRawSprite">
+              <property name="text">
+               <string>Save RAW</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer_2">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -139,6 +158,13 @@
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_7">
+     <item>
+      <widget class="QLabel" name="lVDP1Info">
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QDialogButtonBox" name="dbbButtons">
        <property name="standardButtons">

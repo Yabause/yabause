@@ -70,6 +70,12 @@ signals:
    void killProgressDialog();
 
 protected:
+  void closeEvent(QCloseEvent *e) override;
+
+public slots:
+   void accept() Q_DECL_OVERRIDE;
+   void reject() Q_DECL_OVERRIDE;
+   void done(int r) Q_DECL_OVERRIDE;
 
 protected slots:
    void on_pbGotoAddress_clicked();

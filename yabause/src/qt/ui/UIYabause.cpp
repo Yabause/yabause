@@ -1141,7 +1141,7 @@ void UIYabause::on_aViewDebugSSH2_triggered()
 void UIYabause::on_aViewDebugVDP1_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	UIDebugVDP1( this ).exec();
+	UIDebugVDP1( this, mYabauseGL->getWidget() ).exec();
 }
 
 void UIYabause::on_aViewDebugVDP2_triggered()
@@ -1273,6 +1273,11 @@ void UIYabause::on_cbVideoDriver_currentIndexChanged( int id )
 
 void UIYabause::pause( bool paused )
 {
+	// Store last visible buffer
+	if (paused)
+		mYabauseGL->snapshotView();
+
+	mYabauseGL->setPaused( paused );
 	mYabauseGL->updateView();
 	
 	aEmulationRun->setEnabled( paused );

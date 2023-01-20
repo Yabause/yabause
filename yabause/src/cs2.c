@@ -147,6 +147,7 @@ void FASTCALL Cs2WriteByte(SH2_struct *sh, u32 addr, u8 val)
  * \bug        Mapping isn't quite correct(as noted in source)
  */
 u16 FASTCALL Cs2ReadWord(SH2_struct *sh, u32 addr) {
+  s32 i;
   u16 val = 0;
   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
@@ -187,6 +188,68 @@ u16 FASTCALL Cs2ReadWord(SH2_struct *sh, u32 addr) {
                   return Cs2Area->reg.CR4;
     case 0x90028:
     case 0x9002A: return Cs2Area->reg.MPEGRGB;
+    case 0x90000:
+                  // transfer data
+                  if (Cs2Area->datatranstype != CDB_DATATRANSTYPE_INVALID)
+                  {
+                     // get sector
+
+                     // Make sure we still have sectors to transfer
+                     if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
+                     {
+                        // Transfer Data
+                        const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+
+                        if (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans] == NULL)
+                        {
+                           CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
+                           return 0;
+                        }
+#ifdef WORDS_BIGENDIAN
+                        val = *((const u16 *) ptr);
+#else
+                        val = BSWAP16(*((const u16 *) ptr));
+#endif
+
+                        // increment datatransoffset/cdwnum
+                        Cs2Area->cdwnum += 2;
+                        Cs2Area->datatransoffset += 2;
+
+                        // Make sure we're not beyond the sector size boundary
+                        if (Cs2Area->datatransoffset >= Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->size)
+                        {
+                           Cs2Area->datatransoffset = 0;
+                           Cs2Area->datanumsecttrans++;
+                        }
+                     }
+                     else
+                     {
+                        if (Cs2Area->datatranstype == CDB_DATATRANSTYPE_GETDELSECTOR)
+                        {
+                           // Ok, so we don't have any more sectors to
+                           // transfer, might as well delete them all.
+
+                           Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
+
+                           // free blocks
+                           for (i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos+Cs2Area->datasectstotrans); i++)
+                           {
+                              Cs2FreeBlock(Cs2Area->datatranspartition->block[i]);
+                              Cs2Area->datatranspartition->block[i] = NULL;
+                              Cs2Area->datatranspartition->blocknum[i] = 0xFF;
+                           }
+
+                           // sort remaining blocks
+                           Cs2SortBlocks(Cs2Area->datatranspartition);
+
+                           Cs2Area->datatranspartition->size -= Cs2Area->cdwnum;
+                           Cs2Area->datatranspartition->numblocks -= Cs2Area->datasectstotrans;
+
+                           CDLOG("cs2\t: datatranspartition->size = %x\n", Cs2Area->datatranspartition->size);
+                        }
+                     }
+                  }
+                  break;
     case 0x98000:
                   // transfer info
                   switch (Cs2Area->infotranstype) {

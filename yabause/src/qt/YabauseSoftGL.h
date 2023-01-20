@@ -31,6 +31,9 @@ class YabauseSoftGL : public QWidget
 public:
 	YabauseSoftGL( QWidget* parent = 0 );
 
+	void setPaused(bool isPaused);
+  void updatePausedView( const QSize& s );
+	void snapshotView();
 	void updateView( const QSize& size = QSize() );
 	virtual void swapBuffers();
 	QImage grabFrameBuffer(bool withAlpha = false);

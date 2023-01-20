@@ -17,6 +17,7 @@
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 #include "UIHexEditor.h"
+#include "Settings.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QPainter>
@@ -73,6 +74,18 @@ void UIHexEditor::goToAddress( u32 address, bool setCursor )
 {
    UIHexEditorWnd *hexEditorWnd=(UIHexEditorWnd *)currentWidget();
    hexEditorWnd->goToAddress(address, setCursor);
+}
+   
+void UIHexEditor::saveCursorPosition()
+{
+   UIHexEditorWnd *hexEditorWnd=(UIHexEditorWnd *)currentWidget();
+   hexEditorWnd->saveCursorPosition();
+}
+
+void UIHexEditor::restoreCursorPosition()
+{
+   UIHexEditorWnd *hexEditorWnd=(UIHexEditorWnd *)currentWidget();
+   hexEditorWnd->restoreCursorPosition();
 }
 
 u32 UIHexEditor::getStartAddress()
@@ -132,7 +145,7 @@ UIHexEditorWnd::UIHexEditorWnd( QWidget* p )
    connect(&autoScrollTimer, SIGNAL(timeout()), this, SLOT(autoScroll()));
    autoScrollTimer.setInterval(5);
 
-   setMouseTracking(true);
+   setMouseTracking(true);	
 }
 
 void UIHexEditorWnd::sliderUpdate(int value)
@@ -196,6 +209,20 @@ void UIHexEditorWnd::goToAddress(u32 address, bool setCursor)
       resetSelection(address * 2);
    }
    viewport()->update();
+}
+
+void UIHexEditorWnd::saveCursorPosition()
+{
+  Settings *settings = QtYabause::settings();
+  settings->setValue("Debug/MemoryEditorCaretPosition",
+                     QVariant(verticalScrollBar()->value()));
+}
+
+void UIHexEditorWnd::restoreCursorPosition()
+{
+   Settings* settings = QtYabause::settings();
+   verticalScrollBar()->setValue(
+       settings->value("Debug/MemoryEditorCaretPosition", QVariant(0)).toInt());
 }
 
 u8 UIHexEditorWnd::readByte(u32 addr)

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>513</width>
-    <height>523</height>
+    <width>522</width>
+    <height>716</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1027,6 +1027,56 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="wDebug">
+      <attribute name="title">
+       <string>Debug</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="laddr2line">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>addr2line Executable</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QLineEdit" name="leAddr2Line"/>
+         </item>
+         <item>
+          <widget class="QToolButton" name="tbAddr2Line">
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="2" column="0">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
    <item>
@@ -1090,8 +1140,8 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="bgShowLogWindow"/>
   <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowToolbar"/>
-  <buttongroup name="bgShowLogWindow"/>
  </buttongroups>
 </ui>

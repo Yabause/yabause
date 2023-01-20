@@ -41,6 +41,7 @@ public:
    UIDebugCPU( PROCTYPE proc, YabauseThread *mYabauseThread, QWidget* parent = 0 );
    virtual void updateRegList();
    virtual void updateCodeList(u32 addr);
+   virtual void updateCodePage(u32 addr);
    virtual u32 getRegister(int index, int *size);
    virtual void setRegister(int index, u32 value);
    virtual bool addCodeBreakpoint(u32 addr);

@@ -467,7 +467,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
 
-   while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+   while (!(command & 0x8000) && commandCounter < 5000) { // fix me
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
@@ -548,7 +548,7 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
 
-   while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+   while (!(command & 0x8000) && commandCounter < 5000) { // fix me
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
@@ -784,6 +784,21 @@ static u32 Vdp1DebugGetCommandNumberAddr(u32 number)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+Vdp1CommandType Vdp1DebugGetCommandType(u32 number) 
+{
+   u32 addr;
+   if ((addr = Vdp1DebugGetCommandNumberAddr(number)) != 0xFFFFFFFF)
+   {
+      const u16 command = T1ReadWord(Vdp1Ram, addr);
+      if (command & 0x8000)
+        return VDPCT_DRAW_END;
+      else if ((command & 0x000F) < VDPCT_INVALID)
+        return (Vdp1CommandType) (command & 0x000F);
+   }
+        
+   return VDPCT_INVALID;
+}
 
 void Vdp1DebugGetCommandNumberName(u32 number, char *outstring)
 {
@@ -1476,6 +1491,261 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
       }
       default:
          break;
+   }
+
+   return texture;
+}
+
+u8 Vdp1DebugCommandVertices(u32 number, int *x0, int *y0, int *x1, int *y1,
+  int *x2, int *y2, int *x3, int *y3)
+{
+   u16 command;
+   vdp1cmd_struct cmd;
+   u32 addr;
+   s32 i;
+   u8 cmdType;
+
+   if ((addr = Vdp1DebugGetCommandNumberAddr(number)) == 0xFFFFFFFF)
+      return -1;
+
+   command = T1ReadWord(Vdp1Ram, addr);
+   if (command & 0x8000)
+      // Draw End
+      return -1;
+
+   if (command & 0x4000)
+      // Command Skipped
+      return -1;
+
+   Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
+   cmdType = cmd.CMDCTRL & 0x000F;
+   if (cmdType <= 5) 
+   {
+      // Find user local coordinates first
+      vdp1cmd_struct tmpCmd;
+      s16 coordX = 0;
+      s16 coordY = 0;
+      for (i = number; i >= 0; --i)
+      {
+        if ((addr = Vdp1DebugGetCommandNumberAddr(i)) == 0xFFFFFFFF)
+          break;
+      
+        Vdp1ReadCommand(&tmpCmd, addr, Vdp1Ram);
+        if ((tmpCmd.CMDCTRL & 0x000F) != 10)
+          continue;
+
+        coordX = tmpCmd.CMDXA;
+        coordY = tmpCmd.CMDYA;
+        break;
+      }
+
+      // 0: Normal Sprite
+      // 1: Scaled Sprite
+      // 2: Distorted Sprite
+      // 3: Distorted Sprite *
+      // 4: Polygon
+      // 5: Polyline
+      if (cmdType == 0 || cmdType == 1)
+      {
+        s16 i0, j0;
+        s16 i1, j1;
+        if (cmdType == 0)
+        {
+          i0 = cmd.CMDXA;
+          i1 = i0 + (((cmd.CMDSIZE & 0x3F00) >> 5) & 0xFF);
+          j0 = cmd.CMDYA;
+          j1 = j0 + (cmd.CMDSIZE & 0xFF);
+        }
+        else
+        {
+          switch ((cmd.CMDCTRL >> 8) & 0xF)
+          {
+          default:
+          case 0x0:
+            i0 = cmd.CMDXA;
+            i1 = i0 + cmd.CMDXC;
+            j0 = cmd.CMDYA;
+            j1 = j0 + cmd.CMDYC;
+            break;
+          case 0x5: // Upper-Left
+            i0 = cmd.CMDXA;
+            i1 = i0 + cmd.CMDXB;
+            j0 = cmd.CMDYA;
+            j1 = j0 + cmd.CMDYB;
+            break;
+          case 0x6: // Upper-Center
+            i0 = cmd.CMDXA - cmd.CMDXB / 2;
+            i1 = cmd.CMDXA + cmd.CMDXB / 2;
+            j0 = cmd.CMDYA;
+            j1 = j0 + cmd.CMDYB;
+            break;
+          case 0x7: // Upper-Right
+            i0 = cmd.CMDXA - cmd.CMDXB;
+            i1 = cmd.CMDXA;
+            j0 = cmd.CMDYA;
+            j1 = j0 + cmd.CMDYB;
+            break;
+          case 0x9: // Center-Left
+            i0 = cmd.CMDXA;
+            i1 = cmd.CMDXA + cmd.CMDXB;
+            j0 = cmd.CMDYA - cmd.CMDYB / 2;
+            j1 = cmd.CMDYA + cmd.CMDYB / 2;
+            break;
+          case 0xA: // Center-Center
+            i0 = cmd.CMDXA - cmd.CMDXB / 2;
+            i1 = cmd.CMDXA + cmd.CMDXB / 2;
+            j0 = cmd.CMDYA - cmd.CMDYB / 2;
+            j1 = cmd.CMDYA + cmd.CMDYB / 2;
+            break;
+          case 0xB: // Center-Right
+            i0 = cmd.CMDXA - cmd.CMDXB;
+            i1 = cmd.CMDXA;
+            j0 = cmd.CMDYA - cmd.CMDYB / 2;
+            j1 = cmd.CMDYA + cmd.CMDYB / 2;
+            break;
+          case 0xD: // Lower-Left
+            i0 = cmd.CMDXA;
+            i1 = cmd.CMDXA + cmd.CMDXB;
+            j0 = cmd.CMDYA - cmd.CMDYB;
+            j1 = cmd.CMDYA;
+            break;
+          case 0xE: // Lower-Center
+            i0 = cmd.CMDXA - cmd.CMDXB / 2;
+            i1 = cmd.CMDXA + cmd.CMDXB / 2;
+            j0 = cmd.CMDYA - cmd.CMDYB;
+            j1 = cmd.CMDYA;
+            break;
+          case 0xF: // Lower-Right
+            i0 = cmd.CMDXA - cmd.CMDXB;
+            i1 = cmd.CMDXA;
+            j0 = cmd.CMDYA - cmd.CMDYB;
+            j1 = cmd.CMDYA;
+            break;
+          }
+        }
+
+        *x0 = coordX + i0;
+        *y0 = coordY + j0;
+        *x1 = coordX + i1;
+        *y1 = coordY + j0;
+        *x2 = coordX + i1;
+        *y2 = coordY + j1;
+        *x3 = coordX + i0;
+        *y3 = coordY + j1;
+      }
+      else
+      {
+        *x0 = coordX + cmd.CMDXA;
+        *y0 = coordY + cmd.CMDYA;
+        *x1 = coordX + cmd.CMDXB;
+        *y1 = coordY + cmd.CMDYB;
+        *x2 = coordX + cmd.CMDXC;
+        *y2 = coordY + cmd.CMDYC;
+        *x3 = coordX + cmd.CMDXD;
+        *y3 = coordY + cmd.CMDYD;
+      }
+      return 0;
+   }
+   else 
+   {
+     return -1;
+   }
+}
+
+u8 *Vdp1DebugRawTexture(u32 cmdNumber, int *width, int *height, int *numBytes)
+{
+   u16 cmdRaw;
+   vdp1cmd_struct cmd;
+   u32 cmdAddress;
+   u8 *texture = NULL;
+               
+   // Initial number of bytes written to texture
+   *numBytes = 0;
+
+   if ((cmdAddress = Vdp1DebugGetCommandNumberAddr(cmdNumber)) == 0xFFFFFFFF)
+      return NULL;
+
+   cmdRaw = T1ReadWord(Vdp1Ram, cmdAddress);
+
+   if (cmdRaw & 0x8000)
+      // Draw End
+      return NULL;
+
+   if (cmdRaw & 0x4000)
+      // Command Skipped
+      return NULL;
+
+   Vdp1ReadCommand(&cmd, cmdAddress, Vdp1Ram);
+
+   const int spriteCmdType = ((cmd.CMDPMOD >> 3) & 0x7);
+   switch (cmd.CMDCTRL & 0x000F)
+   {
+      case 0: // Normal Sprite
+      case 1: // Scaled Sprite
+      case 2: // Distorted Sprite
+      case 3: // Distorted Sprite *
+         width[0] = (cmd.CMDSIZE & 0x3F00) >> 5;
+         height[0] = cmd.CMDSIZE & 0xFF;
+   
+         switch (spriteCmdType) {
+            // 0: 4 bpp Bank mode
+            // 1: 4 bpp LUT mode
+            case 0:
+            case 1:
+               numBytes[0] = 0.5 * width[0] * height[0];
+               texture = (u8*) malloc(numBytes[0]);
+               break;
+            // 2: 8 bpp(64 color) Bank mode
+            // 3: 8 bpp(128 color) Bank mode
+            // 4: 8 bpp(256 color) Bank mode
+            case 2:
+            case 3:
+            case 4:
+               numBytes[0] = width[0] * height[0];
+               texture = (u8*) malloc(numBytes[0]);
+               break;
+            // 5: 16 bpp Bank mode
+            case 5:
+               numBytes[0] = 2 * width[0] * height[0];
+               texture = (u8*) malloc(numBytes[0]);
+               break;
+            default:
+               texture = NULL;
+               break;
+         }
+
+         if (texture == NULL)
+            return NULL;
+
+         break;
+      case 4: // Polygon
+      case 5: // Polyline
+      case 6: // Line
+      case 7: // Polyline *
+         // Do 1x1 pixel
+         width[0] = 1;
+         height[0] = 1;
+         texture = (u8*) malloc(sizeof(u16));
+
+         if (texture == NULL)
+            return NULL;
+
+         *numBytes = 2;
+         memcpy(texture, &cmd.CMDCOLR, sizeof(u16));
+         return texture;
+      case 8:  // User Clipping
+      case 9:  // System Clipping
+      case 10: // Local Coordinates
+      case 11: // User Clipping *
+         return NULL;
+      default: // Invalid command
+         return NULL;
+   }
+
+   // Read texture data directly from VRAM.
+   for (u32 i = 0; i < *numBytes; ++i) 
+   {
+     texture[ i ] = T1ReadByte(Vdp1Ram, ((cmd.CMDSRCA * 8) + i) & 0x7FFFF);
    }
 
    return texture;

@@ -4,6 +4,10 @@ yab_port_start()
 
 option(YAB_USE_QT5 "Use Qt 5 if available." ON)
 
+set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 if(YAB_USE_QT5) 
 	find_package(Qt5 COMPONENTS Widgets QUIET)
 endif()

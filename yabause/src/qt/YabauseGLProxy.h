@@ -39,7 +39,9 @@ public:
 	static const int SOFTWARE;
 
 	YabauseGLProxy( QWidget* parent = 0, int impl = DEFAULT );
+	void setPaused(bool paused);
 
+	void snapshotView();
 	void updateView( const QSize& size = QSize() );
 	virtual void swapBuffers();
 	QImage grabFrameBuffer(bool withAlpha = false);

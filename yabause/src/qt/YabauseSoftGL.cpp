@@ -42,6 +42,18 @@ void YabauseSoftGL::showEvent( QShowEvent* e )
 void YabauseSoftGL::resizeGL( int w, int h )
 { updateView( QSize( w, h ) ); }
 
+void YabauseSoftGL::snapshotView()
+{
+}
+	
+void YabauseSoftGL::setPaused( bool isPaused )
+{
+}
+
+void YabauseSoftGL::updatePausedView( const QSize& s )
+{
+}
+
 void YabauseSoftGL::updateView( const QSize& s )
 {
 }

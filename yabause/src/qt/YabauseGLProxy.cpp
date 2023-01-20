@@ -32,11 +32,33 @@ YabauseGLProxy::YabauseGLProxy( QWidget* parent, int impl )
 	mImpl = -1;
 	select( parent, impl );
 }
+	
+void YabauseGLProxy::snapshotView()
+{
+	if (mImpl == YabauseGLProxy::SOFTWARE)
+		mYabauseSoft->snapshotView();
+	else
+		mYabauseGL->snapshotView();
+}
+	
+void YabauseGLProxy::setPaused(bool isPaused)
+{
+	if (mImpl == YabauseGLProxy::SOFTWARE)
+		mYabauseSoft->setPaused( isPaused );
+	else
+		mYabauseGL->setPaused( isPaused );
+}
 
 void YabauseGLProxy::updateView( const QSize& size )
 {
-	if (mImpl == YabauseGLProxy::SOFTWARE) mYabauseSoft->updateView(size);
-	else mYabauseGL->updateView(size);
+	if (mImpl == YabauseGLProxy::SOFTWARE)
+	{
+    mYabauseSoft->updateView(size);
+	}
+	else
+	{
+		mYabauseGL->updateView(size);
+	}
 }
 
 void YabauseGLProxy::swapBuffers()
