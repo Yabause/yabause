@@ -1906,6 +1906,8 @@ VDP1HalfLuminance::VDP1HalfLuminance(VIDVulkan * vulkan, TextureManager * tm, Ve
 
 
   fragShaderName = R"S(
+    precision highp float;
+    precision highp sampler2D;
     layout(binding = 0) uniform UniformBufferObject {
        mat4 u_mvpMatrix;
        vec2 u_texsize;
@@ -1956,6 +1958,8 @@ VDP1Shadow::VDP1Shadow(VIDVulkan * vulkan, TextureManager * tm, VertexManager * 
   bindid.push_back(bindIdFbo);
 
   fragShaderName = R"S(
+    precision highp float;
+    precision highp sampler2D;
     layout(binding = 0) uniform UniformBufferObject {
        mat4 u_mvpMatrix;
        vec2 u_texsize;
@@ -2010,6 +2014,8 @@ VDP1GlowShadingAndHalfTransOperation::VDP1GlowShadingAndHalfTransOperation(VIDVu
   bindid.push_back(bindIdFbo);
 
   fragShaderName = R"S(
+    precision highp float;
+    precision highp sampler2D;
     layout(binding = 0) uniform UniformBufferObject {
        mat4 u_mvpMatrix;
        vec2 u_texsize;

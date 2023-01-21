@@ -43,6 +43,8 @@ using std::vector;
 
 #include <queue> 
 
+#define FRAMEBUFFER_COUNT (2)
+
 class Vdp1Renderer {
 
 
@@ -59,7 +61,7 @@ class Vdp1Renderer {
   struct OffscreenPass {
     int32_t width, height;
     VkFramebuffer frameBuffer[2];
-    FrameBufferAttachment color[2], depth;
+    FrameBufferAttachment color[FRAMEBUFFER_COUNT], depth;
     VkRenderPass renderPass;
     VkSampler sampler;
     VkDescriptorImageInfo descriptor;
