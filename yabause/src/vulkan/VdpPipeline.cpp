@@ -1373,10 +1373,10 @@ void VdpPipelineCramAdd::createColorAttachment(VkPipelineColorBlendAttachmentSta
   color.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
   color.blendEnable = VK_TRUE;
   color.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+  color.dstColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
   color.colorBlendOp = VK_BLEND_OP_ADD;
   color.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  color.dstAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
   color.alphaBlendOp = VK_BLEND_OP_ADD;
 }
 
