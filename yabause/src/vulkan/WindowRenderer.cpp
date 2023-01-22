@@ -239,7 +239,7 @@ void WindowRenderer::flush(VkCommandBuffer commandbuffer) {
 }
 
 
-void WindowRenderer::draw(VkCommandBuffer commandBuffer) {
+void WindowRenderer::draw(VkCommandBuffer commandBuffer, const std::function<void(VkCommandBuffer commandBuffer)>& f) {
 
   if( ready != true ){
 
@@ -274,7 +274,7 @@ void WindowRenderer::draw(VkCommandBuffer commandBuffer) {
     ready = true;
   }
 
-  if (window[0].isNeedDraw() || window[1].isNeedDraw()) {
+  if (window[0].isNeedDraw() || window[1].isNeedDraw() || isSpriteWindowEnabled ) {
     VkDevice device = vulkan->getDevice();
 
     std::array<VkClearValue, 2> clear_values{};
@@ -306,6 +306,11 @@ void WindowRenderer::draw(VkCommandBuffer commandBuffer) {
 
     window[0].draw(commandBuffer);
     window[1].draw(commandBuffer);
+
+	// callback sprite window
+	if (isSpriteWindowEnabled) {
+		f(commandBuffer);
+	}
 
     vkCmdEndRenderPass(commandBuffer);
 

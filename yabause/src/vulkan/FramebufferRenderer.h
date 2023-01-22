@@ -48,6 +48,7 @@ public:
     SRC_ALPHA,
     ADD,
     DST_ALPHA,
+	WINDOW,
     NONE
   };
 
@@ -88,6 +89,7 @@ public:
   void draw(Vdp2 * fixVdp2Reg, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat );
   void drawWithDestAlphaMode(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat);
   void drawShadow(Vdp2 * fixVdp2Reg, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat);
+  void FramebufferRenderer::drawSpriteWindow(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to);
   void onEndFrame();
 
   void chenageResolution(int vdp2Width, int vdp2Height, int renderWidth, int renderHeight);
@@ -180,6 +182,8 @@ protected:
   VkPipelineColorBlendAttachmentState colorBlendAttachmentNone = {};
   VkPipelineColorBlendStateCreateInfo colorBlendingNone = {};
 
+  VkPipelineColorBlendAttachmentState colorBlendAttachmentSpWindow = {};
+  VkPipelineColorBlendStateCreateInfo colorBlendingSpWindow = {};
 
   int renderCount = 0;
 

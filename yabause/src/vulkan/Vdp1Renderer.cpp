@@ -3112,6 +3112,10 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
     sprite_window = 1;
   }
 
+  if (sprite_window == 1 && (cmd->CMDCOLR & 0x8000) && (((cmd->CMDPMOD >> 3) & 0x7) != 1 && ((cmd->CMDPMOD >> 3) & 0x7) != 5)) {
+	  MSB_SHADOW = 1;
+  }
+
   addcolor = ((fixVdp2Regs->CCCTL & 0x540) == 0x140);
 
   readPriority(cmd, &priority, &colorcl, &nromal_shadow);

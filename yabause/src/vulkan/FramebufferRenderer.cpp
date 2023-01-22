@@ -753,6 +753,96 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
 }
 
 
+void FramebufferRenderer::drawSpriteWindow(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to) {
+
+	const VkDevice device = vulkan->getDevice();
+
+	glm::mat4 m4(1.0f);
+	ubo.matrix = m4; // glm::ortho(0.0f, (float)352, (float)224, 0.0f, 10.0f, 0.0f);
+	ubo.from = from / 10.0f;
+	ubo.to = to / 10.0f;
+
+	void* data;
+	vkMapMemory(device, ubuffer[renderCount].mem, 0, sizeof(ubo), 0, &data);
+	memcpy(data, &ubo, sizeof(ubo));
+	vkUnmapMemory(device, ubuffer[renderCount].mem);
+
+
+	updateDescriptorSets(renderCount);
+
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+		_pipelineLayout, 0, 1, &_descriptorSet[this->renderCount], 0, nullptr);
+
+	const GLchar drawfb_spriteWindow_f[] =
+#if defined(_OGLES3_)
+		"#version 310 es \n"
+		"precision highp sampler2D; \n"
+		"precision highp float;\n"
+#else
+		"#version 430 \n"
+#endif
+		"layout(binding = 0) uniform vdp2regs { \n"
+		" mat4 matrix; \n"
+		" float u_pri[8]; \n"
+		" float u_alpha[8]; \n"
+		" vec4 u_coloroffset;\n"
+		" float u_cctl; \n"
+		" float u_emu_height; \n"
+		" float u_vheight; \n"
+		" int u_color_ram_offset; \n"
+		" float u_viewport_offset; \n"
+		" int u_sprite_window; \n"
+		" float u_from;\n"
+		" float u_to;\n"
+		" int dir;\n"
+		"}; \n"
+		"layout(binding = 1) uniform highp sampler2D s_vdp1FrameBuffer;\n"
+		"layout(binding = 2) uniform sampler2D s_color; \n"
+		"layout(binding = 3) uniform sampler2D s_line; \n"
+		"layout(location = 0) in vec2 v_texcoord;\n"
+		"layout(location = 0) out vec4 fragColor;\n"
+		"void main()\n"
+		"{\n"
+		"  vec2 addr = v_texcoord;\n"
+		"  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
+		"  int additional = int(fbColor.a * 255.0);\n"
+		"  if( (additional & 0x80) == 0 ){ discard; } // show? \n"
+		"  highp float depth = u_pri[ (additional&0x07) ];\n"
+		"  if( (additional & 0x40) != 0 && fbColor.b != 0.0 ){  // index color and shadow? \n"
+		"    fragColor = vec4(4.0/255.0, 0.0, 0.0, 0.0);\n"
+		"  }else{ // direct color \n"
+		"    discard;\n"
+		"  } \n"
+		"  gl_FragDepth = depth;\n"
+		"}\n";
+
+
+	//----------------------------------------------------------------------------------
+	VkPipeline pgid = findShader("spriteWindow", drawfb_spriteWindow_f, WINDOW);
+
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pgid);
+
+	VkBuffer vertexBuffers[] = { _vertexBuffer };
+	VkDeviceSize offsets[] = { 0 };
+
+	vkCmdBindVertexBuffers(commandBuffer,
+		0, 1, vertexBuffers, offsets);
+
+	vkCmdBindIndexBuffer(commandBuffer,
+		_indexBuffer,
+		0, VK_INDEX_TYPE_UINT16);
+
+	vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
+
+	renderCount++;
+	if (renderCount >= MAX_RENDER_COUNT) {
+		renderCount = 0;
+	}
+
+}
+
+
+
 void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat) {
 
   const VkDevice device = vulkan->getDevice();
@@ -937,6 +1027,9 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
   if (sname == "shadow") {
     target = string(code);
   }
+  else if (sname == "spriteWindow" ) {
+	target = string(code);
+  }
   else {
     if (sname.find("hblank") != string::npos) {
       target = Yglprg_vdp2_drawfb_hblank_vulkan_f;
@@ -998,7 +1091,8 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
 
     LOGI("%s%d\n", " erros: ", (int)result.GetNumErrors());
     if (result.GetNumErrors() != 0) {
-      LOGE("%s%s\n", "messages", result.GetErrorMessage().c_str());
+		const char * msg = result.GetErrorMessage().c_str();
+      LOGE("%s%s\n", "messages", msg);
       throw std::runtime_error("failed to create shader module!");
     }
     data = { result.cbegin(), result.cend() };
@@ -1093,6 +1187,9 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
   }
   else if (c == DST_ALPHA) {
     pipelineInfo.pColorBlendState = &colorBlendingDestAlpha;
+  }
+  else if (c == WINDOW) {
+	pipelineInfo.pColorBlendState = &colorBlendingSpWindow;
   }
   else {
     pipelineInfo.pColorBlendState = &colorBlendingNone;
@@ -1487,6 +1584,25 @@ void FramebufferRenderer::createDescriptorSets() {
   colorBlendingDestAlpha.blendConstants[1] = 0.0f; // Optional
   colorBlendingDestAlpha.blendConstants[2] = 0.0f; // Optional
   colorBlendingDestAlpha.blendConstants[3] = 0.0f; // Optional
+
+  colorBlendAttachmentSpWindow.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  colorBlendAttachmentSpWindow.blendEnable = VK_TRUE;
+  colorBlendAttachmentSpWindow.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentSpWindow.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentSpWindow.colorBlendOp = VK_BLEND_OP_ADD;
+  colorBlendAttachmentSpWindow.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentSpWindow.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentSpWindow.alphaBlendOp = VK_BLEND_OP_ADD;
+
+  colorBlendingSpWindow.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+  colorBlendingSpWindow.logicOpEnable = VK_FALSE;
+  colorBlendingSpWindow.logicOp = VK_LOGIC_OP_COPY; // Optional
+  colorBlendingSpWindow.attachmentCount = 1;
+  colorBlendingSpWindow.pAttachments = &colorBlendAttachmentSpWindow;
+  colorBlendingSpWindow.blendConstants[0] = 0.0f; // Optional
+  colorBlendingSpWindow.blendConstants[1] = 0.0f; // Optional
+  colorBlendingSpWindow.blendConstants[2] = 0.0f; // Optional
+  colorBlendingSpWindow.blendConstants[3] = 0.0f; // Optional
 
 
   VkDynamicState dynamicStates[] = {

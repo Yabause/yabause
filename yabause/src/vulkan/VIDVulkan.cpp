@@ -676,7 +676,13 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     OSDDisplayMessages(NULL, 0, 0);
     vkCmdEndRenderPass(commandBuffer);
   } else {
-    windowRenderer->draw(commandBuffer);
+
+	windowRenderer->setSpriteWindow(((fixVdp2Regs->SPCTL >> 4) & 0x03) == 0x01);
+    windowRenderer->draw(commandBuffer,
+		[&](VkCommandBuffer tcommandBuffer) {
+		// Draw sprite window
+		fbRender->drawSpriteWindow(fixVdp2Regs, tcommandBuffer, 0, 10);
+	});
 
     if (resolutionMode != RES_NATIVE) {
       VkRect2D tmp_render_area{};
@@ -1596,8 +1602,8 @@ int VIDVulkan::genPolygon(VdpPipeline **pipleLine, vdp2draw_struct *input, CharT
   program->logwin0 = input->WindowArea0;
   program->bwin1 = input->bEnWin1;
   program->logwin1 = input->WindowArea1;
-  program->bwinsp = 0;
-  program->logwinsp = 0;
+  program->bwinsp = input->bEnSpriteWin;
+  program->logwinsp = input->WindowAreaSprite;
   program->blendmode = input->blendmode;
   program->winmode = input->LogicWin;
   program->mosaic[0] = input->mosaicxmask;
@@ -1885,6 +1891,8 @@ int VIDVulkan::genPolygonRbg0(VdpPipeline **pipleLine, vdp2draw_struct *input, C
   program->logwin0 = input->WindowArea0;
   program->bwin1 = input->bEnWin1;
   program->logwin1 = input->WindowArea1;
+  program->bwinsp = input->bEnSpriteWin;
+  program->logwinsp = input->WindowAreaSprite;
   program->winmode = input->LogicWin;
   program->lineTexture = (VkImageView)input->lineTexture;
   program->blendmode = input->blendmode;
@@ -2213,7 +2221,9 @@ void VIDVulkan::drawNBG0() {
   info.bEnWin1 = (fixVdp2Regs->WCTLA >> 3) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLA >> 2) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLA >> 7) & 0x01;
-
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLA >> 5) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLA >> 4) & 0x01; 
+  
   ReadLineScrollData(&info, fixVdp2Regs->SCRCTL & 0xFF, fixVdp2Regs->LSTA0.all);
   info.lineinfo = lineNBG0;
   genLineinfo(&info);
@@ -2507,7 +2517,9 @@ void VIDVulkan::drawNBG1() {
   info.bEnWin1 = (fixVdp2Regs->WCTLA >> 11) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLA >> 10) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLA >> 15) & 0x01;
-
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLA >> 13) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLA >> 12) & 0x01;
+  
   ReadLineScrollData(&info, fixVdp2Regs->SCRCTL >> 8, fixVdp2Regs->LSTA1.all);
   info.lineinfo = lineNBG1;
   genLineinfo(&info);
@@ -2848,6 +2860,8 @@ void VIDVulkan::drawNBG2() {
   info.bEnWin1 = (fixVdp2Regs->WCTLB >> 3) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLB >> 2) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLB >> 7) & 0x01;
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLB >> 5) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLB >> 4) & 0x01;
 
   // Vdp2SetGetColor(&info); ToDO
 
@@ -3010,6 +3024,8 @@ void VIDVulkan::drawNBG3() {
   info.bEnWin1 = (fixVdp2Regs->WCTLB >> 11) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLB >> 10) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLB >> 15) & 0x01;
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLB >> 13) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLB >> 12) & 0x01;
 
   // Vdp2SetGetColor(&info); TODO
 
@@ -3120,6 +3136,9 @@ void VIDVulkan::drawRBG0() {
   info->WindowArea1 = (fixVdp2Regs->WCTLC >> 2) & 0x01;
 
   info->LogicWin = (fixVdp2Regs->WCTLC >> 7) & 0x01;
+
+  info->bEnSpriteWin = (fixVdp2Regs->WCTLC >> 5) & 0x01;
+  info->WindowAreaSprite = (fixVdp2Regs->WCTLC >> 4) & 0x01;
 
   info->islinescroll = 0;
   info->linescrolltbl = 0;
@@ -5407,6 +5426,8 @@ void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x, 
   tile.WindowArea1 = info->WindowArea1;
   tile.LogicWin = info->LogicWin;
   tile.lineTexture = info->lineTexture;
+  tile.bEnSpriteWin = info->bEnSpriteWin;
+  tile.WindowAreaSprite = info->WindowAreaSprite;
   tile.id = info->id;
 
   tile.cellw = tile.cellh = info->patternpixelwh;

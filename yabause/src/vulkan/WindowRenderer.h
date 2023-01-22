@@ -30,7 +30,7 @@ extern "C" {
 #include "frameprofile.h"
 }
 
-
+#include <functional>
 
 #include "VulkanScene.h"
 class VIDVulkan;
@@ -98,6 +98,8 @@ class WindowRenderer {
   VkCommandPool _command_pool = VK_NULL_HANDLE;
   std::vector<VkCommandBuffer> command_buffers;
 
+  bool isSpriteWindowEnabled = false;
+   
 public:
   WindowRenderer(int width, int height, VIDVulkan * vulkan);
   ~WindowRenderer();
@@ -111,12 +113,16 @@ public:
   void generateWindowInfo(Vdp2 * fixVdp2Regs, int which);
 
   void flush(VkCommandBuffer cb);
-  void draw(VkCommandBuffer commandBuffer);
+  void draw(VkCommandBuffer commandBuffer, const std::function<void(VkCommandBuffer commandBuffer)>& f);
 
   VkImageView getImageView() { return offscreenPass.color.view; }
   VkSampler getSampler() { return offscreenPass.sampler; }
 
   bool isReady(){ return ready; }
+
+  void setSpriteWindow(bool enable) {
+	  isSpriteWindowEnabled = enable;
+  }
 
 protected:
   VdpPipelineFactory * pipleLineFactory;
