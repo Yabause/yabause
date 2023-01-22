@@ -1497,7 +1497,7 @@ void VIDVulkan::SetSaturnResolution(int width, int height) {
 // TextureCache * c �L���b�V�����W
 // int cash_flg 1�̏ꍇ c�̃L���b�V�����W���X�V����
 int VIDVulkan::genPolygon(VdpPipeline **pipleLine, vdp2draw_struct *input, CharTexture *output, float *colors,
-                          TextureCache *c, int cash_flg) {
+                          TextureCache *c, int cash_flg, int isOffset) {
   unsigned int x, y;
   VdpPipeline *program;
   // texturecoordinate_struct *tmp;
@@ -1608,25 +1608,49 @@ int VIDVulkan::genPolygon(VdpPipeline **pipleLine, vdp2draw_struct *input, CharT
   program->specialcolormode = input->specialcolormode;
 
   Vertex tmp[4];
-  tmp[0].pos[0] = (input->vertices[0] - input->cx) * input->coordincx;
-  tmp[0].pos[1] = input->vertices[1] * input->coordincy;
-  tmp[0].pos[2] = (float)input->priorityOffset / 2.0f;
-  tmp[0].pos[3] = 1.0f;
 
-  tmp[1].pos[0] = (input->vertices[2] - input->cx) * input->coordincx;
-  tmp[1].pos[1] = input->vertices[3] * input->coordincy;
-  tmp[1].pos[2] = (float)input->priorityOffset / 2.0f;
-  tmp[1].pos[3] = 1.0f;
+  if (isOffset) {
+	  tmp[0].pos[0] = (input->vertices[0] - input->cx) * input->coordincx;
+	  tmp[0].pos[1] = input->vertices[1] * input->coordincy;
+	  tmp[0].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[0].pos[3] = 1.0f;
 
-  tmp[2].pos[0] = (input->vertices[4] - input->cx) * input->coordincx;
-  tmp[2].pos[1] = input->vertices[5] * input->coordincy;
-  tmp[2].pos[2] = (float)input->priorityOffset / 2.0f;
-  tmp[2].pos[3] = 1.0f;
+	  tmp[1].pos[0] = (input->vertices[2] - input->cx) * input->coordincx;
+	  tmp[1].pos[1] = input->vertices[3] * input->coordincy;
+	  tmp[1].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[1].pos[3] = 1.0f;
 
-  tmp[3].pos[0] = (input->vertices[6] - input->cx) * input->coordincx;
-  tmp[3].pos[1] = input->vertices[7] * input->coordincy;
-  tmp[3].pos[2] = (float)input->priorityOffset / 2.0f;
-  tmp[3].pos[3] = 1.0f;
+	  tmp[2].pos[0] = (input->vertices[4] - input->cx) * input->coordincx;
+	  tmp[2].pos[1] = input->vertices[5] * input->coordincy;
+	  tmp[2].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[2].pos[3] = 1.0f;
+
+	  tmp[3].pos[0] = (input->vertices[6] - input->cx) * input->coordincx;
+	  tmp[3].pos[1] = input->vertices[7] * input->coordincy;
+	  tmp[3].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[3].pos[3] = 1.0f;
+  }
+  else {
+	  tmp[0].pos[0] = input->vertices[0];
+	  tmp[0].pos[1] = input->vertices[1];
+	  tmp[0].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[0].pos[3] = 1.0f;
+
+	  tmp[1].pos[0] = input->vertices[2];
+	  tmp[1].pos[1] = input->vertices[3];
+	  tmp[1].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[1].pos[3] = 1.0f;
+
+	  tmp[2].pos[0] = input->vertices[4];
+	  tmp[2].pos[1] = input->vertices[5];
+	  tmp[2].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[2].pos[3] = 1.0f;
+
+	  tmp[3].pos[0] = input->vertices[6];
+	  tmp[3].pos[1] = input->vertices[7];
+	  tmp[3].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[3].pos[3] = 1.0f;
+  }
 
   if (output != NULL) {
     tm->allocate(output, input->cellw, input->cellh, &x, &y);
@@ -2231,7 +2255,7 @@ void VIDVulkan::drawNBG0() {
         infotmp.cy = 0;
         infotmp.coordincx = 1.0;
         infotmp.coordincy = 1.0;
-        genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, &tmpc, 0);
+        genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, &tmpc, 0, 0);
         drawBitmapCoordinateInc(&info, &texture);
       } else {
 
@@ -2259,7 +2283,7 @@ void VIDVulkan::drawNBG0() {
           infotmp.cy = 0;
           infotmp.coordincx = 1.0;
           infotmp.coordincy = 1.0;
-          genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, NULL, 0);
+          genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, NULL, 0, 0);
           drawBitmapLineScroll(&info, &texture);
         } else {
           yy = info.y;
@@ -2276,7 +2300,7 @@ void VIDVulkan::drawNBG0() {
               info.vertices[7] = (yy + info.cellh);
 
               if (isCached == 0) {
-                genPolygon(&pipleLineNBG0, &info, &texture, NULL, &tmpc, 1);
+                genPolygon(&pipleLineNBG0, &info, &texture, NULL, &tmpc, 1,0);
                 if (info.islinescroll) {
                   drawBitmapLineScroll(&info, &texture);
                 } else {
@@ -2284,7 +2308,7 @@ void VIDVulkan::drawNBG0() {
                 }
                 isCached = 1;
               } else {
-                genPolygon(&pipleLineNBG0, &info, NULL, NULL, &tmpc, 0);
+                genPolygon(&pipleLineNBG0, &info, NULL, NULL, &tmpc, 0, 0);
               }
               xx += info.cellw;
             }
@@ -2311,7 +2335,7 @@ void VIDVulkan::drawNBG0() {
         infotmp.cellh = vdp2height;
 
         infotmp.flipfunction = 0;
-        genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, &tmpc, 0);
+        genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, &tmpc, 0, 0);
         drawMapPerLine(&info, &texture);
       } else {
         info.x = fixVdp2Regs->SCXIN0 & 0x7FF;
@@ -2526,7 +2550,7 @@ void VIDVulkan::drawNBG1() {
       infotmp.cy = 0;
       infotmp.coordincx = 1.0;
       infotmp.coordincy = 1.0;
-      genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0);
+      genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0, 0);
       drawBitmapCoordinateInc(&info, &texture);
     } else {
 
@@ -2555,7 +2579,7 @@ void VIDVulkan::drawNBG1() {
         infotmp.cy = 0;
         infotmp.coordincx = 1.0;
         infotmp.coordincy = 1.0;
-        genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0);
+        genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0, 0);
         drawBitmapLineScroll(&info, &texture);
       } else {
         yy = info.y;
@@ -2572,7 +2596,7 @@ void VIDVulkan::drawNBG1() {
             info.vertices[7] = (yy + info.cellh);
 
             if (isCached == 0) {
-              genPolygon(&pipleLineNBG1, &info, &texture, NULL, &tmpc, 1);
+              genPolygon(&pipleLineNBG1, &info, &texture, NULL, &tmpc, 1, 0);
               if (info.islinescroll) {
                 drawBitmapLineScroll(&info, &texture);
               } else {
@@ -2580,7 +2604,7 @@ void VIDVulkan::drawNBG1() {
               }
               isCached = 1;
             } else {
-              genPolygon(&pipleLineNBG1, &info, NULL, NULL, &tmpc, 0);
+              genPolygon(&pipleLineNBG1, &info, NULL, NULL, &tmpc, 0, 0);
             }
             xx += info.cellw;
           }
@@ -2606,7 +2630,7 @@ void VIDVulkan::drawNBG1() {
       infotmp.cellw = vdp2width;
       infotmp.cellh = vdp2height;
       infotmp.flipfunction = 0;
-      genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0);
+      genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0, 0);
       drawMapPerLine(&info, &texture);
     } else {
       // Vdp2DrawMap(&info, &texture);
@@ -2876,7 +2900,7 @@ void VIDVulkan::drawNBG2() {
     infotmp.cellw = vdp2width;
     infotmp.cellh = vdp2height;
     infotmp.flipfunction = 0;
-    genPolygon(&pipleLineNBG2, &infotmp, &texture, NULL, &tmpc, 0);
+    genPolygon(&pipleLineNBG2, &infotmp, &texture, NULL, &tmpc, 0, 0);
     drawMapPerLineNbg23(&info, &texture, 2, xoffset);
   } else {
     info.x = (fixVdp2Regs->SCXN2 & 0x7FF) + xoffset;
@@ -3031,7 +3055,7 @@ void VIDVulkan::drawNBG3() {
     infotmp.cellw = vdp2width;
     infotmp.cellh = vdp2height;
     infotmp.flipfunction = 0;
-    genPolygon(&pipleLineNBG3, &infotmp, &texture, NULL, &tmpc, 0);
+    genPolygon(&pipleLineNBG3, &infotmp, &texture, NULL, &tmpc, 0, 0);
     drawMapPerLineNbg23(&info, &texture, 3, xoffset);
   } else {
     info.x = (fixVdp2Regs->SCXN3 & 0x7FF) + xoffset;
@@ -5447,11 +5471,11 @@ void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x, 
   // info->coordincy,0);
 
   if (tm->isCached(cacheaddr, &c)) {
-    genPolygon((VdpPipeline **)info->pipeline, &tile, NULL, NULL, &c, 0);
+    genPolygon((VdpPipeline **)info->pipeline, &tile, NULL, NULL, &c, 0,1);
     return;
   }
 
-  genPolygon((VdpPipeline **)info->pipeline, &tile, texture, NULL, &c, 1);
+  genPolygon((VdpPipeline **)info->pipeline, &tile, texture, NULL, &c, 1,1);
   tm->addCache(cacheaddr, &c);
 
   switch (info->patternwh) {

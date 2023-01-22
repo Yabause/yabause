@@ -139,7 +139,11 @@ public:
     VdpPipeline ** pipleLine,
     vdp2draw_struct * input,
     CharTexture * output,
-    float * colors, TextureCache * c, int cash_flg);
+    float * colors, 
+	TextureCache * c, 
+	int cash_flg,
+	int isOffset
+  );
 
   void onUpdateColorRamWord(u32 addr);
 
