@@ -4062,22 +4062,39 @@ void Vdp1Renderer::readFrameBuffer(u32 type, u32 addr, void *out) {
       u16 a = *((u8 *)(frameBuffer) + index + 3);
       if ((a & 0x40) == 0) {
         *(u16 *)out = ((r >> 3) & 0x1f) | (((g >> 3) & 0x1f) << 5) | (((b >> 3) & 0x1F) << 10);
-        if ((*(u16 *)out) != 0)
-          *(u16 *)out |= 0x8000;
+        //if ((*(u16 *)out) != 0)
+        *(u16 *)out |= 0x8000;
       } else {
-        u8 sptype = Vdp2Regs->SPCTL & 0x0F;
-        switch (sptype) {
-        case 0:
-          *(u16 *)out = ((a << (5 + 8)) & 0xE000) | (((a >> 3) & 0x03) << 11) | (((g << 8) | r) & 0x7FF);
-          break;
-        case 1:
-          *(u16 *)out = ((a << (5 + 8)) & 0xE000) | (((a >> 3) & 0x03) << 11) | (((g << 8) | r) & 0x7FF);
-          break;
-        default:
-          *(u16 *)out = 0;
-          LOG("VIDOGLVdp1ReadFrameBuffer sprite type %d is not supported", sptype);
-          break;
-        }
+		u16 tmpcindex = ((a << (5 + 8)) & 0xE000) | (((a >> 3) & 0x03) << 11) | (((g << 8) | r));
+		switch (Vdp2Regs->SPCTL & 0xF) {
+		case 0:
+			tmpcindex &= 0x7FF;
+			break;
+		case 1:
+			tmpcindex &= 0x7FF;
+			break;
+		case 2:
+			tmpcindex &= 0x7FF;
+			break;
+		case 3:
+			tmpcindex &= 0x7FF;
+			break;
+		case 4:
+			tmpcindex &= 0x7FF;
+			break;
+		case 5:
+			tmpcindex &= 0x7FF;
+			break;
+		case 6:
+			tmpcindex &= 0x3FF;
+			break;
+		case 7:
+			tmpcindex &= 0x1FF;
+			break;
+		default:
+			break;
+		}
+		*(u16 *)out = tmpcindex;
       }
     } break;
     case 2: {
