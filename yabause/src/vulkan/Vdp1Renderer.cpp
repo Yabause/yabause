@@ -701,6 +701,12 @@ void Vdp1Renderer::drawEnd(void) {
   memcpy(data, &ubo, sizeof(vdp1Ubo));
   vkUnmapMemory(device, _uniformBufferMemory);
 
+  while (offscreenPass.color[drawframe].renderFences.size() > 0) {
+	  ErrorCheck(vkWaitForFences(device, 1, &offscreenPass.color[drawframe].renderFences.front(), VK_TRUE, UINT64_MAX));
+	  vkDestroyFence(device, offscreenPass.color[drawframe].renderFences.front(), nullptr);
+	  offscreenPass.color[drawframe].renderFences.pop();
+  }
+
   piplelines.push_back(currentPipeLine);
   for (int i = 0; i < piplelines.size(); i++) {
     piplelines[i]->moveToVertexBuffer(piplelines[i]->vertices, piplelines[i]->indices);
@@ -972,12 +978,13 @@ void Vdp1Renderer::drawEnd(void) {
   offscreenPass.color[drawframe].renderFences.push(fence);
   offscreenPass.color[drawframe].updated = true;
   offscreenPass.color[drawframe].readed = false;
-
+  /*
   while (offscreenPass.color[drawframe].renderFences.size() > 0) {
     ErrorCheck(vkWaitForFences(device, 1, &offscreenPass.color[drawframe].renderFences.front(), VK_TRUE, UINT64_MAX));
     vkDestroyFence(device, offscreenPass.color[drawframe].renderFences.front(), nullptr);
     offscreenPass.color[drawframe].renderFences.pop();
   }
+  */
 
   // vkQueueWaitIdle(vulkan->getVulkanQueue());
   // vkDeviceWaitIdle(device);
