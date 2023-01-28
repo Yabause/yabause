@@ -150,13 +150,31 @@ int Vdp2Window::draw(VkCommandBuffer commandBuffer) {
   return 0;
 }
 
-int Vdp2Window::updateSize(int width, int height) {
+int Vdp2Window::updateSize(int width, int height, int pretransformFlag, bool rotateScreen ) {
   WindowUbo ubo = {};
   glm::mat4 m4(1.0f);
-  ubo.model = glm::ortho(0.0f, (float)width, 0.0f, (float)height, 10.0f, 0.0f);
+  
+  glm::mat4 pre_rotate_mat = glm::mat4(1.0f);
+  glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, 1.0f);
+
+  if (rotateScreen) {
+    pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  }
+
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR) {
+     pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(90.0f), rotation_axis);
+  } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+     pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(270.0f), rotation_axis);
+  } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR) {
+     pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
+  }
+
+  ubo.model = pre_rotate_mat * glm::ortho(0.0f, (float)width, 0.0f, (float)height, 10.0f, 0.0f);
+
   ubo.windowBit = 1 << id;
   pipeline->setUBO(&ubo, sizeof(ubo));
   pipeline->updateDescriptorSets();
+  isUpdated = 1;
   return 0;
 }
 
@@ -184,9 +202,9 @@ void WindowRenderer::setUp() {
   createCommandPool();
   prepareOffscreen();
   window[0].init(0, vulkan, offscreenPass.renderPass);
-  window[0].updateSize(vdp2width, vdp2height);
+  window[0].updateSize(offscreenPass.width, offscreenPass.height,pretransformFlag,rotateScreen);
   window[1].init(1, vulkan, offscreenPass.renderPass);
-  window[1].updateSize(vdp2width, vdp2height);
+  window[1].updateSize(offscreenPass.width, offscreenPass.height,pretransformFlag,rotateScreen);
 
   VkDevice device = vulkan->getDevice();
 }
@@ -205,12 +223,20 @@ WindowRenderer::~WindowRenderer() {
 
 }
 
-void WindowRenderer::changeResolution(int width, int height) {
+void WindowRenderer::changeResolution(int width, int height, int pretransformFlag, bool rotateScreen) {
 
-  if (width == this->vdp2width && height == this->vdp2height) return;
+  if ( width == this->vdp2width && 
+       height == this->vdp2height && 
+       this->pretransformFlag == pretransformFlag &&
+       this->rotateScreen == rotateScreen
+       ) {
+    return;
+  }
 
   this->vdp2width = width;
   this->vdp2height = height;
+  this->pretransformFlag = pretransformFlag;
+  this->rotateScreen = rotateScreen;  
 
   vkQueueWaitIdle(vulkan->getVulkanQueue());
 
@@ -224,10 +250,11 @@ void WindowRenderer::changeResolution(int width, int height) {
   vkFreeMemory(device, offscreenPass.depth.mem, nullptr);
   vkDestroyImageView(device, offscreenPass.depth.view, nullptr);
   vkDestroyFramebuffer(device, offscreenPass.frameBuffer, nullptr);
-  prepareOffscreen();
 
-  window[0].updateSize(vdp2width, vdp2height);
-  window[1].updateSize(vdp2width, vdp2height);
+
+  prepareOffscreen();
+  window[0].updateSize(offscreenPass.width, offscreenPass.height,pretransformFlag,rotateScreen);
+  window[1].updateSize(offscreenPass.width, offscreenPass.height,pretransformFlag,rotateScreen);
 
 }
 
@@ -264,10 +291,10 @@ void WindowRenderer::draw(VkCommandBuffer commandBuffer, const std::function<voi
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    VkViewport viewport = vks::initializers::viewport((float)vdp2width, (float)vdp2height, 0.0f, 1.0f);
+    VkViewport viewport = vks::initializers::viewport((float)offscreenPass.width, (float)offscreenPass.height, 0.0f, 1.0f);
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-    VkRect2D scissor = vks::initializers::rect2D(vdp2width, vdp2height, 0, 0);
+    VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     vkCmdEndRenderPass(commandBuffer);
@@ -296,10 +323,10 @@ void WindowRenderer::draw(VkCommandBuffer commandBuffer, const std::function<voi
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    VkViewport viewport = vks::initializers::viewport((float)vdp2width, (float)vdp2height, 0.0f, 1.0f);
+    VkViewport viewport = vks::initializers::viewport((float)offscreenPass.width, (float)offscreenPass.height, 0.0f, 1.0f);
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-    VkRect2D scissor = vks::initializers::rect2D(vdp2width, vdp2height, 0, 0);
+    VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     VkDeviceSize offsets[1] = { 0 };
@@ -307,10 +334,10 @@ void WindowRenderer::draw(VkCommandBuffer commandBuffer, const std::function<voi
     window[0].draw(commandBuffer);
     window[1].draw(commandBuffer);
 
-	// callback sprite window
-	if (isSpriteWindowEnabled) {
-		f(commandBuffer);
-	}
+	  // callback sprite window
+	  if (isSpriteWindowEnabled) {
+		  f(commandBuffer);
+	  }
 
     vkCmdEndRenderPass(commandBuffer);
 
@@ -627,8 +654,15 @@ void WindowRenderer::prepareOffscreen() {
   VkDevice device = vulkan->getDevice();
   VkPhysicalDevice physicalDevice = vulkan->getPhysicalDevice();
 
-  offscreenPass.width = vdp2width;
-  offscreenPass.height = vdp2height;
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+        pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+    offscreenPass.width = vdp2height;
+    offscreenPass.height = vdp2width;
+  } else {
+    offscreenPass.width = vdp2width;
+    offscreenPass.height = vdp2height;
+  }
+
 
   // Find a suitable depth format
   VkFormat fbDepthFormat;

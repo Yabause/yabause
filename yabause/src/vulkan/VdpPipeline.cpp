@@ -214,6 +214,11 @@ VdpPipeline::VdpPipeline(
 
   fragFuncCheckWindow = R"S(
   vec2 getEmuPos( int dir ){
+        return vec2( 
+          (gl_FragCoord.x-offsetx) / windowWidth,
+          (gl_FragCoord.y-offsety) / windowHeight
+        );
+/*            
     switch(dir){
       case 1: // 90
         return vec2(
@@ -241,6 +246,7 @@ VdpPipeline::VdpPipeline(
         break;
     }
     return vec2(0.0,0.0);
+*/    
   }    
   void checkWindow() {
     if( winmode != -1 ){

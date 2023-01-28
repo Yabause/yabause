@@ -374,7 +374,7 @@ void VIDVulkan::resize(int originx, int originy, unsigned int w, unsigned int h,
   isFullScreen = on;
   originx = originx;
   originy = originy;
-  aspect_rate_mode = aspect_rate_mode;
+  this->aspect_rate_mode = (ASPECT_RATE_MODE)aspect_rate_mode;
 
   int tmpw = vdp2width;
   int tmph = vdp2height;
@@ -453,7 +453,7 @@ void VIDVulkan::Vdp2DrawStart(void) {
     // createCommandPool();
     vdp1->changeResolution(renderWidth, renderHeight);
     vdp1->setVdp2Resolution(vdp2width, vdp2height);
-    windowRenderer->changeResolution(vdp2width, vdp2height);
+    windowRenderer->changeResolution(vdp2width, vdp2height, _renderer->getWindow()->GetPreTransFlag(), rotate_screen );
     generateOffscreenPath(vdp2width, vdp2height);
     if (resolutionMode == RES_NATIVE) {
       freeSubRenderTarget();
@@ -546,17 +546,29 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
+    glm::vec4 viewportData;
+    int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+    int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+    int deviceOriginX = originx;
+    int deviceOriginY = originy;
+    if( resolutionMode != RES_NATIVE ){
+      deviceWidth = renderWidth;
+      deviceHeight = renderHeight;
+      deviceOriginX = 0;
+      deviceOriginY = 0;
+    }
+
   int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
   VkRect2D render_area{};
   render_area.offset.x = 0;
   render_area.offset.y = 0;
   if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
       pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
-    render_area.extent.width = _renderer->getWindow()->GetVulkanSurfaceSize().height;
-    render_area.extent.height = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+    render_area.extent.width = deviceHeight;
+    render_area.extent.height = deviceWidth;
   } else {
-    render_area.extent.width = _renderer->getWindow()->GetVulkanSurfaceSize().width;
-    render_area.extent.height = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+    render_area.extent.width = deviceWidth;
+    render_area.extent.height = deviceHeight;
   }
 
   int offcount = 0;
@@ -583,79 +595,42 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
 
 
-    glm::vec4 viewportData;
-    int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
-    int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
-
     int u_dir = 0;
 
-    if (resolutionMode != RES_NATIVE) {
-      switch (pretransformFlag) {
+    switch (pretransformFlag) {
       case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
-        viewportData = {deviceHeight - finalHeight - originy, originx, finalHeight, finalWidth};
-        break;
-      case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
-        viewportData = {deviceHeight - finalWidth - originx, deviceWidth - finalHeight - originy, finalWidth,
-                        finalHeight};
-        break;
-      case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
-        viewportData = {originy, deviceWidth - finalWidth - originx, finalHeight, finalWidth};
-        break;
-      default:
-        viewportData = {originx, originy, finalWidth, finalHeight};
-        break;
-      }
-    } else {
-      switch (pretransformFlag) {
-      case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
-        viewportData = {deviceHeight - renderHeight - originy, originx, renderHeight, renderWidth};
+        viewportData = {deviceHeight - renderHeight - deviceOriginY, deviceOriginX, renderHeight, renderWidth};
         u_dir = 1;
         break;
       case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
-        viewportData = {originy, deviceWidth - renderWidth - originx, renderHeight, renderWidth};
+        viewportData = {deviceOriginY, deviceWidth - renderWidth - deviceOriginX, renderHeight, renderWidth};
         u_dir = 2;
         break;
       case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
-        viewportData = {deviceHeight - renderWidth - originx, deviceWidth - renderHeight - originy, renderWidth,
+        viewportData = {deviceHeight - renderWidth - deviceOriginX, deviceWidth - renderHeight - deviceOriginY, renderWidth,
                         renderHeight};
         u_dir = 3;
         break;
       default:
-        viewportData = {originx, originy, renderWidth, renderHeight};
+        viewportData = {deviceOriginX, deviceOriginY, renderWidth, renderHeight};
         u_dir = 0;
         break;
-      }
     }
 
     auto c = vk::CommandBuffer(commandBuffer);
     vk::Viewport viewport;
     vk::Rect2D scissor;
-    if (resolutionMode != RES_NATIVE) {
-      viewport.width = renderWidth;
-      viewport.height = renderHeight;
-      viewport.x = 0;
-      viewport.y = 0;
-      viewport.minDepth = 0.0f;
-      viewport.maxDepth = 1.0f;
-
-      scissor.extent.width = renderWidth;
-      scissor.extent.height = renderHeight;
-      scissor.offset.x = 0;
-      scissor.offset.y = 0;
-
-    } else {
-      viewport.width = viewportData.z;
-      viewport.height = viewportData.w;
-      viewport.x = viewportData.x;
-      viewport.y = viewportData.y;
-      viewport.minDepth = 0.0f;
-      viewport.maxDepth = 1.0f;
+    viewport.width = viewportData.z;
+    viewport.height = viewportData.w;
+    viewport.x = viewportData.x;
+    viewport.y = viewportData.y;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
       
-      scissor.extent.width = viewportData.z;
-      scissor.extent.height = viewportData.w;
-      scissor.offset.x = viewportData.x;
-      scissor.offset.y = viewportData.y;
-  }  
+    scissor.extent.width = viewportData.z;
+    scissor.extent.height = viewportData.w;
+    scissor.offset.x = viewportData.x;
+    scissor.offset.y = viewportData.y;
 
   fbRender->onStartFrame(fixVdp2Regs, commandBuffer, viewport, resolutionMode);
 
@@ -678,7 +653,8 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   } else {
 
 	windowRenderer->setSpriteWindow(((fixVdp2Regs->SPCTL >> 4) & 0x03) == 0x01);
-    windowRenderer->draw(commandBuffer,
+  
+  windowRenderer->draw(commandBuffer,
 		[&](VkCommandBuffer tcommandBuffer) {
 		// Draw sprite window
 		fbRender->drawSpriteWindow(fixVdp2Regs, tcommandBuffer, 0, 10);
@@ -688,8 +664,15 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       VkRect2D tmp_render_area{};
       tmp_render_area.offset.x = 0;
       tmp_render_area.offset.y = 0;
-      tmp_render_area.extent.width = renderWidth;
-      tmp_render_area.extent.height = renderHeight;
+
+      if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+          pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+        tmp_render_area.extent.width = deviceHeight;
+        tmp_render_area.extent.height = deviceWidth;
+      } else {
+        tmp_render_area.extent.width = deviceWidth;
+        tmp_render_area.extent.height = deviceHeight;
+      }
 
       VkRenderPassBeginInfo tmp_render_pass_begin_info{};
       tmp_render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -709,7 +692,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     UniformBufferObject ubo = {};
     ubo.emu_height = (float)vdp2height / (float)renderHeight;
     ubo.vheight = renderHeight;
-    ubo.viewport_offset = originy;
+    ubo.viewport_offset = deviceOriginY;
     ubo.u_dir = u_dir;
 
     int from = 0;
@@ -728,18 +711,17 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     glm::mat4 pre_rotate_mat = glm::mat4(1.0f);
     glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, 1.0f);
 
-	if (rotate_screen) {
-		pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	}
-
-    if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR) {
-      pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(90.0f), rotation_axis);
-    } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
-      pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(270.0f), rotation_axis);
-    } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR) {
-      pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
+    if (rotate_screen) {
+      pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     }
 
+    if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR) {
+       pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(90.0f), rotation_axis);
+    } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+       pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(270.0f), rotation_axis);
+    } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR) {
+       pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
+    }
 
     // Draw Back Color
     if (backPiepline->vertices.size() > 0) {
@@ -830,10 +812,10 @@ void VIDVulkan::Vdp2DrawEnd(void) {
             ubo.winmode = prg->winmode;
             ubo.winmask = winmask;
             ubo.winflag = winflag;
-            ubo.offsetx = originx;
-            ubo.offsety = originy;
-            ubo.windowWidth = renderWidth;
-            ubo.windowHeight = renderHeight;
+            ubo.offsetx = deviceOriginX;
+            ubo.offsety = deviceOriginY;
+            ubo.windowWidth = windowRenderer->getWidth();
+            ubo.windowHeight = windowRenderer->getHeight();
           } else {
             ubo.winmode = -1;
             ubo.winmask = -1;
@@ -865,9 +847,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
           // per line color calculation mode
           else if (layers[i][j]->lineTexture != VK_NULL_HANDLE && layers[i][j]->specialPriority == 0) {
-
-            LOGE("offcount = %d",offcount);
-            
+           
             UniformBufferObject ubomini = ubo;
             ubomini.winmode = -1;
            
@@ -945,7 +925,60 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     vkCmdEndRenderPass(commandBuffer);
 
     if (resolutionMode != RES_NATIVE) {
+
+      glm::vec4 viewportData;
+      int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+      int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+      int deviceOriginX = originx;
+      int deviceOriginY = originy;
+
+      switch (pretransformFlag) {
+      case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
+        viewportData = {deviceHeight - finalHeight - originy, originx, finalHeight, finalWidth};
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
+        viewportData = {deviceHeight - finalWidth - originx, deviceWidth - finalHeight - originy, finalWidth,
+                        finalHeight};
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+        viewportData = {originy, deviceWidth - finalWidth - originx, finalHeight, finalWidth};
+        break;
+      default:
+        viewportData = {originx, originy, finalWidth, finalHeight};
+        break;
+      }
+
+      int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
+      VkRect2D render_area{};
+      render_area.offset.x = 0;
+      render_area.offset.y = 0;
+      if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+          pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+        render_area.extent.width = deviceHeight;
+        render_area.extent.height = deviceWidth;
+      } else {
+        render_area.extent.width = deviceWidth;
+        render_area.extent.height = deviceHeight;
+      }
+
+      int offcount = 0;
+      std::array<VkClearValue, 2> clear_values{};
+      clear_values[1].depthStencil.depth = 0.0f;
+      clear_values[1].depthStencil.stencil = 0;
+      clear_values[0].color.float32[0] = 0.0;
+      clear_values[0].color.float32[1] = 0.0;
+      clear_values[0].color.float32[2] = 0.0;
+      clear_values[0].color.float32[3] = 0.0f;
+
+      VkRenderPassBeginInfo render_pass_begin_info{};
+      render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanRenderPass();
+      render_pass_begin_info.framebuffer = _renderer->getWindow()->GetVulkanActiveFramebuffer();
+      render_pass_begin_info.renderArea = render_area;
+      render_pass_begin_info.clearValueCount = clear_values.size();
+      render_pass_begin_info.pClearValues = clear_values.data();
       vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
       auto c = vk::CommandBuffer(commandBuffer);
       vk::Viewport viewport;
       vk::Rect2D scissor;
@@ -962,10 +995,19 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       scissor.offset.y = viewportData.y;
       c.setScissor(0, 1, &scissor);
       vkCmdEndRenderPass(commandBuffer);
+
       blitSubRenderTarget(commandBuffer, viewportData);
-      NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(),
+
+      render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanKeepRenderPass();
+      c.setViewport(0, 1, &viewport);
+      c.setScissor(0, 1, &scissor);      
+      vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+      NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanKeepRenderPass(),
                              commandBuffer);
-      OSDDisplayMessages(NULL, 0, 0);
+      OSDDisplayMessages(NULL, finalWidth, finalHeight);
+      vkCmdEndRenderPass(commandBuffer);
+
     }
   }
 
@@ -1416,7 +1458,7 @@ void VIDVulkan::SetSaturnResolution(int width, int height) {
         if (rotate_screen) {
           if (isFullScreen) {
             if (deviceWidth < deviceHeight) {
-				originy = 0; // deviceHeight - (deviceHeight - deviceWidth * wrate);
+				      originy = 0; // deviceHeight - (deviceHeight - deviceWidth * wrate);
               renderHeight = deviceWidth * wrate;
               renderWidth = deviceWidth;
             } else {
@@ -5978,25 +6020,21 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
 
   deleteOfscreenPath();
 
-  if( resolutionMode == RES_NATIVE ){
-    int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
-    if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+  int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
         pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+
       if (offscreenPass.height == width && offscreenPass.width == height)
         return;
       offscreenPass.width = height;
       offscreenPass.height = width;
-    } else {
-  if (offscreenPass.width == width && offscreenPass.height == height)
-    return;
-  offscreenPass.width = width;
-  offscreenPass.height = height;
-    }
-  }else{
-    if (offscreenPass.width == width && offscreenPass.height == height)
-      return;
-    offscreenPass.width = width;
-    offscreenPass.height = height;      
+
+  } else {
+
+      if (offscreenPass.width == width && offscreenPass.height == height)
+        return;
+      offscreenPass.width = width;
+      offscreenPass.height = height;
   }
 
   // Color attachment
@@ -6529,8 +6567,17 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   VkDevice device = getDevice();
   VkPhysicalDevice physicalDevice = getPhysicalDevice();
 
-  subRenderTarget.width = width;
-  subRenderTarget.height = height;
+
+  int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+      pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+    subRenderTarget.width = height;
+    subRenderTarget.height = width;
+  } else {
+    subRenderTarget.width = width;
+    subRenderTarget.height = height;
+  }
+
 
   // Find a suitable depth format
   VkFormat fbDepthFormat;
@@ -6804,3 +6851,4 @@ void VIDVulkan::blitSubRenderTarget(VkCommandBuffer commandBuffer, const glm::ve
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_TRANSFER_BIT,
       VK_PIPELINE_STAGE_TRANSFER_BIT, VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 }
+

@@ -59,6 +59,9 @@ public:
   Vertex * vertex;
   int vertexcnt;
 
+  int width;
+  int height;
+
   VIDVulkan * vulkan;
   VdpPipelineWindow * pipeline;
   VkBuffer vertexBuffer;
@@ -67,7 +70,7 @@ public:
   VkDeviceMemory stagingBufferMemory;
 
   int init(int id, VIDVulkan * vulkan, VkRenderPass offscreenPass);
-  int updateSize(int width, int height);
+  int updateSize(int width, int height, int pretransformFlag, bool rotateScreen );
   int flush(VkCommandBuffer commandBuffer);
   int draw(VkCommandBuffer commandBuffer);
   int free();
@@ -104,7 +107,7 @@ public:
   WindowRenderer(int width, int height, VIDVulkan * vulkan);
   ~WindowRenderer();
   void setUp();
-  void changeResolution(int width, int height);
+  void changeResolution(int width, int height, int pretransformFlag, bool rotateScreen);
 
   vdp2WindowInfo * getVdp2WindowInfo(int which) {
     return window[which].info;
@@ -124,10 +127,16 @@ public:
 	  isSpriteWindowEnabled = enable;
   }
 
+  int getWidth(){ return offscreenPass.width; }
+  int getHeight(){ return offscreenPass.height; }
+
+
 protected:
   VdpPipelineFactory * pipleLineFactory;
   uint32_t vdp2width;
   uint32_t vdp2height;
+  int pretransformFlag = 0;
+  bool rotateScreen = false;
   VIDVulkan * vulkan;
   Vdp2Window window[2];
   void prepareOffscreen();

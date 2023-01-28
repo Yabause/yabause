@@ -331,7 +331,12 @@ static void OSDNanovgVDisplayMessage(OSDMessage_struct * message, pixel_t * buff
     return;
   }
 
-  VIDCore->GetGlSize(&vidwidth, &vidheight);
+  if( w == 0 && h == 0 ){
+    VIDCore->GetGlSize(&vidwidth, &vidheight);
+  }else{
+    vidwidth = w;
+    vidheight = h;
+  }
   
 
   if (message->type == OSDMSG_FPS) {
