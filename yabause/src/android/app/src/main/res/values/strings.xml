@@ -83,9 +83,9 @@
     <string name="dynrec_cpu_interface">Old Dynamic Recompiler(fast but less accurate)</string>
     <string name="software_cpu_interface">Interpreter(slow but more accurate)</string>
 
-    <string name="opengl_video_interface">OpenGL</string>
+    <string name="opengl_video_interface">OpenGL ES 3.1</string>
     <string name="software_video_interface">Software</string>
-    <string name="vulkan_video_interface">Vulkan(Experimental)</string>
+    <string name="vulkan_video_interface">Vulkan</string>
     <string name="onscreen_pad">On-Screen Pad</string>
     <string name="select_from_other_directory">Select from other directory.</string>
 
