@@ -1054,7 +1054,7 @@ void VdpPipeline::updateDescriptorSets()
 
   VkDescriptorImageInfo imageInfos[32];
   for (int i = 0; i < bindid.size(); i++) {
-    if (samplers[bindid[i]].img != nullptr) {
+    if (samplers[bindid[i]].img != NULL) {
       imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
       imageInfos[i].imageView = samplers[bindid[i]].img;
       imageInfos[i].sampler = samplers[bindid[i]].smp;
