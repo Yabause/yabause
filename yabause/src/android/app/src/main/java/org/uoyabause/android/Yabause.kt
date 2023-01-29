@@ -690,6 +690,7 @@ class Yabause : AppCompatActivity(),
  */
             R.id.reset -> YabauseRunnable.reset()
             R.id.report -> startReport()
+/*
             R.id.gametitle -> {
                 val save_path = YabauseStorage.storage.screenshotPath
                 val current_gamecode = YabauseRunnable.getCurrentGameCode()
@@ -707,6 +708,7 @@ class Yabause : AppCompatActivity(),
                     }
                 }
             }
+*/
             R.id.save_state -> {
                 val save_path = YabauseStorage.storage.stateSavePath
                 val current_gamecode = YabauseRunnable.getCurrentGameCode()
@@ -862,6 +864,7 @@ class Yabause : AppCompatActivity(),
                 val transaction = supportFragmentManager.beginTransaction()
                 val fragment = StateListFragment()
                 fragment.setBasePath(basepath)
+                transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                 transaction.replace(R.id.ext_fragment, fragment, StateListFragment.TAG)
                 transaction.show(fragment)
                 transaction.commit()
@@ -877,7 +880,7 @@ class Yabause : AppCompatActivity(),
                 waitingResult = true
                 val transaction = supportFragmentManager.beginTransaction()
                 val fragment = TabBackupFragment.newInstance()
-                // fragment.setBasePath(basepath);
+                transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                 transaction.replace(R.id.ext_fragment, fragment, TabBackupFragment.TAG)
                 transaction.show(fragment)
                 transaction.commit()
@@ -895,6 +898,7 @@ class Yabause : AppCompatActivity(),
                     val transaction = supportFragmentManager.beginTransaction()
                     val fragment = PadTestFragment.newInstance()
                     fragment.setListener(this)
+                    transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                     transaction.replace(R.id.ext_fragment, fragment, PadTestFragment.TAG)
                     transaction.show(fragment)
                     transaction.commit()
@@ -1001,6 +1005,7 @@ class Yabause : AppCompatActivity(),
                         YabauseRunnable.getCurrentGameCode(),
                         cheat_codes
                     )
+                transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                 transaction.replace(R.id.ext_fragment, fragment, TabCheatFragment.TAG)
                 transaction.show(fragment)
                 transaction.commit()
@@ -1126,12 +1131,8 @@ class Yabause : AppCompatActivity(),
                     }
                 }
                 fragment.setonEndObserver(observer)
-                transaction.setCustomAnimations(
-                    R.anim.slide_in_up,
-                    R.anim.slide_out_up,
-                    R.anim.slide_in_up,
-                    R.anim.slide_out_up
-                )
+                transaction.setCustomAnimations(R.anim.fade_in,
+                    R.anim.fade_out);
                 transaction.replace(R.id.ext_fragment, fragment, InGamePreference.TAG)
                 // transaction.addToBackStack(InGamePreference.TAG);
                 transaction.commit()

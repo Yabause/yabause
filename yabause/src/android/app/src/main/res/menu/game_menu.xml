@@ -90,11 +90,11 @@
             android:visible="true" />
 
     </group>
-
+<!--
     <item android:id="@+id/gametitle"
         android:icon="@drawable/ic_screen_share_black_24dp"
         android:title="@string/menu_set_as_gametitle" />
-
+-->
 
     <item android:id="@+id/report"
         android:icon="@drawable/ic_send_black_24dp"
