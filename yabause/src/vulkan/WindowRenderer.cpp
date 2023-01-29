@@ -196,6 +196,15 @@ WindowRenderer::WindowRenderer(int width, int height, VIDVulkan * vulkan)
   this->vulkan = vulkan;
   ready = false;
 
+  offscreenPass.color.image = nullptr;
+  offscreenPass.color.mem = nullptr;
+  offscreenPass.color.view = nullptr;
+  offscreenPass.depth.image = nullptr;
+  offscreenPass.depth.mem = nullptr;
+  offscreenPass.depth.view = nullptr;
+  offscreenPass.frameBuffer = nullptr;
+  
+
 }
 
 void WindowRenderer::setUp() {
@@ -877,6 +886,9 @@ void WindowRenderer::prepareOffscreen() {
     offscreenPass.width = vdp2width;
     offscreenPass.height = vdp2height;
   }
+
+  offscreenPass.width = vdp2width;
+  offscreenPass.height = vdp2height;
   offscreenPass.renderPass = vulkan->getRenderPass();
 
 #endif

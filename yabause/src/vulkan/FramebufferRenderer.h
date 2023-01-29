@@ -58,7 +58,7 @@ public:
   ~FramebufferRenderer();
   void setup();
   void setupShaders();
-  VkPipeline FramebufferRenderer::compileShader(const char * code, const char * name, enum ColorClacMode c, uint8_t winflag);
+  VkPipeline compileShader(const char * code, const char * name, enum ColorClacMode c, uint8_t winflag);
 
   VkPipeline findShader(const char * name, const char * code, enum ColorClacMode c) {
     VkPipeline pgid;
