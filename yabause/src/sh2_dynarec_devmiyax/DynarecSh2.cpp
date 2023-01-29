@@ -96,7 +96,7 @@ void cacheflush(uintptr_t begin, uintptr_t end, int flag )
 }
 #else
 void cacheflush(uintptr_t begin, uintptr_t end, int flag ){
-  __builtin___clear_cache((void*)begin,(void*)end);
+  __builtin___clear_cache((char *)begin,(char *)end);
 }
 #endif
 #endif
