@@ -51,6 +51,9 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
   var isLTriggerAnalog = true
   var isRTriggerAnalog = true
 
+  var productId = 0;
+  var vendorId = 0;
+
   fun loadDefault() {
     Keymap.clear()
     Keymap[MotionEvent.AXIS_HAT_Y or 0x8000] = PadEvent.BUTTON_UP
@@ -79,12 +82,38 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
     try {
       val yabroot = File(storage.rootPath)
       if (!yabroot.exists()) yabroot.mkdir()
-      val inputStream: InputStream = FileInputStream(storage.rootPath + setting_filename)
-      val size = inputStream.available()
-      val buffer = ByteArray(size)
-      inputStream.read(buffer)
-      inputStream.close()
-      val json = String(buffer)
+
+      var json = ""
+      val file = File(storage.rootPath + setting_filename)
+      if (file.exists()) {
+        val inputStream: InputStream = FileInputStream(storage.rootPath + setting_filename)
+        val size = inputStream.available()
+        val buffer = ByteArray(size)
+        inputStream.read(buffer)
+        inputStream.close()
+        json = String(buffer)
+      } else {
+
+        // Retoro Pocket Pro
+        if(  productId == 12289 && vendorId == 8226 ) {
+          json =
+            "{\"BUTTON_UP\":-2147450864,\"BUTTON_DOWN\":-2147483632,\"BUTTON_LEFT\":-2147450865,\"BUTTON_RIGHT\":-2147483633,\"BUTTON_LEFT_TRIGGER\":-2147483625,\"BUTTON_RIGHT_TRIGGER\":-2147483626,\"BUTTON_START\":108,\"BUTTON_A\":96,\"BUTTON_B\":97,\"BUTTON_C\":103,\"BUTTON_X\":99,\"BUTTON_Y\":100,\"BUTTON_Z\":102,\"PERANALOG_AXIS_X\":-1879048192,\"PERANALOG_AXIS_Y\":-1879048191,\"PERANALOG_AXIS_LTRIGGER\":-1879048169,\"PERANALOG_AXIS_RTRIGGER\":-1879048170,\"MENU\":109,\"IS_LTRIGGER_ANALOG\":true,\"IS_RTRIGGER_ANALOG\":true}";
+
+        // Odin
+        }else if(productId == 274 && vendorId == 8224 ){
+          json = "{\"BUTTON_UP\":-2147450864,\"BUTTON_DOWN\":-2147483632,\"BUTTON_LEFT\":-2147450865,\"BUTTON_RIGHT\":-2147483633,\"BUTTON_LEFT_TRIGGER\":65535,\"BUTTON_RIGHT_TRIGGER\":65535,\"BUTTON_START\":108,\"BUTTON_A\":96,\"BUTTON_B\":97,\"BUTTON_C\":103,\"BUTTON_X\":99,\"BUTTON_Y\":100,\"BUTTON_Z\":102,\"PERANALOG_AXIS_X\":-1879048192,\"PERANALOG_AXIS_Y\":-1879048191,\"PERANALOG_AXIS_LTRIGGER\":104,\"PERANALOG_AXIS_RTRIGGER\":105,\"MENU\":109,\"IS_LTRIGGER_ANALOG\":false,\"IS_RTRIGGER_ANALOG\":false}"
+
+        //nacon
+        }else if(productId == 773 && vendorId == 12933 ){
+          json = "{\"BUTTON_UP\":-2147450864,\"BUTTON_DOWN\":-2147483632,\"BUTTON_LEFT\":-2147450865,\"BUTTON_RIGHT\":-2147483633,\"BUTTON_LEFT_TRIGGER\":-2147483625,\"BUTTON_RIGHT_TRIGGER\":-2147483626,\"BUTTON_START\":108,\"BUTTON_A\":96,\"BUTTON_B\":97,\"BUTTON_C\":103,\"BUTTON_X\":99,\"BUTTON_Y\":100,\"BUTTON_Z\":102,\"PERANALOG_AXIS_X\":-1879048192,\"PERANALOG_AXIS_Y\":-1879048191,\"PERANALOG_AXIS_LTRIGGER\":-1879048169,\"PERANALOG_AXIS_RTRIGGER\":-1879048170,\"MENU\":109,\"IS_LTRIGGER_ANALOG\":true,\"IS_RTRIGGER_ANALOG\":true}"
+        // PlayStation 4
+        }else if( productId == 2508 && vendorId == 1356 ) {
+          json = "{\"BUTTON_UP\":-2147450864,\"BUTTON_DOWN\":-2147483632,\"BUTTON_LEFT\":-2147450865,\"BUTTON_RIGHT\":-2147483633,\"BUTTON_LEFT_TRIGGER\":-2147483631,\"BUTTON_RIGHT_TRIGGER\":-2147483630,\"BUTTON_START\":108,\"BUTTON_A\":96,\"BUTTON_B\":97,\"BUTTON_C\":103,\"BUTTON_X\":99,\"BUTTON_Y\":100,\"BUTTON_Z\":102,\"PERANALOG_AXIS_X\":-1879048192,\"PERANALOG_AXIS_Y\":-1879048191,\"PERANALOG_AXIS_LTRIGGER\":-1879048175,\"PERANALOG_AXIS_RTRIGGER\":-1879048174,\"MENU\":109,\"IS_LTRIGGER_ANALOG\":true,\"IS_RTRIGGER_ANALOG\":true}"
+        // Generic XBox Controller
+        }else{
+          json = "{\"BUTTON_UP\":-2147450864,\"BUTTON_DOWN\":-2147483632,\"BUTTON_LEFT\":-2147450865,\"BUTTON_RIGHT\":-2147483633,\"BUTTON_LEFT_TRIGGER\":-2147483625,\"BUTTON_RIGHT_TRIGGER\":-2147483626,\"BUTTON_START\":108,\"BUTTON_A\":96,\"BUTTON_B\":97,\"BUTTON_C\":103,\"BUTTON_X\":99,\"BUTTON_Y\":100,\"BUTTON_Z\":102,\"PERANALOG_AXIS_X\":-1879048192,\"PERANALOG_AXIS_Y\":-1879048191,\"PERANALOG_AXIS_LTRIGGER\":-1879048169,\"PERANALOG_AXIS_RTRIGGER\":-1879048170,\"MENU\":4,\"IS_LTRIGGER_ANALOG\":true,\"IS_RTRIGGER_ANALOG\":true}"
+        }
+      }
 
       Log.d("yabause", "keymap: $json")
 
@@ -475,6 +504,8 @@ internal class PadManagerV16 : PadManager() {
     if (did == null) {
       pads[0] = BasicInputDevice(this)
       pads[0]!!._selected_device_id = -1
+      pads[0]!!.productId = -1
+      pads[0]!!.vendorId = -1
     } else {
       val dev = InputDevice.getDevice(did)
       if (dev.name.contains("HuiJia")) {
@@ -483,6 +514,8 @@ internal class PadManagerV16 : PadManager() {
         pads[0] = BasicInputDevice(this)
       }
       pads[0]!!._selected_device_id = did
+      pads[0]!!.productId = dev.productId
+      pads[0]!!.vendorId = dev.vendorId
     }
     pads[0]!!._playerindex = 0
     pads[0]!!.loadSettings("keymap_v2.json")
@@ -512,6 +545,8 @@ internal class PadManagerV16 : PadManager() {
         pads[1] = BasicInputDevice(this)
       }
       pads[1]!!._selected_device_id = did
+      pads[1]!!.productId = dev.productId
+      pads[1]!!.vendorId = dev.vendorId
     }
     pads[1]!!._playerindex = 1
     pads[1]!!.loadSettings("keymap_player2_v2.json")
@@ -590,6 +625,9 @@ internal class PadManagerV16 : PadManager() {
           if (dev.name == "uinput-fpc") {
             continue
           }
+
+          dev.productId
+          dev.vendorId
 
           deviceIds[dev.descriptor] = deviceId
         }
