@@ -450,6 +450,7 @@ void Window::_InitRenderPass() {
 
   attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
   attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+  attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 
   ErrorCheck(vkCreateRenderPass(_renderer->GetVulkanDevice(), &render_pass_create_info, nullptr, &_render_pass_keep));
 }
