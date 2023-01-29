@@ -3645,7 +3645,7 @@ int Vdp1Renderer::genPolygon(YglSprite *input, CharTexture *output, float *color
     if (currentPipeLine != nullptr) {
       piplelines.push_back(currentPipeLine);
     }
-    program = pipleLineFactory->getPipeline(prg, vulkan, tm, vm);
+    program = pipleLineFactory->getPipeline(prg, vulkan, tm, vm, 0);
     currentPipeLine = program;
   } else {
     program = currentPipeLine;

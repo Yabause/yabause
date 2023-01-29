@@ -48,21 +48,26 @@ public:
     SRC_ALPHA,
     ADD,
     DST_ALPHA,
-	WINDOW,
+	  WINDOW,
     NONE
   };
+
+  uint8_t winflag = 0;
 
   FramebufferRenderer(VIDVulkan * vulkan);
   ~FramebufferRenderer();
   void setup();
   void setupShaders();
-  VkPipeline compileShader(const char * code, const char * name, enum ColorClacMode c);
+  VkPipeline FramebufferRenderer::compileShader(const char * code, const char * name, enum ColorClacMode c, uint8_t winflag);
 
   VkPipeline findShader(const char * name, const char * code, enum ColorClacMode c) {
     VkPipeline pgid;
-    auto prg = pipelines.find(name);
+    string key = name;
+    key += std::to_string(c);
+    key += std::to_string(winflag);
+    auto prg = pipelines.find(key);
     if (prg == pipelines.end()) {
-      pgid = compileShader(code, name, c);
+      pgid = compileShader(code, name, c, winflag);
     }
     else {
       pgid = prg->second;
@@ -184,6 +189,9 @@ protected:
 
   VkPipelineColorBlendAttachmentState colorBlendAttachmentSpWindow = {};
   VkPipelineColorBlendStateCreateInfo colorBlendingSpWindow = {};
+
+  VkPipelineColorBlendAttachmentState spcolorBlendAttachment = {};
+  VkPipelineColorBlendStateCreateInfo colorSprite = {};
 
   int renderCount = 0;
 

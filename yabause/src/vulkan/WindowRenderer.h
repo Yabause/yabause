@@ -41,6 +41,10 @@ class TextureCache;
 class VdpPipelineFactory;
 class VdpPipelineWindow;
 
+#define WINDOW_CLIP_STENCIL   (0)
+#define WINDOW_CLIP_OFFSCRENN (1)
+
+#define WINDOW_CLIP_MODE (WINDOW_CLIP_STENCIL)
 
 struct WindowUbo {
   glm::mat4 model;

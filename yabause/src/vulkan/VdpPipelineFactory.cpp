@@ -112,12 +112,13 @@ VdpPipeline * VdpPipelineFactory::getPipeline(
   YglPipelineId id,
   VIDVulkan * vulkan,
   TextureManager * tm,
-  VertexManager * vm
+  VertexManager * vm,
+  uint8_t winflag
 ) {
 
   VdpPipeline * current = nullptr;
 
-  current = findInGarbage(id);
+  current = findInGarbage(id, winflag);
   if (current != NULL) {
     return current;
   }
@@ -238,6 +239,7 @@ VdpPipeline * VdpPipelineFactory::getPipeline(
   }
 
   current->setRenderPass(this->renderPass);
+  current->setWinFlg(winflag);
   current->createGraphicsPipeline();
   return current;
 }
@@ -255,12 +257,12 @@ void VdpPipelineFactory::garbage(VdpPipeline * p) {
   garbageCollction.push_back(p);
 }
 
-VdpPipeline * VdpPipelineFactory::findInGarbage(YglPipelineId id) {
+VdpPipeline * VdpPipelineFactory::findInGarbage(YglPipelineId id, uint8_t winflg) {
 
   VdpPipeline * p;
   int removeIndex = -1;
   for (int i = 0; i < garbageCollction.size(); i++) {
-    if (garbageCollction[i]->prgid == id) {
+    if (garbageCollction[i]->prgid == id && garbageCollction[i]->getWinFlg() == winflg) {
       p = garbageCollction[i];
       removeIndex = i;
       break;

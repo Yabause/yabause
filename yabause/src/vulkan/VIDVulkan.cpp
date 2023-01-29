@@ -654,12 +654,6 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
 	windowRenderer->setSpriteWindow(((fixVdp2Regs->SPCTL >> 4) & 0x03) == 0x01);
   
-  windowRenderer->draw(commandBuffer,
-		[&](VkCommandBuffer tcommandBuffer) {
-		// Draw sprite window
-		fbRender->drawSpriteWindow(fixVdp2Regs, tcommandBuffer, 0, 10);
-	});
-
     if (resolutionMode != RES_NATIVE) {
       VkRect2D tmp_render_area{};
       tmp_render_area.offset.x = 0;
@@ -723,6 +717,12 @@ void VIDVulkan::Vdp2DrawEnd(void) {
        pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
     }
 
+    windowRenderer->draw(commandBuffer,
+      [&](VkCommandBuffer tcommandBuffer) {
+      // Draw sprite window
+      fbRender->drawSpriteWindow(fixVdp2Regs, tcommandBuffer, 0, 10);
+    });
+
     // Draw Back Color
     if (backPiepline->vertices.size() > 0) {
       glm::mat4 MVP = model * proj; // no need to rotate
@@ -785,6 +785,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
           ubo.color_offset.a = 0;
           ubo.blendmode = prg->blendmode;
 
+#if 0
           if (prg->bwin0 || prg->bwin1 || prg->bwinsp) {
             u8 bwin1 = prg->bwin1 << 1;
             u8 logwin1 = prg->logwin1 << 1;
@@ -812,10 +813,10 @@ void VIDVulkan::Vdp2DrawEnd(void) {
             ubo.winmode = prg->winmode;
             ubo.winmask = winmask;
             ubo.winflag = winflag;
-            ubo.offsetx = deviceOriginX;
-            ubo.offsety = deviceOriginY;
-            ubo.windowWidth = windowRenderer->getWidth();
-            ubo.windowHeight = windowRenderer->getHeight();
+            ubo.offsetx = viewportData.x;
+            ubo.offsety = viewportData.y;
+            ubo.windowWidth = viewportData.z;
+            ubo.windowHeight = viewportData.w;
           } else {
             ubo.winmode = -1;
             ubo.winmask = -1;
@@ -823,7 +824,13 @@ void VIDVulkan::Vdp2DrawEnd(void) {
             ubo.windowWidth = -1;
             ubo.windowHeight = -1;
           }
-
+#else
+          ubo.winmode = -1;
+          ubo.winmask = -1;
+          ubo.winflag = -1;
+          ubo.windowWidth = -1;
+          ubo.windowHeight = -1;
+#endif
           // Goto Mosaic render pass
           if (layers[i][j]->mosaic[0] != 1 || layers[i][j]->mosaic[1] != 1) {
 
@@ -862,9 +869,9 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
             VdpPipeline *p;
             if (isDestinationAlpha) {
-              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA_DST, this, this->tm, this->vm);
+              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA_DST, this, this->tm, this->vm, 0);
             } else {
-              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA, this, this->tm, this->vm);
+              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA, this, this->tm, this->vm, 0);
             }
             renderWithLineEffectToMainTarget(p, commandBuffer, ubo, layers[i][j]->lineTexture, viewportData,offcount);
             onFramePipelines.push_back(p);
@@ -1634,11 +1641,25 @@ int VIDVulkan::genPolygon(VdpPipeline **pipleLine, vdp2draw_struct *input, CharT
     }
   }
 
+  auto winflg = VdpPipeline::genWinFlag(
+    input->LogicWin,
+    input->bEnWin0,
+    input->bEnWin1,
+    input->bEnSpriteWin,
+    input->WindowArea0,
+    input->WindowArea1,
+    input->WindowAreaSprite
+  );
+
+  if(input->bEnSpriteWin != 0) {
+    printf("hello");
+  }
+
   if (*pipleLine == NULL) {
-    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm);
-  } else if ((*pipleLine)->prgid != prg) {
+    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm, winflg);
+  } else if ((*pipleLine)->prgid != prg || (*pipleLine)->getWinFlg() != winflg) {
     pipleLineFactory->garbage(*pipleLine);
-    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm);
+    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm, winflg);
   }
 
   program = *pipleLine;
@@ -1651,6 +1672,7 @@ int VIDVulkan::genPolygon(VdpPipeline **pipleLine, vdp2draw_struct *input, CharT
   program->logwin1 = input->WindowArea1;
   program->bwinsp = input->bEnSpriteWin;
   program->logwinsp = input->WindowAreaSprite;
+
   program->blendmode = input->blendmode;
   program->winmode = input->LogicWin;
   program->mosaic[0] = input->mosaicxmask;
@@ -1923,11 +1945,21 @@ int VIDVulkan::genPolygonRbg0(VdpPipeline **pipleLine, vdp2draw_struct *input, C
     }
   }
 
+  auto winflg = VdpPipeline::genWinFlag(
+    input->LogicWin,
+    input->bEnWin0,
+    input->bEnWin1,
+    input->bEnSpriteWin,
+    input->WindowArea0,
+    input->WindowArea1,
+    input->WindowAreaSprite
+  );
+
   if (*pipleLine == NULL) {
-    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm);
-  } else if ((*pipleLine)->prgid != prg) {
+    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm, winflg);
+  } else if ((*pipleLine)->prgid != prg || (*pipleLine)->getWinFlg() != winflg) {
     pipleLineFactory->garbage(*pipleLine);
-    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm);
+    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm, winflg);
   }
 
   program = *pipleLine;
@@ -6410,6 +6442,31 @@ void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer
   } else {
     render_area.extent.width = _renderer->getWindow()->GetVulkanSurfaceSize().width;
     render_area.extent.height = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+  }
+
+  if (rotate_screen) {
+	  switch (ubomini.u_dir) {
+	  case 0:
+		  ubomini.u_dir = 2; //270
+		  ubomini.u_tw = offscreenPass.height;
+		  ubomini.u_th = offscreenPass.width;
+		  break;
+	  case 1:
+		  ubomini.u_dir = 0; // 0
+		  ubomini.u_tw = offscreenPass.width;
+		  ubomini.u_th = offscreenPass.height;
+		  break;
+	  case 2:
+		  ubomini.u_dir = 3; //180
+		  ubomini.u_tw = offscreenPass.width;
+		  ubomini.u_th = offscreenPass.height;
+		  break;
+	  case 3:
+		  ubomini.u_dir = 1; // 90
+		  ubomini.u_tw = offscreenPass.height;
+		  ubomini.u_th = offscreenPass.width;
+		  break;
+	  }
   }
 
   VkRenderPassBeginInfo render_pass_begin_info{};

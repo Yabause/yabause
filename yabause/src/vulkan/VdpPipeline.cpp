@@ -212,13 +212,15 @@ VdpPipeline::VdpPipeline(
   }
   )s";
 
+#if (WINDOW_CLIP_MODE == WINDOW_CLIP_STENCIL)
+  fragFuncCheckWindow = "\n void checkWindow(){ return; } \n";
+#else
   fragFuncCheckWindow = R"S(
   vec2 getEmuPos( int dir ){
         return vec2( 
           (gl_FragCoord.x-offsetx) / windowWidth,
           (gl_FragCoord.y-offsety) / windowHeight
         );
-/*            
     switch(dir){
       case 1: // 90
         return vec2(
@@ -246,9 +248,9 @@ VdpPipeline::VdpPipeline(
         break;
     }
     return vec2(0.0,0.0);
-*/    
   }    
   void checkWindow() {
+/*
     if( winmode != -1 ){
       vec2 winaddr = getEmuPos(u_dir);
       vec4 wintexture = texture(windowSampler,winaddr);
@@ -266,9 +268,10 @@ VdpPipeline::VdpPipeline(
             }
         }
     }
+*/
   }
   )S";
-
+#endif
   //fragShaderName = "./shaders/shader.frag.spv";
 
   bindid.clear();
@@ -724,16 +727,86 @@ void VDP1UserClip::createDpethStencil(VkPipelineDepthStencilStateCreateInfo & de
 
 
 void VdpPipeline::createDpethStencil(VkPipelineDepthStencilStateCreateInfo & depthStencil) {
-  depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depthStencil.depthTestEnable = VK_TRUE;
-  depthStencil.depthWriteEnable = VK_TRUE;
-  depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL; // VK_COMPARE_OP_LESS;
-  depthStencil.depthBoundsTestEnable = VK_FALSE;
-  depthStencil.minDepthBounds = 0.0f; // Optional
-  depthStencil.maxDepthBounds = 1.0f; // Optional
-  depthStencil.stencilTestEnable = VK_FALSE;
-  depthStencil.front = {}; // Optional
-  depthStencil.back = {}; // Optional
+
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_TRUE;
+	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL; // VK_COMPARE_OP_LESS;
+	depthStencil.depthBoundsTestEnable = VK_FALSE;
+	depthStencil.minDepthBounds = 0.0f; // Optional
+	depthStencil.maxDepthBounds = 1.0f; // Optional
+
+
+	if (winflag == 0) {
+		depthStencil.stencilTestEnable = VK_FALSE;
+		depthStencil.front = {}; // Optional
+		depthStencil.back = {}; // Optional
+	}
+	else {
+
+		int winmode, bwin0, bwin1, bwinsp, logwin0, logwin1, logwinsp = 0;
+		decodeWinFlag(winmode, bwin0, bwin1, bwinsp, logwin0, logwin1, logwinsp);
+
+		depthStencil.stencilTestEnable = VK_TRUE;
+		depthStencil.front.passOp = VK_STENCIL_OP_KEEP;
+		depthStencil.front.failOp = VK_STENCIL_OP_KEEP;
+		depthStencil.front.depthFailOp = VK_STENCIL_OP_KEEP;
+		depthStencil.front.writeMask = 0;
+
+    bwin1 = bwin1 << 1;
+    logwin1 = logwin1 << 1;
+    bwinsp = bwinsp << 2;
+    logwinsp = logwinsp << 2;
+
+		int winmask = (bwin0 | bwin1 | bwinsp);
+		int swinflag = 0;
+		if (winmode == 0) { // and
+			if (bwin0)  swinflag = logwin0;
+			if (bwin1)  swinflag |= logwin1;
+			if (bwinsp) swinflag |= logwinsp;
+
+			depthStencil.front.compareOp = VK_COMPARE_OP_EQUAL;
+			depthStencil.front.compareMask = winmask;
+			depthStencil.front.reference = swinflag;
+		}
+		else { // or
+			swinflag = winmask;
+			if (bwin0)  swinflag &= ~logwin0;
+			if (bwin1)  swinflag &= ~logwin1;
+			if (bwinsp) swinflag &= ~logwinsp;
+
+			depthStencil.front.compareOp = VK_COMPARE_OP_NOT_EQUAL;
+			depthStencil.front.compareMask = winmask;
+			depthStencil.front.reference = swinflag;
+
+		}
+
+		depthStencil.back = depthStencil.front;
+
+		/*
+		if (bwin0 || bwin1 || bwinsp)
+		{
+			glEnable(GL_STENCIL_TEST);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+			int winmask = (bwin0 | bwin1 | bwinsp);
+			int winflag = 0;
+			if (winmode == 0) { // and
+				if (bwin0)  winflag = logwin0;
+				if (bwin1)  winflag |= logwin1;
+				if (bwinsp) winflag |= logwinsp;
+				glStencilFunc(GL_EQUAL, winflag, winmask);
+			}
+			else { // or
+				winflag = winmask;
+				if (bwin0)  winflag &= ~logwin0;
+				if (bwin1)  winflag &= ~logwin1;
+				if (bwinsp) winflag &= ~logwinsp;
+				glStencilFunc(GL_NOTEQUAL, winflag, winmask);
+			}
+		}
+		*/
+	}
 }
 
 void VdpPipeline::createColorBlending(VkPipelineColorBlendStateCreateInfo & colorBlending, VkPipelineColorBlendAttachmentState & colorAttachment) {
@@ -981,20 +1054,21 @@ void VdpPipeline::updateDescriptorSets()
 
   VkDescriptorImageInfo imageInfos[32];
   for (int i = 0; i < bindid.size(); i++) {
+    if (samplers[bindid[i]].img != nullptr) {
+      imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      imageInfos[i].imageView = samplers[bindid[i]].img;
+      imageInfos[i].sampler = samplers[bindid[i]].smp;
 
-    imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageInfos[i].imageView = samplers[bindid[i]].img;
-    imageInfos[i].sampler = samplers[bindid[i]].smp;
-
-    VkWriteDescriptorSet descriptorWrite = {};
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = _descriptorSet[dsIndex];
-    descriptorWrite.dstBinding = bindid[i];
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pImageInfo = &imageInfos[i];
-    descriptorWrites.push_back(descriptorWrite);
+      VkWriteDescriptorSet descriptorWrite = {};
+      descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      descriptorWrite.dstSet = _descriptorSet[dsIndex];
+      descriptorWrite.dstBinding = bindid[i];
+      descriptorWrite.dstArrayElement = 0;
+      descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      descriptorWrite.descriptorCount = 1;
+      descriptorWrite.pImageInfo = &imageInfos[i];
+      descriptorWrites.push_back(descriptorWrite);
+    }
   }
 
   vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -1265,7 +1339,7 @@ VdpPipelinePreLineAlphaCram::VdpPipelinePreLineAlphaCram(
     layout(binding = 1) uniform highp sampler2D s_texture;
     layout(binding = 2) uniform highp sampler2D s_color;
     layout(binding = 3) uniform highp sampler2D s_line;
-    layout(binding = 4) uniform highp sampler2D windowSampler;
+    //layout(binding = 4) uniform highp sampler2D windowSampler;
     layout(location = 0) out vec4 fragColor;
     layout(location = 1) out float fargDepth;
   )S" +
@@ -1507,28 +1581,27 @@ void VdpPipelineWindow::createInputAssembly(VkPipelineInputAssemblyStateCreateIn
 
 
 void VdpPipelineWindow::createColorAttachment(VkPipelineColorBlendAttachmentState & color) {
-  color.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-  color.blendEnable = VK_TRUE;
-  color.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.colorBlendOp = VK_BLEND_OP_ADD;
-  color.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.alphaBlendOp = VK_BLEND_OP_ADD;
-
+  color.colorWriteMask = 0; // VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  color.blendEnable = VK_FALSE;
 }
 
 void VdpPipelineWindow::createDpethStencil(VkPipelineDepthStencilStateCreateInfo & depthStencil) {
   depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
   depthStencil.depthTestEnable = VK_FALSE;
-  depthStencil.depthWriteEnable = VK_TRUE;
+  depthStencil.depthWriteEnable = VK_FALSE;
   depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL; // VK_COMPARE_OP_LESS;
   depthStencil.depthBoundsTestEnable = VK_FALSE;
   depthStencil.minDepthBounds = 0.0f; // Optional
   depthStencil.maxDepthBounds = 1.0f; // Optional
-  depthStencil.stencilTestEnable = VK_FALSE;
-  depthStencil.front = {}; // Optional
-  depthStencil.back = {}; // Optional
+  depthStencil.stencilTestEnable = VK_TRUE;
+  depthStencil.front.compareOp = VK_COMPARE_OP_ALWAYS;
+  depthStencil.front.failOp = VK_STENCIL_OP_REPLACE;
+  depthStencil.front.depthFailOp = VK_STENCIL_OP_REPLACE;
+  depthStencil.front.passOp = VK_STENCIL_OP_REPLACE;
+  depthStencil.front.compareMask = this->id;
+  depthStencil.front.writeMask = this->id;
+  depthStencil.front.reference = this->id;
+  depthStencil.back = depthStencil.front;
 }
 
 
