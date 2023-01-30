@@ -551,7 +551,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
     int deviceOriginX = originx;
     int deviceOriginY = originy;
-    if( resolutionMode != RES_NATIVE ){
+    if( resolutionMode != RES_NATIVE && (Vdp2Regs->TVMD & 0x8000) != 0 ){
       deviceWidth = renderWidth;
       deviceHeight = renderHeight;
       deviceOriginX = 0;
@@ -650,9 +650,10 @@ void VIDVulkan::Vdp2DrawEnd(void) {
                             commandBuffer);
     OSDDisplayMessages(NULL, 0, 0);
     vkCmdEndRenderPass(commandBuffer);
+    goto ENDEND;
   } else {
 
-	windowRenderer->setSpriteWindow(((fixVdp2Regs->SPCTL >> 4) & 0x03) == 0x01);
+	  windowRenderer->setSpriteWindow(((fixVdp2Regs->SPCTL >> 4) & 0x03) == 0x01);
   
     if (resolutionMode != RES_NATIVE) {
       VkRect2D tmp_render_area{};
