@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.preference.CheckBoxPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -166,6 +167,24 @@ class InGamePreference(val gamecode: String) : PreferenceFragmentCompat(), Share
         setupInGamePreferences(activityContext, gamecode)
         preferenceManager.sharedPreferencesName = gamecode
         setPreferencesFromResource(R.xml.in_game_preferences, rootKey)
+
+        val defaultPreference = PreferenceManager.getDefaultSharedPreferences(activityContext)
+
+        if( defaultPreference.getString("pref_video","0") == "4") {
+            var pg = findPreference<ListPreference?>("pref_polygon_generation")
+            if (pg != null) {
+                pg.isEnabled = false;
+                pg.value = "2"
+            }
+
+           var cp = findPreference<CheckBoxPreference?>("pref_use_compute_shader")
+            if( cp != null ){
+                cp.isEnabled = false;
+                cp.isChecked = true;
+            }
+        }
+
+
         setSummaries()
         this.preferenceScreen.sharedPreferences!!.registerOnSharedPreferenceChangeListener(this)
     }
@@ -213,6 +232,10 @@ class InGamePreference(val gamecode: String) : PreferenceFragmentCompat(), Share
         editor.putString("pref_frameLimit", sharedPreferences.getString("pref_frameLimit", "0"))
         val v = sharedPreferences.getString("pref_aspect_rate", "0")
         editor.putString("pref_aspect_rate", v)
+        editor.putString(
+            "pref_resolution",
+            sharedPreferences.getString("pref_resolution", "0")
+        )
         editor.putString(
             "pref_rbg_resolution",
             sharedPreferences.getString("pref_rbg_resolution", "0")

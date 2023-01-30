@@ -304,7 +304,14 @@ class SettingsActivity : AppCompatActivity() {
             val polygon_setting =
                 preferenceManager.findPreference("pref_polygon_generation") as ListPreference?
             polygon_setting!!.summary = polygon_setting.entry
-            polygon_setting.isEnabled = (video_cart.value == "1" || video_cart.value == "4")
+
+
+            if( (video_cart.value == "4") ) {
+                polygon_setting.isEnabled = false
+                polygon_setting.value = "2"
+            }else{
+                polygon_setting.isEnabled = true
+            }
 
             if (deviceSupportsAEP == false) {
                 polygon_setting.entries =
@@ -482,7 +489,14 @@ class SettingsActivity : AppCompatActivity() {
                     val polygon_setting =
                         preferenceManager.findPreference("pref_polygon_generation") as ListPreference?
                     polygon_setting!!.summary = polygon_setting.entry
-                    polygon_setting.isEnabled = (pref.value == "1" || pref.value == "4")
+                    //polygon_setting.isEnabled = (pref.value == "1" || pref.value == "4")
+
+                    if( pref.value == "4" ) {
+                        polygon_setting.isEnabled = false
+                        polygon_setting.value = "2"
+                    }else{
+                        polygon_setting.isEnabled = true
+                    }
 
                     val r_setting =
                         preferenceManager.findPreference("pref_use_compute_shader") as CheckBoxPreference?
