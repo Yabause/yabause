@@ -599,8 +599,8 @@ void Vdp1Renderer::erase() {
   if (left < 0)
     left = 0;
 
-  int width = right - left + 1;
-  int height = bottom - top + 1;
+  int width = right - left + (1*interlace);
+  int height = bottom - top + (1*interlace);
   if (width <= 0)
     width = 1;
   if (height <= 0)
