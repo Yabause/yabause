@@ -52,15 +52,8 @@ import android.os.ParcelFileDescriptor
 import android.os.Process.killProcess
 import android.os.Process.myPid
 import android.util.Log
-import android.view.KeyEvent
-import android.view.Menu
-import android.view.MenuItem
-import android.view.MotionEvent
-import android.view.View
-import android.view.WindowInsets
+import android.view.*
 import android.view.WindowInsets.Type
-import android.view.WindowInsetsController
-import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -73,7 +66,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import androidx.preference.PreferenceManager
 import androidx.transition.Fade
-import com.activeandroid.query.Select
 import com.activeandroid.util.IOUtils
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.AuthUI.IdpConfig.GoogleBuilder
@@ -118,19 +110,11 @@ import org.uoyabause.android.cheat.TabCheatFragment
 import org.uoyabause.android.game.BaseGame
 import org.uoyabause.android.game.GameUiEvent
 import org.uoyabause.android.game.SonicR
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.InputStream
+import java.io.*
 import java.net.URLDecoder
 import java.text.DateFormat
 import java.text.SimpleDateFormat
-import java.util.Arrays
-import java.util.Date
-import java.util.Locale
+import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -1012,31 +996,32 @@ class Yabause : AppCompatActivity(),
             }
 
             R.id.exit -> {
-                YabauseRunnable.deinit()
-                try {
-                    var timeOutCount = 0;
-                    while( YabauseRunnable.isRunning() == 1 ) {
-                        Thread.sleep(100)
-                        timeOutCount++;
-                        if( timeOutCount > 40 ){
-                            break;
+                progressMessage.text = "Exiting..."
+                progressBar.visibility = View.VISIBLE
+                waitingResult = true
+                val myThread = Thread {
+                    YabauseRunnable.deinit()
+                    runOnUiThread(Runnable {
+                        waitingResult = false
+                        //Your code to run in GUI thread here
+                        mParcelFileDescriptor?.close()
+                        subFileDescripters.forEach {
+                            it.close()
                         }
-                    }
-                } catch (e: InterruptedException) {
-                }
-                mParcelFileDescriptor?.close()
-                subFileDescripters.forEach {
-                    it.close()
-                }
-                subFileDescripters.clear()
+                        subFileDescripters.clear()
 
-                val playTime = (System.currentTimeMillis() / 1000L) - startTime;
-                val resultIntent = Intent()
-                resultIntent.putExtra("playTime",playTime)
-                setResult(RESULT_OK, resultIntent)
+                        val playTime = (System.currentTimeMillis() / 1000L) - startTime;
+                        val resultIntent = Intent()
+                        resultIntent.putExtra("playTime",playTime)
+                        setResult(RESULT_OK, resultIntent)
 
-                finish()
-                killProcess(myPid())
+                        finish()
+                        killProcess(myPid())
+                    } //public void run() {
+                    )
+                }
+                myThread.start()
+
             }
             R.id.menu_in_game_setting -> {
                 waitingResult = true

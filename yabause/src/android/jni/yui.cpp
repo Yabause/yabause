@@ -1726,8 +1726,10 @@ extern "C"
     void
     Java_org_uoyabause_android_YabauseRunnable_deinit(JNIEnv *env)
     {
+        pthread_mutex_lock(&g_mtxGlLock);
         g_msg = MSG_RENDER_LOOP_EXIT;
-        // pthread_join(_threadId,NULL);
+        pthread_mutex_unlock(&g_mtxGlLock);
+        pthread_join(_threadId,NULL);
     }
 
     void
@@ -2272,8 +2274,10 @@ void renderLoop()
             break;
         case MSG_RENDER_LOOP_EXIT:
             YUI_LOG("MSG_RENDER_LOOP_EXIT");
+            pause = 0;
             renderingEnabled = 0;
             destroy();
+            pthread_mutex_unlock(&g_mtxGlLock);
             break;
 
         case MSG_SAVE_STATE:
