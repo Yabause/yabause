@@ -585,9 +585,9 @@ void Vdp1Renderer::erase() {
     interlace *= 2.0f;
   }
 
-  float bottom = (vulkan->vdp2height - ((Vdp1Regs->EWLR & 0x1FF) * vdp1hratio * interlace)) * hrate;
+  float top = (((Vdp1Regs->EWLR & 0x1FF) * vdp1hratio * interlace)) * hrate;
   float right = (((Vdp1Regs->EWRR >> 9) & 0x7F) << 3) * vdp1wratio * wrate;
-  float top = (vulkan->vdp2height - ((Vdp1Regs->EWRR & 0x1FF) * vdp1hratio * interlace)) * hrate;
+  float bottom = (((Vdp1Regs->EWRR & 0x1FF) * vdp1hratio * interlace)) * hrate;
   float left = (((Vdp1Regs->EWLR >> 9) & 0x7F) << 3) * vdp1wratio * wrate;
 
   if (top < 0)
