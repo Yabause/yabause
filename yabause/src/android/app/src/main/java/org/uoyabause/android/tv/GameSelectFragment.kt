@@ -1027,11 +1027,6 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                 Log.d(TAG, "Ad was dismissed.")
                 //requestNewInterstitial()
             }
-
-            override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
-                Log.d(TAG, "Ad failed to show.")
-            }
-
             override fun onAdShowedFullScreenContent() {
                 Log.d(TAG, "Ad showed fullscreen content.")
                 mInterstitialAd = null

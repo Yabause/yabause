@@ -78,7 +78,7 @@ class GameSelectActivityPhone : AppCompatActivity() {
                     MobileAds.initialize(this)
                     adView = AdView(this)
                     adView!!.adUnitId = this.getString(R.string.banner_ad_unit_id)
-                    adView!!.adSize = AdSize.BANNER
+                    adView!!.setAdSize(AdSize.BANNER)
                     val adRequest = AdRequest.Builder().build()
 
                     val params = FrameLayout.LayoutParams(
