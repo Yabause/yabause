@@ -158,7 +158,7 @@ class Yabause : AppCompatActivity(),
 
     private lateinit var padManager: PadManager
     private lateinit var yabauseThread: YabauseRunnable
-    private lateinit var audio: YabauseAudio
+    private var audio: YabauseAudio? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var progressBar: View
     private lateinit var progressMessage: TextView
@@ -296,7 +296,7 @@ class Yabause : AppCompatActivity(),
                 if (waitingResult == false && menu_showing == true) {
                     menu_showing = false
                     YabauseRunnable.resume()
-                    audio.unmute(audio.SYSTEM)
+                    audio?.unmute(YabauseAudio.SYSTEM)
                 }
             }
 
@@ -1030,7 +1030,7 @@ class Yabause : AppCompatActivity(),
                 if (currentGameCode == null) {
                     waitingResult = false
                     YabauseRunnable.resume()
-                    audio.unmute(audio.SYSTEM)
+                    audio?.unmute(YabauseAudio.SYSTEM)
                     return true
                 }
                 val fragment = InGamePreference(currentGameCode)
@@ -1041,7 +1041,7 @@ class Yabause : AppCompatActivity(),
                     override fun onError(e: Throwable) {
                         waitingResult = false
                         YabauseRunnable.resume()
-                        audio.unmute(audio.SYSTEM)
+                        audio?.unmute(YabauseAudio.SYSTEM)
                     }
 
                     override fun onComplete() {
@@ -1112,7 +1112,7 @@ class Yabause : AppCompatActivity(),
                         val mainview = findViewById(R.id.yabause_view) as View
                         mainview.requestFocus()
                         YabauseRunnable.resume()
-                        audio.unmute(audio.SYSTEM)
+                        audio?.unmute(YabauseAudio.SYSTEM)
                     }
                 }
                 fragment.setonEndObserver(observer)
@@ -1138,7 +1138,7 @@ class Yabause : AppCompatActivity(),
     public override fun onPause() {
         super.onPause()
         YabauseRunnable.pause()
-        audio.mute(audio.SYSTEM)
+        audio?.mute(YabauseAudio.SYSTEM)
         inputManager!!.unregisterInputDeviceListener(this)
         scope.coroutineContext.cancelChildren()
     }
@@ -1151,7 +1151,7 @@ class Yabause : AppCompatActivity(),
             tracker!!.send(ScreenViewBuilder().build())
         }
         if (waitingResult == false) {
-            audio.unmute(audio.SYSTEM)
+            audio?.unmute(YabauseAudio.SYSTEM)
             YabauseRunnable.resume()
         }
         inputManager!!.registerInputDeviceListener(this, null)
@@ -1259,7 +1259,7 @@ class Yabause : AppCompatActivity(),
             val mainview = findViewById(R.id.yabause_view) as View
             mainview.requestFocus()
             YabauseRunnable.resume()
-            audio.unmute(audio.SYSTEM)
+            audio?.unmute(YabauseAudio.SYSTEM)
         }
     }
 
@@ -1270,7 +1270,7 @@ class Yabause : AppCompatActivity(),
             val mainview = findViewById(R.id.yabause_view) as View
             mainview.requestFocus()
             YabauseRunnable.resume()
-            audio.unmute(audio.SYSTEM)
+            audio?.unmute(YabauseAudio.SYSTEM)
         }
     }
 
@@ -1288,7 +1288,7 @@ class Yabause : AppCompatActivity(),
             val mainview = findViewById(R.id.yabause_view) as View
             mainview.requestFocus()
             YabauseRunnable.resume()
-            audio.unmute(audio.SYSTEM)
+            audio?.unmute(YabauseAudio.SYSTEM)
         }
     }
 
@@ -1380,7 +1380,7 @@ class Yabause : AppCompatActivity(),
         scope.coroutineContext.cancelChildren()
         waitingResult = false
         YabauseRunnable.resume()
-        audio.unmute(audio.SYSTEM)
+        audio?.unmute(YabauseAudio.SYSTEM)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -1467,7 +1467,7 @@ class Yabause : AppCompatActivity(),
                     waitingResult = false
                     menu_showing = false
                     YabauseRunnable.resume()
-                    audio.unmute(audio.SYSTEM)
+                    audio?.unmute(YabauseAudio.SYSTEM)
                     return true
                 }
                 fg = supportFragmentManager.findFragmentByTag(TabBackupFragment.TAG)
@@ -1481,7 +1481,7 @@ class Yabause : AppCompatActivity(),
                     waitingResult = false
                     menu_showing = false
                     YabauseRunnable.resume()
-                    audio.unmute(audio.SYSTEM)
+                    audio?.unmute(YabauseAudio.SYSTEM)
                     return true
                 }
                 val fg2 =
@@ -1544,12 +1544,12 @@ class Yabause : AppCompatActivity(),
             val mainview = findViewById(R.id.yabause_view) as View
             mainview.requestFocus()
             YabauseRunnable.resume()
-            audio.unmute(audio.SYSTEM)
+            audio?.unmute(YabauseAudio.SYSTEM)
             drawerLayout.closeDrawer(GravityCompat.START)
         } else {
             menu_showing = true
             YabauseRunnable.pause()
-            audio.mute(audio.SYSTEM)
+            audio?.mute(YabauseAudio.SYSTEM)
 
             val tx = findViewById<TextView>(R.id.menu_title)
             if (tx != null) {
@@ -1675,9 +1675,9 @@ class Yabause : AppCompatActivity(),
         Log.d(TAG, "setFilter $ifilter")
         val audioout = sharedPref.getBoolean("pref_audio", true)
         if (audioout) {
-            audio.unmute(audio.USER)
+            audio?.unmute(YabauseAudio.USER)
         } else {
-            audio.mute(audio.USER)
+            audio?.mute(YabauseAudio.USER)
         }
         Log.d(TAG, "Audio $audioout")
         val bios = sharedPref.getString("pref_bios", "")
