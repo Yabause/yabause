@@ -1061,15 +1061,14 @@ class Yabause : AppCompatActivity(),
                         val fps = gamePreference.getBoolean("pref_fps", false)
                         YabauseRunnable.enableFPS(if (fps) 1 else 0)
                         Log.d(TAG, "enable FPS $fps")
+
                         val iPg = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
                         YabauseRunnable.setPolygonGenerationMode(iPg!!)
+
                         Log.d(TAG, "setPolygonGenerationMode $iPg")
                         val frameskip = gamePreference.getBoolean("pref_frameskip", true)
                         YabauseRunnable.enableFrameskip(if (frameskip) 1 else 0)
                         Log.d(TAG, "enable enableFrameskip $frameskip")
-                        val sKa: Int? =
-                            gamePreference.getString("pref_polygon_generation", "0")?.toInt()
-                        YabauseRunnable.setPolygonGenerationMode(sKa!!)
 
                         val aspect = gamePreference.getString("pref_aspect_rate", "0")?.toInt()
                         YabauseRunnable.setAspectRateMode(aspect!!)
@@ -1608,14 +1607,8 @@ class Yabause : AppCompatActivity(),
 
         // ------------------------------------------------------------------------------------------------
         // Load per game setting
-        val gamePreference = getSharedPreferences(gameCode, Context.MODE_PRIVATE)
-        YabauseRunnable.enableComputeShader(
-            if (gamePreference.getBoolean(
-                    "pref_use_compute_shader",
-                    false
-                )
-            ) 1 else 0
-        )
+        val key = gamecode.replace(" ","-")
+        val gamePreference = getHarmonySharedPreferences(key)
         YabauseRunnable.enableRotateScreen(
             if (gamePreference.getBoolean(
                     "pref_rotate_screen",
@@ -1626,14 +1619,12 @@ class Yabause : AppCompatActivity(),
         val fps = gamePreference.getBoolean("pref_fps", false)
         YabauseRunnable.enableFPS(if (fps) 1 else 0)
         Log.d(TAG, "enable FPS $fps")
-        val iPg: Int? = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
-        YabauseRunnable.setPolygonGenerationMode(iPg!!)
-        Log.d(TAG, "setPolygonGenerationMode $iPg")
+        //val iPg: Int? = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
+        //YabauseRunnable.setPolygonGenerationMode(iPg!!)
+        //Log.d(TAG, "setPolygonGenerationMode $iPg")
         val frameskip = gamePreference.getBoolean("pref_frameskip", true)
         YabauseRunnable.enableFrameskip(if (frameskip) 1 else 0)
         Log.d(TAG, "enable enableFrameskip $frameskip")
-        val sKa: Int? = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
-        YabauseRunnable.setPolygonGenerationMode(sKa!!)
 
         val aspect = gamePreference.getString("pref_aspect_rate", "0")?.toInt()
         YabauseRunnable.setAspectRateMode(aspect!!)
@@ -1705,6 +1696,28 @@ class Yabause : AppCompatActivity(),
         } else {
             videoInterface = -1
         }
+
+        // Force tesselation and compute Shader
+        if( videoInterface == 4 ) {
+
+            YabauseRunnable.setPolygonGenerationMode(2)
+            Log.d(TAG, "setPolygonGenerationMode 2")
+            YabauseRunnable.enableComputeShader(1)
+
+        }else{
+            val iPg: Int? = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
+            YabauseRunnable.setPolygonGenerationMode(iPg!!)
+            Log.d(TAG, "setPolygonGenerationMode $iPg")
+            YabauseRunnable.enableComputeShader(
+                if (gamePreference.getBoolean(
+                        "pref_use_compute_shader",
+                        false
+                    )
+                ) 1 else 0
+            )
+        }
+
+
         Log.d(TAG, "video $video")
         Log.d(TAG, "getGamePath $gamePath")
         Log.d(TAG, "getMemoryPath $memoryPath")

@@ -50,10 +50,17 @@ fun setupInGamePreferences(context: Context, gameCode: String?) {
 
     if (!gamePreference.contains("pref_polygon_generation")) {
         val editor = gamePreference.edit()
-        editor.putString(
-            "pref_polygon_generation",
-            defaultPreference.getString("pref_polygon_generation", "0")
-        )
+        var default = "0"
+        if( defaultPreference.getString("pref_video", "0") == "4" ){
+            editor.putString(
+                "pref_polygon_generation","2"
+            )
+        }else {
+            editor.putString(
+                "pref_polygon_generation",
+                defaultPreference.getString("pref_polygon_generation", default)
+            )
+        }
         editor.apply()
     }
 
@@ -119,12 +126,15 @@ fun setupInGamePreferences(context: Context, gameCode: String?) {
     editor.putBoolean("pref_fps", gamePreference.getBoolean("pref_fps", false))
     editor.putBoolean("pref_frameskip", gamePreference.getBoolean("pref_frameskip", false))
     editor.putBoolean("pref_rotate_screen", gamePreference.getBoolean("pref_rotate_screen", false))
-    editor.putString("pref_polygon_generation", gamePreference.getString("pref_polygon_generation", "0"))
+    editor.putString(
+        "pref_polygon_generation",
+        gamePreference.getString("pref_polygon_generation", "0")
+    )
+    editor.putBoolean("pref_use_compute_shader", gamePreference.getBoolean("pref_use_compute_shader", false))
     editor.putString("pref_frameLimit", gamePreference.getString("pref_frameLimit", "0"))
     val v = gamePreference.getString("pref_aspect_rate", "0")
     editor.putString("pref_aspect_rate", v)
     editor.putString("pref_rbg_resolution", gamePreference.getString("pref_rbg_resolution", "0"))
-    editor.putBoolean("pref_use_compute_shader", gamePreference.getBoolean("pref_use_compute_shader", false))
     editor.apply()
 }
 
