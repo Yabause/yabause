@@ -8401,8 +8401,10 @@ void VIDOGLSetSettingValueMode(int type, int value) {
 	  break;
   case VDP_SETTING_POLYGON_MODE:
     _Ygl->polygonmode = value;
+    break;
   case VDP_SETTING_ROTATE_SCREEN:
     _Ygl->rotate_screen = value;
+    break;
   }
 
   return;

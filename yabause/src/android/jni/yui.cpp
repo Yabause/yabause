@@ -1919,12 +1919,14 @@ extern "C"
     Java_org_uoyabause_android_YabauseRunnable_setPolygonGenerationMode(JNIEnv *env, jobject obj, jint pgm)
     {
         g_PolygonGenerationMode = pgm;
+        VideoSetSetting(VDP_SETTING_POLYGON_MODE, g_PolygonGenerationMode);
     }
 
     void
     Java_org_uoyabause_android_YabauseRunnable_setAspectRateMode(JNIEnv *env, jobject obj, jint ka)
     {
         g_aspect_rate_mode = ka;
+        VideoSetSetting(VDP_SETTING_ASPECT_RATE_MODE, g_aspect_rate_mode);
     }
 
     void

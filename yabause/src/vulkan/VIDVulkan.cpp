@@ -1360,6 +1360,11 @@ void VIDVulkan::SetSettingValue(int type, int value) {
   case VDP_SETTING_FILTERMODE:
     //_Ygl->aamode = value; ToDo
     break;
+  case VDP_SETTING_ASPECT_RATE_MODE:
+    if (aspect_rate_mode != value) {
+      aspect_rate_mode = (ASPECT_RATE_MODE)value;
+      rebuildFrameBuffer = 1; // rebuild frame buffers at the top of frame
+    }
   case VDP_SETTING_RESOLUTION_MODE:
     if (resolutionMode != value) {
       resolutionMode = value;
