@@ -18,12 +18,15 @@
 */
 package org.uoyabause.android
 
+import android.os.Bundle
 import android.util.Log
 import com.activeandroid.Model
 import com.activeandroid.annotation.Column
 import com.activeandroid.annotation.Table
 import com.activeandroid.query.Delete
 import com.activeandroid.query.Select
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.type.DateTime
 import okhttp3.Credentials
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
@@ -342,6 +345,7 @@ class GameInfo : Model() {
     }
 
     fun updateState(): Int {
+        val ctx = appContext
         var status: GameStatus? = null
         if (product_number != "") {
             status = try {
@@ -354,7 +358,16 @@ class GameInfo : Model() {
             }
         }
         if (status == null) {
-            image_url = ""
+
+            var mFirebaseAnalytics = FirebaseAnalytics.getInstance(ctx)
+            val bundle = Bundle()
+            bundle.putString(FirebaseAnalytics.Param.ITEM_ID, product_number)
+            bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game_title)
+            mFirebaseAnalytics.logEvent(
+                "yab_game_not_found", bundle
+            )
+
+            image_url = "https://d3edktb2n8l35b.cloudfront.net/BOXART/"+product_number+".PNG?" + ctx.getString(R.string.boxart_sigin).replace("%26","&");
             rating = 0
             try {
                 val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
@@ -362,19 +375,90 @@ class GameInfo : Model() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+
+            // not in database upload game info
+            try {
+                Log.i(
+                    "GameInfo",
+                    product_number + "( " + game_title + " ) is not found "
+                )
+
+
+
+                // automatic update
+                if (BuildConfig.DEBUG /*&& responseCode == 500*/) {
+                    //String.format( "{game:{maker_id:\"%s\",product_number:\"%s\",version:\"%s\","release_date:\"%s\",\"device_infomation\":\"%s\","
+                    //        "area:\"%s\",game_title:\"%s\",input_device:\"%s\"}}",
+                    //        cdip->company,cdip->itemnum,cdip->version,cdip->date,cdip->cdinfo,cdip->region, cdip->gamename, cdip->peripheral);
+                    val job = JSONObject()
+                    job.put(
+                        "game", JSONObject()
+                            .put("maker_id", maker_id)
+                            .put("product_number", product_number)
+                            .put("version", version)
+                            .put("release_date", release_date)
+                            .put("device_infomation", device_infomation)
+                            .put("area", area)
+                            .put("game_title", game_title)
+                            .put("input_device", input_device)
+                    )
+                    val urlstr = "https://www.uoyabause.org/api/games/"
+                    val MIMEType = MediaType.parse("application/json; charset=utf-8")
+                    val requestBody = RequestBody.create(MIMEType, job.toString())
+                    val request = Request.Builder().url(urlstr).post(requestBody).build()
+                    var client = OkHttpClient.Builder()
+                        .connectTimeout(10, TimeUnit.SECONDS)
+                        .writeTimeout(10, TimeUnit.SECONDS)
+                        .readTimeout(30, TimeUnit.SECONDS)
+                        .authenticator { _, response ->
+                            val credential =
+                                Credentials.basic(
+                                    appContext.getString(R.string.basic_user),
+                                    ctx.getString(R.string.basic_password)
+                                )
+                            response.request().newBuilder().header("Authorization", credential)
+                                .build()
+                        }
+                        .build()
+                    val response = client.newCall(request).execute()
+                    if (response.isSuccessful) {
+                        val rootObject = JSONObject(response.body()!!.string())
+                        if (rootObject.getBoolean("result") != true) {
+                            Log.i(
+                                "GameInfo",
+                                product_number + "( " + game_title + " ) can not be added"
+                            )
+                        }
+                    } else {
+                        Log.i(
+                            "GameInfo",
+                            product_number + "( " + game_title + " ) can not be added by " + response.message()
+                        )
+                    }
+                }
+            }catch( e : Exception ){
+                e.printStackTrace()
+                Log.e("GameInfo", product_number + "( " + game_title + " ) " + e.localizedMessage)
+            }
+
+
         } else {
-            image_url = "" //status.image_url;
+            image_url = "https://d3edktb2n8l35b.cloudfront.net/BOXART/"+product_number+".PNG?" + ctx.getString(R.string.boxart_sigin).replace("%26","&");
             rating = status.rating
             update_at = status.update_at
         }
-        val save_path = storage.screenshotPath
-        val screen_shot_save_path = "$save_path$product_number.png"
-        val fp: File? = File(screen_shot_save_path)
-        if (fp != null && fp.exists()) {
-            image_url = screen_shot_save_path
-        }
+
+
+        //val save_path = storage.screenshotPath
+        //val screen_shot_save_path = "$save_path$product_number.png"
+        //val fp: File? = File(screen_shot_save_path)
+        //if (fp != null && fp.exists()) {
+        //    image_url = screen_shot_save_path
+        //}
         if (product_number == "") return -1
 
+
+/*
         try {
             var encoded_product_id = product_number
             encoded_product_id = encoded_product_id.replace(".", "%2E")
@@ -491,6 +575,7 @@ class GameInfo : Model() {
             Log.e("GameInfo", product_number + "( " + game_title + " ) " + e.localizedMessage)
         } finally {
         }
+ */
         return 0
     }
 }

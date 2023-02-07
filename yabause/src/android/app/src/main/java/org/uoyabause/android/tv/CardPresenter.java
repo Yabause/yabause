@@ -42,11 +42,13 @@ import androidx.annotation.Nullable;
 import androidx.leanback.widget.ImageCardView;
 import androidx.leanback.widget.Presenter;
 
+import android.os.Bundle;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.uoyabause.android.GameInfo;
 import org.devmiyax.yabasanshiro.R;
@@ -146,6 +148,17 @@ public class CardPresenter extends Presenter {
                             @Override
                             public void onLoadCleared(@Nullable Drawable placeholder) {
 
+                            }
+
+                            @Override
+                            public void onLoadFailed(@Nullable Drawable placeholder) {
+                                FirebaseAnalytics mFirebaseAnalytics = FirebaseAnalytics.getInstance(viewHolder.view.getContext());
+                                Bundle bundle = new Bundle();
+                                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, game.getProduct_number());
+                                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game.image_url);
+                                mFirebaseAnalytics.logEvent(
+                                        "yab_fail_load_image", bundle
+                                );
                             }
                         });
 
