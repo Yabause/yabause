@@ -134,6 +134,7 @@ public:
   void GetNativeResolution(int *width, int *height, int * interlace);
   void Vdp2DispOff(void);
   void genLineinfo(vdp2draw_struct *info);
+  void getScreenshot(void ** outbuf, int & width, int & height);
 
   int genPolygon(
     VdpPipeline ** pipleLine,
