@@ -89,13 +89,14 @@ static FrameProfileInfo frameinfo_histroy[MAX_HISTORY];
 static int current_history_index = 0;
 static int profile_index = 0;
 
-int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer) {
+int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer, int preTransformFlag) {
   
   VKNVGCreateInfo createInfo={0};
   createInfo.device = device;
   createInfo.gpu = gpu;
   createInfo.renderpass = renderPass;
   createInfo.cmdBuffer = cmdBuffer;
+  createInfo.pretransformFlag = preTransformFlag;
 
   if (vg != NULL) {
     nvgUpdateVk(vg,createInfo);

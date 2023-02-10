@@ -62,7 +62,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
   }
 #endif
 
-int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer);
+int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer, int preTransformFlag);
 
 VIDVulkan *VIDVulkan::_instance = nullptr;
 
@@ -647,7 +647,8 @@ void VIDVulkan::Vdp2DrawEnd(void) {
     c.setScissor(0, 1, &scissor);
     NanovgVulkanSetDevices(device, this->getPhysicalDevice(),
                             _renderer->getWindow()->GetVulkanRenderPass(),
-                            commandBuffer);
+                            commandBuffer,
+                            pretransformFlag);
     OSDDisplayMessages(NULL, 0, 0);
     vkCmdEndRenderPass(commandBuffer);
     goto ENDEND;
@@ -926,7 +927,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
 
     if (resolutionMode == RES_NATIVE) {
       NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(),
-                             commandBuffer);
+                             commandBuffer, pretransformFlag);
       OSDDisplayMessages(NULL, 0, 0);
     }
 
@@ -1012,7 +1013,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       c.setScissor(0, 1, &scissor);      
       vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
       NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanKeepRenderPass(),
-                             commandBuffer);
+                             commandBuffer, pretransformFlag);
       OSDDisplayMessages(NULL, finalWidth, finalHeight);
       vkCmdEndRenderPass(commandBuffer);
 

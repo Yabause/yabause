@@ -18,7 +18,7 @@ typedef struct VKNVGCreateInfo {
   VkDevice device;
   VkRenderPass renderpass;
   VkCommandBuffer cmdBuffer;
-
+  int pretransformFlag;
   const VkAllocationCallbacks *allocator; //Allocator for vulkan. can be null
 } VKNVGCreateInfo;
 #ifdef __cplusplus
@@ -96,6 +96,13 @@ typedef struct VKNVGpath {
   int strokeOffset;
   int strokeCount;
 } VKNVGpath;
+
+
+typedef struct VKNVGVertUniforms {
+  float mvp[12];  
+  float v[2];  
+  float dmy[2];  
+} VKNVGVertUniforms;
 
 typedef struct VKNVGfragUniforms {
   float scissorMat[12]; // matrices are actually 3 vec4s
@@ -864,7 +871,7 @@ static void vknvg_setUniforms(VKNVGcontext *vk, VkDescriptorSet descSet, int uni
   VkDescriptorBufferInfo vertUniformBufferInfo = {0};
   vertUniformBufferInfo.buffer = vk->vertUniformBuffer.buffer;
   vertUniformBufferInfo.offset = 0;
-  vertUniformBufferInfo.range = sizeof(vk->view);
+  vertUniformBufferInfo.range = sizeof(VKNVGVertUniforms); //sizeof(vk->view);
 
   writes[0].dstSet = descSet;
   writes[0].descriptorCount = 1;
@@ -1129,7 +1136,7 @@ static int vknvg_renderCreate(void *uptr) {
   vkGetPhysicalDeviceProperties(vk->createInfo.gpu, &vk->gpuProperties);
 
   const uint32_t fillVertShader[] = {
-#include "shader/fill.vert.inc"
+#include "shader/fill.vert4.inc"
   };
 
   const uint32_t fillFragShader[] = {
@@ -1293,9 +1300,21 @@ static int vknvg_renderGetTextureSize(void *uptr, int image, int *w, int *h) {
 }
 static void vknvg_renderViewport(void *uptr, float width, float height, float devicePixelRatio) {
   VKNVGcontext *vk = (VKNVGcontext *)uptr;
+/*
+  if (vk->createInfo.pretransformFlag == (int)VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR 
+     || vk->createInfo.pretransformFlag == (int)VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+    vk->view[0] = (float)height;
+    vk->view[1] = (float)width;
+  }
+  else {
+    vk->view[0] = (float)width;
+    vk->view[1] = (float)height;
+  }
+*/
   vk->view[0] = (float)width;
   vk->view[1] = (float)height;
 }
+
 static void vknvg_renderCancel(void *uptr) {
   VKNVGcontext *vk = (VKNVGcontext *)uptr;
 
@@ -1303,6 +1322,15 @@ static void vknvg_renderCancel(void *uptr) {
   vk->npaths = 0;
   vk->ncalls = 0;
   vk->nuniforms = 0;
+}
+
+void vknvg_TransformRotate(float* t, float a)
+{
+  float b = (NVG_PI /180.0f) * a;
+	float cs = cosf(b), sn = sinf(b);
+	t[0] = cs; t[1] = sn; t[2] = 0.0f; t[3] = 0.0f;
+	t[4] = -sn; t[5] = cs; t[6] = 0.0f; t[7] = 0.0f;
+	t[8] = 0.0f; t[9] = 0.0f; t[10] = 1.0f; t[11] = 0.0f;
 }
 
 static void vknvg_renderFlush(void *uptr) {
@@ -1315,9 +1343,40 @@ static void vknvg_renderFlush(void *uptr) {
 
   int i;
   if (vk->ncalls > 0) {
+
+    VKNVGVertUniforms vm = {};
+    vm.v[0] = vk->view[0];
+    vm.v[1] = vk->view[1];
+    
+    vm.mvp[0] = 1.0;
+    vm.mvp[1] = 0.0;
+    vm.mvp[2] = 0.0;
+    
+    vm.mvp[4*1+0] = 0.0;
+    vm.mvp[4*1+1] = 1.0;
+    vm.mvp[4*1+2] = 0.0;
+
+    vm.mvp[4*2+0] = 0.0;
+    vm.mvp[4*2+1] = 0.0;
+    vm.mvp[4*2+2] = 1.0;
+
+    switch(vk->createInfo.pretransformFlag){
+      case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
+        vknvg_TransformRotate(vm.mvp,90.0f);
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+        vknvg_TransformRotate(vm.mvp,270.0f);
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
+        vknvg_TransformRotate(vm.mvp,180.0f);
+        break;
+      default:
+        break;
+    }
+
     vknvg_UpdateBuffer(device, allocator, &vk->vertexBuffer, memoryProperties, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, vk->verts, vk->nverts * sizeof(vk->verts[0]));
     vknvg_UpdateBuffer(device, allocator, &vk->fragUniformBuffer, memoryProperties, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, vk->uniforms, vk->nuniforms * vk->fragSize);
-    vknvg_UpdateBuffer(device, allocator, &vk->vertUniformBuffer, memoryProperties, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, vk->view, sizeof(vk->view));
+    vknvg_UpdateBuffer(device, allocator, &vk->vertUniformBuffer, memoryProperties, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &vm, sizeof(VKNVGVertUniforms));
     vk->currentPipeline = nullptr;
 
     if (vk->ncalls > vk->cdescPool) {
@@ -1623,3 +1682,4 @@ void nvgDeleteVk(NVGcontext *ctx) {
 #undef nullptr
 #endif
 #endif
+

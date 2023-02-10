@@ -405,6 +405,7 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
   screenshotSaved = false;
   bool supportsBlit = true;
 
+    
   _device_width = _renderer->getWindow()->GetVulkanSurfaceSize().width;
   _device_height = _renderer->getWindow()->GetVulkanSurfaceSize().height;
 
@@ -428,6 +429,7 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
 
   // Source for the copy is the last rendered swapchain image
   VkImage srcImage = _renderer->getWindow()->getCurrentImage();
+  int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
 
 
   //if (dstScreenImage == VK_NULL_HANDLE) {
@@ -439,6 +441,17 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
     imageCreateCI.format = VK_FORMAT_R8G8B8A8_UNORM;
     imageCreateCI.extent.width = _device_width;
     imageCreateCI.extent.height = _device_height;
+
+    if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+        pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+      imageCreateCI.extent.width = _device_height;
+      imageCreateCI.extent.height = _device_width;
+    } else {
+      imageCreateCI.extent.width = _device_width;
+      imageCreateCI.extent.height = _device_height;
+    }
+
+
     imageCreateCI.extent.depth = 1;
     imageCreateCI.arrayLayers = 1;
     imageCreateCI.mipLevels = 1;
@@ -498,6 +511,16 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
     VkOffset3D blitSize;
     blitSize.x = _device_width;
     blitSize.y = _device_height;
+
+    if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+        pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+      blitSize.x = _device_height;
+      blitSize.y = _device_width;
+    } else {
+      blitSize.x = _device_width;
+      blitSize.y = _device_height;
+    }
+
     blitSize.z = 1;
     VkImageBlit imageBlitRegion{};
     imageBlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -583,19 +606,73 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
   }
   dstbuf = (unsigned char*)malloc(width*height * 4);
 
-  for (uint32_t y = 0; y < height; y++)
-  {
-    unsigned char *srcrow = &data[(_device_height - 1 - y)*subResourceLayout.rowPitch];
-    unsigned char *dstrow = &dstbuf[y*width * 4];
 
-    for (uint32_t x = 0; x < width; x++) {
-      dstrow[x * 4 + 0] = srcrow[x * 4 + 0];
-      dstrow[x * 4 + 1] = srcrow[x * 4 + 1];
-      dstrow[x * 4 + 2] = srcrow[x * 4 + 2];
-      dstrow[x * 4 + 3] = srcrow[x * 4 + 3];
-    }
-
+  switch (pretransformFlag) {
+      case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
+      {
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            int sx = y;
+            int sy = x;
+            unsigned char *srcrow = &data[sy*subResourceLayout.rowPitch];
+            dstrow[x * 4 + 0] = srcrow[sx * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[sx * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[sx * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[sx * 4 + 3];
+          }
+        }
+      }
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            int sx = _device_height - 1 - x;
+            int sy = _device_width - 1 - y;
+            unsigned char *srcrow = &data[sy*subResourceLayout.rowPitch];
+            dstrow[x * 4 + 0] = srcrow[sx * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[sx * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[sx * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[sx * 4 + 3];
+          }
+        }
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            int sx = _device_height - 1 - y;
+            int sy = _device_width - 1 - x;
+            unsigned char *srcrow = &data[sy*subResourceLayout.rowPitch];
+            dstrow[x * 4 + 0] = srcrow[sx * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[sx * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[sx * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[sx * 4 + 3];
+          }
+        }
+        break;
+      default:
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *srcrow = &data[(_device_height - 1 - y)*subResourceLayout.rowPitch];
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            dstrow[x * 4 + 0] = srcrow[x * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[x * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[x * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[x * 4 + 3];
+          }
+        }
+        break;
   }
+
+
+
+  
   *outbuf = (void*)dstbuf;
 #if 0
 
