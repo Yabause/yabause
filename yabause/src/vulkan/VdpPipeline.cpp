@@ -1547,7 +1547,8 @@ VdpPipelineWindow::VdpPipelineWindow(int id, VIDVulkan * vulkan, TextureManager 
   layout(location = 0) out vec4 outColor;
 
   void main() {
-    outColor = vec4(float(windowBit) / 255.0 ,0.0,0.0,0.0);
+    //outColor = vec4(float(windowBit) / 255.0 ,0.0,0.0,0.0);
+    outColor = vec4(1.0,1.0,1.0,1.0);
   }
 
   )s";

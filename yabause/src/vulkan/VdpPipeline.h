@@ -201,7 +201,7 @@ public:
   void setWinFlg(uint8_t flg) { winflag = flg; }
 
   static uint8_t genWinFlag(int winmode, int bwin0, int bwin1, int bwinsp, int logwin0, int logwin1, int logwinsp) {
-    return(((winmode & 0x1) << 8) | ((bwin0 & 0x1) << 3) | ((bwin1 & 0x1) << 4) | ((bwinsp & 0x1) << 5)
+    return(((winmode & 0x1) << 7) | ((bwin0 & 0x1) << 3) | ((bwin1 & 0x1) << 4) | ((bwinsp & 0x1) << 5)
       | ((logwin0 & 0x1) << 0) | ((logwin1 & 0x1) << 1) | ((logwinsp & 0x1) << 2));
   }
 
@@ -286,7 +286,7 @@ protected:
 
 
   void decodeWinFlag(int & winmode, int & bwin0, int & bwin1, int & bwinsp, int & logwin0, int & logwin1, int & logwinsp ) {
-	  winmode = (winflag >> 8) & 0x01;
+	  winmode = (winflag >> 7) & 0x01;
 	  bwin0 = (winflag >> 3) & 0x01;
 	  bwin1 = (winflag >> 4) & 0x01;
 	  bwinsp = (winflag >> 5) & 0x01;
