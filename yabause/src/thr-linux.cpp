@@ -312,7 +312,7 @@ void YabThreadFreeMutex( YabMutex * mtx ){
     }
 }
 
-pthread_mutex_t used_cpu_cores_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 int YabThreadGetFastestCpuIndex(){
 #if defined(IOS) || defined(__JETSON__)
   return 0;
@@ -326,7 +326,6 @@ int YabThreadGetFastestCpuIndex(){
 
   
     // Find Fastest CPU
-    pthread_mutex_lock(&used_cpu_cores_mutex);
     for ( int cpuindex = 0; cpuindex < cpu_count; cpuindex++){
         sprintf(fname, "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", cpuindex);
         FILE * fp = fopen(fname, "r");
@@ -342,7 +341,6 @@ int YabThreadGetFastestCpuIndex(){
     }
 
     used_cpu_cores[max_cpu_index] = 1;
-    pthread_mutex_unlock(&used_cpu_cores_mutex);
     return max_cpu_index;
 #endif    
 }

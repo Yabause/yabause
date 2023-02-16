@@ -128,7 +128,7 @@ public:
   void SetFilterMode(int type);
   void Sync();
   void Vdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
-  void Vdp1EraseWrite(void);
+  void Vdp1EraseWrite(int isDraw);
   void Vdp1FrameChange(void);
   void SetSettingValue(int type, int value);
   void GetNativeResolution(int *width, int *height, int * interlace);

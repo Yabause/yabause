@@ -6581,7 +6581,6 @@ static void Vdp2DrawNBG0(void)
         info.GetKValueB = vdp2rGetKValue2Wm3;
       }
     }
-    info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG0PlaneAddr;
   }
   else if ((fixVdp2Regs->BGON & 0x1) || info.enable)
   {

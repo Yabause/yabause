@@ -3201,7 +3201,7 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
 
     ScuRegs->IST |= statusbit;
     //if (vector != 0x41) LOG("INT %d", vector);
-    //LOG("%s(%x) IMS=%08X at frame %d:%d", ScuGetVectorString(vector), vector, ScuRegs->IMS, yabsys.frame_count, yabsys.LineCount);
+    LOG("%s(%x) IMS=%08X at frame %d:%d", ScuGetVectorString(vector), vector, ScuRegs->IMS, yabsys.frame_count, yabsys.LineCount);
     SH2SendInterrupt(MSH2, vector, level);
     if (yabsys.IsSSH2Running) {
       if (vector == 0x42)
