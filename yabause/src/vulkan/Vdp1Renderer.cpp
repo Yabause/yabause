@@ -472,7 +472,7 @@ void Vdp1Renderer::drawStart(void) {
   Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
 }
 
-void Vdp1Renderer::erase( int isDraw ) {
+void Vdp1Renderer::erase() {
 
   VkDevice device = vulkan->getDevice();
 
@@ -557,7 +557,7 @@ void Vdp1Renderer::erase( int isDraw ) {
 
   VkRenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
   renderPassBeginInfo.renderPass = offscreenPass.renderPass;
-  renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer[targetFrame];
+  renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer[readframe];
   renderPassBeginInfo.renderArea.extent.width = offscreenPass.width;
   renderPassBeginInfo.renderArea.extent.height = offscreenPass.height;
   renderPassBeginInfo.clearValueCount = 2;

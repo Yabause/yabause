@@ -464,13 +464,8 @@ extern "C" void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
 #else
     if (val == 1){
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-
-      if (Vdp1External.manualerase == 0) {
-        VIDCore->Vdp1EraseWrite(1);
-      }
-       
       Vdp1Regs->EDSR >>= 1;
-      Vdp1Draw(); 
+      Vdp1Draw();
       VIDCore->Vdp1DrawEnd();
       yabsys.wait_line_count = yabsys.LineCount + 50;
       yabsys.wait_line_count %= yabsys.MaxLineCount;
@@ -1711,7 +1706,7 @@ VideoInterface_struct VIDDummy = {
 	VIDDummyVdp1LocalCoordinate,
 	VIDDummVdp1ReadFrameBuffer,
 	VIDDummVdp1WriteFrameBuffer,
-  VIDDummErase,
+  VIDDummSync,
   VIDDummSync,
 	VIDDummyVdp2Reset,
 	VIDDummyVdp2DrawStart,
