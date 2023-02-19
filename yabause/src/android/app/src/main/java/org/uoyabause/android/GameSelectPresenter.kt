@@ -939,6 +939,7 @@ class GameSelectPresenter(
         ZipOutputStream(zipFile.outputStream()).use { zipOut ->
             FileInputStream(sourceFile).use { fileIn ->
                 val entry = ZipEntry(sourceFile.name)
+                entry.setTime(sourceFile.lastModified())
                 zipOut.putNextEntry(entry)
                 var len: Int
                 while (fileIn.read(buffer).also { len = it } > 0) {
@@ -1017,10 +1018,7 @@ class GameSelectPresenter(
 
                     // ローカルにファイルが存在しない場合
                     if( localFile.exists() == false ){
-
                         Log.d(TAG,"Local file not exits force download")
-
-                        // クラウドのファイルが新しい場合、クラウドのファイルをダウンロード
                         storageRef.getFile(localZipFile).addOnCompleteListener { task ->
                             if (task.isSuccessful) {
 
@@ -1078,7 +1076,11 @@ class GameSelectPresenter(
                                         listener_?.onDismissDialog();
                                     }
                                 }
+
                             }else{
+
+                                Log.d(TAG,"Same data.")
+
                                 target_.activity?.runOnUiThread {
                                     syncState = BackupSyncState.IDLE
                                     listener_?.onDismissDialog();
@@ -1090,7 +1092,7 @@ class GameSelectPresenter(
 
                             Log.d(TAG,"Try Downloading")
 
-                            //zip(localFile,localZipFile)
+                            zip(localFile,localZipFile)
                             val md5 = calculateMD5(localZipFile)
                             Log.d(TAG,"check md5hash cloud:${metadata.md5Hash},  local:${md5}")
 
@@ -1110,15 +1112,14 @@ class GameSelectPresenter(
                                         // ダウンロード成功時の処理
                                         unzip(localZipFile,destinationDirectory)
 
-                                        val memzip2 = YabauseStorage.storage.getMemoryPath("memory2.zip")
-                                        val localZipFile2 = File(memzip2)
-
-
-                                        zip(localFile,localZipFile2)
+                                        // 以下ハッシュ値が同じになるかのチェック
+                                        //val memzip2 = YabauseStorage.storage.getMemoryPath("memory2.zip")
+                                        //val localZipFile2 = File(memzip2)
+                                        //zip(localFile,localZipFile2)
 
                                         // 念のためハッシュ値を比較
-                                        val md5 = calculateMD5(localZipFile2)
-                                        Log.d(TAG," md5hash is updated cloud:${metadata.md5Hash},  local:${md5}")
+                                        //val md5 = calculateMD5(localZipFile2)
+                                        //Log.d(TAG," md5hash is updated cloud:${metadata.md5Hash},  local:${md5}")
 
 
                                     } else {
@@ -1131,6 +1132,9 @@ class GameSelectPresenter(
                                     }
                                 }
                             }else{
+
+                                Log.d(TAG,"Same data.")
+
                                 target_.activity?.runOnUiThread {
                                     syncState = BackupSyncState.IDLE
                                     listener_?.onDismissDialog();
