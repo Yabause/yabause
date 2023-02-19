@@ -414,6 +414,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             override fun onError(e: Throwable) {
                 observer = null
                 dismissDialog()
+                presenter_?.syncBackup()
             }
 
             override fun onComplete() {
@@ -429,6 +430,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                         presenter_!!.checkSignIn(signInActivityLauncher)
                     }
                 }
+                presenter_?.syncBackup()
             }
         }
         presenter_!!.updateGameList(refresh_level, tmpobserver)

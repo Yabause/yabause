@@ -25,6 +25,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.media.MediaDrm
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -39,7 +40,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.multidex.MultiDexApplication
@@ -59,6 +59,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageException
 import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.Single
@@ -77,8 +79,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.devmiyax.yabasanshiro.BuildConfig
-import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.YabauseStorage.Companion.storage
+import java.security.MessageDigest
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import androidx.appcompat.view.ContextThemeWrapper as ContextThemeWrapper1
+import org.devmiyax.yabasanshiro.R
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.zip.ZipInputStream
 
 class GameSelectPresenter(
     target: Fragment,
@@ -89,6 +99,14 @@ class GameSelectPresenter(
     private val TAG = "GameSelectPresenter"
     private var tracker: Tracker? = null
     private val scope = CoroutineScope(Dispatchers.IO)
+
+    enum class BackupSyncState {
+        IDLE,
+        CHECKING_DOWNLOAD,
+        CHECKING_UPLOAD
+    }
+
+    private var syncState = BackupSyncState.IDLE
 
 
     private var gameSignInActivityLauncher = target.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -294,23 +312,26 @@ class GameSelectPresenter(
             // Sign in failed
             if (response == null) {
                 // User pressed back button
-                listener_.onShowMessage(R.string.sign_in_cancelled)
+                listener_.onShowMessage(org.devmiyax.yabasanshiro.R.string.sign_in_cancelled)
                 return
             }
-            if (response.error!!.errorCode == ErrorCodes.NO_NETWORK) {
-                listener_.onShowMessage(R.string.no_internet_connection)
+/*
+            if (response.error!!.errorCode == MediaDrm.ErrorCodes.NO_NETWORK) {
+                listener_.onShowMessage(org.devmiyax.yabasanshiro.R.string.no_internet_connection)
                 return
             }
-            if (response.error!!.errorCode == ErrorCodes.UNKNOWN_ERROR) {
-                listener_.onShowMessage(R.string.unknown_error)
+            if (response.error!!.errorCode == MediaDrm.ErrorCodes.UNKNOWN_ERROR) {
+                listener_.onShowMessage(org.devmiyax.yabasanshiro.R.string.unknown_error)
                 return
             }
+
+ */
         }
         if (authEmitter != null) {
             authEmitter!!.onError(Throwable("Sigin in failed"))
             authEmitter = null
         }
-        listener_.onShowMessage(R.string.unknown_sign_in_response)
+        listener_.onShowMessage(org.devmiyax.yabasanshiro.R.string.unknown_sign_in_response)
     }
 
     fun onSelectFile(uri: Uri) {
@@ -341,8 +362,10 @@ class GameSelectPresenter(
                 message += target_.getString(R.string.remaining_installation_count_is) + " " + count + "."
             }
 
-            AlertDialog.Builder(ContextThemeWrapper(
-                target_.activity, R.style.Theme_AppCompat))
+            AlertDialog.Builder(
+                ContextThemeWrapper1(
+                target_.activity, R.style.Theme_AppCompat)
+            )
                 .setTitle(target_.getString(R.string.do_you_want_to_install))
                 .setMessage(message)
                 .setPositiveButton(R.string.yes) { _, _ ->
@@ -790,8 +813,10 @@ class GameSelectPresenter(
             .layoutInflater.inflate(R.layout.signin, null)
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser == null) {
-            val builder = AlertDialog.Builder(ContextThemeWrapper(
-                target_.activity, R.style.Theme_AppCompat))
+            val builder = AlertDialog.Builder(
+                ContextThemeWrapper1(
+                    target_.activity, R.style.Theme_AppCompat)
+            )
             builder.setTitle(R.string.do_you_want_to_sign_in)
                 .setCancelable(false)
                 .setView(view)
@@ -890,5 +915,265 @@ class GameSelectPresenter(
         target_ = target
         listener_ = listener
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(target_.requireActivity())
+    }
+
+    fun calculateMD5(file: File): String {
+        val md = MessageDigest.getInstance("MD5")
+        val inputStream = file.inputStream()
+        inputStream.use { input ->
+            val buffer = ByteArray(4096)
+            var bytesRead = input.read(buffer)
+            while (bytesRead != -1) {
+                md.update(buffer, 0, bytesRead)
+                bytesRead = input.read(buffer)
+            }
+        }
+        val bytes = md.digest()
+        return Base64.getEncoder().encodeToString(bytes)
+    }
+
+
+    fun zip(sourceFile: File, zipFile: File) {
+        Log.d(TAG,"zip time = ${sourceFile.lastModified()}")
+        val buffer = ByteArray(4096)
+        ZipOutputStream(zipFile.outputStream()).use { zipOut ->
+            FileInputStream(sourceFile).use { fileIn ->
+                val entry = ZipEntry(sourceFile.name)
+                zipOut.putNextEntry(entry)
+                var len: Int
+                while (fileIn.read(buffer).also { len = it } > 0) {
+                    zipOut.write(buffer, 0, len)
+                }
+                zipOut.closeEntry()
+            }
+        }
+    }
+
+    fun unzip(zipFile: File, destinationDirectory: File) {
+        val buffer = ByteArray(4096)
+        val zipIn = ZipInputStream(zipFile.inputStream())
+        var entry = zipIn.nextEntry
+        while (entry != null) {
+            val outputFile = File(destinationDirectory, entry.name)
+            if (entry.isDirectory) {
+                outputFile.mkdirs()
+            } else {
+                outputFile.parentFile?.mkdirs()
+                val fos = FileOutputStream(outputFile)
+                var len = zipIn.read(buffer)
+                while (len > 0) {
+                    fos.write(buffer, 0, len)
+                    len = zipIn.read(buffer)
+                }
+                fos.close()
+            }
+            // ファイルの日付情報を設定
+            Log.d(TAG,"unzip time = ${entry.time}")
+            outputFile.setLastModified(entry.time)
+            entry = zipIn.nextEntry
+        }
+        zipIn.closeEntry()
+        zipIn.close()
+    }
+
+    fun unixTimeToDateString(unixTime: Long): String {
+        val instant = Instant.ofEpochSecond(unixTime/1000L)
+        val zoneId = ZoneId.systemDefault()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        return formatter.format(instant.atZone(zoneId))
+    }
+
+    fun syncBackup() {
+
+        target_.activity?.runOnUiThread {
+            syncState = BackupSyncState.CHECKING_DOWNLOAD
+            listener_.onShowDialog("Syncing Backup Memory ...")
+        }
+
+        val auth = FirebaseAuth.getInstance()
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Log.d(TAG, "Fail to get currentUser even if Auth is successed!")
+            syncState = BackupSyncState.IDLE
+            listener_?.onDismissDialog();
+            return
+        }
+
+
+        val mem = YabauseStorage.storage.getMemoryPath("memory.ram")
+
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.reference.child(currentUser.uid).child("memory.zip")
+        val localFile = File(mem)
+        val destinationDirectory = File(YabauseStorage.storage.getMemoryPath("/"))
+        val memzip = YabauseStorage.storage.getMemoryPath("memory.zip")
+        val localZipFile = File(memzip)
+
+        Log.d(TAG,"syncBackup")
+        storageRef.downloadUrl
+            .addOnSuccessListener { uri ->
+                // クラウドのファイルの更新日時を取得
+                storageRef.metadata.addOnSuccessListener { metadata ->
+
+                    // ローカルにファイルが存在しない場合
+                    if( localFile.exists() == false ){
+
+                        Log.d(TAG,"Local file not exits force download")
+
+                        // クラウドのファイルが新しい場合、クラウドのファイルをダウンロード
+                        storageRef.getFile(localZipFile).addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+
+                                Log.d(TAG,"Download OK")
+
+                                // ダウンロード成功時の処理
+                                unzip(localZipFile,destinationDirectory)
+
+                            } else {
+                                // ダウンロード失敗時の処理
+                            }
+
+                            target_.activity?.runOnUiThread {
+                                syncState = BackupSyncState.IDLE
+                                listener_?.onDismissDialog();
+                            }
+                        }
+
+                    // ローカルにファイルが存在する場合
+                    }else {
+
+                        val cloudUpdateTime = metadata.updatedTimeMillis
+                        val localUpdateTime = localFile.lastModified()
+
+                        Log.d(TAG,"Local file exits cloudTime:${unixTimeToDateString(cloudUpdateTime)},  loalTime:${unixTimeToDateString(localUpdateTime)}")
+
+                        // クラウドのほうが古い場合、アップロード
+                        if (cloudUpdateTime < localUpdateTime) {
+
+                            Log.d(TAG,"Try uploading")
+
+                            zip(localFile,localZipFile)
+
+                            // 念のためハッシュ値を比較
+                            val md5 = calculateMD5(localZipFile)
+                            Log.d(TAG,"check md5hash cloud:${metadata.md5Hash},  local:${md5}")
+                            if( md5 != metadata.md5Hash ) {
+
+                                Log.d(TAG,"Start uploading")
+
+                                listener_?.onUpdateDialogMessage("Upload backup file to Cloud");
+
+                                // クラウドのファイルが古い場合、ローカルのファイルをアップロード
+                                val inputStream = FileInputStream(localZipFile)
+                                storageRef.putStream(inputStream).addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+                                        // アップロード成功時の処理
+                                        Log.d(TAG,"Upload OK")
+                                    } else {
+                                        // アップロード失敗時の処理
+                                        Log.d(TAG,"Upload Fail")
+                                    }
+                                    target_.activity?.runOnUiThread {
+                                        syncState = BackupSyncState.IDLE
+                                        listener_?.onDismissDialog();
+                                    }
+                                }
+                            }else{
+                                target_.activity?.runOnUiThread {
+                                    syncState = BackupSyncState.IDLE
+                                    listener_?.onDismissDialog();
+                                }
+                            }
+
+                        // クラウドのほうが新しい場合、ダウンロード
+                        } else {
+
+                            Log.d(TAG,"Try Downloading")
+
+                            //zip(localFile,localZipFile)
+                            val md5 = calculateMD5(localZipFile)
+                            Log.d(TAG,"check md5hash cloud:${metadata.md5Hash},  local:${md5}")
+
+                            if( md5 != metadata.md5Hash ) {
+
+                                Log.d(TAG,"Start Downloading")
+
+                                listener_?.onUpdateDialogMessage("Downloading backup file from Cloud");
+                                storageRef.getFile(localZipFile).addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+
+                                        Log.d(TAG,"Download OK")
+
+                                        val md51 = calculateMD5(localZipFile)
+                                        Log.d(TAG," md5hash is updated cloud:${metadata.md5Hash},  local:${md51}")
+
+                                        // ダウンロード成功時の処理
+                                        unzip(localZipFile,destinationDirectory)
+
+                                        val memzip2 = YabauseStorage.storage.getMemoryPath("memory2.zip")
+                                        val localZipFile2 = File(memzip2)
+
+
+                                        zip(localFile,localZipFile2)
+
+                                        // 念のためハッシュ値を比較
+                                        val md5 = calculateMD5(localZipFile2)
+                                        Log.d(TAG," md5hash is updated cloud:${metadata.md5Hash},  local:${md5}")
+
+
+                                    } else {
+                                        // ダウンロード失敗時の処理
+                                        Log.d(TAG,"Download Fail")
+                                    }
+                                    target_.activity?.runOnUiThread {
+                                        syncState = BackupSyncState.IDLE
+                                        listener_?.onDismissDialog();
+                                    }
+                                }
+                            }else{
+                                target_.activity?.runOnUiThread {
+                                    syncState = BackupSyncState.IDLE
+                                    listener_?.onDismissDialog();
+                                }
+                            }
+                        }
+                    }
+                }.addOnFailureListener { exception ->
+                    // メタデータの取得に失敗した場合の処理
+                    target_.activity?.runOnUiThread {
+                        syncState = BackupSyncState.IDLE
+                        listener_?.onDismissDialog();
+                    }
+                }
+
+            }
+            .addOnFailureListener { exception ->
+                if (exception is StorageException && exception.errorCode == StorageException.ERROR_OBJECT_NOT_FOUND) {
+
+                    Log.d(TAG,"Cloud file not exits force upload")
+
+                    zip(localFile,localZipFile)
+                    val inputStream = FileInputStream(localZipFile)
+                    storageRef.putStream(inputStream).addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            // アップロード成功時の処理
+                        } else {
+                            // アップロード失敗時の処理
+                        }
+                        target_.activity?.runOnUiThread {
+                            syncState = BackupSyncState.IDLE
+                            listener_?.onDismissDialog();
+                        }
+                    }
+
+                } else {
+                    // その他のエラーが発生した場合の処理
+                    target_.activity?.runOnUiThread {
+                        syncState = BackupSyncState.IDLE
+                        listener_?.onDismissDialog();
+                    }
+                }
+            }
+
     }
 }

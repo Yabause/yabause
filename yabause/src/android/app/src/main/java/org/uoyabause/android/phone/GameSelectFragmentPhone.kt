@@ -692,6 +692,7 @@ class GameSelectFragmentPhone : Fragment(),
 
                 observer = null
                 dismissDialog()
+                presenter.syncBackup()
             }
 
             override fun onComplete() {
@@ -731,6 +732,7 @@ class GameSelectFragmentPhone : Fragment(),
                 }
                 viewPager.adapter!!.notifyDataSetChanged()
                 observer = null
+                presenter.syncBackup()
             }
         }
         presenter.updateGameList(refreshLevel, tmpObserver)
