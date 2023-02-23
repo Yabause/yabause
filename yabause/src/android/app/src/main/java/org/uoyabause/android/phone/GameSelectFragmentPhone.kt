@@ -945,6 +945,7 @@ class GameSelectFragmentPhone : Fragment(),
         if (isBackGroundComplete) {
             updateGameList()
         }
+        presenter.onResume()
     }
 
     var isFront = true
@@ -952,7 +953,10 @@ class GameSelectFragmentPhone : Fragment(),
     override fun onPause() {
         isFront = false
         super.onPause()
+        this.presenter.onPause()
     }
+
+
 
     override fun onDestroy() {
         System.gc()
