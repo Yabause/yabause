@@ -896,6 +896,13 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         loadRows()
     }
 
+    override fun onFinishSyncBackUp(result: GameSelectPresenter.SyncResult, message: String) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onStartSyncBackUp() {
+        TODO("Not yet implemented")
+    }
 
     private fun showSnackbar(id: Int) {
         Toast.makeText(activity, getString(id), Toast.LENGTH_SHORT).show()

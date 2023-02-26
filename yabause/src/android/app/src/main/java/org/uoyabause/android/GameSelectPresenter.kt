@@ -92,6 +92,8 @@ import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import androidx.appcompat.view.ContextThemeWrapper as ContextThemeWrapper1
+import android.os.Handler
+import android.os.Looper
 
 class GameSelectPresenter(
     target: Fragment,
@@ -132,6 +134,12 @@ class GameSelectPresenter(
         }
     }
 
+    enum class SyncResult {
+        SUCCESS,
+        FAIL,
+        DONOTING
+    }
+
 
     interface GameSelectPresenterListener {
         // void onUpdateGameList( );
@@ -140,6 +148,10 @@ class GameSelectPresenter(
         fun onUpdateDialogMessage(message: String)
         fun onDismissDialog()
         fun onLoadRows()
+
+        fun onStartSyncBackUp()
+
+        fun onFinishSyncBackUp( result: SyncResult, message: String )
     }
 
     private fun updateGameDatabaseRx(observer: Observer<String>?) {
@@ -765,6 +777,15 @@ class GameSelectPresenter(
     }
 
     fun startGame(item: GameInfo, launcher : ActivityResultLauncher<Intent>) {
+
+        if( syncState != BackupSyncState.IDLE){
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed({
+                startGame(item, launcher)
+            }, 1000) //
+            return;
+        }
+
         val c = Calendar.getInstance()
         item.lastplay_date = c.time
         item.save()
@@ -885,6 +906,15 @@ class GameSelectPresenter(
     }
 
     fun fileSelected(file: File) {
+
+        if( syncState != BackupSyncState.IDLE){
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed({
+                fileSelected(file)
+            }, 1000) //
+            return;
+        }
+
         val apath: String = file.absolutePath
         // save last selected dir
         val sharedPref =
@@ -958,48 +988,61 @@ class GameSelectPresenter(
     }
 
 
-    fun zip(sourceFile: File, zipFile: File) {
+    fun zip(sourceFile: File, zipFile: File) : Int {
         Log.d(TAG,"zip time = ${sourceFile.lastModified()}")
         val buffer = ByteArray(4096)
-        ZipOutputStream(zipFile.outputStream()).use { zipOut ->
-            FileInputStream(sourceFile).use { fileIn ->
-                val entry = ZipEntry(sourceFile.name)
-                entry.setTime(sourceFile.lastModified())
-                zipOut.putNextEntry(entry)
-                var len: Int
-                while (fileIn.read(buffer).also { len = it } > 0) {
-                    zipOut.write(buffer, 0, len)
+        try {
+            val outputStream = FileOutputStream(zipFile.absolutePath)
+            ZipOutputStream(outputStream).use { zipOut ->
+                FileInputStream(sourceFile).use { fileIn ->
+                    val entry = ZipEntry(sourceFile.name)
+                    entry.setTime(sourceFile.lastModified())
+                    zipOut.putNextEntry(entry)
+                    var len: Int
+                    while (fileIn.read(buffer).also { len = it } > 0) {
+                        zipOut.write(buffer, 0, len)
+                    }
+                    zipOut.closeEntry()
                 }
-                zipOut.closeEntry()
             }
+        }catch( e:Exception ){
+            Log.e(TAG,"${e.message}")
+            return -1
         }
+        return 0
     }
 
-    fun unzip(zipFile: File, destinationDirectory: File) {
-        val buffer = ByteArray(4096)
-        val zipIn = ZipInputStream(zipFile.inputStream())
-        var entry = zipIn.nextEntry
-        while (entry != null) {
-            val outputFile = File(destinationDirectory, entry.name)
-            if (entry.isDirectory) {
-                outputFile.mkdirs()
-            } else {
-                outputFile.parentFile?.mkdirs()
-                val fos = FileOutputStream(outputFile)
-                var len = zipIn.read(buffer)
-                while (len > 0) {
-                    fos.write(buffer, 0, len)
-                    len = zipIn.read(buffer)
+    fun unzip(zipFile: File, destinationDirectory: File) : Int {
+        try {
+            val buffer = ByteArray(4096)
+            val zipIn = ZipInputStream(zipFile.inputStream())
+            var entry = zipIn.nextEntry
+            while (entry != null) {
+                val outputFile = File(destinationDirectory, entry.name)
+                if (entry.isDirectory) {
+                    outputFile.mkdirs()
+                } else {
+                    outputFile.parentFile?.mkdirs()
+                    val fos = FileOutputStream(outputFile)
+                    var len = zipIn.read(buffer)
+                    while (len > 0) {
+                        fos.write(buffer, 0, len)
+                        len = zipIn.read(buffer)
+                    }
+                    fos.close()
                 }
-                fos.close()
+                // ファイルの日付情報を設定
+                Log.d(TAG, "unzip time = ${entry.time}")
+                outputFile.setLastModified(entry.time)
+                entry = zipIn.nextEntry
             }
-            // ファイルの日付情報を設定
-            Log.d(TAG,"unzip time = ${entry.time}")
-            outputFile.setLastModified(entry.time)
-            entry = zipIn.nextEntry
+            zipIn.closeEntry()
+            zipIn.close()
+        }catch( e : Exception ){
+            Log.e(TAG,"${e.message}")
+            return -1
         }
-        zipIn.closeEntry()
-        zipIn.close()
+        return 0
     }
 
     fun unixTimeToDateString(unixTime: Long): String {
@@ -1009,45 +1052,81 @@ class GameSelectPresenter(
         return formatter.format(instant.atZone(zoneId))
     }
 
+    fun escapeFileName(fileName: String): String {
+        return fileName.replace("/", "_")
+    }
+
     fun downloadBackupMemory(
-        storageRef: StorageReference,
-        localZipFile: File,
+        downloadFileName: String,
+        currentUser: FirebaseUser,
         destinationDirectory: File,
     )
     {
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.reference.child(currentUser.uid).child("${downloadFileName}")
+        val memzip = YabauseStorage.storage.getMemoryPath("${downloadFileName}")
+        val localZipFile = File(memzip)
+
         storageRef.getFile(localZipFile).addOnCompleteListener { task ->
             if (task.isSuccessful) {
 
                 Log.d(TAG, "Download OK")
 
                 // ダウンロード成功時の処理
-                unzip(localZipFile, destinationDirectory)
+                if( unzip(localZipFile, destinationDirectory) != 0 ){
+                    localZipFile.delete()
+                    target_.activity?.runOnUiThread {
+                        syncState = BackupSyncState.IDLE
+                        listener_.onFinishSyncBackUp(SyncResult.FAIL, "Fail to unzip backup data from cloud")
+                    }
+                }else {
+                    localZipFile.delete()
+                    target_.activity?.runOnUiThread {
+                        syncState = BackupSyncState.IDLE
+                        listener_.onFinishSyncBackUp(
+                            SyncResult.SUCCESS,
+                            "Success to download backup data from cloud"
+                        )
+                    }
+                }
 
             } else {
                 // ダウンロード失敗時の処理
+                target_.activity?.runOnUiThread {
+                    syncState = BackupSyncState.IDLE
+                    listener_.onFinishSyncBackUp(SyncResult.FAIL, "Fail to download backup data from cloud")
+                }
             }
 
-            target_.activity?.runOnUiThread {
-                syncState = BackupSyncState.IDLE
-                listener_?.onDismissDialog();
-            }
+
         }
 
     }
 
+
+
     fun uploadBackupMemory(
-        storageRef: StorageReference,
         localFile: File,
         currentUser: FirebaseUser,
         aid: String,
     ) {
 
-        val memzip = YabauseStorage.storage.getMemoryPath("memory.zip")
-        val localZipFile = File(memzip)
-
         val localUpdateTime = localFile.lastModified()
-        zip(localFile, localZipFile)
+        val lmd5 = escapeFileName(calculateMD5(localFile))
+        val memzip = YabauseStorage.storage.getMemoryPath("$lmd5}.zip")
+        val localZipFile = File(memzip)
+        if( zip(localFile, localZipFile) != 0 ){
+            target_.activity?.runOnUiThread {
+                syncState = BackupSyncState.IDLE
+                listener_.onFinishSyncBackUp(SyncResult.FAIL, "Fail to zip backup data")
+            }
+            return;
+        }
+
+
         val md5 = calculateMD5(localZipFile)
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.reference.child(currentUser.uid).child("${lmd5}.zip")
 
         // クラウドのファイルが古い場合、ローカルのファイルをアップロード
         val inputStream = FileInputStream(localZipFile)
@@ -1063,19 +1142,46 @@ class GameSelectPresenter(
                 if (key != null) {
                     val data = hashMapOf(
                         "device" to aid,
+                        "deviceName" to android.os.Build.MODEL,
                         "date" to localUpdateTime,
-                        "md5" to md5
+                        "md5" to md5,
+                        "filename" to "${lmd5}.zip"
+
                     )
-                    backupReference.child(key).setValue(data)
+                    backupReference.child(key).setValue(data, object : DatabaseReference.CompletionListener {
+                        override fun onComplete(error: DatabaseError?, ref: DatabaseReference) {
+                            if (error != null) {
+                                // setValue()がエラーで終了した場合の処理を記述
+                                localZipFile.delete()
+                                target_.activity?.runOnUiThread {
+                                    syncState = GameSelectPresenter.BackupSyncState.IDLE
+                                    listener_.onFinishSyncBackUp(SyncResult.FAIL, "Fail to upload backup data to cloud ${error.message}" )
+                                }
+
+                            } else {
+                                Log.d(TAG, "path = user-posts/${currentUser.uid}/backupHistory/${key}")
+                                Log.d(TAG, "data = ${data}")
+                                localZipFile.delete()
+                                target_.activity?.runOnUiThread {
+                                    syncState = GameSelectPresenter.BackupSyncState.IDLE
+                                    listener_.onFinishSyncBackUp(SyncResult.SUCCESS, "Success to upload backup data to cloud" )
+                                }
+                            }
+                        }
+                    })
                 }
+
+
 
             } else {
                 // アップロード失敗時の処理
                 Log.d(TAG, "Upload Fail")
-            }
-            target_.activity?.runOnUiThread {
-                syncState = GameSelectPresenter.BackupSyncState.IDLE
-                listener_?.onDismissDialog();
+                localZipFile.delete()
+                target_.activity?.runOnUiThread {
+                    syncState = GameSelectPresenter.BackupSyncState.IDLE
+                    listener_.onFinishSyncBackUp(SyncResult.FAIL, "Fail to upload backup data to cloud" )
+                }
+
             }
 
         }
@@ -1097,16 +1203,19 @@ class GameSelectPresenter(
             // 最新の更新履歴を取得する
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    if( dataSnapshot.value != null ) {
+                        val mem = YabauseStorage.storage.getMemoryPath("memory.ram")
+                        val localFile = File(mem)
+                        if (localFile.exists()) {
+                            val latestData = dataSnapshot.children.first().value as Map<*, *>
+                            val cloudUpdateTime = latestData["date"] as Long
+                            val localUpdateTime = localFile.lastModified()
 
-                    val mem = YabauseStorage.storage.getMemoryPath("memory.ram")
-                    val localFile = File(mem)
-                    val latestData = dataSnapshot.children.first().value as Map<*, *>
-                    val cloudUpdateTime = latestData["date"] as Long
-                    val localUpdateTime = localFile.lastModified()
-
-                    // クラウドのほうが新しい場合ダウンロード
-                    if (cloudUpdateTime > localUpdateTime) {
-                        syncBackup()
+                            // クラウドのほうが新しい場合ダウンロード
+                            if (cloudUpdateTime > localUpdateTime) {
+                                syncBackup()
+                            }
+                        }
                     }
                 }
 
@@ -1126,7 +1235,8 @@ class GameSelectPresenter(
 
             target_.activity?.runOnUiThread {
                 syncState = BackupSyncState.CHECKING_DOWNLOAD
-                listener_.onShowDialog("Syncing Backup Memory ...")
+                //listener_.onShowDialog("Syncing Backup Memory ...")
+                listener_.onStartSyncBackUp()
             }
 
             val auth = FirebaseAuth.getInstance()
@@ -1134,7 +1244,8 @@ class GameSelectPresenter(
             if (currentUser == null) {
                 Log.d(TAG, "Fail to get currentUser even if Auth is successed!")
                 syncState = BackupSyncState.IDLE
-                listener_?.onDismissDialog();
+                //listener_?.onDismissDialog();
+                listener_.onFinishSyncBackUp(SyncResult.DONOTING, "" )
                 return
             }
 
@@ -1152,136 +1263,158 @@ class GameSelectPresenter(
 
             val mem = YabauseStorage.storage.getMemoryPath("memory.ram")
 
+            val localFile = File(mem)
+            var storageFileNmae = "memory.zip"
+
             val storage = FirebaseStorage.getInstance()
             val storageRef = storage.reference.child(currentUser.uid).child("memory.zip")
-            val localFile = File(mem)
             val destinationDirectory = File(YabauseStorage.storage.getMemoryPath("/"))
             val memzip = YabauseStorage.storage.getMemoryPath("memory.zip")
             val localZipFile = File(memzip)
 
+
+            // 更新履歴情報にアクセスする
+            val database = FirebaseDatabase.getInstance()
+            val backupReference = database.getReference("user-posts").child(currentUser.uid)
+                .child("backupHistory")
+
             Log.d(TAG, "syncBackup")
-            storageRef.downloadUrl
-                // クラウドにバックアップが存在する場合,取得するか、ロカールのものをアップするは判断する
-                .addOnSuccessListener { uri ->
 
-                    // 更新履歴情報にアクセスする
-                    val database = FirebaseDatabase.getInstance()
-                    val backupReference = database.getReference("user-posts").child(currentUser.uid)
-                        .child("backupHistory")
+            // 最新の更新履歴を取得する
+            backupReference.orderByChild("date")
+                .limitToLast(2)
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        if (dataSnapshot.exists()) {
+                            val latestData = dataSnapshot.children.last().value
+                            // ローカルにファイルが存在しない場合 => 強制ダウンロード
+                            if (localFile.exists() == false) {
+                                Log.d(TAG, "Local file not exits force download")
 
-                    // 最新の更新履歴を取得する
-                    backupReference.orderByChild("timestamp")
-                        .limitToLast(2)
-                        .addListenerForSingleValueEvent(object : ValueEventListener {
-                            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                                if (dataSnapshot.exists()) {
-                                    val latestData = dataSnapshot.children.first().value
-                                    // ローカルにファイルが存在しない場合 => 強制ダウンロード
-                                    if (localFile.exists() == false) {
-                                        Log.d(TAG, "Local file not exits force download")
+                                val latestData = dataSnapshot.children.first().value as Map<*, *>
+                                val downloadFilename = latestData["filename"] as String
 
-                                        downloadBackupMemory(
-                                            storageRef,
-                                            localZipFile,
-                                            destinationDirectory
-                                        )
+                                downloadBackupMemory(
+                                    downloadFilename,
+                                    currentUser,
+                                    destinationDirectory
+                                )
 
-                                        // ローカルにファイルが存在する場合、クラウドのほうが新しかったらダウンロード
-                                    } else {
+                                // ローカルにファイルが存在する場合、クラウドのほうが新しかったらダウンロード
+                            } else {
 
-                                        val latestData = dataSnapshot.children.first().value as Map<*, *>
-                                        val cloudUpdateTime = latestData["date"] as Long
-                                        val localUpdateTime = localFile.lastModified()
+                                val latestData = dataSnapshot.children.last().value as Map<*, *>
+                                val cloudUpdateTime = latestData["date"] as Long
+                                val localUpdateTime = localFile.lastModified()
 
-                                        // クラウドのほうが古い => アップロード
-                                        if (cloudUpdateTime < localUpdateTime) {
-                                            Log.d(TAG, "Local file is newer than cloud")
-                                            uploadBackupMemory(
-                                                storageRef,
-                                                localFile,
-                                                currentUser,
-                                                aid
-                                            )
-                                        }
+                                //Log.d(TAG, "path = user-posts/${currentUser.uid}/${key}")
+                                Log.d(TAG, "latestData = ${latestData}")
+                                Log.d(TAG, "localUpdateTime = ${localUpdateTime} cloudUpdateTime = ${cloudUpdateTime}")
 
-                                        // クラウドのほうが新しい => ダウンロード
-                                        else if (cloudUpdateTime > localUpdateTime) {
 
-                                            // コンフリクトの検出
-                                            // 最新の日付よりも
-                                            repeat(dataSnapshot.children.count()) {
-                                                val latestData =
-                                                    dataSnapshot.children.first().value as Map<*, *>
-                                                val predate = latestData["date"] as Long
-                                                if (predate < localUpdateTime) {
+                                // クラウドのほうが古い => アップロード
+                                if (cloudUpdateTime < localUpdateTime) {
+                                    Log.d(TAG, "Local file is newer than cloud")
 
-                                                    val builder = AlertDialog.Builder(YabauseApplication.appContext)
-                                                    builder.setTitle("Conflict detected")
-                                                        .setMessage("Which do you want to use?")
-                                                        //.setIcon(R.drawable.alert_icon)
-                                                        .setPositiveButton("Local") { dialog, which ->
-                                                            // Upload
-                                                            localFile.setLastModified( Date().time )
-                                                            uploadBackupMemory( storageRef, localFile, currentUser, aid )
-                                                            target_.activity?.runOnUiThread {
-                                                                syncState = BackupSyncState.IDLE
-                                                                listener_?.onDismissDialog();
-                                                            }
-                                                        }
-                                                        .setNegativeButton("Cloud") { dialog, which ->
-                                                            // Download
-                                                            downloadBackupMemory(storageRef,localZipFile,destinationDirectory)
-                                                            target_.activity?.runOnUiThread {
-                                                                syncState = BackupSyncState.IDLE
-                                                                listener_?.onDismissDialog();
-                                                            }
-                                                        }
-
-                                                    val dialog = builder.create()
-                                                    dialog.show()
-                                                    return
-                                                }
-                                            }
-
-                                            Log.d(TAG, "Local file is older than cloud")
-                                            downloadBackupMemory(
-                                                storageRef,
-                                                localZipFile,
-                                                destinationDirectory
-                                            )
-
-                                        } else {
-                                            Log.d(TAG, "Local file is same as cloud")
-                                            target_.activity?.runOnUiThread {
-                                                syncState = BackupSyncState.IDLE
-                                                listener_?.onDismissDialog();
-                                            }
-                                        }
-                                    }
-
-                                } else {
-                                    // データが存在しない場合の処理
-                                    Log.d(TAG, "backup history does not exits on cloud history")
                                     uploadBackupMemory(
-                                        storageRef,
                                         localFile,
                                         currentUser,
                                         aid
                                     )
                                 }
+
+                                // クラウドのほうが新しい => ダウンロード
+                                else if (cloudUpdateTime > localUpdateTime) {
+
+                                    // コンフリクトの検出
+                                    // 最新の日付よりも
+                                    //repeat(dataSnapshot.children.count()) {
+                                        val preLastData =
+                                            dataSnapshot.children.first().value as Map<*, *>
+                                        val predate = preLastData["date"] as Long
+                                        if (predate < localUpdateTime) {
+
+                                            target_.activity?.runOnUiThread {
+                                                val builder =
+                                                    AlertDialog.Builder(target_.requireContext())
+                                                builder.setTitle("Conflict detected")
+                                                    .setMessage("Which do you want to use?")
+                                                    //.setIcon(R.drawable.alert_icon)
+                                                    .setPositiveButton("Local") { dialog, which ->
+                                                        // Upload
+                                                        localFile.setLastModified(Date().time)
+                                                        uploadBackupMemory(
+                                                            localFile,
+                                                            currentUser,
+                                                            aid
+                                                        )
+                                                    }
+                                                    .setNegativeButton("Cloud") { dialog, which ->
+
+                                                        val downloadFilename =
+                                                            latestData["filename"] as String
+
+                                                        // Download
+                                                        downloadBackupMemory(
+                                                            downloadFilename,
+                                                            currentUser,
+                                                            destinationDirectory
+                                                        )
+                                                    }
+
+                                                val dialog = builder.create()
+                                                dialog.show()
+                                            }
+                                            return
+                                        }
+                                    //}
+
+                                    val downloadFilename = latestData["filename"] as String
+
+                                    Log.d(TAG, "Local file is older than cloud")
+                                    downloadBackupMemory(
+                                        downloadFilename,
+                                        currentUser,
+                                        destinationDirectory
+                                    )
+
+                                } else {
+                                    Log.d(TAG, "Local file is same as cloud ")
+                                    target_.activity?.runOnUiThread {
+                                        syncState = BackupSyncState.IDLE
+                                        listener_.onFinishSyncBackUp(SyncResult.DONOTING, "" )
+                                    }
+                                }
                             }
 
-                            override fun onCancelled(databaseError: DatabaseError) {
-                                // データの読み取りに失敗した場合の処理
-                                Log.d(TAG, "Fail to access ${backupReference}")
-                                uploadBackupMemory(
-                                    storageRef,
-                                    localFile,
-                                    currentUser,
-                                    aid
-                                )
-                            }
-                        })
+                        } else {
+                            // データが存在しない場合の処理
+                            Log.d(TAG, "backup history does not exits on cloud history")
+                            uploadBackupMemory(
+                                localFile,
+                                currentUser,
+                                aid
+                            )
+                        }
+                    }
+
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        // データの読み取りに失敗した場合の処理
+                        Log.d(TAG, "Fail to access ${backupReference}")
+                        uploadBackupMemory(
+                            localFile,
+                            currentUser,
+                            aid
+                        )
+                    }
+                })
+
+
+/*
+            storageRef.downloadUrl
+                // クラウドにバックアップが存在する場合,取得するか、ロカールのものをアップするは判断する
+                .addOnSuccessListener { uri ->
+
 
                 }
                 // バックアップが存在しない場合 => アップロード
@@ -1297,192 +1430,7 @@ class GameSelectPresenter(
                     }
 
                 }
-
-/*
-        storageRef.downloadUrl
-            .addOnSuccessListener { uri ->
-                // クラウドのファイルの更新日時を取得
-                storageRef.metadata.addOnSuccessListener { metadata ->
-
-                    // ローカルにファイルが存在しない場合
-                    if( localFile.exists() == false ){
-                        Log.d(TAG,"Local file not exits force download")
-                        storageRef.getFile(localZipFile).addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-
-                                Log.d(TAG,"Download OK")
-
-                                // ダウンロード成功時の処理
-                                unzip(localZipFile,destinationDirectory)
-
-                            } else {
-                                // ダウンロード失敗時の処理
-                            }
-
-                            target_.activity?.runOnUiThread {
-                                syncState = BackupSyncState.IDLE
-                                listener_?.onDismissDialog();
-                            }
-                        }
-
-                    // ローカルにファイルが存在する場合
-                    }else {
-
-                        val cloudUpdateTime = metadata.updatedTimeMillis
-                        val localUpdateTime = localFile.lastModified()
-
-                        Log.d(TAG,"Local file exits cloudTime:${unixTimeToDateString(cloudUpdateTime)},  loalTime:${unixTimeToDateString(localUpdateTime)}")
-
-                        // クラウドのほうが古い場合、アップロード
-                        if (cloudUpdateTime < localUpdateTime) {
-
-                            Log.d(TAG,"Try uploading")
-
-                            zip(localFile,localZipFile)
-
-                            // 念のためハッシュ値を比較
-                            val md5 = calculateMD5(localZipFile)
-                            Log.d(TAG,"check md5hash cloud:${metadata.md5Hash},  local:${md5}")
-                            if( md5 != metadata.md5Hash ) {
-
-                                Log.d(TAG,"Start uploading")
-
-                                listener_?.onUpdateDialogMessage("Upload backup file to Cloud");
-
-                                // クラウドのファイルが古い場合、ローカルのファイルをアップロード
-                                val inputStream = FileInputStream(localZipFile)
-                                storageRef.putStream(inputStream).addOnCompleteListener { task ->
-                                    if (task.isSuccessful) {
-
-                                      // アップロード成功時の処理
-                                      Log.d(TAG,"Upload OK")
-                                      val advertisingId = advertisingIdInfo.id
-                                      val database = FirebaseDatabase.getInstance()
-                                      val backupReference = database.getReference("user-posts").child(currentUser.uid).child("backupHistory")
-                                      val key = backupReference.push().key
-                                      if( key != null ) {
-                                          val data = hashMapOf(
-                                              "device" to advertisingIdInfo.id,
-                                              "date" to localFile.lastModified(),
-                                              "md5" to md5
-                                          )
-                                          backupReference.child(key).setValue(data)
-                                      }
-
-                                    } else {
-                                        // アップロード失敗時の処理
-                                        Log.d(TAG,"Upload Fail")
-                                    }
-                                    target_.activity?.runOnUiThread {
-                                        syncState = BackupSyncState.IDLE
-                                        listener_?.onDismissDialog();
-                                    }
-                                }
-
-                            }else{
-
-                                Log.d(TAG,"Same data.")
-
-                                target_.activity?.runOnUiThread {
-                                    syncState = BackupSyncState.IDLE
-                                    listener_?.onDismissDialog();
-                                }
-                            }
-
-                        // クラウドのほうが新しい場合、ダウンロード
-                        } else {
-
-                            Log.d(TAG,"Try Downloading")
-
-                            zip(localFile,localZipFile)
-                            val md5 = calculateMD5(localZipFile)
-                            Log.d(TAG,"check md5hash cloud:${metadata.md5Hash},  local:${md5}")
-
-                            if( md5 != metadata.md5Hash ) {
-
-                                Log.d(TAG,"Start Downloading")
-
-                                listener_?.onUpdateDialogMessage("Downloading backup file from Cloud");
-                                storageRef.getFile(localZipFile).addOnCompleteListener { task ->
-                                    if (task.isSuccessful) {
-
-                                        Log.d(TAG,"Download OK")
-
-                                        val md51 = calculateMD5(localZipFile)
-                                        Log.d(TAG," md5hash is updated cloud:${metadata.md5Hash},  local:${md51}")
-
-                                        // ダウンロード成功時の処理
-                                        unzip(localZipFile,destinationDirectory)
-
-                                        // 以下ハッシュ値が同じになるかのチェック
-                                        //val memzip2 = YabauseStorage.storage.getMemoryPath("memory2.zip")
-                                        //val localZipFile2 = File(memzip2)
-                                        //zip(localFile,localZipFile2)
-
-                                        // 念のためハッシュ値を比較
-                                        //val md5 = calculateMD5(localZipFile2)
-                                        //Log.d(TAG," md5hash is updated cloud:${metadata.md5Hash},  local:${md5}")
-
-
-                                    } else {
-                                        // ダウンロード失敗時の処理
-                                        Log.d(TAG,"Download Fail")
-                                    }
-                                    target_.activity?.runOnUiThread {
-                                        syncState = BackupSyncState.IDLE
-                                        listener_?.onDismissDialog();
-                                    }
-                                }
-                            }else{
-
-                                Log.d(TAG,"Same data.")
-
-                                target_.activity?.runOnUiThread {
-                                    syncState = BackupSyncState.IDLE
-                                    listener_?.onDismissDialog();
-                                }
-                            }
-                        }
-                    }
-                }.addOnFailureListener { exception ->
-                    // メタデータの取得に失敗した場合の処理
-                    target_.activity?.runOnUiThread {
-                        syncState = BackupSyncState.IDLE
-                        listener_?.onDismissDialog();
-                    }
-                }
-
-            }
-            .addOnFailureListener { exception ->
-                if (exception is StorageException && exception.errorCode == StorageException.ERROR_OBJECT_NOT_FOUND) {
-
-                    Log.d(TAG,"Cloud file not exits force upload")
-
-                    zip(localFile,localZipFile)
-                    val inputStream = FileInputStream(localZipFile)
-                    storageRef.putStream(inputStream).addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            // アップロード成功時の処理
-                        } else {
-                            // アップロード失敗時の処理
-                        }
-                        target_.activity?.runOnUiThread {
-                            syncState = BackupSyncState.IDLE
-                            listener_?.onDismissDialog();
-                        }
-                    }
-
-                } else {
-                    // その他のエラーが発生した場合の処理
-                    target_.activity?.runOnUiThread {
-                        syncState = BackupSyncState.IDLE
-                        listener_?.onDismissDialog();
-                    }
-                }
-            }
-
-    }
- */
+*/
 
     }
 }

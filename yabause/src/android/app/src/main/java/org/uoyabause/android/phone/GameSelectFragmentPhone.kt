@@ -45,6 +45,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -981,6 +982,25 @@ class GameSelectFragmentPhone : Fragment(),
 
     override fun onLoadRows() {
         loadRows()
+    }
+
+
+    override fun onStartSyncBackUp(){
+    }
+
+    override fun onFinishSyncBackUp(result: GameSelectPresenter.SyncResult, message: String) {
+        if( result == GameSelectPresenter.SyncResult.SUCCESS ){
+            Snackbar.make(rootView.rootView, message, Snackbar.LENGTH_LONG).show();
+        }
+
+        if( result == GameSelectPresenter.SyncResult.FAIL ){
+            val color = ContextCompat.getColor(requireContext(), R.color.design_default_color_error)
+            val snackbar = Snackbar.make(rootView.rootView, message, Snackbar.LENGTH_LONG)
+            snackbar.setTextColor( color )
+            snackbar.show()
+        }
+
+
     }
 
     companion object {
