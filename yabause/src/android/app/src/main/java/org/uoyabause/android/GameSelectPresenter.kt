@@ -95,6 +95,7 @@ import androidx.appcompat.view.ContextThemeWrapper as ContextThemeWrapper1
 import android.os.Handler
 import android.os.Looper
 
+
 class GameSelectPresenter(
     target: Fragment,
     private val yabauseActivityLauncher: ActivityResultLauncher<Intent>,
@@ -1138,6 +1139,8 @@ class GameSelectPresenter(
                 val database = FirebaseDatabase.getInstance()
                 val backupReference = database.getReference("user-posts").child(currentUser.uid)
                     .child("backupHistory")
+
+
                 val key = backupReference.push().key
                 if (key != null) {
                     val data = hashMapOf(
@@ -1157,7 +1160,6 @@ class GameSelectPresenter(
                                     syncState = GameSelectPresenter.BackupSyncState.IDLE
                                     listener_.onFinishSyncBackUp(SyncResult.FAIL, "Fail to upload backup data to cloud ${error.message}" )
                                 }
-
                             } else {
                                 Log.d(TAG, "path = user-posts/${currentUser.uid}/backupHistory/${key}")
                                 Log.d(TAG, "data = ${data}")
@@ -1166,6 +1168,7 @@ class GameSelectPresenter(
                                     syncState = GameSelectPresenter.BackupSyncState.IDLE
                                     listener_.onFinishSyncBackUp(SyncResult.SUCCESS, "Success to upload backup data to cloud" )
                                 }
+                                checkAndRemoveLastData(currentUser)
                             }
                         }
                     })
@@ -1198,7 +1201,7 @@ class GameSelectPresenter(
             .child("backupHistory")
 
         backupListener = backupReference!!
-            .orderByChild("timestamp")
+            .orderByChild("date")
             .limitToLast(1)
             // 最新の更新履歴を取得する
             .addValueEventListener(object : ValueEventListener {
@@ -1223,6 +1226,70 @@ class GameSelectPresenter(
 
                 }
             })
+
+
+
+    }
+
+    fun checkAndRemoveLastData(currentUser: FirebaseUser){
+        // 更新履歴情報にアクセスする
+        val database = FirebaseDatabase.getInstance()
+        val backupReference = database.getReference("user-posts").child(currentUser.uid)
+            .child("backupHistory")
+
+        Log.d(TAG, "checkAndRemoveLastData")
+
+        backupReference.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val numRefs = snapshot.childrenCount
+
+                Log.d(TAG, "Backup count is ${numRefs}")
+
+                // １０世代以上の物は削除する
+                if( numRefs > 10 ){
+
+                    Log.d(TAG, "Removing the oldest file")
+
+                    val query = backupReference.orderByChild("date").limitToFirst(1)
+                    query.addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            for (childSnapshot in snapshot.children) {
+                                // 一番古いデータのリファレンスを取得します
+                                val oldestRef = childSnapshot.ref
+
+                                val latestData = childSnapshot.value as Map<*, *>
+                                val downloadFilename = latestData["filename"] as String
+
+                                val storage = FirebaseStorage.getInstance()
+                                val fileRef = storage.reference.child(currentUser.uid).child("${downloadFilename}")
+                                fileRef.delete()
+                                    .addOnSuccessListener {
+                                        // リファレンスを削除します
+                                        Log.d(TAG, "Success remove old data")
+                                        oldestRef.removeValue()
+
+                                    }
+                                    .addOnFailureListener { e ->
+                                        // 削除に失敗した場合の処理を実装します
+                                        Log.d(TAG, "Fail to delete storage file ${e.message}")
+                                    }
+
+                            }
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            // エラーが発生した場合の処理を実装します
+                            Log.d(TAG, "Fail to delete storage file ${error.message}")
+                        }
+                    })
+                }
+            }
+            override fun onCancelled(error: DatabaseError) {
+                // エラーが発生した場合の処理を実装します
+                Log.d(TAG, "Fail to delete storage file ${error.message}")
+            }
+        })
+
 
     }
 
