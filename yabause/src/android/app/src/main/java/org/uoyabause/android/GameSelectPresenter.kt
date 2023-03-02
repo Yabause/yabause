@@ -1063,6 +1063,11 @@ class GameSelectPresenter(
         destinationDirectory: File,
     )
     {
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
+        if( sharedPref.getBoolean("auto_backup",false) == false ){
+            return
+        }
+
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference.child(currentUser.uid).child("${downloadFileName}")
         val memzip = YabauseStorage.storage.getMemoryPath("${downloadFileName}")
@@ -1111,6 +1116,11 @@ class GameSelectPresenter(
         currentUser: FirebaseUser,
         aid: String,
     ) {
+
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
+        if( sharedPref.getBoolean("auto_backup",false) == false ){
+            return
+        }
 
         val localUpdateTime = localFile.lastModified()
         val lmd5 = escapeFileName(calculateMD5(localFile))
@@ -1192,6 +1202,11 @@ class GameSelectPresenter(
 
     fun startSubscribeBackupMemory( currentUser: FirebaseUser){
 
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
+        if( sharedPref.getBoolean("auto_backup",false) == false ){
+            return
+        }
+
         if( backupReference != null ) return
         if( backupListener != null ) return
 
@@ -1232,6 +1247,12 @@ class GameSelectPresenter(
     }
 
     fun checkAndRemoveLastData(currentUser: FirebaseUser){
+
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
+        if( sharedPref.getBoolean("auto_backup",false) == false ){
+            return
+        }
+
         // 更新履歴情報にアクセスする
         val database = FirebaseDatabase.getInstance()
         val backupReference = database.getReference("user-posts").child(currentUser.uid)
@@ -1294,6 +1315,11 @@ class GameSelectPresenter(
     }
 
         fun syncBackup() {
+
+            val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
+            if( sharedPref.getBoolean("auto_backup",false) == false ){
+                return
+            }
 
             // 同期中は何もしない
             if( syncState == BackupSyncState.CHECKING_DOWNLOAD ){

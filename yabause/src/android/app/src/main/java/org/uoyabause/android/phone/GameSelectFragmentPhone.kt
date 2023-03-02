@@ -27,6 +27,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.BitmapFactory
+import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Build.VERSION_CODES
@@ -55,6 +57,7 @@ import androidx.preference.PreferenceManager
 import androidx.viewpager.widget.ViewPager
 import com.activeandroid.query.Select
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.TransformationUtils.centerCrop
 import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
 import com.google.android.material.navigation.NavigationView
@@ -77,6 +80,7 @@ import org.uoyabause.android.GameSelectPresenter.GameSelectPresenterListener
 import org.uoyabause.android.tv.GameSelectFragment
 import java.io.File
 import java.util.*
+
 
 internal class GameListPage(val pageTitle: String, var gameList: GameItemAdapter)
 
@@ -205,7 +209,7 @@ class GameSelectFragmentPhone : Fragment(),
             intent.type = "*/*"
             readRequestLauncher.launch(intent)
         }else {
-            val message = resources.getString(R.string.or_place_file_to, YabauseStorage.storage.gamePath)
+            val message = resources.getString(org.devmiyax.yabasanshiro.R.string.or_place_file_to, YabauseStorage.storage.gamePath)
             val rtn = YabauseApplication.checkDonated(requireActivity(), message)
             if ( rtn == 0) {
                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
@@ -219,14 +223,14 @@ class GameSelectFragmentPhone : Fragment(),
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
-        rootView = inflater.inflate(R.layout.fragment_game_select_fragment_phone, container, false)
-        progressBar = rootView.findViewById(R.id.llProgressBar)
+        rootView = inflater.inflate(org.devmiyax.yabasanshiro.R.layout.fragment_game_select_fragment_phone, container, false)
+        progressBar = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.llProgressBar)
         progressBar.visibility = View.GONE
-        progressMessage = rootView.findViewById(R.id.pbText)
+        progressMessage = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.pbText)
 
-        val fab: View = rootView.findViewById(R.id.fab)
+        val fab: View = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.fab)
         if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
             fab.setOnClickListener {
                 selectGameFile()
@@ -244,7 +248,7 @@ class GameSelectFragmentPhone : Fragment(),
     private var adHeight = 0
     fun onAdViewIsShown(height: Int) {
         try {
-            val parentLayout = rootView.findViewById<DrawerLayout>(R.id.drawer_layout_game_select)
+            val parentLayout = rootView.findViewById<DrawerLayout>(org.devmiyax.yabasanshiro.R.id.drawer_layout_game_select)
             val param = parentLayout.layoutParams as FrameLayout.LayoutParams
             param.bottomMargin = height + 4
             parentLayout.layoutParams = param
@@ -257,7 +261,16 @@ class GameSelectFragmentPhone : Fragment(),
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         drawerLayout!!.closeDrawers()
         when (item.itemId) {
-            R.id.menu_item_setting -> {
+            org.devmiyax.yabasanshiro.R.id.menu_auto_backupsync -> {
+
+                val fragment = BackupBackupItemFragment.newInstance(1,presenter)
+                val transaction = requireActivity().supportFragmentManager.beginTransaction()
+                transaction.replace(org.devmiyax.yabasanshiro.R.id.ext_fragment, fragment)
+                transaction.addToBackStack(null)
+                transaction.commit()
+
+            }
+            org.devmiyax.yabasanshiro.R.id.menu_item_setting -> {
 
                 firebaseAnalytics?.logEvent("Game Select Fragment"){
                     param("event", "menu_item_setting")
@@ -266,7 +279,7 @@ class GameSelectFragmentPhone : Fragment(),
                 val intent = Intent(activity, SettingsActivity::class.java)
                 settingActivityLauncher.launch(intent)
             }
-            R.id.menu_item_load_game -> {
+            org.devmiyax.yabasanshiro.R.id.menu_item_load_game -> {
 
                 firebaseAnalytics?.logEvent("Game Select Fragment"){
                     param("event", "menu_item_load_game")
@@ -285,7 +298,7 @@ class GameSelectFragmentPhone : Fragment(),
                     fd.showDialog()
                 }
             }
-            R.id.menu_item_update_game_db -> {
+            org.devmiyax.yabasanshiro.R.id.menu_item_update_game_db -> {
 
                 firebaseAnalytics?.logEvent("Game Select Fragment"){
                     param("event", "menu_item_update_game_db")
@@ -295,18 +308,18 @@ class GameSelectFragmentPhone : Fragment(),
                     updateGameList()
                 }
             }
-            R.id.menu_item_login -> if (item.title == getString(R.string.sign_out)) {
+            org.devmiyax.yabasanshiro.R.id.menu_item_login -> if (item.title == getString(org.devmiyax.yabasanshiro.R.string.sign_out)) {
 
                 firebaseAnalytics?.logEvent("Game Select Fragment"){
                     param("event", "menu_item_login")
                 }
 
                 presenter.signOut()
-                item.setTitle(R.string.sign_in)
+                item.setTitle(org.devmiyax.yabasanshiro.R.string.sign_in)
             } else {
                 presenter.signIn(signInActivityLauncher)
             }
-            R.id.menu_privacy_policy -> {
+            org.devmiyax.yabasanshiro.R.id.menu_privacy_policy -> {
 
                 firebaseAnalytics?.logEvent("Game Select Fragment"){
                     param("event", "menu_privacy_policy")
@@ -317,7 +330,7 @@ class GameSelectFragmentPhone : Fragment(),
                 val i = Intent(Intent.ACTION_VIEW, uri)
                 startActivity(i)
             }
-            R.id.menu_item_login_to_other -> {
+            org.devmiyax.yabasanshiro.R.id.menu_item_login_to_other -> {
 
                 firebaseAnalytics?.logEvent("Game Select Fragment"){
                     param("event", "menu_item_login_to_other")
@@ -427,8 +440,8 @@ class GameSelectFragmentPhone : Fragment(),
         presenter.onSignIn(result.resultCode, result.data)
         if (presenter.currentUserName != null) {
             val m = navigationView!!.menu
-            val miLogin = m.findItem(R.id.menu_item_login)
-            miLogin.setTitle(R.string.sign_out)
+            val miLogin = m.findItem(org.devmiyax.yabasanshiro.R.id.menu_item_login)
+            miLogin.setTitle(org.devmiyax.yabasanshiro.R.string.sign_out)
         }
     }
 
@@ -571,7 +584,7 @@ class GameSelectFragmentPhone : Fragment(),
         if (message != null) {
             progressMessage.text = message
         } else {
-            progressMessage.text = getString(R.string.updating)
+            progressMessage.text = getString(org.devmiyax.yabasanshiro.R.string.updating)
         }
         progressBar.visibility = VISIBLE
     }
@@ -584,6 +597,7 @@ class GameSelectFragmentPhone : Fragment(),
         progressBar.visibility = View.GONE
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view,savedInstanceState)
         val activity = requireActivity() as AppCompatActivity
@@ -591,27 +605,32 @@ class GameSelectFragmentPhone : Fragment(),
         val application = activity.application as YabauseApplication
         tracker = application.defaultTracker
         val toolbar =
-            rootView.findViewById<View>(R.id.toolbar) as Toolbar
-        toolbar.setLogo(R.mipmap.ic_launcher)
-        toolbar.title = getString(R.string.app_name)
+            rootView.findViewById<View>(org.devmiyax.yabasanshiro.R.id.toolbar) as Toolbar
+        toolbar.setLogo(org.devmiyax.yabasanshiro.R.mipmap.ic_launcher)
+        toolbar.title = getString(org.devmiyax.yabasanshiro.R.string.app_name)
         toolbar.subtitle = getVersionName(activity)
         activity.setSupportActionBar(toolbar)
-        tabLayout = rootView.findViewById(R.id.tab_game_index)
+        tabLayout = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.tab_game_index)
         tabLayout.removeAllTabs()
 
         drawerLayout =
-            rootView.findViewById<View>(R.id.drawer_layout_game_select) as DrawerLayout
+            rootView.findViewById<View>(org.devmiyax.yabasanshiro.R.id.drawer_layout_game_select) as DrawerLayout
+
+
+
+
         drawerToggle = object : ActionBarDrawerToggle(
             getActivity(), /* host Activity */
             drawerLayout, /* DrawerLayout object */
-            R.string.drawer_open, /* "open drawer" description */
-            R.string.drawer_close /* "close drawer" description */
+            org.devmiyax.yabasanshiro.R.string.drawer_open, /* "open drawer" description */
+            org.devmiyax.yabasanshiro.R.string.drawer_close /* "close drawer" description */
         ) {
 
+/*
             override fun onDrawerOpened(drawerView: View) {
                 super.onDrawerOpened(drawerView)
                 // activity.getSupportActionBar().setTitle("bbb");
-                val tx = rootView.findViewById<TextView?>(R.id.menu_title)
+                val tx = rootView.findViewById<TextView?>(org.devmiyax.yabasanshiro.R.id.menu_title)
                 val uname = presenter.currentUserName
                 if (tx != null && uname != null) {
                     tx.text = uname
@@ -619,16 +638,18 @@ class GameSelectFragmentPhone : Fragment(),
                     tx.text = ""
                 }
                 val iv =
-                    rootView.findViewById<ImageView?>(R.id.navi_header_image)
+                    rootView.findViewById<ImageView?>(org.devmiyax.yabasanshiro.R.id.navi_header_image)
                 val uri = presenter.currentUserPhoto
                 if (iv != null && uri != null) {
                     Glide.with(drawerView.context)
                         .load(uri)
                         .into(iv)
                 } else {
-                    iv.setImageResource(R.mipmap.ic_launcher)
+                    iv.setImageResource(org.devmiyax.yabasanshiro.R.mipmap.ic_launcher)
                 }
             }
+
+ */
         }
         // Set the drawer toggle as the DrawerListener
         drawerLayout!!.addDrawerListener(drawerToggle)
@@ -636,19 +657,54 @@ class GameSelectFragmentPhone : Fragment(),
         activity.supportActionBar!!.setHomeButtonEnabled(true)
         drawerToggle.syncState()
         navigationView =
-            rootView.findViewById<View>(R.id.nav_view) as NavigationView
+            rootView.findViewById<View>(org.devmiyax.yabasanshiro.R.id.nav_view) as NavigationView
         if (navigationView != null) {
             navigationView!!.setNavigationItemSelectedListener(this)
+
+            val headerView = navigationView!!.getHeaderView(0)
+            val drawerView = headerView!!.findViewById<ImageView>(org.devmiyax.yabasanshiro.R.id.navi_header_image)
+            val uri = presenter.currentUserPhoto
+
+            if( uri != null ) {
+                val icon: Icon = Icon.createWithResource(
+                    requireContext(),
+                    org.devmiyax.yabasanshiro.R.mipmap.ic_launcher
+                )
+                val drawable = icon.loadDrawable(context)
+                if (drawable != null) {
+                    val width = drawable.intrinsicWidth
+                    val height = drawable.intrinsicHeight
+
+                    Glide.with(requireActivity())
+                        .load(uri)
+                        .override(width, height) // 幅500px、高さ500pxにリサイズ
+                        .centerCrop() // センタークロップ
+                        .into(drawerView)
+                }
+            }else{
+                drawerView.setImageResource(org.devmiyax.yabasanshiro.R.mipmap.ic_launcher)
+            }
+
+            val tx = headerView.findViewById<TextView?>(org.devmiyax.yabasanshiro.R.id.menu_title)
+            val uname = presenter.currentUserName
+            if (tx != null && uname != null) {
+                tx.text = uname
+            } else {
+                tx.text = ""
+            }
+
         }
+
+
 
         if (presenter.currentUserName != null) {
             val m = navigationView!!.menu
-            val miLogin = m.findItem(R.id.menu_item_login)
-            miLogin.setTitle(R.string.sign_out)
+            val miLogin = m.findItem(org.devmiyax.yabasanshiro.R.id.menu_item_login)
+            miLogin.setTitle(org.devmiyax.yabasanshiro.R.string.sign_out)
         } else {
             val m = navigationView!!.menu
-            val miLogin = m.findItem(R.id.menu_item_login)
-            miLogin.setTitle(R.string.sign_in)
+            val miLogin = m.findItem(org.devmiyax.yabasanshiro.R.id.menu_item_login)
+            miLogin.setTitle(org.devmiyax.yabasanshiro.R.string.sign_in)
         }
         if (checkStoragePermission() == 0) {
             updateGameList()
@@ -682,7 +738,7 @@ class GameSelectFragmentPhone : Fragment(),
             }
 
             override fun onNext(response: String) {
-                updateDialogString("${getString(R.string.updating)} $response")
+                updateDialogString("${getString(org.devmiyax.yabasanshiro.R.string.updating)} $response")
             }
 
             override fun onError(e: Throwable) {
@@ -710,7 +766,7 @@ class GameSelectFragmentPhone : Fragment(),
                 }
 
                 loadRows()
-                val viewPager = rootView.findViewById(R.id.view_pager_game_index) as? ViewPager
+                val viewPager = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.view_pager_game_index) as? ViewPager
                 tabPageAdapter.setGameList(gameListPages)
                 viewPager!!.adapter = tabPageAdapter
                 tabLayout.setupWithViewPager(viewPager)
@@ -741,12 +797,12 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     private fun showRestartMessage() { // need_to_accept
-        val viewMessage = rootView.findViewById<TextView?>(R.id.empty_message)
-        val viewPager = rootView.findViewById<ViewPager?>(R.id.view_pager_game_index)
+        val viewMessage = rootView.findViewById<TextView?>(org.devmiyax.yabasanshiro.R.id.empty_message)
+        val viewPager = rootView.findViewById<ViewPager?>(org.devmiyax.yabasanshiro.R.id.view_pager_game_index)
         viewMessage?.visibility = VISIBLE
         viewPager?.visibility = View.GONE
 
-        val welcomeMessage = resources.getString(R.string.need_to_accept)
+        val welcomeMessage = resources.getString(org.devmiyax.yabasanshiro.R.string.need_to_accept)
         viewMessage.text = welcomeMessage
     }
 
@@ -780,8 +836,8 @@ class GameSelectFragmentPhone : Fragment(),
                 .execute<GameInfo?>()
             if (checklist.size == 0) {
 
-                val viewMessage = rootView.findViewById<TextView?>(R.id.empty_message)
-                val viewPager = rootView.findViewById<ViewPager?>(R.id.view_pager_game_index)
+                val viewMessage = rootView.findViewById<TextView?>(org.devmiyax.yabasanshiro.R.id.empty_message)
+                val viewPager = rootView.findViewById<ViewPager?>(org.devmiyax.yabasanshiro.R.id.view_pager_game_index)
                 viewMessage!!.visibility = VISIBLE
                 viewPager!!.visibility = View.GONE
 
@@ -790,14 +846,14 @@ class GameSelectFragmentPhone : Fragment(),
                 if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
                     val packageName = requireActivity().packageName
                     val welcomeMessage = resources.getString(
-                        R.string.welcome_11,
+                        org.devmiyax.yabasanshiro.R.string.welcome_11,
                         "Android/data/$packageName/files/yabause/games",
                         "Android/data/$packageName/files",
                     )
                     markwon.setMarkdown(viewMessage, welcomeMessage)
                 }else {
                     val welcomeMessage = resources.getString(
-                        R.string.welcome,
+                        org.devmiyax.yabasanshiro.R.string.welcome,
                         YabauseStorage.storage.gamePath
                     )
                     markwon.setMarkdown(viewMessage, welcomeMessage)
@@ -808,8 +864,8 @@ class GameSelectFragmentPhone : Fragment(),
             Log.d(TAG, e.localizedMessage!!)
         }
 
-        val viewMessage = rootView.findViewById(R.id.empty_message) as? View
-        val viewPager = rootView.findViewById(R.id.view_pager_game_index) as? ViewPager
+        val viewMessage = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.empty_message) as? View
+        val viewPager = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.view_pager_game_index) as? ViewPager
         viewMessage?.visibility = View.GONE
         viewPager?.visibility = VISIBLE
 
@@ -994,7 +1050,7 @@ class GameSelectFragmentPhone : Fragment(),
         }
 
         if( result == GameSelectPresenter.SyncResult.FAIL ){
-            val color = ContextCompat.getColor(requireContext(), R.color.design_default_color_error)
+            val color = ContextCompat.getColor(requireContext(), org.devmiyax.yabasanshiro.R.color.design_default_color_error)
             val snackbar = Snackbar.make(rootView.rootView, message, Snackbar.LENGTH_LONG)
             snackbar.setTextColor( color )
             snackbar.show()
