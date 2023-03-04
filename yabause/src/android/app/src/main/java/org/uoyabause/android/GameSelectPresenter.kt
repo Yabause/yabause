@@ -501,6 +501,8 @@ class GameSelectPresenter(
                     "yab_start_game", bundle
                 )
                 parcelFileDescriptor!!.close()
+                val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
+                sharedPref.edit().putString("last_play_Game",gameinfo.game_title).commit()
                 val intent = Intent(target_.requireActivity(), Yabause::class.java)
                 intent.putExtra("org.uoyabause.android.FileNameUri", uri.toString())
                 intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number)
@@ -726,6 +728,10 @@ class GameSelectPresenter(
                     mFirebaseAnalytics.logEvent(
                         "yab_start_game", bundle
                     )
+
+                    val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
+                    sharedPref.edit().putString("last_play_Game",gameinfo.game_title).commit()
+
                     parcelFileDescriptor1!!.close()
                 } else {
                     Toast.makeText(target_.requireContext(), "Fail to open $apath", Toast.LENGTH_LONG)
@@ -805,6 +811,9 @@ class GameSelectPresenter(
         mFirebaseAnalytics.logEvent(
             "yab_start_game", bundle
         )
+
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
+        sharedPref.edit().putString("last_play_Game",item.game_title).commit()
 
         if (item.file_path.contains("content://") == true) {
             val intent = Intent(target_.activity, Yabause::class.java)
@@ -951,6 +960,10 @@ class GameSelectPresenter(
                     mFirebaseAnalytics.logEvent(
                         "yab_start_game", bundle
                     )
+
+                    val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
+                    sharedPref.edit().putString("last_play_Game",gameinfo.game_title).commit()
+
                     val intent = Intent(target_.requireActivity(), Yabause::class.java)
                     intent.putExtra("org.uoyabause.android.FileNameEx", apath)
                     intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number)
@@ -1013,7 +1026,7 @@ class GameSelectPresenter(
         return 0
     }
 
-    fun unzip(zipFile: File, destinationDirectory: File) : Int {
+    fun unzip(zipFile: File, destinationDirectory: File, isUpdateDate: Boolean) : Int {
         try {
             val buffer = ByteArray(4096)
             val zipIn = ZipInputStream(zipFile.inputStream())
@@ -1033,8 +1046,10 @@ class GameSelectPresenter(
                     fos.close()
                 }
                 // ファイルの日付情報を設定
-                Log.d(TAG, "unzip time = ${entry.time}")
-                outputFile.setLastModified(entry.time)
+                if( !isUpdateDate ) {
+                    Log.d(TAG, "unzip time = ${entry.time}")
+                    outputFile.setLastModified(entry.time)
+                }
                 entry = zipIn.nextEntry
             }
             zipIn.closeEntry()
@@ -1061,6 +1076,7 @@ class GameSelectPresenter(
         downloadFileName: String,
         currentUser: FirebaseUser,
         destinationDirectory: File,
+        isUpdateDate: Boolean
     )
     {
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
@@ -1079,7 +1095,7 @@ class GameSelectPresenter(
                 Log.d(TAG, "Download OK")
 
                 // ダウンロード成功時の処理
-                if( unzip(localZipFile, destinationDirectory) != 0 ){
+                if( unzip(localZipFile, destinationDirectory,isUpdateDate) != 0 ){
                     localZipFile.delete()
                     target_.activity?.runOnUiThread {
                         syncState = BackupSyncState.IDLE
@@ -1150,17 +1166,22 @@ class GameSelectPresenter(
                 val backupReference = database.getReference("user-posts").child(currentUser.uid)
                     .child("backupHistory")
 
+                val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
+                val lastPlayGameName = sharedPref.getString("last_play_Game","")
+
 
                 val key = backupReference.push().key
                 if (key != null) {
+
                     val data = hashMapOf(
                         "device" to aid,
                         "deviceName" to android.os.Build.MODEL,
                         "date" to localUpdateTime,
                         "md5" to md5,
-                        "filename" to "${lmd5}.zip"
-
+                        "filename" to "${lmd5}.zip",
+                        "lastPlayGameName" to "${lastPlayGameName}"
                     )
+
                     backupReference.child(key).setValue(data, object : DatabaseReference.CompletionListener {
                         override fun onComplete(error: DatabaseError?, ref: DatabaseReference) {
                             if (error != null) {
@@ -1390,7 +1411,8 @@ class GameSelectPresenter(
                                 downloadBackupMemory(
                                     downloadFilename,
                                     currentUser,
-                                    destinationDirectory
+                                    destinationDirectory,
+                                    false
                                 )
 
                                 // ローカルにファイルが存在する場合、クラウドのほうが新しかったらダウンロード
@@ -1451,7 +1473,8 @@ class GameSelectPresenter(
                                                         downloadBackupMemory(
                                                             downloadFilename,
                                                             currentUser,
-                                                            destinationDirectory
+                                                            destinationDirectory,
+                                                            false
                                                         )
                                                     }
 
@@ -1468,7 +1491,8 @@ class GameSelectPresenter(
                                     downloadBackupMemory(
                                         downloadFilename,
                                         currentUser,
-                                        destinationDirectory
+                                        destinationDirectory,
+                                        false
                                     )
 
                                 } else {

@@ -10,10 +10,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
 import androidx.preference.PreferenceManager
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.GameSelectPresenter
 import org.uoyabause.android.ShowPinInFragment
+import org.uoyabause.android.YabauseStorage
 import org.uoyabause.android.phone.placeholder.PlaceholderContent
+import java.io.File
 
 
 /**
@@ -33,6 +37,8 @@ class BackupBackupItemFragment : Fragment() {
         }
     }
 
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
@@ -48,6 +54,47 @@ class BackupBackupItemFragment : Fragment() {
                 }
                 adapter = BackupBackupItemRecyclerViewAdapter(PlaceholderContent.ITEMS)
                 PlaceholderContent.adapter = adapter as BackupBackupItemRecyclerViewAdapter
+
+                val a = adapter as BackupBackupItemRecyclerViewAdapter
+                a.setRollback {
+
+                    val auth = FirebaseAuth.getInstance()
+                    val currentUser = auth.currentUser
+                    if (currentUser != null) {
+
+                        /*
+                        val downloadFilename =
+                            PlaceholderContent.ITEMS[it].rawdata["filename"] as String
+                        val destinationDirectory = File(YabauseStorage.storage.getMemoryPath("/"))
+                        presenter_.downloadBackupMemory(
+                            downloadFilename,
+                            currentUser,
+                            destinationDirectory,
+                            true
+                        )
+                        */
+
+                        val database = FirebaseDatabase.getInstance()
+                        val backupReference = database.getReference("user-posts").child(currentUser.uid)
+                            .child("backupHistory")
+
+                        val dataref = backupReference.child( PlaceholderContent.ITEMS[it].key )
+
+                        dataref.child("date").setValue(System.currentTimeMillis() ).addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                // データの更新が成功した場合に実行される処理
+                                //Log.d(TAG, "Data updated successfully.")
+                                presenter_.syncBackup()
+                            } else {
+                                // データの更新が失敗した場合に実行される処理
+                                //Log.w(TAG, "Failed to update data.", task.exception)
+                            }
+                        }
+
+
+
+                    }
+                }
             }
         }
 
@@ -74,6 +121,8 @@ class BackupBackupItemFragment : Fragment() {
 
                 val sharedPref = PreferenceManager.getDefaultSharedPreferences(this.requireActivity())
                 sharedPref.edit().putBoolean("auto_backup",true).commit()
+
+                presenter_.syncBackup()
 
             } else {
                 // チェックが外れたときの処理

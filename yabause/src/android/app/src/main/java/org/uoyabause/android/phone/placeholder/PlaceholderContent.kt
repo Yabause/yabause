@@ -56,8 +56,7 @@ object PlaceholderContent {
                     val children = snapshot.children.reversed()
                     for (childSnapshot in children) {
                         val latestData = childSnapshot.value as Map<*, *>
-                        addItem( createPlaceholderItem(latestData) )
-
+                        addItem( createPlaceholderItem(latestData, childSnapshot.key!! ) )
                     }
                     adapter?.notifyDataSetChanged()
                 }
@@ -75,36 +74,25 @@ object PlaceholderContent {
         ITEM_MAP.put(item.id, item)
     }
 
-    private fun createPlaceholderItem(mapdata: Map<*, *>): PlaceholderItem {
+    private fun createPlaceholderItem(mapdata: Map<*, *>, key: String ): PlaceholderItem {
         val lastdate = mapdata["date"] as Long
         val date = Date(lastdate)
         val sdf = SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.JAPAN)
         val formattedDate = sdf.format(date)
-
-        return PlaceholderItem(formattedDate, mapdata["deviceName"] as String,mapdata["filename"] as String  )
-    }
-
-    private fun createPlaceholderItem(position: Int): PlaceholderItem {
-        return PlaceholderItem(position.toString(), "Item " + position, makeDetails(position))
-    }
-
-    private fun makeDetails(position: Int): String {
-        val builder = StringBuilder()
-        builder.append("Details about Item: ").append(position)
-        for (i in 0..position - 1) {
-            builder.append("\nMore details information here.")
+        var title = mapdata["lastPlayGameName"] as String?
+        if ( title == null ){
+            title = ""
         }
-        return builder.toString()
+        var device = mapdata["deviceName"] as String?
+        if ( device == null ){
+            device = ""
+        }
+
+        return PlaceholderItem(formattedDate, device, title, mapdata, key  )
     }
 
-    /**
-     * A placeholder item representing a piece of content.
-     */
-    //data class PlaceholderItem(val id: String, val content: String, val details: String) {
-    //    override fun toString(): String = content
-    //}
 
-    data class PlaceholderItem(val id: String, val content: String, val details: String) {
+    data class PlaceholderItem(val id: String, val content: String, val details: String, val rawdata: Map<*, *>, val key: String ) {
         override fun toString(): String = content
     }
 }
