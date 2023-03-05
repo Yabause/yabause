@@ -626,30 +626,33 @@ class GameSelectFragmentPhone : Fragment(),
             org.devmiyax.yabasanshiro.R.string.drawer_close /* "close drawer" description */
         ) {
 
-/*
+
             override fun onDrawerOpened(drawerView: View) {
                 super.onDrawerOpened(drawerView)
                 // activity.getSupportActionBar().setTitle("bbb");
+
                 val tx = rootView.findViewById<TextView?>(org.devmiyax.yabasanshiro.R.id.menu_title)
                 val uname = presenter.currentUserName
-                if (tx != null && uname != null) {
-                    tx.text = uname
-                } else {
-                    tx.text = ""
-                }
-                val iv =
-                    rootView.findViewById<ImageView?>(org.devmiyax.yabasanshiro.R.id.navi_header_image)
-                val uri = presenter.currentUserPhoto
-                if (iv != null && uri != null) {
-                    Glide.with(drawerView.context)
-                        .load(uri)
-                        .into(iv)
-                } else {
-                    iv.setImageResource(org.devmiyax.yabasanshiro.R.mipmap.ic_launcher)
+
+                if( tx?.text != uname ) {
+                    if (tx != null && uname != null) {
+                        tx.text = uname
+                    } else {
+                        tx.text = ""
+                    }
+                    val iv =
+                        rootView.findViewById<ImageView?>(org.devmiyax.yabasanshiro.R.id.navi_header_image)
+                    val uri = presenter.currentUserPhoto
+                    if (iv != null && uri != null) {
+                        Glide.with(drawerView.context)
+                            .load(uri)
+                            .into(iv)
+                    } else {
+                        iv.setImageResource(org.devmiyax.yabasanshiro.R.mipmap.ic_launcher)
+                    }
                 }
             }
 
- */
         }
         // Set the drawer toggle as the DrawerListener
         drawerLayout!!.addDrawerListener(drawerToggle)

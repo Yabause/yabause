@@ -1076,7 +1076,8 @@ class GameSelectPresenter(
         downloadFileName: String,
         currentUser: FirebaseUser,
         destinationDirectory: File,
-        isUpdateDate: Boolean
+        isUpdateDate: Boolean,
+        onSccess: () -> Unit
     )
     {
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
@@ -1109,6 +1110,7 @@ class GameSelectPresenter(
                             SyncResult.SUCCESS,
                             "Success to download backup data from cloud"
                         )
+                        onSccess()
                     }
                 }
 
@@ -1413,7 +1415,8 @@ class GameSelectPresenter(
                                     currentUser,
                                     destinationDirectory,
                                     false
-                                )
+                                ){}
+
 
                                 // ローカルにファイルが存在する場合、クラウドのほうが新しかったらダウンロード
                             } else {
@@ -1475,7 +1478,7 @@ class GameSelectPresenter(
                                                             currentUser,
                                                             destinationDirectory,
                                                             false
-                                                        )
+                                                        ){}
                                                     }
 
                                                 val dialog = builder.create()
@@ -1493,7 +1496,7 @@ class GameSelectPresenter(
                                         currentUser,
                                         destinationDirectory,
                                         false
-                                    )
+                                    ){}
 
                                 } else {
                                     Log.d(TAG, "Local file is same as cloud ")
