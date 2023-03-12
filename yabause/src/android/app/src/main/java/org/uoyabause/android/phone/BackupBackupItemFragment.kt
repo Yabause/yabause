@@ -11,8 +11,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import androidx.activity.viewModels
+import androidx.compose.runtime.Composable
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -27,10 +34,15 @@ import com.android.billingclient.api.QueryPurchasesParams
 import com.google.common.collect.ImmutableList
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.devmiyax.yabasanshiro.R
+import org.uoyabause.android.BillingViewModel
 import org.uoyabause.android.GameSelectPresenter
 import org.uoyabause.android.ShowPinInFragment
 import org.uoyabause.android.YabauseApplication
@@ -40,15 +52,6 @@ import org.uoyabause.android.phone.placeholder.PlaceholderContent
 import org.uoyabause.android.repository.SubscriptionDataRepository
 import java.io.File
 
-data class MainState(
-    val hasRenewableBasic: Boolean? = false,
-    val hasPrepaidBasic: Boolean? = false,
-    val hasRenewablePremium: Boolean? = false,
-    val hasPrepaidPremium: Boolean? = false,
-    val basicProductDetails: ProductDetails? = null,
-    val premiumProductDetails: ProductDetails? = null,
-    val purchases: List<Purchase>? = null,
-)
 
 /**
  * A fragment representing a list of Items.
@@ -57,190 +60,9 @@ class BackupBackupItemFragment : Fragment() {
 
     private var columnCount = 1
     private lateinit var presenter_: GameSelectPresenter
-
-
-    var billingClient: BillingClientWrapper = BillingClientWrapper(YabauseApplication.appContext)
-    private var repo: SubscriptionDataRepository =
-        SubscriptionDataRepository(billingClientWrapper = billingClient)
-    private val _billingConnectionState = MutableLiveData(false)
-    val billingConnectionState: LiveData<Boolean> = _billingConnectionState
-
-    init {
-        billingClient.startBillingConnection(billingConnectionState = _billingConnectionState)
-    }
-
-    // The productsForSaleFlows object combines all the Product flows into one for emission.
-    val productsForSaleFlows = combine(
-        repo.basicProductDetails,
-        repo.premiumProductDetails
-    ) { basicProductDetails,
-        premiumProductDetails
-        ->
-        MainState(
-            basicProductDetails = basicProductDetails,
-            premiumProductDetails = premiumProductDetails
-        )
-    }
-
-    // The userCurrentSubscriptionFlow object combines all the possible subscription flows into one
-    // for emission.
-    private val userCurrentSubscriptionFlow = combine(
-        repo.hasRenewableBasic,
-        repo.hasPrepaidBasic,
-        repo.hasRenewablePremium,
-        repo.hasPrepaidPremium
-    ) { hasRenewableBasic,
-        hasPrepaidBasic,
-        hasRenewablePremium,
-        hasPrepaidPremium
-        ->
-        MainState(
-            hasRenewableBasic = hasRenewableBasic,
-            hasPrepaidBasic = hasPrepaidBasic,
-            hasRenewablePremium = hasRenewablePremium,
-            hasPrepaidPremium = hasPrepaidPremium
-        )
-    }
-
-    val currentPurchasesFlow = repo.purchases
-
-    private fun retrieveEligibleOffers(
-        offerDetails: MutableList<ProductDetails.SubscriptionOfferDetails>,
-        tag: String
-    ): List<ProductDetails.SubscriptionOfferDetails> {
-        val eligibleOffers = emptyList<ProductDetails.SubscriptionOfferDetails>().toMutableList()
-        offerDetails.forEach { offerDetail ->
-            if (offerDetail.offerTags.contains(tag)) {
-                eligibleOffers.add(offerDetail)
-            }
-        }
-
-        return eligibleOffers
-    }
-
-    private fun leastPricedOfferToken(
-        offerDetails: List<ProductDetails.SubscriptionOfferDetails>
-    ): String {
-        var offerToken = String()
-        var leastPricedOffer: ProductDetails.SubscriptionOfferDetails
-        var lowestPrice = Int.MAX_VALUE
-
-        if (!offerDetails.isNullOrEmpty()) {
-            for (offer in offerDetails) {
-                for (price in offer.pricingPhases.pricingPhaseList) {
-                    if (price.priceAmountMicros < lowestPrice) {
-                        lowestPrice = price.priceAmountMicros.toInt()
-                        leastPricedOffer = offer
-                        offerToken = leastPricedOffer.offerToken
-                    }
-                }
-            }
-        }
-        return offerToken
-    }
-
-    private fun upDowngradeBillingFlowParamsBuilder(
-        productDetails: ProductDetails,
-        offerToken: String,
-        oldToken: String
-    ): BillingFlowParams {
-        return BillingFlowParams.newBuilder().setProductDetailsParamsList(
-            listOf(
-                BillingFlowParams.ProductDetailsParams.newBuilder()
-                    .setProductDetails(productDetails)
-                    .setOfferToken(offerToken)
-                    .build()
-            )
-        ).setSubscriptionUpdateParams(
-            BillingFlowParams.SubscriptionUpdateParams.newBuilder()
-                .setOldPurchaseToken(oldToken)
-                .setReplaceProrationMode(
-                    BillingFlowParams.ProrationMode.IMMEDIATE_AND_CHARGE_FULL_PRICE
-                )
-                .build()
-        ).build()
-    }
-
-    private fun billingFlowParamsBuilder(
-        productDetails: ProductDetails,
-        offerToken: String
-    ): BillingFlowParams.Builder {
-        return BillingFlowParams.newBuilder().setProductDetailsParamsList(
-            listOf(
-                BillingFlowParams.ProductDetailsParams.newBuilder()
-                    .setProductDetails(productDetails)
-                    .setOfferToken(offerToken)
-                    .build()
-            )
-        )
-    }
-
-    fun buy(
-        productDetails: ProductDetails,
-        currentPurchases: List<Purchase>?,
-        activity: Activity,
-        tag: String
-    ) {
-        val offers =
-            productDetails.subscriptionOfferDetails?.let {
-                retrieveEligibleOffers(
-                    offerDetails = it,
-                    tag = tag.lowercase()
-                )
-            }
-        val offerToken = offers?.let { leastPricedOfferToken(it) }
-        val oldPurchaseToken: String
-
-        // Get current purchase. In this app, a user can only have one current purchase at
-        // any given time.
-        if (!currentPurchases.isNullOrEmpty() &&
-            currentPurchases.size == MAX_CURRENT_PURCHASES_ALLOWED
-        ) {
-/*
-            // This either an upgrade, downgrade, or conversion purchase.
-            val currentPurchase = currentPurchases.first()
-
-            // Get the token from current purchase.
-            oldPurchaseToken = currentPurchase.purchaseToken
-
-            val billingParams = offerToken?.let {
-                upDowngradeBillingFlowParamsBuilder(
-                    productDetails = productDetails,
-                    offerToken = it,
-                    oldToken = oldPurchaseToken
-                )
-            }
-
-            if (billingParams != null) {
-                billingClient.launchBillingFlow(
-                    activity,
-                    billingParams
-                )
-            }
-
- */
-        } else if (currentPurchases == null) {
-            // This is a normal purchase.
-            val billingParams = offerToken?.let {
-                billingFlowParamsBuilder(
-                    productDetails = productDetails,
-                    offerToken = it
-                )
-            }
-
-            if (billingParams != null) {
-                billingClient.launchBillingFlow(
-                    activity,
-                    billingParams.build()
-                )
-            }
-        } else if (!currentPurchases.isNullOrEmpty() &&
-            currentPurchases.size > MAX_CURRENT_PURCHASES_ALLOWED
-        ) {
-            // The developer has allowed users  to have more than 1 purchase, so they need to
-            /// implement a logic to find which one to use.
-            Log.d(TAG, "User has more than 1 current purchase.")
-        }
+    private val viewModel by viewModels<BillingViewModel>()
+    val connectionObserver = Observer<Boolean> { isConnecteed ->
+        Log.d(TAG,"isConnected ${isConnecteed}")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -249,7 +71,50 @@ class BackupBackupItemFragment : Fragment() {
         arguments?.let {
             columnCount = it.getInt(ARG_COLUMN_COUNT)
         }
+        viewModel.billingConnectionState.observe(this,connectionObserver)
+        lifecycleScope.launchWhenStarted {
+            viewModel.userCurrentSubscriptionFlow.collect { collectedSubscriptions ->
+                when {
+                    collectedSubscriptions.hasPrepaidBasic == true -> {
+                        Log.d(TAG,"hasPrepaidBasic")
+                        if(!presenter_.isOnSubscription) {
+                            presenter_.isOnSubscription = true
+                            onEnableSubscribe()
+                            presenter_.syncBackup()
+                        }
 
+                    }
+                    collectedSubscriptions.hasRenewableBasic == true -> {
+                        Log.d(TAG,"hasRenewableBasic")
+                        if(!presenter_.isOnSubscription) {
+                            presenter_.isOnSubscription = true
+                            onEnableSubscribe()
+                            presenter_.syncBackup()
+                        }
+                    }
+                    else -> {
+                        Log.d(TAG,"else")
+                        if(presenter_.isOnSubscription) {
+                            presenter_.isOnSubscription = false
+                            onDiaslbeSubscribe()
+                        }
+                    }
+                }
+            }
+        }
+
+
+    }
+
+    fun onDiaslbeSubscribe() {
+        val chk = this.view?.findViewById<CheckBox>(R.id.checkBoxAutoBackup)
+        chk?.isEnabled = false
+    }
+
+
+    fun onEnableSubscribe() {
+        val chk = this.view?.findViewById<CheckBox>(R.id.checkBoxAutoBackup)
+        chk?.isEnabled = true
     }
 
 
@@ -259,6 +124,8 @@ class BackupBackupItemFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_backupbackup_item_list, container, false)
         val cview = view.findViewById<RecyclerView>(R.id.BackupBackuplist)
+
+
         // Set the adapter
         if (cview is RecyclerView) {
             with(cview) {
@@ -336,15 +203,20 @@ class BackupBackupItemFragment : Fragment() {
 
         val chk = view.findViewById<CheckBox>(R.id.checkBoxAutoBackup)
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(this.requireActivity())
-        chk.isChecked  = sharedPref.getBoolean("auto_backup",false)
-        if( chk.isChecked  == false ){
-            val touchInterceptorView = view.findViewById<View>(R.id.touch_interceptor_view)
-            touchInterceptorView.setOnTouchListener { _, _ -> true }
-            cview.alpha = 0.5f
+        if( presenter_.isOnSubscription ) {
+            chk.isChecked = sharedPref.getBoolean("auto_backup", true)
+            if (chk.isChecked == false) {
+                val touchInterceptorView = view.findViewById<View>(R.id.touch_interceptor_view)
+                touchInterceptorView.setOnTouchListener { _, _ -> true }
+                cview.alpha = 0.5f
+            } else {
+                val touchInterceptorView = view.findViewById<View>(R.id.touch_interceptor_view)
+                touchInterceptorView.setOnTouchListener { _, _ -> false }
+                cview.alpha = 1.0f
+            }
         }else{
-            val touchInterceptorView = view.findViewById<View>(R.id.touch_interceptor_view)
-            touchInterceptorView.setOnTouchListener { _, _ -> false }
-            cview.alpha = 1.0f
+            chk.isEnabled = false
+            chk.isChecked = false
         }
 
         chk.setOnCheckedChangeListener { buttonView, isChecked ->
@@ -360,6 +232,7 @@ class BackupBackupItemFragment : Fragment() {
 
                 presenter_.syncBackup()
 
+
             } else {
                 // チェックが外れたときの処理
                 //Log.d(TAG, "CheckBox is unchecked")
@@ -371,6 +244,8 @@ class BackupBackupItemFragment : Fragment() {
                 sharedPref.edit().putBoolean("auto_backup",false).commit()
             }
         }
+
+
 
         return view
     }

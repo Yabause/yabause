@@ -229,6 +229,6 @@ class BillingClientWrapper(
         private const val BASIC_SUB = "up_basic_sub"
         private const val PREMIUM_SUB = "up_premium_sub"
 
-        private val LIST_OF_PRODUCTS = listOf(BASIC_SUB, PREMIUM_SUB)
+        private val LIST_OF_PRODUCTS = listOf(BASIC_SUB)
     }
 }

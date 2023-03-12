@@ -94,6 +94,7 @@ import java.util.zip.ZipOutputStream
 import androidx.appcompat.view.ContextThemeWrapper as ContextThemeWrapper1
 import android.os.Handler
 import android.os.Looper
+import org.uoyabause.android.phone.BackupBackupItemFragment
 
 
 class GameSelectPresenter(
@@ -108,6 +109,9 @@ class GameSelectPresenter(
     private val scope = CoroutineScope(Dispatchers.IO)
     private var backupReference: DatabaseReference? = null
     private var backupListener: ValueEventListener? = null
+
+    var isOnSubscription = false
+
     enum class BackupSyncState {
         IDLE,
         CHECKING_DOWNLOAD,
@@ -1081,7 +1085,12 @@ class GameSelectPresenter(
     )
     {
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
-        if( sharedPref.getBoolean("auto_backup",false) == false ){
+
+        if( isOnSubscription == false ){
+            return
+        }
+
+        if( sharedPref.getBoolean("auto_backup",true) == false ){
             return
         }
 
@@ -1133,10 +1142,14 @@ class GameSelectPresenter(
         localFile: File,
         currentUser: FirebaseUser,
         aid: String,
+        onSccess: () -> Unit
     ) {
+        if( isOnSubscription == false ){
+            return
+        }
 
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
-        if( sharedPref.getBoolean("auto_backup",false) == false ){
+        if( sharedPref.getBoolean("auto_backup",true) == false ){
             return
         }
 
@@ -1202,6 +1215,7 @@ class GameSelectPresenter(
                                     listener_.onFinishSyncBackUp(SyncResult.SUCCESS, "Success to upload backup data to cloud" )
                                 }
                                 checkAndRemoveLastData(currentUser)
+                                onSccess()
                             }
                         }
                     })
@@ -1225,8 +1239,12 @@ class GameSelectPresenter(
 
     fun startSubscribeBackupMemory( currentUser: FirebaseUser){
 
+        if( isOnSubscription == false ){
+            return
+        }
+
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
-        if( sharedPref.getBoolean("auto_backup",false) == false ){
+        if( sharedPref.getBoolean("auto_backup",true) == false ){
             return
         }
 
@@ -1271,8 +1289,12 @@ class GameSelectPresenter(
 
     fun checkAndRemoveLastData(currentUser: FirebaseUser){
 
+        if( isOnSubscription == false ){
+            return
+        }
+
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
-        if( sharedPref.getBoolean("auto_backup",false) == false ){
+        if( sharedPref.getBoolean("auto_backup",true) == false ){
             return
         }
 
@@ -1339,8 +1361,12 @@ class GameSelectPresenter(
 
         fun syncBackup() {
 
+            if( isOnSubscription == false ){
+                return
+            }
+
             val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
-            if( sharedPref.getBoolean("auto_backup",false) == false ){
+            if( sharedPref.getBoolean("auto_backup",true) == false ){
                 return
             }
 
@@ -1348,6 +1374,7 @@ class GameSelectPresenter(
             if( syncState == BackupSyncState.CHECKING_DOWNLOAD ){
                 return
             }
+
 
             target_.activity?.runOnUiThread {
                 syncState = BackupSyncState.CHECKING_DOWNLOAD
@@ -1415,7 +1442,9 @@ class GameSelectPresenter(
                                     currentUser,
                                     destinationDirectory,
                                     false
-                                ){}
+                                ){
+                                    startSubscribeBackupMemory( currentUser)
+                                }
 
 
                                 // ローカルにファイルが存在する場合、クラウドのほうが新しかったらダウンロード
@@ -1438,7 +1467,9 @@ class GameSelectPresenter(
                                         localFile,
                                         currentUser,
                                         aid
-                                    )
+                                    ){
+                                        startSubscribeBackupMemory( currentUser)
+                                    }
                                 }
 
                                 // クラウドのほうが新しい => ダウンロード
@@ -1465,7 +1496,9 @@ class GameSelectPresenter(
                                                             localFile,
                                                             currentUser,
                                                             aid
-                                                        )
+                                                        ){
+                                                            startSubscribeBackupMemory( currentUser)
+                                                        }
                                                     }
                                                     .setNegativeButton("Cloud") { dialog, which ->
 
@@ -1478,7 +1511,9 @@ class GameSelectPresenter(
                                                             currentUser,
                                                             destinationDirectory,
                                                             false
-                                                        ){}
+                                                        ){
+                                                            startSubscribeBackupMemory( currentUser)
+                                                        }
                                                     }
 
                                                 val dialog = builder.create()
@@ -1496,7 +1531,9 @@ class GameSelectPresenter(
                                         currentUser,
                                         destinationDirectory,
                                         false
-                                    ){}
+                                    ){
+                                        startSubscribeBackupMemory( currentUser)
+                                    }
 
                                 } else {
                                     Log.d(TAG, "Local file is same as cloud ")
@@ -1514,7 +1551,9 @@ class GameSelectPresenter(
                                 localFile,
                                 currentUser,
                                 aid
-                            )
+                            ){
+                                startSubscribeBackupMemory( currentUser)
+                            }
                         }
                     }
 
@@ -1525,7 +1564,9 @@ class GameSelectPresenter(
                             localFile,
                             currentUser,
                             aid
-                        )
+                        ){
+                            startSubscribeBackupMemory( currentUser)
+                        }
                     }
                 })
 

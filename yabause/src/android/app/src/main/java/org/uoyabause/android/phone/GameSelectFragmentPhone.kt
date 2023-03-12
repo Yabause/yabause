@@ -22,6 +22,8 @@ package org.uoyabause.android.phone
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.ProgressDialog.show
 import android.app.UiModeManager
 import android.content.Context
 import android.content.Intent
@@ -35,6 +37,7 @@ import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.View.VISIBLE
@@ -52,6 +55,9 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
 import androidx.viewpager.widget.ViewPager
@@ -71,6 +77,8 @@ import com.google.firebase.analytics.ktx.logEvent
 import io.noties.markwon.Markwon
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.devmiyax.yabasanshiro.StartupActivity
@@ -152,6 +160,14 @@ class GameSelectFragmentPhone : Fragment(),
     private lateinit var progressMessage: TextView
     private var isBackGroundComplete = false
 
+    private var isBillingConnected = false
+    private val viewModel by viewModels<BillingViewModel>()
+    val connectionObserver = androidx.lifecycle.Observer<Boolean> { isConnecteed ->
+        Log.d(BackupBackupItemFragment.TAG,"isConnected ${isConnecteed}")
+        isBillingConnected = isConnecteed
+    }
+
+
     private val alphabet = arrayOf(
         "A",
         "B",
@@ -186,6 +202,34 @@ class GameSelectFragmentPhone : Fragment(),
         instance = this
         presenter = GameSelectPresenter(this as Fragment, yabauseActivityLauncher,this)
         tabPageAdapter = GameViewPagerAdapter(this@GameSelectFragmentPhone.childFragmentManager)
+        presenter.isOnSubscription = false
+        viewModel.billingConnectionState.observe(this,connectionObserver)
+        lifecycleScope.launchWhenStarted {
+            viewModel.userCurrentSubscriptionFlow.collect { collectedSubscriptions ->
+                when {
+                    collectedSubscriptions.hasPrepaidBasic == true -> {
+                        Log.d(BackupBackupItemFragment.TAG,"hasPrepaidBasic")
+                        if( presenter.isOnSubscription == false) {
+                            presenter.isOnSubscription = true
+                            presenter.syncBackup()
+                        }
+
+                    }
+                    collectedSubscriptions.hasRenewableBasic == true -> {
+                        Log.d(BackupBackupItemFragment.TAG,"hasRenewableBasic")
+                        if( presenter.isOnSubscription == false) {
+                            presenter.isOnSubscription = true
+                            presenter.syncBackup()
+                        }
+                    }
+                    else -> {
+                        Log.d(BackupBackupItemFragment.TAG,"else")
+                        presenter.isOnSubscription = false
+                    }
+                }
+            }
+        }
+
     }
 
     private var readRequestLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -257,17 +301,54 @@ class GameSelectFragmentPhone : Fragment(),
         }
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu): Unit {
+        val menuItem = menu.findItem(R.id.menu_auto_backupsync)
+        menuItem.isEnabled = isBillingConnected // メニューアイテムが選択可能かどうかを判定し、isEnabled プロパティに設定する
+        return
+    }
+
+    suspend fun startSub(){
+        if( viewModel.billingConnectionState.value == true) {
+            val YEARLY_BASIC_PLANS_TAG = "yearly-basic"
+            viewModel.productsForSaleFlows.collectLatest { it ->
+                it.let {
+                    viewModel.buy(
+                        productDetails = it,
+                        currentPurchases = null,
+                        tag = YEARLY_BASIC_PLANS_TAG,
+                        activity = requireActivity()
+                    )
+                }
+            }
+        }
+    }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         drawerLayout!!.closeDrawers()
         when (item.itemId) {
             org.devmiyax.yabasanshiro.R.id.menu_auto_backupsync -> {
 
-                val fragment = BackupBackupItemFragment.newInstance(1,presenter)
-                val transaction = requireActivity().supportFragmentManager.beginTransaction()
-                transaction.replace(org.devmiyax.yabasanshiro.R.id.ext_fragment, fragment)
-                transaction.addToBackStack(null)
-                transaction.commit()
+                if( presenter.isOnSubscription ) {
+                    val fragment = BackupBackupItemFragment.newInstance(1, presenter)
+                    val transaction = requireActivity().supportFragmentManager.beginTransaction()
+                    transaction.replace(org.devmiyax.yabasanshiro.R.id.ext_fragment, fragment)
+                    transaction.addToBackStack(null)
+                    transaction.commit()
+                }else{
+
+                    AlertDialog.Builder(requireActivity())
+                        .setTitle("Subscribe Auto backup")
+                        .setMessage("fee: $1/year\n * automatically backup data to cloud\n *rollback * Shar backup data dvices")
+                        .setPositiveButton(R.string.yes){ _, _->
+                            lifecycleScope.launch {
+                                startSub()
+                            }
+                        }.setNegativeButton(R.string.no){ _, _->
+
+                        }
+                        .show()
+
+                }
 
             }
             org.devmiyax.yabasanshiro.R.id.menu_item_setting -> {
