@@ -1,4 +1,4 @@
-package org.devmiyax.yabasanshiro;
+package org.uoyabause.yabasanshiro;
 
 /*  Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
@@ -19,12 +19,17 @@ package org.devmiyax.yabasanshiro;
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+import android.app.Application;
+
+import com.activeandroid.Configuration;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
+import org.uoyabause.android.GameInfo;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
@@ -33,7 +38,7 @@ import static junit.framework.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 @Config(
     //constants = BuildConfig.class,
-    application = TestApplication.class,    // Run with TestApplication instead of actual
+    application = GameInfoUnitText.TestApplication.class,    // Run with TestApplication instead of actual
     sdk = 21                                // Test against Lollipop
 )
 public class GameInfoUnitText {
@@ -48,4 +53,22 @@ public class GameInfoUnitText {
     assertEquals(1, 1);
   }
 
+  public static class TestApplication extends Application {
+    @Override
+    public void onCreate() {
+      super.onCreate();
+      // Create configurations for a temporary mock database
+      Configuration.Builder configuration = new Configuration.Builder(this).setDatabaseName(null);
+      configuration.addModelClasses(GameInfo.class);
+      // Initialize ActiveAndroid DB
+      //ActiveAndroid.initialize(configuration.create());
+    }
+
+    @Override
+    public void onTerminate() {
+      // Dispose temporary database on termination
+      //ActiveAndroid.dispose();
+      super.onTerminate();
+    }
+  }
 }

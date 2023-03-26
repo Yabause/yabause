@@ -74,7 +74,6 @@ import androidx.leanback.widget.RowPresenter
 import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
 import com.activeandroid.query.Select
-import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
@@ -896,7 +895,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         loadRows()
     }
 
-    override fun onFinishSyncBackUp(result: GameSelectPresenter.SyncResult, message: String) {
+    override fun onFinishSyncBackUp(result: AutoBackupManager.SyncResult, message: String) {
         TODO("Not yet implemented")
     }
 

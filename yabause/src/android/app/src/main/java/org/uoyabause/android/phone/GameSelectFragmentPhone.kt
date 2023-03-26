@@ -23,13 +23,11 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
-import android.app.ProgressDialog.show
 import android.app.UiModeManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.graphics.BitmapFactory
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
@@ -56,14 +54,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
 import androidx.viewpager.widget.ViewPager
 import com.activeandroid.query.Select
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.TransformationUtils.centerCrop
 import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
 import com.google.android.material.navigation.NavigationView
@@ -85,6 +81,7 @@ import org.devmiyax.yabasanshiro.StartupActivity
 import org.uoyabause.android.*
 import org.uoyabause.android.FileDialog.FileSelectedListener
 import org.uoyabause.android.GameSelectPresenter.GameSelectPresenterListener
+import org.uoyabause.android.AutoBackupManager
 import org.uoyabause.android.tv.GameSelectFragment
 import java.io.File
 import java.util.*
@@ -202,29 +199,34 @@ class GameSelectFragmentPhone : Fragment(),
         instance = this
         presenter = GameSelectPresenter(this as Fragment, yabauseActivityLauncher,this)
         tabPageAdapter = GameViewPagerAdapter(this@GameSelectFragmentPhone.childFragmentManager)
-        presenter.isOnSubscription = false
-        viewModel.billingConnectionState.observe(this,connectionObserver)
-        lifecycleScope.launchWhenStarted {
-            viewModel.userCurrentSubscriptionFlow.collect { collectedSubscriptions ->
-                when {
-                    collectedSubscriptions.hasPrepaidBasic == true -> {
-                        Log.d(BackupBackupItemFragment.TAG,"hasPrepaidBasic")
-                        if( presenter.isOnSubscription == false) {
-                            presenter.isOnSubscription = true
-                            presenter.syncBackup()
-                        }
 
-                    }
-                    collectedSubscriptions.hasRenewableBasic == true -> {
-                        Log.d(BackupBackupItemFragment.TAG,"hasRenewableBasic")
-                        if( presenter.isOnSubscription == false) {
-                            presenter.isOnSubscription = true
-                            presenter.syncBackup()
+        if( BuildConfig.DEBUG ){
+            presenter.isOnSubscription = true
+        }else {
+            presenter.isOnSubscription = false
+            viewModel.billingConnectionState.observe(this, connectionObserver)
+            lifecycleScope.launchWhenStarted {
+                viewModel.userCurrentSubscriptionFlow.collect { collectedSubscriptions ->
+                    when {
+                        collectedSubscriptions.hasPrepaidBasic == true -> {
+                            Log.d(BackupBackupItemFragment.TAG, "hasPrepaidBasic")
+                            if (presenter.isOnSubscription == false) {
+                                presenter.isOnSubscription = true
+                                presenter.syncBackup()
+                            }
+
                         }
-                    }
-                    else -> {
-                        Log.d(BackupBackupItemFragment.TAG,"else")
-                        presenter.isOnSubscription = false
+                        collectedSubscriptions.hasRenewableBasic == true -> {
+                            Log.d(BackupBackupItemFragment.TAG, "hasRenewableBasic")
+                            if (presenter.isOnSubscription == false) {
+                                presenter.isOnSubscription = true
+                                presenter.syncBackup()
+                            }
+                        }
+                        else -> {
+                            Log.d(BackupBackupItemFragment.TAG, "else")
+                            presenter.isOnSubscription = false
+                        }
                     }
                 }
             }
@@ -327,6 +329,10 @@ class GameSelectFragmentPhone : Fragment(),
         drawerLayout!!.closeDrawers()
         when (item.itemId) {
             org.devmiyax.yabasanshiro.R.id.menu_auto_backupsync -> {
+
+                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                    param("event", "menu_auto_backupsync")
+                }
 
                 if( presenter.isOnSubscription ) {
                     val fragment = BackupBackupItemFragment.newInstance(1, presenter)
@@ -1128,12 +1134,12 @@ class GameSelectFragmentPhone : Fragment(),
     override fun onStartSyncBackUp(){
     }
 
-    override fun onFinishSyncBackUp(result: GameSelectPresenter.SyncResult, message: String) {
-        if( result == GameSelectPresenter.SyncResult.SUCCESS ){
+    override fun onFinishSyncBackUp(result: AutoBackupManager.SyncResult, message: String) {
+        if( result == AutoBackupManager.SyncResult.SUCCESS ){
             Snackbar.make(rootView.rootView, message, Snackbar.LENGTH_LONG).show();
         }
 
-        if( result == GameSelectPresenter.SyncResult.FAIL ){
+        if( result == AutoBackupManager.SyncResult.FAIL ){
             val color = ContextCompat.getColor(requireContext(), org.devmiyax.yabasanshiro.R.color.design_default_color_error)
             val snackbar = Snackbar.make(rootView.rootView, message, Snackbar.LENGTH_LONG)
             snackbar.setTextColor( color )

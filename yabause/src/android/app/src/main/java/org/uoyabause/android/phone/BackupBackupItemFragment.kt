@@ -31,6 +31,7 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.common.collect.ImmutableList
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -41,6 +42,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.BillingViewModel
 import org.uoyabause.android.GameSelectPresenter
@@ -72,31 +74,35 @@ class BackupBackupItemFragment : Fragment() {
             columnCount = it.getInt(ARG_COLUMN_COUNT)
         }
         viewModel.billingConnectionState.observe(this,connectionObserver)
-        lifecycleScope.launchWhenStarted {
-            viewModel.userCurrentSubscriptionFlow.collect { collectedSubscriptions ->
-                when {
-                    collectedSubscriptions.hasPrepaidBasic == true -> {
-                        Log.d(TAG,"hasPrepaidBasic")
-                        if(!presenter_.isOnSubscription) {
-                            presenter_.isOnSubscription = true
-                            onEnableSubscribe()
-                            presenter_.syncBackup()
-                        }
+        if( BuildConfig.DEBUG ){
+            presenter_.isOnSubscription = true
+        }else {
+            lifecycleScope.launchWhenStarted {
+                viewModel.userCurrentSubscriptionFlow.collect { collectedSubscriptions ->
+                    when {
+                        collectedSubscriptions.hasPrepaidBasic == true -> {
+                            Log.d(TAG, "hasPrepaidBasic")
+                            if (!presenter_.isOnSubscription) {
+                                presenter_.isOnSubscription = true
+                                onEnableSubscribe()
+                                presenter_.syncBackup()
+                            }
 
-                    }
-                    collectedSubscriptions.hasRenewableBasic == true -> {
-                        Log.d(TAG,"hasRenewableBasic")
-                        if(!presenter_.isOnSubscription) {
-                            presenter_.isOnSubscription = true
-                            onEnableSubscribe()
-                            presenter_.syncBackup()
                         }
-                    }
-                    else -> {
-                        Log.d(TAG,"else")
-                        if(presenter_.isOnSubscription) {
-                            presenter_.isOnSubscription = false
-                            onDiaslbeSubscribe()
+                        collectedSubscriptions.hasRenewableBasic == true -> {
+                            Log.d(TAG, "hasRenewableBasic")
+                            if (!presenter_.isOnSubscription) {
+                                presenter_.isOnSubscription = true
+                                onEnableSubscribe()
+                                presenter_.syncBackup()
+                            }
+                        }
+                        else -> {
+                            Log.d(TAG, "else")
+                            if (presenter_.isOnSubscription) {
+                                presenter_.isOnSubscription = false
+                                onDiaslbeSubscribe()
+                            }
                         }
                     }
                 }
@@ -139,64 +145,13 @@ class BackupBackupItemFragment : Fragment() {
                 val a = adapter as BackupBackupItemRecyclerViewAdapter
                 a.setRollback {
 
-                    val auth = FirebaseAuth.getInstance()
-                    val currentUser = auth.currentUser
-                    if (currentUser != null) {
+                    val downloadFilename =
+                        PlaceholderContent.ITEMS[it].rawdata["filename"] as String
 
+                    val key = PlaceholderContent.ITEMS[it].key as String
 
-                        val downloadFilename =
-                            PlaceholderContent.ITEMS[it].rawdata["filename"] as String
-                        val destinationDirectory = File(YabauseStorage.storage.getMemoryPath("/"))
-                        presenter_.downloadBackupMemory(
-                            downloadFilename,
-                            currentUser,
-                            destinationDirectory,
-                            true
-                        ) {
-                            val mem = YabauseStorage.storage.getMemoryPath("memory.ram")
-                            val localFile = File(mem)
-                            val localUpdateTime = localFile.lastModified()
-                            val database = FirebaseDatabase.getInstance()
-                            val backupReference =
-                                database.getReference("user-posts").child(currentUser.uid)
-                                    .child("backupHistory")
+                    presenter_.rollBackMemory(downloadFilename,key)
 
-                            val dataref = backupReference.child(PlaceholderContent.ITEMS[it].key)
-
-                            dataref.child("date").setValue(localUpdateTime)
-                                .addOnCompleteListener { task ->
-                                    if (task.isSuccessful) {
-                                        // データの更新が成功した場合に実行される処理
-                                        //Log.d(TAG, "Data updated successfully.")
-                                        presenter_.syncBackup()
-                                    } else {
-                                        // データの更新が失敗した場合に実行される処理
-                                        //Log.w(TAG, "Failed to update data.", task.exception)
-                                    }
-                            }
-                        }
-
-/*
-                        val database = FirebaseDatabase.getInstance()
-                        val backupReference = database.getReference("user-posts").child(currentUser.uid)
-                            .child("backupHistory")
-
-                        val dataref = backupReference.child( PlaceholderContent.ITEMS[it].key )
-
-                        dataref.child("date").setValue(System.currentTimeMillis() ).addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                // データの更新が成功した場合に実行される処理
-                                //Log.d(TAG, "Data updated successfully.")
-                                presenter_.syncBackup()
-                            } else {
-                                // データの更新が失敗した場合に実行される処理
-                                //Log.w(TAG, "Failed to update data.", task.exception)
-                            }
-                        }
-*/
-
-
-                    }
                 }
             }
         }
