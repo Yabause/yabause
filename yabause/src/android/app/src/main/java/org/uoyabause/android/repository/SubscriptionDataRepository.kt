@@ -83,7 +83,7 @@ class SubscriptionDataRepository(billingClientWrapper: BillingClientWrapper) {
 
     companion object {
         // List of subscription product offerings
-        private const val BASIC_SUB = "up_basic_sub"
+        private const val BASIC_SUB = "cloud_functions"
         private const val PREMIUM_SUB = "up_premium_sub"
     }
 }

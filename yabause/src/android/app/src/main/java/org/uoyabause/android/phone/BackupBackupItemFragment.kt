@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.fragment.app.viewModels
@@ -33,8 +34,13 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.common.collect.ImmutableList
+import com.google.firebase.analytics.ktx.logEvent
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
+import io.reactivex.observers.DisposableSingleObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -66,15 +72,44 @@ class BackupBackupItemFragment : Fragment() {
     val connectionObserver = Observer<Boolean> { isConnecteed ->
         Log.d(TAG,"isConnected ${isConnecteed}")
     }
+    private var authchecker: DisposableSingleObserver<FirebaseUser>? = null
 
+    private var signInActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        presenter_.onSignIn(result.resultCode, result.data)
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user != null) {
+            PlaceholderContent.onSiginIn()
+            startSubscribe()
+        }else{
+            fragmentManager?.beginTransaction()?.remove(this)?.commit();
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         arguments?.let {
             columnCount = it.getInt(ARG_COLUMN_COUNT)
         }
+
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) {
+            presenter_.signIn(signInActivityLauncher)
+            return
+        }else {
+            startSubscribe()
+        }
+    }
+
+    fun startSubscribe(){
         viewModel.billingConnectionState.observe(this,connectionObserver)
-        if( BuildConfig.DEBUG ){
+
+        val remoteConfig = FirebaseRemoteConfig.getInstance()
+        val configSettings = FirebaseRemoteConfigSettings.Builder()
+            .setMinimumFetchIntervalInSeconds(3600)
+            .build()
+        remoteConfig.setConfigSettingsAsync(configSettings)
+        remoteConfig.setDefaultsAsync(R.xml.config)
+
+        if(!remoteConfig.getBoolean("is_enable_subscription")){
             presenter_.isOnSubscription = true
         }else {
             lifecycleScope.launchWhenStarted {
@@ -108,7 +143,6 @@ class BackupBackupItemFragment : Fragment() {
                 }
             }
         }
-
 
     }
 

@@ -39,6 +39,10 @@ object PlaceholderContent {
         //for (i in 1..COUNT) {
         //    addItem(createPlaceholderItem(i))
         //}
+        onSiginIn()
+    }
+
+    fun onSiginIn(){
         val auth = FirebaseAuth.getInstance()
         val currentUser = auth.currentUser
         if (currentUser != null) {
@@ -62,7 +66,9 @@ object PlaceholderContent {
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
+                    ITEMS.clear()
+                    ITEM_MAP.clear()
+                    adapter?.notifyDataSetChanged()
                 }
             })
         }

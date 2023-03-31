@@ -226,7 +226,7 @@ class BillingClientWrapper(
         private const val TAG = "BillingClient"
 
         // List of subscription product offerings
-        private const val BASIC_SUB = "up_basic_sub"
+        private const val BASIC_SUB = "cloud_functions"
         private const val PREMIUM_SUB = "up_premium_sub"
 
         private val LIST_OF_PRODUCTS = listOf(BASIC_SUB)

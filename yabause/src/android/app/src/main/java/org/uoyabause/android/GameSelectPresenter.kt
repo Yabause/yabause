@@ -195,12 +195,12 @@ class GameSelectPresenter(
                 return@SingleOnSubscribe
             }
             authEmitter = emitter
-
-            target_.startActivity(
-                AuthUI.getInstance()
-                    .createSignInIntentBuilder()
-                    .setAvailableProviders(Arrays.asList(GoogleBuilder().build()))
-                    .build())
+                target_.startActivity(
+                    AuthUI.getInstance()
+                        .createSignInIntentBuilder()
+                        .setAvailableProviders(Arrays.asList(GoogleBuilder().build()))
+                        .build()
+            )
         })
         .subscribeOn(AndroidSchedulers.mainThread())
         .observeOn(AndroidSchedulers.mainThread())

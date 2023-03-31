@@ -70,6 +70,8 @@ import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.android.play.core.review.testing.FakeReviewManager
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.logEvent
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import io.noties.markwon.Markwon
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
@@ -200,7 +202,14 @@ class GameSelectFragmentPhone : Fragment(),
         presenter = GameSelectPresenter(this as Fragment, yabauseActivityLauncher,this)
         tabPageAdapter = GameViewPagerAdapter(this@GameSelectFragmentPhone.childFragmentManager)
 
-        if( BuildConfig.DEBUG ){
+        val remoteConfig = FirebaseRemoteConfig.getInstance()
+        val configSettings = FirebaseRemoteConfigSettings.Builder()
+            .setMinimumFetchIntervalInSeconds(3600)
+            .build()
+        remoteConfig.setConfigSettingsAsync(configSettings)
+        remoteConfig.setDefaultsAsync(R.xml.config)
+
+        if(!remoteConfig.getBoolean("is_enable_subscription")){
             presenter.isOnSubscription = true
         }else {
             presenter.isOnSubscription = false
@@ -1087,6 +1096,15 @@ class GameSelectFragmentPhone : Fragment(),
         super.onResume()
         if (tracker != null) { // mTracker.setScreenName(TAG);
             tracker!!.send(ScreenViewBuilder().build())
+        }
+        if (presenter.currentUserName != null) {
+            val m = navigationView!!.menu
+            val miLogin = m.findItem(org.devmiyax.yabasanshiro.R.id.menu_item_login)
+            miLogin.setTitle(org.devmiyax.yabasanshiro.R.string.sign_out)
+        } else {
+            val m = navigationView!!.menu
+            val miLogin = m.findItem(org.devmiyax.yabasanshiro.R.id.menu_item_login)
+            miLogin.setTitle(org.devmiyax.yabasanshiro.R.string.sign_in)
         }
         isFront = true
         if (isBackGroundComplete) {
