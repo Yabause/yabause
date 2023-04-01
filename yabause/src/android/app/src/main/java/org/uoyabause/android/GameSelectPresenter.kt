@@ -195,7 +195,7 @@ class GameSelectPresenter(
                 return@SingleOnSubscribe
             }
             authEmitter = emitter
-                target_.startActivity(
+            target_.startActivity(
                     AuthUI.getInstance()
                         .createSignInIntentBuilder()
                         .setAvailableProviders(Arrays.asList(GoogleBuilder().build()))

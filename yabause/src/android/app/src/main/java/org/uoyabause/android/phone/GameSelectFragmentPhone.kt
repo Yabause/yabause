@@ -353,7 +353,7 @@ class GameSelectFragmentPhone : Fragment(),
 
                     AlertDialog.Builder(requireActivity())
                         .setTitle("Subscribe Auto backup")
-                        .setMessage("fee: $1/year\n * automatically backup data to cloud\n *rollback * Shar backup data dvices")
+                        .setMessage("fee: $1/year \n *Automatically backup data to cloud \n *Rollback \n *Share backup data between devices")
                         .setPositiveButton(R.string.yes){ _, _->
                             lifecycleScope.launch {
                                 startSub()
