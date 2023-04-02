@@ -236,4 +236,18 @@
     Remarque : <a href="https://www.uoyabause.org/static_pages/privacy_policy">La politique de confidentialité</a> décrit la manière dont les données sont traitées. YabaSanshiro envoie des données de diagnostic à devMiyax et à des services tiers pour aider à améliorer l\'application.
     </string>
 
+    <string name="restore_defaults">
+        réinitialiser
+    </string>
+    <string name="last_play_game">"Dernier jeu joué : "</string>
+    <string name="device">Dispositif:</string>
+    <string name="auto_backup_memory_sync">Synchronisation automatique de sauvegarde</string>
+    <string name="auto_backup_sync">Synchronisation automatique de sauvegarde</string>
+    <string name="msg_fail_to_upload_backup_data_to_cloud">Echec de téléchargement des données de sauvegarde sur le cloud</string>
+    <string name="msg_fail_to_unzip_backup_data_from_cloud">Échec de décompression des données de sauvegarde en provenance du cloud</string>
+    <string name="msg_success_to_download_backup_data_from_cloud">Le téléchargement de données de sauvegarde à partir du cloud a réussi</string>
+    <string name="msg_fail_to_download_backup_data_from_cloud">Impossible de télécharger les données de sauvegarde du cloud.</string>
+    <string name="msg_fail_to_zip_backup_data">Impossible de compresser les données de sauvegarde</string>
+    <string name="msg_success_to_upload_backup_data_to_cloud">Le téléchargement des données de sauvegarde vers le cloud a réussi.</string>
+
 </resources>

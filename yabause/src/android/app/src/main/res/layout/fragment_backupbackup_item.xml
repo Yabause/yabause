@@ -26,7 +26,8 @@
             android:layout_margin="16dp"
             android:text="2023/01/02 11:122:11"
             android:textAppearance="@style/Toolbar.TitleText"
-            android:textSize="24sp" />
+            android:textSize="24sp"
+            card_view:ignore="HardcodedText" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -40,7 +41,7 @@
             android:layout_marginTop="4dp"
             android:layout_marginEnd="4dp"
             android:layout_marginBottom="4dp"
-            android:text="Last play game: "
+            android:text="@string/last_play_game"
             android:textAppearance="?attr/textAppearanceListItem" />
 
 
@@ -50,7 +51,8 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:text="SonicR"
-            android:textAppearance="?attr/textAppearanceListItem" />
+            android:textAppearance="?attr/textAppearanceListItem"
+            card_view:ignore="HardcodedText" />
 
     </LinearLayout>
 
@@ -66,7 +68,7 @@
             android:layout_marginTop="4dp"
             android:layout_marginEnd="4dp"
             android:layout_marginBottom="4dp"
-            android:text="Device: "
+            android:text="@string/device"
             android:textAppearance="?attr/textAppearanceListItem" />
 
         <TextView
@@ -75,7 +77,8 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:text="Pocke Pie"
-            android:textAppearance="?attr/textAppearanceListItem" />
+            android:textAppearance="?attr/textAppearanceListItem"
+            card_view:ignore="HardcodedText" />
 
     </LinearLayout>
 

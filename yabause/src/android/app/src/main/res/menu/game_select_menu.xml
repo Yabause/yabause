@@ -25,7 +25,7 @@
     <item
         android:id="@+id/menu_auto_backupsync"
         android:icon="@drawable/cloud_sync_48px"
-        android:title="Auto backup sync"
+        android:title="@string/auto_backup_sync"
         />
 
     <item

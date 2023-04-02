@@ -18,6 +18,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import android.util.Base64;
+import org.devmiyax.yabasanshiro.R
 import java.text.SimpleDateFormat
 import java.util.TimeZone
 
@@ -33,7 +34,7 @@ class AutoBackupManager(
     }
 
     val listener_: AutoBackupManagerListener
-
+    val context = YabauseApplication.appContext
     var database_ : FirebaseDatabase
     var storage_ : FirebaseStorage
 
@@ -253,7 +254,7 @@ class AutoBackupManager(
                     exception ->
                 Log.d(TAG, "Upload Fail ${exception.message}")
                 localZipFile.delete()
-                listener_.onFinish(SyncResult.FAIL, "Fail to upload backup data to cloud" ){
+                listener_.onFinish(SyncResult.FAIL, context.getString(R.string.msg_fail_to_download_backup_data_from_cloud) ){
                     syncState = BackupSyncState.IDLE
                 }
 
@@ -266,29 +267,22 @@ class AutoBackupManager(
                 // ダウンロード成功時の処理
                 if( unzip(localZipFile, destinationDirectory,setTime) != 0 ){
                     localZipFile.delete()
-                    listener_.onFinish(SyncResult.FAIL, "Fail to unzip backup data from cloud"){
+                    listener_.onFinish(SyncResult.FAIL, context.getString(R.string.msg_fail_to_unzip_backup_data_from_cloud)){
                         syncState = BackupSyncState.IDLE
                     }
 
                 }else {
                     localZipFile.delete()
+
                     listener_.onFinish(SyncResult.SUCCESS,
-                        "Success to download backup data from cloud"){
+                        context.getString(R.string.msg_success_to_download_backup_data_from_cloud)){
                         syncState = BackupSyncState.IDLE
                     }
-
-                        listener_.onFinish(
-                            SyncResult.SUCCESS,
-                            "Success to download backup data from cloud"
-                        ) {
-                            syncState = BackupSyncState.IDLE
-                            onSccess()
-                        }
                 }
 
             } else {
                 // ダウンロード失敗時の処理
-                listener_.onFinish(SyncResult.FAIL, "Fail to download backup data from cloud"){
+                listener_.onFinish(SyncResult.FAIL, context.getString(R.string.msg_fail_to_download_backup_data_from_cloud)){
                     syncState = BackupSyncState.IDLE
                 }
 
@@ -322,14 +316,17 @@ class AutoBackupManager(
             return
         }
 
-        listener_.enable()
+        // ファイルがない場合は何もしない
+        if( !localFile.exists() ){
+            return
+        }
 
         val localUpdateTime = localFile.lastModified()
         val lmd5 = escapeFileName(calculateMD5(localFile))
         val memzip = YabauseStorage.storage.getMemoryPath("$lmd5}.zip")
         val localZipFile = File(memzip)
         if( zip(localFile, localZipFile) != 0 ){
-            listener_.onFinish(SyncResult.FAIL, "Fail to zip backup data"){
+            listener_.onFinish(SyncResult.FAIL, context.getString(R.string.msg_fail_to_zip_backup_data)){
                 syncState = BackupSyncState.IDLE
             }
             return
@@ -344,7 +341,7 @@ class AutoBackupManager(
                 exception ->
             Log.d(TAG, "Upload Fail ${exception.message}")
             localZipFile.delete()
-            listener_.onFinish(SyncResult.FAIL, "Fail to upload backup data to cloud" ){
+            listener_.onFinish(SyncResult.FAIL, context.getString(R.string.msg_fail_to_upload_backup_data_to_cloud) ){
                 syncState = BackupSyncState.IDLE
             }
         }
@@ -374,14 +371,14 @@ class AutoBackupManager(
                             if (error != null) {
                                 // setValue()がエラーで終了した場合の処理を記述
                                 localZipFile.delete()
-                                listener_.onFinish(SyncResult.FAIL, "Fail to upload backup data to cloud ${error.message}" ){
+                                listener_.onFinish(SyncResult.FAIL, "${context.getString(R.string.msg_fail_to_upload_backup_data_to_cloud)} ${error.message}" ){
                                     syncState = BackupSyncState.IDLE
                                 }
                             } else {
                                 Log.d(TAG, "path = user-posts/${currentUser.uid}/backupHistory/${key}")
                                 Log.d(TAG, "data = ${data}")
                                 localZipFile.delete()
-                                listener_.onFinish(SyncResult.SUCCESS, "Success to upload backup data to cloud" ){
+                                listener_.onFinish(SyncResult.SUCCESS, context.getString(R.string.msg_success_to_upload_backup_data_to_cloud) ){
                                     syncState = BackupSyncState.IDLE
                                 }
                                 checkAndRemoveLastData(currentUser)
