@@ -235,6 +235,8 @@ extern "C" int Vdp1Init(void) {
    if ((Vdp1Regs = (Vdp1 *) malloc(sizeof(Vdp1))) == NULL)
       return -1;
 
+   memset(Vdp1Regs, 0, sizeof(Vdp1Regs));      
+
    if ((Vdp1Ram = T1MemoryInit(0x80000)) == NULL)
       return -1;
 
@@ -331,13 +333,13 @@ extern "C" void VideoDeInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 extern "C" void Vdp1Reset(void) {
-  memset(Vdp1Regs, 0, sizeof(Vdp1Regs));
+  
    Vdp1Regs->PTMR = 0;
    Vdp1Regs->MODR = 0x1000; // VDP1 Version 1
-   Vdp1Regs->TVMR = 0;
-   Vdp1Regs->EWDR = 0;
-   Vdp1Regs->EWLR = 0;
-   Vdp1Regs->EWRR = 0;
+   //Vdp1Regs->TVMR = 0; // undefined when reset
+   //Vdp1Regs->EWDR = 0; // undefined when reset
+   //Vdp1Regs->EWLR = 0; // undefined when reset
+   //Vdp1Regs->EWRR = 0; // undefined when reset
    Vdp1Regs->ENDR = 0;
    VIDCore->Vdp1Reset();
 
