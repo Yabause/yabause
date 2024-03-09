@@ -109,7 +109,7 @@
               android:key="pref_video"
               android:title="@string/video_core"
               android:dialogTitle="@string/choose_video_core"
-              android:defaultValue="1" />
+              android:defaultValue="-1" />
  
         <CheckBoxPreference
             android:key="pref_fps"

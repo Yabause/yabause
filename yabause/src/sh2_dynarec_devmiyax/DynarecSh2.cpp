@@ -96,7 +96,7 @@ void cacheflush(uintptr_t begin, uintptr_t end, int flag )
 }
 #else
 void cacheflush(uintptr_t begin, uintptr_t end, int flag ){
-  __builtin___clear_cache((void*)begin,(void*)end);
+  __builtin___clear_cache((char *)begin,(char *)end);
 }
 #endif
 #endif
@@ -336,26 +336,48 @@ void DumpInstX( int i, u32 pc, u16 op  )
   return;
 }
 
-
 #define opdesc(op, y, c, d)	x86op_desc(x86_##op, &op##_size, &op##_src, &op##_dest, &op##_off1, &op##_imm, &op##_off3, y, c, d)
 
 #define opNULL			x86op_desc(0,0,0,0,0,0,0,0,0,0)
 
 #if defined(_WINDOWS)
-#define PROLOGSIZE		     27    
-#define EPILOGSIZE		      3
-#define SEPERATORSIZE	     10
-#define SEPERATORSIZE_NORMAL 7
-#define SEPERATORSIZE_DEBUG  24
-#define SEPERATORSIZE_DELAY  7
-#define SEPERATORSIZE_DELAY_SLOT  27
-#define SEPERATORSIZE_DELAY_AFTER  10 
-#define SEPERATORSIZE_DELAYD_DEBUG 34
-#define DELAYJUMPSIZE	     17
-#define DALAY_CLOCK_OFFSET 6
-#define DALAY_CLOCK_OFFSET_DEBUG 6
-#define NORMAL_CLOCK_OFFSET 6
-#define NORMAL_CLOCK_OFFSET_DEBUG 3
+
+
+
+#if defined(_WIN64)
+  #define PROLOGSIZE		     (0x31)    
+  #define SEPERATORSIZE_NORMAL (0x3c-0x31)
+  #define SEPERATORSIZE_DELAY_SLOT  (0x6a-0x3c)
+  #define SEPERATORSIZE_DELAY_AFTER  (0x85-0x6a) 
+  #define EPILOGSIZE		      (0x95-0x85)
+  #define DELAYJUMPSIZE	     (0xb5-0x95)
+
+  #define DALAY_CLOCK_OFFSET 10
+  #define NORMAL_CLOCK_OFFSET 10
+  #define DALAY_CLOCK_OFFSET_DEBUG 10
+  #define NORMAL_CLOCK_OFFSET_DEBUG 5
+  #define SEPERATORSIZE_DEBUG  (0xe3-0xb5)
+  #define SEPERATORSIZE_DELAYD_DEBUG (0x11d-0xe3)
+
+#else // 32bit
+  #define PROLOGSIZE		     27    
+  #define EPILOGSIZE		      3
+  #define SEPERATORSIZE	     10
+  #define SEPERATORSIZE_NORMAL 7
+  #define SEPERATORSIZE_DEBUG  24
+  #define SEPERATORSIZE_DELAY  7
+  #define SEPERATORSIZE_DELAY_SLOT  27
+  #define SEPERATORSIZE_DELAY_AFTER  10 
+  #define SEPERATORSIZE_DELAYD_DEBUG 34
+  #define DELAYJUMPSIZE	     17
+  #define DALAY_CLOCK_OFFSET 6
+  #define DALAY_CLOCK_OFFSET_DEBUG 6
+  #define NORMAL_CLOCK_OFFSET 6
+  #define NORMAL_CLOCK_OFFSET_DEBUG 3
+
+
+#endif
+
 #elif defined(AARCH64)
 #define PROLOGSIZE		     (11*4)    
 #define SEPERATORSIZE_NORMAL (2*4)
@@ -541,7 +563,6 @@ opinit(TRAPA);
 opinit(DIV1);
 opinit(MAC_W);
 
-
 void prologue(void);
 void epilogue(void);
 void seperator(void);
@@ -549,12 +570,11 @@ void seperator_normal(void);
 void seperator_delay(void);
 void seperator_delay_slot(void);
 void seperator_delay_after(void);
-
 void seperator_d_normal(void);
 void seperator_d_delay(void);
-
 void PageJump(void); // jumps to a different page
 void PageFlip(void); // "flips" the page
+
 
 #if defined(AARCH64)
 void internal_jmp(void);
@@ -1099,7 +1119,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     addr += 2;
 
 #ifdef BUILD_INFO
-    if(show_code_) DumpInstX( i, addr-2, op  );
+    DumpInstX( i, addr-2, op  );
 #endif
 
     instruction_counter++;
@@ -1554,13 +1574,19 @@ void DynarecSh2::Undecoded(){
   return;
 }
 
+
 inline int DynarecSh2::Execute(){
 
   Block * pBlock = NULL;
 
+#if defined(BUILD_INFO)
+  m_pCompiler->setShowCode(true);
+#endif
+
   m_pCompiler->exec_count_++;
 #if defined(EXECUTE_STAT)
-  m_pCompiler->setShowCode( is_slave_ );
+  //m_pCompiler->setShowCode( is_slave_ );
+  m_pCompiler->setShowCode(true);
 #endif
 //#endif
 
@@ -1687,11 +1713,11 @@ inline int DynarecSh2::Execute(){
 #if defined(DEBUG_CPU) || defined(EXECUTE_STAT)
     u32 prepc = GET_PC();
   if (is_slave_) { //statics_trigger_ == COLLECTING) {
-    s64 pretime = YabauseGetTicks();
+    //s64 pretime = YabauseGetTicks();
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
-    compie_statics_[prepc].count++;
-    compie_statics_[prepc].time += YabauseGetTicks() - pretime;
-    compie_statics_[prepc].end_addr = pBlock->e_addr;
+    //compie_statics_[prepc].count++;
+    //compie_statics_[prepc].time += YabauseGetTicks() - pretime;
+    //compie_statics_[prepc].end_addr = pBlock->e_addr;
   }
   else {
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
@@ -1809,7 +1835,7 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
     }
     m_pDynaSh2->SysReg[3] = MappedMemoryReadLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2),NULL);
 
-    LOG("**** [%s] Exception vecnum=%s(%x), PC=%08X to %08X, level=%08X\n", (is_slave_ == false) ? "M" : "S", ScuGetVectorString(Vector), Vector,prepc, m_pDynaSh2->SysReg[3], level);
+    //LOG("**** [%s] Exception vecnum=%s(%x), PC=%08X to %08X, level=%08X\n", (is_slave_ == false) ? "M" : "S", ScuGetVectorString(Vector), Vector,prepc, m_pDynaSh2->SysReg[3], level);
 
 #if defined(DEBUG_CPU)
 //    LOG("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X\n", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level);
@@ -1838,7 +1864,7 @@ int DynarecSh2::Resume() {
 
 void DynarecSh2::ShowStatics(){
 #if defined(DEBUG_CPU)
-  LOG("\nExec cnt %d loopskip_cnt_ = %d, interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, loopskip_cnt_, interruput_chk_cnt_, interruput_cnt_ );
+  //LOG("\nExec cnt %d loopskip_cnt_ = %d, interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, loopskip_cnt_, interruput_chk_cnt_, interruput_cnt_ );
   pre_cnt_ = GET_COUNT();
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
@@ -1853,7 +1879,7 @@ void DynarecSh2::ShowStatics(){
   case COLLECTING:
     statics_trigger_ = FINISHED;
     while (FINISHED == statics_trigger_) {
-      YabThreadUSleep(10000);
+      //YabThreadUSleep(10000);
     }
     break;
   case FINISHED:
@@ -1881,7 +1907,7 @@ int DynarecSh2::GetCurrentStatics(MapCompileStatics & buf){
 
   statics_trigger_ = REQUESTED;
   while (statics_trigger_!= FINISHED) {
-    YabThreadUSleep(10000);
+    //YabThreadUSleep(10000);
   }
   
   buf = compie_statics_;

@@ -135,7 +135,7 @@ int Vdp2Window::draw(VkCommandBuffer commandBuffer) {
   if (vertexcnt <= 0) return 1;
 
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-    pipeline->getPipelineLayout(), 0, 1, &pipeline->_descriptorSet, 0, nullptr);
+    pipeline->getPipelineLayout(), 0, 1, pipeline->getDescriptorSet(), 0, nullptr);
 
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getGraphicsPipeline());
 
@@ -150,13 +150,31 @@ int Vdp2Window::draw(VkCommandBuffer commandBuffer) {
   return 0;
 }
 
-int Vdp2Window::updateSize(int width, int height) {
+int Vdp2Window::updateSize(int width, int height, int pretransformFlag, bool rotateScreen ) {
   WindowUbo ubo = {};
   glm::mat4 m4(1.0f);
-  ubo.model = glm::ortho(0.0f, (float)width, 0.0f, (float)height, 10.0f, 0.0f);
+  
+  glm::mat4 pre_rotate_mat = glm::mat4(1.0f);
+  glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, 1.0f);
+
+  if (rotateScreen) {
+    pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  }
+
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR) {
+     pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(90.0f), rotation_axis);
+  } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+     pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(270.0f), rotation_axis);
+  } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR) {
+     pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
+  }
+
+  ubo.model = pre_rotate_mat * glm::ortho(0.0f, (float)width, 0.0f, (float)height, 10.0f, 0.0f);
+
   ubo.windowBit = 1 << id;
   pipeline->setUBO(&ubo, sizeof(ubo));
   pipeline->updateDescriptorSets();
+  isUpdated = 1;
   return 0;
 }
 
@@ -176,24 +194,38 @@ WindowRenderer::WindowRenderer(int width, int height, VIDVulkan * vulkan)
   vdp2width = width;
   vdp2height = height;
   this->vulkan = vulkan;
+  ready = false;
+
+  offscreenPass.color.image = NULL;
+  offscreenPass.color.mem = NULL;
+  offscreenPass.color.view = NULL;
+  offscreenPass.depth.image = NULL;
+  offscreenPass.depth.mem = NULL;
+  offscreenPass.depth.view = NULL;
+  offscreenPass.frameBuffer = NULL;
+  
 
 }
 
 void WindowRenderer::setUp() {
   createCommandPool();
   prepareOffscreen();
-  window[0].init(0, vulkan, offscreenPass.renderPass);
-  window[0].updateSize(vdp2width, vdp2height);
-  window[1].init(1, vulkan, offscreenPass.renderPass);
-  window[1].updateSize(vdp2width, vdp2height);
+  window[0].init(0x01, vulkan, offscreenPass.renderPass);
+  window[0].updateSize(offscreenPass.width, offscreenPass.height,pretransformFlag,rotateScreen);
+  window[1].init(0x02, vulkan, offscreenPass.renderPass);
+  window[1].updateSize(offscreenPass.width, offscreenPass.height,pretransformFlag,rotateScreen);
 
   VkDevice device = vulkan->getDevice();
 }
 
 WindowRenderer::~WindowRenderer() {
 
+#if (WINDOW_CLIP_MODE == WINDOW_CLIP_OFFSCRENN)
   VkDevice device = vulkan->getDevice();
-  vkDestroySampler(device, offscreenPass.sampler, nullptr);
+  if (offscreenPass.sampler) {
+    vkDestroySampler(device, offscreenPass.sampler, nullptr);
+    offscreenPass.sampler = nullptr;
+  }
   vkDestroyImage(device, offscreenPass.color.image, nullptr);
   vkFreeMemory(device, offscreenPass.color.mem, nullptr);
   vkDestroyImageView(device, offscreenPass.color.view, nullptr);
@@ -201,20 +233,30 @@ WindowRenderer::~WindowRenderer() {
   vkFreeMemory(device, offscreenPass.depth.mem, nullptr);
   vkDestroyImageView(device, offscreenPass.depth.view, nullptr);
   vkDestroyFramebuffer(device, offscreenPass.frameBuffer, nullptr);
+#endif
 
 }
 
-void WindowRenderer::changeResolution(int width, int height) {
+void WindowRenderer::changeResolution(int width, int height, int pretransformFlag, bool rotateScreen) {
 
-  if (width == this->vdp2width && height == this->vdp2height) return;
+  if ( width == this->vdp2width && 
+       height == this->vdp2height && 
+       this->pretransformFlag == pretransformFlag &&
+       this->rotateScreen == rotateScreen
+       ) {
+    return;
+  }
 
   this->vdp2width = width;
   this->vdp2height = height;
+  this->pretransformFlag = pretransformFlag;
+  this->rotateScreen = rotateScreen;  
 
   vkQueueWaitIdle(vulkan->getVulkanQueue());
 
   VkDevice device = vulkan->getDevice();
 
+#if (WINDOW_CLIP_MODE == WINDOW_CLIP_OFFSCRENN)
   vkDestroySampler(device, offscreenPass.sampler, nullptr);
   vkDestroyImage(device, offscreenPass.color.image, nullptr);
   vkFreeMemory(device, offscreenPass.color.mem, nullptr);
@@ -223,10 +265,11 @@ void WindowRenderer::changeResolution(int width, int height) {
   vkFreeMemory(device, offscreenPass.depth.mem, nullptr);
   vkDestroyImageView(device, offscreenPass.depth.view, nullptr);
   vkDestroyFramebuffer(device, offscreenPass.frameBuffer, nullptr);
-  prepareOffscreen();
+#endif
 
-  window[0].updateSize(vdp2width, vdp2height);
-  window[1].updateSize(vdp2width, vdp2height);
+  prepareOffscreen();
+  window[0].updateSize(offscreenPass.width, offscreenPass.height,pretransformFlag,rotateScreen);
+  window[1].updateSize(offscreenPass.width, offscreenPass.height,pretransformFlag,rotateScreen);
 
 }
 
@@ -238,8 +281,12 @@ void WindowRenderer::flush(VkCommandBuffer commandbuffer) {
 }
 
 
-void WindowRenderer::draw(VkCommandBuffer commandBuffer) {
-  if (window[0].isNeedDraw() || window[1].isNeedDraw()) {
+void WindowRenderer::draw(VkCommandBuffer commandBuffer, const std::function<void(VkCommandBuffer commandBuffer)>& f) {
+
+
+#if (WINDOW_CLIP_MODE == WINDOW_CLIP_OFFSCRENN)
+  if( ready != true ){
+
     VkDevice device = vulkan->getDevice();
 
     std::array<VkClearValue, 2> clear_values{};
@@ -261,20 +308,88 @@ void WindowRenderer::draw(VkCommandBuffer commandBuffer) {
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    VkViewport viewport = vks::initializers::viewport((float)vdp2width, (float)vdp2height, 0.0f, 1.0f);
+    VkViewport viewport = vks::initializers::viewport((float)offscreenPass.width, (float)offscreenPass.height, 0.0f, 1.0f);
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-    VkRect2D scissor = vks::initializers::rect2D(vdp2width, vdp2height, 0, 0);
+    VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    vkCmdEndRenderPass(commandBuffer);
+    ready = true;
+  }
+#endif
+
+  
+
+#if (WINDOW_CLIP_MODE == WINDOW_CLIP_OFFSCRENN)
+  if (window[0].isNeedDraw() || window[1].isNeedDraw() || isSpriteWindowEnabled) {
+    VkDevice device = vulkan->getDevice();
+
+    std::array<VkClearValue, 2> clear_values{};
+    clear_values[1].depthStencil.depth = 0.0f;
+    clear_values[1].depthStencil.stencil = 0;
+    clear_values[0].color.float32[0] = 0.0f;
+    clear_values[0].color.float32[1] = 0.0f;
+    clear_values[0].color.float32[2] = 0.0f;
+    clear_values[0].color.float32[3] = 0.0f;
+
+    VkRenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+    renderPassBeginInfo.renderPass = offscreenPass.renderPass;
+    renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer;
+    renderPassBeginInfo.renderArea.extent.width = offscreenPass.width;
+    renderPassBeginInfo.renderArea.extent.height = offscreenPass.height;
+    renderPassBeginInfo.clearValueCount = clear_values.size();
+    renderPassBeginInfo.pClearValues = clear_values.data();
+    VkCommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+
+    vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    VkViewport viewport = vks::initializers::viewport((float)offscreenPass.width, (float)offscreenPass.height, 0.0f, 1.0f);
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+    VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     VkDeviceSize offsets[1] = { 0 };
+#endif
 
     window[0].draw(commandBuffer);
     window[1].draw(commandBuffer);
 
-    vkCmdEndRenderPass(commandBuffer);
+	  // callback sprite window
+	  if (isSpriteWindowEnabled) {
+		  f(commandBuffer);
+	  }
 
+
+#if (WINDOW_CLIP_MODE == WINDOW_CLIP_OFFSCRENN)
+    VkImageMemoryBarrier barrier = {};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = offscreenPass.color.image;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    //barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    //barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+
+    vkCmdPipelineBarrier(
+      commandBuffer,
+      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+      0,
+      0, nullptr,
+      0, nullptr,
+      1, &barrier
+    );
+
+    LOGE("set Barrier for %lx", (uintptr_t)offscreenPass.color.image );
   }
+#endif
 }
 
 void WindowRenderer::createCommandPool() {
@@ -557,11 +672,19 @@ void WindowRenderer::generateWindowInfo(Vdp2 * fixVdp2Regs, int which) {
 
 void WindowRenderer::prepareOffscreen() {
 
+#if (WINDOW_CLIP_MODE == WINDOW_CLIP_OFFSCRENN)
   VkDevice device = vulkan->getDevice();
   VkPhysicalDevice physicalDevice = vulkan->getPhysicalDevice();
 
-  offscreenPass.width = vdp2width;
-  offscreenPass.height = vdp2height;
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+        pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+    offscreenPass.width = vdp2height;
+    offscreenPass.height = vdp2width;
+  } else {
+    offscreenPass.width = vdp2width;
+    offscreenPass.height = vdp2height;
+  }
+
 
   // Find a suitable depth format
   VkFormat fbDepthFormat;
@@ -749,5 +872,24 @@ void WindowRenderer::prepareOffscreen() {
   offscreenPass.descriptor.sampler = offscreenPass.sampler;
 
   //vulkan->transitionImageLayout(offscreenPass.color.image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+#else
 
+  VkDevice device = vulkan->getDevice();
+  VkPhysicalDevice physicalDevice = vulkan->getPhysicalDevice();
+
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+    pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+    offscreenPass.width = vdp2height;
+    offscreenPass.height = vdp2width;
+  }
+  else {
+    offscreenPass.width = vdp2width;
+    offscreenPass.height = vdp2height;
+  }
+
+  offscreenPass.width = vdp2width;
+  offscreenPass.height = vdp2height;
+  offscreenPass.renderPass = vulkan->getRenderPass();
+
+#endif
 }

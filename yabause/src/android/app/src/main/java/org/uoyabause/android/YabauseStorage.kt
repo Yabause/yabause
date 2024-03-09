@@ -95,6 +95,7 @@ class YabauseStorage private constructor() {
     private val state: File
     private val screenshots: File
     private val record: File
+    private val shader: File
     private val root: File
     private var external: File? = null
     private var progress_emitter: ObservableEmitter<String>? = null
@@ -165,6 +166,9 @@ class YabauseStorage private constructor() {
 
     val recordPath: String
         get() = record.toString() + File.separator
+
+    val shaderPath: String
+        get() = shader.toString() + File.separator
 
     val screenshotPath: String
         get() = screenshots.toString() + File.separator
@@ -758,6 +762,9 @@ class YabauseStorage private constructor() {
         if (!screenshots.exists()) screenshots.mkdir()
         record = File(yabroot, "record")
         if (!record.exists()) record.mkdir()
+        shader = File(yabroot, "shader")
+        if (!shader.exists()) shader.mkdir()
+
     }
 
     fun externalMemoryAvailable(): Boolean {

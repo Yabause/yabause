@@ -19,6 +19,7 @@ class AddiTest : public ::testing::Test {
   }
 
   virtual ~AddiTest() {
+    freeMemory();
     delete pctx_;    
   }   
 

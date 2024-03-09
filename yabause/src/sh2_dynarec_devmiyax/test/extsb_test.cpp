@@ -19,6 +19,7 @@ class ExtsbTest : public ::testing::Test {
   }
 
   virtual ~ExtsbTest() {
+    freeMemory();
     delete pctx_;    
   }   
 
@@ -37,7 +38,7 @@ TEST_F(ExtsbTest, normal) {
   pctx_->GetGenRegPtr()[2]=0x00000020; //source
   pctx_->GetGenRegPtr()[1]=0x00FF0036; //source
 
-  // subc r1,r2
+  
   memSetWord( 0x06000000, 0x621e );
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop
@@ -53,7 +54,6 @@ TEST_F(ExtsbTest, normal_T1) {
 
   pctx_->GetGenRegPtr()[0]=0x00000080; //source
 
-  // subc r1,r2
   memSetWord( 0x06000000, 0x600e );
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop

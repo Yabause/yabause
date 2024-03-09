@@ -37,7 +37,7 @@ virtual void TearDown() {
 
 };
 
-TEST_F(StsTest, normal) {
+TEST_F(StsTest, STSMPR) {
 
 
   pctx_->GetGenRegPtr()[3]=0x06000264;
@@ -45,7 +45,7 @@ TEST_F(StsTest, normal) {
 
 
   // sts.l
-  memSetWord( 0x0600024c, 0x4322 );
+  memSetWord( 0x0600024c, 0x4322 ); // STSMPR
   memSetWord( 0x0600024e, 0x000b );  // rts
   memSetWord( 0x06000250, 0x0009 );  // nop
   memSetLong( 0x06000260, 0xDEADDEAD );  // nop
@@ -54,7 +54,7 @@ TEST_F(StsTest, normal) {
   pctx_->Execute();
 
   EXPECT_EQ( 0x06000260, pctx_->GetGenRegPtr()[3] );
-  EXPECT_EQ( 0xCAFECAFE, memGetLong(0x06000260) );
+  EXPECT_EQ( 0xFECAFECA, memGetLong(0x06000260) );
 
 }
 
@@ -90,7 +90,7 @@ TEST_F(StsTest, stsmmach) {
   pctx_->Execute();
 
   EXPECT_EQ( 0x06000260, pctx_->GetGenRegPtr()[3] );
-  EXPECT_EQ( 0xCAFECAFE, memGetLong(0x06000260) );
+  EXPECT_EQ( 0xFECAFECA, memGetLong(0x06000260) );
 
 }
 
@@ -125,7 +125,7 @@ TEST_F(StsTest, stsmmacl) {
   pctx_->Execute();
 
   EXPECT_EQ( 0x06000260, pctx_->GetGenRegPtr()[3] );
-  EXPECT_EQ( 0xCAFECAFE, memGetLong(0x06000260) );
+  EXPECT_EQ( 0xFECAFECA, memGetLong(0x06000260) );
 
 }
 
@@ -142,7 +142,7 @@ TEST_F(StsTest, stspr) {
   pctx_->SET_PC( 0x0600024c );
   pctx_->Execute();
 
-  EXPECT_EQ( 0xCAFECAFE, pctx_->GetGenRegPtr()[3] );
+  EXPECT_EQ(3405695742, pctx_->GetGenRegPtr()[3] );
 
 }
 
@@ -160,7 +160,7 @@ TEST_F(StsTest, stsmpr) {
   pctx_->Execute();
 
   EXPECT_EQ( 0x06000260, pctx_->GetGenRegPtr()[3] );
-  EXPECT_EQ( 0xCAFECAFE, memGetLong(0x06000260) );
+  EXPECT_EQ(4274716362, memGetLong(0x06000260) );
 
 }
 

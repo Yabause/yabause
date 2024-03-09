@@ -18,12 +18,15 @@
 */
 package org.uoyabause.android.phone
 
+import android.content.res.Configuration
+import android.graphics.drawable.Drawable
 import android.os.Build
+import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
@@ -32,12 +35,21 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import java.io.File
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.DrawableImageViewTarget
+import com.frybits.harmony.getHarmonySharedPreferences
+import com.google.firebase.analytics.FirebaseAnalytics
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.GameInfo
 import org.uoyabause.android.phone.GameItemAdapter.GameViewHolder
+import java.io.File
+import javax.sql.DataSource
+
 
 class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
     RecyclerView.Adapter<GameViewHolder>() {
@@ -66,6 +78,8 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
 
             menuButton = rootview.findViewById<View>(R.id.game_card_menu) as ImageButton
 
+
+
             /*
             ViewGroup.LayoutParams lp = imageViewIcon.getLayoutParams();
             lp.width = CARD_WIDTH;
@@ -75,18 +89,52 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
         }
 
        override fun onCreateContextMenu(
-            menu: ContextMenu?,
-            v: View?,
-            menuInfo: ContextMenu.ContextMenuInfo?
-        ) {
+           menu: ContextMenu?,
+           v: View?,
+           menuInfo: ContextMenu.ContextMenuInfo?,
+       ) {
         }
 
     }
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GameViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.cards_layout, parent, false)
         view.setOnClickListener(GameSelectFragmentPhone.myOnClickListener)
+
+
+        // work here if you need to control height of your items
+        // keep in mind that parent is RecyclerView in this case
+        //val height = 10;
+        //view.minimumHeight = height
+/*
+        if (parent?.resources?.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            try {
+                val lp: GridLayoutManager.LayoutParams =
+                    view.getLayoutParams() as GridLayoutManager.LayoutParams
+
+                val tv = TypedValue()
+                if (parent.context.theme.resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                    val actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,
+                        parent.resources.displayMetrics)
+                    lp.height = (parent.getMeasuredHeight() - actionBarHeight - 48 )
+                    view.setLayoutParams(lp)
+                }
+
+            } catch (e: Exception) {
+
+            }
+        }else{
+            val tv = TypedValue()
+            if (parent.context.theme.resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                val actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,
+                    parent.resources.displayMetrics)
+                view.minimumHeight = (parent.getMeasuredHeight() - actionBarHeight - 48 ) / 4
+            }
+
+        }
+*/
         return GameViewHolder(view)
     }
 
@@ -119,10 +167,43 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
             }
             textViewVersion.text = rate
             if (game.image_url != null && game.image_url != "") { // try {
+
+
                 if (game.image_url!!.startsWith("http")) {
-                    Glide.with(ctx)
-                        .load(game.image_url)
-                        .into(imageView)
+
+                    Glide.with(imageView)
+                            .load(game.image_url)
+                            .listener(object : RequestListener<Drawable> {
+
+                                override fun onLoadFailed(e: GlideException?, model: Any?,
+                                                          target: com.bumptech.glide.request.target.Target<Drawable>?,
+                                                          isFirstResource: Boolean): Boolean {
+
+                                    var mFirebaseAnalytics = FirebaseAnalytics.getInstance(ctx)
+                                    val bundle = Bundle()
+                                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, game.product_number)
+                                    bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game.image_url)
+                                    mFirebaseAnalytics.logEvent(
+                                        "yab_fail_load_image", bundle
+                                    )
+
+                                    return false
+                                }
+
+                                override fun onResourceReady(
+                                    resource: Drawable?,
+                                    model: Any?,
+                                    target: com.bumptech.glide.request.target.Target<Drawable>?,
+                                    dataSource: com.bumptech.glide.load.DataSource?,
+                                    isFirstResource: Boolean
+                                ): Boolean {
+                                    if (resource != null) imageView.setImageDrawable(resource)
+                                    return false
+                                }
+                            })
+                        .submit()
+
+
                 } else {
                     Glide.with(holder.rootview.context)
                         .load(game.image_url?.let { File(it) })
@@ -147,7 +228,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
 
     private fun showPopupMenu(
         view: View,
-        position: Int
+        position: Int,
     ) { // inflate menu
         val popup = PopupMenu(view.context, view)
         val inflater: MenuInflater = popup.getMenuInflater()

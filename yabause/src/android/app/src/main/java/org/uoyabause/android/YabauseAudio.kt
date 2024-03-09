@@ -42,8 +42,6 @@ import android.media.AudioManager.OnAudioFocusChangeListener
 
 class YabauseAudio internal constructor(private val activity: Activity) :
     OnAudioFocusChangeListener {
-    val SYSTEM = 1
-    val USER = 2
     private var muteFlags: Int
     private var muted: Boolean
     fun mute(flags: Int) {
@@ -85,5 +83,10 @@ class YabauseAudio internal constructor(private val activity: Activity) :
         activity.volumeControlStream = AudioManager.STREAM_MUSIC
         muteFlags = 0
         muted = false
+    }
+
+    companion object {
+        const val SYSTEM = 1
+        const val USER = 2
     }
 }

@@ -22,6 +22,7 @@ class BtTest : public ::testing::Test {
   }
 
   virtual ~BtTest() {
+    freeMemory();
     delete pctx_;    
   }   
 
@@ -39,15 +40,18 @@ virtual void TearDown() {
 
 TEST_F(BtTest, normal) {
 
-  memSetWord( 0x06000246, 0x8902 ); 
+  memSetWord(0x06000246, 0x8902);
 
-  pctx_->SET_PC( 0x06000246 );
-  pctx_->SET_SR( 0x0 );
+  pctx_->SET_PC(0x06000246);
+  pctx_->SET_SR(0x0);
   pctx_->Execute();
 
- EXPECT_EQ( 0x06000248, pctx_->GET_PC() );
- EXPECT_EQ( 0x0, pctx_->GET_SR() );
+  EXPECT_EQ(0x06000248, pctx_->GET_PC());
+  EXPECT_EQ(0x0, pctx_->GET_SR());
 
+}
+
+TEST_F(BtTest, normal1) {
   memSetWord( 0x06000246, 0x8902 ); 
 
   pctx_->SET_PC( 0x06000246 );
@@ -57,14 +61,23 @@ TEST_F(BtTest, normal) {
  EXPECT_EQ( 0x0600024E, pctx_->GET_PC() );
  EXPECT_EQ( 0x1, pctx_->GET_SR() );
 
+}
+
+TEST_F(BtTest, normal2) {
+
   memSetWord( 0x06000246, 0x8982 ); 
 
   pctx_->SET_PC( 0x06000246 );
   pctx_->SET_SR( 0x0 );
   pctx_->Execute();
 
+
  EXPECT_EQ( 0x06000248, pctx_->GET_PC() );
  EXPECT_EQ( 0x0, pctx_->GET_SR() );
+
+}
+
+TEST_F(BtTest, normal3) {
 
   memSetWord( 0x06000246, 0x8982 ); 
 
@@ -95,7 +108,7 @@ TEST_F(BtTest, bts) {
   pctx_->SET_SR( 0x000000);
   pctx_->Execute();
 
-  EXPECT_EQ( 0x06002E4C+4, pctx_->GET_PC() );
+  EXPECT_EQ( 0x06002E4E, pctx_->GET_PC() );
 
   pctx_->GetGenRegPtr()[3]=0x2;
 
@@ -117,7 +130,7 @@ TEST_F(BtTest, bts) {
   pctx_->SET_SR( 0x000000);
   pctx_->Execute();
 
-  EXPECT_EQ( 0x06002E4C+4, pctx_->GET_PC() );
+  EXPECT_EQ( 0x06002E4E, pctx_->GET_PC() );
 
 }
 

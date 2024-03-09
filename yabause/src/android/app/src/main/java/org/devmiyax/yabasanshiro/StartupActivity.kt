@@ -18,10 +18,12 @@
 */
 package org.devmiyax.yabasanshiro
 
+import android.app.ActivityManager
 import android.app.UiModeManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Point
 import android.os.Bundle
@@ -40,6 +42,7 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import org.uoyabause.android.SettingsActivity
 import org.uoyabause.android.phone.GameSelectActivityPhone
 import org.uoyabause.android.tv.GameSelectActivity
 
@@ -53,6 +56,33 @@ class StartupActivity : AppCompatActivity() {
         setContentView(R.layout.activity_startup)
 
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
+
+        val video = sharedPref.getString("pref_video", "-1")
+        if( video == "-1" ){
+
+            val editor = sharedPref.edit()
+            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL)) {
+                // Defulat is Vulkan!
+                editor.putString("pref_video", "4")
+                editor.putBoolean("pref_use_compute_shader", true)
+                editor.putString("pref_polygon_generation", "2")
+            }else {
+                val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                val configurationInfo = activityManager.deviceConfigurationInfo
+                val supportsEs3 = configurationInfo.reqGlEsVersion >= 0x30000
+                if (supportsEs3) {
+                    editor.putString("pref_video", "1")
+                }else{
+                    editor.putString("pref_video", "2")
+                }
+                editor.putBoolean("pref_use_compute_shader", false)
+                editor.putString("pref_polygon_generation", "0")
+            }
+            editor.apply()
+
+        }
+
+
         val aspectRateSetting = sharedPref.getString("pref_aspect_rate", "BAD")
         if (aspectRateSetting == "BAD") {
             val editor = sharedPref.edit()

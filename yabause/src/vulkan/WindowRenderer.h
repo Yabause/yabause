@@ -30,7 +30,7 @@ extern "C" {
 #include "frameprofile.h"
 }
 
-
+#include <functional>
 
 #include "VulkanScene.h"
 class VIDVulkan;
@@ -41,6 +41,10 @@ class TextureCache;
 class VdpPipelineFactory;
 class VdpPipelineWindow;
 
+#define WINDOW_CLIP_STENCIL   (0)
+#define WINDOW_CLIP_OFFSCRENN (1)
+
+#define WINDOW_CLIP_MODE (WINDOW_CLIP_STENCIL)
 
 struct WindowUbo {
   glm::mat4 model;
@@ -59,6 +63,9 @@ public:
   Vertex * vertex;
   int vertexcnt;
 
+  int width;
+  int height;
+
   VIDVulkan * vulkan;
   VdpPipelineWindow * pipeline;
   VkBuffer vertexBuffer;
@@ -67,7 +74,7 @@ public:
   VkDeviceMemory stagingBufferMemory;
 
   int init(int id, VIDVulkan * vulkan, VkRenderPass offscreenPass);
-  int updateSize(int width, int height);
+  int updateSize(int width, int height, int pretransformFlag, bool rotateScreen );
   int flush(VkCommandBuffer commandBuffer);
   int draw(VkCommandBuffer commandBuffer);
   int free();
@@ -98,11 +105,13 @@ class WindowRenderer {
   VkCommandPool _command_pool = VK_NULL_HANDLE;
   std::vector<VkCommandBuffer> command_buffers;
 
+  bool isSpriteWindowEnabled = false;
+   
 public:
   WindowRenderer(int width, int height, VIDVulkan * vulkan);
   ~WindowRenderer();
   void setUp();
-  void changeResolution(int width, int height);
+  void changeResolution(int width, int height, int pretransformFlag, bool rotateScreen);
 
   vdp2WindowInfo * getVdp2WindowInfo(int which) {
     return window[which].info;
@@ -111,16 +120,29 @@ public:
   void generateWindowInfo(Vdp2 * fixVdp2Regs, int which);
 
   void flush(VkCommandBuffer cb);
-  void draw(VkCommandBuffer commandBuffer);
+  void draw(VkCommandBuffer commandBuffer, const std::function<void(VkCommandBuffer commandBuffer)>& f);
 
   VkImageView getImageView() { return offscreenPass.color.view; }
   VkSampler getSampler() { return offscreenPass.sampler; }
+
+  bool isReady(){ return ready; }
+
+  void setSpriteWindow(bool enable) {
+	  isSpriteWindowEnabled = enable;
+  }
+
+  int getWidth(){ return offscreenPass.width; }
+  int getHeight(){ return offscreenPass.height; }
+
 
 protected:
   VdpPipelineFactory * pipleLineFactory;
   uint32_t vdp2width;
   uint32_t vdp2height;
+  int pretransformFlag = 0;
+  bool rotateScreen = false;
   VIDVulkan * vulkan;
   Vdp2Window window[2];
   void prepareOffscreen();
+  bool ready = false;
 };

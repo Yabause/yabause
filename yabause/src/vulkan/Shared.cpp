@@ -102,7 +102,8 @@ void backtraceToLogcat()
 
   dumpBacktrace(oss, buffer, captureBacktrace(buffer, max));
 
-  __android_log_print(ANDROID_LOG_INFO, "app_name", "%s", oss.str().c_str());
+  //__android_log_print(ANDROID_LOG_ERROR, "app_name", "%s", oss.str().c_str());
+  LOGE("%s", oss.str().c_str());
 }
 
 #endif

@@ -21,8 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "VIDVulkan.h"
 #include "VIDVulkanCInterface.h"
 #include "Window.h"
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 #include "TextureManager.h"
 #include "VertexManager.h"
@@ -34,156 +34,170 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "FramebufferRenderer.h"
 
-#include "Shared.h"
 #include "RBGGeneratorVulkan.h"
+#include "Shared.h"
 
 #include "VulkanInitializers.hpp"
 #include "VulkanTools.h"
 
 #if defined(__ANDROID__)
-#define VK_CHECK_RESULT(f)																				\
-{																										\
-	VkResult res = (f);																					\
-	if (res != VK_SUCCESS)																				\
-	{																									\
-		LOGE("Fatal : VkResult is \" %s \" in %s at line %d", vks::tools::errorString(res).c_str(), __FILE__, __LINE__); \
-		assert(res == VK_SUCCESS);																		\
-	}																									\
-}
+#define VK_CHECK_RESULT(f)                                                                                             \
+  {                                                                                                                    \
+    VkResult res = (f);                                                                                                \
+    if (res != VK_SUCCESS) {                                                                                           \
+      LOGE("Fatal : VkResult is \" %s \" in %s at line %d", vks::tools::errorString(res).c_str(), __FILE__, __LINE__); \
+      assert(res == VK_SUCCESS);                                                                                       \
+    }                                                                                                                  \
+  }
 #else
 #include <iostream>
-#define VK_CHECK_RESULT(f)																				\
-{																										\
-	VkResult res = (f);																					\
-	if (res != VK_SUCCESS)																				\
-	{																									\
-		std::cout << "Fatal : VkResult is \"" << vks::tools::errorString(res) << "\" in " << __FILE__ << " at line " << __LINE__ << "\n"; \
-		assert(res == VK_SUCCESS);																		\
-	}																									\
-}
+#define VK_CHECK_RESULT(f)                                                                                             \
+  {                                                                                                                    \
+    VkResult res = (f);                                                                                                \
+    if (res != VK_SUCCESS) {                                                                                           \
+      std::cout << "Fatal : VkResult is \"" << vks::tools::errorString(res) << "\" in " << __FILE__ << " at line "     \
+                << __LINE__ << "\n";                                                                                   \
+      assert(res == VK_SUCCESS);                                                                                       \
+    }                                                                                                                  \
+  }
 #endif
 
-int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer);
+int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer, int preTransformFlag);
 
-
-VIDVulkan * VIDVulkan::_instance = nullptr;
+VIDVulkan *VIDVulkan::_instance = nullptr;
 
 extern "C" {
 
-#include "vidogl.h" 
-#include "vidshared.h"
 #include "debug.h"
+#include "frameprofile.h"
 #include "vdp2.h"
+#include "vidogl.h"
+#include "vidshared.h"
 #include "yabause.h"
 #include "ygl.h"
 #include "yui.h"
-#include "frameprofile.h"
 
-  int VIDVulkanInit(void) { return VIDVulkan::getInstance()->init(); }
-  void VIDVulkanDeInit(void) { VIDVulkan::getInstance()->deInit(); }
-  void VIDVulkanResize(int originx, int originy, unsigned int w, unsigned int h, int on, int aspect_rate_mode) { VIDVulkan::getInstance()->resize(originx, originy, w, h, on, aspect_rate_mode); }
-  int VIDVulkanIsFullscreen(void) { return VIDVulkan::getInstance()->isFullscreen(); }
-  int VIDVulkanVdp1Reset(void) { return VIDVulkan::getInstance()->Vdp1Reset(); }
-  void VIDVulkanVdp1DrawStart(void) { VIDVulkan::getInstance()->Vdp1DrawStart(); }
-  void VIDVulkanVdp1DrawEnd(void) { VIDVulkan::getInstance()->Vdp1DrawEnd(); }
-  void VIDVulkanVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1NormalSpriteDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1PolygonDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1PolylineDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1LineDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1UserClipping(u8 * ram, Vdp1 * regs) { VIDVulkan::getInstance()->Vdp1UserClipping(ram, regs); }
-  void VIDVulkanVdp1SystemClipping(u8 * ram, Vdp1 * regs) { VIDVulkan::getInstance()->Vdp1SystemClipping(ram, regs); }
-  void VIDVulkanVdp1LocalCoordinate(u8 * ram, Vdp1 * regs) { VIDVulkan::getInstance()->Vdp1LocalCoordinate(ram, regs); }
-  int VIDVulkanVdp2Reset(void) { return VIDVulkan::getInstance()->Vdp2Reset(); }
-  void VIDVulkanVdp2DrawStart(void) { VIDVulkan::getInstance()->Vdp2DrawStart(); }
-  void VIDVulkanVdp2DrawEnd(void) { VIDVulkan::getInstance()->Vdp2DrawEnd(); }
-  void VIDVulkanVdp2DrawScreens(void) { VIDVulkan::getInstance()->Vdp2DrawScreens(); }
-  void VIDVulkanVdp2SetResolution(u16 TVMD) { VIDVulkan::getInstance()->Vdp2SetResolution(TVMD); }
-  void VIDGetGlSize(int *width, int *height) { VIDVulkan::getInstance()->GetGlSize(width, height); }
-  void VIDVulkanVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) { VIDVulkan::getInstance()->Vdp1ReadFrameBuffer(type, addr, out); }
-  void VIDVulkanSetFilterMode(int type) { VIDVulkan::getInstance()->SetFilterMode(type); }
-  void VIDVulkanSync() { VIDVulkan::getInstance()->Sync(); }
-  void VIDVulkanVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val) { VIDVulkan::getInstance()->Vdp1WriteFrameBuffer(type, addr, val); }
-  void VIDVulkanVdp1EraseWrite(void) { VIDVulkan::getInstance()->Vdp1EraseWrite(); }
-  void VIDVulkanVdp1FrameChange(void) { VIDVulkan::getInstance()->Vdp1FrameChange(); }
-  void VIDVulkanSetSettingValue(int type, int value) { VIDVulkan::getInstance()->SetSettingValue(type, value); }
-  void VIDVulkanGetNativeResolution(int *width, int *height, int * interlace) { VIDVulkan::getInstance()->GetNativeResolution(width, height, interlace); }
-  void VIDVulkanVdp2DispOff(void) { VIDVulkan::getInstance()->Vdp2DispOff(); }
-  void VIDVulkanOnUpdateColorRamWord(u32 addr) { VIDVulkan::getInstance()->onUpdateColorRamWord(addr); }
-  void VIDVulkanGetScreenshot(void ** outbuf, int * width, int * height) { VIDVulkan::getInstance()->getScreenshot(outbuf, *width, *height); }
-
-  VideoInterface_struct CVIDVulkan = {
-    VIDCORE_VULKAN,
-    "Vulkan Video Interface",
-    VIDVulkanInit,
-    VIDVulkanDeInit,
-    VIDVulkanResize,
-    VIDVulkanIsFullscreen,
-    VIDVulkanVdp1Reset,
-    VIDVulkanVdp1DrawStart,
-    VIDVulkanVdp1DrawEnd,
-    VIDVulkanVdp1NormalSpriteDraw,
-    VIDVulkanVdp1ScaledSpriteDraw,
-    VIDVulkanVdp1DistortedSpriteDraw,
-    VIDVulkanVdp1PolygonDraw,
-    VIDVulkanVdp1PolylineDraw,
-    VIDVulkanVdp1LineDraw,
-    VIDVulkanVdp1UserClipping,
-    VIDVulkanVdp1SystemClipping,
-    VIDVulkanVdp1LocalCoordinate,
-    VIDVulkanVdp1ReadFrameBuffer,
-    VIDVulkanVdp1WriteFrameBuffer,
-    VIDVulkanVdp1EraseWrite,
-    VIDVulkanVdp1FrameChange,
-    VIDVulkanVdp2Reset,
-    VIDVulkanVdp2DrawStart,
-    VIDVulkanVdp2DrawEnd,
-    VIDVulkanVdp2DrawScreens,
-    VIDGetGlSize,
-    VIDVulkanSetSettingValue,
-    VIDVulkanSync,
-    VIDVulkanGetNativeResolution,
-    VIDVulkanVdp2DispOff,
-    VIDVulkanOnUpdateColorRamWord,
-    VIDVulkanGetScreenshot
-  };
-
-  extern int YglCalcTextureQ(float   *pnts, float *q);
-
-  vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_struct * param, int index);
-  vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W(vdp2rotationparameter_struct * param, int index);
-  vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2Wm3(vdp2rotationparameter_struct * param, int index);
-  vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1Wm3(vdp2rotationparameter_struct * param, int index);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00NoK(vdp2draw_struct * info, int h, int v);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00WithK(vdp2draw_struct * info, int h, int v);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01NoK(vdp2draw_struct * info, int h, int v);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01WithK(vdp2draw_struct * info, int h, int v);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02NoK(vdp2draw_struct * info, int h, int v);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKA(vdp2draw_struct * info, int h, int v);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKAWithKB(vdp2draw_struct * info, int h, int v);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(vdp2draw_struct * info, int h, int v);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct * info, int h, int v);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struct * info, int h, int v);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struct * info, int h, int v);
-  vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(vdp2draw_struct * info, int h, int v);
-  int Vdp2SetGetColor(vdp2draw_struct * info);
-
-  extern Vdp2 * fixVdp2Regs;
-
-
-  PFN_vkCmdSetStencilTestEnableEXT vkCmdSetStencilTestEnable = 0;
-  PFN_vkCmdSetStencilOpEXT vkCmdSetStencilOp = 0;
-
+int VIDVulkanInit(void) { return VIDVulkan::getInstance()->init(); }
+void VIDVulkanDeInit(void) { VIDVulkan::getInstance()->deInit(); }
+void VIDVulkanResize(int originx, int originy, unsigned int w, unsigned int h, int on, int aspect_rate_mode) {
+  VIDVulkan::getInstance()->resize(originx, originy, w, h, on, aspect_rate_mode);
+}
+int VIDVulkanIsFullscreen(void) { return VIDVulkan::getInstance()->isFullscreen(); }
+int VIDVulkanVdp1Reset(void) { return VIDVulkan::getInstance()->Vdp1Reset(); }
+void VIDVulkanVdp1DrawStart(void) { VIDVulkan::getInstance()->Vdp1DrawStart(); }
+void VIDVulkanVdp1DrawEnd(void) { VIDVulkan::getInstance()->Vdp1DrawEnd(); }
+void VIDVulkanVdp1NormalSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
+  VIDVulkan::getInstance()->Vdp1NormalSpriteDraw(ram, regs, back_framebuffer);
+}
+void VIDVulkanVdp1ScaledSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
+  VIDVulkan::getInstance()->Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer);
+}
+void VIDVulkanVdp1DistortedSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
+  VIDVulkan::getInstance()->Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer);
+}
+void VIDVulkanVdp1PolygonDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
+  VIDVulkan::getInstance()->Vdp1PolygonDraw(ram, regs, back_framebuffer);
+}
+void VIDVulkanVdp1PolylineDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
+  VIDVulkan::getInstance()->Vdp1PolylineDraw(ram, regs, back_framebuffer);
+}
+void VIDVulkanVdp1LineDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
+  VIDVulkan::getInstance()->Vdp1LineDraw(ram, regs, back_framebuffer);
+}
+void VIDVulkanVdp1UserClipping(u8 *ram, Vdp1 *regs) { VIDVulkan::getInstance()->Vdp1UserClipping(ram, regs); }
+void VIDVulkanVdp1SystemClipping(u8 *ram, Vdp1 *regs) { VIDVulkan::getInstance()->Vdp1SystemClipping(ram, regs); }
+void VIDVulkanVdp1LocalCoordinate(u8 *ram, Vdp1 *regs) { VIDVulkan::getInstance()->Vdp1LocalCoordinate(ram, regs); }
+int VIDVulkanVdp2Reset(void) { return VIDVulkan::getInstance()->Vdp2Reset(); }
+void VIDVulkanVdp2DrawStart(void) { VIDVulkan::getInstance()->Vdp2DrawStart(); }
+void VIDVulkanVdp2DrawEnd(void) { VIDVulkan::getInstance()->Vdp2DrawEnd(); }
+void VIDVulkanVdp2DrawScreens(void) { VIDVulkan::getInstance()->Vdp2DrawScreens(); }
+void VIDVulkanVdp2SetResolution(u16 TVMD) { VIDVulkan::getInstance()->Vdp2SetResolution(TVMD); }
+void VIDGetGlSize(int *width, int *height) { VIDVulkan::getInstance()->GetGlSize(width, height); }
+void VIDVulkanVdp1ReadFrameBuffer(u32 type, u32 addr, void *out) {
+  VIDVulkan::getInstance()->Vdp1ReadFrameBuffer(type, addr, out);
+}
+void VIDVulkanSetFilterMode(int type) { VIDVulkan::getInstance()->SetFilterMode(type); }
+void VIDVulkanSync() { VIDVulkan::getInstance()->Sync(); }
+void VIDVulkanVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val) {
+  VIDVulkan::getInstance()->Vdp1WriteFrameBuffer(type, addr, val);
+}
+void VIDVulkanVdp1EraseWrite(void) { VIDVulkan::getInstance()->Vdp1EraseWrite(); }
+void VIDVulkanVdp1FrameChange(void) { VIDVulkan::getInstance()->Vdp1FrameChange(); }
+void VIDVulkanSetSettingValue(int type, int value) { VIDVulkan::getInstance()->SetSettingValue(type, value); }
+void VIDVulkanGetNativeResolution(int *width, int *height, int *interlace) {
+  VIDVulkan::getInstance()->GetNativeResolution(width, height, interlace);
+}
+void VIDVulkanVdp2DispOff(void) { VIDVulkan::getInstance()->Vdp2DispOff(); }
+void VIDVulkanOnUpdateColorRamWord(u32 addr) { VIDVulkan::getInstance()->onUpdateColorRamWord(addr); }
+void VIDVulkanGetScreenshot(void **outbuf, int *width, int *height) {
+  VIDVulkan::getInstance()->getScreenshot(outbuf, *width, *height);
 }
 
+VideoInterface_struct CVIDVulkan = {VIDCORE_VULKAN,
+                                    "Vulkan Video Interface",
+                                    VIDVulkanInit,
+                                    VIDVulkanDeInit,
+                                    VIDVulkanResize,
+                                    VIDVulkanIsFullscreen,
+                                    VIDVulkanVdp1Reset,
+                                    VIDVulkanVdp1DrawStart,
+                                    VIDVulkanVdp1DrawEnd,
+                                    VIDVulkanVdp1NormalSpriteDraw,
+                                    VIDVulkanVdp1ScaledSpriteDraw,
+                                    VIDVulkanVdp1DistortedSpriteDraw,
+                                    VIDVulkanVdp1PolygonDraw,
+                                    VIDVulkanVdp1PolylineDraw,
+                                    VIDVulkanVdp1LineDraw,
+                                    VIDVulkanVdp1UserClipping,
+                                    VIDVulkanVdp1SystemClipping,
+                                    VIDVulkanVdp1LocalCoordinate,
+                                    VIDVulkanVdp1ReadFrameBuffer,
+                                    VIDVulkanVdp1WriteFrameBuffer,
+                                    VIDVulkanVdp1EraseWrite,
+                                    VIDVulkanVdp1FrameChange,
+                                    VIDVulkanVdp2Reset,
+                                    VIDVulkanVdp2DrawStart,
+                                    VIDVulkanVdp2DrawEnd,
+                                    VIDVulkanVdp2DrawScreens,
+                                    VIDGetGlSize,
+                                    VIDVulkanSetSettingValue,
+                                    VIDVulkanSync,
+                                    VIDVulkanGetNativeResolution,
+                                    VIDVulkanVdp2DispOff,
+                                    VIDVulkanOnUpdateColorRamWord,
+                                    VIDVulkanGetScreenshot};
 
-VIDVulkan::VIDVulkan()
-{
+extern int YglCalcTextureQ(float *pnts, float *q);
+
+vdp2rotationparameter_struct *FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_struct *param, int index);
+vdp2rotationparameter_struct *FASTCALL vdp2rGetKValue1W(vdp2rotationparameter_struct *param, int index);
+vdp2rotationparameter_struct *FASTCALL vdp2rGetKValue2Wm3(vdp2rotationparameter_struct *param, int index);
+vdp2rotationparameter_struct *FASTCALL vdp2rGetKValue1Wm3(vdp2rotationparameter_struct *param, int index);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode00NoK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode00WithK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode01NoK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode01WithK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode02NoK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode02WithKA(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode02WithKAWithKB(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode02WithKB(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struct *info, int h, int v);
+vdp2rotationparameter_struct *FASTCALL vdp2RGetParamMode03WithK(vdp2draw_struct *info, int h, int v);
+int Vdp2SetGetColor(vdp2draw_struct *info);
+
+extern Vdp2 *fixVdp2Regs;
+
+PFN_vkCmdSetStencilTestEnableEXT vkCmdSetStencilTestEnable = 0;
+PFN_vkCmdSetStencilOpEXT vkCmdSetStencilOp = 0;
+}
+
+VIDVulkan::VIDVulkan() {
   vdp2width = 320;
   vdp2height = 240;
   SetSaturnResolution(vdp2width, vdp2height);
-  crammutex = NULL; 
+  crammutex = NULL;
   pipleLineNBG0 = NULL;
   pipleLineNBG1 = NULL;
   pipleLineNBG2 = NULL;
@@ -194,28 +208,26 @@ VIDVulkan::VIDVulkan()
   layers.reserve(10);
 }
 
-
-VIDVulkan::~VIDVulkan()
-{
-}
+VIDVulkan::~VIDVulkan() {}
 
 #include <set>
 using std::set;
 
 std::set<std::string> get_supported_extensions() {
   uint32_t count;
-  vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr); //get number of extensions
+  vkEnumerateInstanceExtensionProperties(nullptr, &count,
+                                         nullptr); // get number of extensions
   std::vector<VkExtensionProperties> extensions(count);
-  vkEnumerateInstanceExtensionProperties(nullptr, &count, extensions.data()); //populate buffer
+  vkEnumerateInstanceExtensionProperties(nullptr, &count,
+                                         extensions.data()); // populate buffer
   std::set<std::string> results;
-  for (auto & extension : extensions) {
+  for (auto &extension : extensions) {
     results.insert(extension.extensionName);
   }
   return results;
 }
 
-int VIDVulkan::init(void)
-{
+int VIDVulkan::init(void) {
   int rtn;
   if ((rtn = VulkanScene::init()) != 0) {
     return rtn;
@@ -223,6 +235,7 @@ int VIDVulkan::init(void)
 
   crammutex = YabThreadCreateMutex();
   pipleLineFactory = new VdpPipelineFactory();
+  pipleLineFactory->initPipeLineCache(this->getDevice());
 
   cram.create(this, 2048, 1);
   lineColor.create(this, 512, 9);
@@ -255,7 +268,8 @@ int VIDVulkan::init(void)
   std::set<std::string> exts = get_supported_extensions();
 
   const VkDevice device = _renderer->GetVulkanDevice();
-  vkCmdSetStencilTestEnable = (PFN_vkCmdSetStencilTestEnableEXT)vkGetDeviceProcAddr(device, "vkCmdSetStencilTestEnableEXT");
+  vkCmdSetStencilTestEnable =
+      (PFN_vkCmdSetStencilTestEnableEXT)vkGetDeviceProcAddr(device, "vkCmdSetStencilTestEnableEXT");
   vkCmdSetStencilOp = (PFN_vkCmdSetStencilOpEXT)vkGetDeviceProcAddr(device, "vkCmdSetStencilOpEXT");
 
   generateOffscreenRenderer();
@@ -276,8 +290,9 @@ int VIDVulkan::init(void)
   return 0;
 }
 
-void VIDVulkan::deInit(void)
-{
+void VIDVulkan::deInit(void) {
+  pipleLineFactory->flushPipeLineCache(this->getDevice());
+
   if (vdp1 != nullptr) {
     delete vdp1;
     vdp1 = nullptr;
@@ -316,7 +331,6 @@ void VIDVulkan::deInit(void)
     crammutex = NULL;
   }
 
-
   if (pipleLineNBG0 != NULL) {
     pipleLineFactory->garbage(pipleLineNBG0);
     pipleLineNBG0 = NULL;
@@ -350,11 +364,9 @@ void VIDVulkan::deInit(void)
 
   delete this;
   _instance = nullptr;
-
 }
 
-void VIDVulkan::resize(int originx, int originy, unsigned int w, unsigned int h, int on, int aspect_rate_mode)
-{
+void VIDVulkan::resize(int originx, int originy, unsigned int w, unsigned int h, int on, int aspect_rate_mode) {
   this->_renderer->getWindow()->resize(w, h);
   _device_width = w;
   _device_height = h;
@@ -362,27 +374,20 @@ void VIDVulkan::resize(int originx, int originy, unsigned int w, unsigned int h,
   isFullScreen = on;
   originx = originx;
   originy = originy;
-  aspect_rate_mode = aspect_rate_mode;
+  this->aspect_rate_mode = (ASPECT_RATE_MODE)aspect_rate_mode;
 
   int tmpw = vdp2width;
   int tmph = vdp2height;
-  vdp2width = 0;   // to force update 
+  vdp2width = 0; // to force update
   vdp2height = 0;
   SetSaturnResolution(tmpw, tmph);
 }
 
-int VIDVulkan::isFullscreen(void)
-{
-  return isFullScreen;
-}
+int VIDVulkan::isFullscreen(void) { return isFullScreen; }
 
-int VIDVulkan::Vdp1Reset(void)
-{
-  return 0;
-}
+int VIDVulkan::Vdp1Reset(void) { return 0; }
 
-void VIDVulkan::Vdp1DrawStart(void)
-{
+void VIDVulkan::Vdp1DrawStart(void) {
   if (rebuildPipelines == 1) {
     pipleLineFactory->dicardAllPielines();
     vdp1->setPolygonMode(polygonMode);
@@ -392,96 +397,97 @@ void VIDVulkan::Vdp1DrawStart(void)
   vdp1->drawStart();
 }
 
-void VIDVulkan::Vdp1DrawEnd(void)
-{
-  vdp1->drawEnd();
-}
+void VIDVulkan::Vdp1DrawEnd(void) { vdp1->drawEnd(); }
 
-void VIDVulkan::Vdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuffer)
-{
+void VIDVulkan::Vdp1NormalSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   vdp1->NormalSpriteDraw(ram, regs, back_framebuffer);
 }
 
-void VIDVulkan::Vdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuffer)
-{
+void VIDVulkan::Vdp1ScaledSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   vdp1->ScaledSpriteDraw(ram, regs, back_framebuffer);
 }
 
-void VIDVulkan::Vdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuffer)
-{
+void VIDVulkan::Vdp1DistortedSpriteDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   vdp1->DistortedSpriteDraw(ram, regs, back_framebuffer);
 }
 
-void VIDVulkan::Vdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuffer)
-{
+void VIDVulkan::Vdp1PolygonDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   vdp1->PolygonDraw(ram, regs, back_framebuffer);
 }
 
-void VIDVulkan::Vdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuffer)
-{
+void VIDVulkan::Vdp1PolylineDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) {
   vdp1->PolylineDraw(ram, regs, back_framebuffer);
 }
 
-void VIDVulkan::Vdp1LineDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuffer)
-{
-  vdp1->LineDraw(ram, regs, back_framebuffer);
-}
+void VIDVulkan::Vdp1LineDraw(u8 *ram, Vdp1 *regs, u8 *back_framebuffer) { vdp1->LineDraw(ram, regs, back_framebuffer); }
 
-void VIDVulkan::Vdp1UserClipping(u8 * ram, Vdp1 * regs)
-{
-  vdp1->UserClipping(ram, regs);
-}
+void VIDVulkan::Vdp1UserClipping(u8 *ram, Vdp1 *regs) { vdp1->UserClipping(ram, regs); }
 
-void VIDVulkan::Vdp1SystemClipping(u8 * ram, Vdp1 * regs)
-{
-  vdp1->SystemClipping(ram, regs);
-}
+void VIDVulkan::Vdp1SystemClipping(u8 *ram, Vdp1 *regs) { vdp1->SystemClipping(ram, regs); }
 
-void VIDVulkan::Vdp1LocalCoordinate(u8 * ram, Vdp1 * regs)
-{
-  vdp1->LocalCoordinate(ram, regs);
-}
+void VIDVulkan::Vdp1LocalCoordinate(u8 *ram, Vdp1 *regs) { vdp1->LocalCoordinate(ram, regs); }
 
-int VIDVulkan::Vdp2Reset(void)
-{
-  return 0;
-}
+int VIDVulkan::Vdp2Reset(void) { return 0; }
 
-void VIDVulkan::Vdp2DrawStart(void)
-{
+void VIDVulkan::Vdp2DrawStart(void) {
+
+  if(rebuildSwapChain){
+    LOGI("rebuild frame buffer");
+    vkQueueWaitIdle(_renderer->GetVulkanQueue());
+    vkDeviceWaitIdle(_renderer->GetVulkanDevice());
+    this->_renderer->getWindow()->cleanupSwapChain();
+    rebuildSwapChain = 0;
+  }
+
+
   fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
-  if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
+  if (fixVdp2Regs == NULL)
+    fixVdp2Regs = Vdp2Regs;
   memcpy(&_baseVdp2Regs, fixVdp2Regs, sizeof(Vdp2));
   fixVdp2Regs = &_baseVdp2Regs;
   ::fixVdp2Regs = &_baseVdp2Regs;
   Vdp2SetResolution(fixVdp2Regs->TVMD);
   if (rebuildFrameBuffer) {
-    createCommandPool();
+    LOGI("rebuild frame buffer");
+    vkQueueWaitIdle(_renderer->GetVulkanQueue());
+    // createCommandPool();
     vdp1->changeResolution(renderWidth, renderHeight);
     vdp1->setVdp2Resolution(vdp2width, vdp2height);
-    windowRenderer->changeResolution(vdp2width, vdp2height);
+    windowRenderer->changeResolution(vdp2width, vdp2height, _renderer->getWindow()->GetPreTransFlag(), rotate_screen );
     generateOffscreenPath(vdp2width, vdp2height);
     if (resolutionMode == RES_NATIVE) {
       freeSubRenderTarget();
-    }
-    else {
+    } else {
       freeSubRenderTarget();
       generateSubRenderTarget(renderWidth, renderHeight);
     }
     rebuildFrameBuffer = 0;
+    // vkQueueWaitIdle(_renderer->GetVulkanQueue());
+    // vkDeviceWaitIdle(_renderer->GetVulkanDevice());
   }
-  vkResetCommandPool(getDevice(), this->_command_pool, 0);
+  // vkQueueWaitIdle(_renderer->GetVulkanQueue());
   tm->reset();
   tm->resetCache();
   vm->reset();
 }
 
-void VIDVulkan::Vdp2DrawEnd(void)
-{
-  if (_renderer == nullptr) return;
+void VIDVulkan::Vdp2DrawEnd(void) {
+  if (_renderer == nullptr)
+    return;
   const VkDevice device = _renderer->GetVulkanDevice();
-  if (device == VK_NULL_HANDLE) return;
+  if (device == VK_NULL_HANDLE)
+    return;
 
+  int ci = getCurrentCommandIndex();
+  int fi = _renderer->getWindow()->BeginRender();
+  // LOGD("====== commandBuffer is %d/%d/%d ========", ci,fi,frameCount);
+
+  if (frameCount >= MAX_COMMANDBUFFER_COUNT) {
+    ErrorCheck(vkWaitForFences(device, 1, &commandFence[ci], VK_TRUE, UINT64_MAX));
+    ErrorCheck(vkResetFences(device, 1, &commandFence[ci]));
+  }
+
+#if 1
   backPiepline->moveToVertexBuffer(backPiepline->vertices, backPiepline->indices);
   backPiepline->setSampler(VdpPipeline::bindIdTexture, backColor.imageView, backColor.sampler);
 
@@ -492,41 +498,41 @@ void VIDVulkan::Vdp2DrawEnd(void)
       if (layers[i][j]->interuput_texture != VK_NULL_HANDLE) {
         layers[i][j]->setSampler(VdpPipeline::bindIdTexture, layers[i][j]->interuput_texture, tm->getTextureSampler());
         layers[i][j]->setSampler(VdpPipeline::bindIdLine, tm->geTextureImageView(), tm->getTextureSampler());
-      }
-      else {
+      } else {
         layers[i][j]->setSampler(VdpPipeline::bindIdTexture, tm->geTextureImageView(), tm->getTextureSampler());
         layers[i][j]->setSampler(VdpPipeline::bindIdLine, lineColor.imageView, lineColor.sampler);
       }
       layers[i][j]->setSampler(VdpPipeline::bindIdColorRam, getCramImageView(), getCramSampler());
 
-
       layers[i][j]->setSampler(VdpPipeline::bindIdWindow, windowRenderer->getImageView(), windowRenderer->getSampler());
-
     }
   }
 
-  tm->updateTextureImage([&](VkCommandBuffer commandBuffer)
-  {
-    updateColorRam(commandBuffer);
-    lineColor.update(this, commandBuffer);
-    backColor.update(this, commandBuffer);
-    vm->flush(commandBuffer);
-    windowRenderer->flush(commandBuffer);
-    fbRender->flush(commandBuffer);
+  tm->updateTextureImage([&](VkCommandBuffer tcommandBuffer) {
+    updateColorRam(tcommandBuffer);
+    lineColor.update(this, tcommandBuffer);
+    backColor.update(this, tcommandBuffer);
+    vm->flush(tcommandBuffer);
+    windowRenderer->flush(tcommandBuffer);
+    fbRender->flush(tcommandBuffer);
 
     for (uint32_t i = 0; i < layers.size(); i++) {
       for (uint32_t j = 0; j < layers[i].size(); j++) {
         if (layers[i][j]->lineTexture != 0) {
-          if (perline[0].imageView == layers[i][j]->lineTexture) perline[0].update(this, commandBuffer);
-          if (perline[1].imageView == layers[i][j]->lineTexture) perline[1].update(this, commandBuffer);
-          if (perline[2].imageView == layers[i][j]->lineTexture) perline[2].update(this, commandBuffer);
-          if (perline[3].imageView == layers[i][j]->lineTexture) perline[3].update(this, commandBuffer);
-          if (perline[4].imageView == layers[i][j]->lineTexture) perline[4].update(this, commandBuffer);
+          if (perline[0].imageView == layers[i][j]->lineTexture)
+            perline[0].update(this, tcommandBuffer);
+          if (perline[1].imageView == layers[i][j]->lineTexture)
+            perline[1].update(this, tcommandBuffer);
+          if (perline[2].imageView == layers[i][j]->lineTexture)
+            perline[2].update(this, tcommandBuffer);
+          if (perline[3].imageView == layers[i][j]->lineTexture)
+            perline[3].update(this, tcommandBuffer);
+          if (perline[4].imageView == layers[i][j]->lineTexture)
+            perline[4].update(this, tcommandBuffer);
         }
       }
     }
-  }
-  );
+  });
 
   fbRender->setFrameBuffer(vdp1->getFrameBufferImage());
   fbRender->setColorRam(cram.imageView);
@@ -535,20 +541,37 @@ void VIDVulkan::Vdp2DrawEnd(void)
   static auto startTime = std::chrono::high_resolution_clock::now();
   auto currentTime = std::chrono::high_resolution_clock::now();
   float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-
-  int fi = _renderer->getWindow()->BeginRender();
-
-
+#endif
   VkCommandBufferBeginInfo command_buffer_begin_info{};
   command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
+    glm::vec4 viewportData;
+    int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+    int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+    int deviceOriginX = originx;
+    int deviceOriginY = originy;
+    if( resolutionMode != RES_NATIVE && (Vdp2Regs->TVMD & 0x8000) != 0 ){
+      deviceWidth = renderWidth;
+      deviceHeight = renderHeight;
+      deviceOriginX = 0;
+      deviceOriginY = 0;
+    }
+
+  int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
   VkRect2D render_area{};
   render_area.offset.x = 0;
   render_area.offset.y = 0;
-  render_area.extent = _renderer->getWindow()->GetVulkanSurfaceSize();
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+      pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+    render_area.extent.width = deviceHeight;
+    render_area.extent.height = deviceWidth;
+  } else {
+    render_area.extent.width = deviceWidth;
+    render_area.extent.height = deviceHeight;
+  }
 
+  int offcount = 0;
   std::array<VkClearValue, 2> clear_values{};
   clear_values[1].depthStencil.depth = 0.0f;
   clear_values[1].depthStencil.stencil = 0;
@@ -565,11 +588,53 @@ void VIDVulkan::Vdp2DrawEnd(void)
   render_pass_begin_info.clearValueCount = clear_values.size();
   render_pass_begin_info.pClearValues = clear_values.data();
 
+  VkCommandBuffer commandBuffer = _command_buffers[ci];
+  // vkQueueWaitIdle(_renderer->GetVulkanQueue());
+  vkResetCommandBuffer(commandBuffer, 0);
+  vkBeginCommandBuffer(commandBuffer, &command_buffer_begin_info);
 
-  vkBeginCommandBuffer(_command_buffers[fi], &command_buffer_begin_info);
+
+
+    int u_dir = 0;
+
+    switch (pretransformFlag) {
+      case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
+        viewportData = {deviceHeight - renderHeight - deviceOriginY, deviceOriginX, renderHeight, renderWidth};
+        u_dir = 1;
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+        viewportData = {deviceOriginY, deviceWidth - renderWidth - deviceOriginX, renderHeight, renderWidth};
+        u_dir = 2;
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
+        viewportData = {deviceHeight - renderWidth - deviceOriginX, deviceWidth - renderHeight - deviceOriginY, renderWidth,
+                        renderHeight};
+        u_dir = 3;
+        break;
+      default:
+        viewportData = {deviceOriginX, deviceOriginY, renderWidth, renderHeight};
+        u_dir = 0;
+        break;
+    }
+
+    auto c = vk::CommandBuffer(commandBuffer);
+    vk::Viewport viewport;
+    vk::Rect2D scissor;
+    viewport.width = viewportData.z;
+    viewport.height = viewportData.w;
+    viewport.x = viewportData.x;
+    viewport.y = viewportData.y;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+      
+    scissor.extent.width = viewportData.z;
+    scissor.extent.height = viewportData.w;
+    scissor.offset.x = viewportData.x;
+    scissor.offset.y = viewportData.y;
+
+  fbRender->onStartFrame(fixVdp2Regs, commandBuffer, viewport, resolutionMode);
 
   if ((Vdp2Regs->TVMD & 0x8000) == 0) {
-
     VkRenderPassBeginInfo render_pass_begin_info{};
     render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanRenderPass();
@@ -577,22 +642,33 @@ void VIDVulkan::Vdp2DrawEnd(void)
     render_pass_begin_info.renderArea = render_area;
     render_pass_begin_info.clearValueCount = clear_values.size();
     render_pass_begin_info.pClearValues = clear_values.data();
-    vkCmdBeginRenderPass(_command_buffers[fi], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-    NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(), _command_buffers[fi]);
+    vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+    c.setViewport(0, 1, &viewport);
+    c.setScissor(0, 1, &scissor);
+    NanovgVulkanSetDevices(device, this->getPhysicalDevice(),
+                            _renderer->getWindow()->GetVulkanRenderPass(),
+                            commandBuffer,
+                            pretransformFlag);
     OSDDisplayMessages(NULL, 0, 0);
-    vkCmdEndRenderPass(_command_buffers[fi]);
+    vkCmdEndRenderPass(commandBuffer);
+    goto ENDEND;
+  } else {
 
-  }
-  else {
-
-    windowRenderer->draw(_command_buffers[fi]);
-
+	  windowRenderer->setSpriteWindow(((fixVdp2Regs->SPCTL >> 4) & 0x03) == 0x01);
+  
     if (resolutionMode != RES_NATIVE) {
       VkRect2D tmp_render_area{};
       tmp_render_area.offset.x = 0;
       tmp_render_area.offset.y = 0;
-      tmp_render_area.extent.width = renderWidth;
-      tmp_render_area.extent.height = renderHeight;
+
+      if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+          pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+        tmp_render_area.extent.width = deviceHeight;
+        tmp_render_area.extent.height = deviceWidth;
+      } else {
+        tmp_render_area.extent.width = deviceWidth;
+        tmp_render_area.extent.height = deviceHeight;
+      }
 
       VkRenderPassBeginInfo tmp_render_pass_begin_info{};
       tmp_render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -601,103 +677,87 @@ void VIDVulkan::Vdp2DrawEnd(void)
       tmp_render_pass_begin_info.renderArea = tmp_render_area;
       tmp_render_pass_begin_info.clearValueCount = clear_values.size();
       tmp_render_pass_begin_info.pClearValues = clear_values.data();
-      vkCmdBeginRenderPass(_command_buffers[fi], &tmp_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-    }
-    else {
-      vkCmdBeginRenderPass(_command_buffers[fi], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+      vkCmdBeginRenderPass(commandBuffer, &tmp_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+    } else {
+      vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
     }
 
-    auto c = vk::CommandBuffer(_command_buffers[fi]);
-    vk::Viewport viewport;
-    vk::Rect2D scissor;
-    if (resolutionMode != RES_NATIVE) {
-      viewport.width = renderWidth;
-      viewport.height = renderHeight;
-      viewport.x = 0;
-      viewport.y = 0;
-      viewport.minDepth = 0.0f;
-      viewport.maxDepth = 1.0f;
-      c.setViewport(0, 1, &viewport);
-
-      scissor.extent.width = renderWidth;
-      scissor.extent.height = renderHeight;
-      scissor.offset.x = 0;
-      scissor.offset.y = 0;
-      c.setScissor(0, 1, &scissor);
-
-    }
-    else {
-      viewport.width = renderWidth;
-      viewport.height = renderHeight;
-      viewport.x = originx;
-      viewport.y = originy;
-      viewport.minDepth = 0.0f;
-      viewport.maxDepth = 1.0f;
-      c.setViewport(0, 1, &viewport);
-
-      scissor.extent.width = renderWidth;
-      scissor.extent.height = renderHeight;
-      scissor.offset.x = originx;
-      scissor.offset.y = originy;
-      c.setScissor(0, 1, &scissor);
-    }
-
+    c.setViewport(0, 1, &viewport);
+    c.setScissor(0, 1, &scissor);    
 
     UniformBufferObject ubo = {};
     ubo.emu_height = (float)vdp2height / (float)renderHeight;
     ubo.vheight = renderHeight;
-    ubo.viewport_offset = viewport.y;
-
-
-    fbRender->onStartFrame(fixVdp2Regs, _command_buffers[fi]);
+    ubo.viewport_offset = deviceOriginY;
+    ubo.u_dir = u_dir;
 
     int from = 0;
     int to = 0;
     bool fbRendered = false;
     bool isDestinationAlpha = (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01);
 
-    vector<VdpPipeline*> onFramePipelines;
+    vector<VdpPipeline *> onFramePipelines;
 
     glm::mat4 m4(1.0f);
     glm::mat4 model = m4;
     glm::mat4 proj = glm::ortho(0.0f, (float)vdp2width, 0.0f, (float)vdp2height, 10.0f, 0.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0));
 
-    // Draw Back Color 
+
+    glm::mat4 pre_rotate_mat = glm::mat4(1.0f);
+    glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, 1.0f);
+
+    if (rotate_screen) {
+      pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    }
+
+    if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR) {
+       pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(90.0f), rotation_axis);
+    } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+       pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(270.0f), rotation_axis);
+    } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR) {
+       pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
+    }
+
+    windowRenderer->draw(commandBuffer,
+      [&](VkCommandBuffer tcommandBuffer) {
+      // Draw sprite window
+      fbRender->drawSpriteWindow(fixVdp2Regs, tcommandBuffer, 0, 10);
+    });
+
+    // Draw Back Color
     if (backPiepline->vertices.size() > 0) {
-      glm::mat4 MVP = model * proj;
+      glm::mat4 MVP = model * proj; // no need to rotate
       ubo.mvp = MVP;
       ubo.blendmode = backPiepline->blendmode;
       backPiepline->setUBO(&ubo, sizeof(ubo));
       backPiepline->updateDescriptorSets();
-      vkCmdBindDescriptorSets(_command_buffers[fi], VK_PIPELINE_BIND_POINT_GRAPHICS,
-        backPiepline->getPipelineLayout(), 0, 1, &backPiepline->_descriptorSet, 0, nullptr);
+      vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, backPiepline->getPipelineLayout(), 0, 1,
+                              backPiepline->getDescriptorSet(), 0, nullptr);
 
-      vkCmdBindPipeline(_command_buffers[fi], VK_PIPELINE_BIND_POINT_GRAPHICS, backPiepline->getGraphicsPipeline());
+      vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, backPiepline->getGraphicsPipeline());
 
-      VkBuffer vertexBuffers[] = { vm->getVertexBuffer(backPiepline->vectexBlock) };
-      VkDeviceSize offsets[] = { backPiepline->vertexOffset };
+      VkBuffer vertexBuffers[] = {vm->getVertexBuffer(backPiepline->vectexBlock)};
+      VkDeviceSize offsets[] = {backPiepline->vertexOffset};
 
-      vkCmdBindVertexBuffers(_command_buffers[fi], 0, 1, vertexBuffers, offsets);
+      vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-      vkCmdBindIndexBuffer(_command_buffers[fi],
-        vm->getIndexBuffer(backPiepline->vectexBlock),
-        backPiepline->indexOffset, VK_INDEX_TYPE_UINT16);
+      vkCmdBindIndexBuffer(commandBuffer, vm->getIndexBuffer(backPiepline->vectexBlock), backPiepline->indexOffset,
+                           VK_INDEX_TYPE_UINT16);
 
-      vkCmdDrawIndexed(_command_buffers[fi], backPiepline->indexSize, 1, 0, 0, 0);
+      vkCmdDrawIndexed(commandBuffer, backPiepline->indexSize, 1, 0, 0, 0);
     }
 
-
+    model = model * pre_rotate_mat;
 
     for (uint32_t i = 0; i < layers.size(); i++) {
 
       glm::mat4 MVP = model * proj;
       ubo.mvp = MVP;
-      //void* data;
-      //vkMapMemory(device, _uniformBufferMemory, 0, sizeof(ubo), 0, &data);
-      //memcpy(data, &ubo, sizeof(ubo));
-      //vkUnmapMemory(device, _uniformBufferMemory);
+      // void* data;
+      // vkMapMemory(device, _uniformBufferMemory, 0, sizeof(ubo), 0, &data);
+      // memcpy(data, &ubo, sizeof(ubo));
+      // vkUnmapMemory(device, _uniformBufferMemory);
 
       fbRendered = false;
       for (uint32_t j = 0; j < layers[i].size(); j++) {
@@ -707,17 +767,16 @@ void VIDVulkan::Vdp2DrawEnd(void)
             to = i;
             if (Vdp1External.disptoggle & 0x01) {
               if (isDestinationAlpha) {
-                fbRender->drawWithDestAlphaMode(fixVdp2Regs, _command_buffers[fi], from, to);
-              }
-              else {
-                fbRender->draw(fixVdp2Regs, _command_buffers[fi], from, to);
+                fbRender->drawWithDestAlphaMode(fixVdp2Regs, commandBuffer, from, to, pre_rotate_mat);
+              } else {
+                fbRender->draw(fixVdp2Regs, commandBuffer, from, to, pre_rotate_mat);
               }
             }
             from = to;
             fbRendered = true;
           }
 
-          VdpPipeline * prg = layers[i][j];
+          VdpPipeline *prg = layers[i][j];
 
           ubo.u_specialColorFunc = 0;
           ubo.specialPriority = prg->specialPriority;
@@ -728,9 +787,8 @@ void VIDVulkan::Vdp2DrawEnd(void)
           ubo.color_offset.a = 0;
           ubo.blendmode = prg->blendmode;
 
-
-          if (prg->bwin0 || prg->bwin1 || prg->bwinsp)
-          {
+#if 0
+          if (prg->bwin0 || prg->bwin1 || prg->bwinsp) {
             u8 bwin1 = prg->bwin1 << 1;
             u8 logwin1 = prg->logwin1 << 1;
             u8 bwinsp = prg->bwinsp << 2;
@@ -739,35 +797,43 @@ void VIDVulkan::Vdp2DrawEnd(void)
             int winmask = (prg->bwin0 | bwin1 | bwinsp);
             int winflag = 0;
             if (prg->winmode == 0) { // and
-              if (prg->bwin0)  winflag = prg->logwin0;
-              if (prg->bwin1)  winflag |= logwin1;
-              if (prg->bwinsp) winflag |= logwinsp;
-            }
-            else { // or
+              if (prg->bwin0)
+                winflag = prg->logwin0;
+              if (prg->bwin1)
+                winflag |= logwin1;
+              if (prg->bwinsp)
+                winflag |= logwinsp;
+            } else { // or
               winflag = winmask;
-              if (prg->bwin0)  winflag &= ~prg->logwin0;
-              if (prg->bwin1)  winflag &= ~logwin1;
-              if (prg->bwinsp) winflag &= ~logwinsp;
+              if (prg->bwin0)
+                winflag &= ~prg->logwin0;
+              if (prg->bwin1)
+                winflag &= ~logwin1;
+              if (prg->bwinsp)
+                winflag &= ~logwinsp;
             }
             ubo.winmode = prg->winmode;
             ubo.winmask = winmask;
             ubo.winflag = winflag;
-            ubo.offsetx = viewport.x;
-            ubo.offsety = viewport.y;
-            ubo.windowWidth = viewport.width;
-            ubo.windowHeight = viewport.height;
-
-          }
-          else {
+            ubo.offsetx = viewportData.x;
+            ubo.offsety = viewportData.y;
+            ubo.windowWidth = viewportData.z;
+            ubo.windowHeight = viewportData.w;
+          } else {
             ubo.winmode = -1;
             ubo.winmask = -1;
             ubo.winflag = -1;
             ubo.windowWidth = -1;
             ubo.windowHeight = -1;
-
           }
-
-          // Goto Mosaic render pass 
+#else
+          ubo.winmode = -1;
+          ubo.winmask = -1;
+          ubo.winflag = -1;
+          ubo.windowWidth = -1;
+          ubo.windowHeight = -1;
+#endif
+          // Goto Mosaic render pass
           if (layers[i][j]->mosaic[0] != 1 || layers[i][j]->mosaic[1] != 1) {
 
             UniformBufferObject ubomini = ubo;
@@ -777,43 +843,41 @@ void VIDVulkan::Vdp2DrawEnd(void)
             ubomini.windowHeight = offscreenPass.height;
             layers[i][j]->setUBO(&ubomini, sizeof(ubomini));
             layers[i][j]->updateDescriptorSets();
-            renderToOffecreenTarget(_command_buffers[fi], layers[i][j]);
+            renderToOffecreenTarget(commandBuffer, layers[i][j], offcount);
 
             ubo.u_tw = vdp2width;
             ubo.u_th = vdp2height;
             ubo.vheight = (i / 10.0f);
             ubo.u_mosaic_x = layers[i][j]->mosaic[0];
             ubo.u_mosaic_y = layers[i][j]->mosaic[1];
-            renderEffectToMainTarget(_command_buffers[fi], ubo, 1);
+            renderEffectToMainTarget(commandBuffer, ubo, 1, viewportData,offcount);
+            offcount++;
           }
 
           // per line color calculation mode
           else if (layers[i][j]->lineTexture != VK_NULL_HANDLE && layers[i][j]->specialPriority == 0) {
-
+           
             UniformBufferObject ubomini = ubo;
-            ubomini.offsetx = 0;
-            ubomini.offsety = 0;
-            ubomini.windowWidth = offscreenPass.width;
-            ubomini.windowHeight = offscreenPass.height;
+            ubomini.winmode = -1;
+           
             layers[i][j]->setUBO(&ubomini, sizeof(ubomini));
             layers[i][j]->updateDescriptorSets();
-            renderToOffecreenTarget(_command_buffers[fi], layers[i][j]);
+            renderToOffecreenTarget(commandBuffer, layers[i][j], offcount);
 
-            ubo.u_tw = vdp2width;
-            ubo.u_th = vdp2height;
+            ubo.u_tw = offscreenPass.width;
+            ubo.u_th = offscreenPass.height;
             ubo.vheight = (i / 10.0f);
             ubo.u_specialColorFunc = prg->specialcolormode;
 
-            VdpPipeline * p;
+            VdpPipeline *p;
             if (isDestinationAlpha) {
-              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA_DST, this, this->tm, this->vm);
+              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA_DST, this, this->tm, this->vm, 0);
+            } else {
+              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA, this, this->tm, this->vm, 0);
             }
-            else {
-              p = pipleLineFactory->getPipeline(PG_VDP2_PER_LINE_ALPHA, this, this->tm, this->vm);
-            }
-            renderWithLineEffectToMainTarget(p, _command_buffers[fi], ubo, layers[i][j]->lineTexture);
+            renderWithLineEffectToMainTarget(p, commandBuffer, ubo, layers[i][j]->lineTexture, viewportData,offcount);
             onFramePipelines.push_back(p);
-
+            offcount++;
           }
 
           // Normal mode
@@ -826,33 +890,30 @@ void VIDVulkan::Vdp2DrawEnd(void)
             layers[i][j]->setUBO(&ubo, sizeof(ubo));
             layers[i][j]->updateDescriptorSets();
 
-            vkCmdBindDescriptorSets(_command_buffers[fi], VK_PIPELINE_BIND_POINT_GRAPHICS,
-              layers[i][j]->getPipelineLayout(), 0, 1, &layers[i][j]->_descriptorSet, 0, nullptr);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layers[i][j]->getPipelineLayout(),
+                                    0, 1, layers[i][j]->getDescriptorSet(), 0, nullptr);
 
-            vkCmdBindPipeline(_command_buffers[fi], VK_PIPELINE_BIND_POINT_GRAPHICS, layers[i][j]->getGraphicsPipeline());
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layers[i][j]->getGraphicsPipeline());
 
-            VkBuffer vertexBuffers[] = { vm->getVertexBuffer(layers[i][j]->vectexBlock) };
-            VkDeviceSize offsets[] = { layers[i][j]->vertexOffset };
+            VkBuffer vertexBuffers[] = {vm->getVertexBuffer(layers[i][j]->vectexBlock)};
+            VkDeviceSize offsets[] = {layers[i][j]->vertexOffset};
 
-            vkCmdBindVertexBuffers(_command_buffers[fi], 0, 1, vertexBuffers, offsets);
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-            vkCmdBindIndexBuffer(_command_buffers[fi],
-              vm->getIndexBuffer(layers[i][j]->vectexBlock),
-              layers[i][j]->indexOffset, VK_INDEX_TYPE_UINT16);
+            vkCmdBindIndexBuffer(commandBuffer, vm->getIndexBuffer(layers[i][j]->vectexBlock),
+                                 layers[i][j]->indexOffset, VK_INDEX_TYPE_UINT16);
 
-            vkCmdDrawIndexed(_command_buffers[fi], layers[i][j]->indexSize, 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, layers[i][j]->indexSize, 1, 0, 0, 0);
           }
         }
       }
       model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.1));
-
     }
     if (Vdp1External.disptoggle & 0x01) {
       if (isDestinationAlpha) {
-        fbRender->drawWithDestAlphaMode(fixVdp2Regs, _command_buffers[fi], from, 10);
-      }
-      else {
-        fbRender->draw(fixVdp2Regs, _command_buffers[fi], from, 10);
+        fbRender->drawWithDestAlphaMode(fixVdp2Regs, commandBuffer, from, 10, pre_rotate_mat);
+      } else {
+        fbRender->draw(fixVdp2Regs, commandBuffer, from, 10, pre_rotate_mat);
       }
     }
 
@@ -861,43 +922,106 @@ void VIDVulkan::Vdp2DrawEnd(void)
     }
 
     if ((fixVdp2Regs->SDCTL & 0xFF) != 0 || this->vdp1->getMsbShadowCount() != 0) {
-      fbRender->drawShadow(fixVdp2Regs, _command_buffers[fi], 0, 10);
+      fbRender->drawShadow(fixVdp2Regs, commandBuffer, 0, 10, pre_rotate_mat);
     }
 
     if (resolutionMode == RES_NATIVE) {
-      NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(), _command_buffers[fi]);
+      NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(),
+                             commandBuffer, pretransformFlag);
       OSDDisplayMessages(NULL, 0, 0);
     }
 
-    vkCmdEndRenderPass(_command_buffers[fi]);
+    vkCmdEndRenderPass(commandBuffer);
 
     if (resolutionMode != RES_NATIVE) {
-      vkCmdBeginRenderPass(_command_buffers[fi], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-      auto c = vk::CommandBuffer(_command_buffers[fi]);
+
+      glm::vec4 viewportData;
+      int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+      int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+      int deviceOriginX = originx;
+      int deviceOriginY = originy;
+
+      switch (pretransformFlag) {
+      case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
+        viewportData = {deviceHeight - finalHeight - originy, originx, finalHeight, finalWidth};
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
+        viewportData = {deviceHeight - finalWidth - originx, deviceWidth - finalHeight - originy, finalWidth,
+                        finalHeight};
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+        viewportData = {originy, deviceWidth - finalWidth - originx, finalHeight, finalWidth};
+        break;
+      default:
+        viewportData = {originx, originy, finalWidth, finalHeight};
+        break;
+      }
+
+      int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
+      VkRect2D render_area{};
+      render_area.offset.x = 0;
+      render_area.offset.y = 0;
+      if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+          pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+        render_area.extent.width = deviceHeight;
+        render_area.extent.height = deviceWidth;
+      } else {
+        render_area.extent.width = deviceWidth;
+        render_area.extent.height = deviceHeight;
+      }
+
+      int offcount = 0;
+      std::array<VkClearValue, 2> clear_values{};
+      clear_values[1].depthStencil.depth = 0.0f;
+      clear_values[1].depthStencil.stencil = 0;
+      clear_values[0].color.float32[0] = 0.0;
+      clear_values[0].color.float32[1] = 0.0;
+      clear_values[0].color.float32[2] = 0.0;
+      clear_values[0].color.float32[3] = 0.0f;
+
+      VkRenderPassBeginInfo render_pass_begin_info{};
+      render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanRenderPass();
+      render_pass_begin_info.framebuffer = _renderer->getWindow()->GetVulkanActiveFramebuffer();
+      render_pass_begin_info.renderArea = render_area;
+      render_pass_begin_info.clearValueCount = clear_values.size();
+      render_pass_begin_info.pClearValues = clear_values.data();
+      vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+      auto c = vk::CommandBuffer(commandBuffer);
       vk::Viewport viewport;
       vk::Rect2D scissor;
-      viewport.width = finalWidth;
-      viewport.height = finalHeight;
-      viewport.x = originx;
-      viewport.y = originy;
+      viewport.width = viewportData.z;
+      viewport.height = viewportData.w;
+      viewport.x = viewportData.x;
+      viewport.y = viewportData.y;
       viewport.minDepth = 0.0f;
       viewport.maxDepth = 1.0f;
       c.setViewport(0, 1, &viewport);
-      scissor.extent.width = finalWidth;
-      scissor.extent.height = finalHeight;
-      scissor.offset.x = originx;
-      scissor.offset.y = originy;
+      scissor.extent.width = viewportData.z;
+      scissor.extent.height = viewportData.w;
+      scissor.offset.x = viewportData.x;
+      scissor.offset.y = viewportData.y;
       c.setScissor(0, 1, &scissor);
-      vkCmdEndRenderPass(_command_buffers[fi]);
-      blitSubRenderTarget(_command_buffers[fi]);
-      NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(), _command_buffers[fi]);
-      OSDDisplayMessages(NULL, 0, 0);
+      vkCmdEndRenderPass(commandBuffer);
+
+      blitSubRenderTarget(commandBuffer, viewportData);
+
+      render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanKeepRenderPass();
+      c.setViewport(0, 1, &viewport);
+      c.setScissor(0, 1, &scissor);      
+      vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+      NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanKeepRenderPass(),
+                             commandBuffer, pretransformFlag);
+      OSDDisplayMessages(NULL, finalWidth, finalHeight);
+      vkCmdEndRenderPass(commandBuffer);
+
     }
   }
 
-
-  vkEndCommandBuffer(_command_buffers[fi]);
-
+ENDEND:
+  vkEndCommandBuffer(commandBuffer);
 
   vector<VkSemaphore> waitSem;
 
@@ -917,8 +1041,9 @@ void VIDVulkan::Vdp2DrawEnd(void)
       waitSem.push_back(fbSem);
     }
   */
-  VkPipelineStageFlags graphicsWaitStageMasks[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-  VkSemaphore graphicsWaitSemaphores[] = { rbgGenerator->getCompleteSemaphore() };
+  VkPipelineStageFlags graphicsWaitStageMasks[] = {VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                                                   VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  VkSemaphore graphicsWaitSemaphores[] = {rbgGenerator->getCompleteSemaphore()};
 
   // Submit command buffer
   VkSubmitInfo submit_info{};
@@ -927,14 +1052,13 @@ void VIDVulkan::Vdp2DrawEnd(void)
   submit_info.pWaitSemaphores = waitSem.data();
   submit_info.pWaitDstStageMask = graphicsWaitStageMasks;
   submit_info.commandBufferCount = 1;
-  submit_info.pCommandBuffers = &_command_buffers[fi];
+  submit_info.pCommandBuffers = &commandBuffer;
   submit_info.signalSemaphoreCount = 1;
   submit_info.pSignalSemaphores = &_render_complete_semaphore;
-  ErrorCheck(vkQueueSubmit(_renderer->GetVulkanQueue(), 1, &submit_info, VK_NULL_HANDLE));
+  ErrorCheck(vkQueueSubmit(_renderer->GetVulkanQueue(), 1, &submit_info, commandFence[ci]));
 
-  //vkQueueWaitIdle(getVulkanQueue());
-  //vkDeviceWaitIdle(device);
-
+  // vkQueueWaitIdle(getVulkanQueue());
+  // vkDeviceWaitIdle(device);
 
 #if 0
   if (resolutionMode != RES_NATIVE) {
@@ -989,18 +1113,12 @@ void VIDVulkan::Vdp2DrawEnd(void)
   fbRender->onEndFrame();
   rbgGenerator->onFinish();
   frameCount++;
-
 }
 
-
-
-void VIDVulkan::readVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask)
-{
-  if (regs->CLOFEN & mask)
-  {
+void VIDVulkan::readVdp2ColorOffset(Vdp2 *regs, vdp2draw_struct *info, int mask) {
+  if (regs->CLOFEN & mask) {
     // color offset enable
-    if (regs->CLOFSL & mask)
-    {
+    if (regs->CLOFSL & mask) {
       // color offset B
       info->cor = regs->COBR & 0xFF;
       if (regs->COBR & 0x100)
@@ -1013,9 +1131,7 @@ void VIDVulkan::readVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask
       info->cob = regs->COBB & 0xFF;
       if (regs->COBB & 0x100)
         info->cob |= 0xFFFFFF00;
-    }
-    else
-    {
+    } else {
       // color offset A
       info->cor = regs->COAR & 0xFF;
       if (regs->COAR & 0x100)
@@ -1029,12 +1145,10 @@ void VIDVulkan::readVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask
       if (regs->COAB & 0x100)
         info->cob |= 0xFFFFFF00;
     }
-  }
-  else { // color offset disable
+  } else { // color offset disable
     info->cor = 0;
     info->cob = 0;
     info->cog = 0;
-
   }
 }
 
@@ -1056,7 +1170,7 @@ void VIDVulkan::updateBackColor() {
 
   readVdp2ColorOffset(fixVdp2Regs, &info, 0x20);
   dot = T1ReadWord(Vdp2Ram, scrAddr);
-  u32* back_pixel_data = backColor.dynamicBuf;
+  u32 *back_pixel_data = backColor.dynamicBuf;
   int lineCount = 1;
   if ((fixVdp2Regs->BKTAU & 0x8000) != 0) {
     lineCount = vdp2height;
@@ -1070,8 +1184,7 @@ void VIDVulkan::updateBackColor() {
     b = Y_MAX((((dot & 0x7C00) >> 10) << 3) + info.cob, 0);
     if (fixVdp2Regs->CCCTL & 0x2) {
       a = 0xFF;
-    }
-    else {
+    } else {
       a = ((~fixVdp2Regs->CCRLB & 0x1F00) >> 5) + 0x7;
     }
     *back_pixel_data++ = (a << 24) | ((b & 0xFF) << 16) | ((g & 0xFF) << 8) | (r & 0xFF);
@@ -1079,16 +1192,16 @@ void VIDVulkan::updateBackColor() {
   genPolygonBack();
 }
 
-
 void VIDVulkan::updateLineColor(void) {
   u32 cacheaddr = 0xFFFFFFFF;
   int inc = 0;
   int line_cnt = vdp2height;
   int i = 0;
-  u32 * line_pixel_data = NULL;
+  u32 *line_pixel_data = NULL;
   u32 addr = 0;
 
-  if (fixVdp2Regs->LNCLEN == 0) return;
+  if (fixVdp2Regs->LNCLEN == 0)
+    return;
 
   line_pixel_data = lineColor.dynamicBuf;
   if (line_pixel_data == NULL) {
@@ -1097,8 +1210,7 @@ void VIDVulkan::updateLineColor(void) {
 
   if ((fixVdp2Regs->LCTA.part.U & 0x8000)) {
     inc = 0x02; // single color
-  }
-  else {
+  } else {
     inc = 0x00; // color per line
   }
 
@@ -1116,12 +1228,9 @@ void VIDVulkan::updateLineColor(void) {
     line_pixel_data++;
     addr += inc;
   }
-
 }
 
-
-void VIDVulkan::Vdp2DrawScreens(void)
-{
+void VIDVulkan::Vdp2DrawScreens(void) {
   u32 scrAddr;
   int dot;
   vdp2draw_struct info;
@@ -1154,14 +1263,12 @@ void VIDVulkan::Vdp2DrawScreens(void)
   drawRBG0();
 }
 
-void VIDVulkan::Vdp2SetResolution(u16 TVMD)
-{
+void VIDVulkan::Vdp2SetResolution(u16 TVMD) {
   int width = 0, height = 0;
   int wratio = 1, hratio = 1;
 
   // Horizontal Resolution
-  switch (TVMD & 0x7)
-  {
+  switch (TVMD & 0x7) {
   case 0:
     width = 320;
     wratio = 1;
@@ -1197,23 +1304,24 @@ void VIDVulkan::Vdp2SetResolution(u16 TVMD)
   }
 
   // Vertical Resolution
-  switch ((TVMD >> 4) & 0x3)
-  {
+  switch ((TVMD >> 4) & 0x3) {
   case 0:
     height = 224;
     break;
-  case 1: height = 240;
+  case 1:
+    height = 240;
     break;
-  case 2: height = 256;
+  case 2:
+    height = 256;
     break;
-  default: break;
+  default:
+    break;
   }
 
   hratio = 1;
 
   // Check for interlace
-  switch ((TVMD >> 6) & 0x3)
-  {
+  switch ((TVMD >> 6) & 0x3) {
   case 3: // Double-density Interlace
     height *= 2;
     hratio = 2;
@@ -1230,47 +1338,34 @@ void VIDVulkan::Vdp2SetResolution(u16 TVMD)
   vdp1->setTextureRatio(wratio, hratio);
 }
 
-void VIDVulkan::GetGlSize(int * width, int * height)
-{
+void VIDVulkan::GetGlSize(int *width, int *height) {
   *width = this->renderWidth;
   *height = this->renderHeight;
 }
 
-void VIDVulkan::Vdp1ReadFrameBuffer(u32 type, u32 addr, void * out)
-{
-  this->vdp1->readFrameBuffer(type, addr, out);
-}
+void VIDVulkan::Vdp1ReadFrameBuffer(u32 type, u32 addr, void *out) { this->vdp1->readFrameBuffer(type, addr, out); }
 
-void VIDVulkan::SetFilterMode(int type)
-{
-}
+void VIDVulkan::SetFilterMode(int type) {}
 
-void VIDVulkan::Sync()
-{
-}
+void VIDVulkan::Sync() {}
 
-void VIDVulkan::Vdp1WriteFrameBuffer(u32 type, u32 addr, u32 val)
-{
-  this->vdp1->writeFrameBuffer(type, addr, val);
-}
+void VIDVulkan::Vdp1WriteFrameBuffer(u32 type, u32 addr, u32 val) { this->vdp1->writeFrameBuffer(type, addr, val); }
 
-void VIDVulkan::Vdp1EraseWrite(void)
-{
-  vdp1->erase();
-}
+void VIDVulkan::Vdp1EraseWrite(void) { vdp1->erase(); }
 
-void VIDVulkan::Vdp1FrameChange(void)
-{
-  vdp1->change();
-}
+void VIDVulkan::Vdp1FrameChange(void) { vdp1->change(); }
 
-void VIDVulkan::SetSettingValue(int type, int value)
-{
+void VIDVulkan::SetSettingValue(int type, int value) {
 
   switch (type) {
   case VDP_SETTING_FILTERMODE:
     //_Ygl->aamode = value; ToDo
     break;
+  case VDP_SETTING_ASPECT_RATE_MODE:
+    if (aspect_rate_mode != value) {
+      aspect_rate_mode = (ASPECT_RATE_MODE)value;
+      rebuildFrameBuffer = 1; // rebuild frame buffers at the top of frame
+    }
   case VDP_SETTING_RESOLUTION_MODE:
     if (resolutionMode != value) {
       resolutionMode = value;
@@ -1293,32 +1388,41 @@ void VIDVulkan::SetSettingValue(int type, int value)
     */
     break;
   case VDP_SETTING_POLYGON_MODE:
-      if (polygonMode != value) {
-        if (!this->_renderer->isTessellationAvailable() && value == GPU_TESSERATION) {
-          polygonMode = PERSPECTIVE_CORRECTION;
-          YuiErrorMsg("This device does not support GPU Tesseration." );
-          return;
-        }
-        rebuildPipelines = 1; // rebuild frame buffers at the top of frame
+    if (polygonMode != value) {
+      if (!this->_renderer->isTessellationAvailable() && value == GPU_TESSERATION) {
+        polygonMode = PERSPECTIVE_CORRECTION;
+        YuiErrorMsg("This device does not support GPU Tesseration.");
+        return;
       }
-      polygonMode = (POLYGONMODE)value;
+      rebuildPipelines = 1; // rebuild frame buffers at the top of frame
+    }
+    polygonMode = (POLYGONMODE)value;
     break;
-    //case VDP_SETTING_ROTATE_SCREEN:
-      //_Ygl->rotate_screen = value;
-    //  break;
+  case VDP_SETTING_ROTATE_SCREEN:
+    this->rotate_screen = value;
+    break;
+  case VDP_SETTING_FRAMELIMIT_MODE:  
+    if( frameLimitMode != value ){
+        frameLimitMode = value;
+
+        if( value == 0 ){
+          this->_renderer->getWindow()->setPresentpMode(VK_PRESENT_MODE_FIFO_KHR);
+        }else{
+          this->_renderer->getWindow()->setPresentpMode(VK_PRESENT_MODE_MAILBOX_KHR);
+        }
+        //this->_renderer->getWindow()->cleanupSwapChain();
+        rebuildSwapChain = 1; // rebuild frame buffers at the top of frame
+    }
+  default:
+    break;
   }
 }
 
-void VIDVulkan::GetNativeResolution(int * width, int * height, int * interlace)
-{
-}
+void VIDVulkan::GetNativeResolution(int *width, int *height, int *interlace) {}
 
-void VIDVulkan::Vdp2DispOff(void)
-{
-}
+void VIDVulkan::Vdp2DispOff(void) {}
 
-void VIDVulkan::setClearColor(float r, float g, float b)
-{
+void VIDVulkan::setClearColor(float r, float g, float b) {
   _clear_r = r;
   _clear_g = g;
   _clear_b = b;
@@ -1326,9 +1430,8 @@ void VIDVulkan::setClearColor(float r, float g, float b)
 
 void VIDVulkan::SetSaturnResolution(int width, int height) {
 
-  //YglChangeResolution(width, height); ToDo
-  //YglSetDensity((vdp2_interlace == 0) ? 1 : 2); ToDo
-
+  // YglChangeResolution(width, height); ToDo
+  // YglSetDensity((vdp2_interlace == 0) ? 1 : 2); ToDo
 
   if (vdp2width != width || vdp2height != height) {
 
@@ -1345,12 +1448,14 @@ void VIDVulkan::SetSaturnResolution(int width, int height) {
 
       if (aspect_rate_mode != FULL) {
 
-        float hrate;
-        float wrate;
+        float hrate = 9.0 / 16.0;
+        float wrate = 16.0 / 9.0;
         switch (aspect_rate_mode) {
         case ORIGINAL:
-          hrate = (float)((vdp2height > 256) ? vdp2height / 2 : vdp2height) / (float)((vdp2width > 352) ? vdp2width / 2 : vdp2width);
-          wrate = (float)((vdp2width > 352) ? vdp2width / 2 : vdp2width) / (float)((vdp2height > 256) ? vdp2height / 2 : vdp2height);
+          hrate = (float)((vdp2height > 256) ? vdp2height / 2 : vdp2height) /
+                  (float)((vdp2width > 352) ? vdp2width / 2 : vdp2width);
+          wrate = (float)((vdp2width > 352) ? vdp2width / 2 : vdp2width) /
+                  (float)((vdp2height > 256) ? vdp2height / 2 : vdp2height);
           break;
         case _4_3:
           hrate = 3.0 / 4.0;
@@ -1360,48 +1465,45 @@ void VIDVulkan::SetSaturnResolution(int width, int height) {
           hrate = 9.0 / 16.0;
           wrate = 16.0 / 9.0;
           break;
+        default:
+          break;
         }
 
         if (rotate_screen) {
           if (isFullScreen) {
-            if (deviceWidth > deviceHeight) {
-              originy = deviceHeight - (deviceHeight - deviceWidth * wrate);
+            if (deviceWidth < deviceHeight) {
+				      originy = 0; // deviceHeight - (deviceHeight - deviceWidth * wrate);
               renderHeight = deviceWidth * wrate;
               renderWidth = deviceWidth;
-            }
-            else {
+            } else {
               originx = (deviceWidth - deviceHeight * hrate) / 2.0f;
               renderWidth = deviceHeight * hrate;
               renderHeight = deviceHeight;
             }
-          }
-          else {
+          } else {
             originx = (deviceWidth - deviceHeight * hrate) / 2.0f;
             renderWidth = deviceHeight * hrate;
             renderHeight = deviceHeight;
           }
-        }
-        else {
+        } else {
           if (isFullScreen) {
             if (deviceHeight > deviceWidth) {
-              originy = 0; // deviceWidth * hrate; // deviceHeight; // -(deviceHeight - deviceWidth * hrate);
+              originy = 0; // deviceWidth * hrate; // deviceHeight; //
+                           // -(deviceHeight - deviceWidth * hrate);
               renderHeight = deviceWidth * hrate;
               renderWidth = deviceWidth;
-            }
-            else {
+            } else {
               originx = (deviceWidth - deviceHeight * wrate) / 2.0f;
               renderWidth = deviceHeight * wrate;
               renderHeight = deviceHeight;
             }
-          }
-          else {
+          } else {
 
             if (deviceHeight > deviceWidth) {
               originy = (deviceHeight - deviceWidth * hrate) / 2.0f;
               renderHeight = deviceWidth * hrate;
               renderWidth = deviceWidth;
-            }
-            else {
+            } else {
               originx = (deviceWidth - deviceHeight * wrate) / 2.0f;
               renderWidth = deviceHeight * wrate;
               renderHeight = deviceHeight;
@@ -1422,8 +1524,8 @@ void VIDVulkan::SetSaturnResolution(int width, int height) {
 
     switch (resolutionMode) {
     case RES_NATIVE:
-      //renderWidth = GlWidth;
-      //renderHeight = GlHeight;
+      // renderWidth = GlWidth;
+      // renderHeight = GlHeight;
       rebuildFrameBuffer = 1;
       break;
     case RES_4x:
@@ -1453,7 +1555,6 @@ void VIDVulkan::SetSaturnResolution(int width, int height) {
       break;
     }
   }
-
 }
 
 // VdpPipeline ** pipleLine out �������ꂽ�p�C�v���C���I�u�W�F�N�g
@@ -1462,15 +1563,16 @@ void VIDVulkan::SetSaturnResolution(int width, int height) {
 // float * colors ���_���Ƃ̐F VDP2�ł͎g��Ȃ�
 // TextureCache * c �L���b�V�����W
 // int cash_flg 1�̏ꍇ c�̃L���b�V�����W���X�V����
-int VIDVulkan::genPolygon(VdpPipeline ** pipleLine, vdp2draw_struct * input, CharTexture * output, float * colors, TextureCache * c, int cash_flg) {
+int VIDVulkan::genPolygon(VdpPipeline **pipleLine, vdp2draw_struct *input, CharTexture *output, float *colors,
+                          TextureCache *c, int cash_flg, int isOffset) {
   unsigned int x, y;
   VdpPipeline *program;
-  //texturecoordinate_struct *tmp;
-  float * vtxa;
+  // texturecoordinate_struct *tmp;
+  float *vtxa;
   float q[4];
   YglPipelineId prg = PG_NORMAL;
-  float * pos;
-  //float * vtxa;
+  float *pos;
+  // float * vtxa;
 
   const int CCRTMD = ((fixVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
 
@@ -1478,15 +1580,12 @@ int VIDVulkan::genPolygon(VdpPipeline ** pipleLine, vdp2draw_struct * input, Cha
 
     if ((input->blendmode & 0x03) == VDP2_CC_NONE) {
       prg = PG_VDP2_NOBLEND;
-    }
-    else if ((input->blendmode & 0x03) == VDP2_CC_ADD) {
+    } else if ((input->blendmode & 0x03) == VDP2_CC_ADD) {
       prg = PG_VDP2_ADDBLEND;
-    }
-    else {
+    } else {
       if (CCRTMD == 0) {
         prg = PG_NORMAL; // src alpha
-      }
-      else {
+      } else {
         prg = PG_NORMAL_DSTALPHA; // dst alpha
       }
     }
@@ -1504,32 +1603,25 @@ int VIDVulkan::genPolygon(VdpPipeline ** pipleLine, vdp2draw_struct * input, Cha
       if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
         prg = PG_LINECOLOR_INSERT_DESTALPHA;
       }
-    }
-    else if (input->linescreen == 2) { // per line operation by HBLANK
+    } else if (input->linescreen == 2) { // per line operation by HBLANK
       if (input->specialprimode == 2) {
-        prg = PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET; // Assault Leynos 2
-      }
-      else {
+        prg = PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET; // Assault
+                                                                // Leynos 2
+      } else {
         prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
       }
     }
-
-  }
-  else {
+  } else {
     if ((input->blendmode & 0x03) == VDP2_CC_NONE) {
       prg = PG_VDP2_NOBLEND_CRAM;
-    }
-    else if ((input->blendmode & 0x03) == VDP2_CC_ADD) {
+    } else if ((input->blendmode & 0x03) == VDP2_CC_ADD) {
       prg = PG_VDP2_ADDCOLOR_CRAM;
-    }
-    else { // VDP2_CC_RATE
+    } else { // VDP2_CC_RATE
       if (CCRTMD == 0) {
         prg = PG_VDP2_NORMAL_CRAM; // src alpha
-      }
-      else {
+      } else {
         prg = PG_VDP2_NORMAL_CRAM_DSTALPHA; // dst alpha
       }
-
     }
 
     if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
@@ -1544,25 +1636,37 @@ int VIDVulkan::genPolygon(VdpPipeline ** pipleLine, vdp2draw_struct * input, Cha
       if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
         prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
       }
-    }
-    else if (input->linescreen == 2) { // per line operation by HBLANK
+    } else if (input->linescreen == 2) { // per line operation by HBLANK
       prg = PG_VDP2_NOBLEND_CRAM;
-      //if (input->specialprimode == 2) {
-      //  prg = PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET; // Assault Leynos 2
-      //}
-      //else {
-      //     prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
-      //}
+      // if (input->specialprimode == 2) {
+      //   prg = PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET; // Assault
+      //   Leynos 2
+      // }
+      // else {
+      //      prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
+      // }
     }
+  }
 
+  auto winflg = VdpPipeline::genWinFlag(
+    input->LogicWin,
+    input->bEnWin0,
+    input->bEnWin1,
+    input->bEnSpriteWin,
+    input->WindowArea0,
+    input->WindowArea1,
+    input->WindowAreaSprite
+  );
+
+  if(input->bEnSpriteWin != 0) {
+    printf("hello");
   }
 
   if (*pipleLine == NULL) {
-    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm);
-  }
-  else if ((*pipleLine)->prgid != prg) {
+    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm, winflg);
+  } else if ((*pipleLine)->prgid != prg || (*pipleLine)->getWinFlg() != winflg) {
     pipleLineFactory->garbage(*pipleLine);
-    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm);
+    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm, winflg);
   }
 
   program = *pipleLine;
@@ -1573,8 +1677,9 @@ int VIDVulkan::genPolygon(VdpPipeline ** pipleLine, vdp2draw_struct * input, Cha
   program->logwin0 = input->WindowArea0;
   program->bwin1 = input->bEnWin1;
   program->logwin1 = input->WindowArea1;
-  program->bwinsp = 0;
-  program->logwinsp = 0;
+  program->bwinsp = input->bEnSpriteWin;
+  program->logwinsp = input->WindowAreaSprite;
+
   program->blendmode = input->blendmode;
   program->winmode = input->LogicWin;
   program->mosaic[0] = input->mosaicxmask;
@@ -1584,62 +1689,79 @@ int VIDVulkan::genPolygon(VdpPipeline ** pipleLine, vdp2draw_struct * input, Cha
   program->lineTexture = (VkImageView)input->lineTexture;
   program->specialcolormode = input->specialcolormode;
 
-
   Vertex tmp[4];
-  tmp[0].pos[0] = (input->vertices[0] - input->cx) * input->coordincx;
-  tmp[0].pos[1] = input->vertices[1] * input->coordincy;
-  tmp[0].pos[2] = (float)input->priorityOffset / 2.0f;
-  tmp[0].pos[3] = 1.0f;
 
-  tmp[1].pos[0] = (input->vertices[2] - input->cx) * input->coordincx;
-  tmp[1].pos[1] = input->vertices[3] * input->coordincy;
-  tmp[1].pos[2] = (float)input->priorityOffset / 2.0f;
-  tmp[1].pos[3] = 1.0f;
+  if (isOffset) {
+	  tmp[0].pos[0] = (input->vertices[0] - input->cx) * input->coordincx;
+	  tmp[0].pos[1] = input->vertices[1] * input->coordincy;
+	  tmp[0].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[0].pos[3] = 1.0f;
 
-  tmp[2].pos[0] = (input->vertices[4] - input->cx) * input->coordincx;
-  tmp[2].pos[1] = input->vertices[5] * input->coordincy;
-  tmp[2].pos[2] = (float)input->priorityOffset / 2.0f;
-  tmp[2].pos[3] = 1.0f;
+	  tmp[1].pos[0] = (input->vertices[2] - input->cx) * input->coordincx;
+	  tmp[1].pos[1] = input->vertices[3] * input->coordincy;
+	  tmp[1].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[1].pos[3] = 1.0f;
 
-  tmp[3].pos[0] = (input->vertices[6] - input->cx) * input->coordincx;
-  tmp[3].pos[1] = input->vertices[7] * input->coordincy;
-  tmp[3].pos[2] = (float)input->priorityOffset / 2.0f;
-  tmp[3].pos[3] = 1.0f;
+	  tmp[2].pos[0] = (input->vertices[4] - input->cx) * input->coordincx;
+	  tmp[2].pos[1] = input->vertices[5] * input->coordincy;
+	  tmp[2].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[2].pos[3] = 1.0f;
 
+	  tmp[3].pos[0] = (input->vertices[6] - input->cx) * input->coordincx;
+	  tmp[3].pos[1] = input->vertices[7] * input->coordincy;
+	  tmp[3].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[3].pos[3] = 1.0f;
+  }
+  else {
+	  tmp[0].pos[0] = input->vertices[0];
+	  tmp[0].pos[1] = input->vertices[1];
+	  tmp[0].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[0].pos[3] = 1.0f;
+
+	  tmp[1].pos[0] = input->vertices[2];
+	  tmp[1].pos[1] = input->vertices[3];
+	  tmp[1].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[1].pos[3] = 1.0f;
+
+	  tmp[2].pos[0] = input->vertices[4];
+	  tmp[2].pos[1] = input->vertices[5];
+	  tmp[2].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[2].pos[3] = 1.0f;
+
+	  tmp[3].pos[0] = input->vertices[6];
+	  tmp[3].pos[1] = input->vertices[7];
+	  tmp[3].pos[2] = (float)input->priorityOffset / 2.0f;
+	  tmp[3].pos[3] = 1.0f;
+  }
 
   if (output != NULL) {
     tm->allocate(output, input->cellw, input->cellh, &x, &y);
-  }
-  else {
+  } else {
     x = c->x;
     y = c->y;
   }
 
   if (input->flipfunction & 0x1) {
     tmp[0].texCoord[0] = tmp[3].texCoord[0] = (float)((x + input->cellw) - ATLAS_BIAS);
-    tmp[1].texCoord[0] = tmp[2].texCoord[0] = (float)((x)+ATLAS_BIAS);
-  }
-  else {
-    tmp[0].texCoord[0] = tmp[3].texCoord[0] = (float)((x)+ATLAS_BIAS);
+    tmp[1].texCoord[0] = tmp[2].texCoord[0] = (float)((x) + ATLAS_BIAS);
+  } else {
+    tmp[0].texCoord[0] = tmp[3].texCoord[0] = (float)((x) + ATLAS_BIAS);
     tmp[1].texCoord[0] = tmp[2].texCoord[0] = (float)((x + input->cellw) - ATLAS_BIAS);
   }
   if (input->flipfunction & 0x2) {
     tmp[0].texCoord[1] = tmp[1].texCoord[1] = (float)((y + input->cellh - input->cy) - ATLAS_BIAS);
     tmp[2].texCoord[1] = tmp[3].texCoord[1] = (float)((y - input->cy) + ATLAS_BIAS);
-  }
-  else {
+  } else {
     tmp[0].texCoord[1] = tmp[1].texCoord[1] = (float)((y + input->cy) + ATLAS_BIAS);
     tmp[2].texCoord[1] = tmp[3].texCoord[1] = (float)((y + input->cy + input->cellh) - ATLAS_BIAS);
   }
 
-  if (c != NULL && cash_flg == 1)
-  {
+  if (c != NULL && cash_flg == 1) {
     c->x = x;
     c->y = y;
   }
 
-  if (input->dst == 1)
-  {
+  if (input->dst == 1) {
     YglCalcTextureQ(input->vertices, q);
 
     tmp[0].texCoord[0] *= q[0];
@@ -1659,9 +1781,7 @@ int VIDVulkan::genPolygon(VdpPipeline ** pipleLine, vdp2draw_struct * input, Cha
     tmp[2].texCoord[3] = q[2];
     tmp[3].texCoord[2] = 0.0f;
     tmp[3].texCoord[3] = q[3];
-
-  }
-  else {
+  } else {
     tmp[0].texCoord[2] = 0.0f;
     tmp[0].texCoord[3] = 1.0f;
     tmp[1].texCoord[2] = 0.0f;
@@ -1697,10 +1817,9 @@ int VIDVulkan::genPolygon(VdpPipeline ** pipleLine, vdp2draw_struct * input, Cha
 void VIDVulkan::genPolygonBack() {
 
   VdpPipeline *program;
-  program = (VdpPipeline*)backPiepline;
+  program = (VdpPipeline *)backPiepline;
 
   program->blendmode = (fixVdp2Regs->BKTAU & 0x8000);
-
 
   Vertex tmp[4] = {};
   tmp[0].pos[0] = 0;
@@ -1738,24 +1857,18 @@ void VIDVulkan::genPolygonBack() {
   program->vertices[3] = tmp[3];
 
   return;
-
 }
 
-int VIDVulkan::genPolygonRbg0(
-  VdpPipeline ** pipleLine,
-  vdp2draw_struct * input,
-  CharTexture * output,
-  TextureCache * c,
-  TextureCache * line,
-  int rbg_type) {
+int VIDVulkan::genPolygonRbg0(VdpPipeline **pipleLine, vdp2draw_struct *input, CharTexture *output, TextureCache *c,
+                              TextureCache *line, int rbg_type) {
   unsigned int x, y;
   VdpPipeline *program;
-  //texturecoordinate_struct *tmp;
-  float * vtxa;
+  // texturecoordinate_struct *tmp;
+  float *vtxa;
   float q[4];
   YglPipelineId prg = PG_NORMAL;
-  float * pos;
-  //float * vtxa;
+  float *pos;
+  // float * vtxa;
 
   const int CCRTMD = ((fixVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
 
@@ -1770,15 +1883,12 @@ int VIDVulkan::genPolygonRbg0(
 
     if ((input->blendmode & 0x03) == VDP2_CC_NONE) {
       prg = PG_VDP2_NOBLEND;
-    }
-    else if ((input->blendmode & 0x03) == VDP2_CC_ADD) {
+    } else if ((input->blendmode & 0x03) == VDP2_CC_ADD) {
       prg = PG_VDP2_ADDBLEND;
-    }
-    else {
+    } else {
       if (CCRTMD == 0) {
         prg = PG_NORMAL; // src alpha
-      }
-      else {
+      } else {
         prg = PG_NORMAL_DSTALPHA; // dst alpha
       }
     }
@@ -1793,54 +1903,45 @@ int VIDVulkan::genPolygonRbg0(
         prg = PG_LINECOLOR_INSERT_DESTALPHA;
       }
     }
-    //else if (input->linescreen == 2) { // per line operation by HBLANK
-    //  prg = PG_VDP2_PER_LINE_ALPHA;
-    //}
-  }
-  else {
+    // else if (input->linescreen == 2) { // per line operation by HBLANK
+    //   prg = PG_VDP2_PER_LINE_ALPHA;
+    // }
+  } else {
 
     if (line->x != -1 && VDP2_CC_NONE != input->blendmode) {
       prg = PG_VDP2_RBG_CRAM_LINE;
-    }
-    else if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+    } else if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC_CRAM;
-    }
-    else if ((input->blendmode & VDP2_CC_BLUR) != 0) {
+    } else if ((input->blendmode & VDP2_CC_BLUR) != 0) {
       prg = PG_VDP2_BLUR_CRAM;
-    }
-    else if (input->linescreen == 1) {
+    } else if (input->linescreen == 1) {
       prg = PG_LINECOLOR_INSERT_CRAM;
       if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
         prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
       }
-    }
-    else if (input->linescreen == 2) { // per line operation by HBLANK
+    } else if (input->linescreen == 2) { // per line operation by HBLANK
       if (input->specialprimode == 2) {
-        prg = PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET; // Assault Leynos 2
-      }
-      else {
+        prg = PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY_COLOROFFSET; // Assault
+                                                                // Leynos 2
+      } else {
         prg = PG_VDP2_NOBLEND_CRAM;
       }
-    }
-    else {
-      //if (input->specialprimode == 2) {
-      //  prg = PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY;
-      //}
-      //else {
-//        prg = PG_VDP2_NORMAL_CRAM;
+    } else {
+      // if (input->specialprimode == 2) {
+      //   prg = PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY;
+      // }
+      // else {
+      //        prg = PG_VDP2_NORMAL_CRAM;
       //}
 
       if ((input->blendmode & 0x03) == VDP2_CC_NONE) {
         prg = PG_VDP2_NOBLEND_CRAM;
-      }
-      else if ((input->blendmode & 0x03) == VDP2_CC_ADD) {
+      } else if ((input->blendmode & 0x03) == VDP2_CC_ADD) {
         prg = PG_VDP2_ADDCOLOR_CRAM;
-      }
-      else { // VDP2_CC_RATE
+      } else { // VDP2_CC_RATE
         if (CCRTMD == 0) {
           prg = PG_VDP2_NORMAL_CRAM; // src alpha
-        }
-        else {
+        } else {
           prg = PG_VDP2_NORMAL_CRAM_DSTALPHA; // dst alpha
         }
       }
@@ -1848,17 +1949,24 @@ int VIDVulkan::genPolygonRbg0(
       if (input->lineTexture != 0) { // Line color blend screen blend is done in 2nd path
         prg = PG_VDP2_NOBLEND_CRAM;
       }
-
-
     }
   }
 
+  auto winflg = VdpPipeline::genWinFlag(
+    input->LogicWin,
+    input->bEnWin0,
+    input->bEnWin1,
+    input->bEnSpriteWin,
+    input->WindowArea0,
+    input->WindowArea1,
+    input->WindowAreaSprite
+  );
+
   if (*pipleLine == NULL) {
-    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm);
-  }
-  else if ((*pipleLine)->prgid != prg) {
+    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm, winflg);
+  } else if ((*pipleLine)->prgid != prg || (*pipleLine)->getWinFlg() != winflg) {
     pipleLineFactory->garbage(*pipleLine);
-    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm);
+    *pipleLine = pipleLineFactory->getPipeline(prg, this, this->tm, this->vm, winflg);
   }
 
   program = *pipleLine;
@@ -1869,6 +1977,8 @@ int VIDVulkan::genPolygonRbg0(
   program->logwin0 = input->WindowArea0;
   program->bwin1 = input->bEnWin1;
   program->logwin1 = input->WindowArea1;
+  program->bwinsp = input->bEnSpriteWin;
+  program->logwinsp = input->WindowAreaSprite;
   program->winmode = input->LogicWin;
   program->lineTexture = (VkImageView)input->lineTexture;
   program->blendmode = input->blendmode;
@@ -1915,26 +2025,21 @@ int VIDVulkan::genPolygonRbg0(
     tmp[1].texCoord[0] = tmp[2].texCoord[0] = input->cellw;
     tmp[0].texCoord[1] = tmp[1].texCoord[1] = 0;
     tmp[2].texCoord[1] = tmp[3].texCoord[1] = input->cellh;
-
-  }
-  else {
-
+  } else {
 
     x = c->x;
     y = c->y;
 
-    tmp[0].texCoord[0] = tmp[3].texCoord[0] = (float)((x)+ATLAS_BIAS);
+    tmp[0].texCoord[0] = tmp[3].texCoord[0] = (float)((x) + ATLAS_BIAS);
     tmp[1].texCoord[0] = tmp[2].texCoord[0] = (float)((x + input->cellw) - ATLAS_BIAS);
-    tmp[0].texCoord[1] = tmp[1].texCoord[1] = (float)((y)+ATLAS_BIAS);
+    tmp[0].texCoord[1] = tmp[1].texCoord[1] = (float)((y) + ATLAS_BIAS);
     tmp[2].texCoord[1] = tmp[3].texCoord[1] = (float)((y + input->cellh) - ATLAS_BIAS);
   }
-
 
   if (line == NULL) {
     tmp[0].texCoord[2] = tmp[1].texCoord[2] = tmp[2].texCoord[2] = tmp[3].texCoord[2] = 0;
     tmp[0].texCoord[3] = tmp[1].texCoord[3] = tmp[2].texCoord[3] = tmp[3].texCoord[3] = 0;
-  }
-  else {
+  } else {
     tmp[0].texCoord[2] = (float)(line->x) + ATLAS_BIAS;
     tmp[0].texCoord[3] = (float)(line->y) + ATLAS_BIAS;
 
@@ -1947,7 +2052,6 @@ int VIDVulkan::genPolygonRbg0(
     tmp[3].texCoord[2] = (float)(line->x + input->cellh) - ATLAS_BIAS;
     tmp[3].texCoord[3] = (float)(line->y) + ATLAS_BIAS;
   }
-
 
   int lastVertex = program->vertices.size();
 
@@ -1967,7 +2071,7 @@ int VIDVulkan::genPolygonRbg0(
 }
 
 void VIDVulkan::drawNBG0() {
-  vdp2draw_struct info = { 0 };
+  vdp2draw_struct info = {0};
   CharTexture texture;
   TextureCache tmpc;
   int char_access = 0;
@@ -1984,7 +2088,7 @@ void VIDVulkan::drawNBG0() {
   info.cellh = 256;
   info.specialcolorfunction = 0;
 
-  info.pipeline = (void*)(&pipleLineNBG0);
+  info.pipeline = (void *)(&pipleLineNBG0);
   if (pipleLineNBG0) {
     pipleLineNBG0->vertices.clear();
     pipleLineNBG0->indices.clear();
@@ -2005,17 +2109,16 @@ void VIDVulkan::drawNBG0() {
     }
   }
 
-  if (fixVdp2Regs->BGON & 0x20)
-  {
+  if (fixVdp2Regs->BGON & 0x20) {
     // RBG1 mode
     info.enable = fixVdp2Regs->BGON & 0x20;
-    if (!info.enable) return;
+    if (!info.enable)
+      return;
 
     // Read in Parameter B
     Vdp2ReadRotationTable(1, &paraB, fixVdp2Regs, Vdp2Ram);
 
-    if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0)
-    {
+    if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0) {
       // Bitmap Mode
 
       ReadBitmapSize(&info, fixVdp2Regs->CHCTLA >> 2, 0x3);
@@ -2024,9 +2127,7 @@ void VIDVulkan::drawNBG0() {
       info.paladdr = (fixVdp2Regs->BMPNA & 0x7) << 4;
       info.flipfunction = 0;
       info.specialfunction = 0;
-    }
-    else
-    {
+    } else {
       // Tile Mode
       info.mapwh = 4;
       ReadPlaneSize(&info, fixVdp2Regs->PLSZ >> 12);
@@ -2038,15 +2139,14 @@ void VIDVulkan::drawNBG0() {
       paraB.MskV = (8 * 64 * info.planeh) - 1;
       paraB.MaxH = 8 * 64 * info.planew * 4;
       paraB.MaxV = 8 * 64 * info.planeh * 4;
-
     }
     info.rotatenum = 1;
-    //paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
+    // paraB.PlaneAddr = (void FASTCALL(*)(void *, int,
+    // Vdp2*))&Vdp2ParameterBPlaneAddr;
     paraB.coefenab = fixVdp2Regs->KTCTL & 0x100;
     paraB.charaddr = (fixVdp2Regs->MPOFR & 0x70) * 0x2000;
     ReadPlaneSizeR(&paraB, fixVdp2Regs->PLSZ >> 12);
-    for (int i = 0; i < 16; i++)
-    {
+    for (int i = 0; i < 16; i++) {
       Vdp2ParameterBPlaneAddr(&info, i, fixVdp2Regs);
       paraB.PlaneAddrv[i] = info.addr;
     }
@@ -2057,35 +2157,26 @@ void VIDVulkan::drawNBG0() {
     else
       info.GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01NoK;
 
-    if (paraB.coefdatasize == 2)
-    {
-      if (paraB.coefmode < 3)
-      {
+    if (paraB.coefdatasize == 2) {
+      if (paraB.coefmode < 3) {
         info.GetKValueB = vdp2rGetKValue1W;
-      }
-      else {
+      } else {
         info.GetKValueB = vdp2rGetKValue1Wm3;
       }
-
-    }
-    else {
-      if (paraB.coefmode < 3)
-      {
+    } else {
+      if (paraB.coefmode < 3) {
         info.GetKValueB = vdp2rGetKValue2W;
-      }
-      else {
+      } else {
         info.GetKValueB = vdp2rGetKValue2Wm3;
       }
     }
-  }
-  else if ((fixVdp2Regs->BGON & 0x1) || info.enable)
-  {
+  } else if ((fixVdp2Regs->BGON & 0x1) || info.enable) {
     // NBG0 mode
     info.enable = fixVdp2Regs->BGON & 0x1;
-    if (!info.enable) return;
+    if (!info.enable)
+      return;
 
-    if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0)
-    {
+    if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0) {
       // Bitmap Mode
 
       ReadBitmapSize(&info, fixVdp2Regs->CHCTLA >> 2, 0x3);
@@ -2098,9 +2189,7 @@ void VIDVulkan::drawNBG0() {
       info.flipfunction = 0;
       info.specialcolorfunction = (fixVdp2Regs->BMPNA & 0x10) >> 4;
       info.specialfunction = 0;
-    }
-    else
-    {
+    } else {
       // Tile Mode
       info.mapwh = 2;
 
@@ -2116,19 +2205,18 @@ void VIDVulkan::drawNBG0() {
     else
       info.coordincx = (float)65536 / (fixVdp2Regs->ZMXN0.all & 0x7FF00);
 
-    switch (fixVdp2Regs->ZMCTL & 0x03)
-    {
+    switch (fixVdp2Regs->ZMCTL & 0x03) {
     case 0:
       info.maxzoom = 1.0f;
       break;
     case 1:
       info.maxzoom = 0.5f;
-      //if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
+      // if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
       break;
     case 2:
     case 3:
       info.maxzoom = 0.25f;
-      //if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
+      // if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
       break;
     }
 
@@ -2137,13 +2225,10 @@ void VIDVulkan::drawNBG0() {
     else
       info.coordincy = (float)65536 / (fixVdp2Regs->ZMYN0.all & 0x7FF00);
 
-    info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG0PlaneAddr;
-  }
-  else {
+    info.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2NBG0PlaneAddr;
+  } else {
     return;
   }
-
-
 
   ReadMosaicData(&info, 0x1, fixVdp2Regs);
 
@@ -2166,10 +2251,8 @@ void VIDVulkan::drawNBG0() {
     info.blendmode |= VDP2_CC_BLUR;
   }
 
-
   // Enable Color Calculation
-  if (fixVdp2Regs->CCCTL & 0x1)
-  {
+  if (fixVdp2Regs->CCCTL & 0x1) {
     // Color calculation ratio
     info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
 
@@ -2177,18 +2260,15 @@ void VIDVulkan::drawNBG0() {
     if (fixVdp2Regs->CCCTL & 0x100) { // Add Color
       info.blendmode |= VDP2_CC_ADD;
       info.alpha = 0xFF;
-    }
-    else { // Use Color calculation ratio
+    } else {                                          // Use Color calculation ratio
       if (info.specialcolormode != 0 && dest_alpha) { // Just currently not supported
         info.blendmode |= VDP2_CC_NONE;
-      }
-      else {
+      } else {
         info.blendmode |= VDP2_CC_RATE;
       }
     }
     // Disable Color Calculation
-  }
-  else {
+  } else {
 
     // Use Destination Alpha 12.14 CCRTMD
     if (dest_alpha) {
@@ -2196,13 +2276,11 @@ void VIDVulkan::drawNBG0() {
       // Color calculation will not be operated.
       // But need to write alpha value
       info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
-    }
-    else {
+    } else {
       info.alpha = 0xFF;
     }
     info.blendmode |= VDP2_CC_NONE;
   }
-
 
   generatePerLineColorCalcuration(&info, NBG0);
   info.linescreen = 0;
@@ -2229,30 +2307,27 @@ void VIDVulkan::drawNBG0() {
   info.bEnWin1 = (fixVdp2Regs->WCTLA >> 3) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLA >> 2) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLA >> 7) & 0x01;
-
-
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLA >> 5) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLA >> 4) & 0x01; 
+  
   ReadLineScrollData(&info, fixVdp2Regs->SCRCTL & 0xFF, fixVdp2Regs->LSTA0.all);
   info.lineinfo = lineNBG0;
   genLineinfo(&info);
   Vdp2SetGetColor(&info);
 
-  if (fixVdp2Regs->SCRCTL & 1)
-  {
+  if (fixVdp2Regs->SCRCTL & 1) {
     info.isverticalscroll = 1;
     info.verticalscrolltbl = (fixVdp2Regs->VCSTA.all & 0x7FFFE) << 1;
     if (fixVdp2Regs->SCRCTL & 0x100)
       info.verticalscrollinc = 8;
     else
       info.verticalscrollinc = 4;
-  }
-  else
+  } else
     info.isverticalscroll = 0;
 
-  if (info.enable == 1)
-  {
+  if (info.enable == 1) {
     // NBG0 draw
-    if (info.isbitmap)
-    {
+    if (info.isbitmap) {
       if (info.coordincx != 1.0f || info.coordincy != 1.0f || VDPLINE_SZ(info.islinescroll)) {
         info.sh = (fixVdp2Regs->SCXIN0 & 0x7FF);
         info.sv = (fixVdp2Regs->SCYIN0 & 0x7FF);
@@ -2276,10 +2351,9 @@ void VIDVulkan::drawNBG0() {
         infotmp.cy = 0;
         infotmp.coordincx = 1.0;
         infotmp.coordincy = 1.0;
-        genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, &tmpc, 0);
+        genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, &tmpc, 0, 0);
         drawBitmapCoordinateInc(&info, &texture);
-      }
-      else {
+      } else {
 
         int xx, yy;
         int isCached = 0;
@@ -2305,16 +2379,13 @@ void VIDVulkan::drawNBG0() {
           infotmp.cy = 0;
           infotmp.coordincx = 1.0;
           infotmp.coordincy = 1.0;
-          genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, NULL, 0);
+          genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, NULL, 0, 0);
           drawBitmapLineScroll(&info, &texture);
-        }
-        else {
+        } else {
           yy = info.y;
-          while (yy + info.y < vdp2height)
-          {
+          while (yy + info.y < vdp2height) {
             xx = info.x;
-            while (xx + info.x < vdp2width)
-            {
+            while (xx + info.x < vdp2width) {
               info.vertices[0] = xx;
               info.vertices[1] = yy;
               info.vertices[2] = (xx + info.cellw);
@@ -2324,19 +2395,16 @@ void VIDVulkan::drawNBG0() {
               info.vertices[6] = xx;
               info.vertices[7] = (yy + info.cellh);
 
-              if (isCached == 0)
-              {
-                genPolygon(&pipleLineNBG0, &info, &texture, NULL, &tmpc, 1);
+              if (isCached == 0) {
+                genPolygon(&pipleLineNBG0, &info, &texture, NULL, &tmpc, 1,0);
                 if (info.islinescroll) {
                   drawBitmapLineScroll(&info, &texture);
-                }
-                else {
+                } else {
                   drawBitmap(&info, &texture);
                 }
                 isCached = 1;
-              }
-              else {
-                genPolygon(&pipleLineNBG0, &info, NULL, NULL, &tmpc, 0);
+              } else {
+                genPolygon(&pipleLineNBG0, &info, NULL, NULL, &tmpc, 0, 0);
               }
               xx += info.cellw;
             }
@@ -2344,9 +2412,7 @@ void VIDVulkan::drawNBG0() {
           }
         }
       }
-    }
-    else
-    {
+    } else {
       if (info.islinescroll) {
         info.sh = (fixVdp2Regs->SCXIN0 & 0x7FF);
         info.sv = (fixVdp2Regs->SCYIN0 & 0x7FF);
@@ -2365,18 +2431,15 @@ void VIDVulkan::drawNBG0() {
         infotmp.cellh = vdp2height;
 
         infotmp.flipfunction = 0;
-        genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, &tmpc, 0);
+        genPolygon(&pipleLineNBG0, &infotmp, &texture, NULL, &tmpc, 0, 0);
         drawMapPerLine(&info, &texture);
-      }
-      else {
+      } else {
         info.x = fixVdp2Regs->SCXIN0 & 0x7FF;
         info.y = fixVdp2Regs->SCYIN0 & 0x7FF;
         drawMap(&info, &texture);
       }
     }
-  }
-  else
-  {
+  } else {
     // RBG1 draw
     memcpy(&g_rgb1.info, &info, sizeof(info));
     drawRotation(&g_rgb1, &pipleLineNBG0);
@@ -2385,8 +2448,6 @@ void VIDVulkan::drawNBG0() {
   if (pipleLineNBG0 != nullptr && pipleLineNBG0->vertices.size() != 0) {
     layers[info.priority].push_back(pipleLineNBG0);
   }
-
-
 }
 
 void VIDVulkan::drawNBG1() {
@@ -2401,14 +2462,15 @@ void VIDVulkan::drawNBG1() {
   info.cob = 0;
   info.specialcolorfunction = 0;
 
-  info.pipeline = (void*)(&pipleLineNBG1);
+  info.pipeline = (void *)(&pipleLineNBG1);
   if (pipleLineNBG1) {
     pipleLineNBG1->vertices.clear();
     pipleLineNBG1->indices.clear();
   }
 
   info.enable = fixVdp2Regs->BGON & 0x2;
-  if (!info.enable) return;
+  if (!info.enable)
+    return;
 
   int char_access = 0;
   int ptn_access = 0;
@@ -2433,8 +2495,7 @@ void VIDVulkan::drawNBG1() {
 
   info.colornumber = (fixVdp2Regs->CHCTLA & 0x3000) >> 12;
 
-  if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x200) != 0)
-  {
+  if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x200) != 0) {
     ReadBitmapSize(&info, fixVdp2Regs->CHCTLA >> 10, 0x3);
 
     info.x = -((fixVdp2Regs->SCXIN1 & 0x7FF) % info.cellw);
@@ -2444,9 +2505,7 @@ void VIDVulkan::drawNBG1() {
     info.flipfunction = 0;
     info.specialfunction = 0;
     info.specialcolorfunction = (fixVdp2Regs->BMPNA & 0x1000) >> 4;
-  }
-  else
-  {
+  } else {
     info.mapwh = 2;
 
     ReadPlaneSize(&info, fixVdp2Regs->PLSZ >> 2);
@@ -2465,7 +2524,6 @@ void VIDVulkan::drawNBG1() {
 
   ReadMosaicData(&info, 0x2, fixVdp2Regs);
 
-
   info.blendmode = 0;
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0xC000) {
@@ -2477,17 +2535,14 @@ void VIDVulkan::drawNBG1() {
     info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
     if (fixVdp2Regs->CCCTL & 0x100) {
       info.blendmode |= VDP2_CC_ADD;
-    }
-    else {
+    } else {
       info.blendmode |= VDP2_CC_RATE;
     }
-  }
-  else {
+  } else {
     // 12.14 CCRTMD
     if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
       info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
-    }
-    else {
+    } else {
       info.alpha = 0xFF;
     }
     info.blendmode |= VDP2_CC_NONE;
@@ -2514,8 +2569,7 @@ void VIDVulkan::drawNBG1() {
   else
     info.coordincx = (float)65536 / (fixVdp2Regs->ZMXN1.all & 0x7FF00);
 
-  switch ((fixVdp2Regs->ZMCTL >> 8) & 0x03)
-  {
+  switch ((fixVdp2Regs->ZMCTL >> 8) & 0x03) {
   case 0:
     info.maxzoom = 1.0f;
     break;
@@ -2535,12 +2589,12 @@ void VIDVulkan::drawNBG1() {
   else
     info.coordincy = (float)65536 / (fixVdp2Regs->ZMYN1.all & 0x7FF00);
 
-
-  info.priority = (fixVdp2Regs->PRINA >> 8) & 0x7;;
-  info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG1PlaneAddr;
+  info.priority = (fixVdp2Regs->PRINA >> 8) & 0x7;
+  ;
+  info.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2NBG1PlaneAddr;
 
   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
-    (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 == 4)) // If NBG0 16M mode is enabled, don't draw
+      (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 == 4)) // If NBG0 16M mode is enabled, don't draw
     return;
 
   // Window Mode
@@ -2549,33 +2603,27 @@ void VIDVulkan::drawNBG1() {
   info.bEnWin1 = (fixVdp2Regs->WCTLA >> 11) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLA >> 10) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLA >> 15) & 0x01;
-
-
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLA >> 13) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLA >> 12) & 0x01;
+  
   ReadLineScrollData(&info, fixVdp2Regs->SCRCTL >> 8, fixVdp2Regs->LSTA1.all);
   info.lineinfo = lineNBG1;
   genLineinfo(&info);
   Vdp2SetGetColor(&info);
 
-  if (fixVdp2Regs->SCRCTL & 0x100)
-  {
+  if (fixVdp2Regs->SCRCTL & 0x100) {
     info.isverticalscroll = 1;
-    if (fixVdp2Regs->SCRCTL & 0x1)
-    {
+    if (fixVdp2Regs->SCRCTL & 0x1) {
       info.verticalscrolltbl = 4 + ((fixVdp2Regs->VCSTA.all & 0x7FFFE) << 1);
       info.verticalscrollinc = 8;
-    }
-    else
-    {
+    } else {
       info.verticalscrolltbl = (fixVdp2Regs->VCSTA.all & 0x7FFFE) << 1;
       info.verticalscrollinc = 4;
     }
-  }
-  else
+  } else
     info.isverticalscroll = 0;
 
-
-  if (info.isbitmap)
-  {
+  if (info.isbitmap) {
 
     if (info.coordincx != 1.0f || info.coordincy != 1.0f) {
       info.sh = (fixVdp2Regs->SCXIN1 & 0x7FF);
@@ -2600,10 +2648,9 @@ void VIDVulkan::drawNBG1() {
       infotmp.cy = 0;
       infotmp.coordincx = 1.0;
       infotmp.coordincy = 1.0;
-      genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0);
+      genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0, 0);
       drawBitmapCoordinateInc(&info, &texture);
-    }
-    else {
+    } else {
 
       int xx, yy;
       int isCached = 0;
@@ -2630,18 +2677,13 @@ void VIDVulkan::drawNBG1() {
         infotmp.cy = 0;
         infotmp.coordincx = 1.0;
         infotmp.coordincy = 1.0;
-        genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0);
+        genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0, 0);
         drawBitmapLineScroll(&info, &texture);
-
-
-      }
-      else {
+      } else {
         yy = info.y;
-        while (yy + info.y < vdp2height)
-        {
+        while (yy + info.y < vdp2height) {
           xx = info.x;
-          while (xx + info.x < vdp2width)
-          {
+          while (xx + info.x < vdp2width) {
             info.vertices[0] = xx;
             info.vertices[1] = yy;
             info.vertices[2] = (xx + info.cellw);
@@ -2651,30 +2693,24 @@ void VIDVulkan::drawNBG1() {
             info.vertices[6] = xx;
             info.vertices[7] = (yy + info.cellh);
 
-
-            if (isCached == 0)
-            {
-              genPolygon(&pipleLineNBG1, &info, &texture, NULL, &tmpc, 1);
+            if (isCached == 0) {
+              genPolygon(&pipleLineNBG1, &info, &texture, NULL, &tmpc, 1, 0);
               if (info.islinescroll) {
                 drawBitmapLineScroll(&info, &texture);
-              }
-              else {
+              } else {
                 drawBitmap(&info, &texture);
               }
               isCached = 1;
-            }
-            else {
-              genPolygon(&pipleLineNBG1, &info, NULL, NULL, &tmpc, 0);
+            } else {
+              genPolygon(&pipleLineNBG1, &info, NULL, NULL, &tmpc, 0, 0);
             }
             xx += info.cellw;
-
           }
           yy += info.cellh;
         }
       }
     }
-  }
-  else {
+  } else {
     if (info.islinescroll) {
       info.sh = (fixVdp2Regs->SCXIN1 & 0x7FF);
       info.sv = (fixVdp2Regs->SCYIN1 & 0x7FF);
@@ -2692,11 +2728,10 @@ void VIDVulkan::drawNBG1() {
       infotmp.cellw = vdp2width;
       infotmp.cellh = vdp2height;
       infotmp.flipfunction = 0;
-      genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0);
+      genPolygon(&pipleLineNBG1, &infotmp, &texture, NULL, &tmpc, 0, 0);
       drawMapPerLine(&info, &texture);
-    }
-    else {
-      //Vdp2DrawMap(&info, &texture);
+    } else {
+      // Vdp2DrawMap(&info, &texture);
       info.x = fixVdp2Regs->SCXIN1 & 0x7FF;
       info.y = fixVdp2Regs->SCYIN1 & 0x7FF;
       drawMap(&info, &texture);
@@ -2706,15 +2741,13 @@ void VIDVulkan::drawNBG1() {
   if (pipleLineNBG1 != nullptr && pipleLineNBG1->vertices.size() != 0) {
     layers[info.priority].push_back(pipleLineNBG1);
   }
-
 }
 
-inline
-int VIDVulkan::checkCharAccessPenalty(int char_access, int ptn_access) {
+inline int VIDVulkan::checkCharAccessPenalty(int char_access, int ptn_access) {
   if (vdp2width >= 640) {
-    //if (char_access < ptn_access) {
-    //  return -1;
-    //}
+    // if (char_access < ptn_access) {
+    //   return -1;
+    // }
     if (ptn_access & 0x01) { // T0
       // T0-T2
       if ((char_access & 0x07) != 0) {
@@ -2755,8 +2788,7 @@ int VIDVulkan::checkCharAccessPenalty(int char_access, int ptn_access) {
       }
     }
     return -1;
-  }
-  else {
+  } else {
 
     if (ptn_access & 0x01) { // T0
       // T0-T2, T4-T7
@@ -2818,8 +2850,6 @@ int VIDVulkan::checkCharAccessPenalty(int char_access, int ptn_access) {
   return 0;
 }
 
-
-
 void VIDVulkan::drawNBG2() {
   vdp2draw_struct info = {};
   CharTexture texture;
@@ -2832,14 +2862,15 @@ void VIDVulkan::drawNBG2() {
   info.specialcolorfunction = 0;
   info.blendmode = 0;
 
-  info.pipeline = (void*)(&pipleLineNBG2);
+  info.pipeline = (void *)(&pipleLineNBG2);
   if (pipleLineNBG2) {
     pipleLineNBG2->vertices.clear();
     pipleLineNBG2->indices.clear();
   }
 
   info.enable = fixVdp2Regs->BGON & 0x4;
-  if (!info.enable) return;
+  if (!info.enable)
+    return;
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x400);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 4) & 0x3;
 
@@ -2867,29 +2898,22 @@ void VIDVulkan::drawNBG2() {
     info.blendmode |= VDP2_CC_BLUR;
   }
 
-
-  if (fixVdp2Regs->CCCTL & 0x4)
-  {
+  if (fixVdp2Regs->CCCTL & 0x4) {
     info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
-    if (fixVdp2Regs->CCCTL & 0x100 /*&& info.specialcolormode == 0*/)
-    {
+    if (fixVdp2Regs->CCCTL & 0x100 /*&& info.specialcolormode == 0*/) {
       info.blendmode |= VDP2_CC_ADD;
-    }
-    else {
+    } else {
       info.blendmode |= VDP2_CC_RATE;
     }
-  }
-  else {
+  } else {
     // 12.14 CCRTMD
     if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
       info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
-    }
-    else {
+    } else {
       info.alpha = 0xFF;
     }
     info.blendmode |= VDP2_CC_NONE;
   }
-
 
   generatePerLineColorCalcuration(&info, NBG2);
   info.linescreen = 0;
@@ -2898,7 +2922,6 @@ void VIDVulkan::drawNBG2() {
 
   info.coloroffset = fixVdp2Regs->CRAOFA & 0x700;
   readVdp2ColorOffset(fixVdp2Regs, &info, 0x4);
-
   if (info.lineTexture != 0) {
     info.linescreen = 2;
     info.cor = 0;
@@ -2906,14 +2929,15 @@ void VIDVulkan::drawNBG2() {
     info.cob = 0;
   }
 
-
   info.linecheck_mask = 0x04;
   info.coordincx = info.coordincy = 1;
-  info.priority = fixVdp2Regs->PRINB & 0x7;;
-  info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG2PlaneAddr;
+  info.priority = fixVdp2Regs->PRINB & 0x7;
+  ;
+  info.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2NBG2PlaneAddr;
 
   if (/*!(info.enable & Vdp2External.disptoggle) ||*/ (info.priority == 0) ||
-    (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
+      (fixVdp2Regs->BGON & 0x1 &&
+       (fixVdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
     return;
 
   // Window Mode
@@ -2922,8 +2946,10 @@ void VIDVulkan::drawNBG2() {
   info.bEnWin1 = (fixVdp2Regs->WCTLB >> 3) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLB >> 2) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLB >> 7) & 0x01;
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLB >> 5) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLB >> 4) & 0x01;
 
-  //Vdp2SetGetColor(&info); ToDO
+  // Vdp2SetGetColor(&info); ToDO
 
   info.islinescroll = 0;
   info.linescrolltbl = 0;
@@ -2950,7 +2976,7 @@ void VIDVulkan::drawNBG2() {
       }
     }
 
-    // Setting miss of cycle patten need to plus 8 dot vertical 
+    // Setting miss of cycle patten need to plus 8 dot vertical
     if (checkCharAccessPenalty(char_access, ptn_access) != 0) {
       xoffset = -8;
     }
@@ -2974,20 +3000,17 @@ void VIDVulkan::drawNBG2() {
     infotmp.cellw = vdp2width;
     infotmp.cellh = vdp2height;
     infotmp.flipfunction = 0;
-    genPolygon(&pipleLineNBG2, &infotmp, &texture, NULL, &tmpc, 0);
+    genPolygon(&pipleLineNBG2, &infotmp, &texture, NULL, &tmpc, 0, 0);
     drawMapPerLineNbg23(&info, &texture, 2, xoffset);
-  }
-  else {
+  } else {
     info.x = (fixVdp2Regs->SCXN2 & 0x7FF) + xoffset;
     info.y = fixVdp2Regs->SCYN2 & 0x7FF;
     drawMap(&info, &texture);
   }
 
-
   if (pipleLineNBG2 != nullptr && pipleLineNBG2->vertices.size() != 0) {
     layers[info.priority].push_back(pipleLineNBG2);
   }
-
 }
 
 void VIDVulkan::drawNBG3() {
@@ -3002,14 +3025,15 @@ void VIDVulkan::drawNBG3() {
   info.specialcolorfunction = 0;
   info.blendmode = 0;
 
-  info.pipeline = (void*)(&pipleLineNBG3);
+  info.pipeline = (void *)(&pipleLineNBG3);
   if (pipleLineNBG3) {
     pipleLineNBG3->vertices.clear();
     pipleLineNBG3->indices.clear();
   }
 
   info.enable = fixVdp2Regs->BGON & 0x8;
-  if (!info.enable) return;
+  if (!info.enable)
+    return;
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x800);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 6) & 0x3;
 
@@ -3036,35 +3060,28 @@ void VIDVulkan::drawNBG3() {
     info.blendmode |= VDP2_CC_BLUR;
   }
 
-  if (fixVdp2Regs->CCCTL & 0x8)
-  {
+  if (fixVdp2Regs->CCCTL & 0x8) {
     info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
-    if (fixVdp2Regs->CCCTL & 0x100)
-    {
+    if (fixVdp2Regs->CCCTL & 0x100) {
       info.blendmode |= VDP2_CC_ADD;
-    }
-    else {
+    } else {
       info.blendmode |= VDP2_CC_RATE;
     }
-  }
-  else {
+  } else {
     // 12.14 CCRTMD
     if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
       info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
-    }
-    else {
+    } else {
       info.alpha = 0xFF;
     }
 
     info.blendmode |= VDP2_CC_NONE;
   }
 
-
   generatePerLineColorCalcuration(&info, NBG3);
   info.linescreen = 0;
   if (fixVdp2Regs->LNCLEN & 0x8)
     info.linescreen = 1;
-
 
   info.coloroffset = (fixVdp2Regs->CRAOFA & 0x7000) >> 4;
   readVdp2ColorOffset(fixVdp2Regs, &info, 0x8);
@@ -3079,11 +3096,12 @@ void VIDVulkan::drawNBG3() {
   info.coordincx = info.coordincy = 1;
 
   info.priority = (fixVdp2Regs->PRINB >> 8) & 0x7;
-  info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG3PlaneAddr;
+  info.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2NBG3PlaneAddr;
 
   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
-    (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 == 4) || // If NBG0 16M mode is enabled, don't draw
-    (fixVdp2Regs->BGON & 0x2 && (fixVdp2Regs->CHCTLA & 0x3000) >> 12 >= 2)) // If NBG1 2048/32786 is enabled, don't draw
+      (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 == 4) || // If NBG0 16M mode is enabled, don't draw
+      (fixVdp2Regs->BGON & 0x2 &&
+       (fixVdp2Regs->CHCTLA & 0x3000) >> 12 >= 2)) // If NBG1 2048/32786 is enabled, don't draw
     return;
 
   // Window Mode
@@ -3092,8 +3110,10 @@ void VIDVulkan::drawNBG3() {
   info.bEnWin1 = (fixVdp2Regs->WCTLB >> 11) & 0x01;
   info.WindowArea1 = (fixVdp2Regs->WCTLB >> 10) & 0x01;
   info.LogicWin = (fixVdp2Regs->WCTLB >> 15) & 0x01;
+  info.bEnSpriteWin = (fixVdp2Regs->WCTLB >> 13) & 0x01;
+  info.WindowAreaSprite = (fixVdp2Regs->WCTLB >> 12) & 0x01;
 
-  //Vdp2SetGetColor(&info); TODO
+  // Vdp2SetGetColor(&info); TODO
 
   int xoffset = 0;
   {
@@ -3137,10 +3157,9 @@ void VIDVulkan::drawNBG3() {
     infotmp.cellw = vdp2width;
     infotmp.cellh = vdp2height;
     infotmp.flipfunction = 0;
-    genPolygon(&pipleLineNBG3, &infotmp, &texture, NULL, &tmpc, 0);
+    genPolygon(&pipleLineNBG3, &infotmp, &texture, NULL, &tmpc, 0, 0);
     drawMapPerLineNbg23(&info, &texture, 3, xoffset);
-  }
-  else {
+  } else {
     info.x = (fixVdp2Regs->SCXN3 & 0x7FF) + xoffset;
     info.y = fixVdp2Regs->SCYN3 & 0x7FF;
     drawMap(&info, &texture);
@@ -3150,12 +3169,10 @@ void VIDVulkan::drawNBG3() {
 
     layers[info.priority].push_back(pipleLineNBG3);
   }
-
-
 }
 
 void VIDVulkan::drawRBG0() {
-  vdp2draw_struct  * info = &g_rgb0.info;
+  vdp2draw_struct *info = &g_rgb0.info;
   g_rgb0.rgb_type = 0;
 
   info->dst = 0;
@@ -3167,14 +3184,14 @@ void VIDVulkan::drawRBG0() {
   info->specialcolorfunction = 0;
   info->enable = fixVdp2Regs->BGON & 0x10;
 
-  info->pipeline = (void*)(&pipleLineRBG0);
+  info->pipeline = (void *)(&pipleLineRBG0);
   if (pipleLineRBG0) {
     pipleLineRBG0->vertices.clear();
     pipleLineRBG0->indices.clear();
   }
 
-
-  if (!info->enable) return;
+  if (!info->enable)
+    return;
   info->priority = fixVdp2Regs->PRIR & 0x7;
   if (!(info->enable & Vdp2External.disptoggle) || (info->priority == 0)) {
 
@@ -3206,6 +3223,9 @@ void VIDVulkan::drawRBG0() {
 
   info->LogicWin = (fixVdp2Regs->WCTLC >> 7) & 0x01;
 
+  info->bEnSpriteWin = (fixVdp2Regs->WCTLC >> 5) & 0x01;
+  info->WindowAreaSprite = (fixVdp2Regs->WCTLC >> 4) & 0x01;
+
   info->islinescroll = 0;
   info->linescrolltbl = 0;
   info->lineinc = 0;
@@ -3217,154 +3237,108 @@ void VIDVulkan::drawRBG0() {
   B0_Updated = 0;
   B1_Updated = 0;
 
-  //paraA.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
-  //paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
+  // paraA.PlaneAddr = (void FASTCALL(*)(void *, int,
+  // Vdp2*))&Vdp2ParameterAPlaneAddr; paraB.PlaneAddr = (void FASTCALL(*)(void
+  // *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
   paraA.charaddr = (fixVdp2Regs->MPOFR & 0x7) * 0x20000;
   paraB.charaddr = (fixVdp2Regs->MPOFR & 0x70) * 0x2000;
   ReadPlaneSizeR(&paraA, fixVdp2Regs->PLSZ >> 8);
   ReadPlaneSizeR(&paraB, fixVdp2Regs->PLSZ >> 12);
 
-
-
-  if (paraA.coefdatasize == 2)
-  {
-    if (paraA.coefmode < 3)
-    {
+  if (paraA.coefdatasize == 2) {
+    if (paraA.coefmode < 3) {
       info->GetKValueA = vdp2rGetKValue1W;
-    }
-    else {
+    } else {
       info->GetKValueA = vdp2rGetKValue1Wm3;
     }
-
-  }
-  else {
-    if (paraA.coefmode < 3)
-    {
+  } else {
+    if (paraA.coefmode < 3) {
       info->GetKValueA = vdp2rGetKValue2W;
-    }
-    else {
+    } else {
       info->GetKValueA = vdp2rGetKValue2Wm3;
     }
   }
 
-  if (paraB.coefdatasize == 2)
-  {
-    if (paraB.coefmode < 3)
-    {
+  if (paraB.coefdatasize == 2) {
+    if (paraB.coefmode < 3) {
       info->GetKValueB = vdp2rGetKValue1W;
-    }
-    else {
+    } else {
       info->GetKValueB = vdp2rGetKValue1Wm3;
     }
-
-  }
-  else {
-    if (paraB.coefmode < 3)
-    {
+  } else {
+    if (paraB.coefmode < 3) {
       info->GetKValueB = vdp2rGetKValue2W;
-    }
-    else {
+    } else {
       info->GetKValueB = vdp2rGetKValue2Wm3;
     }
   }
 
   info->pWinInfo = nullptr;
-  if (fixVdp2Regs->RPMD == 0x00)
-  {
-    if (!(paraA.coefenab))
-    {
+  if (fixVdp2Regs->RPMD == 0x00) {
+    if (!(paraA.coefenab)) {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode00NoK;
-    }
-    else {
+    } else {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode00WithK;
     }
-
-  }
-  else if (fixVdp2Regs->RPMD == 0x01)
-  {
-    if (!(paraB.coefenab))
-    {
+  } else if (fixVdp2Regs->RPMD == 0x01) {
+    if (!(paraB.coefenab)) {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01NoK;
-    }
-    else {
+    } else {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01WithK;
     }
-
-  }
-  else if (fixVdp2Regs->RPMD == 0x02)
-  {
-    if (!(paraA.coefenab))
-    {
+  } else if (fixVdp2Regs->RPMD == 0x02) {
+    if (!(paraA.coefenab)) {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode02NoK;
-    }
-    else {
+    } else {
       if (paraB.coefenab)
         info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode02WithKAWithKB;
       else
         info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode02WithKA;
     }
-
-  }
-  else if (fixVdp2Regs->RPMD == 0x03)
-  {
+  } else if (fixVdp2Regs->RPMD == 0x03) {
     // Enable Window0(RPW0E)?
-    if (((fixVdp2Regs->WCTLD >> 1) & 0x01) == 0x01)
-    {
+    if (((fixVdp2Regs->WCTLD >> 1) & 0x01) == 0x01) {
       info->pWinInfo = windowRenderer->getVdp2WindowInfo(0);
       // RPW0A( inside = 0, outside = 1 )
       info->WindwAreaMode = (fixVdp2Regs->WCTLD & 0x01);
       // Enable Window1(RPW1E)?
-    }
-    else if (((fixVdp2Regs->WCTLD >> 3) & 0x01) == 0x01)
-    {
+    } else if (((fixVdp2Regs->WCTLD >> 3) & 0x01) == 0x01) {
       info->pWinInfo = windowRenderer->getVdp2WindowInfo(1);
       // RPW1A( inside = 0, outside = 1 )
       info->WindwAreaMode = ((fixVdp2Regs->WCTLD >> 2) & 0x01);
       // Bad Setting Both Window is disabled
-    }
-    else {
+    } else {
       info->pWinInfo = windowRenderer->getVdp2WindowInfo(0);
       info->WindwAreaMode = (fixVdp2Regs->WCTLD & 0x01);
     }
 
-    if (paraA.coefenab == 0 && paraB.coefenab == 0)
-    {
+    if (paraA.coefenab == 0 && paraB.coefenab == 0) {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode03NoK;
-    }
-    else if (paraA.coefenab && paraB.coefenab == 0)
-    {
+    } else if (paraA.coefenab && paraB.coefenab == 0) {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode03WithKA;
-    }
-    else if (paraA.coefenab == 0 && paraB.coefenab)
-    {
+    } else if (paraA.coefenab == 0 && paraB.coefenab) {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode03WithKB;
-    }
-    else if (paraA.coefenab && paraB.coefenab)
-    {
+    } else if (paraA.coefenab && paraB.coefenab) {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode03WithK;
     }
   }
 
-
   paraA.screenover = (fixVdp2Regs->PLSZ >> 10) & 0x03;
   paraB.screenover = (fixVdp2Regs->PLSZ >> 14) & 0x03;
 
-
-
   // Figure out which Rotation Parameter we're uqrt
-  switch (fixVdp2Regs->RPMD & 0x3)
-  {
+  switch (fixVdp2Regs->RPMD & 0x3) {
   case 0:
     // Parameter A
     info->rotatenum = 0;
     info->rotatemode = 0;
-    info->PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
+    info->PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2ParameterAPlaneAddr;
     break;
   case 1:
     // Parameter B
     info->rotatenum = 1;
     info->rotatemode = 0;
-    info->PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
+    info->PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2ParameterBPlaneAddr;
     break;
   case 2:
     // Parameter A+B switched via coefficients
@@ -3375,14 +3349,11 @@ void VIDVulkan::drawRBG0() {
     // FIX ME(need to figure out which Parameter is being used)
     info->rotatenum = 0;
     info->rotatemode = 1 + (fixVdp2Regs->RPMD & 0x1);
-    info->PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
+    info->PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2 *)) & Vdp2ParameterAPlaneAddr;
     break;
   }
 
-
-
-  if ((info->isbitmap = fixVdp2Regs->CHCTLB & 0x200) != 0)
-  {
+  if ((info->isbitmap = fixVdp2Regs->CHCTLB & 0x200) != 0) {
     // Bitmap Mode
     ReadBitmapSize(info, fixVdp2Regs->CHCTLB >> 10, 0x1);
 
@@ -3396,9 +3367,7 @@ void VIDVulkan::drawRBG0() {
     info->paladdr = (fixVdp2Regs->BMPNB & 0x7) << 4;
     info->flipfunction = 0;
     info->specialfunction = 0;
-  }
-  else
-  {
+  } else {
     int i;
     // Tile Mode
     info->mapwh = 4;
@@ -3427,20 +3396,17 @@ void VIDVulkan::drawRBG0() {
     paraB.MaxH = 8 * 64 * paraB.planew * 4;
     paraB.MaxV = 8 * 64 * paraB.planeh * 4;
 
-    if (paraA.screenover == OVERMODE_512)
-    {
+    if (paraA.screenover == OVERMODE_512) {
       paraA.MaxH = 512;
       paraA.MaxV = 512;
     }
 
-    if (paraB.screenover == OVERMODE_512)
-    {
+    if (paraB.screenover == OVERMODE_512) {
       paraB.MaxH = 512;
       paraB.MaxV = 512;
     }
 
-    for (i = 0; i < 16; i++)
-    {
+    for (i = 0; i < 16; i++) {
       Vdp2ParameterAPlaneAddr(info, i, fixVdp2Regs);
       paraA.PlaneAddrv[i] = info->addr;
       Vdp2ParameterBPlaneAddr(info, i, fixVdp2Regs);
@@ -3457,16 +3423,15 @@ void VIDVulkan::drawRBG0() {
     info->specialcode = fixVdp2Regs->SFCODE & 0xFF;
 
   info->blendmode = VDP2_CC_NONE;
-  if ((fixVdp2Regs->LNCLEN & 0x10) == 0x00)
-  {
+  if ((fixVdp2Regs->LNCLEN & 0x10) == 0x00) {
     info->LineColorBase = 0x00;
     paraA.lineaddr = 0xFFFFFFFF;
     paraB.lineaddr = 0xFFFFFFFF;
-  }
-  else {
+  } else {
     //      info->alpha = 0xFF;
     info->LineColorBase = ((fixVdp2Regs->LCTA.all) & 0x7FFFF) << 1;
-    if (info->LineColorBase >= 0x80000) info->LineColorBase = 0x00;
+    if (info->LineColorBase >= 0x80000)
+      info->LineColorBase = 0x00;
     paraA.lineaddr = 0xFFFFFFFF;
     paraB.lineaddr = 0xFFFFFFFF;
   }
@@ -3483,17 +3448,14 @@ void VIDVulkan::drawRBG0() {
     info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
     if (fixVdp2Regs->CCCTL & 0x100) {
       info->blendmode |= VDP2_CC_ADD;
-    }
-    else {
+    } else {
       info->blendmode |= VDP2_CC_RATE;
     }
-  }
-  else {
+  } else {
     // 12.14 CCRTMD
     if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
       info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
-    }
-    else {
+    } else {
       info->alpha = 0xFF;
     }
     info->blendmode |= VDP2_CC_NONE;
@@ -3518,11 +3480,9 @@ void VIDVulkan::drawRBG0() {
   if (pipleLineRBG0 != nullptr && pipleLineRBG0->vertices.size() != 0) {
     layers[info->priority].push_back(pipleLineRBG0);
   }
-
 }
 
-void VIDVulkan::drawRotation(RBGDrawInfo * rbg, VdpPipeline ** pipleLine)
-{
+void VIDVulkan::drawRotation(RBGDrawInfo *rbg, VdpPipeline **pipleLine) {
   vdp2draw_struct *info = &rbg->info;
   int rgb_type = rbg->rgb_type;
   CharTexture *texture = &rbg->texture;
@@ -3533,16 +3493,21 @@ void VIDVulkan::drawRotation(RBGDrawInfo * rbg, VdpPipeline ** pipleLine)
   int oldcellx = -1, oldcelly = -1;
   int lineInc = fixVdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
   int linecl = 0xFF;
-  Vdp2 * regs;
+  Vdp2 *regs;
   if ((fixVdp2Regs->CCCTL >> 5) & 0x01) {
     linecl = ((~fixVdp2Regs->CCRLB & 0x1F) << 3) + 0x7;
   }
 
-
-  if (vdp2height >= 448) lineInc <<= 1;
-  if (vdp2height >= 448) rbg->vres = (vdp2height >> 1); else rbg->vres = vdp2height;
-  if (vdp2width >= 640) rbg->hres = (vdp2width >> 1); else rbg->hres = vdp2width;
-
+  if (vdp2height >= 448)
+    lineInc <<= 1;
+  if (vdp2height >= 448)
+    rbg->vres = (vdp2height >> 1);
+  else
+    rbg->vres = vdp2height;
+  if (vdp2width >= 640)
+    rbg->hres = (vdp2width >> 1);
+  else
+    rbg->hres = vdp2width;
 
   switch (rbgResolutionMode) {
   case RBG_RES_ORIGINAL:
@@ -3603,18 +3568,17 @@ void VIDVulkan::drawRotation(RBGDrawInfo * rbg, VdpPipeline ** pipleLine)
   info->cog = 0x00;
   info->cob = 0x00;
 
-  if (fixVdp2Regs->RPMD != 0) rbg->useb = 1;
-  if (rgb_type == 0x04) rbg->useb = 1;
+  if (fixVdp2Regs->RPMD != 0)
+    rbg->useb = 1;
+  if (rgb_type == 0x04)
+    rbg->useb = 1;
 
-  if (!info->isbitmap)
-  {
+  if (!info->isbitmap) {
     oldcellx = -1;
     oldcelly = -1;
-    rbg->pagesize = info->pagewh*info->pagewh;
+    rbg->pagesize = info->pagewh * info->pagewh;
     rbg->patternshift = (2 + info->patternwh);
-  }
-  else
-  {
+  } else {
     oldcellx = 0;
     oldcelly = 0;
     rbg->pagesize = 0;
@@ -3622,9 +3586,10 @@ void VIDVulkan::drawRotation(RBGDrawInfo * rbg, VdpPipeline ** pipleLine)
   }
 
   regs = Vdp2RestoreRegs(3, Vdp2Lines);
-  if (regs) readVdp2ColorOffset(regs, info, info->linecheck_mask);
+  if (regs)
+    readVdp2ColorOffset(regs, info, info->linecheck_mask);
 
-  if (info->lineTexture != 0) {
+  if (info->lineTexture != 0 && info->specialprimode == 0) {
     info->cor = 0;
     info->cog = 0;
     info->cob = 0;
@@ -3682,125 +3647,135 @@ void VIDVulkan::drawRotation(RBGDrawInfo * rbg, VdpPipeline ** pipleLine)
   }
   else {
 #endif
-    u64 cacheaddr = 0x90000000BAD;
+  u64 cacheaddr = 0x90000000BAD;
 
-    rbg->vdp2_sync_flg = -1;
-    if (rbg_use_compute_shader == 0) {
-      tm->allocate(&rbg->texture, info->cellw, info->cellh, &x, &y);
-      rbg->c.x = x;
-      rbg->c.y = y;
-      tm->addCache(cacheaddr, &rbg->c);
-    }
-    info->cellw = cellw;
-    info->cellh = cellh;
+  rbg->vdp2_sync_flg = -1;
+  if (rbg_use_compute_shader == 0) {
+    tm->allocate(&rbg->texture, info->cellw, info->cellh, &x, &y);
+    rbg->c.x = x;
+    rbg->c.y = y;
+    tm->addCache(cacheaddr, &rbg->c);
+  }
+  info->cellw = cellw;
+  info->cellh = cellh;
 
+  rbg->line_texture.textdata = NULL;
+  if (info->LineColorBase != 0) {
+    rbg->line_info.blendmode = 0;
+    rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF); // +info->coloroffset;
+
+    u64 cacheaddr = 0xA0000000DAD;
+    tm->allocate(&rbg->line_texture, rbg->vres, 1, &x, &y);
+    rbg->cline.x = x;
+    rbg->cline.y = y;
+    tm->addCache(cacheaddr, &rbg->cline);
+  } else {
+    rbg->LineColorRamAdress = 0x00;
+    rbg->cline.x = -1;
+    rbg->cline.y = -1;
     rbg->line_texture.textdata = NULL;
-    if (info->LineColorBase != 0)
-    {
-      rbg->line_info.blendmode = 0;
-      rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
+    rbg->line_texture.w = 0;
+  }
 
-      u64 cacheaddr = 0xA0000000DAD;
-      tm->allocate(&rbg->line_texture, rbg->vres, 1, &x, &y);
-      rbg->cline.x = x;
-      rbg->cline.y = y;
-      tm->addCache(cacheaddr, &rbg->cline);
+  drawRotation_in(rbg);
 
-    }
-    else {
-      rbg->LineColorRamAdress = 0x00;
-      rbg->cline.x = -1;
-      rbg->cline.y = -1;
-      rbg->line_texture.textdata = NULL;
-      rbg->line_texture.w = 0;
-    }
-
-    drawRotation_in(rbg);
-
-    //if (rbg_use_compute_shader == 0) {
-    rbg->info.cellw = rbg->hres;
-    rbg->info.cellh = rbg->vres;
-    rbg->info.flipfunction = 0;
-    genPolygonRbg0(pipleLine, &rbg->info, NULL, &rbg->c, &rbg->cline, rbg->rgb_type);
-    //}
-    //else {
-    //  curret_rbg = rbg;
-    //}
+  // if (rbg_use_compute_shader == 0) {
+  rbg->info.cellw = rbg->hres;
+  rbg->info.cellh = rbg->vres;
+  rbg->info.flipfunction = 0;
+  genPolygonRbg0(pipleLine, &rbg->info, NULL, &rbg->c, &rbg->cline, rbg->rgb_type);
+  //}
+  // else {
+  //  curret_rbg = rbg;
+  //}
 #if 0 // ToDo
   }
 #endif
 }
 
-#define ceilf(a) ((a)+0.99999f)
+#define ceilf(a) ((a) + 0.99999f)
 
-static inline int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, float i) {
+static inline int vdp2rGetKValue(vdp2rotationparameter_struct *parameter, float i) {
   float kval;
-  int   kdata;
+  int kdata;
   int h = ceilf(parameter->KtablV + (parameter->deltaKAx * i));
   if (parameter->coefdatasize == 2) {
     if (parameter->k_mem_type == 0) { // vram
       kdata = T1ReadWord(Vdp2Ram, (parameter->coeftbladdr + (int)(h << 1)) & 0x7FFFF);
-    }
-    else { // cram
+    } else { // cram
       kdata = Vdp2ColorRamReadWord(((parameter->coeftbladdr + (int)(h << 1)) & 0x7FF) + 0x800);
     }
-    if (kdata & 0x8000) { return 0; }
+    if (kdata & 0x8000) {
+      return 0;
+    }
     kval = (float)(signed)((kdata & 0x7FFF) | (kdata & 0x4000 ? 0x8000 : 0x0000)) / 1024.0f;
     switch (parameter->coefmode) {
-    case 0:  parameter->kx = kval; parameter->ky = kval; break;
-    case 1:  parameter->kx = kval; break;
-    case 2:  parameter->ky = kval; break;
-    case 3:  /*ToDo*/  break;
+    case 0:
+      parameter->kx = kval;
+      parameter->ky = kval;
+      break;
+    case 1:
+      parameter->kx = kval;
+      break;
+    case 2:
+      parameter->ky = kval;
+      break;
+    case 3: /*ToDo*/
+      break;
     }
-  }
-  else {
+  } else {
     if (parameter->k_mem_type == 0) { // vram
       kdata = T1ReadLong(Vdp2Ram, (parameter->coeftbladdr + (int)(h << 2)) & 0x7FFFF);
-    }
-    else { // cram
+    } else { // cram
       kdata = Vdp2ColorRamReadLong(((parameter->coeftbladdr + (int)(h << 2)) & 0x7FF) + 0x800);
     }
     parameter->lineaddr = (kdata >> 24) & 0x7F;
-    if (kdata & 0x80000000) { return 0; }
+    if (kdata & 0x80000000) {
+      return 0;
+    }
     kval = (float)(int)((kdata & 0x00FFFFFF) | (kdata & 0x00800000 ? 0xFF800000 : 0x00000000)) / (65536.0f);
     switch (parameter->coefmode) {
-    case 0:  parameter->kx = kval; parameter->ky = kval; break;
-    case 1:  parameter->kx = kval; break;
-    case 2:  parameter->ky = kval; break;
-    case 3:  /*ToDo*/  break;
+    case 0:
+      parameter->kx = kval;
+      parameter->ky = kval;
+      break;
+    case 1:
+      parameter->kx = kval;
+      break;
+    case 2:
+      parameter->ky = kval;
+      break;
+    case 3: /*ToDo*/
+      break;
     }
   }
   return 1;
 }
 
 static inline u16 Vdp2ColorRamGetColorRaw(u32 colorindex) {
-  switch (Vdp2Internal.ColorMode)
-  {
+  switch (Vdp2Internal.ColorMode) {
   case 0:
-  case 1:
-  {
+  case 1: {
     colorindex <<= 1;
     return T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
   }
-  case 2:
-  {
+  case 2: {
     colorindex <<= 2;
     colorindex &= 0xFFF;
     return T2ReadWord(Vdp2ColorRam, colorindex);
   }
-  default: break;
+  default:
+    break;
   }
   return 0;
 }
 
-
-inline void setSpecialPriority(vdp2draw_struct *info, u8 dot, u32 * cramindex) {
+inline void setSpecialPriority(vdp2draw_struct *info, u8 dot, u32 *cramindex) {
   int priority;
   if (info->specialprimode == 2) {
     priority = info->priority & 0xE;
     if (info->specialfunction & 1) {
-      if (PixelIsSpecialPriority(info->specialcode, dot))
-      {
+      if (PixelIsSpecialPriority(info->specialcode, dot)) {
         priority |= 1;
       }
     }
@@ -3808,90 +3783,125 @@ inline void setSpecialPriority(vdp2draw_struct *info, u8 dot, u32 * cramindex) {
   }
 }
 
-
-static inline u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, int cellw)
-{
+static inline u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, int cellw) {
   u32 dot;
   u32 cramindex;
   u32 alpha = info->alpha;
   u8 lowdot = 0x00;
-  switch (info->colornumber)
-  {
+  switch (info->colornumber) {
   case 0: // 4 BPP
     dot = T1ReadByte(Vdp2Ram, ((info->charaddr + (((y * cellw) + x) >> 1)) & 0x7FFFF));
-    if (!(x & 0x1)) dot >>= 4;
-    if (!(dot & 0xF) && info->transparencyenable) return 0x00000000;
+    if (!(x & 0x1))
+      dot >>= 4;
+    if (!(dot & 0xF) && info->transparencyenable)
+      return 0x00000000;
     else {
       cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
       setSpecialPriority(info, dot, &cramindex);
-      switch (info->specialcolormode)
-      {
-      case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+      switch (info->specialcolormode) {
+      case 1:
+        if (info->specialcolorfunction == 0) {
+          alpha = 0xFF;
+        }
+        break;
       case 2:
-        if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-        else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+        if (info->specialcolorfunction == 0) {
+          alpha = 0xFF;
+        } else {
+          if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) {
+            alpha = 0xFF;
+          }
+        }
         break;
       case 3:
-        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xFF; }
+        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) {
+          alpha = 0xFF;
+        }
         break;
       }
-      return   cramindex | alpha << 24;
+      return cramindex | alpha << 24;
     }
   case 1: // 8 BPP
     dot = T1ReadByte(Vdp2Ram, ((info->charaddr + (y * cellw) + x) & 0x7FFFF));
-    if (!(dot & 0xFF) && info->transparencyenable) return 0x00000000;
+    if (!(dot & 0xFF) && info->transparencyenable)
+      return 0x00000000;
     else {
       cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
       setSpecialPriority(info, dot, &cramindex);
-      switch (info->specialcolormode)
-      {
-      case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+      switch (info->specialcolormode) {
+      case 1:
+        if (info->specialcolorfunction == 0) {
+          alpha = 0xFF;
+        }
+        break;
       case 2:
-        if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-        else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+        if (info->specialcolorfunction == 0) {
+          alpha = 0xFF;
+        } else {
+          if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) {
+            alpha = 0xFF;
+          }
+        }
         break;
       case 3:
-        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xFF; }
+        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) {
+          alpha = 0xFF;
+        }
         break;
       }
-      return   cramindex | alpha << 24;
+      return cramindex | alpha << 24;
     }
   case 2: // 16 BPP(palette)
     dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
-    if ((dot == 0) && info->transparencyenable) return 0x00000000;
+    if ((dot == 0) && info->transparencyenable)
+      return 0x00000000;
     else {
       cramindex = (info->coloroffset + dot);
       setSpecialPriority(info, dot, &cramindex);
-      switch (info->specialcolormode)
-      {
-      case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+      switch (info->specialcolormode) {
+      case 1:
+        if (info->specialcolorfunction == 0) {
+          alpha = 0xFF;
+        }
+        break;
       case 2:
-        if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-        else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+        if (info->specialcolorfunction == 0) {
+          alpha = 0xFF;
+        } else {
+          if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) {
+            alpha = 0xFF;
+          }
+        }
         break;
       case 3:
-        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xFF; }
+        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) {
+          alpha = 0xFF;
+        }
         break;
       }
-      return   cramindex | alpha << 24;
+      return cramindex | alpha << 24;
     }
   case 3: // 16 BPP(RGB)
     dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
-    if (!(dot & 0x8000) && info->transparencyenable) return 0x00000000;
-    else return SAT2YAB1(alpha, dot);
+    if (!(dot & 0x8000) && info->transparencyenable)
+      return 0x00000000;
+    else
+      return SAT2YAB1(alpha, dot);
   case 4: // 32 BPP
     dot = T1ReadLong(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 4) & 0x7FFFF));
-    if (!(dot & 0x80000000) && info->transparencyenable) return 0x00000000;
-    else return SAT2YAB2(alpha, (dot >> 16), dot);
+    if (!(dot & 0x80000000) && info->transparencyenable)
+      return 0x00000000;
+    else
+      return SAT2YAB2(alpha, (dot >> 16), dot);
   default:
     return 0;
   }
 }
 
+void VIDVulkan::drawRotation_in(RBGDrawInfo *rbg) {
 
-void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
-
-  if (rbg == NULL) return;
+  if (rbg == NULL)
+    return;
 
   vdp2draw_struct *info = &rbg->info;
   int rgb_type = rbg->rgb_type;
@@ -3909,7 +3919,7 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
   int lineInc = fixVdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
   int linecl = 0xFF;
   vdp2rotationparameter_struct *parameter;
-  Vdp2 * regs;
+  Vdp2 *regs;
   if ((fixVdp2Regs->CCCTL >> 5) & 0x01) {
     linecl = ((~fixVdp2Regs->CCRLB & 0x1F) << 3) + 0x7;
   }
@@ -3918,8 +3928,7 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
     lineInc <<= 1;
     info->drawh = (vdp2height >> 1);
     info->hres_shift = 1;
-  }
-  else {
+  } else {
     info->hres_shift = 0;
     info->drawh = vdp2height;
   }
@@ -3933,26 +3942,22 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
   x = 0;
   y = 0;
   u32 lineaddr = 0;
-  if (rgb_type == 0)
-  {
+  if (rgb_type == 0) {
     paraA.dx = paraA.A * paraA.deltaX + paraA.B * paraA.deltaY;
     paraA.dy = paraA.D * paraA.deltaX + paraA.E * paraA.deltaY;
-    paraA.Xp = paraA.A * (paraA.Px - paraA.Cx) +
-      paraA.B * (paraA.Py - paraA.Cy) +
-      paraA.C * (paraA.Pz - paraA.Cz) + paraA.Cx + paraA.Mx;
-    paraA.Yp = paraA.D * (paraA.Px - paraA.Cx) +
-      paraA.E * (paraA.Py - paraA.Cy) +
-      paraA.F * (paraA.Pz - paraA.Cz) + paraA.Cy + paraA.My;
+    paraA.Xp = paraA.A * (paraA.Px - paraA.Cx) + paraA.B * (paraA.Py - paraA.Cy) + paraA.C * (paraA.Pz - paraA.Cz) +
+               paraA.Cx + paraA.Mx;
+    paraA.Yp = paraA.D * (paraA.Px - paraA.Cx) + paraA.E * (paraA.Py - paraA.Cy) + paraA.F * (paraA.Pz - paraA.Cz) +
+               paraA.Cy + paraA.My;
   }
 
-  if (rbg->useb)
-  {
+  if (rbg->useb) {
     paraB.dx = paraB.A * paraB.deltaX + paraB.B * paraB.deltaY;
     paraB.dy = paraB.D * paraB.deltaX + paraB.E * paraB.deltaY;
-    paraB.Xp = paraB.A * (paraB.Px - paraB.Cx) + paraB.B * (paraB.Py - paraB.Cy)
-      + paraB.C * (paraB.Pz - paraB.Cz) + paraB.Cx + paraB.Mx;
-    paraB.Yp = paraB.D * (paraB.Px - paraB.Cx) + paraB.E * (paraB.Py - paraB.Cy)
-      + paraB.F * (paraB.Pz - paraB.Cz) + paraB.Cy + paraB.My;
+    paraB.Xp = paraB.A * (paraB.Px - paraB.Cx) + paraB.B * (paraB.Py - paraB.Cy) + paraB.C * (paraB.Pz - paraB.Cz) +
+               paraB.Cx + paraB.Mx;
+    paraB.Yp = paraB.D * (paraB.Px - paraB.Cx) + paraB.E * (paraB.Py - paraB.Cy) + paraB.F * (paraB.Pz - paraB.Cz) +
+               paraB.Cy + paraB.My;
   }
 
   paraA.over_pattern_name = fixVdp2Regs->OVPNRA;
@@ -3977,8 +3982,7 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
             *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
             line_texture->textdata++;
           }
-        }
-        else {
+        } else {
           *line_texture->textdata = rbg->LineColorRamAdress;
           line_texture->textdata++;
         }
@@ -3991,10 +3995,9 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
 
   const float vstep = 1.0 / rbg->rotate_mval_v;
   const float hstep = 1.0 / rbg->rotate_mval_h;
-  //for (j = 0; j < vres; j += vstep)
+  // for (j = 0; j < vres; j += vstep)
   j = 0.0f;
-  for (int jj = 0; jj < rbg->vres; jj++)
-  {
+  for (int jj = 0; jj < rbg->vres; jj++) {
 #if 0 // PERLINE
     Vdp2 * regs = Vdp2RestoreRegs(j, Vdp2Lines);
 #endif
@@ -4009,17 +4012,14 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
       }
 #endif
       paraA.Xsp = paraA.A * ((paraA.Xst + paraA.deltaXst * j) - paraA.Px) +
-        paraA.B * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) +
-        paraA.C * (paraA.Zst - paraA.Pz);
+                  paraA.B * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) + paraA.C * (paraA.Zst - paraA.Pz);
 
-      paraA.Ysp = paraA.D * ((paraA.Xst + paraA.deltaXst *j) - paraA.Px) +
-        paraA.E * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) +
-        paraA.F * (paraA.Zst - paraA.Pz);
+      paraA.Ysp = paraA.D * ((paraA.Xst + paraA.deltaXst * j) - paraA.Px) +
+                  paraA.E * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) + paraA.F * (paraA.Zst - paraA.Pz);
 
-      paraA.KtablV = paraA.deltaKAst* j;
+      paraA.KtablV = paraA.deltaKAst * j;
     }
-    if (rbg->useb)
-    {
+    if (rbg->useb) {
 #if 0 // PERLINE
       Vdp2ReadRotationTable(1, &paraB, regs, Vdp2Ram);
       paraB.dx = paraB.A * paraB.deltaX + paraB.B * paraB.deltaY;
@@ -4040,34 +4040,30 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
       }
 #endif
       paraB.Xsp = paraB.A * ((paraB.Xst + paraB.deltaXst * j) - paraB.Px) +
-        paraB.B * ((paraB.Yst + paraB.deltaYst * j) - paraB.Py) +
-        paraB.C * (paraB.Zst - paraB.Pz);
+                  paraB.B * ((paraB.Yst + paraB.deltaYst * j) - paraB.Py) + paraB.C * (paraB.Zst - paraB.Pz);
 
       paraB.Ysp = paraB.D * ((paraB.Xst + paraB.deltaXst * j) - paraB.Px) +
-        paraB.E * ((paraB.Yst + paraB.deltaYst * j) - paraB.Py) +
-        paraB.F * (paraB.Zst - paraB.Pz);
+                  paraB.E * ((paraB.Yst + paraB.deltaYst * j) - paraB.Py) + paraB.F * (paraB.Zst - paraB.Pz);
 
       paraB.KtablV = paraB.deltaKAst * j;
     }
 
-    if (info->LineColorBase != 0)
-    {
+    if (info->LineColorBase != 0) {
       if ((fixVdp2Regs->LCTA.part.U & 0x8000) != 0) {
         rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc * (int)(j));
         *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
         line_texture->textdata++;
-      }
-      else {
+      } else {
         *line_texture->textdata = rbg->LineColorRamAdress;
         line_texture->textdata++;
       }
     }
 
-    if (regs) readVdp2ColorOffset(regs, info, info->linecheck_mask);
-    //for (i = 0; i < hres; i += hstep)
+    if (regs)
+      readVdp2ColorOffset(regs, info, info->linecheck_mask);
+    // for (i = 0; i < hres; i += hstep)
     i = 0.0;
-    for (int ii = 0; ii < rbg->hres; ii++)
-    {
+    for (int ii = 0; ii < rbg->hres; ii++) {
       /*
             if (Vdp2CheckWindowDot( info, (int)i, (int)j) == 0) {
               *(texture->textdata++) = 0x00000000;
@@ -4098,8 +4094,7 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
       case 2:
         if (!(paraA.coefenab)) {
           parameter = &paraA;
-        }
-        else {
+        } else {
           if (paraB.coefenab) {
             parameter = &paraA;
             if (vdp2rGetKValue(parameter, i) == 0) {
@@ -4110,14 +4105,12 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
                 continue;
               }
             }
-          }
-          else {
+          } else {
             parameter = &paraA;
             if (vdp2rGetKValue(parameter, i) == 0) {
               paraB.lineaddr = paraA.lineaddr;
               parameter = &paraB;
-            }
-            else {
+            } else {
               int a = 0;
             }
           }
@@ -4127,8 +4120,7 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
         parameter = info->GetRParam(info, (int)i, (int)j);
         break;
       }
-      if (parameter == NULL)
-      {
+      if (parameter == NULL) {
         *(texture->textdata++) = 0x00000000;
         i += hstep;
         continue;
@@ -4139,11 +4131,10 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
       h = fh;
       v = fv;
 
-      //v = jj;
-      //h = ii;
+      // v = jj;
+      // h = ii;
 
-      if (info->isbitmap)
-      {
+      if (info->isbitmap) {
 
         switch (parameter->screenover) {
         case OVERMODE_REPEAT:
@@ -4172,9 +4163,7 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
         // Fetch Pixel
         info->charaddr = parameter->charaddr;
         color = Vdp2RotationFetchPixel(info, h, v, cellw);
-      }
-      else
-      {
+      } else {
         // Tile
         int planenum;
         switch (parameter->screenover) {
@@ -4197,10 +4186,9 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
             info->addr = parameter->PlaneAddrv[planenum];
 
             // Figure out which page it's on(if plane size is not 1x1)
-            info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
-              ((x >> 9) * rbg->pagesize) +
-              (((y & 511) >> rbg->patternshift) * info->pagewh) +
-              ((x & 511) >> rbg->patternshift)) << info->patterndatasize;
+            info->addr += (((y >> 9) * rbg->pagesize * info->planew) + ((x >> 9) * rbg->pagesize) +
+                           (((y & 511) >> rbg->patternshift) * info->pagewh) + ((x & 511) >> rbg->patternshift))
+                          << info->patterndatasize;
 
             getPatternAddr(info); // Heh, this could be optimized
           }
@@ -4224,10 +4212,9 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
             info->addr = parameter->PlaneAddrv[planenum];
 
             // Figure out which page it's on(if plane size is not 1x1)
-            info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
-              ((x >> 9) * rbg->pagesize) +
-              (((y & 511) >> rbg->patternshift) * info->pagewh) +
-              ((x & 511) >> rbg->patternshift)) << info->patterndatasize;
+            info->addr += (((y >> 9) * rbg->pagesize * info->planew) + ((x >> 9) * rbg->pagesize) +
+                           (((y & 511) >> rbg->patternshift) * info->pagewh) + ((x & 511) >> rbg->patternshift))
+                          << info->patterndatasize;
 
             getPatternAddr(info); // Heh, this could be optimized
           }
@@ -4248,15 +4235,13 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
             info->addr = parameter->PlaneAddrv[planenum];
 
             // Figure out which page it's on(if plane size is not 1x1)
-            info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
-              ((x >> 9) * rbg->pagesize) +
-              (((y & 511) >> rbg->patternshift) * info->pagewh) +
-              ((x & 511) >> rbg->patternshift)) << info->patterndatasize;
+            info->addr += (((y >> 9) * rbg->pagesize * info->planew) + ((x >> 9) * rbg->pagesize) +
+                           (((y & 511) >> rbg->patternshift) * info->pagewh) + ((x & 511) >> rbg->patternshift))
+                          << info->patterndatasize;
 
             getPatternAddr(info); // Heh, this could be optimized
           }
-        }
-                              break;
+        } break;
         case OVERMODE_SELPATNAME: {
           x = h;
           y = v;
@@ -4268,27 +4253,23 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
               x &= parameter->MskH;
               y &= parameter->MskV;
               getPatternAddrUsingPatternname(info, parameter->over_pattern_name);
-            }
-            else {
+            } else {
               planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
               x &= parameter->MskH;
               y &= parameter->MskV;
               info->addr = parameter->PlaneAddrv[planenum];
               // Figure out which page it's on(if plane size is not 1x1)
-              info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
-                ((x >> 9) * rbg->pagesize) +
-                (((y & 511) >> rbg->patternshift) * info->pagewh) +
-                ((x & 511) >> rbg->patternshift)) << info->patterndatasize;
+              info->addr += (((y >> 9) * rbg->pagesize * info->planew) + ((x >> 9) * rbg->pagesize) +
+                             (((y & 511) >> rbg->patternshift) * info->pagewh) + ((x & 511) >> rbg->patternshift))
+                            << info->patterndatasize;
               getPatternAddr(info); // Heh, this could be optimized
             }
           }
-        }
-                                  break;
+        } break;
         }
 
         // Figure out which pixel in the tile we want
-        if (info->patternwh == 1)
-        {
+        if (info->patternwh == 1) {
           x &= 8 - 1;
           y &= 8 - 1;
 
@@ -4296,43 +4277,32 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
           if (info->flipfunction & 0x2)
             y = 8 - 1 - y;
 
-          // horizontal flip	
+          // horizontal flip
           if (info->flipfunction & 0x1)
             x = 8 - 1 - x;
-        }
-        else
-        {
-          if (info->flipfunction)
-          {
+        } else {
+          if (info->flipfunction) {
             y &= 16 - 1;
-            if (info->flipfunction & 0x2)
-            {
+            if (info->flipfunction & 0x2) {
               if (!(y & 8))
                 y = 8 - 1 - y + 16;
               else
                 y = 16 - 1 - y;
-            }
-            else if (y & 8)
+            } else if (y & 8)
               y += 8;
 
-            if (info->flipfunction & 0x1)
-            {
+            if (info->flipfunction & 0x1) {
               if (!(x & 8))
                 y += 8;
 
               x &= 8 - 1;
               x = 8 - 1 - x;
-            }
-            else if (x & 8)
-            {
+            } else if (x & 8) {
               y += 8;
               x &= 8 - 1;
-            }
-            else
+            } else
               x &= 8 - 1;
-          }
-          else
-          {
+          } else {
             y &= 16 - 1;
             if (y & 8)
               y += 8;
@@ -4363,52 +4333,53 @@ void VIDVulkan::drawRotation_in(RBGDrawInfo * rbg) {
   }
 }
 
-
-
-void VIDVulkan::genLineinfo(vdp2draw_struct *info)
-{
+void VIDVulkan::genLineinfo(vdp2draw_struct *info) {
   int bound = 0;
   int i;
   u16 val1, val2;
   int index = 0;
   int lineindex = 0;
-  if (info->lineinc == 0 || info->islinescroll == 0) return;
+  if (info->lineinc == 0 || info->islinescroll == 0)
+    return;
 
-  if (VDPLINE_SY(info->islinescroll)) bound += 0x04;
-  if (VDPLINE_SX(info->islinescroll)) bound += 0x04;
-  if (VDPLINE_SZ(info->islinescroll)) bound += 0x04;
+  if (VDPLINE_SY(info->islinescroll))
+    bound += 0x04;
+  if (VDPLINE_SX(info->islinescroll))
+    bound += 0x04;
+  if (VDPLINE_SZ(info->islinescroll))
+    bound += 0x04;
 
-  for (i = 0; i < vdp2height; i += info->lineinc)
-  {
+  for (i = 0; i < vdp2height; i += info->lineinc) {
     index = 0;
-    if (VDPLINE_SX(info->islinescroll))
-    {
-      info->lineinfo[lineindex].LineScrollValH = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc)*bound);
-      if ((info->lineinfo[lineindex].LineScrollValH & 0x400)) info->lineinfo[lineindex].LineScrollValH |= 0xF800; else info->lineinfo[lineindex].LineScrollValH &= 0x07FF;
+    if (VDPLINE_SX(info->islinescroll)) {
+      info->lineinfo[lineindex].LineScrollValH = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc) * bound);
+      if ((info->lineinfo[lineindex].LineScrollValH & 0x400))
+        info->lineinfo[lineindex].LineScrollValH |= 0xF800;
+      else
+        info->lineinfo[lineindex].LineScrollValH &= 0x07FF;
       index += 4;
-    }
-    else {
+    } else {
       info->lineinfo[lineindex].LineScrollValH = 0;
     }
 
-    if (VDPLINE_SY(info->islinescroll))
-    {
-      info->lineinfo[lineindex].LineScrollValV = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc)*bound + index);
-      if ((info->lineinfo[lineindex].LineScrollValV & 0x400)) info->lineinfo[lineindex].LineScrollValV |= 0xF800; else info->lineinfo[lineindex].LineScrollValV &= 0x07FF;
+    if (VDPLINE_SY(info->islinescroll)) {
+      info->lineinfo[lineindex].LineScrollValV =
+          T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc) * bound + index);
+      if ((info->lineinfo[lineindex].LineScrollValV & 0x400))
+        info->lineinfo[lineindex].LineScrollValV |= 0xF800;
+      else
+        info->lineinfo[lineindex].LineScrollValV &= 0x07FF;
       index += 4;
-    }
-    else {
+    } else {
       info->lineinfo[lineindex].LineScrollValV = 0;
     }
 
-    if (VDPLINE_SZ(info->islinescroll))
-    {
-      val1 = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc)*bound + index);
-      val2 = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc)*bound + index + 2);
-      info->lineinfo[lineindex].CoordinateIncH = (((int)((val1) & 0x07) << 8) | (int)((val2) >> 8));
+    if (VDPLINE_SZ(info->islinescroll)) {
+      val1 = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc) * bound + index);
+      val2 = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc) * bound + index + 2);
+      info->lineinfo[lineindex].CoordinateIncH = (((int)((val1)&0x07) << 8) | (int)((val2) >> 8));
       index += 4;
-    }
-    else {
+    } else {
       info->lineinfo[lineindex].CoordinateIncH = 0x0100;
     }
 
@@ -4416,16 +4387,15 @@ void VIDVulkan::genLineinfo(vdp2draw_struct *info)
   }
 }
 
-void VIDVulkan::generatePerLineColorCalcuration(vdp2draw_struct * info, int id) {
+void VIDVulkan::generatePerLineColorCalcuration(vdp2draw_struct *info, int id) {
   int bit = 1 << id;
   int line = 0;
   if (*Vdp2External.perline_alpha_draw & bit) {
-    u32 * linebuf;
+    u32 *linebuf;
     int line_shift = 0;
     if (vdp2height > 256) {
       line_shift = 1;
-    }
-    else {
+    } else {
       line_shift = 0;
     }
 
@@ -4438,15 +4408,12 @@ void VIDVulkan::generatePerLineColorCalcuration(vdp2draw_struct * info, int id) 
     for (line = 0; line < vdp2height; line++) {
       if ((Vdp2Lines[line >> line_shift].BGON & bit) == 0x00) {
         linebuf[line] = 0x00;
-      }
-      else {
+      } else {
         info->enable = 1;
-        if (Vdp2Lines[line >> line_shift].CCCTL & bit)
-        {
+        if (Vdp2Lines[line >> line_shift].CCCTL & bit) {
           if (fixVdp2Regs->CCCTL & 0x100) { // Add Color
             info->blendmode |= VDP2_CC_ADD;
-          }
-          else {
+          } else {
             info->blendmode |= VDP2_CC_RATE;
           }
 
@@ -4467,46 +4434,34 @@ void VIDVulkan::generatePerLineColorCalcuration(vdp2draw_struct * info, int id) 
             linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) << 3) + 0x7) << 24;
             break;
           }
-
-        }
-        else {
+        } else {
           linebuf[line] = 0xFF000000;
         }
 
-        if ((Vdp2Lines[line >> line_shift].CLOFEN  & bit) != 0) {
+        if ((Vdp2Lines[line >> line_shift].CLOFEN & bit) != 0) {
           readVdp2ColorOffset(&Vdp2Lines[line >> line_shift], info, bit);
           linebuf[line] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 0;
           linebuf[line] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
           linebuf[line] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 16;
-        }
-        else {
+        } else {
           linebuf[line] |= 0x00808080;
         }
-
       }
     }
     info->lineTexture = (u64)(perline[id].imageView);
-  }
-  else {
+  } else {
     info->lineTexture = 0;
   }
-
 }
 
-
-
-void VIDVulkan::drawBitmap(vdp2draw_struct *info, CharTexture *texture)
-{
+void VIDVulkan::drawBitmap(vdp2draw_struct *info, CharTexture *texture) {
   int i, j;
 
-  switch (info->colornumber)
-  {
+  switch (info->colornumber) {
   case 0: // 4 BPP
-    for (i = 0; i < info->cellh; i++)
-    {
+    for (i = 0; i < info->cellh; i++) {
       if (info->char_bank[info->charaddr >> 17] == 0) {
-        for (j = 0; j < info->cellw; j += 4)
-        {
+        for (j = 0; j < info->cellw; j += 4) {
           *texture->textdata = 0;
           *texture->textdata++;
           *texture->textdata = 0;
@@ -4517,10 +4472,8 @@ void VIDVulkan::drawBitmap(vdp2draw_struct *info, CharTexture *texture)
           *texture->textdata++;
           info->charaddr += 2;
         }
-      }
-      else {
-        for (j = 0; j < info->cellw; j += 4)
-        {
+      } else {
+        for (j = 0; j < info->cellw; j += 4) {
           getPixel4bpp(info, info->charaddr, texture);
           info->charaddr += 2;
         }
@@ -4529,21 +4482,17 @@ void VIDVulkan::drawBitmap(vdp2draw_struct *info, CharTexture *texture)
     }
     break;
   case 1: // 8 BPP
-    for (i = 0; i < info->cellh; i++)
-    {
+    for (i = 0; i < info->cellh; i++) {
       if (info->char_bank[info->charaddr >> 17] == 0) {
-        for (j = 0; j < info->cellw; j += 2)
-        {
+        for (j = 0; j < info->cellw; j += 2) {
           *texture->textdata = 0x00000000;
           texture->textdata++;
           *texture->textdata = 0x00000000;
           texture->textdata++;
           info->charaddr += 2;
         }
-      }
-      else {
-        for (j = 0; j < info->cellw; j += 2)
-        {
+      } else {
+        for (j = 0; j < info->cellw; j += 2) {
           getPixel8bpp(info, info->charaddr, texture);
           info->charaddr += 2;
         }
@@ -4552,19 +4501,15 @@ void VIDVulkan::drawBitmap(vdp2draw_struct *info, CharTexture *texture)
     }
     break;
   case 2: // 16 BPP(palette)
-    for (i = 0; i < info->cellh; i++)
-    {
+    for (i = 0; i < info->cellh; i++) {
       if (info->char_bank[info->charaddr >> 17] == 0) {
-        for (j = 0; j < info->cellw; j++)
-        {
+        for (j = 0; j < info->cellw; j++) {
           *texture->textdata = 0;
           *texture->textdata++;
           info->charaddr += 2;
         }
-      }
-      else {
-        for (j = 0; j < info->cellw; j++)
-        {
+      } else {
+        for (j = 0; j < info->cellw; j++) {
           *texture->textdata++ = getPixel16bpp(info, info->charaddr);
           info->charaddr += 2;
         }
@@ -4573,19 +4518,15 @@ void VIDVulkan::drawBitmap(vdp2draw_struct *info, CharTexture *texture)
     }
     break;
   case 3: // 16 BPP(RGB)
-    for (i = 0; i < info->cellh; i++)
-    {
+    for (i = 0; i < info->cellh; i++) {
       if (info->char_bank[info->charaddr >> 17] == 0) {
-        for (j = 0; j < info->cellw; j++)
-        {
+        for (j = 0; j < info->cellw; j++) {
           *texture->textdata = 0;
           *texture->textdata++;
           info->charaddr += 2;
         }
-      }
-      else {
-        for (j = 0; j < info->cellw; j++)
-        {
+      } else {
+        for (j = 0; j < info->cellw; j++) {
           *texture->textdata++ = getPixel16bppbmp(info, info->charaddr);
           info->charaddr += 2;
         }
@@ -4594,8 +4535,7 @@ void VIDVulkan::drawBitmap(vdp2draw_struct *info, CharTexture *texture)
     }
     break;
   case 4: // 32 BPP
-    for (i = 0; i < info->cellh; i++)
-    {
+    for (i = 0; i < info->cellh; i++) {
       /*
             if (info->char_bank[info->charaddr >> 17] == 0) {
               for (j = 0; j < info->cellw; j++)
@@ -4608,13 +4548,12 @@ void VIDVulkan::drawBitmap(vdp2draw_struct *info, CharTexture *texture)
             else {
               for (j = 0; j < info->cellw; j++)
               {
-                *texture->textdata++ = Vdp2GetPixel32bppbmp(info, info->charaddr);
-                info->charaddr += 4;
+                *texture->textdata++ = Vdp2GetPixel32bppbmp(info,
+         info->charaddr); info->charaddr += 4;
               }
             }
       */
-      for (j = 0; j < info->cellw; j++)
-      {
+      for (j = 0; j < info->cellw; j++) {
         *texture->textdata++ = getPixel32bppbmp(info, info->charaddr);
         info->charaddr += 4;
       }
@@ -4624,20 +4563,16 @@ void VIDVulkan::drawBitmap(vdp2draw_struct *info, CharTexture *texture)
   }
 }
 
-
-
-void VIDVulkan::drawBitmapLineScroll(vdp2draw_struct *info, CharTexture *texture)
-{
+void VIDVulkan::drawBitmapLineScroll(vdp2draw_struct *info, CharTexture *texture) {
   int i, j;
   int height = vdp2height;
 
-  for (i = 0; i < height; i++)
-  {
+  for (i = 0; i < height; i++) {
     int sh, sv;
     u32 baseaddr;
-    vdp2Lineinfo * line;
+    vdp2Lineinfo *line;
     baseaddr = (u32)info->charaddr;
-    line = &(info->lineinfo[i*info->lineinc]);
+    line = &(info->lineinfo[i * info->lineinc]);
 
     if (VDPLINE_SX(info->islinescroll))
       sh = line->LineScrollValH + info->sh;
@@ -4659,18 +4594,15 @@ void VIDVulkan::drawBitmapLineScroll(vdp2draw_struct *info, CharTexture *texture
     case 0:
       baseaddr += ((sh + sv * (info->cellw >> 2)) << 1);
       if (info->char_bank[baseaddr >> 17] == 0) {
-        for (j = 0; j < vdp2width; j += 4)
-        {
+        for (j = 0; j < vdp2width; j += 4) {
           *texture->textdata++ = 0;
           *texture->textdata++ = 0;
           *texture->textdata++ = 0;
           *texture->textdata++ = 0;
           baseaddr += 2;
         }
-      }
-      else {
-        for (j = 0; j < vdp2width; j += 4)
-        {
+      } else {
+        for (j = 0; j < vdp2width; j += 4) {
           getPixel4bpp(info, baseaddr, texture);
           baseaddr += 2;
         }
@@ -4679,16 +4611,13 @@ void VIDVulkan::drawBitmapLineScroll(vdp2draw_struct *info, CharTexture *texture
     case 1:
       baseaddr += sh + sv * info->cellw;
       if (info->char_bank[baseaddr >> 17] == 0) {
-        for (j = 0; j < vdp2width; j += 2)
-        {
+        for (j = 0; j < vdp2width; j += 2) {
           *texture->textdata++ = 0;
           *texture->textdata++ = 0;
           baseaddr += 2;
         }
-      }
-      else {
-        for (j = 0; j < vdp2width; j += 2)
-        {
+      } else {
+        for (j = 0; j < vdp2width; j += 2) {
           getPixel8bpp(info, baseaddr, texture);
           baseaddr += 2;
         }
@@ -4697,33 +4626,26 @@ void VIDVulkan::drawBitmapLineScroll(vdp2draw_struct *info, CharTexture *texture
     case 2:
       baseaddr += ((sh + sv * info->cellw) << 1);
       if (info->char_bank[baseaddr >> 17] == 0) {
-        for (j = 0; j < vdp2width; j++)
-        {
+        for (j = 0; j < vdp2width; j++) {
           *texture->textdata++ = 0;
           baseaddr += 2;
         }
-      }
-      else {
-        for (j = 0; j < vdp2width; j++)
-        {
+      } else {
+        for (j = 0; j < vdp2width; j++) {
           *texture->textdata++ = getPixel16bpp(info, baseaddr);
           baseaddr += 2;
-
         }
       }
       break;
     case 3:
       baseaddr += ((sh + sv * info->cellw) << 1);
       if (info->char_bank[baseaddr >> 17] == 0) {
-        for (j = 0; j < vdp2width; j++)
-        {
+        for (j = 0; j < vdp2width; j++) {
           *texture->textdata++ = 0;
           baseaddr += 2;
         }
-      }
-      else {
-        for (j = 0; j < vdp2width; j++)
-        {
+      } else {
+        for (j = 0; j < vdp2width; j++) {
           *texture->textdata++ = getPixel16bppbmp(info, baseaddr);
           baseaddr += 2;
         }
@@ -4732,18 +4654,15 @@ void VIDVulkan::drawBitmapLineScroll(vdp2draw_struct *info, CharTexture *texture
     case 4:
       baseaddr += ((sh + sv * info->cellw) << 2);
       if (info->char_bank[baseaddr >> 17] == 0) {
-        for (j = 0; j < vdp2width; j++)
-        {
+        for (j = 0; j < vdp2width; j++) {
           *texture->textdata++ = 0;
           baseaddr += 4;
         }
-      }
-      else {
-        for (j = 0; j < vdp2width; j++)
-        {
-          //if (info->isverticalscroll){
+      } else {
+        for (j = 0; j < vdp2width; j++) {
+          // if (info->isverticalscroll){
           //	sv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl+(j>>3) ) >> 16;
-          //}
+          // }
           *texture->textdata++ = getPixel32bppbmp(info, baseaddr);
           baseaddr += 4;
         }
@@ -4754,13 +4673,12 @@ void VIDVulkan::drawBitmapLineScroll(vdp2draw_struct *info, CharTexture *texture
   }
 }
 
-void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info, CharTexture *texture)
-{
+void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info, CharTexture *texture) {
   u32 color;
   int i, j;
 
-  int incv = 1.0 / info->coordincy*256.0;
-  int inch = 1.0 / info->coordincx*256.0;
+  int incv = 1.0 / info->coordincy * 256.0;
+  int inch = 1.0 / info->coordincx * 256.0;
 
   int lineinc = 1;
   int linestart = 0;
@@ -4774,20 +4692,20 @@ void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info, CharTexture *text
     linestart = vdp1_interlace - 1;
   }
 
-  for (i = linestart; i < height; i += lineinc)
-  {
+  for (i = linestart; i < height; i += lineinc) {
     int sh, sv;
     int v;
     u32 baseaddr;
-    vdp2Lineinfo * line;
+    vdp2Lineinfo *line;
     baseaddr = (u32)info->charaddr;
-    line = &(info->lineinfo[i*info->lineinc]);
+    line = &(info->lineinfo[i * info->lineinc]);
 
-    v = (i*incv) >> 8;
+    v = (i * incv) >> 8;
     if (VDPLINE_SZ(info->islinescroll))
       inch = line->CoordinateIncH;
 
-    if (inch == 0) inch = 1;
+    if (inch == 0)
+      inch = 1;
 
     if (VDPLINE_SX(info->islinescroll))
       sh = info->sh + line->LineScrollValH;
@@ -4799,34 +4717,44 @@ void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info, CharTexture *text
     else
       sv = v + info->sv;
 
-    //sh &= (info->cellw - 1);
+    // sh &= (info->cellw - 1);
     sv &= (info->cellh - 1);
 
     switch (info->colornumber) {
     case 0:
-      for (j = 0; j < vdp2width; j++)
-      {
-        u32 h = ((j*inch) >> 8);
-        u32 addr = ((sh + h)&(info->cellw - 1) + (sv*info->cellw)) >> 1; // Not confrimed!
+      for (j = 0; j < vdp2width; j++) {
+        u32 h = ((j * inch) >> 8);
+        u32 addr = ((sh + h) & (info->cellw - 1) + (sv * info->cellw)) >> 1; // Not confrimed!
         if (addr >= 0x80000) {
           *texture->textdata++ = 0x0000;
-        }
-        else {
+        } else {
           u8 dot = T1ReadByte(Vdp2Ram, baseaddr + addr);
           u32 alpha = info->alpha;
-          if (!(h & 0x01)) dot >>= 4;
-          if (!(dot & 0xF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
+          if (!(h & 0x01))
+            dot >>= 4;
+          if (!(dot & 0xF) && info->transparencyenable)
+            *texture->textdata++ = 0x00000000;
           else {
             color = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
-            switch (info->specialcolormode)
-            {
-            case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+            switch (info->specialcolormode) {
+            case 1:
+              if (info->specialcolorfunction == 0) {
+                alpha = 0xFF;
+              }
+              break;
             case 2:
-              if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-              else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+              if (info->specialcolorfunction == 0) {
+                alpha = 0xFF;
+              } else {
+                if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) {
+                  alpha = 0xFF;
+                }
+              }
               break;
             case 3:
-              if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
+              if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) {
+                alpha = 0xFF;
+              }
               break;
             }
             *texture->textdata++ = color | (alpha << 24);
@@ -4838,26 +4766,35 @@ void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info, CharTexture *text
 
       // Shining force 3 battle sciene
       u32 maxaddr = (info->cellw * info->cellh) + info->cellw;
-      for (j = 0; j < vdp2width; j++)
-      {
-        int h = ((j*inch) >> 8);
+      for (j = 0; j < vdp2width; j++) {
+        int h = ((j * inch) >> 8);
         u32 alpha = info->alpha;
-        u32 addr = ((sh + h)&(info->cellw - 1)) + sv * info->cellw;
+        u32 addr = ((sh + h) & (info->cellw - 1)) + sv * info->cellw;
         u8 dot = T1ReadByte(Vdp2Ram, baseaddr + addr);
         if (!dot && info->transparencyenable) {
-          *texture->textdata++ = 0; continue;
-        }
-        else {
+          *texture->textdata++ = 0;
+          continue;
+        } else {
           color = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
-          switch (info->specialcolormode)
-          {
-          case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+          switch (info->specialcolormode) {
+          case 1:
+            if (info->specialcolorfunction == 0) {
+              alpha = 0xFF;
+            }
+            break;
           case 2:
-            if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-            else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+            if (info->specialcolorfunction == 0) {
+              alpha = 0xFF;
+            } else {
+              if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) {
+                alpha = 0xFF;
+              }
+            }
             break;
           case 3:
-            if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
+            if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) {
+              alpha = 0xFF;
+            }
             break;
           }
         }
@@ -4866,30 +4803,26 @@ void VIDVulkan::drawBitmapCoordinateInc(vdp2draw_struct *info, CharTexture *text
       break;
     }
     case 2:
-      //baseaddr += ((sh + sv * info->cellw) << 1);
-      for (j = 0; j < vdp2width; j++)
-      {
-        int h = ((j*inch) >> 8);
-        u32 addr = (((sh + h)&(info->cellw - 1)) + sv * info->cellw) << 1;  // Not confrimed
+      // baseaddr += ((sh + sv * info->cellw) << 1);
+      for (j = 0; j < vdp2width; j++) {
+        int h = ((j * inch) >> 8);
+        u32 addr = (((sh + h) & (info->cellw - 1)) + sv * info->cellw) << 1; // Not confrimed
         *texture->textdata++ = getPixel16bpp(info, baseaddr + addr);
-
       }
       break;
     case 3:
-      //baseaddr += ((sh + sv * info->cellw) << 1);
-      for (j = 0; j < vdp2width; j++)
-      {
-        int h = ((j*inch) >> 8);
-        u32 addr = (((sh + h)&(info->cellw - 1)) + sv * info->cellw) << 1;  // Not confrimed
+      // baseaddr += ((sh + sv * info->cellw) << 1);
+      for (j = 0; j < vdp2width; j++) {
+        int h = ((j * inch) >> 8);
+        u32 addr = (((sh + h) & (info->cellw - 1)) + sv * info->cellw) << 1; // Not confrimed
         *texture->textdata++ = getPixel16bppbmp(info, baseaddr + addr);
       }
       break;
     case 4:
-      //baseaddr += ((sh + sv * info->cellw) << 2);
-      for (j = 0; j < vdp2width; j++)
-      {
-        int h = (j*inch >> 8);
-        u32 addr = (((sh + h)&(info->cellw - 1)) + sv * info->cellw) << 2;  // Not confrimed
+      // baseaddr += ((sh + sv * info->cellw) << 2);
+      for (j = 0; j < vdp2width; j++) {
+        int h = (j * inch >> 8);
+        u32 addr = (((sh + h) & (info->cellw - 1)) + sv * info->cellw) << 2; // Not confrimed
         *texture->textdata++ = getPixel32bppbmp(info, baseaddr + addr);
       }
       break;
@@ -4931,8 +4864,7 @@ void VIDVulkan::drawMapPerLineNbg23(vdp2draw_struct *info, CharTexture *texture,
   if (vdp2height >= 448) {
     info->drawh = (vdp2height >> 1);
     res_shift = 1;
-  }
-  else {
+  } else {
     info->drawh = vdp2height;
     res_shift = 0;
   }
@@ -4940,43 +4872,42 @@ void VIDVulkan::drawMapPerLineNbg23(vdp2draw_struct *info, CharTexture *texture,
   for (v = 0; v < vdp2height; v += 1) {
 
     int targetv = 0;
-    Vdp2 * regs = Vdp2RestoreRegs(v >> res_shift, Vdp2Lines);
+    Vdp2 *regs = Vdp2RestoreRegs(v >> res_shift, Vdp2Lines);
 
     if (id == 2) {
       sx = (regs->SCXN2 & 0x7FF) + xoffset;
       targetv = (regs->SCYN2 & 0x7FF);
-    }
-    else if (id == 3) {
+    } else if (id == 3) {
       sx = (regs->SCXN3 & 0x7FF) + xoffset;
       targetv = (regs->SCYN3 & 0x7FF);
-    }
-    else {
+    } else {
       LOG("Bad id");
       return;
     }
 
     // determine which chara shoud be used.
-    //mapy   = (v+sy) / (512 * info->planeh);
+    // mapy   = (v+sy) / (512 * info->planeh);
     mapy = (targetv) >> planeh_shift;
-    //int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
-    dot_on_planey = (targetv)-(mapy << planeh_shift);
+    // int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
+    dot_on_planey = (targetv) - (mapy << planeh_shift);
     mapy = mapy & 0x01;
-    //planey = dot_on_planey / 512;
+    // planey = dot_on_planey / 512;
     planey = dot_on_planey >> plane_shift;
-    //int dot_on_pagey = dot_on_planey - planey * 512;
+    // int dot_on_pagey = dot_on_planey - planey * 512;
     dot_on_pagey = dot_on_planey & plane_mask;
     planey = planey & (info->planeh - 1);
-    //pagey = dot_on_pagey / (512 / info->pagewh);
+    // pagey = dot_on_pagey / (512 / info->pagewh);
     pagey = dot_on_pagey >> page_shift;
-    //chary = dot_on_pagey - pagey*(512 / info->pagewh);
+    // chary = dot_on_pagey - pagey*(512 / info->pagewh);
     chary = dot_on_pagey & page_mask;
-    if (pagey < 0) pagey = info->pagewh - 1 + pagey;
+    if (pagey < 0)
+      pagey = info->pagewh - 1 + pagey;
 
     for (int j = 0; j < info->draww; j += 1) {
 
-      //mapx = (h + sx) / (512 * info->planew);
+      // mapx = (h + sx) / (512 * info->planew);
       mapx = (j + sx) >> planew_shift;
-      //int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
+      // int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
       dot_on_planex = (j + sx) - (mapx << planew_shift);
       mapx = mapx & 0x01;
 
@@ -4986,16 +4917,17 @@ void VIDVulkan::drawMapPerLineNbg23(vdp2draw_struct *info, CharTexture *texture,
         premapid = mapid;
       }
 
-      //planex = dot_on_planex / 512;
+      // planex = dot_on_planex / 512;
       planex = dot_on_planex >> plane_shift;
-      //int dot_on_pagex = dot_on_planex - planex * 512;
+      // int dot_on_pagex = dot_on_planex - planex * 512;
       dot_on_pagex = dot_on_planex & plane_mask;
       planex = planex & (info->planew - 1);
-      //pagex = dot_on_pagex / (512 / info->pagewh);
+      // pagex = dot_on_pagex / (512 / info->pagewh);
       pagex = dot_on_pagex >> page_shift;
-      //charx = dot_on_pagex - pagex*(512 / info->pagewh);
+      // charx = dot_on_pagex - pagex*(512 / info->pagewh);
       charx = dot_on_pagex & page_mask;
-      if (pagex < 0) pagex = info->pagewh - 1 + pagex;
+      if (pagex < 0)
+        pagex = info->pagewh - 1 + pagex;
 
       if (planex != preplanex || pagex != prepagex || planey != preplaney || pagey != prepagey) {
         getPalAndCharAddr(info, planex, pagex, planey, pagey);
@@ -5008,8 +4940,7 @@ void VIDVulkan::drawMapPerLineNbg23(vdp2draw_struct *info, CharTexture *texture,
       int x = charx;
       int y = chary;
 
-      if (info->patternwh == 1)
-      {
+      if (info->patternwh == 1) {
         x &= 8 - 1;
         y &= 8 - 1;
 
@@ -5017,43 +4948,32 @@ void VIDVulkan::drawMapPerLineNbg23(vdp2draw_struct *info, CharTexture *texture,
         if (info->flipfunction & 0x2)
           y = 8 - 1 - y;
 
-        // horizontal flip	
+        // horizontal flip
         if (info->flipfunction & 0x1)
           x = 8 - 1 - x;
-      }
-      else
-      {
-        if (info->flipfunction)
-        {
+      } else {
+        if (info->flipfunction) {
           y &= 16 - 1;
-          if (info->flipfunction & 0x2)
-          {
+          if (info->flipfunction & 0x2) {
             if (!(y & 8))
               y = 8 - 1 - y + 16;
             else
               y = 16 - 1 - y;
-          }
-          else if (y & 8)
+          } else if (y & 8)
             y += 8;
 
-          if (info->flipfunction & 0x1)
-          {
+          if (info->flipfunction & 0x1) {
             if (!(x & 8))
               y += 8;
 
             x &= 8 - 1;
             x = 8 - 1 - x;
-          }
-          else if (x & 8)
-          {
+          } else if (x & 8) {
             y += 8;
             x &= 8 - 1;
-          }
-          else
+          } else
             x &= 8 - 1;
-        }
-        else
-        {
+        } else {
           y &= 16 - 1;
           if (y & 8)
             y += 8;
@@ -5066,9 +4986,7 @@ void VIDVulkan::drawMapPerLineNbg23(vdp2draw_struct *info, CharTexture *texture,
     }
     texture->textdata += texture->w;
   }
-
 }
-
 
 void VIDVulkan::drawMap(vdp2draw_struct *info, CharTexture *texture) {
   int lineindex = 0;
@@ -5097,7 +5015,7 @@ void VIDVulkan::drawMap(vdp2draw_struct *info, CharTexture *texture) {
   info->drawh = (int)((float)vdp2height / info->coordincy);
   info->lineinc = info->patternpixelwh;
 
-  //info->coordincx = 1.0f;
+  // info->coordincx = 1.0f;
 
   for (v = -info->patternpixelwh; v < info->drawh + info->patternpixelwh; v += info->patternpixelwh) {
     int targetv = 0;
@@ -5106,23 +5024,23 @@ void VIDVulkan::drawMap(vdp2draw_struct *info, CharTexture *texture) {
     if (!info->isverticalscroll) {
       targetv = info->y + v;
       // determine which chara shoud be used.
-      //mapy   = (v+sy) / (512 * info->planeh);
+      // mapy   = (v+sy) / (512 * info->planeh);
       mapy = (targetv) >> planeh_shift;
-      //int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
-      dot_on_planey = (targetv)-(mapy << planeh_shift);
+      // int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
+      dot_on_planey = (targetv) - (mapy << planeh_shift);
       mapy = mapy & 0x01;
-      //planey = dot_on_planey / 512;
+      // planey = dot_on_planey / 512;
       planey = dot_on_planey >> plane_shift;
-      //int dot_on_pagey = dot_on_planey - planey * 512;
+      // int dot_on_pagey = dot_on_planey - planey * 512;
       dot_on_pagey = dot_on_planey & plane_mask;
       planey = planey & (info->planeh - 1);
-      //pagey = dot_on_pagey / (512 / info->pagewh);
+      // pagey = dot_on_pagey / (512 / info->pagewh);
       pagey = dot_on_pagey >> page_shift;
-      //chary = dot_on_pagey - pagey*(512 / info->pagewh);
+      // chary = dot_on_pagey - pagey*(512 / info->pagewh);
       chary = dot_on_pagey & page_mask;
-      if (pagey < 0) pagey = info->pagewh - 1 + pagey;
-    }
-    else {
+      if (pagey < 0)
+        pagey = info->pagewh - 1 + pagey;
+    } else {
       cell_count = 0;
     }
 
@@ -5132,48 +5050,48 @@ void VIDVulkan::drawMap(vdp2draw_struct *info, CharTexture *texture) {
         targetv = info->y + v + (T1ReadLong(Vdp2Ram, info->verticalscrolltbl + cell_count) >> 16);
         cell_count += info->verticalscrollinc;
         // determine which chara shoud be used.
-        //mapy   = (v+sy) / (512 * info->planeh);
+        // mapy   = (v+sy) / (512 * info->planeh);
         mapy = (targetv) >> planeh_shift;
-        //int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
-        dot_on_planey = (targetv)-(mapy << planeh_shift);
+        // int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
+        dot_on_planey = (targetv) - (mapy << planeh_shift);
         mapy = mapy & 0x01;
-        //planey = dot_on_planey / 512;
+        // planey = dot_on_planey / 512;
         planey = dot_on_planey >> plane_shift;
-        //int dot_on_pagey = dot_on_planey - planey * 512;
+        // int dot_on_pagey = dot_on_planey - planey * 512;
         dot_on_pagey = dot_on_planey & plane_mask;
         planey = planey & (info->planeh - 1);
-        //pagey = dot_on_pagey / (512 / info->pagewh);
+        // pagey = dot_on_pagey / (512 / info->pagewh);
         pagey = dot_on_pagey >> page_shift;
-        //chary = dot_on_pagey - pagey*(512 / info->pagewh);
+        // chary = dot_on_pagey - pagey*(512 / info->pagewh);
         chary = dot_on_pagey & page_mask;
-        if (pagey < 0) pagey = info->pagewh - 1 + pagey;
+        if (pagey < 0)
+          pagey = info->pagewh - 1 + pagey;
       }
 
-      //mapx = (h + sx) / (512 * info->planew);
+      // mapx = (h + sx) / (512 * info->planew);
       mapx = (h + sx) >> planew_shift;
-      //int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
+      // int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
       dot_on_planex = (h + sx) - (mapx << planew_shift);
       mapx = mapx & 0x01;
-      //planex = dot_on_planex / 512;
+      // planex = dot_on_planex / 512;
       planex = dot_on_planex >> plane_shift;
-      //int dot_on_pagex = dot_on_planex - planex * 512;
+      // int dot_on_pagex = dot_on_planex - planex * 512;
       dot_on_pagex = dot_on_planex & plane_mask;
       planex = planex & (info->planew - 1);
-      //pagex = dot_on_pagex / (512 / info->pagewh);
+      // pagex = dot_on_pagex / (512 / info->pagewh);
       pagex = dot_on_pagex >> page_shift;
-      //charx = dot_on_pagex - pagex*(512 / info->pagewh);
+      // charx = dot_on_pagex - pagex*(512 / info->pagewh);
       charx = dot_on_pagex & page_mask;
-      if (pagex < 0) pagex = info->pagewh - 1 + pagex;
+      if (pagex < 0)
+        pagex = info->pagewh - 1 + pagex;
 
       info->PlaneAddr(info, info->mapwh * mapy + mapx, fixVdp2Regs);
       getPalAndCharAddr(info, planex, pagex, planey, pagey);
       drawPattern(info, texture, h - charx, v - chary, 0, 0);
-
     }
 
     lineindex++;
   }
-
 }
 
 void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
@@ -5212,9 +5130,9 @@ void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
   else
     info->drawh = vdp2height;
 
-  const int incv = 1.0 / info->coordincy*256.0;
+  const int incv = 1.0 / info->coordincy * 256.0;
   const int res_shift = 0;
-  //if (vdp2height >= 440) res_shift = 0;
+  // if (vdp2height >= 440) res_shift = 0;
 
   int linemask = 0;
   switch (info->lineinc) {
@@ -5232,30 +5150,27 @@ void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
     break;
   }
 
-
-  for (v = 0; v < vdp2height; v += 1) {  // ToDo: info->coordincy
+  for (v = 0; v < vdp2height; v += 1) { // ToDo: info->coordincy
 
     int targetv = 0;
 
     if (VDPLINE_SX(info->islinescroll)) {
       sx = info->sh + info->lineinfo[lineindex << res_shift].LineScrollValH;
-    }
-    else {
+    } else {
       sx = info->sh;
     }
 
     if (VDPLINE_SY(info->islinescroll)) {
-      targetv = info->sv + (v&linemask) + info->lineinfo[lineindex << res_shift].LineScrollValV;
-    }
-    else {
-      targetv = info->sv + ((v*incv) >> 8);
+      targetv = info->sv + (v & linemask) + info->lineinfo[lineindex << res_shift].LineScrollValV;
+    } else {
+      targetv = info->sv + ((v * incv) >> 8);
     }
 
     if (info->isverticalscroll) {
       // this is *wrong*, vertical scroll use a different value per cell
-      // info->verticalscrolltbl should be incremented by info->verticalscrollinc
-      // each time there's a cell change and reseted at the end of the line...
-      // or something like that :)
+      // info->verticalscrolltbl should be incremented by
+      // info->verticalscrollinc each time there's a cell change and reseted at
+      // the end of the line... or something like that :)
       targetv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl) >> 16;
     }
 
@@ -5263,41 +5178,41 @@ void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
       info->coordincx = info->lineinfo[lineindex << res_shift].CoordinateIncH / 256.0f;
       if (info->coordincx == 0) {
         info->coordincx = vdp2width;
-      }
-      else {
+      } else {
         info->coordincx = 1.0f / info->coordincx;
       }
     }
 
-    if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
-
+    if (info->coordincx < info->maxzoom)
+      info->coordincx = info->maxzoom;
 
     // determine which chara shoud be used.
-    //mapy   = (v+sy) / (512 * info->planeh);
+    // mapy   = (v+sy) / (512 * info->planeh);
     mapy = (targetv) >> planeh_shift;
-    //int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
-    dot_on_planey = (targetv)-(mapy << planeh_shift);
+    // int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
+    dot_on_planey = (targetv) - (mapy << planeh_shift);
     mapy = mapy & 0x01;
-    //planey = dot_on_planey / 512;
+    // planey = dot_on_planey / 512;
     planey = dot_on_planey >> plane_shift;
-    //int dot_on_pagey = dot_on_planey - planey * 512;
+    // int dot_on_pagey = dot_on_planey - planey * 512;
     dot_on_pagey = dot_on_planey & plane_mask;
     planey = planey & (info->planeh - 1);
-    //pagey = dot_on_pagey / (512 / info->pagewh);
+    // pagey = dot_on_pagey / (512 / info->pagewh);
     pagey = dot_on_pagey >> page_shift;
-    //chary = dot_on_pagey - pagey*(512 / info->pagewh);
+    // chary = dot_on_pagey - pagey*(512 / info->pagewh);
     chary = dot_on_pagey & page_mask;
-    if (pagey < 0) pagey = info->pagewh - 1 + pagey;
+    if (pagey < 0)
+      pagey = info->pagewh - 1 + pagey;
 
-    int inch = 1.0 / info->coordincx*256.0;
+    int inch = 1.0 / info->coordincx * 256.0;
 
     for (int j = 0; j < info->draww; j += 1) {
 
-      int h = ((j*inch) >> 8);
+      int h = ((j * inch) >> 8);
 
-      //mapx = (h + sx) / (512 * info->planew);
+      // mapx = (h + sx) / (512 * info->planew);
       mapx = (h + sx) >> planew_shift;
-      //int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
+      // int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
       dot_on_planex = (h + sx) - (mapx << planew_shift);
       mapx = mapx & 0x01;
 
@@ -5307,16 +5222,17 @@ void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
         premapid = mapid;
       }
 
-      //planex = dot_on_planex / 512;
+      // planex = dot_on_planex / 512;
       planex = dot_on_planex >> plane_shift;
-      //int dot_on_pagex = dot_on_planex - planex * 512;
+      // int dot_on_pagex = dot_on_planex - planex * 512;
       dot_on_pagex = dot_on_planex & plane_mask;
       planex = planex & (info->planew - 1);
-      //pagex = dot_on_pagex / (512 / info->pagewh);
+      // pagex = dot_on_pagex / (512 / info->pagewh);
       pagex = dot_on_pagex >> page_shift;
-      //charx = dot_on_pagex - pagex*(512 / info->pagewh);
+      // charx = dot_on_pagex - pagex*(512 / info->pagewh);
       charx = dot_on_pagex & page_mask;
-      if (pagex < 0) pagex = info->pagewh - 1 + pagex;
+      if (pagex < 0)
+        pagex = info->pagewh - 1 + pagex;
 
       if (planex != preplanex || pagex != prepagex || planey != preplaney || pagey != prepagey) {
         getPalAndCharAddr(info, planex, pagex, planey, pagey);
@@ -5329,8 +5245,7 @@ void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
       int x = charx;
       int y = chary;
 
-      if (info->patternwh == 1)
-      {
+      if (info->patternwh == 1) {
         x &= 8 - 1;
         y &= 8 - 1;
 
@@ -5338,43 +5253,32 @@ void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
         if (info->flipfunction & 0x2)
           y = 8 - 1 - y;
 
-        // horizontal flip	
+        // horizontal flip
         if (info->flipfunction & 0x1)
           x = 8 - 1 - x;
-      }
-      else
-      {
-        if (info->flipfunction)
-        {
+      } else {
+        if (info->flipfunction) {
           y &= 16 - 1;
-          if (info->flipfunction & 0x2)
-          {
+          if (info->flipfunction & 0x2) {
             if (!(y & 8))
               y = 8 - 1 - y + 16;
             else
               y = 16 - 1 - y;
-          }
-          else if (y & 8)
+          } else if (y & 8)
             y += 8;
 
-          if (info->flipfunction & 0x1)
-          {
+          if (info->flipfunction & 0x1) {
             if (!(x & 8))
               y += 8;
 
             x &= 8 - 1;
             x = 8 - 1 - x;
-          }
-          else if (x & 8)
-          {
+          } else if (x & 8) {
             y += 8;
             x &= 8 - 1;
-          }
-          else
+          } else
             x &= 8 - 1;
-        }
-        else
-        {
+        } else {
           y &= 16 - 1;
           if (y & 8)
             y += 8;
@@ -5385,23 +5289,19 @@ void VIDVulkan::drawMapPerLine(vdp2draw_struct *info, CharTexture *texture) {
       }
 
       *texture->textdata++ = Vdp2RotationFetchPixel(info, x, y, info->cellw);
-
     }
-    if ((v & linemask) == linemask) lineindex++;
+    if ((v & linemask) == linemask)
+      lineindex++;
     texture->textdata += texture->w;
   }
-
 }
 
-
-void VIDVulkan::getPatternAddrUsingPatternname(vdp2draw_struct *info, u16 paternname)
-{
+void VIDVulkan::getPatternAddrUsingPatternname(vdp2draw_struct *info, u16 paternname) {
   u16 tmp = paternname;
   info->specialfunction = (info->supplementdata >> 9) & 0x1;
   info->specialcolorfunction = (info->supplementdata >> 8) & 0x1;
 
-  switch (info->colornumber)
-  {
+  switch (info->colornumber) {
   case 0: // in 16 colors
     info->paladdr = ((tmp & 0xF000) >> 12) | ((info->supplementdata & 0xE0) >> 1);
     break;
@@ -5410,13 +5310,11 @@ void VIDVulkan::getPatternAddrUsingPatternname(vdp2draw_struct *info, u16 patern
     break;
   }
 
-  switch (info->auxmode)
-  {
+  switch (info->auxmode) {
   case 0:
     info->flipfunction = (tmp & 0xC00) >> 10;
 
-    switch (info->patternwh)
-    {
+    switch (info->patternwh) {
     case 1:
       info->charaddr = (tmp & 0x3FF) | ((info->supplementdata & 0x1F) << 10);
       break;
@@ -5428,8 +5326,7 @@ void VIDVulkan::getPatternAddrUsingPatternname(vdp2draw_struct *info, u16 patern
   case 1:
     info->flipfunction = 0;
 
-    switch (info->patternwh)
-    {
+    switch (info->patternwh) {
     case 1:
       info->charaddr = (tmp & 0xFFF) | ((info->supplementdata & 0x1C) << 10);
       break;
@@ -5446,22 +5343,17 @@ void VIDVulkan::getPatternAddrUsingPatternname(vdp2draw_struct *info, u16 patern
   info->charaddr *= 0x20; // thanks Runik
 }
 
-
-void VIDVulkan::getPatternAddr(vdp2draw_struct *info)
-{
+void VIDVulkan::getPatternAddr(vdp2draw_struct *info) {
   info->addr &= 0x7FFFF;
-  switch (info->patterndatasize)
-  {
-  case 1:
-  {
+  switch (info->patterndatasize) {
+  case 1: {
     u16 tmp = T1ReadWord(Vdp2Ram, info->addr);
 
     info->addr += 2;
     info->specialfunction = (info->supplementdata >> 9) & 0x1;
     info->specialcolorfunction = (info->supplementdata >> 8) & 0x1;
 
-    switch (info->colornumber)
-    {
+    switch (info->colornumber) {
     case 0: // in 16 colors
       info->paladdr = ((tmp & 0xF000) >> 12) | ((info->supplementdata & 0xE0) >> 1);
       break;
@@ -5470,13 +5362,11 @@ void VIDVulkan::getPatternAddr(vdp2draw_struct *info)
       break;
     }
 
-    switch (info->auxmode)
-    {
+    switch (info->auxmode) {
     case 0:
       info->flipfunction = (tmp & 0xC00) >> 10;
 
-      switch (info->patternwh)
-      {
+      switch (info->patternwh) {
       case 1:
         info->charaddr = (tmp & 0x3FF) | ((info->supplementdata & 0x1F) << 10);
         break;
@@ -5488,8 +5378,7 @@ void VIDVulkan::getPatternAddr(vdp2draw_struct *info)
     case 1:
       info->flipfunction = 0;
 
-      switch (info->patternwh)
-      {
+      switch (info->patternwh) {
       case 1:
         info->charaddr = (tmp & 0xFFF) | ((info->supplementdata & 0x1C) << 10);
         break;
@@ -5528,27 +5417,19 @@ void VIDVulkan::getPatternAddr(vdp2draw_struct *info)
   info->charaddr *= 0x20; // thanks Runik
 }
 
+void VIDVulkan::getPalAndCharAddr(vdp2draw_struct *info, int planex, int x, int planey, int y) {
+  u32 addr = info->addr + (info->pagewh * info->pagewh * info->planew * planey + info->pagewh * info->pagewh * planex +
+                           info->pagewh * y + x) *
+                              info->patterndatasize * 2;
 
-
-void VIDVulkan::getPalAndCharAddr(vdp2draw_struct *info, int planex, int x, int planey, int y)
-{
-  u32 addr = info->addr +
-    (info->pagewh*info->pagewh*info->planew*planey +
-      info->pagewh*info->pagewh*planex +
-      info->pagewh*y +
-      x)*info->patterndatasize * 2;
-
-  switch (info->patterndatasize)
-  {
-  case 1:
-  {
+  switch (info->patterndatasize) {
+  case 1: {
     u16 tmp = T1ReadWord(Vdp2Ram, addr);
 
     info->specialfunction = (info->supplementdata >> 9) & 0x1;
     info->specialcolorfunction = (info->supplementdata >> 8) & 0x1;
 
-    switch (info->colornumber)
-    {
+    switch (info->colornumber) {
     case 0: // in 16 colors
       info->paladdr = ((tmp & 0xF000) >> 12) | ((info->supplementdata & 0xE0) >> 1);
       break;
@@ -5557,13 +5438,11 @@ void VIDVulkan::getPalAndCharAddr(vdp2draw_struct *info, int planex, int x, int 
       break;
     }
 
-    switch (info->auxmode)
-    {
+    switch (info->auxmode) {
     case 0:
       info->flipfunction = (tmp & 0xC00) >> 10;
 
-      switch (info->patternwh)
-      {
+      switch (info->patternwh) {
       case 1:
         info->charaddr = (tmp & 0x3FF) | ((info->supplementdata & 0x1F) << 10);
         break;
@@ -5575,8 +5454,7 @@ void VIDVulkan::getPalAndCharAddr(vdp2draw_struct *info, int planex, int x, int 
     case 1:
       info->flipfunction = 0;
 
-      switch (info->patternwh)
-      {
+      switch (info->patternwh) {
       case 1:
         info->charaddr = (tmp & 0xFFF) | ((info->supplementdata & 0x1C) << 10);
         break;
@@ -5614,11 +5492,9 @@ void VIDVulkan::getPalAndCharAddr(vdp2draw_struct *info, int planex, int x, int 
   info->charaddr *= 0x20; // thanks Runik
 }
 
-void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x, int y, int cx, int cy)
-{
-  u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) |
-    (info->paladdr << 20) | info->charaddr | info->transparencyenable |
-    ((info->patternpixelwh >> 4) << 1) | (((u64)(info->coloroffset >> 8) & 0x07) << 32);
+void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x, int y, int cx, int cy) {
+  u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr | info->transparencyenable |
+                  ((info->patternpixelwh >> 4) << 1) | (((u64)(info->coloroffset >> 8) & 0x07) << 32);
 
   TextureCache c;
   vdp2draw_struct tile = {};
@@ -5636,6 +5512,8 @@ void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x, 
   tile.WindowArea1 = info->WindowArea1;
   tile.LogicWin = info->LogicWin;
   tile.lineTexture = info->lineTexture;
+  tile.bEnSpriteWin = info->bEnSpriteWin;
+  tile.WindowAreaSprite = info->WindowAreaSprite;
   tile.id = info->id;
 
   tile.cellw = tile.cellh = info->patternpixelwh;
@@ -5646,14 +5524,13 @@ void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x, 
   tile.coordincx = info->coordincx;
   tile.coordincy = info->coordincy;
 
-  //if (info->specialprimode == 1)
-  //  tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
-  //else
+  // if (info->specialprimode == 1)
+  //   tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
+  // else
   tile.priority = info->priority;
   if (info->specialprimode == 1) {
     tile.priorityOffset = (int)((info->priority & 0xFFFFFFFE) | info->specialfunction) - (int)info->priority;
-  }
-  else {
+  } else {
     tile.priorityOffset = 0;
   }
 
@@ -5667,20 +5544,21 @@ void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x, 
   tile.vertices[7] = (y + (float)info->lineinc);
 
   // Screen culling
-  //if (tile.vertices[0] >= vdp2width || tile.vertices[1] >= vdp2height || tile.vertices[2] < 0 || tile.vertices[5] < 0)
+  // if (tile.vertices[0] >= vdp2width || tile.vertices[1] >= vdp2height ||
+  // tile.vertices[2] < 0 || tile.vertices[5] < 0)
   //{
   //	return;
   //}
-/*
-  if ((info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincx == 1.0f && info->coordincy == 1.0f)
-  {                                                 // coordinate inc is not supported yet.
-    winmode = Vdp2CheckWindowRange(info, x - cx, y - cy, tile.cellw, info->lineinc);
-    if (winmode == 0) // all outside, no need to draw
-    {
-      return;
+  /*
+    if ((info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincx == 1.0f &&
+    info->coordincy == 1.0f) { // coordinate inc is not supported yet. winmode =
+    Vdp2CheckWindowRange(info, x - cx, y - cy, tile.cellw, info->lineinc); if
+    (winmode == 0) // all outside, no need to draw
+      {
+        return;
+      }
     }
-  }
-*/
+  */
   tile.cor = info->cor;
   tile.cog = info->cog;
   tile.cob = info->cob;
@@ -5696,19 +5574,18 @@ void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x, 
     YglCacheAdd(_Ygl->texture_manager, cacheaddr, &c);
   */
 
-  //genQuadVertex(&tile, texture, &c, cx, cy, info->coordincx, info->coordincy,0);
-
+  // genQuadVertex(&tile, texture, &c, cx, cy, info->coordincx,
+  // info->coordincy,0);
 
   if (tm->isCached(cacheaddr, &c)) {
-    genPolygon((VdpPipeline**)info->pipeline, &tile, NULL, NULL, &c, 0);
+    genPolygon((VdpPipeline **)info->pipeline, &tile, NULL, NULL, &c, 0,1);
     return;
   }
 
-  genPolygon((VdpPipeline**)info->pipeline, &tile, texture, NULL, &c, 1);
+  genPolygon((VdpPipeline **)info->pipeline, &tile, texture, NULL, &c, 1,1);
   tm->addCache(cacheaddr, &c);
 
-  switch (info->patternwh)
-  {
+  switch (info->patternwh) {
   case 1:
     drawCell(info, texture);
     break;
@@ -5725,30 +5602,24 @@ void VIDVulkan::drawPattern(vdp2draw_struct *info, CharTexture *texture, int x, 
   }
 }
 
-
-void VIDVulkan::genQuadVertex(vdp2draw_struct * input, CharTexture * output, YglCache * c, int cx, int cy, float sx, float sy, int cash_flg) {
+void VIDVulkan::genQuadVertex(vdp2draw_struct *input, CharTexture *output, YglCache *c, int cx, int cy, float sx,
+                              float sy, int cash_flg) {
   unsigned int x, y;
   if (output != NULL) {
     tm->allocate(output, input->cellw, input->cellh, &x, &y);
-  }
-  else {
+  } else {
     x = c->x;
     y = c->y;
   }
 }
 
-
-
-void VIDVulkan::drawCell(vdp2draw_struct *info, CharTexture *texture)
-{
+void VIDVulkan::drawCell(vdp2draw_struct *info, CharTexture *texture) {
   int i, j;
 
   // Access Denied(Wizardry - Llylgamyn Saga)
   if (info->char_bank[info->charaddr >> 17] == 0) {
-    for (i = 0; i < info->cellh; i++)
-    {
-      for (j = 0; j < info->cellw; j++)
-      {
+    for (i = 0; i < info->cellh; i++) {
+      for (j = 0; j < info->cellw; j++) {
         *texture->textdata++ = 0x00000000;
       }
       texture->textdata += texture->w;
@@ -5756,13 +5627,10 @@ void VIDVulkan::drawCell(vdp2draw_struct *info, CharTexture *texture)
     return;
   }
 
-  switch (info->colornumber)
-  {
+  switch (info->colornumber) {
   case 0: // 4 BPP
-    for (i = 0; i < info->cellh; i++)
-    {
-      for (j = 0; j < info->cellw; j += 4)
-      {
+    for (i = 0; i < info->cellh; i++) {
+      for (j = 0; j < info->cellw; j += 4) {
         getPixel4bpp(info, info->charaddr, texture);
         info->charaddr += 2;
       }
@@ -5770,10 +5638,8 @@ void VIDVulkan::drawCell(vdp2draw_struct *info, CharTexture *texture)
     }
     break;
   case 1: // 8 BPP
-    for (i = 0; i < info->cellh; i++)
-    {
-      for (j = 0; j < info->cellw; j += 2)
-      {
+    for (i = 0; i < info->cellh; i++) {
+      for (j = 0; j < info->cellw; j += 2) {
         getPixel8bpp(info, info->charaddr, texture);
         info->charaddr += 2;
       }
@@ -5781,10 +5647,8 @@ void VIDVulkan::drawCell(vdp2draw_struct *info, CharTexture *texture)
     }
     break;
   case 2: // 16 BPP(palette)
-    for (i = 0; i < info->cellh; i++)
-    {
-      for (j = 0; j < info->cellw; j++)
-      {
+    for (i = 0; i < info->cellh; i++) {
+      for (j = 0; j < info->cellw; j++) {
         *texture->textdata++ = getPixel16bpp(info, info->charaddr);
         info->charaddr += 2;
       }
@@ -5792,10 +5656,8 @@ void VIDVulkan::drawCell(vdp2draw_struct *info, CharTexture *texture)
     }
     break;
   case 3: // 16 BPP(RGB)
-    for (i = 0; i < info->cellh; i++)
-    {
-      for (j = 0; j < info->cellw; j++)
-      {
+    for (i = 0; i < info->cellh; i++) {
+      for (j = 0; j < info->cellw; j++) {
         *texture->textdata++ = getPixel16bppbmp(info, info->charaddr);
         info->charaddr += 2;
       }
@@ -5803,10 +5665,8 @@ void VIDVulkan::drawCell(vdp2draw_struct *info, CharTexture *texture)
     }
     break;
   case 4: // 32 BPP
-    for (i = 0; i < info->cellh; i++)
-    {
-      for (j = 0; j < info->cellw; j++)
-      {
+    for (i = 0; i < info->cellh; i++) {
+      for (j = 0; j < info->cellw; j++) {
         *texture->textdata++ = getPixel32bppbmp(info, info->charaddr);
         info->charaddr += 4;
       }
@@ -5815,7 +5675,6 @@ void VIDVulkan::drawCell(vdp2draw_struct *info, CharTexture *texture)
     break;
   }
 }
-
 
 u32 VIDVulkan::getPixel4bpp(vdp2draw_struct *info, u32 addr, CharTexture *texture) {
 
@@ -5828,8 +5687,7 @@ u32 VIDVulkan::getPixel4bpp(vdp2draw_struct *info, u32 addr, CharTexture *textur
   dot = (dotw & 0xF000) >> 12;
   if (!(dot & 0xF) && info->transparencyenable) {
     *texture->textdata++ = 0x00000000;
-  }
-  else {
+  } else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
     setSpecialPriority(info, dot, &cramindex);
     alpha = getAlpha(info, dot, cramindex);
@@ -5840,8 +5698,7 @@ u32 VIDVulkan::getPixel4bpp(vdp2draw_struct *info, u32 addr, CharTexture *textur
   dot = (dotw & 0xF00) >> 8;
   if (!(dot & 0xF) && info->transparencyenable) {
     *texture->textdata++ = 0x00000000;
-  }
-  else {
+  } else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
     setSpecialPriority(info, dot, &cramindex);
     alpha = getAlpha(info, dot, cramindex);
@@ -5852,8 +5709,7 @@ u32 VIDVulkan::getPixel4bpp(vdp2draw_struct *info, u32 addr, CharTexture *textur
   dot = (dotw & 0xF0) >> 4;
   if (!(dot & 0xF) && info->transparencyenable) {
     *texture->textdata++ = 0x00000000;
-  }
-  else {
+  } else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
     setSpecialPriority(info, dot, &cramindex);
     alpha = getAlpha(info, dot, cramindex);
@@ -5864,8 +5720,7 @@ u32 VIDVulkan::getPixel4bpp(vdp2draw_struct *info, u32 addr, CharTexture *textur
   dot = (dotw & 0xF);
   if (!(dot & 0xF) && info->transparencyenable) {
     *texture->textdata++ = 0x00000000;
-  }
-  else {
+  } else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
     setSpecialPriority(info, dot, &cramindex);
     alpha = getAlpha(info, dot, cramindex);
@@ -5883,7 +5738,8 @@ u32 VIDVulkan::getPixel8bpp(vdp2draw_struct *info, u32 addr, CharTexture *textur
 
   alpha = info->alpha;
   dot = (dotw & 0xFF00) >> 8;
-  if (!(dot & 0xFF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
+  if (!(dot & 0xFF) && info->transparencyenable)
+    *texture->textdata++ = 0x00000000;
   else {
     cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
     setSpecialPriority(info, dot, &cramindex);
@@ -5892,7 +5748,8 @@ u32 VIDVulkan::getPixel8bpp(vdp2draw_struct *info, u32 addr, CharTexture *textur
   }
   alpha = info->alpha;
   dot = (dotw & 0xFF);
-  if (!(dot & 0xFF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
+  if (!(dot & 0xFF) && info->transparencyenable)
+    *texture->textdata++ = 0x00000000;
   else {
     cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
     setSpecialPriority(info, dot, &cramindex);
@@ -5902,25 +5759,27 @@ u32 VIDVulkan::getPixel8bpp(vdp2draw_struct *info, u32 addr, CharTexture *textur
   return 0;
 }
 
-
 u32 VIDVulkan::getPixel16bpp(vdp2draw_struct *info, u32 addr) {
   u32 cramindex;
   u8 alpha = info->alpha;
   u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
-  if ((dot == 0) && info->transparencyenable) return 0x00000000;
+  if ((dot == 0) && info->transparencyenable)
+    return 0x00000000;
   else {
     cramindex = info->coloroffset + dot;
     setSpecialPriority(info, dot, &cramindex);
     alpha = getAlpha(info, dot, cramindex);
-    return   cramindex | alpha << 24;
+    return cramindex | alpha << 24;
   }
 }
 
 u32 VIDVulkan::getPixel16bppbmp(vdp2draw_struct *info, u32 addr) {
   u32 color;
   u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
-  if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
-  else color = SAT2YAB1(info->alpha, dot);
+  if (!(dot & 0x8000) && info->transparencyenable)
+    color = 0x00000000;
+  else
+    color = SAT2YAB1(info->alpha, dot);
   return color;
 }
 
@@ -5929,40 +5788,59 @@ u32 VIDVulkan::getPixel32bppbmp(vdp2draw_struct *info, u32 addr) {
   u16 dot1, dot2;
   dot1 = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
   dot2 = T1ReadWord(Vdp2Ram, addr + 2 & 0x7FFFF);
-  if (!(dot1 & 0x8000) && info->transparencyenable) color = 0x00000000;
-  else color = SAT2YAB2(info->alpha, dot1, dot2);
+  if (!(dot1 & 0x8000) && info->transparencyenable)
+    color = 0x00000000;
+  else
+    color = SAT2YAB2(info->alpha, dot1, dot2);
   return color;
 }
 
 u32 VIDVulkan::getAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex) {
   u32 alpha = info->alpha;
-  const int CCMD = ((fixVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
-  if (CCMD == 0) {  // Calculate Rate mode
-    switch (info->specialcolormode)
-    {
-    case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+  const int CCMD = ((fixVdp2Regs->CCCTL >> 8) & 0x01); // hard/vdp2/hon/p12_14.htm#CCMD_
+  if (CCMD == 0) {                                     // Calculate Rate mode
+    switch (info->specialcolormode) {
+    case 1:
+      if (info->specialcolorfunction == 0) {
+        alpha = 0xFF;
+      }
+      break;
     case 2:
-      if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-      else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+      if (info->specialcolorfunction == 0) {
+        alpha = 0xFF;
+      } else {
+        if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) {
+          alpha = 0xFF;
+        }
+      }
       break;
     case 3:
-      if (((getRawColor(cramindex) & 0x8000) == 0)) { alpha = 0xFF; }
+      if (((getRawColor(cramindex) & 0x8000) == 0)) {
+        alpha = 0xFF;
+      }
       break;
     }
-  }
-  else {  // Calculate Add mode
+  } else { // Calculate Add mode
     alpha = 0xFF;
-    switch (info->specialcolormode)
-    {
+    switch (info->specialcolormode) {
     case 1:
-      if (info->specialcolorfunction == 0) { alpha = 0x40; }
+      if (info->specialcolorfunction == 0) {
+        alpha = 0x40;
+      }
       break;
     case 2:
-      if (info->specialcolorfunction == 0) { alpha = 0x40; }
-      else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0x40; } }
+      if (info->specialcolorfunction == 0) {
+        alpha = 0x40;
+      } else {
+        if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) {
+          alpha = 0x40;
+        }
+      }
       break;
     case 3:
-      if (((getRawColor(cramindex) & 0x8000) == 0)) { alpha = 0x40; }
+      if (((getRawColor(cramindex) & 0x8000) == 0)) {
+        alpha = 0x40;
+      }
       break;
     }
   }
@@ -5971,48 +5849,51 @@ u32 VIDVulkan::getAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex) {
 
 //////////////////////////////////////////////////////////////////////////////
 u16 VIDVulkan::getRawColor(u32 colorindex) {
-  switch (Vdp2Internal.ColorMode)
-  {
+  switch (Vdp2Internal.ColorMode) {
   case 0:
-  case 1:
-  {
+  case 1: {
     colorindex <<= 1;
     return T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
   }
-  case 2:
-  {
+  case 2: {
     colorindex <<= 2;
     colorindex &= 0xFFF;
     return T2ReadWord(Vdp2ColorRam, colorindex);
   }
-  default: break;
+  default:
+    break;
   }
   return 0;
 }
 
-void DynamicTexture::create(VIDVulkan * vulkan, int texWidth, int texHeight) {
+void DynamicTexture::create(VIDVulkan *vulkan, int texWidth, int texHeight) {
 
   const VkDevice device = vulkan->getDevice();
   width = texWidth;
   height = texHeight;
   VkDeviceSize imageSize = texWidth * texHeight * 4;
 
-  char * pixels = (char*)malloc(texWidth * texHeight * 4);
+  char *pixels = (char *)malloc(texWidth * texHeight * 4);
   memset(pixels, 0, texWidth * texHeight * 4);
 
-  vulkan->createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+  vulkan->createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
+                       stagingBufferMemory);
 
-  vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, (void**)&dynamicBuf);
+  vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, (void **)&dynamicBuf);
   memcpy(dynamicBuf, pixels, static_cast<size_t>(imageSize));
   vkUnmapMemory(device, stagingBufferMemory);
 
   vulkan->createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
-    VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, memory);
-  vulkan->transitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+                      VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                      image, memory);
+  vulkan->transitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
+                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
   vulkan->copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-  vulkan->transitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-  //vkDestroyBuffer(device, stagingBuffer, nullptr);
-  //vkFreeMemory(device, stagingBufferMemory, nullptr);
+  vulkan->transitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  // vkDestroyBuffer(device, stagingBuffer, nullptr);
+  // vkFreeMemory(device, stagingBufferMemory, nullptr);
   free(pixels);
 
   VkImageViewCreateInfo viewInfo = {};
@@ -6030,7 +5911,6 @@ void DynamicTexture::create(VIDVulkan * vulkan, int texWidth, int texHeight) {
     throw std::runtime_error("failed to create texture image view!");
   }
 
-
   VkSamplerCreateInfo samplerInfo = {};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   samplerInfo.magFilter = VK_FILTER_NEAREST;
@@ -6039,7 +5919,7 @@ void DynamicTexture::create(VIDVulkan * vulkan, int texWidth, int texHeight) {
   samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerInfo.anisotropyEnable = VK_FALSE;
-  //samplerInfo.maxAnisotropy = 16;
+  // samplerInfo.maxAnisotropy = 16;
   samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
   samplerInfo.unnormalizedCoordinates = VK_FALSE;
   samplerInfo.compareEnable = VK_FALSE;
@@ -6052,12 +5932,8 @@ void DynamicTexture::create(VIDVulkan * vulkan, int texWidth, int texHeight) {
     throw std::runtime_error("failed to create texture sampler!");
   }
 
-  vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, (void**)&dynamicBuf);
-
-
+  vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, (void **)&dynamicBuf);
 }
-
-
 
 void VIDVulkan::onUpdateColorRamWord(u32 addr) {
   YabThreadLock(crammutex);
@@ -6068,24 +5944,23 @@ void VIDVulkan::onUpdateColorRamWord(u32 addr) {
     return;
   }
 
-  switch (Vdp2Internal.ColorMode)
-  {
+  switch (Vdp2Internal.ColorMode) {
   case 0:
-  case 1:
-  {
+  case 1: {
     u16 tmp;
     u8 alpha = 0;
     tmp = T2ReadWord(Vdp2ColorRam, addr);
-    if (tmp & 0x8000) alpha = 0xFF;
+    if (tmp & 0x8000)
+      alpha = 0xFF;
     cram.dynamicBuf[(addr >> 1) & 0x7FF] = SAT2YAB1(alpha, tmp);
     break;
   }
-  case 2:
-  {
+  case 2: {
     u32 tmp1 = T2ReadWord(Vdp2ColorRam, (addr & 0xFFC));
     u32 tmp2 = T2ReadWord(Vdp2ColorRam, (addr & 0xFFC) + 2);
     u8 alpha = 0;
-    if (tmp1 & 0x8000) alpha = 0xFF;
+    if (tmp1 & 0x8000)
+      alpha = 0xFF;
     cram.dynamicBuf[(addr >> 2) & 0x7FF] = SAT2YAB2(alpha, tmp1, tmp2);
     break;
   }
@@ -6093,19 +5968,18 @@ void VIDVulkan::onUpdateColorRamWord(u32 addr) {
     break;
   }
   YabThreadUnLock(crammutex);
-
 }
 
 void VIDVulkan::updateColorRam(VkCommandBuffer commandBuffer) {
   YabThreadLock(crammutex);
   if (Vdp2ColorRamUpdated) {
     cram.update(this, commandBuffer);
+	Vdp2ColorRamUpdated = 0;
   }
   YabThreadUnLock(crammutex);
 }
 
-
-void DynamicTexture::update(VIDVulkan * vulkan, VkCommandBuffer commandBuffer) {
+void DynamicTexture::update(VIDVulkan *vulkan, VkCommandBuffer commandBuffer) {
   vkUnmapMemory(vulkan->getDevice(), stagingBufferMemory);
 
   VkPipelineStageFlags sourceStage;
@@ -6131,14 +6005,7 @@ void DynamicTexture::update(VIDVulkan * vulkan, VkCommandBuffer commandBuffer) {
   sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
   destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-  vkCmdPipelineBarrier(
-    commandBuffer,
-    sourceStage, destinationStage,
-    0,
-    0, nullptr,
-    0, nullptr,
-    1, &barrier
-  );
+  vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
   //------------------------------------------------------------------------
   VkBufferImageCopy region = {};
@@ -6151,20 +6018,9 @@ void DynamicTexture::update(VIDVulkan * vulkan, VkCommandBuffer commandBuffer) {
   region.imageSubresource.baseArrayLayer = 0;
   region.imageSubresource.layerCount = 1;
 
-  region.imageOffset = { 0, 0, 0 };
-  region.imageExtent = {
-    (uint32_t)width,
-    (uint32_t)height,
-    1
-  };
-  vkCmdCopyBufferToImage(
-    commandBuffer,
-    stagingBuffer,
-    image,
-    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-    1,
-    &region
-  );
+  region.imageOffset = {0, 0, 0};
+  region.imageExtent = {(uint32_t)width, (uint32_t)height, 1};
+  vkCmdCopyBufferToImage(commandBuffer, stagingBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
   VkImageMemoryBarrier destbarrier = {};
   destbarrier = barrier;
@@ -6176,17 +6032,9 @@ void DynamicTexture::update(VIDVulkan * vulkan, VkCommandBuffer commandBuffer) {
   sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
   destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-  vkCmdPipelineBarrier(
-    commandBuffer,
-    sourceStage, destinationStage,
-    0,
-    0, nullptr,
-    0, nullptr,
-    1, &destbarrier
-  );
+  vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &destbarrier);
   VkDeviceSize imageSize = width * height * 4;
-  vkMapMemory(vulkan->getDevice(), stagingBufferMemory, 0, imageSize, 0, (void**)&dynamicBuf);
-
+  vkMapMemory(vulkan->getDevice(), stagingBufferMemory, 0, imageSize, 0, (void **)&dynamicBuf);
 }
 
 /*
@@ -6209,12 +6057,24 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   VkDevice device = getDevice();
   VkPhysicalDevice physicalDevice = getPhysicalDevice();
 
-  if (offscreenPass.width == width && offscreenPass.height == height) return;
-
   deleteOfscreenPath();
 
-  offscreenPass.width = width;
-  offscreenPass.height = height;
+  int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+        pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+
+      if (offscreenPass.height == width && offscreenPass.width == height)
+        return;
+      offscreenPass.width = height;
+      offscreenPass.height = width;
+
+  } else {
+
+      if (offscreenPass.width == width && offscreenPass.height == height)
+        return;
+      offscreenPass.width = width;
+      offscreenPass.height = height;
+  }
 
   // Color attachment
   VkImageCreateInfo image = {};
@@ -6256,7 +6116,6 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   colorImageView.image = offscreenPass.image;
   VK_CHECK_RESULT(vkCreateImageView(device, &colorImageView, nullptr, &offscreenPass.view));
 
-
   // Create sampler to sample from the attachment in the fragment shader
   VkSamplerCreateInfo samplerInfo = {};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -6273,8 +6132,35 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
   VK_CHECK_RESULT(vkCreateSampler(device, &samplerInfo, nullptr, &offscreenPass.sampler));
 
+  VkFormat fbDepthFormat;
+  VkBool32 validDepthFormat = vks::tools::getSupportedDepthFormat(physicalDevice, &fbDepthFormat);
+  assert(validDepthFormat);
 
-  std::array<VkAttachmentDescription, 1> attchmentDescriptions = {};
+  // Depth stencil attachment ------------------------------------------------------
+  image.format = fbDepthFormat;
+  image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+  VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
+  vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
+  memAlloc.allocationSize = memReqs.size;
+  memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &offscreenPass.depth.mem));
+  VK_CHECK_RESULT(vkBindImageMemory(device, offscreenPass.depth.image, offscreenPass.depth.mem, 0));
+
+  VkImageViewCreateInfo depthStencilView = vks::initializers::imageViewCreateInfo();
+  depthStencilView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  depthStencilView.format = fbDepthFormat;
+  depthStencilView.flags = 0;
+  depthStencilView.subresourceRange = {};
+  depthStencilView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+  depthStencilView.subresourceRange.baseMipLevel = 0;
+  depthStencilView.subresourceRange.levelCount = 1;
+  depthStencilView.subresourceRange.baseArrayLayer = 0;
+  depthStencilView.subresourceRange.layerCount = 1;
+  depthStencilView.image = offscreenPass.depth.image;
+  VK_CHECK_RESULT(vkCreateImageView(device, &depthStencilView, nullptr, &offscreenPass.depth.view));
+
+  std::array<VkAttachmentDescription, 2> attchmentDescriptions = {};
   // Color attachment
   attchmentDescriptions[0].format = VK_FORMAT_R8G8B8A8_UNORM;
   attchmentDescriptions[0].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -6285,16 +6171,27 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   attchmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   attchmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-  VkAttachmentReference colorReference = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+  // Depth attachment
+  attchmentDescriptions[1].format = fbDepthFormat;
+  attchmentDescriptions[1].samples = VK_SAMPLE_COUNT_1_BIT;
+  attchmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attchmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  attchmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attchmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  attchmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attchmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentReference colorReference = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+  VkAttachmentReference depthReference = {1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
   VkSubpassDescription subpassDescription = {};
   subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpassDescription.colorAttachmentCount = 1;
   subpassDescription.pColorAttachments = &colorReference;
-  subpassDescription.pDepthStencilAttachment = nullptr;
+  subpassDescription.pDepthStencilAttachment = &depthReference;
 
   // Use subpass dependencies for layout transitions
-  std::array<VkSubpassDependency, 2> dependencies;
+  std::array<VkSubpassDependency, 3> dependencies;
 
   dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
   dependencies[0].dstSubpass = 0;
@@ -6312,6 +6209,13 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
   dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
+  dependencies[2].srcSubpass = 0;
+  dependencies[2].dstSubpass = 0;
+  dependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependencies[2].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependencies[2].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
   // Create the actual renderpass
   VkRenderPassCreateInfo renderPassInfo = {};
@@ -6319,9 +6223,8 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   renderPassInfo.attachmentCount = static_cast<uint32_t>(attchmentDescriptions.size());
   renderPassInfo.pAttachments = attchmentDescriptions.data();
 
-  //renderPassInfo.subpassCount = 0;
-  //renderPassInfo.pSubpasses = VK_NULL_HANDLE; // Optional
-
+  // renderPassInfo.subpassCount = 0;
+  // renderPassInfo.pSubpasses = VK_NULL_HANDLE; // Optional
 
   renderPassInfo.subpassCount = 1;
   renderPassInfo.pSubpasses = &subpassDescription;
@@ -6330,15 +6233,14 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
 
   VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr, &offscreenPass.renderPass));
 
-
-
-  VkImageView attachments[1];
+  VkImageView attachments[2];
   attachments[0] = offscreenPass.view;
+  attachments[1] = offscreenPass.depth.view;
 
   VkFramebufferCreateInfo fbufCreateInfo = {};
   fbufCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
   fbufCreateInfo.renderPass = offscreenPass.renderPass;
-  fbufCreateInfo.attachmentCount = 1;
+  fbufCreateInfo.attachmentCount = 2;
   fbufCreateInfo.pAttachments = attachments;
   fbufCreateInfo.width = offscreenPass.width;
   fbufCreateInfo.height = offscreenPass.height;
@@ -6356,8 +6258,6 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   offscreenPass.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   offscreenPass.descriptor.imageView = offscreenPass.view;
   offscreenPass.descriptor.sampler = offscreenPass.sampler;
-
-
 }
 
 void VIDVulkan::generateOffscreenRenderer() {
@@ -6380,7 +6280,6 @@ void VIDVulkan::generateOffscreenRenderer() {
   indices.push_back(3);
   indices.push_back(0);
 
-
   const VkDevice device = getDevice();
 
   // VertexBuffer
@@ -6388,43 +6287,37 @@ void VIDVulkan::generateOffscreenRenderer() {
 
   VkBuffer stagingBuffer;
   VkDeviceMemory stagingBufferMemory;
-  createBuffer(bufferSize,
-    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    stagingBuffer, stagingBufferMemory);
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
+               stagingBufferMemory);
 
-  void* data;
+  void *data;
   vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
   memcpy(data, vertices.data(), (size_t)bufferSize);
   vkUnmapMemory(device, stagingBufferMemory);
 
-  createBuffer(bufferSize,
-    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-    offscreenRenderer.vertexBuffer, offscreenRenderer.vertexBufferMemory);
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, offscreenRenderer.vertexBuffer,
+               offscreenRenderer.vertexBufferMemory);
 
   copyBuffer(stagingBuffer, offscreenRenderer.vertexBuffer, bufferSize);
 
   vkDestroyBuffer(device, stagingBuffer, nullptr);
   vkFreeMemory(device, stagingBufferMemory, nullptr);
 
-
   // IndexBuffer
   bufferSize = sizeof(indices[0]) * indices.size();
 
-  createBuffer(bufferSize,
-    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    stagingBuffer,
-    stagingBufferMemory);
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
+               stagingBufferMemory);
 
   vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
   memcpy(data, indices.data(), (size_t)bufferSize);
   vkUnmapMemory(device, stagingBufferMemory);
 
-  createBuffer(bufferSize,
-    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, offscreenRenderer.indexBuffer, offscreenRenderer.indexBufferMemory);
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, offscreenRenderer.indexBuffer, offscreenRenderer.indexBufferMemory);
 
   copyBuffer(stagingBuffer, offscreenRenderer.indexBuffer, bufferSize);
 
@@ -6448,7 +6341,6 @@ void VIDVulkan::generateOffscreenRenderer() {
   offscreenRenderer.perlineDestination->setRenderPass(_renderer->getWindow()->GetVulkanKeepRenderPass());
   offscreenRenderer.perlineDestination->createGraphicsPipeline();
 #endif
-
 }
 
 void VIDVulkan::deleteOfscreenPath() {
@@ -6467,13 +6359,14 @@ void VIDVulkan::deleteOfscreenPath() {
   }
 }
 
+void VIDVulkan::renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeline *render, int ofIndex) {
 
-void VIDVulkan::renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeline * render) {
-
-  std::array<VkClearValue, 1> clear_values{};
-  clear_values[0].color.float32[0] = 0.0f;
-  clear_values[0].color.float32[1] = 0.0f;
-  clear_values[0].color.float32[2] = 0.0f;
+  std::array<VkClearValue, 2> clear_values{};
+  clear_values[1].depthStencil.depth = 0.0f;
+  clear_values[1].depthStencil.stencil = 0;
+  clear_values[0].color.float32[0] = 0.0;
+  clear_values[0].color.float32[1] = 0.0;
+  clear_values[0].color.float32[2] = 0.0;
   clear_values[0].color.float32[3] = 0.0f;
 
   VkRenderPassBeginInfo renderPassBeginInfo = {};
@@ -6482,11 +6375,10 @@ void VIDVulkan::renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeli
   renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer;
   renderPassBeginInfo.renderArea.extent.width = offscreenPass.width;
   renderPassBeginInfo.renderArea.extent.height = offscreenPass.height;
-  renderPassBeginInfo.clearValueCount = 1;
+  renderPassBeginInfo.clearValueCount = clear_values.size();
   renderPassBeginInfo.pClearValues = clear_values.data();
 
   vkCmdEndRenderPass(commandBuffer);
-
   vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   auto c = vk::CommandBuffer(commandBuffer);
@@ -6507,36 +6399,82 @@ void VIDVulkan::renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeli
   scissor.offset.y = 0;
   c.setScissor(0, 1, &scissor);
 
-
-  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-    render->getPipelineLayout(), 0, 1, &render->_descriptorSet, 0, nullptr);
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, render->getPipelineLayout(), 0, 1,
+                          render->getDescriptorSet(), 0, nullptr);
 
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, render->getGraphicsPipeline());
 
-  VkBuffer vertexBuffers[] = { vm->getVertexBuffer(render->vectexBlock) };
-  VkDeviceSize offsets[] = { render->vertexOffset };
+  VkBuffer vertexBuffers[] = {vm->getVertexBuffer(render->vectexBlock)};
+  VkDeviceSize offsets[] = {render->vertexOffset};
 
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-  vkCmdBindIndexBuffer(commandBuffer,
-    vm->getIndexBuffer(render->vectexBlock),
-    render->indexOffset, VK_INDEX_TYPE_UINT16);
+  vkCmdBindIndexBuffer(commandBuffer, vm->getIndexBuffer(render->vectexBlock), render->indexOffset,
+                       VK_INDEX_TYPE_UINT16);
 
   vkCmdDrawIndexed(commandBuffer, render->indexSize, 1, 0, 0, 0);
 
   c.endRenderPass();
 
-
 }
 
+void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer commandBuffer,
+                                                 const UniformBufferObject &ubo, VkImageView lineinfo, const glm::vec4 & viewportData, int ofIndex) {
 
-void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, VkImageView lineinfo) {
+  VkImageMemoryBarrier barrier = {};
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.image = offscreenPass.image;
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+  barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
   UniformBufferObject ubomini = ubo;
+  int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
   VkRect2D render_area{};
   render_area.offset.x = 0;
   render_area.offset.y = 0;
-  render_area.extent = _renderer->getWindow()->GetVulkanSurfaceSize();
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+      pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+    render_area.extent.width = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+    render_area.extent.height = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+  } else {
+    render_area.extent.width = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+    render_area.extent.height = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+  }
+
+  if (rotate_screen) {
+	  switch (ubomini.u_dir) {
+	  case 0:
+		  ubomini.u_dir = 2; //270
+		  ubomini.u_tw = offscreenPass.height;
+		  ubomini.u_th = offscreenPass.width;
+		  break;
+	  case 1:
+		  ubomini.u_dir = 0; // 0
+		  ubomini.u_tw = offscreenPass.width;
+		  ubomini.u_th = offscreenPass.height;
+		  break;
+	  case 2:
+		  ubomini.u_dir = 3; //180
+		  ubomini.u_tw = offscreenPass.width;
+		  ubomini.u_th = offscreenPass.height;
+		  break;
+	  case 3:
+		  ubomini.u_dir = 1; // 90
+		  ubomini.u_tw = offscreenPass.height;
+		  ubomini.u_th = offscreenPass.width;
+		  break;
+	  }
+  }
 
   VkRenderPassBeginInfo render_pass_begin_info{};
   render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -6546,6 +6484,7 @@ void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer
   render_pass_begin_info.clearValueCount = 0;
   render_pass_begin_info.pClearValues = nullptr;
 
+  
   vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
   auto c = vk::CommandBuffer(commandBuffer);
@@ -6565,21 +6504,20 @@ void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer
     scissor.offset.x = 0;
     scissor.offset.y = 0;
     c.setScissor(0, 1, &scissor);
-
-  }
-  else {
-    viewport.width = renderWidth;
-    viewport.height = renderHeight;
-    viewport.x = originx;
-    viewport.y = originy;
+  } else {
+    viewport.width = viewportData.z;
+    viewport.height = viewportData.w;
+    viewport.x = viewportData.x;
+    viewport.y = viewportData.y;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
-    c.setViewport(0, 1, &viewport);
 
-    scissor.extent.width = renderWidth;
-    scissor.extent.height = renderHeight;
-    scissor.offset.x = originx;
-    scissor.offset.y = originy;
+    scissor.extent.width = viewportData.z;
+    scissor.extent.height = viewportData.w;
+    scissor.offset.x = viewportData.x;
+    scissor.offset.y = viewportData.y;
+
+    c.setViewport(0, 1, &viewport);
     c.setScissor(0, 1, &scissor);
   }
 
@@ -6589,26 +6527,22 @@ void VIDVulkan::renderWithLineEffectToMainTarget(VdpPipeline *p, VkCommandBuffer
   p->setSampler(VdpPipeline::bindIdWindow, windowRenderer->getImageView(), windowRenderer->getSampler());
   p->updateDescriptorSets();
 
-  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-    p->getPipelineLayout(), 0, 1, &p->_descriptorSet, 0, nullptr);
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, p->getPipelineLayout(), 0, 1,
+                          p->getDescriptorSet(), 0, nullptr);
 
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, p->getGraphicsPipeline());
 
-  VkBuffer vertexBuffers[] = { offscreenRenderer.vertexBuffer };
-  VkDeviceSize offsets[] = { 0 };
+  VkBuffer vertexBuffers[] = {offscreenRenderer.vertexBuffer};
+  VkDeviceSize offsets[] = {0};
 
-  vkCmdBindVertexBuffers(commandBuffer,
-    0, 1, vertexBuffers, offsets);
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-  vkCmdBindIndexBuffer(commandBuffer,
-    offscreenRenderer.indexBuffer,
-    0, VK_INDEX_TYPE_UINT16);
+  vkCmdBindIndexBuffer(commandBuffer, offscreenRenderer.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
   vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
-
 }
 
-void VIDVulkan::renderEffectToMainTarget(VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, int mode) {
+void VIDVulkan::renderEffectToMainTarget(VkCommandBuffer commandBuffer, const UniformBufferObject &ubo, int mode, const glm::vec4 & viewportData, int ofIndex) {
 
   VkRect2D render_area{};
   render_area.offset.x = 0;
@@ -6642,9 +6576,7 @@ void VIDVulkan::renderEffectToMainTarget(VkCommandBuffer commandBuffer, const Un
     scissor.offset.x = 0;
     scissor.offset.y = 0;
     c.setScissor(0, 1, &scissor);
-
-  }
-  else {
+  } else {
     viewport.width = renderWidth;
     viewport.height = renderHeight;
     viewport.x = originx;
@@ -6665,37 +6597,33 @@ void VIDVulkan::renderEffectToMainTarget(VkCommandBuffer commandBuffer, const Un
     offscreenRenderer.blit->setUBO(&dmyubo, sizeof(dmyubo));
     offscreenRenderer.blit->setSampler(VdpPipeline::bindIdTexture, offscreenPass.view, offscreenPass.sampler);
 
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-      offscreenRenderer.blit->getPipelineLayout(), 0, 1, &offscreenRenderer.blit->_descriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, offscreenRenderer.blit->getPipelineLayout(),
+                            0, 1, offscreenRenderer.blit->getDescriptorSet(), 0, nullptr);
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, offscreenRenderer.blit->getGraphicsPipeline());
-  }
-  else if (mode == 1) {
+  } else if (mode == 1) {
 
     offscreenRenderer.mosaic->setUBO(&ubo, sizeof(ubo));
     offscreenRenderer.mosaic->setSampler(VdpPipeline::bindIdTexture, offscreenPass.view, offscreenPass.sampler);
-    offscreenRenderer.mosaic->setSampler(VdpPipeline::bindIdWindow, windowRenderer->getImageView(), windowRenderer->getSampler());
+    offscreenRenderer.mosaic->setSampler(VdpPipeline::bindIdWindow, windowRenderer->getImageView(),
+                                         windowRenderer->getSampler());
     offscreenRenderer.mosaic->updateDescriptorSets();
 
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-      offscreenRenderer.mosaic->getPipelineLayout(), 0, 1, &offscreenRenderer.mosaic->_descriptorSet, 0, nullptr);
+                            offscreenRenderer.mosaic->getPipelineLayout(), 0, 1,
+                            offscreenRenderer.mosaic->getDescriptorSet(), 0, nullptr);
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, offscreenRenderer.mosaic->getGraphicsPipeline());
-
   }
 
-  VkBuffer vertexBuffers[] = { offscreenRenderer.vertexBuffer };
-  VkDeviceSize offsets[] = { 0 };
+  VkBuffer vertexBuffers[] = {offscreenRenderer.vertexBuffer};
+  VkDeviceSize offsets[] = {0};
 
-  vkCmdBindVertexBuffers(commandBuffer,
-    0, 1, vertexBuffers, offsets);
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-  vkCmdBindIndexBuffer(commandBuffer,
-    offscreenRenderer.indexBuffer,
-    0, VK_INDEX_TYPE_UINT16);
+  vkCmdBindIndexBuffer(commandBuffer, offscreenRenderer.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
   vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
-
 }
 
 void VIDVulkan::generateSubRenderTarget(int width, int height) {
@@ -6703,8 +6631,17 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   VkDevice device = getDevice();
   VkPhysicalDevice physicalDevice = getPhysicalDevice();
 
-  subRenderTarget.width = width;
-  subRenderTarget.height = height;
+
+  int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
+  if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+      pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+    subRenderTarget.width = height;
+    subRenderTarget.height = width;
+  } else {
+    subRenderTarget.width = width;
+    subRenderTarget.height = height;
+  }
+
 
   // Find a suitable depth format
   VkFormat fbDepthFormat;
@@ -6748,7 +6685,6 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   colorImageView.image = subRenderTarget.color.image;
   VK_CHECK_RESULT(vkCreateImageView(device, &colorImageView, nullptr, &subRenderTarget.color.view));
 
-
   // Create sampler to sample from the attachment in the fragment shader
   VkSamplerCreateInfo samplerInfo = vks::initializers::samplerCreateInfo();
   samplerInfo.magFilter = VK_FILTER_NEAREST;
@@ -6788,7 +6724,8 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   depthStencilView.image = subRenderTarget.depth.image;
   VK_CHECK_RESULT(vkCreateImageView(device, &depthStencilView, nullptr, &subRenderTarget.depth.view));
 
-  // Create a separate render pass for the offscreen rendering as it may differ from the one used for scene rendering
+  // Create a separate render pass for the offscreen rendering as it may differ
+  // from the one used for scene rendering
 
   std::array<VkAttachmentDescription, 2> attchmentDescriptions = {};
   // Color attachment
@@ -6810,8 +6747,8 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   attchmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   attchmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-  VkAttachmentReference colorReference = { 0, VK_IMAGE_LAYOUT_GENERAL/*VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL*/ };
-  VkAttachmentReference depthReference = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+  VkAttachmentReference colorReference = {0, VK_IMAGE_LAYOUT_GENERAL /*VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL*/};
+  VkAttachmentReference depthReference = {1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
   VkSubpassDescription subpassDescription = {};
   subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -6820,7 +6757,7 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   subpassDescription.pDepthStencilAttachment = &depthReference;
 
   // Use subpass dependencies for layout transitions
-  std::array<VkSubpassDependency, 3> dependencies;
+  std::array<VkSubpassDependency, 2> dependencies;
 
   dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
   dependencies[0].dstSubpass = 0;
@@ -6837,7 +6774,7 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
   dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
   dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
+#if 0
   dependencies[2].srcSubpass = 0;
   dependencies[2].dstSubpass = 0;
   dependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -6845,16 +6782,15 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
   dependencies[2].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
   dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
+#endif
   // Create the actual renderpass
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   renderPassInfo.attachmentCount = static_cast<uint32_t>(attchmentDescriptions.size());
   renderPassInfo.pAttachments = attchmentDescriptions.data();
 
-  //renderPassInfo.subpassCount = 0;
-  //renderPassInfo.pSubpasses = VK_NULL_HANDLE; // Optional
-
+  // renderPassInfo.subpassCount = 0;
+  // renderPassInfo.pSubpasses = VK_NULL_HANDLE; // Optional
 
   renderPassInfo.subpassCount = 1;
   renderPassInfo.pSubpasses = &subpassDescription;
@@ -6876,7 +6812,6 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   fbufCreateInfo.layers = 1;
   VK_CHECK_RESULT(vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &subRenderTarget.frameBuffer));
 
-
   VkSemaphoreCreateInfo semaphore_create_info{};
   semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
   vkCreateSemaphore(device, &semaphore_create_info, nullptr, &subRenderTarget.color._render_complete_semaphore);
@@ -6885,7 +6820,6 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   subRenderTarget.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   subRenderTarget.descriptor.imageView = subRenderTarget.color.view;
   subRenderTarget.descriptor.sampler = subRenderTarget.sampler;
-
 }
 
 void VIDVulkan::freeSubRenderTarget() {
@@ -6894,65 +6828,59 @@ void VIDVulkan::freeSubRenderTarget() {
   VkDevice device = getDevice();
 
   if (subRenderTarget.sampler != VK_NULL_HANDLE) {
-    vkDestroySampler(device, subRenderTarget.sampler, nullptr); subRenderTarget.sampler = VK_NULL_HANDLE;
+    vkDestroySampler(device, subRenderTarget.sampler, nullptr);
+    subRenderTarget.sampler = VK_NULL_HANDLE;
   }
   if (subRenderTarget.color.image != VK_NULL_HANDLE) {
-    vkDestroyImage(device, subRenderTarget.color.image, nullptr); subRenderTarget.color.image = VK_NULL_HANDLE;
+    vkDestroyImage(device, subRenderTarget.color.image, nullptr);
+    subRenderTarget.color.image = VK_NULL_HANDLE;
   }
   if (subRenderTarget.color.mem != VK_NULL_HANDLE) {
-    vkFreeMemory(device, subRenderTarget.color.mem, nullptr); subRenderTarget.color.mem = VK_NULL_HANDLE;
+    vkFreeMemory(device, subRenderTarget.color.mem, nullptr);
+    subRenderTarget.color.mem = VK_NULL_HANDLE;
   }
   if (subRenderTarget.color.view != VK_NULL_HANDLE) {
-    vkDestroyImageView(device, subRenderTarget.color.view, nullptr); subRenderTarget.color.view = VK_NULL_HANDLE;
+    vkDestroyImageView(device, subRenderTarget.color.view, nullptr);
+    subRenderTarget.color.view = VK_NULL_HANDLE;
   }
   if (subRenderTarget.depth.image != VK_NULL_HANDLE) {
-    vkDestroyImage(device, subRenderTarget.depth.image, nullptr); subRenderTarget.depth.image = VK_NULL_HANDLE;
+    vkDestroyImage(device, subRenderTarget.depth.image, nullptr);
+    subRenderTarget.depth.image = VK_NULL_HANDLE;
   }
   if (subRenderTarget.depth.mem != VK_NULL_HANDLE) {
-    vkFreeMemory(device, subRenderTarget.depth.mem, nullptr); subRenderTarget.depth.mem = VK_NULL_HANDLE;
+    vkFreeMemory(device, subRenderTarget.depth.mem, nullptr);
+    subRenderTarget.depth.mem = VK_NULL_HANDLE;
   }
   if (subRenderTarget.depth.view != VK_NULL_HANDLE) {
-    vkDestroyImageView(device, subRenderTarget.depth.view, nullptr); subRenderTarget.depth.view = VK_NULL_HANDLE;
+    vkDestroyImageView(device, subRenderTarget.depth.view, nullptr);
+    subRenderTarget.depth.view = VK_NULL_HANDLE;
   }
   if (subRenderTarget.frameBuffer != VK_NULL_HANDLE) {
-    vkDestroyFramebuffer(device, subRenderTarget.frameBuffer, nullptr); subRenderTarget.frameBuffer = VK_NULL_HANDLE;
+    vkDestroyFramebuffer(device, subRenderTarget.frameBuffer, nullptr);
+    subRenderTarget.frameBuffer = VK_NULL_HANDLE;
   }
 
   if (subRenderTarget.renderPass != VK_NULL_HANDLE) {
-    vkDestroyRenderPass(device, subRenderTarget.renderPass, nullptr); subRenderTarget.renderPass = VK_NULL_HANDLE;
+    vkDestroyRenderPass(device, subRenderTarget.renderPass, nullptr);
+    subRenderTarget.renderPass = VK_NULL_HANDLE;
   }
-
-
 }
 
-void VIDVulkan::blitSubRenderTarget(VkCommandBuffer commandBuffer) {
+void VIDVulkan::blitSubRenderTarget(VkCommandBuffer commandBuffer, const glm::vec4 &viewportData) {
   VkDevice device = getDevice();
   VkImage dstImage = _renderer->getWindow()->getCurrentImage();
 
   // Transition destination image to transfer destination layout
-  vks::tools::insertImageMemoryBarrier(
-    commandBuffer,
-    dstImage,
-    0,
-    VK_ACCESS_TRANSFER_WRITE_BIT,
-    VK_IMAGE_LAYOUT_UNDEFINED,
-    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-    VK_PIPELINE_STAGE_TRANSFER_BIT,
-    VK_PIPELINE_STAGE_TRANSFER_BIT,
-    VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
-
+  vks::tools::insertImageMemoryBarrier(commandBuffer, dstImage, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                                       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                       VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                       VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
   // Transition swapchain image from present to transfer source layout
   vks::tools::insertImageMemoryBarrier(
-    commandBuffer,
-    subRenderTarget.color.image,
-    VK_ACCESS_MEMORY_READ_BIT,
-    VK_ACCESS_TRANSFER_READ_BIT,
-    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-    VK_PIPELINE_STAGE_TRANSFER_BIT,
-    VK_PIPELINE_STAGE_TRANSFER_BIT,
-    VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+      commandBuffer, subRenderTarget.color.image, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
   // Define the region to blit (we will blit the whole swapchain image)
   VkImageBlit imageBlitRegion{};
@@ -6963,27 +6891,208 @@ void VIDVulkan::blitSubRenderTarget(VkCommandBuffer commandBuffer) {
   imageBlitRegion.srcOffsets[1].z = 1;
   imageBlitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   imageBlitRegion.dstSubresource.layerCount = 1;
-  imageBlitRegion.dstOffsets[0].x = originx;
-  imageBlitRegion.dstOffsets[0].y = originy;
+  imageBlitRegion.dstOffsets[0].x = viewportData.x;
+  imageBlitRegion.dstOffsets[0].y = viewportData.y;
   imageBlitRegion.dstOffsets[0].z = 0;
-  imageBlitRegion.dstOffsets[1].x = originx + finalWidth;
-  imageBlitRegion.dstOffsets[1].y = originy + finalHeight;
+  imageBlitRegion.dstOffsets[1].x = viewportData.x + viewportData.z;
+  imageBlitRegion.dstOffsets[1].y = viewportData.y + viewportData.w;
   imageBlitRegion.dstOffsets[1].z = 1;
 
   // Issue the blit command
-  vkCmdBlitImage(
-    commandBuffer,
-    subRenderTarget.color.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-    dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-    1,
-    &imageBlitRegion,
-    VK_FILTER_NEAREST);
+  vkCmdBlitImage(commandBuffer, subRenderTarget.color.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage,
+                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlitRegion, VK_FILTER_NEAREST);
 
+  // Transition destination image to general layout, which is the required
+  // layout for mapping the image memory later on
+  vks::tools::insertImageMemoryBarrier(commandBuffer, dstImage, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT,
+                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+                                       VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                       VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+
+  // Transition back the swap chain image after the blit is done
+  vks::tools::insertImageMemoryBarrier(
+      commandBuffer, subRenderTarget.color.image, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_MEMORY_READ_BIT,
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+}
+
+
+void VIDVulkan::getScreenshot(void ** outbuf, int & width, int & height)
+{
+  screenshotSaved = false;
+  bool supportsBlit = true;
+
+    
+  _device_width = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+  _device_height = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+
+
+  // Check blit support for source and destination
+  VkFormatProperties formatProps;
+
+  // Check if the device supports blitting from optimal images (the swapchain images are in optimal format)
+  vkGetPhysicalDeviceFormatProperties(getPhysicalDevice(), _renderer->getWindow()->getColorFormat(), &formatProps);
+  if (!(formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)) {
+    std::cerr << "Device does not support blitting from optimal tiled images, using copy instead of blit!" << std::endl;
+    supportsBlit = false;
+  }
+
+  // Check if the device supports blitting to linear images
+  vkGetPhysicalDeviceFormatProperties(getPhysicalDevice(), VK_FORMAT_R8G8B8A8_UNORM, &formatProps);
+  if (!(formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT)) {
+    std::cerr << "Device does not support blitting to linear tiled images, using copy instead of blit!" << std::endl;
+    supportsBlit = false;
+  }
+
+  // Source for the copy is the last rendered swapchain image
+  VkImage srcImage = _renderer->getWindow()->getCurrentImage();
+  int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
+
+
+  //if (dstScreenImage == VK_NULL_HANDLE) {
+
+  glm::vec4 viewportData;
+    // Create the linear tiled destination image to copy to and to read the memory from
+  VkImageCreateInfo imageCreateCI(vks::initializers::imageCreateInfo());
+  imageCreateCI.imageType = VK_IMAGE_TYPE_2D;
+  // Note that vkCmdBlitImage (if supported) will also do format conversions if the swapchain color format would differ
+  imageCreateCI.format = VK_FORMAT_R8G8B8A8_UNORM;
+
+
+  int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+  int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+  int deviceOriginX = originx;
+  int deviceOriginY = originy;
+    
+
+  switch (pretransformFlag) {
+      case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
+        viewportData = {deviceHeight - renderHeight - deviceOriginY, deviceOriginX, renderHeight, renderWidth};
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+        viewportData = {deviceOriginY, deviceWidth - renderWidth - deviceOriginX, renderHeight, renderWidth};
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
+        viewportData = {deviceHeight - renderWidth - deviceOriginX, deviceWidth - renderHeight - deviceOriginY, renderWidth,
+                        renderHeight};
+        break;
+      default:
+        viewportData = {deviceOriginX, deviceOriginY, renderWidth, renderHeight};
+        break;
+    }
+
+
+    imageCreateCI.extent.width = viewportData.z;
+    imageCreateCI.extent.height = viewportData.w;
+
+
+    imageCreateCI.extent.depth = 1;
+    imageCreateCI.arrayLayers = 1;
+    imageCreateCI.mipLevels = 1;
+    imageCreateCI.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageCreateCI.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageCreateCI.tiling = VK_IMAGE_TILING_LINEAR;
+    imageCreateCI.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
+    // Create the image
+    VK_CHECK_RESULT(vkCreateImage(getDevice(), &imageCreateCI, nullptr, &dstScreenImage));
+    // Create memory to back up the image
+    VkMemoryRequirements memRequirements;
+    VkMemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());
+
+    vkGetImageMemoryRequirements(getDevice(), dstScreenImage, &memRequirements);
+    memAllocInfo.allocationSize = memRequirements.size;
+    // Memory must be host visible to copy from
+    memAllocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    VK_CHECK_RESULT(vkAllocateMemory(getDevice(), &memAllocInfo, nullptr, &dstImageScreenMemory));
+    VK_CHECK_RESULT(vkBindImageMemory(getDevice(), dstScreenImage, dstImageScreenMemory, 0));
+
+  //}
+  //else {
+  //}
+
+  // Do the actual blit from the swapchain image to our host visible destination image
+  VkCommandBuffer copyCmd = beginSingleTimeCommands();
+
+  // Transition destination image to transfer destination layout
+  vks::tools::insertImageMemoryBarrier(
+    copyCmd,
+    dstScreenImage,
+    0,
+    VK_ACCESS_TRANSFER_WRITE_BIT,
+    VK_IMAGE_LAYOUT_UNDEFINED,
+    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+
+  // Transition swapchain image from present to transfer source layout
+  vks::tools::insertImageMemoryBarrier(
+    copyCmd,
+    srcImage,
+    VK_ACCESS_MEMORY_READ_BIT,
+    VK_ACCESS_TRANSFER_READ_BIT,
+    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+
+  // If source and destination support blit we'll blit as this also does automatic format conversion (e.g. from BGR to RGB)
+  if (supportsBlit)
+  {
+    // Define the region to blit (we will blit the whole swapchain image)
+    VkOffset3D blitSize;
+
+
+    blitSize.x = viewportData.z;
+    blitSize.y = viewportData.w;
+
+    blitSize.z = 1;
+    VkImageBlit imageBlitRegion{};
+    imageBlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageBlitRegion.srcSubresource.layerCount = 1;
+    imageBlitRegion.srcOffsets[0].x = viewportData.x;    
+    imageBlitRegion.srcOffsets[0].y = viewportData.y;    
+    imageBlitRegion.srcOffsets[1] = blitSize;
+    imageBlitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageBlitRegion.dstSubresource.layerCount = 1;
+    imageBlitRegion.dstOffsets[1] = blitSize;
+
+    // Issue the blit command
+    vkCmdBlitImage(
+      copyCmd,
+      srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      dstScreenImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      1,
+      &imageBlitRegion,
+      VK_FILTER_NEAREST);
+  }
+  else
+  {
+    // Otherwise use image copy (requires us to manually flip components)
+    VkImageCopy imageCopyRegion{};
+    imageCopyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageCopyRegion.srcSubresource.layerCount = 1;
+    imageCopyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageCopyRegion.dstSubresource.layerCount = 1;
+    imageCopyRegion.extent.width = viewportData.z;
+    imageCopyRegion.extent.height = viewportData.w;
+    imageCopyRegion.extent.depth = 1;
+
+    // Issue the copy command
+    vkCmdCopyImage(
+      copyCmd,
+      srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      dstScreenImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      1,
+      &imageCopyRegion);
+  }
 
   // Transition destination image to general layout, which is the required layout for mapping the image memory later on
   vks::tools::insertImageMemoryBarrier(
-    commandBuffer,
-    dstImage,
+    copyCmd,
+    dstScreenImage,
     VK_ACCESS_TRANSFER_WRITE_BIT,
     VK_ACCESS_MEMORY_READ_BIT,
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -6994,8 +7103,8 @@ void VIDVulkan::blitSubRenderTarget(VkCommandBuffer commandBuffer) {
 
   // Transition back the swap chain image after the blit is done
   vks::tools::insertImageMemoryBarrier(
-    commandBuffer,
-    subRenderTarget.color.image,
+    copyCmd,
+    srcImage,
     VK_ACCESS_TRANSFER_READ_BIT,
     VK_ACCESS_MEMORY_READ_BIT,
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -7004,5 +7113,145 @@ void VIDVulkan::blitSubRenderTarget(VkCommandBuffer commandBuffer) {
     VK_PIPELINE_STAGE_TRANSFER_BIT,
     VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
 
+  //vulkanDevice->flushCommandBuffer(copyCmd, queue);
+  endSingleTimeCommands(copyCmd);
 
+  // Get layout of the image (including row pitch)
+  VkImageSubresource subResource{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0 };
+  VkSubresourceLayout subResourceLayout;
+  vkGetImageSubresourceLayout(getDevice(), dstScreenImage, &subResource, &subResourceLayout);
+
+  // Map image memory so we can start copying from it
+  unsigned char* data;
+  vkMapMemory(getDevice(), dstImageScreenMemory, 0, VK_WHOLE_SIZE, 0, (void**)&data);
+  data += subResourceLayout.offset;
+
+
+  width = renderWidth;
+  height = renderHeight;
+
+  if (dstbuf != nullptr) {
+    free(dstbuf);
+  }
+  dstbuf = (unsigned char*)malloc(width*height * 4);
+
+
+  switch (pretransformFlag) {
+      case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
+      {
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            int sx = y;
+            int sy = x;
+            unsigned char *srcrow = &data[sy*subResourceLayout.rowPitch];
+            dstrow[x * 4 + 0] = srcrow[sx * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[sx * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[sx * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[sx * 4 + 3];
+          }
+        }
+      }
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            int sx = width - 1 - x;
+            int sy = height - 1 - y;
+            unsigned char *srcrow = &data[sy*subResourceLayout.rowPitch];
+            dstrow[x * 4 + 0] = srcrow[sx * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[sx * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[sx * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[sx * 4 + 3];
+          }
+        }
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            int sx = height - 1 - y;
+            int sy = width - 1 - x;
+            unsigned char *srcrow = &data[sy*subResourceLayout.rowPitch];
+            dstrow[x * 4 + 0] = srcrow[sx * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[sx * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[sx * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[sx * 4 + 3];
+          }
+        }
+        break;
+      default:
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *srcrow = &data[ (height-1-y) *subResourceLayout.rowPitch];
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            dstrow[x * 4 + 0] = srcrow[x * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[x * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[x * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[x * 4 + 3];
+          }
+        }
+        break;
+  }
+
+
+
+  
+  *outbuf = (void*)dstbuf;
+#if 0
+
+  std::ofstream file(filename, std::ios::out | std::ios::binary);
+
+  // ppm header
+  file << "P6\n" << _device_width << "\n" << _device_height << "\n" << 255 << "\n";
+
+  // If source is BGR (destination is always RGB) and we can't use blit (which does automatic conversion), we'll have to manually swizzle color components
+  bool colorSwizzle = false;
+  // Check if source is BGR
+  // Note: Not complete, only contains most common and basic BGR surface formats for demonstration purposes
+  if (!supportsBlit)
+  {
+    std::vector<VkFormat> formatsBGR = { VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM };
+    colorSwizzle = (std::find(formatsBGR.begin(), formatsBGR.end(), _renderer->getWindow()->getColorFormat()) != formatsBGR.end());
+  }
+
+  // ppm binary pixel data
+  for (uint32_t y = 0; y < height; y++)
+  {
+    unsigned int *row = (unsigned int*)data;
+    for (uint32_t x = 0; x < width; x++)
+    {
+      if (colorSwizzle)
+      {
+        file.write((char*)row + 2, 1);
+        file.write((char*)row + 1, 1);
+        file.write((char*)row, 1);
+      }
+      else
+      {
+        file.write((char*)row, 3);
+      }
+      row++;
+    }
+    data += subResourceLayout.rowPitch;
+  }
+  file.close();
+#endif
+  std::cout << "Screenshot saved to disk" << std::endl;
+
+
+  vkUnmapMemory(getDevice(), dstImageScreenMemory);
+  vkFreeMemory(getDevice(), dstImageScreenMemory, nullptr);
+  vkDestroyImage(getDevice(), dstScreenImage, nullptr);
+  dstImageScreenMemory = VK_NULL_HANDLE;
+  dstScreenImage = VK_NULL_HANDLE;
+
+  screenshotSaved = true;
 }
+
+

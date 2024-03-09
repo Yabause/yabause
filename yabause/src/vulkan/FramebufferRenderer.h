@@ -31,6 +31,7 @@ extern "C" {
 }
 
 #include "VIDVulkan.h"
+#include "vulkan/vulkan.hpp"
 
 #include <string>
 using std::string;
@@ -47,20 +48,26 @@ public:
     SRC_ALPHA,
     ADD,
     DST_ALPHA,
+	  WINDOW,
     NONE
   };
+
+  uint8_t winflag = 0;
 
   FramebufferRenderer(VIDVulkan * vulkan);
   ~FramebufferRenderer();
   void setup();
   void setupShaders();
-  VkPipeline compileShader(const char * code, const char * name, enum ColorClacMode c);
+  VkPipeline compileShader(const char * code, const char * name, enum ColorClacMode c, uint8_t winflag);
 
   VkPipeline findShader(const char * name, const char * code, enum ColorClacMode c) {
     VkPipeline pgid;
-    auto prg = pipelines.find(name);
+    string key = name;
+    key += std::to_string(c);
+    key += std::to_string(winflag);
+    auto prg = pipelines.find(key);
     if (prg == pipelines.end()) {
-      pgid = compileShader(code, name, c);
+      pgid = compileShader(code, name, c, winflag);
     }
     else {
       pgid = prg->second;
@@ -83,10 +90,11 @@ public:
   }
 
 
-  void onStartFrame(Vdp2 * fixVdp2Reg, VkCommandBuffer commandBuffer);
-  void draw(Vdp2 * fixVdp2Reg, VkCommandBuffer commandBuffer, int from, int to);
-  void drawWithDestAlphaMode(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to);
-  void drawShadow(Vdp2 * fixVdp2Reg, VkCommandBuffer commandBuffer, int from, int to);
+  void onStartFrame(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, const  vk::Viewport & viewport, int resolutionMode);
+  void draw(Vdp2 * fixVdp2Reg, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat );
+  void drawWithDestAlphaMode(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat);
+  void drawShadow(Vdp2 * fixVdp2Reg, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat);
+  void drawSpriteWindow(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to);
   void onEndFrame();
 
   void chenageResolution(int vdp2Width, int vdp2Height, int renderWidth, int renderHeight);
@@ -127,6 +135,7 @@ protected:
     int sprite_window;
     float from;
     float to;
+    int   dir;
   } ubo;
 
   struct UniformBuffer {
@@ -178,6 +187,11 @@ protected:
   VkPipelineColorBlendAttachmentState colorBlendAttachmentNone = {};
   VkPipelineColorBlendStateCreateInfo colorBlendingNone = {};
 
+  VkPipelineColorBlendAttachmentState colorBlendAttachmentSpWindow = {};
+  VkPipelineColorBlendStateCreateInfo colorBlendingSpWindow = {};
+
+  VkPipelineColorBlendAttachmentState spcolorBlendAttachment = {};
+  VkPipelineColorBlendStateCreateInfo colorSprite = {};
 
   int renderCount = 0;
 

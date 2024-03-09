@@ -22,6 +22,7 @@ class BraTest : public ::testing::Test {
   }
 
   virtual ~BraTest() {
+    freeMemory();
     delete pctx_;    
   }   
 
@@ -47,8 +48,9 @@ TEST_F(BraTest, normal) {
   EXPECT_EQ( 0x0600304A, pctx_->GET_PC() );
 
   // BRA
-  memSetWord( 0x00000220, 0xA015 );
-  memSetWord( 0x00000222, 0x277A );  // nop
+  memSetWord(0x00000220, 0xA015);
+  memSetWord(0x00000222, 0x000b);  // rts
+  memSetWord(0x00000224, 0x0009);  // nop
 
   pctx_->SET_PC( 0x00000220 );
   pctx_->Execute();

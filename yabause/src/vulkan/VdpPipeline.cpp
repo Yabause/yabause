@@ -39,8 +39,6 @@ const int VdpPipeline::bindIdFbo = 2;
 const int VdpPipeline::bindIdLine = 3;
 const int VdpPipeline::bindIdWindow = 4;
 
-
-
 VkShaderModule ShaderManager::getShader(uint32_t id) {
     auto it = shaders.find(id);
     if (it == shaders.end()) {
@@ -66,6 +64,7 @@ std::string ShaderManager::get_shader_header() {
 #endif
 }
 
+
 VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, int type) {
     const VkDevice device = vulkan->getDevice();
 
@@ -73,24 +72,73 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
 
     string target = get_shader_header() + code;
 
-    Compiler compiler;
-    CompileOptions options;
-    options.SetOptimizationLevel(shaderc_optimization_level_performance);
-    //options.SetOptimizationLevel(shaderc_optimization_level_zero);
-    SpvCompilationResult result = compiler.CompileGlslToSpv(
-      target,
-      (shaderc_shader_kind)type,
-      "VdpPipeline",
-      options);
+    std::vector<uint32_t> data;
+    std::vector<char> buffer;
+    SpvCompilationResult result;
+#if !defined(_WINDOWS)
+    std::size_t hash_value = std::hash<std::string>()(target);
+    
+    // Serach from file
+    string mempath = YuiGetShaderCachePath();
+    std::string hashval = std::to_string(hash_value);
+    string file_path = mempath + hashval + ".spv";
 
-    LOGI("%s%d", "erros: ", (int)result.GetNumErrors());
-    if (result.GetNumErrors() != 0) {
-      LOGI("%s%s", "messages: ", result.GetErrorMessage().c_str());
-      cout << target;
-      throw std::runtime_error("failed to create shader module!");
+    // バイナリファイルを読み込む
+    std::ifstream file(file_path, std::ios::binary);
+    if (file) {
+
+      // ファイルサイズを取得する
+      file.seekg(0, std::ios::end);
+      std::size_t file_size = file.tellg();
+      file.seekg(0, std::ios::beg);
+
+      // ファイルの内容を読み込む
+      buffer.resize(file_size);
+      file.read(buffer.data(), file_size);
+
+      for( int i=0; i<file_size; i+= 4 ){
+        uint32_t value = static_cast<uint32_t>(buffer[i+0])
+                    | (static_cast<uint32_t>(buffer[i+1]) << 8)
+                    | (static_cast<uint32_t>(buffer[i+2]) << 16)
+                    | (static_cast<uint32_t>(buffer[i+3]) << 24);
+        data.push_back(value);
+      }
+      file.close();
+
+    }else{    
+#endif
+      Compiler compiler;
+      CompileOptions options;
+      options.SetOptimizationLevel(shaderc_optimization_level_performance);
+      //options.SetOptimizationLevel(shaderc_optimization_level_zero);
+      result = compiler.CompileGlslToSpv(
+        target,
+        (shaderc_shader_kind)type,
+        "VdpPipeline",
+        options);
+
+      LOGI("%s%d", "erros: ", (int)result.GetNumErrors());
+      if (result.GetNumErrors() != 0) {
+        LOGE("%s%s", "messages: ", result.GetErrorMessage().c_str());
+        cout << target;
+        throw std::runtime_error("failed to create shader module!");
+      }
+      data = { result.cbegin(), result.cend() };
+#if !defined(_WINDOWS)
+      std::ofstream file(file_path, std::ios::binary);
+      if (!file) {
+          std::cerr << "Error: Failed to open file." << std::endl;
+          throw std::runtime_error("failed to create shader module!");
+      }
+
+      // データを書き込む
+      file.write((const char*)data.data(), data.size()* sizeof(uint32_t));
+
+      // ファイルを閉じる
+      file.close();
+
     }
-    std::vector<uint32_t> data = { result.cbegin(), result.cend() };
-
+#endif
     VkShaderModuleCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = data.size() * sizeof(uint32_t);
@@ -104,6 +152,8 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
 }
 
 ShaderManager * ShaderManager::instance = nullptr;
+
+VkPipelineCache VdpPipeline::threadPipelineCache = VK_NULL_HANDLE;
 
 
 VdpPipeline::VdpPipeline(
@@ -121,15 +171,18 @@ VdpPipeline::VdpPipeline(
   logwinsp = 0;
   winmode = -1;
 
+  ubuffer.resize(MAX_DS_SIZE);
+  memset(_descriptorSet, 0, sizeof(VkDescriptorSet) * MAX_DS_SIZE);
+
   vdp2Uniform = R"u(
   layout(binding = 0) uniform UniformBufferObject {
     mat4 mvp;
     vec4 u_color_offset;
     int u_blendmode;
-    int offsetx;
-    int offsety;
-    int windowWidth;
-    int windowHeight;
+    float offsetx;
+    float offsety;
+    float windowWidth;
+    float windowHeight;
     int winmask;
     int winflag;
     int winmode;
@@ -142,6 +195,7 @@ VdpPipeline::VdpPipeline(
     int u_mosaic_y;
     int specialPriority;
     int u_specialColorFunc;
+    int u_dir;
   };
   )u";
 
@@ -158,10 +212,47 @@ VdpPipeline::VdpPipeline(
   }
   )s";
 
+#if (WINDOW_CLIP_MODE == WINDOW_CLIP_STENCIL)
+  fragFuncCheckWindow = "\n void checkWindow(){ return; } \n";
+#else
   fragFuncCheckWindow = R"S(
+  vec2 getEmuPos( int dir ){
+        return vec2( 
+          (gl_FragCoord.x-offsetx) / windowWidth,
+          (gl_FragCoord.y-offsety) / windowHeight
+        );
+    switch(dir){
+      case 1: // 90
+        return vec2(
+          (gl_FragCoord.y-offsetx) / windowWidth,
+          (windowHeight+offsety - gl_FragCoord.x) / windowHeight
+        );
+        break;
+      case 2: // 270
+        return vec2( 
+          (windowWidth+offsetx - gl_FragCoord.y) /float(windowWidth),
+          (gl_FragCoord.x-offsety) / windowHeight
+        );
+        break;
+      case 3: // 180
+        return vec2( 
+          (windowWidth + offsetx  - gl_FragCoord.x) /windowWidth,
+          (windowHeight + offsety  - gl_FragCoord.y) /windowHeight
+        );
+        break;
+      default: // 0
+        return vec2( 
+          (gl_FragCoord.x-offsetx) / windowWidth,
+          (gl_FragCoord.y-offsety) / windowHeight
+        );
+        break;
+    }
+    return vec2(0.0,0.0);
+  }    
   void checkWindow() {
+/*
     if( winmode != -1 ){
-      vec2 winaddr = vec2( (gl_FragCoord.x-float(offsetx)) /float(windowWidth), (gl_FragCoord.y-float(offsety)) /float(windowHeight));
+      vec2 winaddr = getEmuPos(u_dir);
       vec4 wintexture = texture(windowSampler,winaddr);
       int winvalue = int(wintexture.r * 255.0);
 
@@ -177,9 +268,10 @@ VdpPipeline::VdpPipeline(
             }
         }
     }
+*/
   }
   )S";
-
+#endif
   //fragShaderName = "./shaders/shader.frag.spv";
 
   bindid.clear();
@@ -259,6 +351,7 @@ VdpPipeline::~VdpPipeline() {
     vkDestroyPipeline(device, _graphicsPipeline, nullptr);
     _graphicsPipeline = VK_NULL_HANDLE;
   }
+
 }
 
 std::string VdpPipeline::get_shader_header() {
@@ -282,11 +375,15 @@ void VdpPipeline::moveToVertexBuffer(const vector<Vertex> & vertices, const vect
 }
 
 void VdpPipeline::setUBO(const void * ubo, int size) {
+  dsIndex++;
+  if( dsIndex >= MAX_DS_SIZE ){
+    dsIndex = 0;
+  }  
   const VkDevice device = vulkan->getDevice();
   void* data;
-  vkMapMemory(device, _uniformBufferMemory, 0, size, 0, &data);
+  vkMapMemory(device, ubuffer[dsIndex]._uniformBufferMemory, 0, size, 0, &data);
   memcpy(data, ubo, size);
-  vkUnmapMemory(device, _uniformBufferMemory);
+  vkUnmapMemory(device, ubuffer[dsIndex]._uniformBufferMemory);
   uboSize = size;
   if (MAX_UBO_SIZE < uboSize) {
     throw std::runtime_error("MAX_UBO_SIZE over!!");
@@ -317,9 +414,15 @@ void VdpPipeline::createGraphicsPipeline() {
 
   VkDevice device = vulkan->getDevice();
 
-  vulkan->createBuffer(MAX_UBO_SIZE,
-    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    _uniformBuffer, _uniformBufferMemory);
+  //vulkan->createBuffer(MAX_UBO_SIZE,
+  //  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+  //  _uniformBuffer, _uniformBufferMemory);
+
+  for (UniformBuffer & u : ubuffer) {
+    vulkan->createBuffer(MAX_UBO_SIZE,
+      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      u._uniformBuffer, u._uniformBufferMemory);
+  }
 
 
   initDescriptorSets(bindid);
@@ -500,7 +603,7 @@ void VdpPipeline::createGraphicsPipeline() {
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
   pipelineInfo.basePipelineIndex = -1; // Optional
 
-  if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_graphicsPipeline) != VK_SUCCESS) {
+  if (vkCreateGraphicsPipelines(device, VdpPipeline::threadPipelineCache, 1, &pipelineInfo, nullptr, &_graphicsPipeline) != VK_SUCCESS) {
     throw std::runtime_error("failed to create graphics pipeline!");
   }
 
@@ -624,16 +727,86 @@ void VDP1UserClip::createDpethStencil(VkPipelineDepthStencilStateCreateInfo & de
 
 
 void VdpPipeline::createDpethStencil(VkPipelineDepthStencilStateCreateInfo & depthStencil) {
-  depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depthStencil.depthTestEnable = VK_TRUE;
-  depthStencil.depthWriteEnable = VK_TRUE;
-  depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL; // VK_COMPARE_OP_LESS;
-  depthStencil.depthBoundsTestEnable = VK_FALSE;
-  depthStencil.minDepthBounds = 0.0f; // Optional
-  depthStencil.maxDepthBounds = 1.0f; // Optional
-  depthStencil.stencilTestEnable = VK_FALSE;
-  depthStencil.front = {}; // Optional
-  depthStencil.back = {}; // Optional
+
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_TRUE;
+	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL; // VK_COMPARE_OP_LESS;
+	depthStencil.depthBoundsTestEnable = VK_FALSE;
+	depthStencil.minDepthBounds = 0.0f; // Optional
+	depthStencil.maxDepthBounds = 1.0f; // Optional
+
+
+	if (winflag == 0) {
+		depthStencil.stencilTestEnable = VK_FALSE;
+		depthStencil.front = {}; // Optional
+		depthStencil.back = {}; // Optional
+	}
+	else {
+
+		int winmode, bwin0, bwin1, bwinsp, logwin0, logwin1, logwinsp = 0;
+		decodeWinFlag(winmode, bwin0, bwin1, bwinsp, logwin0, logwin1, logwinsp);
+
+		depthStencil.stencilTestEnable = VK_TRUE;
+		depthStencil.front.passOp = VK_STENCIL_OP_KEEP;
+		depthStencil.front.failOp = VK_STENCIL_OP_KEEP;
+		depthStencil.front.depthFailOp = VK_STENCIL_OP_KEEP;
+		depthStencil.front.writeMask = 0;
+
+    bwin1 = bwin1 << 1;
+    logwin1 = logwin1 << 1;
+    bwinsp = bwinsp << 2;
+    logwinsp = logwinsp << 2;
+
+		int winmask = (bwin0 | bwin1 | bwinsp);
+		int swinflag = 0;
+		if (winmode == 0) { // and
+			if (bwin0)  swinflag = logwin0;
+			if (bwin1)  swinflag |= logwin1;
+			if (bwinsp) swinflag |= logwinsp;
+
+			depthStencil.front.compareOp = VK_COMPARE_OP_EQUAL;
+			depthStencil.front.compareMask = winmask;
+			depthStencil.front.reference = swinflag;
+		}
+		else { // or
+			swinflag = winmask;
+			if (bwin0)  swinflag &= ~logwin0;
+			if (bwin1)  swinflag &= ~logwin1;
+			if (bwinsp) swinflag &= ~logwinsp;
+
+			depthStencil.front.compareOp = VK_COMPARE_OP_NOT_EQUAL;
+			depthStencil.front.compareMask = winmask;
+			depthStencil.front.reference = swinflag;
+
+		}
+
+		depthStencil.back = depthStencil.front;
+
+		/*
+		if (bwin0 || bwin1 || bwinsp)
+		{
+			glEnable(GL_STENCIL_TEST);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+			int winmask = (bwin0 | bwin1 | bwinsp);
+			int winflag = 0;
+			if (winmode == 0) { // and
+				if (bwin0)  winflag = logwin0;
+				if (bwin1)  winflag |= logwin1;
+				if (bwinsp) winflag |= logwinsp;
+				glStencilFunc(GL_EQUAL, winflag, winmask);
+			}
+			else { // or
+				winflag = winmask;
+				if (bwin0)  winflag &= ~logwin0;
+				if (bwin1)  winflag &= ~logwin1;
+				if (bwinsp) winflag &= ~logwinsp;
+				glStencilFunc(GL_NOTEQUAL, winflag, winmask);
+			}
+		}
+		*/
+	}
 }
 
 void VdpPipeline::createColorBlending(VkPipelineColorBlendStateCreateInfo & colorBlending, VkPipelineColorBlendAttachmentState & colorAttachment) {
@@ -717,17 +890,35 @@ VdpLineBase::VdpLineBase(VIDVulkan * vulkan, TextureManager * tm, VertexManager 
 
     )S" + fragFuncCheckWindow
 
-    + R"s(  void main() {
-      checkWindow();
-      ivec2 addr;
-      addr.x = int(v_texcoord.x);
-      addr.y = int(v_texcoord.y);
-      ivec2 linepos;
-      linepos.y = 0;
-      linepos.x = int( (gl_FragCoord.y-u_viewport_offset) * u_emu_height);
-      vec4 txcol = texelFetch( s_texture, addr,0 );
-      vec4 lncol = texelFetch( s_line, linepos,0 );
-      if(txcol.a > 0.0){
+    + R"s(  
+      int getLinePos( int dir ){      
+        switch(dir){
+          case 1: // 90
+            return int((u_vheight - gl_FragCoord.x-u_viewport_offset) * u_emu_height);
+          break;
+          case 2: // 270
+            return int((gl_FragCoord.x-u_viewport_offset) * u_emu_height);
+          break;
+          case 3: // 180
+            return int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);
+            break;
+          default:
+            return int((gl_FragCoord.y-u_viewport_offset) * u_emu_height);
+            break;
+        }
+        return 0;
+      }
+      void main() {
+        checkWindow();
+        ivec2 addr;
+        addr.x = int(v_texcoord.x);
+        addr.y = int(v_texcoord.y);
+        ivec2 linepos;
+        linepos.y = 0;
+        linepos.x = getLinePos(u_dir);
+        vec4 txcol = texelFetch( s_texture, addr,0 );
+        vec4 lncol = texelFetch( s_line, linepos,0 );
+        if(txcol.a > 0.0){
   )s";
 
 }
@@ -803,13 +994,13 @@ void VdpPipeline::initDescriptorSets(const vector<int> & bindid) {
 
   VkDescriptorPoolSize uni;
   uni.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  uni.descriptorCount = 1;
+  uni.descriptorCount = MAX_DS_SIZE;
   poolSizes.push_back(uni);
 
   for (int i = 0; i < bindid.size(); i++) {
     VkDescriptorPoolSize pool = {};
     pool.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    pool.descriptorCount = 1;
+    pool.descriptorCount = MAX_DS_SIZE;
     poolSizes.push_back(pool);
   }
 
@@ -817,7 +1008,7 @@ void VdpPipeline::initDescriptorSets(const vector<int> & bindid) {
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
   poolInfo.pPoolSizes = poolSizes.data();
-  poolInfo.maxSets = 1;
+  poolInfo.maxSets = MAX_DS_SIZE;
 
   if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &_descriptorPool) != VK_SUCCESS) {
     throw std::runtime_error("failed to create descriptor pool!");
@@ -829,28 +1020,31 @@ void VdpPipeline::initDescriptorSets(const vector<int> & bindid) {
   allocInfo.descriptorPool = _descriptorPool;
   allocInfo.descriptorSetCount = 1;
   allocInfo.pSetLayouts = layouts;
-  if (vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet) != VK_SUCCESS) {
-    throw std::runtime_error("failed to allocate descriptor set!");
+
+  for (int i = 0; i < MAX_DS_SIZE; i++) {
+    if (vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[i]) != VK_SUCCESS) {
+      throw std::runtime_error("failed to allocate descriptor set!");
+    }
   }
 
 }
 
 void VdpPipeline::updateDescriptorSets()
 {
+  //LOGD("updateDescriptorSets %d", this->prgid );
 
   VkDevice device = vulkan->getDevice();
 
   std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-
   VkDescriptorBufferInfo bufferInfo = {};
-  bufferInfo.buffer = _uniformBuffer;
+  bufferInfo.buffer = ubuffer[dsIndex]._uniformBuffer;
   bufferInfo.offset = 0;
   bufferInfo.range = uboSize;
 
   VkWriteDescriptorSet descriptorWrite = {};
   descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptorWrite.dstSet = _descriptorSet;
+  descriptorWrite.dstSet = _descriptorSet[dsIndex];
   descriptorWrite.dstBinding = 0;
   descriptorWrite.dstArrayElement = 0;
   descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -860,20 +1054,21 @@ void VdpPipeline::updateDescriptorSets()
 
   VkDescriptorImageInfo imageInfos[32];
   for (int i = 0; i < bindid.size(); i++) {
+    if (samplers[bindid[i]].img != NULL) {
+      imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      imageInfos[i].imageView = samplers[bindid[i]].img;
+      imageInfos[i].sampler = samplers[bindid[i]].smp;
 
-    imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageInfos[i].imageView = samplers[bindid[i]].img;
-    imageInfos[i].sampler = samplers[bindid[i]].smp;
-
-    VkWriteDescriptorSet descriptorWrite = {};
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = _descriptorSet;
-    descriptorWrite.dstBinding = bindid[i];
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pImageInfo = &imageInfos[i];
-    descriptorWrites.push_back(descriptorWrite);
+      VkWriteDescriptorSet descriptorWrite = {};
+      descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      descriptorWrite.dstSet = _descriptorSet[dsIndex];
+      descriptorWrite.dstBinding = bindid[i];
+      descriptorWrite.dstArrayElement = 0;
+      descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      descriptorWrite.descriptorCount = 1;
+      descriptorWrite.pImageInfo = &imageInfos[i];
+      descriptorWrites.push_back(descriptorWrite);
+    }
   }
 
   vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -927,6 +1122,25 @@ VdpPipelinePerLine::VdpPipelinePerLine(VIDVulkan * vulkan, TextureManager * tm, 
   )S" +
     fragFuncCheckWindow
     + R"s(
+
+      int getLinePosInTexture( int dir ){      
+        switch(dir){
+          case 1: // 90
+            return int((1.0 - v_texcoord.x) * u_tw);
+            break;
+          case 2: // 270
+            return int(v_texcoord.x * u_tw);
+            break;
+          case 3: // 180
+            return int((1.0 - v_texcoord.y) * u_th);
+            break;
+          default:
+            return int(u_th * v_texcoord.y);
+            break;
+        }
+        return 0;
+      }
+
   void main() {
     checkWindow();
     ivec2 addr;
@@ -934,7 +1148,7 @@ VdpPipelinePerLine::VdpPipelinePerLine(VIDVulkan * vulkan, TextureManager * tm, 
     addr.y = int(u_th * v_texcoord.y);
     vec4 txcol = texelFetch( s_texture, addr,0 ) ;
     if(txcol.a > 0.0){
-      addr.x = int(u_th * v_texcoord.y);
+      addr.x = getLinePosInTexture(u_dir);
       addr.y = 0;
       if(u_specialColorFunc == 0 ) {
           txcol.a = texelFetch( s_line, addr,0 ).a;
@@ -1022,6 +1236,25 @@ VdpBack::VdpBack(
     layout(location = 0) in vec4 v_texcoord;
     layout(binding = 1) uniform highp sampler2D s_texture;
     layout(location = 0) out vec4 fragColor;
+
+      int getLinePos( int dir ){      
+        switch(dir){
+          case 1: // 90
+            return int((u_vheight - gl_FragCoord.x-u_viewport_offset) * u_emu_height);
+            break;
+          case 2: // 270
+            return int((gl_FragCoord.x-u_viewport_offset) * u_emu_height);
+            break;
+          case 3: // 180
+            return int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);
+            break;
+          default:
+            return int((gl_FragCoord.y-u_viewport_offset) * u_emu_height);
+            break;
+        }
+        return 0;
+      }
+
   void main() {
     if( u_blendmode == 0 ){
       fragColor = texelFetch( s_texture, ivec2(0,0) ,0 );
@@ -1029,7 +1262,7 @@ VdpBack::VdpBack(
     }else{
       ivec2 linepos;
       linepos.y = 0; 
-      linepos.x = int( (gl_FragCoord.y-u_viewport_offset) * u_emu_height);
+      linepos.x = getLinePos(u_dir);
       fragColor = texelFetch( s_texture, linepos,0 );
       return;
     }
@@ -1070,7 +1303,7 @@ VdpPipelineCram::VdpPipelineCram(
     layout(binding = 2) uniform highp sampler2D s_color;
     layout(binding = 4) uniform highp sampler2D windowSampler;
     layout(location = 0) out vec4 fragColor;
-    layout(location = 1) out float fargDepth;
+    //layout(location = 1) out float fargDepth;
   )S" +
     fragFuncCheckWindow
     + R"s(
@@ -1106,7 +1339,7 @@ VdpPipelinePreLineAlphaCram::VdpPipelinePreLineAlphaCram(
     layout(binding = 1) uniform highp sampler2D s_texture;
     layout(binding = 2) uniform highp sampler2D s_color;
     layout(binding = 3) uniform highp sampler2D s_line;
-    layout(binding = 4) uniform highp sampler2D windowSampler;
+    //layout(binding = 4) uniform highp sampler2D windowSampler;
     layout(location = 0) out vec4 fragColor;
     layout(location = 1) out float fargDepth;
   )S" +
@@ -1220,10 +1453,10 @@ void VdpPipelineCramAdd::createColorAttachment(VkPipelineColorBlendAttachmentSta
   color.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
   color.blendEnable = VK_TRUE;
   color.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+  color.dstColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
   color.colorBlendOp = VK_BLEND_OP_ADD;
   color.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  color.dstAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
   color.alphaBlendOp = VK_BLEND_OP_ADD;
 }
 
@@ -1314,7 +1547,8 @@ VdpPipelineWindow::VdpPipelineWindow(int id, VIDVulkan * vulkan, TextureManager 
   layout(location = 0) out vec4 outColor;
 
   void main() {
-    outColor = vec4(float(windowBit) / 255.0 ,0.0,0.0,0.0);
+    //outColor = vec4(float(windowBit) / 255.0 ,0.0,0.0,0.0);
+    outColor = vec4(1.0,1.0,1.0,1.0);
   }
 
   )s";
@@ -1348,28 +1582,27 @@ void VdpPipelineWindow::createInputAssembly(VkPipelineInputAssemblyStateCreateIn
 
 
 void VdpPipelineWindow::createColorAttachment(VkPipelineColorBlendAttachmentState & color) {
-  color.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-  color.blendEnable = VK_TRUE;
-  color.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.colorBlendOp = VK_BLEND_OP_ADD;
-  color.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-  color.alphaBlendOp = VK_BLEND_OP_ADD;
-
+  color.colorWriteMask = 0; // VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  color.blendEnable = VK_FALSE;
 }
 
 void VdpPipelineWindow::createDpethStencil(VkPipelineDepthStencilStateCreateInfo & depthStencil) {
   depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
   depthStencil.depthTestEnable = VK_FALSE;
-  depthStencil.depthWriteEnable = VK_TRUE;
+  depthStencil.depthWriteEnable = VK_FALSE;
   depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL; // VK_COMPARE_OP_LESS;
   depthStencil.depthBoundsTestEnable = VK_FALSE;
   depthStencil.minDepthBounds = 0.0f; // Optional
   depthStencil.maxDepthBounds = 1.0f; // Optional
-  depthStencil.stencilTestEnable = VK_FALSE;
-  depthStencil.front = {}; // Optional
-  depthStencil.back = {}; // Optional
+  depthStencil.stencilTestEnable = VK_TRUE;
+  depthStencil.front.compareOp = VK_COMPARE_OP_ALWAYS;
+  depthStencil.front.failOp = VK_STENCIL_OP_REPLACE;
+  depthStencil.front.depthFailOp = VK_STENCIL_OP_REPLACE;
+  depthStencil.front.passOp = VK_STENCIL_OP_REPLACE;
+  depthStencil.front.compareMask = this->id;
+  depthStencil.front.writeMask = this->id;
+  depthStencil.front.reference = this->id;
+  depthStencil.back = depthStencil.front;
 }
 
 
@@ -1753,6 +1986,8 @@ VDP1HalfLuminance::VDP1HalfLuminance(VIDVulkan * vulkan, TextureManager * tm, Ve
 
 
   fragShaderName = R"S(
+    precision highp float;
+    precision highp sampler2D;
     layout(binding = 0) uniform UniformBufferObject {
        mat4 u_mvpMatrix;
        vec2 u_texsize;
@@ -1803,6 +2038,8 @@ VDP1Shadow::VDP1Shadow(VIDVulkan * vulkan, TextureManager * tm, VertexManager * 
   bindid.push_back(bindIdFbo);
 
   fragShaderName = R"S(
+    precision highp float;
+    precision highp sampler2D;
     layout(binding = 0) uniform UniformBufferObject {
        mat4 u_mvpMatrix;
        vec2 u_texsize;
@@ -1857,6 +2094,8 @@ VDP1GlowShadingAndHalfTransOperation::VDP1GlowShadingAndHalfTransOperation(VIDVu
   bindid.push_back(bindIdFbo);
 
   fragShaderName = R"S(
+    precision highp float;
+    precision highp sampler2D;
     layout(binding = 0) uniform UniformBufferObject {
        mat4 u_mvpMatrix;
        vec2 u_texsize;
@@ -1919,58 +2158,44 @@ VdpRbgCramLinePipeline::VdpRbgCramLinePipeline(VIDVulkan * vulkan, TextureManage
   prgid = PG_VDP2_RBG_CRAM_LINE;
 
   fragShaderName =
-    vdp2Uniform +
-    "layout(location = 0) in vec4 v_texcoord;\n"
-    "layout(binding = 1) uniform highp sampler2D s_texture;\n"
-    "layout(binding = 2) uniform highp sampler2D s_color;\n"
-    "layout(binding = 3) uniform highp sampler2D s_line_texture;\n"
-    "layout(binding = 4) uniform highp sampler2D windowSampler;"
-    "layout (location = 0) out vec4 fragColor;\n"
-    "void main()\n"
-    "{\n"
-    "    if (winmode != -1) { \n"
-    "      vec2 winaddr = vec2(gl_FragCoord.x / float(windowWidth), gl_FragCoord.y / float(windowHeight)); \n"
-    "      vec4 wintexture = texture(windowSampler, winaddr); \n"
-    "      int winvalue = int(wintexture.r * 255.0); \n"
-    "      // and \n"
-    "      if (winmode == 0) {    \n"
-    "       if ((winvalue & winmask) != winflag) { \n"
-    "         discard; \n"
-    "       } \n"
-    "       // or \n"
-    "     } \n"
-    "     else { \n"
-    "       if ((winvalue & winmask) == winflag) { \n"
-    "         discard; \n"
-    "       } \n"
-    "     } \n"
-    "   } \n"
-    "  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );         \n"
-    "  if(txindex.a > 0.0) {\n"
-    "    highp int highg = int(txindex.g*255.0);"
-    "    vec4 txcol = texelFetch( s_color, ivec2( ((highg&0x7F)<<8) | int(txindex.r*255.0) , 0 ) , 0 );\n"
-    "    txcol.a = txindex.a; \n"
-    "    if( (highg & 0x80)  != 0) {\n"
-    "      int coef = int(txindex.b*255.0);\n"
-    "      vec4 linecol;\n"
-    "      vec4 lineindex = texelFetch( s_line_texture,  ivec2( int(v_texcoord.z),int(v_texcoord.w))  ,0 );\n"
-    "      int lineparam = ((int(lineindex.g*255.0) & 0x7F)<<8) | int(lineindex.r*255.0); \n"
-    "      if( (coef & 0x80) != 0 ){\n"
-    "        int caddr = (lineparam&0x780) | (coef&0x7F);\n "
-    "        linecol = texelFetch( s_color, ivec2( caddr,0  ) , 0 );\n"
-    "      }else{\n"
-    "        linecol = texelFetch( s_color, ivec2( lineparam , 0 ) , 0 );\n"
-    "      }\n"
-    "      if( u_blendmode == 1 ) { \n"
-    "        txcol = mix(txcol,  linecol , 1.0-txindex.a); txcol.a = txindex.a + 0.25;\n"
-    "      }else if( u_blendmode == 2 ) {\n"
-    "        txcol = clamp(txcol+linecol,vec4(0.0),vec4(1.0)); txcol.a = txindex.a; \n"
-    "      }\n"
-    "    }\n"
-    "    fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n"
-    "  }else \n"
-    "    discard;\n"
-    "}\n";
-
+    vdp2Uniform + R"S(
+    layout(location = 0) in vec4 v_texcoord;
+    layout(binding = 1) uniform highp sampler2D s_texture;
+    layout(binding = 2) uniform highp sampler2D s_color;
+    layout(binding = 3) uniform highp sampler2D s_line_texture;
+    layout(binding = 4) uniform highp sampler2D windowSampler;
+    layout (location = 0) out vec4 fragColor;
+    )S" + fragFuncCheckWindow +
+    
+    R"S(
+    void main(){
+      checkWindow();
+      vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );
+      if(txindex.a > 0.0) {
+        highp int highg = int(txindex.g*255.0);
+        vec4 txcol = texelFetch( s_color, ivec2( ((highg&0x7F)<<8) | int(txindex.r*255.0) , 0 ) , 0 );
+        txcol.a = txindex.a;
+        if( (highg & 0x80)  != 0) {
+          int coef = int(txindex.b*255.0);
+          vec4 linecol;
+          vec4 lineindex = texelFetch( s_line_texture,  ivec2( int(v_texcoord.z),int(v_texcoord.w))  ,0 );
+          int lineparam = ((int(lineindex.g*255.0) & 0x7F)<<8) | int(lineindex.r*255.0);
+          if( (coef & 0x80) != 0 ){
+            int caddr = (lineparam&0x780) | (coef&0x7F);
+            linecol = texelFetch( s_color, ivec2( caddr,0  ) , 0 );
+          }else{
+            linecol = texelFetch( s_color, ivec2( lineparam , 0 ) , 0 );
+          }
+          if( u_blendmode == 1 ) { 
+            txcol = mix(txcol,  linecol , 1.0-txindex.a); txcol.a = txindex.a + 0.25;
+          }else if( u_blendmode == 2 ) {
+            txcol = clamp(txcol+linecol,vec4(0.0),vec4(1.0)); txcol.a = txindex.a;
+          }
+        }
+        fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));
+      }else 
+        discard;
+    }
+    )S";
 }
 

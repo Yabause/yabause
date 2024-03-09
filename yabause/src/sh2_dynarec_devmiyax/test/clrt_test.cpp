@@ -19,6 +19,7 @@ class ClrtTest : public ::testing::Test {
   }
 
   virtual ~ClrtTest() {
+    freeMemory();
     delete pctx_;    
   }   
 

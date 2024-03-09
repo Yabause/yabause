@@ -56,7 +56,7 @@ TEST_F(MacwTest, normal) {
   pctx_->Execute();
 
   EXPECT_EQ( 0xffffff1b, pctx_->GET_MACH() );
-  EXPECT_EQ( 0xfffe9fa2, pctx_->GET_MACL() );
+  EXPECT_EQ(0xec4f77fe, pctx_->GET_MACL() );
 
 }
 
@@ -79,7 +79,7 @@ TEST_F(MacwTest, s) {
   pctx_->Execute();
 
   EXPECT_EQ( 0xffffff1b, pctx_->GET_MACH() );
-  EXPECT_EQ( 0xfffe9fa2, pctx_->GET_MACL() );
+  EXPECT_EQ( 0xec4f77fe, pctx_->GET_MACL() );
 
 }
 

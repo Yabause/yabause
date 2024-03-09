@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <array>
 #include <chrono>
 
-
+#define MAX_COMMANDBUFFER_COUNT (4)
 
 struct Vertex {
   glm::vec4 pos;
@@ -121,6 +121,10 @@ public:
     return _renderer->GetVulkanComputeQueueFamilyIndex();
   }
 
+  const VkQueue getVulkanComputeQueue() {
+    return _renderer->GetVulkanQueue();
+  }
+
   const uint32_t getFrameBufferCount() {
     return _renderer->getWindow()->GetFrameBufferCount();
   }
@@ -128,10 +132,13 @@ public:
   const VkQueue getVulkanQueue() {
     return _renderer->GetVulkanQueue();
   }
-
-  const VkCommandPool getCommandPool() {
-    return _command_pool;
+  const int getPreTransFlag() {
+    return _renderer->getWindow()->GetPreTransFlag();
   }
+
+  //const VkCommandPool getCommandPool() {
+  //  return _command_pool;
+  //}
 
   VkShaderModule createShaderModule(const std::vector<char>& code);
 
@@ -160,10 +167,13 @@ protected:
 
   Renderer * _renderer;
 
+
   void createCommandPool();
-  VkCommandPool _command_pool = VK_NULL_HANDLE;
-  VkSemaphore _render_complete_semaphore = VK_NULL_HANDLE;
+  VkCommandPool _command_pool;
   std::vector<VkCommandBuffer> _command_buffers;
+  std::vector<VkFence> commandFence;
+
+  VkSemaphore _render_complete_semaphore = VK_NULL_HANDLE;
   uint32_t _current_frame = 0;
 
   VkImage dstScreenImage = VK_NULL_HANDLE;

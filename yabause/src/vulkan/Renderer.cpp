@@ -43,19 +43,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "VulkanTools.h"
 
+#define ENABLE_VULKAN_DEBUG 0
+
 Renderer::Renderer()
 {
   LOGI("InitPlatform in");
   InitPlatform();
   LOGI("InitPlatform out");
   _SetupLayersAndExtensions();
-#if 0 //_DEBUG
+#if  ENABLE_VULKAN_DEBUG //_DEBUG
   _SetupDebug();
 #endif
   LOGI("_InitInstance in");
   _InitInstance();
   LOGI("_InitInstance out");
-#if 0 //_DEBUG
+#if ENABLE_VULKAN_DEBUG //_DEBUG
   _InitDebug();
 #endif
   LOGI("_InitDevice in");
@@ -68,7 +70,7 @@ Renderer::~Renderer()
   delete _window;
 
   _DeInitDevice();
-#if 0 //_DEBUG
+#if ENABLE_VULKAN_DEBUG //_DEBUG
   _DeInitDebug();
 #endif
   _DeInitInstance();
@@ -124,6 +126,12 @@ const VkQueue Renderer::GetVulkanQueue() const
 {
   return _queue;
 }
+
+const VkQueue Renderer::GetComputeQueue() const
+{
+  return _queueCompute;
+}
+
 
 const uint32_t Renderer::GetVulkanGraphicsQueueFamilyIndex() const
 {
@@ -230,7 +238,7 @@ void Renderer::_InitDevice()
 
   if (_compute_family_index == _graphics_family_index) {
 
-    float queue_priorities[]{ 0.0f };
+    float queue_priorities[]{ 0.5f, 1.0f };
     VkDeviceQueueCreateInfo device_queue_create_info{};
     device_queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     device_queue_create_info.queueFamilyIndex = _graphics_family_index;
@@ -244,6 +252,7 @@ void Renderer::_InitDevice()
       features.tessellationShader = VK_TRUE;
       features.geometryShader = VK_TRUE;
     }
+    //features.robustBufferAccess = VK_TRUE;
 
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -254,6 +263,9 @@ void Renderer::_InitDevice()
     device_create_info.ppEnabledExtensionNames = _device_extensions.data();
 
     ErrorCheck(vkCreateDevice(_gpu, &device_create_info, nullptr, &_device));
+    vkGetDeviceQueue(_device, _graphics_family_index, 0, &_queue);
+    vkGetDeviceQueue(_device, _graphics_family_index, 1, &_queueCompute);
+
 
   }
   else {
@@ -278,6 +290,7 @@ void Renderer::_InitDevice()
       features.tessellationShader = VK_TRUE;
       features.geometryShader = VK_TRUE;
     }
+    //features.robustBufferAccess = VK_TRUE;
 
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -288,10 +301,12 @@ void Renderer::_InitDevice()
     device_create_info.ppEnabledExtensionNames = _device_extensions.data();
 
     ErrorCheck(vkCreateDevice(_gpu, &device_create_info, nullptr, &_device));
+    vkGetDeviceQueue(_device, _graphics_family_index, 0, &_queue);
+    vkGetDeviceQueue(_device, _compute_family_index, 0, &_queueCompute);
   }
 
 
-  vkGetDeviceQueue(_device, _graphics_family_index, 0, &_queue);
+  
 }
 
 void Renderer::_DeInitDevice()
@@ -301,6 +316,8 @@ void Renderer::_DeInitDevice()
 }
 
 #if BUILD_ENABLE_VULKAN_DEBUG
+
+void backtraceToLogcat();
 
 VKAPI_ATTR VkBool32 VKAPI_CALL
 VulkanDebugCallback(
@@ -337,6 +354,11 @@ VulkanDebugCallback(
 
 #if defined(ANDROID)
   LOGE("%s", stream.str().c_str());
+  backtraceToLogcat();
+
+  if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
+    abort();
+  }
 #endif
 
 #if defined( _WIN32 )

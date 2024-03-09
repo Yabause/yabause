@@ -53,6 +53,8 @@ yabsys_struct yabsys;
 
 int initMemory() {
 
+  CurrentSH2 = (SH2_struct *)calloc(1, sizeof(SH2_struct));
+
   if ((BiosRom = (u8*)calloc(0x80000, sizeof(u8))) == NULL) {
     return -1;
   }
@@ -67,13 +69,59 @@ int initMemory() {
   return 0;
 }
 
+int freeMemory() {
+  free(CurrentSH2);
+  free(BiosRom);
+  free(HighWram);
+  free(LowWram);
+  return 0;
+}
+
 void setromlock( bool lock ){
   romlock = lock;
 }
 
+
 extern "C" {
 
-u8 FASTCALL MappedMemoryReadByte(u32 addr) {
+  const char * ScuGetVectorString(u32 vec) {
+    switch (vec) {
+    case 0x40:
+      return "VBlankIN";
+      break;
+    case 0x41:
+      return "VBlankOUT";
+      break;
+    case 0x42:
+      return "HBlankIN";
+      break;
+    case 0x43:
+      return "Timer0";
+      break;
+    case 0x44:
+      return "Timer1";
+      break;
+    case 0x45:
+      return "DSP End";
+      break;
+    case 0x47:
+      return "SmpcINTBACK";
+      break;
+    case 0x49:
+      return "DMA2 End";
+    case 0x4A:
+      return "DMA1 End";
+    case 0x4B:
+      return "DMA0 End";
+    case 0x4d:
+      return "DrawEnd";
+      break;
+
+    }
+    return "Unknown";
+  }
+
+u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle) {
 
   switch (addr & 0x0FF00000)
   {
@@ -99,7 +147,7 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr) {
   return 0;
 }
 
-u16 FASTCALL MappedMemoryReadWord(u32 addr) {
+u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle) {
   switch (addr & 0x0FF00000)
   {
     // ROM
@@ -126,7 +174,7 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr) {
 }
 
 
-u32 FASTCALL MappedMemoryReadLong(u32 addr) {
+u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle) {
   switch (addr & 0x0FF00000)
   {
     // ROM
@@ -152,7 +200,7 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr) {
   return 0;
 }
 
-void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val) {
+void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle) {
   switch (addr & 0x0FF00000)
   {
     // ROM
@@ -177,7 +225,7 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val) {
 
 }
 
-void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val) {
+void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle) {
   switch (addr & 0x0FF00000)
   {
     // ROM
@@ -202,7 +250,7 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val) {
 
 }
 
-void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val) {
+void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val, u32 * cycle) {
   switch (addr & 0x0FF00000)
   {
     // ROM
@@ -225,6 +273,14 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val) {
     break;
   }
 
+}
+
+u16 FASTCALL MappedMemoryReadInst(u32 addr, u32 * cycle) {
+  return MappedMemoryReadWord(addr, cycle);
+}
+
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr, u32 * cycle) {
+  return MappedMemoryReadLong(addr, cycle);
 }
 
 void SH2HandleBreakpoints(SH2_struct *context) {

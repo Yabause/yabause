@@ -2902,20 +2902,24 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
   return 0;
 }
 
-
-extern float vdp1wratio;
-extern float vdp1hratio;
-
 //////////////////////////////////////////////////////////////////////////////
-void YglEraseWriteVDP1(void) {
+void YglEraseWriteVDP1( int isDraw ) {
 
   u16 color;
   int priority;
   u32 alpha = 0;
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
 
+  int target = 0;
+  if (isDraw) {
+    target = _Ygl->vdp1FrameBuff[_Ygl->drawframe];
+  }
+  else {
+    target = _Ygl->vdp1FrameBuff[_Ygl->readframe];
+  }
+
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target, 0);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil);
 
@@ -2990,7 +2994,7 @@ void YglEraseWriteVDP1(void) {
 
   glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
+  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", target);
 
   if( _Ygl->bWriteCpuFrameBuffer ){
     memset(_Ygl->CpuWriteFrameBuffer,0xFF, _Ygl->rwidth * _Ygl->rheight * 4);
@@ -3356,6 +3360,7 @@ void YglUpdateVdp2Reg() {
     _Ygl->fbu_.u_sprite_window = 0;  
   }
   
+  _Ygl->fbu_.u_dir = 0;
 
   if (_Ygl->framebuffer_uniform_id_ == 0) {
     glGenBuffers(1, &_Ygl->framebuffer_uniform_id_);

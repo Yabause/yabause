@@ -24,6 +24,29 @@ add_subdirectory(nanogui-sdl)
 #include( ../glfw/external_zlib.cmake )
 include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libpng.cmake )
 
+
+set( sqlite3_source_path ${CMAKE_CURRENT_BINARY_DIR}/external/sqlite3/src/external_sqlite3/ )
+set( sqlite3_cmake_file_path ${sqlite3_source_path}/CMakeLists.txt )
+
+ExternalProject_Add( external_sqlite3
+  PREFIX            ${CMAKE_CURRENT_BINARY_DIR}/external/sqlite3
+  INSTALL_DIR       ${CMAKE_CURRENT_BINARY_DIR}
+  # http://www.sqlite.org/download.html
+  URL               https://www.sqlite.org/2022/sqlite-amalgamation-3400000.zip
+##  URL_HASH          SHA1=cee1d63a9ae8d8f5948c12682c5d746b72363aaf
+  PATCH_COMMAND
+    COMMAND echo cmake_minimum_required( VERSION 3.2 ) > ${sqlite3_cmake_file_path}
+    COMMAND echo project( sqlite3_project ) >> ${sqlite3_cmake_file_path}
+    COMMAND echo find_package( Threads ) >> ${sqlite3_cmake_file_path}
+    COMMAND echo add_library( sqlite3 sqlite3.c ) >> ${sqlite3_cmake_file_path}
+    COMMAND echo install( TARGETS sqlite3 DESTINATION lib ) >> ${sqlite3_cmake_file_path}
+    COMMAND echo install( FILES sqlite3.h DESTINATION include ) >> ${sqlite3_cmake_file_path}
+  CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}
+                    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                    -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+                    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+)
+
 #------------------------------------------------------------------------------
 # nlohmann/json
 #  * sets EXTERNAL_JSON_INCLUDE_DIR 
@@ -50,7 +73,7 @@ ExternalProject_Add(
 # set include directory
 set(EXTERNAL_JSON_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/Json/src/Json/single_include")
 
-set(PORT_INCLUDE_DIRS ${EXTERNAL_JSON_INCLUDE_DIR} ${SDL2_INCLUDE_DIR} ${png_INCLUDE_DIR} ${zlib_INCLUDE_DIR} )
+set(PORT_INCLUDE_DIRS ${EXTERNAL_JSON_INCLUDE_DIR} ${SDL2_INCLUDE_DIR} ${png_INCLUDE_DIR} ${zlib_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include )
 set(PORT_LIBRARIES ${SDL2_LIBRARY} ${OPENGLES2_LIBRARIES} ${png_STATIC_LIBRARIES} ${zlib_STATIC_LIBRARIES} )
 
 message("Nlohmann/json dir =" ${EXTERNAL_JSON_INCLUDE_DIR})
@@ -62,19 +85,56 @@ set(yabause_ra_SOURCES
 	InputConfig.h
 	InputConfig.cpp
 	MenuScreen.h
-    MenuScreen.cpp
-    Preference.h
-    Preference.cpp
-    ../about.h
-    ../about.c
+  MenuScreen.cpp
+  Preference.h
+  Preference.cpp
+  EventManager.h
+  EventManager.cpp
+  GameInfo.h
+  GameInfo.cpp
+  GameListPanel.h
+  GameListPanel.cpp
+  ../about.h
+  ../about.c
 ) 
 link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} )
-include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" )
-add_executable(yabause-retro-arena ${yabause_ra_SOURCES})
-target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui stdc++fs  ${LIBCHDR_LIBRARIES} )
+include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${sqlite3_source_path} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" "win/include" )
+set(APP_ICON_RESOURCE_WINDOWS application.rc)
+add_executable(yabause-retro-arena WIN32 ${yabause_ra_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
+
+
+# OpenSSL for https
+if(WIN32) 
+
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/include )
+
+# 64bit
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x64/libssl.lib)
+	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x64/libcrypto.lib)
+else()
+	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x86/libssl-1_1.lib)
+	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x86/libcrypto-1_1.lib)
+endif()
+
+else()
+	
+  find_package(OpenSSL REQUIRED) 
+	if( OpenSSL_FOUND )
+		include_directories(${OPENSSL_INCLUDE_DIRS})
+		link_directories(${OPENSSL_LIBRARIES})
+		message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+		target_link_libraries(yabause-retro-arena ${OPENSSL_LIBRARIES})
+  endif()
+
+endif()
+
+
+target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${zlib_STATIC_LIBRARIES} )
-add_dependencies(yabause-retro-arena Json png zlib libchd )
+target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_BINARY_DIR}/lib/sqlite3.lib )
+add_dependencies(yabause-retro-arena Json png zlib libchd nanogui external_sqlite3)
 yab_port_success(yabause-retro-arena)
 set_target_properties(yabause-retro-arena PROPERTIES OUTPUT_NAME yabasanshiro)
 

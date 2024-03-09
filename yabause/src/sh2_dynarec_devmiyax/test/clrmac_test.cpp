@@ -19,6 +19,7 @@ class ClrmacTest : public ::testing::Test {
   }
 
   virtual ~ClrmacTest() {
+    freeMemory();
     delete pctx_;    
   }   
 

@@ -534,6 +534,9 @@ extern "C" void * VdpProc( void *arg ){
     case VDPEV_DIRECT_DRAW:
       FrameProfileAdd("DirectDraw start");
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW(T)");
+      if (Vdp1External.manualerase == 0) {
+        VIDCore->Vdp1EraseWrite(1);
+      }
       Vdp1Draw();
       VIDCore->Vdp1DrawEnd();
       Vdp1External.frame_change_plot = 0;
@@ -732,6 +735,7 @@ void VDP2SetFrameLimit(int mode) {
     lastticks = YabauseGetTicks();
     break;
   }
+  VideoSetSetting(VDP_SETTING_FRAMELIMIT_MODE, mode);
 }
 
 void frameSkipAndLimit() {
@@ -1278,21 +1282,16 @@ void vdp2VBlankOUT(void) {
   }
 
   VIDCore->Vdp2DrawStart();
-
+  
   // VBlank Erase
-  if (Vdp1External.vbalnk_erase ||  // VBlank Erace (VBE1) 
-    ((Vdp1Regs->FBCR & 2) == 0)){  // One cycle mode
-    VIDCore->Vdp1EraseWrite();
+  if (Vdp1External.vbalnk_erase) {
+    VIDCore->Vdp1EraseWrite(0);
   }
 
   // Frame Change
   if (Vdp1External.swap_frame_buffer == 1)
   {
     vdp1_frame++;
-    if (Vdp1External.manualerase){  // Manual Erace (FCM1 FCT0) Just before frame changing
-      VIDCore->Vdp1EraseWrite();
-      Vdp1External.manualerase = 0;
-    }
 
     FRAMELOG("Vdp1FrameChange swap=%d,plot=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
     VIDCore->Vdp1FrameChange();
@@ -1302,10 +1301,18 @@ void vdp2VBlankOUT(void) {
     Vdp1Regs->EDSR >>= 1;
 #endif
 
+    if (Vdp1External.manualerase) {  // Manual Erace (FCM1 FCT0) Just before frame changing
+      VIDCore->Vdp1EraseWrite(1);
+      Vdp1External.manualerase = 0;
+    }
+
     FRAMELOG("[VDP1] Displayed framebuffer changed. EDSR=%02X", Vdp1Regs->EDSR);
 
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1External.frame_change_plot == 1 || Vdp1External.status == VDP1_STATUS_RUNNING ){
+
+      VIDCore->Vdp1EraseWrite(1);
+
       FRAMELOG("[VDP1] frame_change_plot == 1 start drawing immidiatly", Vdp1Regs->EDSR);
       LOG("[VDP1] Start Drawing");
       Vdp1Regs->addr = 0;
@@ -1418,7 +1425,7 @@ void Vdp2VBlankOUT(void) {
     *Vdp2External.perline_alpha = 0;
   }
 
-  if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){  // VBlank Erace (VBE1)
+  if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1 && (Vdp1Regs->FBCR &0x03) == 0x03 ){  // VBlank Erace (VBE1)
     Vdp1External.vbalnk_erase = 1;
   }else{
     Vdp1External.vbalnk_erase = 0;

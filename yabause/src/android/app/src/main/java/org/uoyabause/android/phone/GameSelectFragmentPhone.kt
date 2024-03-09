@@ -237,7 +237,6 @@ class GameSelectFragmentPhone : Fragment(),
         if( adHeight != 0 ) {
             onAdViewIsShown(adHeight)
         }
-
         return rootView
     }
 
@@ -658,6 +657,8 @@ class GameSelectFragmentPhone : Fragment(),
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         drawerToggle.onConfigurationChanged(newConfig)
+        tabPageAdapter.setGameList(gameListPages)
+        tabPageAdapter.notifyDataSetChanged()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean { // Pass the event to ActionBarDrawerToggle, if it returns

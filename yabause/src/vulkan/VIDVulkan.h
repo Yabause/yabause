@@ -47,15 +47,14 @@ class WindowRenderer;
 
 #define ATLAS_BIAS (0.025f)
 
-
 struct UniformBufferObject {
   glm::mat4 mvp;
   glm::vec4 color_offset;
   int blendmode;
-  int offsetx;
-  int offsety;
-  int windowWidth;
-  int windowHeight;
+  float offsetx;
+  float offsety;
+  float windowWidth;
+  float windowHeight;
   int winmask;
   int winflag;
   int winmode;
@@ -68,6 +67,7 @@ struct UniformBufferObject {
   int u_mosaic_y;
   int specialPriority;
   int u_specialColorFunc;
+  int u_dir;
 };
 
 class DynamicTexture {
@@ -128,18 +128,23 @@ public:
   void SetFilterMode(int type);
   void Sync();
   void Vdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
-  void Vdp1EraseWrite(void);
+  void Vdp1EraseWrite(int isDraw);
   void Vdp1FrameChange(void);
   void SetSettingValue(int type, int value);
   void GetNativeResolution(int *width, int *height, int * interlace);
   void Vdp2DispOff(void);
   void genLineinfo(vdp2draw_struct *info);
+  void getScreenshot(void ** outbuf, int & width, int & height);
 
   int genPolygon(
     VdpPipeline ** pipleLine,
     vdp2draw_struct * input,
     CharTexture * output,
-    float * colors, TextureCache * c, int cash_flg);
+    float * colors, 
+	TextureCache * c, 
+	int cash_flg,
+	int isOffset
+  );
 
   void onUpdateColorRamWord(u32 addr);
 
@@ -197,6 +202,12 @@ protected:
   uint64_t frameCount;
   POLYGONMODE polygonMode;
   int rebuildPipelines = 0;
+  int frameLimitMode = 0;
+  int rebuildSwapChain = 0;
+
+  int getCurrentCommandIndex(){
+    return frameCount & (MAX_COMMANDBUFFER_COUNT-1);
+  }
 
   VdpPipelineFactory * pipleLineFactory;
 
@@ -331,7 +342,7 @@ protected:
 
   void generateSubRenderTarget(int width, int height);
   void freeSubRenderTarget();
-  void blitSubRenderTarget(VkCommandBuffer commandBuffer);
+  void blitSubRenderTarget(VkCommandBuffer commandBuffer, const glm::vec4 & viewportData );
 
 
   struct OffscreenPass {
@@ -344,6 +355,7 @@ protected:
     VkRenderPass renderPass = VK_NULL_HANDLE;
     VkSampler sampler = VK_NULL_HANDLE;
     VkDescriptorImageInfo descriptor;
+    FrameBufferAttachment depth;
   };
 
   OffscreenPass offscreenPass;
@@ -361,9 +373,9 @@ protected:
 
   void generateOffscreenPath(int width, int height);
   void generateOffscreenRenderer();
-  void renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeline * render);
-  void renderEffectToMainTarget(VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, int mode);
-  void renderWithLineEffectToMainTarget(VdpPipeline * p, VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, VkImageView lineinfo);
+  void renderToOffecreenTarget(VkCommandBuffer commandBuffer, VdpPipeline * render,int ofIndex);
+  void renderEffectToMainTarget(VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, int mode, const glm::vec4 & viewportData, int ofIndex);
+  void renderWithLineEffectToMainTarget(VdpPipeline * p, VkCommandBuffer commandBuffer, const UniformBufferObject & ubo, VkImageView lineinfo, const glm::vec4 & viewportData, int ofIndex );
   void deleteOfscreenPath();
   int checkCharAccessPenalty(int char_access, int ptn_access);
 

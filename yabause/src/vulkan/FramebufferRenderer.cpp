@@ -90,56 +90,57 @@ void FramebufferRenderer::setupShaders() {
   //compileShader(Yglprg_vdp2_drawfb_line_blend_fv, "line_blend", SRC_ALPHA);
   //compileShader(Yglprg_vdp2_drawfb_line_add_fv, "line_add", SRC_ALPHA);
 
+#if 0
   string a;
 
   a = string(Yglprg_vdp2_drawfb_cram_less_line_dest_alpha_fv) + string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
-  compileShader(a.c_str(), "less_destalpha_line", SRC_ALPHA);
+  compileShader(a.c_str(), "less_destalpha_line", SRC_ALPHA, 0);
 
   a = string(Yglprg_vdp2_drawfb_cram_equal_line_dest_alpha_fv) + string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
-  compileShader(a.c_str(), "equal_destalpha_line", SRC_ALPHA);
+  compileShader(a.c_str(), "equal_destalpha_line", SRC_ALPHA, 0);
 
   a = string(Yglprg_vdp2_drawfb_cram_more_line_dest_alpha_fv) + string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
-  compileShader(a.c_str(), "more_destalpha_line", SRC_ALPHA);
+  compileShader(a.c_str(), "more_destalpha_line", SRC_ALPHA, 0);
 
   a = string(Yglprg_vdp2_drawfb_cram_msb_line_dest_alpha_fv) + string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
-  compileShader(a.c_str(), "msb_destalpha_line", SRC_ALPHA);
+  compileShader(a.c_str(), "msb_destalpha_line", SRC_ALPHA, 0);
 
   a = string(Yglprg_vdp2_drawfb_cram_less_color_col_f) + string(Yglprg_vdp2_drawfb_line_blend_fv);
-  compileShader(a.c_str(), "less_color_col_line", NONE);
+  compileShader(a.c_str(), "less_color_col_line", NONE, 0);
 
   a = string(Yglprg_vdp2_drawfb_cram_equal_color_col_f) + string(Yglprg_vdp2_drawfb_line_blend_fv);
-  compileShader(a.c_str(), "equal_color_col_line", NONE);
+  compileShader(a.c_str(), "equal_color_col_line", NONE, 0);
 
   a = string(Yglprg_vdp2_drawfb_cram_more_color_col_f) + string(Yglprg_vdp2_drawfb_line_blend_fv);
-  compileShader(a.c_str(), "more_color_col_line", NONE);
+  compileShader(a.c_str(), "more_color_col_line", NONE, 0);
 
   a = string(Yglprg_vdp2_drawfb_cram_msb_color_col_f) + string(Yglprg_vdp2_drawfb_line_blend_fv);
-  compileShader(a.c_str(), "msb_color_col_line", NONE);
+  compileShader(a.c_str(), "msb_color_col_line", NONE, 0);
 
   a = string(Yglprg_vdp2_drawfb_cram_less_color_add_f) + string(Yglprg_vdp2_drawfb_line_add_fv);
-  compileShader(a.c_str(), "less_color_add_line", NONE);
+  compileShader(a.c_str(), "less_color_add_line", NONE, 0);
 
   a = string(Yglprg_vdp2_drawfb_cram_equal_color_add_f) + string(Yglprg_vdp2_drawfb_line_add_fv);
-  compileShader(a.c_str(), "equal_color_add_line", NONE);
+  compileShader(a.c_str(), "equal_color_add_line", NONE, 0);
 
   a = string(Yglprg_vdp2_drawfb_cram_more_color_add_f) + string(Yglprg_vdp2_drawfb_line_add_fv);
-  compileShader(a.c_str(), "more_color_add_line", NONE);
+  compileShader(a.c_str(), "more_color_add_line", NONE, 0);
 
   a = string(Yglprg_vdp2_drawfb_cram_msb_color_add_f) + string(Yglprg_vdp2_drawfb_line_add_fv);
-  compileShader(a.c_str(), "msb_color_add_line", NONE);
+  compileShader(a.c_str(), "msb_color_add_line", NONE, 0);
 
-#if 0
-  compileShader(Yglprg_vdp2_drawfb_cram_no_color_col_f, "hblank", NONE);
-  compileShader(Yglprg_vdp2_drawfb_cram_destalpha_col_hblank_f, "hblank_destalpha", NONE);
-  compileShader(Yglprg_vdp2_drawfb_cram_less_color_col_hblank_f, "less_color_col_hblank", NONE);
-  compileShader(Yglprg_vdp2_drawfb_cram_equal_color_col_hblank_f, "equal_color_col_hblank", NONE);
-  compileShader(Yglprg_vdp2_drawfb_cram_more_color_col_hblank_f, "equal_color_col_hblank", NONE);
-  compileShader(Yglprg_vdp2_drawfb_cram_msb_color_col_hblank_f, "msb_color_col_hblank", NONE);
-  compileShader(Yglprg_vdp2_drawfb_cram_less_color_add_f, "less_add_hblank", NONE);
-  compileShader(Yglprg_vdp2_drawfb_cram_equal_color_add_f, "equal_add_hblank", NONE);
-  compileShader(Yglprg_vdp2_drawfb_cram_more_color_add_f, "more_add_hblank", NONE);
-  compileShader(Yglprg_vdp2_drawfb_cram_msb_color_add_f, "msb_add_hblank", NONE);
-#endif  
+
+  compileShader(Yglprg_vdp2_drawfb_cram_no_color_col_f, "hblank", NONE, 0);
+  compileShader(Yglprg_vdp2_drawfb_cram_destalpha_col_hblank_f, "hblank_destalpha", NONE, 0);
+  compileShader(Yglprg_vdp2_drawfb_cram_less_color_col_hblank_f, "less_color_col_hblank", NONE, 0);
+  compileShader(Yglprg_vdp2_drawfb_cram_equal_color_col_hblank_f, "equal_color_col_hblank", NONE, 0);
+  compileShader(Yglprg_vdp2_drawfb_cram_more_color_col_hblank_f, "equal_color_col_hblank", NONE, 0);
+  compileShader(Yglprg_vdp2_drawfb_cram_msb_color_col_hblank_f, "msb_color_col_hblank", NONE, 0);
+  compileShader(Yglprg_vdp2_drawfb_cram_less_color_add_f, "less_add_hblank", NONE, 0);
+  compileShader(Yglprg_vdp2_drawfb_cram_equal_color_add_f, "equal_add_hblank", NONE, 0);
+  compileShader(Yglprg_vdp2_drawfb_cram_more_color_add_f, "more_add_hblank", NONE, 0);
+  compileShader(Yglprg_vdp2_drawfb_cram_msb_color_add_f, "msb_add_hblank", NONE, 0);
+#endif
 
 }
 
@@ -180,6 +181,7 @@ FramebufferRenderer::FramebufferRenderer(VIDVulkan * vulkan) {
      int u_sprite_window;
      float u_from;
      float u_to;
+     int dir;
     } ubo;
 
     layout(location = 0) in vec4 a_position;
@@ -223,12 +225,32 @@ void FramebufferRenderer::setup() {
   setupShaders();
 }
 
-void FramebufferRenderer::onStartFrame(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer) {
-  renderCount = 0;
+void FramebufferRenderer::onStartFrame(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, const  vk::Viewport & viewport, int resolutionMode) {
+  //renderCount = 0;
   updateVdp2Reg(fixVdp2Regs);
   if (lineTexture != VK_NULL_HANDLE) {
     perline.update(vulkan, commandBuffer);
   }
+
+  int pretransformFlag = vulkan->getPreTransFlag();
+
+  if (resolutionMode == RES_NATIVE) {
+    if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR) {
+      ubo.dir = 1;
+    } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+      ubo.dir = 2;
+    } else if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR) {
+      ubo.dir = 3;
+    }else{
+      ubo.dir = 0;
+    }
+  }else{
+      ubo.dir = 0;
+  }
+  ubo.emu_height = (float)vulkan->vdp2height / (float)vulkan->renderHeight;
+  ubo.vheight = (float)vulkan->renderHeight;
+  ubo.viewport_offset = vulkan->originy;
+
 }
 
 void FramebufferRenderer::onEndFrame() {
@@ -369,14 +391,11 @@ void FramebufferRenderer::updateVdp2Reg(Vdp2 * fixVdp2Regs) {
   ubo.coloroffset[3] = 0.0f;
 
   // For Line Color insersion
-  ubo.emu_height = (float)vulkan->vdp2height / (float)vulkan->renderHeight;
-  ubo.vheight = (float)vulkan->renderHeight;
   ubo.color_ram_offset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
   //if (vulkan->resolutionMode == RES_NATIVE) {
   //  _Ygl->fbu_.u_viewport_offset = (float)_Ygl->originy;
   //}
   //else {
-  ubo.viewport_offset = 0.0f;
   //}
 
   // Check if transparent sprite window
@@ -390,16 +409,27 @@ void FramebufferRenderer::updateVdp2Reg(Vdp2 * fixVdp2Regs) {
     ubo.sprite_window = 0;
   }
 
-
 }
 
 
-void FramebufferRenderer::drawWithDestAlphaMode(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to) {
+void FramebufferRenderer::drawWithDestAlphaMode(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat) {
 
   const VkDevice device = vulkan->getDevice();
   glm::mat4 m4(1.0f);
-  ubo.matrix = m4;
+  ubo.matrix = m4 * pre_rotate_mat;
   VkPipeline pgid;
+
+  // Window Mode
+  int bwin0 = (Vdp2Regs->WCTLC >> 9) & 0x01;
+  int logwin0 = (Vdp2Regs->WCTLC >> 8) & 0x01;
+  int bwin1 = ((Vdp2Regs->WCTLC >> 11) & 0x01);
+  int logwin1 = ((Vdp2Regs->WCTLC >> 10) & 0x01);
+  int bwinsp = ((Vdp2Regs->WCTLC >> 13) & 0x01);
+  int logwinsp = (((Vdp2Regs->WCTLC >> 12) & 0x01) ? 0 : 1); // Invarse?
+  int winmode = (Vdp2Regs->WCTLC >> 15) & 0x01;
+
+  this->winflag = (((winmode & 0x1) << 8) | ((bwin0 & 0x1) << 3) | ((bwin1 & 0x1) << 4) | ((bwinsp & 0x1) << 5)
+    | ((logwin0 & 0x1) << 0) | ((logwin1 & 0x1) << 1) | ((logwinsp & 0x1) << 2));
 
 
   u8 *sprprilist = (u8 *)&fixVdp2Regs->PRISA;
@@ -503,16 +533,20 @@ void FramebufferRenderer::drawWithDestAlphaMode(Vdp2 * fixVdp2Regs, VkCommandBuf
     vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
     renderCount++;
+    if( renderCount >= MAX_RENDER_COUNT ){
+      renderCount = 0;
+    }
 
   }
 }
 
-void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to) {
+void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat ) {
 
   const VkDevice device = vulkan->getDevice();
 
   glm::mat4 m4(1.0f);
-  ubo.matrix = m4; // glm::ortho(0.0f, (float)352, (float)224, 0.0f, 10.0f, 0.0f);
+
+  ubo.matrix = m4 * pre_rotate_mat; // glm::ortho(0.0f, (float)352, (float)224, 0.0f, 10.0f, 0.0f);
   ubo.from = from / 10.0f;
   ubo.to = to / 10.0f;
 
@@ -533,6 +567,28 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
   const int CCRTMD = ((fixVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
   const int CCMD = ((fixVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
   const int SPLCEN = (fixVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
+
+   // Window Mode
+  int bwin0 = (Vdp2Regs->WCTLC >> 9) & 0x01;
+  int logwin0 = (Vdp2Regs->WCTLC >> 8) & 0x01;
+  int bwin1 = ((Vdp2Regs->WCTLC >> 11) & 0x01);
+  int logwin1 = ((Vdp2Regs->WCTLC >> 10) & 0x01);
+  int bwinsp = ((Vdp2Regs->WCTLC >> 13) & 0x01);
+  int logwinsp = 0; // (((Vdp2Regs->WCTLC >> 12) & 0x01) ? 0 : 1); // Invarse?
+  int winmode = (Vdp2Regs->WCTLC >> 15) & 0x01;
+
+  this->winflag = (((winmode & 0x1) << 8) | ((bwin0 & 0x1) << 3) | ((bwin1 & 0x1) << 4) | ((bwinsp & 0x1) << 5)
+    | ((logwin0 & 0x1) << 0) | ((logwin1 & 0x1) << 1) | ((logwinsp & 0x1) << 2));
+
+
+  int bwin_cc0 = (Vdp2Regs->WCTLD >> 9) & 0x01;
+  int logwin_cc0 = (Vdp2Regs->WCTLD >> 8) & 0x01;
+  int bwin_cc1 = (Vdp2Regs->WCTLD >> 11) & 0x01;
+  int logwin_cc1 = (Vdp2Regs->WCTLD >> 10) & 0x01;
+  int winmode_cc = (Vdp2Regs->WCTLD >> 15) & 0x01;
+
+
+
   int blend = 1;
   if (blend && SPCCN) {
     const int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
@@ -725,15 +781,109 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
   vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
   renderCount++;
+  if( renderCount >= MAX_RENDER_COUNT ){
+    renderCount = 0;
+  }
+
 }
 
 
-void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to) {
+void FramebufferRenderer::drawSpriteWindow(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to) {
+
+	const VkDevice device = vulkan->getDevice();
+
+	glm::mat4 m4(1.0f);
+	ubo.matrix = m4; // glm::ortho(0.0f, (float)352, (float)224, 0.0f, 10.0f, 0.0f);
+	ubo.from = from / 10.0f;
+	ubo.to = to / 10.0f;
+
+	void* data;
+	vkMapMemory(device, ubuffer[renderCount].mem, 0, sizeof(ubo), 0, &data);
+	memcpy(data, &ubo, sizeof(ubo));
+	vkUnmapMemory(device, ubuffer[renderCount].mem);
+
+
+	updateDescriptorSets(renderCount);
+
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+		_pipelineLayout, 0, 1, &_descriptorSet[this->renderCount], 0, nullptr);
+
+	const GLchar drawfb_spriteWindow_f[] =
+#if defined(_OGLES3_)
+		"#version 310 es \n"
+		"precision highp sampler2D; \n"
+		"precision highp float;\n"
+#else
+		"#version 430 \n"
+#endif
+		"layout(binding = 0) uniform vdp2regs { \n"
+		" mat4 matrix; \n"
+		" float u_pri[8]; \n"
+		" float u_alpha[8]; \n"
+		" vec4 u_coloroffset;\n"
+		" float u_cctl; \n"
+		" float u_emu_height; \n"
+		" float u_vheight; \n"
+		" int u_color_ram_offset; \n"
+		" float u_viewport_offset; \n"
+		" int u_sprite_window; \n"
+		" float u_from;\n"
+		" float u_to;\n"
+		" int dir;\n"
+		"}; \n"
+		"layout(binding = 1) uniform highp sampler2D s_vdp1FrameBuffer;\n"
+		"layout(binding = 2) uniform sampler2D s_color; \n"
+		"layout(binding = 3) uniform sampler2D s_line; \n"
+		"layout(location = 0) in vec2 v_texcoord;\n"
+		"layout(location = 0) out vec4 fragColor;\n"
+		"void main()\n"
+		"{\n"
+		"  vec2 addr = v_texcoord;\n"
+		"  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
+		"  int additional = int(fbColor.a * 255.0);\n"
+		"  if( (additional & 0x80) == 0 ){ discard; } // show? \n"
+		"  highp float depth = u_pri[ (additional&0x07) ];\n"
+		"  if( (additional & 0x40) != 0 && fbColor.b != 0.0 ){  // index color and shadow? \n"
+		"    fragColor = vec4(4.0/255.0, 0.0, 0.0, 0.0);\n"
+		"  }else{ // direct color \n"
+		"    discard;\n"
+		"  } \n"
+		"  gl_FragDepth = depth;\n"
+		"}\n";
+
+
+	//----------------------------------------------------------------------------------
+	VkPipeline pgid = findShader("spriteWindow", drawfb_spriteWindow_f, WINDOW);
+
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pgid);
+
+	VkBuffer vertexBuffers[] = { _vertexBuffer };
+	VkDeviceSize offsets[] = { 0 };
+
+	vkCmdBindVertexBuffers(commandBuffer,
+		0, 1, vertexBuffers, offsets);
+
+	vkCmdBindIndexBuffer(commandBuffer,
+		_indexBuffer,
+		0, VK_INDEX_TYPE_UINT16);
+
+	vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
+
+	renderCount++;
+	if (renderCount >= MAX_RENDER_COUNT) {
+		renderCount = 0;
+	}
+
+}
+
+
+
+void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer, int from, int to, const glm::mat4 & pre_rotate_mat) {
 
   const VkDevice device = vulkan->getDevice();
 
   glm::mat4 m4(1.0f);
-  ubo.matrix = m4; // glm::ortho(0.0f, (float)352, (float)224, 0.0f, 10.0f, 0.0f);
+  ubo.matrix = m4 * pre_rotate_mat; // glm::ortho(0.0f, (float)352, (float)224, 0.0f, 10.0f, 0.0f);
   ubo.from = from / 10.0f;
   ubo.to = to / 10.0f;
 
@@ -769,6 +919,7 @@ void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer command
     " int u_sprite_window; \n"
     " float u_from;\n"
     " float u_to;\n"
+    " int dir;\n"
     "}; \n"
     "layout(binding = 1) uniform highp sampler2D s_vdp1FrameBuffer;\n"
     "layout(binding = 2) uniform sampler2D s_color; \n"
@@ -809,6 +960,10 @@ void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer command
   vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
   renderCount++;
+  if( renderCount >= MAX_RENDER_COUNT ){
+    renderCount = 0;
+  }
+
 }
 
 
@@ -892,7 +1047,11 @@ static std::vector<char> readFile(const std::string& filename) {
   return buffer;
 }
 
-VkPipeline FramebufferRenderer::compileShader(const char * code, const char * name, enum ColorClacMode c) {
+#include <functional>
+#include <fstream>
+#include <iostream>
+
+VkPipeline FramebufferRenderer::compileShader(const char * code, const char * name, enum ColorClacMode c, uint8_t winflag) {
 
   VkDevice device = vulkan->getDevice();
 
@@ -902,6 +1061,9 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
 
   if (sname == "shadow") {
     target = string(code);
+  }
+  else if (sname == "spriteWindow" ) {
+	target = string(code);
   }
   else {
     if (sname.find("hblank") != string::npos) {
@@ -917,23 +1079,72 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
 
 
   LOGI("%s%s", "compiling: ", name);
+  std::vector<uint32_t> data;
+  std::vector<char> buffer;
+  SpvCompilationResult result;
+#if !defined(_WINDOWS)
+  std::size_t hash_value = std::hash<std::string>()(target);
+  
+  // Serach from file
+  string mempath = YuiGetShaderCachePath();
+  std::string hashval = std::to_string(hash_value);
+  string file_path = mempath + hashval + ".spv";
 
-  Compiler compiler;
-  CompileOptions options;
-  options.SetOptimizationLevel(shaderc_optimization_level_performance);
-  //options.SetOptimizationLevel(shaderc_optimization_level_zero);
-  SpvCompilationResult result = compiler.CompileGlslToSpv(
-    target,
-    shaderc_fragment_shader,
-    name,
-    options);
+  // バイナリファイルを読み込む
+  std::ifstream file(file_path, std::ios::binary);
+  if (file) {
 
-  LOGI("%s%d\n", " erros: ", (int)result.GetNumErrors());
-  if (result.GetNumErrors() != 0) {
-    LOGI("%s%s\n", "messages", result.GetErrorMessage().c_str());
-    throw std::runtime_error("failed to create shader module!");
+    // ファイルサイズを取得する
+    file.seekg(0, std::ios::end);
+    std::size_t file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // ファイルの内容を読み込む
+    buffer.resize(file_size);
+    file.read(buffer.data(), file_size);
+
+    for( int i=0; i<file_size; i+= 4 ){
+      uint32_t value = static_cast<uint32_t>(buffer[i+0])
+                   | (static_cast<uint32_t>(buffer[i+1]) << 8)
+                   | (static_cast<uint32_t>(buffer[i+2]) << 16)
+                   | (static_cast<uint32_t>(buffer[i+3]) << 24);
+      data.push_back(value);
+    }
+    file.close();
+
+  }else{
+#endif
+    Compiler compiler;
+    CompileOptions options;
+    options.SetOptimizationLevel(shaderc_optimization_level_performance);
+    //options.SetOptimizationLevel(shaderc_optimization_level_zero);
+    result = compiler.CompileGlslToSpv(
+      target,
+      shaderc_fragment_shader,
+      name,
+      options);
+
+    LOGI("%s%d\n", " erros: ", (int)result.GetNumErrors());
+    if (result.GetNumErrors() != 0) {
+		const char * msg = result.GetErrorMessage().c_str();
+      LOGE("%s%s\n", "messages", msg);
+      throw std::runtime_error("failed to create shader module!");
+    }
+    data = { result.cbegin(), result.cend() };
+#if !defined(_WINDOWS)
+    std::ofstream file(file_path, std::ios::binary);
+    if (!file) {
+        std::cerr << "Error: Failed to open file." << std::endl;
+        throw std::runtime_error("failed to create shader module!");
+    }
+
+    // データを書き込む
+    file.write((const char*)data.data(), data.size()* sizeof(uint32_t));
+
+    // ファイルを閉じる
+    file.close();
   }
-  std::vector<uint32_t> data = { result.cbegin(), result.cend() };
+#endif
 
   VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -993,6 +1204,84 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
   dynamicState.dynamicStateCount = 2; // 2;
   dynamicState.pDynamicStates = dynamicStates; // dynamicStates;
 
+  VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+  depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+  depthStencil.depthTestEnable = VK_TRUE;
+  depthStencil.depthWriteEnable = VK_TRUE;
+  depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
+  depthStencil.depthBoundsTestEnable = VK_FALSE;
+  depthStencil.minDepthBounds = 0.0f;
+  depthStencil.maxDepthBounds = 1.0f;
+
+  if (winflag == 0) {
+    depthStencil.stencilTestEnable = VK_FALSE;
+    depthStencil.front = {}; // Optional
+    depthStencil.back = {}; // Optional
+  }
+  else {
+
+    int winmode, bwin0, bwin1, bwinsp, logwin0, logwin1, logwinsp = 0;
+
+    winmode = (winflag >> 8) & 0x01;
+    bwin0 = (winflag >> 3) & 0x01;
+    bwin1 = (winflag >> 4) & 0x01;
+    bwinsp = (winflag >> 5) & 0x01;
+    logwin0 = (winflag >> 0) & 0x01;
+    logwin1 = (winflag >> 1) & 0x01;
+    logwinsp = (winflag >> 2) & 0x01;
+
+    bwin1 = bwin1 << 1;
+    logwin1 = logwin1 << 1;
+    bwinsp = bwinsp << 2;
+    logwinsp = logwinsp << 2;
+
+
+    depthStencil.stencilTestEnable = VK_TRUE;
+    depthStencil.front.passOp = VK_STENCIL_OP_KEEP;
+    depthStencil.front.failOp = VK_STENCIL_OP_KEEP;
+    depthStencil.front.depthFailOp = VK_STENCIL_OP_KEEP;
+    depthStencil.front.writeMask = 0;
+
+    int winmask = (bwin0 | bwin1 | bwinsp);
+    int winflagp = 0;
+    if (winmode == 0) { // and
+      if (bwin0)  winflagp = logwin0;
+      if (bwin1)  winflagp |= logwin1;
+      if (bwinsp) winflagp |= logwinsp;
+      depthStencil.front.compareOp = VK_COMPARE_OP_EQUAL;
+      depthStencil.front.compareMask = winmask;
+      depthStencil.front.reference = winflagp;
+    }
+    else { // or
+      winflagp = winmask;
+      if (bwin0)  winflagp &= ~logwin0;
+      if (bwin1)  winflagp &= ~logwin1;
+      if (bwinsp) winflagp &= ~logwinsp;
+      depthStencil.front.compareOp = VK_COMPARE_OP_NOT_EQUAL;
+      depthStencil.front.compareMask = winmask;
+      depthStencil.front.reference = winflagp;
+    }
+  }
+  depthStencil.back = depthStencil.front;
+
+  if (sname == "spriteWindow") {
+    depthStencil.depthTestEnable = VK_FALSE;
+    depthStencil.depthWriteEnable = VK_FALSE;
+    depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL; // VK_COMPARE_OP_LESS;
+    depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.minDepthBounds = 0.0f; // Optional
+    depthStencil.maxDepthBounds = 1.0f; // Optional
+    depthStencil.stencilTestEnable = VK_TRUE;
+    depthStencil.front.compareOp = VK_COMPARE_OP_ALWAYS;
+    depthStencil.front.failOp = VK_STENCIL_OP_REPLACE;
+    depthStencil.front.depthFailOp = VK_STENCIL_OP_REPLACE;
+    depthStencil.front.passOp = VK_STENCIL_OP_REPLACE;
+    depthStencil.front.compareMask = 4;
+    depthStencil.front.writeMask = 4;
+    depthStencil.front.reference = 4;
+    depthStencil.back = depthStencil.front;
+  }
+
   VkGraphicsPipelineCreateInfo pipelineInfo = {};
   pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipelineInfo.stageCount = 2;
@@ -1012,6 +1301,19 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
   else if (c == DST_ALPHA) {
     pipelineInfo.pColorBlendState = &colorBlendingDestAlpha;
   }
+  else if (c == WINDOW) {
+	pipelineInfo.pColorBlendState = &colorBlendingSpWindow;
+  }
+  else if (sname == "spriteWindow") {
+    spcolorBlendAttachment.colorWriteMask = 0;
+    spcolorBlendAttachment.blendEnable = VK_FALSE;
+    colorSprite.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorSprite.logicOpEnable = VK_FALSE;
+    colorSprite.logicOp = VK_LOGIC_OP_COPY; 
+    colorSprite.attachmentCount = 1;
+    colorSprite.pAttachments = &spcolorBlendAttachment;
+    pipelineInfo.pColorBlendState = &colorSprite;
+  }
   else {
     pipelineInfo.pColorBlendState = &colorBlendingNone;
   }
@@ -1027,7 +1329,11 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
     throw std::runtime_error("failed to create graphics pipeline!");
   }
 
-  pipelines[name] = graphicsPipeline;
+  string key = name;
+  key += std::to_string(c);
+  key += std::to_string(winflag);
+
+  pipelines[key] = graphicsPipeline;
 
   return graphicsPipeline;
 
@@ -1144,23 +1450,72 @@ void FramebufferRenderer::createDescriptorSets() {
     }
   }
 
-  Compiler compiler;
-  CompileOptions options;
-  options.SetOptimizationLevel(shaderc_optimization_level_performance);
-  //options.SetOptimizationLevel(shaderc_optimization_level_zero);
-  SpvCompilationResult result = compiler.CompileGlslToSpv(
-    get_shader_header() + vertexShaderName,
-    shaderc_vertex_shader,
-    "framebuffer",
-    options);
 
-  std::cout << " erros: " << result.GetNumErrors() << std::endl;
-  if (result.GetNumErrors() != 0) {
-    std::cout << "messages: " << result.GetErrorMessage() << std::endl;
-    throw std::runtime_error("failed to create shader module!");
+  std::vector<uint32_t> data;
+  std::vector<char> buffer;
+  SpvCompilationResult result;
+#if !defined(_WINDOWS)
+  std::size_t hash_value = std::hash<std::string>()(get_shader_header() + vertexShaderName);
+
+  // Serach from file
+  string mempath = YuiGetShaderCachePath();
+  std::string hashval = std::to_string(hash_value);
+  string file_path = mempath + hashval + ".spv";
+
+  // バイナリファイルを読み込む
+  std::ifstream file(file_path, std::ios::binary);
+  if (file) {
+
+    // ファイルサイズを取得する
+    file.seekg(0, std::ios::end);
+    std::size_t file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // ファイルの内容を読み込む
+    buffer.resize(file_size);
+    file.read(buffer.data(), file_size);
+
+    for( int i=0; i<file_size; i+= 4 ){
+      uint32_t value = static_cast<uint32_t>(buffer[i+0])
+                   | (static_cast<uint32_t>(buffer[i+1]) << 8)
+                   | (static_cast<uint32_t>(buffer[i+2]) << 16)
+                   | (static_cast<uint32_t>(buffer[i+3]) << 24);
+      data.push_back(value);
+    }
+    file.close();
+
+  }else{
+#endif
+    Compiler compiler;
+    CompileOptions options;
+    options.SetOptimizationLevel(shaderc_optimization_level_performance);
+    //options.SetOptimizationLevel(shaderc_optimization_level_zero);
+    result = compiler.CompileGlslToSpv(
+      get_shader_header() + vertexShaderName,
+      shaderc_vertex_shader,
+      "framebuffer",
+      options);
+
+    std::cout << " erros: " << result.GetNumErrors() << std::endl;
+    if (result.GetNumErrors() != 0) {
+      std::cout << "messages: " << result.GetErrorMessage() << std::endl;
+      throw std::runtime_error("failed to create shader module!");
+    }
+    data = { result.cbegin(), result.cend() };
+#if !defined(_WINDOWS)
+    std::ofstream file(file_path, std::ios::binary);
+    if (!file) {
+        std::cerr << "Error: Failed to open file." << std::endl;
+        throw std::runtime_error("failed to create shader module!");
+    }
+
+    // データを書き込む
+    file.write((const char*)data.data(), data.size()* sizeof(uint32_t));
+
+    // ファイルを閉じる
+    file.close();    
   }
-  std::vector<uint32_t> data = { result.cbegin(), result.cend() };
-
+#endif
   VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   createInfo.codeSize = data.size() * sizeof(uint32_t);
@@ -1356,6 +1711,25 @@ void FramebufferRenderer::createDescriptorSets() {
   colorBlendingDestAlpha.blendConstants[1] = 0.0f; // Optional
   colorBlendingDestAlpha.blendConstants[2] = 0.0f; // Optional
   colorBlendingDestAlpha.blendConstants[3] = 0.0f; // Optional
+
+  colorBlendAttachmentSpWindow.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  colorBlendAttachmentSpWindow.blendEnable = VK_TRUE;
+  colorBlendAttachmentSpWindow.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentSpWindow.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentSpWindow.colorBlendOp = VK_BLEND_OP_ADD;
+  colorBlendAttachmentSpWindow.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentSpWindow.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentSpWindow.alphaBlendOp = VK_BLEND_OP_ADD;
+
+  colorBlendingSpWindow.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+  colorBlendingSpWindow.logicOpEnable = VK_FALSE;
+  colorBlendingSpWindow.logicOp = VK_LOGIC_OP_COPY; // Optional
+  colorBlendingSpWindow.attachmentCount = 1;
+  colorBlendingSpWindow.pAttachments = &colorBlendAttachmentSpWindow;
+  colorBlendingSpWindow.blendConstants[0] = 0.0f; // Optional
+  colorBlendingSpWindow.blendConstants[1] = 0.0f; // Optional
+  colorBlendingSpWindow.blendConstants[2] = 0.0f; // Optional
+  colorBlendingSpWindow.blendConstants[3] = 0.0f; // Optional
 
 
   VkDynamicState dynamicStates[] = {

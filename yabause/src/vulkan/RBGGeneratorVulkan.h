@@ -34,6 +34,8 @@ extern "C" {
 #include "vulkan/VIDVulkan.h"
 #include "vulkan/vulkan.hpp"
 
+#define MAX_RBG_RENDER 2
+
 struct RBGUniform;
 
 class RBGGeneratorVulkan {
@@ -52,7 +54,7 @@ public:
   VkSemaphore getCompleteSemaphore() {
     if (tex_surface[0].rendered) {
       tex_surface[0].rendered = false;
-      return static_cast<VkSemaphore>(semaphores.complete);
+      return static_cast<VkSemaphore>(semaphores[currentIndex].complete);
     }
     return VK_NULL_HANDLE;
 
@@ -83,12 +85,12 @@ protected:
   Buffer ssbo_cram_;
   Buffer ssbo_window_;
   Buffer ssbo_paraA_;
-  Buffer rbgUniform;
+  Buffer rbgUniform[MAX_RBG_RENDER];
 
   vk::PipelineLayout pipelineLayout = nullptr;
   vk::DescriptorPool descriptorPool = nullptr;
   vk::DescriptorSetLayout descriptorSetLayout = nullptr;
-  vk::DescriptorSet descriptorSet = nullptr;
+  vk::DescriptorSet descriptorSet[MAX_RBG_RENDER];
   vk::Pipeline pipeline = nullptr;
 
   int tex_width_ = 0;
@@ -101,12 +103,16 @@ protected:
 
   vk::Queue queue = nullptr;
   vk::CommandPool commandPool = nullptr;
-  vk::CommandBuffer command = nullptr;
+  vk::CommandBuffer command[MAX_RBG_RENDER];
+  vk::Fence commandfence[MAX_RBG_RENDER];
+
+  int drawCounter = 0;
+  int currentIndex = 0;
 
   struct Semaphores {
     vk::Semaphore ready = nullptr;
     vk::Semaphore complete = nullptr;
-  } semaphores;
+  } semaphores[MAX_RBG_RENDER];
 
   vk::Pipeline compile_color_dot(const char * base[], int size, const char * color, const char * dot);
 

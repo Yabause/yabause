@@ -52,15 +52,8 @@ import android.os.ParcelFileDescriptor
 import android.os.Process.killProcess
 import android.os.Process.myPid
 import android.util.Log
-import android.view.KeyEvent
-import android.view.Menu
-import android.view.MenuItem
-import android.view.MotionEvent
-import android.view.View
-import android.view.WindowInsets
+import android.view.*
 import android.view.WindowInsets.Type
-import android.view.WindowInsetsController
-import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -73,7 +66,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import androidx.preference.PreferenceManager
 import androidx.transition.Fade
-import com.activeandroid.query.Select
 import com.activeandroid.util.IOUtils
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.AuthUI.IdpConfig.GoogleBuilder
@@ -118,19 +110,11 @@ import org.uoyabause.android.cheat.TabCheatFragment
 import org.uoyabause.android.game.BaseGame
 import org.uoyabause.android.game.GameUiEvent
 import org.uoyabause.android.game.SonicR
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.InputStream
+import java.io.*
 import java.net.URLDecoder
 import java.text.DateFormat
 import java.text.SimpleDateFormat
-import java.util.Arrays
-import java.util.Date
-import java.util.Locale
+import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -174,7 +158,7 @@ class Yabause : AppCompatActivity(),
 
     private lateinit var padManager: PadManager
     private lateinit var yabauseThread: YabauseRunnable
-    private lateinit var audio: YabauseAudio
+    private var audio: YabauseAudio? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var progressBar: View
     private lateinit var progressMessage: TextView
@@ -312,7 +296,7 @@ class Yabause : AppCompatActivity(),
                 if (waitingResult == false && menu_showing == true) {
                     menu_showing = false
                     YabauseRunnable.resume()
-                    audio.unmute(audio.SYSTEM)
+                    audio?.unmute(YabauseAudio.SYSTEM)
                 }
             }
 
@@ -690,6 +674,7 @@ class Yabause : AppCompatActivity(),
  */
             R.id.reset -> YabauseRunnable.reset()
             R.id.report -> startReport()
+/*
             R.id.gametitle -> {
                 val save_path = YabauseStorage.storage.screenshotPath
                 val current_gamecode = YabauseRunnable.getCurrentGameCode()
@@ -707,6 +692,7 @@ class Yabause : AppCompatActivity(),
                     }
                 }
             }
+*/
             R.id.save_state -> {
                 val save_path = YabauseStorage.storage.stateSavePath
                 val current_gamecode = YabauseRunnable.getCurrentGameCode()
@@ -862,6 +848,7 @@ class Yabause : AppCompatActivity(),
                 val transaction = supportFragmentManager.beginTransaction()
                 val fragment = StateListFragment()
                 fragment.setBasePath(basepath)
+                transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                 transaction.replace(R.id.ext_fragment, fragment, StateListFragment.TAG)
                 transaction.show(fragment)
                 transaction.commit()
@@ -877,7 +864,7 @@ class Yabause : AppCompatActivity(),
                 waitingResult = true
                 val transaction = supportFragmentManager.beginTransaction()
                 val fragment = TabBackupFragment.newInstance()
-                // fragment.setBasePath(basepath);
+                transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                 transaction.replace(R.id.ext_fragment, fragment, TabBackupFragment.TAG)
                 transaction.show(fragment)
                 transaction.commit()
@@ -895,6 +882,7 @@ class Yabause : AppCompatActivity(),
                     val transaction = supportFragmentManager.beginTransaction()
                     val fragment = PadTestFragment.newInstance()
                     fragment.setListener(this)
+                    transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                     transaction.replace(R.id.ext_fragment, fragment, PadTestFragment.TAG)
                     transaction.show(fragment)
                     transaction.commit()
@@ -1001,30 +989,39 @@ class Yabause : AppCompatActivity(),
                         YabauseRunnable.getCurrentGameCode(),
                         cheat_codes
                     )
+                transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                 transaction.replace(R.id.ext_fragment, fragment, TabCheatFragment.TAG)
                 transaction.show(fragment)
                 transaction.commit()
             }
 
             R.id.exit -> {
-                YabauseRunnable.deinit()
-                try {
-                    Thread.sleep(1000)
-                } catch (e: InterruptedException) {
-                }
-                mParcelFileDescriptor?.close()
-                subFileDescripters.forEach {
-                    it.close()
-                }
-                subFileDescripters.clear()
+                progressMessage.text = "Exiting..."
+                progressBar.visibility = View.VISIBLE
+                waitingResult = true
+                val myThread = Thread {
+                    YabauseRunnable.deinit()
+                    runOnUiThread(Runnable {
+                        waitingResult = false
+                        //Your code to run in GUI thread here
+                        mParcelFileDescriptor?.close()
+                        subFileDescripters.forEach {
+                            it.close()
+                        }
+                        subFileDescripters.clear()
 
-                val playTime = (System.currentTimeMillis() / 1000L) - startTime;
-                val resultIntent = Intent()
-                resultIntent.putExtra("playTime",playTime)
-                setResult(RESULT_OK, resultIntent)
+                        val playTime = (System.currentTimeMillis() / 1000L) - startTime;
+                        val resultIntent = Intent()
+                        resultIntent.putExtra("playTime",playTime)
+                        setResult(RESULT_OK, resultIntent)
 
-                finish()
-                killProcess(myPid())
+                        finish()
+                        killProcess(myPid())
+                    } //public void run() {
+                    )
+                }
+                myThread.start()
+
             }
             R.id.menu_in_game_setting -> {
                 waitingResult = true
@@ -1033,7 +1030,7 @@ class Yabause : AppCompatActivity(),
                 if (currentGameCode == null) {
                     waitingResult = false
                     YabauseRunnable.resume()
-                    audio.unmute(audio.SYSTEM)
+                    audio?.unmute(YabauseAudio.SYSTEM)
                     return true
                 }
                 val fragment = InGamePreference(currentGameCode)
@@ -1044,7 +1041,7 @@ class Yabause : AppCompatActivity(),
                     override fun onError(e: Throwable) {
                         waitingResult = false
                         YabauseRunnable.resume()
-                        audio.unmute(audio.SYSTEM)
+                        audio?.unmute(YabauseAudio.SYSTEM)
                     }
 
                     override fun onComplete() {
@@ -1064,15 +1061,14 @@ class Yabause : AppCompatActivity(),
                         val fps = gamePreference.getBoolean("pref_fps", false)
                         YabauseRunnable.enableFPS(if (fps) 1 else 0)
                         Log.d(TAG, "enable FPS $fps")
+
                         val iPg = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
                         YabauseRunnable.setPolygonGenerationMode(iPg!!)
+
                         Log.d(TAG, "setPolygonGenerationMode $iPg")
                         val frameskip = gamePreference.getBoolean("pref_frameskip", true)
                         YabauseRunnable.enableFrameskip(if (frameskip) 1 else 0)
                         Log.d(TAG, "enable enableFrameskip $frameskip")
-                        val sKa: Int? =
-                            gamePreference.getString("pref_polygon_generation", "0")?.toInt()
-                        YabauseRunnable.setPolygonGenerationMode(sKa!!)
 
                         val aspect = gamePreference.getString("pref_aspect_rate", "0")?.toInt()
                         YabauseRunnable.setAspectRateMode(aspect!!)
@@ -1115,16 +1111,12 @@ class Yabause : AppCompatActivity(),
                         val mainview = findViewById(R.id.yabause_view) as View
                         mainview.requestFocus()
                         YabauseRunnable.resume()
-                        audio.unmute(audio.SYSTEM)
+                        audio?.unmute(YabauseAudio.SYSTEM)
                     }
                 }
                 fragment.setonEndObserver(observer)
-                transaction.setCustomAnimations(
-                    R.anim.slide_in_up,
-                    R.anim.slide_out_up,
-                    R.anim.slide_in_up,
-                    R.anim.slide_out_up
-                )
+                transaction.setCustomAnimations(R.anim.fade_in,
+                    R.anim.fade_out);
                 transaction.replace(R.id.ext_fragment, fragment, InGamePreference.TAG)
                 // transaction.addToBackStack(InGamePreference.TAG);
                 transaction.commit()
@@ -1145,7 +1137,7 @@ class Yabause : AppCompatActivity(),
     public override fun onPause() {
         super.onPause()
         YabauseRunnable.pause()
-        audio.mute(audio.SYSTEM)
+        audio?.mute(YabauseAudio.SYSTEM)
         inputManager!!.unregisterInputDeviceListener(this)
         scope.coroutineContext.cancelChildren()
     }
@@ -1158,7 +1150,7 @@ class Yabause : AppCompatActivity(),
             tracker!!.send(ScreenViewBuilder().build())
         }
         if (waitingResult == false) {
-            audio.unmute(audio.SYSTEM)
+            audio?.unmute(YabauseAudio.SYSTEM)
             YabauseRunnable.resume()
         }
         inputManager!!.registerInputDeviceListener(this, null)
@@ -1266,7 +1258,7 @@ class Yabause : AppCompatActivity(),
             val mainview = findViewById(R.id.yabause_view) as View
             mainview.requestFocus()
             YabauseRunnable.resume()
-            audio.unmute(audio.SYSTEM)
+            audio?.unmute(YabauseAudio.SYSTEM)
         }
     }
 
@@ -1277,7 +1269,7 @@ class Yabause : AppCompatActivity(),
             val mainview = findViewById(R.id.yabause_view) as View
             mainview.requestFocus()
             YabauseRunnable.resume()
-            audio.unmute(audio.SYSTEM)
+            audio?.unmute(YabauseAudio.SYSTEM)
         }
     }
 
@@ -1295,7 +1287,7 @@ class Yabause : AppCompatActivity(),
             val mainview = findViewById(R.id.yabause_view) as View
             mainview.requestFocus()
             YabauseRunnable.resume()
-            audio.unmute(audio.SYSTEM)
+            audio?.unmute(YabauseAudio.SYSTEM)
         }
     }
 
@@ -1387,7 +1379,7 @@ class Yabause : AppCompatActivity(),
         scope.coroutineContext.cancelChildren()
         waitingResult = false
         YabauseRunnable.resume()
-        audio.unmute(audio.SYSTEM)
+        audio?.unmute(YabauseAudio.SYSTEM)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -1474,7 +1466,7 @@ class Yabause : AppCompatActivity(),
                     waitingResult = false
                     menu_showing = false
                     YabauseRunnable.resume()
-                    audio.unmute(audio.SYSTEM)
+                    audio?.unmute(YabauseAudio.SYSTEM)
                     return true
                 }
                 fg = supportFragmentManager.findFragmentByTag(TabBackupFragment.TAG)
@@ -1488,7 +1480,7 @@ class Yabause : AppCompatActivity(),
                     waitingResult = false
                     menu_showing = false
                     YabauseRunnable.resume()
-                    audio.unmute(audio.SYSTEM)
+                    audio?.unmute(YabauseAudio.SYSTEM)
                     return true
                 }
                 val fg2 =
@@ -1551,12 +1543,12 @@ class Yabause : AppCompatActivity(),
             val mainview = findViewById(R.id.yabause_view) as View
             mainview.requestFocus()
             YabauseRunnable.resume()
-            audio.unmute(audio.SYSTEM)
+            audio?.unmute(YabauseAudio.SYSTEM)
             drawerLayout.closeDrawer(GravityCompat.START)
         } else {
             menu_showing = true
             YabauseRunnable.pause()
-            audio.mute(audio.SYSTEM)
+            audio?.mute(YabauseAudio.SYSTEM)
 
             val tx = findViewById<TextView>(R.id.menu_title)
             if (tx != null) {
@@ -1615,14 +1607,8 @@ class Yabause : AppCompatActivity(),
 
         // ------------------------------------------------------------------------------------------------
         // Load per game setting
-        val gamePreference = getSharedPreferences(gameCode, Context.MODE_PRIVATE)
-        YabauseRunnable.enableComputeShader(
-            if (gamePreference.getBoolean(
-                    "pref_use_compute_shader",
-                    false
-                )
-            ) 1 else 0
-        )
+        val key = gamecode.replace(" ","-")
+        val gamePreference = getHarmonySharedPreferences(key)
         YabauseRunnable.enableRotateScreen(
             if (gamePreference.getBoolean(
                     "pref_rotate_screen",
@@ -1633,14 +1619,12 @@ class Yabause : AppCompatActivity(),
         val fps = gamePreference.getBoolean("pref_fps", false)
         YabauseRunnable.enableFPS(if (fps) 1 else 0)
         Log.d(TAG, "enable FPS $fps")
-        val iPg: Int? = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
-        YabauseRunnable.setPolygonGenerationMode(iPg!!)
-        Log.d(TAG, "setPolygonGenerationMode $iPg")
+        //val iPg: Int? = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
+        //YabauseRunnable.setPolygonGenerationMode(iPg!!)
+        //Log.d(TAG, "setPolygonGenerationMode $iPg")
         val frameskip = gamePreference.getBoolean("pref_frameskip", true)
         YabauseRunnable.enableFrameskip(if (frameskip) 1 else 0)
         Log.d(TAG, "enable enableFrameskip $frameskip")
-        val sKa: Int? = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
-        YabauseRunnable.setPolygonGenerationMode(sKa!!)
 
         val aspect = gamePreference.getString("pref_aspect_rate", "0")?.toInt()
         YabauseRunnable.setAspectRateMode(aspect!!)
@@ -1682,9 +1666,9 @@ class Yabause : AppCompatActivity(),
         Log.d(TAG, "setFilter $ifilter")
         val audioout = sharedPref.getBoolean("pref_audio", true)
         if (audioout) {
-            audio.unmute(audio.USER)
+            audio?.unmute(YabauseAudio.USER)
         } else {
-            audio.mute(audio.USER)
+            audio?.mute(YabauseAudio.USER)
         }
         Log.d(TAG, "Audio $audioout")
         val bios = sharedPref.getString("pref_bios", "")
@@ -1712,6 +1696,28 @@ class Yabause : AppCompatActivity(),
         } else {
             videoInterface = -1
         }
+
+        // Force tesselation and compute Shader
+        if( videoInterface == 4 ) {
+
+            YabauseRunnable.setPolygonGenerationMode(2)
+            Log.d(TAG, "setPolygonGenerationMode 2")
+            YabauseRunnable.enableComputeShader(1)
+
+        }else{
+            val iPg: Int? = gamePreference.getString("pref_polygon_generation", "0")?.toInt()
+            YabauseRunnable.setPolygonGenerationMode(iPg!!)
+            Log.d(TAG, "setPolygonGenerationMode $iPg")
+            YabauseRunnable.enableComputeShader(
+                if (gamePreference.getBoolean(
+                        "pref_use_compute_shader",
+                        false
+                    )
+                ) 1 else 0
+            )
+        }
+
+
         Log.d(TAG, "video $video")
         Log.d(TAG, "getGamePath $gamePath")
         Log.d(TAG, "getMemoryPath $memoryPath")
@@ -1820,6 +1826,10 @@ class Yabause : AppCompatActivity(),
         val scsp_time_sync: Int? = sharedPref.getString("scsp_time_sync_mode", "1")?.toInt()
         YabauseRunnable.setScspSyncTimeMode(scsp_time_sync!!)
     }
+
+    val shaderPath: String
+        get() = YabauseStorage.storage.shaderPath
+
 
     val testPath: String?
         get() = if (testCase == null) {

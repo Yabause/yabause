@@ -47,7 +47,7 @@ class TextureManager;
 class VertexManager;
 
 #define MAX_UBO_SIZE (256)
-
+#define MAX_DS_SIZE (4)
 
 class ShaderManager {
 
@@ -93,6 +93,8 @@ private:
 class VdpPipeline {
 public:
 
+  static VkPipelineCache threadPipelineCache;
+
   VdpPipeline(
     VIDVulkan * vulkan,
     TextureManager * tm,
@@ -114,12 +116,18 @@ public:
   vector<Vertex> vertices;
   vector<uint16_t> indices;
 
-  VkBuffer ubo;
+  struct UniformBuffer {
+    VkBuffer _uniformBuffer;  
+    VkDeviceMemory _uniformBufferMemory = 0;
+  };
+  std::vector<UniformBuffer> ubuffer;
+  int dsIndex = 0;
+
   uint32_t uboSize;
   void setUBO(const void * ubo, int size);
 
-  VkBuffer _uniformBuffer;
-  VkDeviceMemory _uniformBufferMemory;
+  
+  
 
 
   struct SamplerSet {
@@ -178,9 +186,9 @@ public:
 
   VkPipelineLayout getPipelineLayout() { return _pipelineLayout; }
   VkPipeline getGraphicsPipeline() { return _graphicsPipeline; }
-  VkDescriptorSet getDescriptorSete() { return _descriptorSet; }
+  VkDescriptorSet * getDescriptorSet() { return &_descriptorSet[dsIndex]; }
 
-  VkDescriptorSet _descriptorSet;
+  VkDescriptorSet _descriptorSet[MAX_DS_SIZE];
 
   std::string get_shader_header();
   VkShaderModule compileShader(const string & code, int type);
@@ -189,6 +197,13 @@ public:
 
   bool isNeedBarrier() { return needBarrier; }
 
+  uint8_t getWinFlg() { return winflag;  }
+  void setWinFlg(uint8_t flg) { winflag = flg; }
+
+  static uint8_t genWinFlag(int winmode, int bwin0, int bwin1, int bwinsp, int logwin0, int logwin1, int logwinsp) {
+    return(((winmode & 0x1) << 7) | ((bwin0 & 0x1) << 3) | ((bwin1 & 0x1) << 4) | ((bwinsp & 0x1) << 5)
+      | ((logwin0 & 0x1) << 0) | ((logwin1 & 0x1) << 1) | ((logwinsp & 0x1) << 2));
+  }
 
 protected:
 
@@ -232,6 +247,53 @@ protected:
   vector<int> bindid;
 
   bool needBarrier = false;
+
+  /*
+  if (bwin0 || bwin1 || bwinsp)
+  {
+	  glEnable(GL_STENCIL_TEST);
+	  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+	  int winmask = (bwin0 | bwin1 | bwinsp);
+	  int winflag = 0;
+	  if (winmode == 0) { // and
+		  if (bwin0)  winflag = logwin0;
+		  if (bwin1)  winflag |= logwin1;
+		  if (bwinsp) winflag |= logwinsp;
+		  glStencilFunc(GL_EQUAL, winflag, winmask);
+	  }
+	  else { // or
+		  winflag = winmask;
+		  if (bwin0)  winflag &= ~logwin0;
+		  if (bwin1)  winflag &= ~logwin1;
+		  if (bwinsp) winflag &= ~logwinsp;
+		  glStencilFunc(GL_NOTEQUAL, winflag, winmask);
+	  }
+  }
+  */
+
+  // bit spec
+  // 8 winmode
+  // 7
+  // 6
+  // 5 bwinsp
+  // 4 bwin1
+  // 3 bwin0
+  // 2 logwinsp
+  // 1 logwin1
+  // 0 logwin0
+  uint8_t winflag;
+
+
+  void decodeWinFlag(int & winmode, int & bwin0, int & bwin1, int & bwinsp, int & logwin0, int & logwin1, int & logwinsp ) {
+	  winmode = (winflag >> 7) & 0x01;
+	  bwin0 = (winflag >> 3) & 0x01;
+	  bwin1 = (winflag >> 4) & 0x01;
+	  bwinsp = (winflag >> 5) & 0x01;
+	  logwin0 = (winflag >> 0) & 0x01;
+	  logwin1 = (winflag >> 1) & 0x01;
+	  logwinsp = (winflag >> 2) & 0x01;
+  }
 
 };
 

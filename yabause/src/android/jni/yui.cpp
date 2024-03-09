@@ -40,7 +40,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <stdio.h>
 #include <dlfcn.h>
 #include <unistd.h>
-
 #include <jni.h>
 #include <android/native_window.h>     // requires ndk r5 or newer
 #include <android/native_window_jni.h> // requires ndk r5 or newer
@@ -295,6 +294,11 @@ ScreenRecorder gsc;
 #define YUI_LOG yprintf
 //#define YUI_LOG
 
+std::string shaderCachePath;
+const char *YuiGetShaderCachePath(){
+    return shaderCachePath.c_str();
+}
+
 const char *GetBiosPath()
 {
     jclass yclass;
@@ -318,6 +322,31 @@ const char *GetBiosPath()
         rtn = env->GetStringUTFChars(message, &dummy);
     return rtn;
 }
+
+const char *GetShaderPath()
+{
+    jclass yclass;
+    jmethodID getBiosPath;
+    jstring message;
+    jboolean dummy;
+    JNIEnv *env;
+    const char *rtn;
+
+    if (yvm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
+        return NULL;
+    }
+
+    yclass = env->GetObjectClass(yabause);
+    getBiosPath = env->GetMethodID(yclass, "getShaderPath", "()Ljava/lang/String;");
+    message = (jstring)env->CallObjectMethod(yabause, getBiosPath);
+    if (env->GetStringLength(message) == 0)
+        rtn = NULL;
+    else
+        rtn = env->GetStringUTFChars(message, &dummy);
+    return rtn;
+}
+
 
 char *GetPlayDataDir()
 {
@@ -847,6 +876,13 @@ extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_enab
     return 0;
 }
 
+static int s_isRunning = 0;
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_isRunning()
+{
+    return s_isRunning;
+}
+
+
 extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_lockGL()
 {
     pthread_mutex_lock(&g_mtxGlLock);
@@ -1175,6 +1211,8 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, job
     if (initEGLFunc() == -1)
         return -1;
 
+    s_isRunning = 1;
+
     yabause = env->NewGlobalRef(yab);
 
     s_biospath = GetBiosPath();
@@ -1185,6 +1223,16 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, job
     s_carttype = GetCartridgeType();
     s_player2Enable = GetPlayer2Device();
     s_playdatadir = GetPlayDataDir();
+    shaderCachePath = string(GetShaderPath());
+/*
+    std::size_t pos = shaderCachePath.rfind("/");
+    if (pos != std::string::npos) {
+        shaderCachePath = shaderCachePath.substr(0,pos+1);
+        YUI_LOG("shader path = %s", shaderCachePath.c_str() );
+    } else {
+        YUI_LOG("YabauseRunnable_init s_buppath is invalid");
+    }
+*/
 
     GetFileDescriptorPath("test");
 
@@ -1653,12 +1701,14 @@ int destroy()
 {
     YabauseDeInit();
 
-    eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    eglDestroyContext(g_Display, g_Context_Sub);
-    eglDestroyContext(g_Display, g_Context);
-    eglDestroySurface(g_Display, g_Surface);
-    eglDestroySurface(g_Display, g_Pbuffer);
-    eglTerminate(g_Display);
+    if (s_vidcoretype != VIDCORE_VULKAN){
+        eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        eglDestroyContext(g_Display, g_Context_Sub);
+        eglDestroyContext(g_Display, g_Context);
+        eglDestroySurface(g_Display, g_Surface);
+        eglDestroySurface(g_Display, g_Pbuffer);
+        eglTerminate(g_Display);
+    }
 
     g_window = 0;
     g_Display = EGL_NO_DISPLAY;
@@ -1676,8 +1726,10 @@ extern "C"
     void
     Java_org_uoyabause_android_YabauseRunnable_deinit(JNIEnv *env)
     {
+        pthread_mutex_lock(&g_mtxGlLock);
         g_msg = MSG_RENDER_LOOP_EXIT;
-        // pthread_join(_threadId,NULL);
+        pthread_mutex_unlock(&g_mtxGlLock);
+        pthread_join(_threadId,NULL);
     }
 
     void
@@ -1867,12 +1919,14 @@ extern "C"
     Java_org_uoyabause_android_YabauseRunnable_setPolygonGenerationMode(JNIEnv *env, jobject obj, jint pgm)
     {
         g_PolygonGenerationMode = pgm;
+        VideoSetSetting(VDP_SETTING_POLYGON_MODE, g_PolygonGenerationMode);
     }
 
     void
     Java_org_uoyabause_android_YabauseRunnable_setAspectRateMode(JNIEnv *env, jobject obj, jint ka)
     {
         g_aspect_rate_mode = ka;
+        VideoSetSetting(VDP_SETTING_ASPECT_RATE_MODE, g_aspect_rate_mode);
     }
 
     void
@@ -2016,8 +2070,8 @@ Java_org_uoyabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject obj,
     {
         __android_log_print(ANDROID_LOG_INFO, "yabause", "JNI_OnLoad is called");
 
-        JNIEnv *env;
-        if (vm->GetEnv((void **)&env, JNI_VERSION_1_6) != JNI_OK)
+        JNIEnv *env = nullptr;
+        if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK)
             return -1;
         yvm = vm;
 
@@ -2222,8 +2276,10 @@ void renderLoop()
             break;
         case MSG_RENDER_LOOP_EXIT:
             YUI_LOG("MSG_RENDER_LOOP_EXIT");
+            pause = 0;
             renderingEnabled = 0;
             destroy();
+            pthread_mutex_unlock(&g_mtxGlLock);
             break;
 
         case MSG_SAVE_STATE:
@@ -2395,6 +2451,8 @@ void renderLoop()
 
     if (context != NULL)
         crashlytics_free(&context);
+
+    s_isRunning = 0;
 }
 
 void *threadStartCallback(void *myself)

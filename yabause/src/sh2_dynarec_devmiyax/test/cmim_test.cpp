@@ -19,6 +19,7 @@ class CmpimTest : public ::testing::Test {
   }
 
   virtual ~CmpimTest() {
+    freeMemory();
     delete pctx_;    
   }   
 
@@ -33,20 +34,23 @@ virtual void TearDown() {
 };
 
 
-TEST_F(CmpimTest, normal) {
+TEST_F(CmpimTest, CMP_PL) {
 
-  pctx_->GetGenRegPtr()[0]=0xFFFFFFFF; // m
+  pctx_->GetGenRegPtr()[0] = 0xFFFFFFFF; // m
   pctx_->SET_SR(0x00000E0);
 
-  memSetWord( 0x06000000, 0x88ff );  // cmppl R[1]
-  memSetWord( 0x06000002, 0x000b );  // rts
-  memSetWord( 0x06000004, 0x0009 );  // nop
+  memSetWord(0x06000000, 0x88ff);  // cmppl R[1]
+  memSetWord(0x06000002, 0x000b);  // rts
+  memSetWord(0x06000004, 0x0009);  // nop
 
-  pctx_->SET_PC( 0x06000000 );
+  pctx_->SET_PC(0x06000000);
   pctx_->Execute();
 
-  EXPECT_EQ( 0x000000E1, pctx_->GET_SR() );
+  EXPECT_EQ(0x000000E1, pctx_->GET_SR());
 
+}
+
+TEST_F(CmpimTest, normal1) {
   pctx_->GetGenRegPtr()[0]=0x000000FF; // m
   pctx_->SET_SR(0x00000E1);
 
@@ -58,6 +62,10 @@ TEST_F(CmpimTest, normal) {
   pctx_->Execute();
 
   EXPECT_EQ( 0x000000E0, pctx_->GET_SR() );
+
+}
+
+TEST_F(CmpimTest, normal2) {
 
   pctx_->GetGenRegPtr()[0]=0x0000007F; // m
   pctx_->SET_SR(0x00000E0);
@@ -85,6 +93,10 @@ TEST_F(CmpimTest, Zero) {
   pctx_->Execute();
 
   EXPECT_EQ( 0x000000E0, pctx_->GET_SR() );
+
+}
+
+TEST_F(CmpimTest, Zero1) {
 
   pctx_->GetGenRegPtr()[0]=0x0; // m
   pctx_->SET_SR(0x00000E1);

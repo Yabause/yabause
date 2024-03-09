@@ -56,7 +56,7 @@ bool VScrollPanel::scrollEvent(const Vector2i &/* p */, const Vector2f &rel) {
         std::min(1.0f, height() / (float)mChildPreferredHeight);
 
     mScroll = std::max((float) 0.0f, std::min((float) 1.0f,
-            mScroll - scrollAmount / (float)(mSize.y() - 8 - scrollh)));
+            mScroll - scrollAmount / (float)(mSize.y() /*- 8*/ - scrollh)));
     return true;
 }
 

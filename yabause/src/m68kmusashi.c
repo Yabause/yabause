@@ -105,70 +105,6 @@ static void M68KMusashiSetMSP(u32 val) {
    m68k_set_reg(M68K_REG_MSP, val);
 }
 
-u32 M68KMusashiGetISP(void) {
-  return m68k_get_reg(NULL, M68K_REG_ISP);
-}
-
-u32 M68KMusashiGetVBR(void) {
-  return m68k_get_reg(NULL, M68K_REG_VBR);
-}
-
-u32 M68KMusashiGetSFC(void) {
-  return m68k_get_reg(NULL, M68K_REG_SFC);
-}
-
-u32 M68KMusashiGetDFC(void) {
-  return m68k_get_reg(NULL, M68K_REG_DFC);
-}
-
-u32 M68KMusashiGetCACR(void) {
-  return m68k_get_reg(NULL, M68K_REG_CACR);
-}
-
-u32 M68KMusashiGetCAAR(void) {
-  return m68k_get_reg(NULL, M68K_REG_CAAR);
-}
-
-u32 M68KMusashiGetPPC(void) {
-  return m68k_get_reg(NULL, M68K_REG_PPC);
-}
-
-u32 M68KMusashiGetIR(void) {
-  return m68k_get_reg(NULL, M68K_REG_IR);
-}
-
-void M68KMusashiSetISP(u32 val) {
-  m68k_set_reg(M68K_REG_ISP, val);
-}
-
-void M68KMusashiSetVBR(u32 val) {
-  m68k_set_reg(M68K_REG_VBR, val);
-}
-
-void M68KMusashiSetSFC(u32 val) {
-  m68k_set_reg(M68K_REG_SFC, val);
-}
-
-void M68KMusashiSetDFC(u32 val) {
-  m68k_set_reg(M68K_REG_DFC, val);
-}
-
-void M68KMusashiSetCACR(u32 val) {
-  m68k_set_reg(M68K_REG_CACR, val);
-}
-
-void M68KMusashiSetCAAR(u32 val) {
-  m68k_set_reg(M68K_REG_CAAR, val);
-}
-
-void M68KMusashiSetPPC(u32 val) {
-  m68k_set_reg(M68K_REG_PPC, val);
-}
-
-void M68KMusashiSetIR(u32 val) {
-  m68k_set_reg(M68K_REG_IR, val);
-}
-
 static void M68KMusashiSetFetch(u32 low_adr, u32 high_adr, pointer fetch_adr) {
 }
 
@@ -229,7 +165,7 @@ static void M68KMusashiSetWriteW(M68K_WRITE *Func) {
    rw_funcs.w_16 = Func;
 }
 
-static void M68KMusashiSaveState(IOCheck_struct * check, FILE *fp) {
+static void M68KMusashiSaveState(FILE *fp) {
 }
 
 static void M68KMusashiLoadState(FILE *fp) {
@@ -262,20 +198,6 @@ M68K_struct M68KMusashi = {
    M68KMusashiSetReadW,
    M68KMusashiSetWriteB,
    M68KMusashiSetWriteW,
-   M68KMusashiGetISP,
-   M68KMusashiGetVBR,
-   M68KMusashiGetSFC,
-   M68KMusashiGetDFC,
-   M68KMusashiGetCACR,
-   M68KMusashiGetCAAR,
-   M68KMusashiGetPPC,
-   M68KMusashiGetIR,
-   M68KMusashiSetISP,
-   M68KMusashiSetVBR,
-   M68KMusashiSetSFC,
-   M68KMusashiSetDFC,
-   M68KMusashiSetCACR,
-   M68KMusashiSetCAAR,
-   M68KMusashiSetPPC,
-   M68KMusashiSetIR
+   M68KMusashiSaveState,
+   M68KMusashiLoadState
 };

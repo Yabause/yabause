@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="org.devmiyax.yabasanshiro">
+    xmlns:tools="http://schemas.android.com/tools">
     <!--
         Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
@@ -71,6 +70,7 @@
     <application
         android:name="org.uoyabause.android.YabauseApplication"
         android:icon="@mipmap/ic_launcher"
+        android:extractNativeLibs="true"
         android:isGame="true"
         android:label="@string/app_name"
         android:logo="@drawable/banner"
@@ -132,8 +132,8 @@
             android:name="org.uoyabause.android.Yabause"
             android:configChanges="orientation|keyboardHidden|screenSize|keyboard"
             android:label="@string/app_name"
-            android:process=":emulationmain"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
@@ -161,13 +161,15 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/ad_app_id" />
 
-        <service android:name="org.uoyabause.android.Notification">
+        <service android:name="org.uoyabause.android.Notification"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
 
-        <receiver android:name="org.uoyabause.android.tv.DownloadReceiver">
+        <receiver android:name="org.uoyabause.android.tv.DownloadReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="org.uoyabause.download.COMPLETE" />
                 <action android:name="org.uoyabause.download.FAILED" />
@@ -193,7 +195,8 @@
             android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"
             android:noHistory="true"
-            android:theme="@style/AppTheme.Launcher">
+            android:theme="@style/AppTheme.Launcher"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -238,9 +241,7 @@
         <meta-data
             android:name="com.google.android.gms.games.APP_ID"
             android:value="@string/game_id" />
-        <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
+
     </application>
 
 </manifest>

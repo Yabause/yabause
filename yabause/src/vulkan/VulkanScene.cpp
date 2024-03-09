@@ -51,6 +51,8 @@ static std::vector<char> readFile(const std::string& filename) {
 
 VulkanScene::VulkanScene()
 {
+  _command_buffers.clear();
+  _command_pool = VK_NULL_HANDLE;
 }
 
 
@@ -90,10 +92,10 @@ void VulkanScene::deInit(void)
     _command_buffers.clear();
   }
   vkDestroyCommandPool(device, _command_pool, nullptr);
+  _command_pool = VK_NULL_HANDLE;
 
   vkDestroySemaphore(device, _render_complete_semaphore, nullptr);
   _render_complete_semaphore = VK_NULL_HANDLE;
-  _command_pool = VK_NULL_HANDLE;
 
 
 }
@@ -156,30 +158,41 @@ void VulkanScene::createCommandPool()
   const VkDevice device = _renderer->GetVulkanDevice();
   if (device == VK_NULL_HANDLE) return;
 
+  
   if (_command_buffers.size() != 0) {
     vkFreeCommandBuffers(device, _command_pool, _command_buffers.size(), _command_buffers.data());
   }
+
   if (_command_pool != VK_NULL_HANDLE) vkDestroyCommandPool(device, _command_pool, nullptr);
 
+    VkCommandPoolCreateInfo pool_create_info{};
+    pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    pool_create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    pool_create_info.queueFamilyIndex = _renderer->GetVulkanGraphicsQueueFamilyIndex();
+    vkCreateCommandPool(_renderer->GetVulkanDevice(), &pool_create_info, nullptr, &_command_pool);
 
-  VkCommandPoolCreateInfo pool_create_info{};
-  pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  pool_create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  pool_create_info.queueFamilyIndex = _renderer->GetVulkanGraphicsQueueFamilyIndex();
-  vkCreateCommandPool(_renderer->GetVulkanDevice(), &pool_create_info, nullptr, &_command_pool);
+    _command_buffers.resize(MAX_COMMANDBUFFER_COUNT);
 
-  _command_buffers.resize(_renderer->getWindow()->GetFrameBufferCount());
+    VkCommandBufferAllocateInfo	command_buffer_allocate_info{};
+    command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    command_buffer_allocate_info.commandPool = _command_pool;
+    command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    command_buffer_allocate_info.commandBufferCount = _command_buffers.size();
+    vkAllocateCommandBuffers(_renderer->GetVulkanDevice(), &command_buffer_allocate_info, _command_buffers.data());
 
-  VkCommandBufferAllocateInfo	command_buffer_allocate_info{};
-  command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  command_buffer_allocate_info.commandPool = _command_pool;
-  command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  command_buffer_allocate_info.commandBufferCount = _command_buffers.size();
-  vkAllocateCommandBuffers(_renderer->GetVulkanDevice(), &command_buffer_allocate_info, _command_buffers.data());
+    VkSemaphoreCreateInfo semaphore_create_info{};
+    semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    vkCreateSemaphore(_renderer->GetVulkanDevice(), &semaphore_create_info, nullptr, &_render_complete_semaphore);
 
-  VkSemaphoreCreateInfo semaphore_create_info{};
-  semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-  vkCreateSemaphore(_renderer->GetVulkanDevice(), &semaphore_create_info, nullptr, &_render_complete_semaphore);
+    commandFence.resize(MAX_COMMANDBUFFER_COUNT);
+
+    for( int i=0; i<commandFence.size(); i++  ){
+      VkFenceCreateInfo fence_create_info {};
+	    fence_create_info.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	    vkCreateFence( device, &fence_create_info, nullptr, &commandFence[i] );
+    }
+
+
 }
 
 void VulkanScene::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
@@ -392,6 +405,7 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
   screenshotSaved = false;
   bool supportsBlit = true;
 
+    
   _device_width = _renderer->getWindow()->GetVulkanSurfaceSize().width;
   _device_height = _renderer->getWindow()->GetVulkanSurfaceSize().height;
 
@@ -415,6 +429,7 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
 
   // Source for the copy is the last rendered swapchain image
   VkImage srcImage = _renderer->getWindow()->getCurrentImage();
+  int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
 
 
   //if (dstScreenImage == VK_NULL_HANDLE) {
@@ -426,6 +441,17 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
     imageCreateCI.format = VK_FORMAT_R8G8B8A8_UNORM;
     imageCreateCI.extent.width = _device_width;
     imageCreateCI.extent.height = _device_height;
+
+    if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+        pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+      imageCreateCI.extent.width = _device_height;
+      imageCreateCI.extent.height = _device_width;
+    } else {
+      imageCreateCI.extent.width = _device_width;
+      imageCreateCI.extent.height = _device_height;
+    }
+
+
     imageCreateCI.extent.depth = 1;
     imageCreateCI.arrayLayers = 1;
     imageCreateCI.mipLevels = 1;
@@ -485,6 +511,16 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
     VkOffset3D blitSize;
     blitSize.x = _device_width;
     blitSize.y = _device_height;
+
+    if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+        pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+      blitSize.x = _device_height;
+      blitSize.y = _device_width;
+    } else {
+      blitSize.x = _device_width;
+      blitSize.y = _device_height;
+    }
+
     blitSize.z = 1;
     VkImageBlit imageBlitRegion{};
     imageBlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -570,19 +606,73 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
   }
   dstbuf = (unsigned char*)malloc(width*height * 4);
 
-  for (uint32_t y = 0; y < height; y++)
-  {
-    unsigned char *srcrow = &data[(_device_height - 1 - y)*subResourceLayout.rowPitch];
-    unsigned char *dstrow = &dstbuf[y*width * 4];
 
-    for (uint32_t x = 0; x < width; x++) {
-      dstrow[x * 4 + 0] = srcrow[x * 4 + 0];
-      dstrow[x * 4 + 1] = srcrow[x * 4 + 1];
-      dstrow[x * 4 + 2] = srcrow[x * 4 + 2];
-      dstrow[x * 4 + 3] = srcrow[x * 4 + 3];
-    }
-
+  switch (pretransformFlag) {
+      case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
+      {
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            int sx = y;
+            int sy = x;
+            unsigned char *srcrow = &data[sy*subResourceLayout.rowPitch];
+            dstrow[x * 4 + 0] = srcrow[sx * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[sx * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[sx * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[sx * 4 + 3];
+          }
+        }
+      }
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            int sx = _device_height - 1 - x;
+            int sy = _device_width - 1 - y;
+            unsigned char *srcrow = &data[sy*subResourceLayout.rowPitch];
+            dstrow[x * 4 + 0] = srcrow[sx * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[sx * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[sx * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[sx * 4 + 3];
+          }
+        }
+        break;
+      case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            int sx = _device_height - 1 - y;
+            int sy = _device_width - 1 - x;
+            unsigned char *srcrow = &data[sy*subResourceLayout.rowPitch];
+            dstrow[x * 4 + 0] = srcrow[sx * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[sx * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[sx * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[sx * 4 + 3];
+          }
+        }
+        break;
+      default:
+        for (uint32_t y = 0; y < height; y++)
+        {
+          unsigned char *srcrow = &data[(_device_height - 1 - y)*subResourceLayout.rowPitch];
+          unsigned char *dstrow = &dstbuf[y*width * 4];
+          for (uint32_t x = 0; x < width; x++) {
+            dstrow[x * 4 + 0] = srcrow[x * 4 + 0];
+            dstrow[x * 4 + 1] = srcrow[x * 4 + 1];
+            dstrow[x * 4 + 2] = srcrow[x * 4 + 2];
+            dstrow[x * 4 + 3] = srcrow[x * 4 + 3];
+          }
+        }
+        break;
   }
+
+
+
+  
   *outbuf = (void*)dstbuf;
 #if 0
 

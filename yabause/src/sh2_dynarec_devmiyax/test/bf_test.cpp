@@ -20,6 +20,7 @@ class BfTest : public ::testing::Test {
   }
 
   virtual ~BfTest() {
+    freeMemory();
     delete pctx_;    
   }
 
@@ -85,25 +86,24 @@ TEST_F(BfTest, carry) {
 
 TEST_F(BfTest, bfs) {
 
-  // rtcl R[0]
-
+  // BFS When SR=0, 
   memSetWord(0x06002E4C,0x8F0B);
   memSetWord( 0x06002E4E, 0x0009 );  // nop 
-
   pctx_->SET_PC( 0x06002E4C );
   pctx_->SET_SR( 0x000000);
   pctx_->Execute();
 
   EXPECT_EQ( 0x06002E4C+4+(0xB<<1), pctx_->GET_PC() );
 
+  // BFS When SR=1
   memSetWord(0x06002E4C,0x8F0B);
   memSetWord( 0x06002E4E, 0x0009 );  // nop 
-
   pctx_->SET_PC( 0x06002E4C );
   pctx_->SET_SR( 0x000001);
   pctx_->Execute();
 
-  EXPECT_EQ( 0x06002E4C+4, pctx_->GET_PC() );
+  u32 ans = pctx_->GET_PC();
+  EXPECT_EQ( 0x06002E4E, ans );
 
   pctx_->GetGenRegPtr()[3]=0x2;
 
@@ -125,7 +125,8 @@ TEST_F(BfTest, bfs) {
   pctx_->SET_SR( 0x000001);
   pctx_->Execute();
 
-  EXPECT_EQ( 0x06002E4C+4, pctx_->GET_PC() );
+  ans = pctx_->GET_PC();
+  EXPECT_EQ( 0x06002E4E, ans );
 
 }
 

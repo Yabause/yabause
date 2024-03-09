@@ -106,7 +106,25 @@ protected:
     std::function<void(bool)> mChangeCallback;
     std::function<void()> mOnFocusCallback;
     std::function<void()> mOnLeaveCallback;
+    
     std::vector<Button *> mButtonGroup;
+};
+
+
+class NANOGUI_EXPORT ImageButton : public Button {
+public:
+  ImageButton(Widget *parent, const std::string &caption = "Untitled", int icon = 0);
+
+  virtual Vector2i preferredSize(NVGcontext *ctx) const override;
+  virtual void draw(NVGcontext *ctx) override;
+
+  std::function<int(int id, int x, int y, int w, int h)> onImageRequested() const { return mOnImageRequested; }
+  void setOnImageRequested(const std::function<int(int id, int x, int y, int w, int h)> &callback) { mOnImageRequested = callback; }
+
+protected:
+  int imageHeight;
+  std::function<int(int id, int x, int y, int w, int h)> mOnImageRequested;
+
 };
 
 NAMESPACE_END(nanogui)

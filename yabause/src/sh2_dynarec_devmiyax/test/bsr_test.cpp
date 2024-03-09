@@ -20,6 +20,7 @@ class BsrTest : public ::testing::Test {
   }
 
   virtual ~BsrTest() {
+    freeMemory();
     delete pctx_;    
   }
 
@@ -35,34 +36,37 @@ virtual void TearDown() {
 
 };
 
+string toHex(u32 val) {
+  std::stringstream ss;
+  ss << std::hex << val;
+  std::string s = ss.str();
+  return s;
+}
+
 TEST_F(BsrTest, normal) {
-
-  // rtcl R[0]
-
-memSetWord(0x06002E4C,0xB123);
-memSetWord(0x06002E4E, 0x0009);
+  
+  memSetWord(0x06002E4C,0xB123); // bsr 0x06003096
+  memSetWord(0x06002E4E, 0x0009);
 
   pctx_->SET_PC( 0x06002E4C );
   pctx_->SET_SR( 0x000000 );
   pctx_->Execute();
 
-EXPECT_EQ( 0x06003096, pctx_->GET_PC() );
+  EXPECT_EQ(toHex(0x06003096), toHex(pctx_->GET_PC()) );
   EXPECT_EQ( 0x06002E50, pctx_->GET_PR() );
 
 }
 
 TEST_F(BsrTest, negatif) {
 
-  // rtcl R[0]
-
-memSetWord(0x06002E4C,0xB823);
-memSetWord(0x06002E4E, 0x0009);
+  memSetWord(0x06002E4C,0xB823);
+  memSetWord(0x06002E4E, 0x0009);
 
   pctx_->SET_PC( 0x06002E4C );
   pctx_->SET_SR( 0x000000 );
   pctx_->Execute();
 
-EXPECT_EQ( 0x06002E4C - 4022, pctx_->GET_PC() );
+  EXPECT_EQ( 0x06002E4C - 4022, pctx_->GET_PC() );
   EXPECT_EQ( 0x06002E50, pctx_->GET_PR() );
 
 }
@@ -74,8 +78,6 @@ TEST_F(BsrTest, bsrf) {
 
   memSetWord(0x06002E00,0x0103);
   memSetWord(0x06002E02, 0x0009);
-
-
 
   pctx_->SET_PC( 0x06002E00 );
   pctx_->SET_SR( 0x000000 );

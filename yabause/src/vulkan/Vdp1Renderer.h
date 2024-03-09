@@ -41,6 +41,10 @@ class VdpPipeline;
 #include <vector>  
 using std::vector;
 
+#include <queue> 
+
+#define FRAMEBUFFER_COUNT (2)
+
 class Vdp1Renderer {
 
 
@@ -52,11 +56,12 @@ class Vdp1Renderer {
     VkSemaphore _render_complete_semaphore;
     bool updated;
     bool readed;
+    std::queue<VkFence> renderFences;
   };
   struct OffscreenPass {
     int32_t width, height;
     VkFramebuffer frameBuffer[2];
-    FrameBufferAttachment color[2], depth;
+    FrameBufferAttachment color[FRAMEBUFFER_COUNT], depth;
     VkRenderPass renderPass;
     VkSampler sampler;
     VkDescriptorImageInfo descriptor;
@@ -95,15 +100,13 @@ public:
   void SystemClipping(u8 * ram, Vdp1 * regs);
   void LocalCoordinate(u8 * ram, Vdp1 * regs);
 
-  void erase();
+  void erase( int isDraw );
   void change();
 
   void setTextureRatio(int vdp2widthratio, int vdp2heightratio);
+  
+  VkImageView getFrameBufferImage();
 
-  VkImageView getFrameBufferImage() {
-    blitCpuWrittenFramebuffer(readframe);
-    return offscreenPass.color[readframe].view;
-  }
   VkSemaphore getFrameBufferSem() {
     if (offscreenPass.color[readframe].updated) {
       offscreenPass.color[readframe].updated = false;
@@ -210,14 +213,15 @@ protected:
   VkDeviceMemory _indexBufferMemory;
   VkBuffer _clearUniformBuffer;
   VkDeviceMemory _clearUniformBufferMemory;
-  VkDescriptorSet _descriptorSet;
+  VkDescriptorSet _descriptorSet[2];
   VkDescriptorSetLayout _descriptorSetLayout;
   VkDescriptorPool _descriptorPool;
   VkShaderModule _vertShaderModule;
   VkShaderModule _fragShaderModule;
   VkPipelineLayout _pipelineLayout;
   VkPipeline _graphicsPipeline;
-
+  //VkFence clearFence[2];
+  uint64_t clearCount = 0;
   Vdp2 baseVdp2Regs;
   void * frameBuffer;
 

@@ -51,6 +51,7 @@ public:
   const VkPhysicalDevice						GetVulkanPhysicalDevice() const;
   const VkDevice								GetVulkanDevice() const;
   const VkQueue								GetVulkanQueue() const;
+  const VkQueue GetComputeQueue() const;
   const uint32_t								GetVulkanGraphicsQueueFamilyIndex() const;
   const uint32_t								GetVulkanComputeQueueFamilyIndex() const;
   const VkPhysicalDeviceProperties		&	GetVulkanPhysicalDeviceProperties() const;

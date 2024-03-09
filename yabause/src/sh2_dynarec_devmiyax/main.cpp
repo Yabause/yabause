@@ -182,16 +182,16 @@ int readProgram(const char * addr, const char * filename) {
 
   setromlock(false);
   u32 copyaddr = startaddr;
+  u32 cycle;
   for (int i = 0; i < file_size; i++) {
-    MappedMemoryWriteByte(copyaddr, fgetc(fp));
+    MappedMemoryWriteByte(copyaddr, fgetc(fp),&cycle);
     copyaddr++;
   }
   setromlock(true);
   fclose(fp);
-
 	u32 VBR = SH2Core->GetVBR(CurrentSH2);
-  SH2Core->SetPC(CurrentSH2, MappedMemoryReadLong(VBR));
-  SH2Core->SetGPR(CurrentSH2, 15, MappedMemoryReadLong(VBR+4));
+  SH2Core->SetPC(CurrentSH2, MappedMemoryReadLong(VBR, &cycle));
+  SH2Core->SetGPR(CurrentSH2, 15, MappedMemoryReadLong(VBR+4, &cycle));
 
 
   printf("Starting %08X, %s\n",SH2Core->GetPC(CurrentSH2),filename );

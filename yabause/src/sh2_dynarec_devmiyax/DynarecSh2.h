@@ -116,6 +116,20 @@ struct Block
 // Sh2 Registris
 struct tagSH2
 {
+  tagSH2() {
+    memset(GenReg, 0, sizeof(u32) * 16);
+    memset(CtrlReg, 0, sizeof(u32) * 3);
+    memset(SysReg, 0, sizeof(u32) * 6);
+    getmembyte = 0;
+    getmemword = 0;
+    getmemlong = 0;
+    setmembyte = 0;
+    setmemword = 0;
+    setmemlong = 0;
+    eachclock = 0;
+    exitcount = 0;
+  }
+
   u32 GenReg[16];
   u32 CtrlReg[3];
   u32 SysReg[6];
@@ -418,11 +432,16 @@ extern "C"
 
 #ifdef _WINDOWS
 
+#ifdef _WIN64
+#define dynaLock()
+#define dynaFree()
+#else
 #define dynaLock() __asm {                         \
     __asm push edx /*__asm push ebx*/ \
 }
 #define dynaFree() __asm {/*__asm pop ebx*/          \
    __asm pop edx}
+#endif
 
 #else
 #define dynaLock()

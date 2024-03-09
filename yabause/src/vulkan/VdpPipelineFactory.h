@@ -39,7 +39,8 @@ public:
     YglPipelineId id,
     VIDVulkan * vulkan,
     TextureManager * tm,
-    VertexManager * vm
+    VertexManager * vm,
+    uint8_t winflag
   );
 
   void setRenderPath(VkRenderPass renderPass) {
@@ -47,12 +48,18 @@ public:
   }
   void garbage(VdpPipeline * p);
 
+  void initPipeLineCache(VkDevice device);
+  void flushPipeLineCache(VkDevice device);
+
   void dicardAllPielines();
 
 protected:
 
-  VdpPipeline * findInGarbage(YglPipelineId id);
+  VkPipelineCache threadPipelineCache{ VK_NULL_HANDLE };
+
+  VdpPipeline * findInGarbage(YglPipelineId id, uint8_t winflg);
   vector<VdpPipeline*> garbageCollction;
 
   VkRenderPass renderPass;
 };
+
