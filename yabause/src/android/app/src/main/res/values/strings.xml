@@ -385,5 +385,19 @@
         Use SH2 cache
     </string>
 
+    <string name="restore_defaults">
+        Restore defaults
+    </string>
+    <string name="last_play_game">Last play game:</string>
+    <string name="device">Device:</string>
+    <string name="auto_backup_memory_sync">Auto backup sync</string>
+    <string name="auto_backup_sync">Auto backup sync</string>
+    <string name="msg_fail_to_upload_backup_data_to_cloud">Fail to upload backup data to cloud</string>
+    <string name="msg_fail_to_unzip_backup_data_from_cloud">Fail to unzip backup data from cloud</string>
+    <string name="msg_success_to_download_backup_data_from_cloud">Success to download backup data from cloud</string>
+    <string name="msg_fail_to_download_backup_data_from_cloud">Fail to download backup data from cloud</string>
+    <string name="msg_fail_to_zip_backup_data">Fail to zip backup data</string>
+    <string name="msg_success_to_upload_backup_data_to_cloud">Success to upload backup data to cloud</string>
+
 </resources>
 	

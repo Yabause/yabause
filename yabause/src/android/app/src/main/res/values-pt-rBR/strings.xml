@@ -143,6 +143,18 @@
     </string>
 
 
-
+    <string name="restore_defaults">
+        Restaurar padrões
+    </string>
+    <string name="last_play_game">"Último jogo jogado: "</string>
+    <string name="device">Dispositivo:</string>
+    <string name="auto_backup_memory_sync">Sincronização automática de backup</string>
+    <string name="auto_backup_sync">Sincronização automática de backup</string>
+    <string name="msg_fail_to_upload_backup_data_to_cloud">Falha ao fazer o upload de dados de backup para a nuvem.</string>
+    <string name="msg_fail_to_unzip_backup_data_from_cloud">\'Não foi possível descompactar os dados de backup do cloud.</string>
+    <string name="msg_success_to_download_backup_data_from_cloud">Sucesso ao baixar dados de backup da nuvem</string>
+    <string name="msg_fail_to_download_backup_data_from_cloud">Não foi possível baixar os dados de backup do nuvem</string>
+    <string name="msg_fail_to_zip_backup_data">Falha ao compactar os dados de backup</string>
+    <string name="msg_success_to_upload_backup_data_to_cloud">Sucesso ao fazer o upload de dados de backup para a nuvem.</string>
 
 </resources>

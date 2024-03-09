@@ -21,6 +21,7 @@ package org.uoyabause.android.phone
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.MenuItem
 import android.view.Window
@@ -37,14 +38,22 @@ import com.google.android.gms.ads.MobileAds
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import androidx.activity.viewModels
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 
 import com.google.android.gms.ads.AdListener
+import org.uoyabause.android.BillingViewModel
 
 class GameSelectActivityPhone : AppCompatActivity() {
     lateinit var frg_: GameSelectFragmentPhone
     var adView: AdView? = null
+
+
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
 
         val window: Window = getWindow()
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)

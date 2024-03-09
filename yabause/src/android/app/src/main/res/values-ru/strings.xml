@@ -427,5 +427,19 @@
     Примечание. <a href="https://www.uoyabause.org/static_pages/privacy_policy"> Политика конфиденциальности </a> описывает, как обрабатываются данные. YabaSanshiro отправляет диагностические данные в devMiyax и сторонние службы, чтобы помочь улучшить приложение.
     </string>
 
+    <string name="restore_defaults">
+        восстановить настройки по-умолчанию
+    </string>
+    <string name="last_play_game">Последняя игра:</string>
+    <string name="device">Устройство:</string>
+    <string name="auto_backup_memory_sync">Автоматическая синхронизация резервных копий</string>
+    <string name="auto_backup_sync">Автоматическая синхронизация резервных копий</string>
+    <string name="msg_fail_to_upload_backup_data_to_cloud">\'Не удалось загрузить данные резервной копии в облако</string>
+    <string name="msg_fail_to_unzip_backup_data_from_cloud">Не удалось распаковать резервные данные из облака.</string>
+    <string name="msg_success_to_download_backup_data_from_cloud">Успешная загрузка резервных данных из облака</string>
+    <string name="msg_fail_to_download_backup_data_from_cloud">Не удалось загрузить резервные данные из облака.</string>
+    <string name="msg_fail_to_zip_backup_data">Не удалось архивировать данные резервной копии</string>
+    <string name="msg_success_to_upload_backup_data_to_cloud">Успешно загружено резервное копирование данных в о</string>
+
 </resources>
 	

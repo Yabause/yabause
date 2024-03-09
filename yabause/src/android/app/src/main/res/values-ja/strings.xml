@@ -303,4 +303,19 @@
     <string name="use_sh2_cache">
         SH2 cacheを使用する
     </string>
+
+    <string name="restore_defaults">
+        初期設定に戻す
+    </string>
+    <string name="last_play_game">最後にプレイしたゲーム：</string>
+    <string name="device">デバイス:</string>
+    <string name="auto_backup_memory_sync">自動バックアップ同期</string>
+    <string name="auto_backup_sync">自動バックアップ同期</string>
+    <string name="msg_fail_to_upload_backup_data_to_cloud">バックアップデータをクラウドにアップロードできませんでした</string>
+    <string name="msg_fail_to_unzip_backup_data_from_cloud">バックアップデータをクラウドから展開できませんでした</string>
+    <string name="msg_success_to_download_backup_data_from_cloud">バックアップデータのクラウドからダウンロードに成功しました。</string>
+    <string name="msg_fail_to_download_backup_data_from_cloud">クラウドからバックアップデータをダウンロードできません</string>
+    <string name="msg_fail_to_zip_backup_data">バックアップデータを圧縮できませんでした</string>
+    <string name="msg_success_to_upload_backup_data_to_cloud">バックアップデータのクラウドへのアップロードに成功しました</string>
+
 </resources>

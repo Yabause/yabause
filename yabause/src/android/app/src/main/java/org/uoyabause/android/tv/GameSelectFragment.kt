@@ -74,7 +74,6 @@ import androidx.leanback.widget.RowPresenter
 import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
 import com.activeandroid.query.Select
-import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
@@ -414,6 +413,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             override fun onError(e: Throwable) {
                 observer = null
                 dismissDialog()
+                presenter_?.syncBackup()
             }
 
             override fun onComplete() {
@@ -429,6 +429,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
                         presenter_!!.checkSignIn(signInActivityLauncher)
                     }
                 }
+                presenter_?.syncBackup()
             }
         }
         presenter_!!.updateGameList(refresh_level, tmpobserver)
@@ -894,6 +895,13 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         loadRows()
     }
 
+    override fun onFinishSyncBackUp(result: AutoBackupManager.SyncResult, message: String) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onStartSyncBackUp() {
+        TODO("Not yet implemented")
+    }
 
     private fun showSnackbar(id: Int) {
         Toast.makeText(activity, getString(id), Toast.LENGTH_SHORT).show()

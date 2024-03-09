@@ -121,7 +121,7 @@ void VIDVulkanSync() { VIDVulkan::getInstance()->Sync(); }
 void VIDVulkanVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val) {
   VIDVulkan::getInstance()->Vdp1WriteFrameBuffer(type, addr, val);
 }
-void VIDVulkanVdp1EraseWrite(void) { VIDVulkan::getInstance()->Vdp1EraseWrite(); }
+void VIDVulkanVdp1EraseWrite( void ) { VIDVulkan::getInstance()->Vdp1EraseWrite(); }
 void VIDVulkanVdp1FrameChange(void) { VIDVulkan::getInstance()->Vdp1FrameChange(); }
 void VIDVulkanSetSettingValue(int type, int value) { VIDVulkan::getInstance()->SetSettingValue(type, value); }
 void VIDVulkanGetNativeResolution(int *width, int *height, int *interlace) {

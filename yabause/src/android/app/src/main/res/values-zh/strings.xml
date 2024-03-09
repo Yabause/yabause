@@ -203,5 +203,19 @@
     注意：<a href="https://www.uoyabause.org/static_pages/privacy_policy">隐私政策</a>描述了数据的处理方式。 YabaSanshiro 将诊断数据发送到 devMiyax 和第三方服务，以帮助改进应用程序。
     </string>
 
+    <string name="restore_defaults">
+        恢复默认值
+    </string>
+    <string name="last_play_game">最近玩过的游戏:</string>
+    <string name="device">设备:</string>
+    <string name="auto_backup_memory_sync">自动备份同步</string>
+    <string name="auto_backup_sync">自动备份同步</string>
+    <string name="msg_fail_to_upload_backup_data_to_cloud">上传备份数据到云失败</string>
+    <string name="msg_fail_to_unzip_backup_data_from_cloud">无法从云中解压备份数据</string>
+    <string name="msg_success_to_download_backup_data_from_cloud">下载备份数据成功</string>
+    <string name="msg_fail_to_download_backup_data_from_cloud">下载云备份数据失败</string>
+    <string name="msg_fail_to_zip_backup_data">无法将备份数据打包</string>
+    <string name="msg_success_to_upload_backup_data_to_cloud">上传备份数据到云成功</string>
+
 </resources>
 	
