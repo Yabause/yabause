@@ -489,7 +489,7 @@ void Vdp1Renderer::drawStart(void) {
 
 }
 
-void Vdp1Renderer::erase( int isDraw ) {
+void Vdp1Renderer::erase() {
 
   VkDevice device = vulkan->getDevice();
 
@@ -576,14 +576,9 @@ void Vdp1Renderer::erase( int isDraw ) {
   clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
   clearValues[1].depthStencil = { 1.0f, 0 };
 
-  int targetFrame = readframe;
-  if (isDraw) {
-    targetFrame = drawframe;
-  }
-
   VkRenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
   renderPassBeginInfo.renderPass = offscreenPass.renderPass;
-  renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer[targetFrame];
+  renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer[readframe];
   renderPassBeginInfo.renderArea.extent.width = offscreenPass.width;
   renderPassBeginInfo.renderArea.extent.height = offscreenPass.height;
   renderPassBeginInfo.clearValueCount = 2;
@@ -599,7 +594,25 @@ void Vdp1Renderer::erase( int isDraw ) {
   VkViewport viewport = vks::initializers::viewport((float)offscreenPass.width, (float)offscreenPass.height, 0.0f, 1.0f);
   vkCmdSetViewport(cb, 0, 1, &viewport);
 
-  VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
+  float wrate = (float)offscreenPass.width / (float)vulkan->vdp2width;
+  float hrate = (float)offscreenPass.height / (float)vulkan->vdp2height;
+
+  if (Vdp1Regs->TVMR & 0x01) {
+    wrate *= 2.0f;
+  }
+
+
+  float interlace = 1.0;
+  if (Vdp1Regs->FBCR & 0x8) {
+    interlace *= 2.0f;
+  }
+
+  float bottom = (vulkan->vdp2height - ((Vdp1Regs->EWRR & 0x1FF) * vdp1hratio * interlace ))  * hrate;
+  float right = (((Vdp1Regs->EWRR >> 9) & 0x7F) << 3)  * vdp1wratio * wrate;
+  float top = (vulkan->vdp2height - ((Vdp1Regs->EWLR & 0x1FF) * vdp1hratio * interlace)) * hrate;
+  float left = (((Vdp1Regs->EWLR >> 9) & 0x7F) << 3) * vdp1wratio * wrate;
+   
+  VkRect2D scissor = vks::initializers::rect2D(right - left, top - bottom , left, bottom);
   vkCmdSetScissor(cb, 0, 1, &scissor);
 
   vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS,

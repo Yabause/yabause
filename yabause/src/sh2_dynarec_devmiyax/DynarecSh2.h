@@ -200,12 +200,13 @@ private:
   {
     debug_mode_ = false;
     BuildInstructionList();
-    Init();
+    dCode = (Block*)ALLOCATE(sizeof(Block)*NUMOFBLOCKS);
 #ifdef SET_DIRTY
     LookupParentTable = new addrs[0x100000 >> 1];
 #else
     LookupParentTable = NULL;
 #endif
+    Init();
     compile_count_ = 0;
     exec_count_ = 0;
     remove_count_ = 0;

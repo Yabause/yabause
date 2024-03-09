@@ -81,7 +81,7 @@ u32 skipped_frame = 0;
 u32 pre_swap_frame_buffer = 0;
 static int autoframeskipenab=0;
 static int throttlespeed=0;
-u64 lastticks=0;
+s64 lastticks=0;
 static int fps;
 int vdp2_is_odd_frame = 0;
 // Asyn rendering
@@ -89,7 +89,7 @@ YabEventQueue * evqueue = NULL; // Event Queue for async rendring
 YabEventQueue * rcv_evqueue = NULL;
 YabEventQueue * vdp1_rcv_evqueue = NULL;
 YabEventQueue * vout_rcv_evqueue = NULL;
-static u64 syncticks = 0;       // CPU time sync for real time.
+static s64 syncticks = 0;       // CPU time sync for real time.
 static int vdp_proc_running = 0;
 YabMutex * vrammutex = NULL;
 int g_frame_count = 0;
@@ -97,8 +97,8 @@ static int framestoskip = 0;
 static int framesskipped = 0;
 static int skipnextframe = 0;
 static int previous_skipped = 0;
-static u64 curticks = 0;
-static u64 diffticks = 0;
+static s64 curticks = 0;
+static s64 diffticks = 0;
 static u32 framecount = 0;
 static s64 onesecondticks = 0;
 static int enableFrameLimit = 1;
@@ -534,9 +534,6 @@ extern "C" void * VdpProc( void *arg ){
     case VDPEV_DIRECT_DRAW:
       FrameProfileAdd("DirectDraw start");
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW(T)");
-      if (Vdp1External.manualerase == 0) {
-        VIDCore->Vdp1EraseWrite(1);
-      }
       Vdp1Draw();
       VIDCore->Vdp1DrawEnd();
       Vdp1External.frame_change_plot = 0;
@@ -777,7 +774,7 @@ void frameSkipAndLimit() {
     {
 
       s64 sleeptime = (targetTime - (onesecondticks + diffticks));
-      u64 xcurticks = YabauseGetTicks();
+      s64 xcurticks = YabauseGetTicks();
       if (sleeptime-1000 > 0) {
         YabNanosleep(sleeptime-1000);
       }
@@ -1208,7 +1205,7 @@ void vdp2VBlankOUT(void) {
   static VideoInterface_struct * saved = NULL;
   int isrender = 0;
 #if PROFILE_RENDERING
-  u64 starttime = YabauseGetTicks();
+  s64 starttime = YabauseGetTicks();
 #endif
   VdpLockVram();
   FRAMELOG("***** VOUT(T) swap=%d,plot=%d,vdp1status=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot, Vdp1External.status );
@@ -1281,16 +1278,21 @@ void vdp2VBlankOUT(void) {
   }
 
   VIDCore->Vdp2DrawStart();
-  
+
   // VBlank Erase
-  if (Vdp1External.vbalnk_erase) {
-    VIDCore->Vdp1EraseWrite(0);
+  if (Vdp1External.vbalnk_erase ||  // VBlank Erace (VBE1) 
+    ((Vdp1Regs->FBCR & 2) == 0)){  // One cycle mode
+    VIDCore->Vdp1EraseWrite();
   }
 
   // Frame Change
   if (Vdp1External.swap_frame_buffer == 1)
   {
     vdp1_frame++;
+    if (Vdp1External.manualerase){  // Manual Erace (FCM1 FCT0) Just before frame changing
+      VIDCore->Vdp1EraseWrite();
+      Vdp1External.manualerase = 0;
+    }
 
     FRAMELOG("Vdp1FrameChange swap=%d,plot=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
     VIDCore->Vdp1FrameChange();
@@ -1300,18 +1302,10 @@ void vdp2VBlankOUT(void) {
     Vdp1Regs->EDSR >>= 1;
 #endif
 
-    if (Vdp1External.manualerase) {  // Manual Erace (FCM1 FCT0) Just before frame changing
-      VIDCore->Vdp1EraseWrite(1);
-      Vdp1External.manualerase = 0;
-    }
-
     FRAMELOG("[VDP1] Displayed framebuffer changed. EDSR=%02X", Vdp1Regs->EDSR);
 
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1External.frame_change_plot == 1 || Vdp1External.status == VDP1_STATUS_RUNNING ){
-
-      VIDCore->Vdp1EraseWrite(1);
-
       FRAMELOG("[VDP1] frame_change_plot == 1 start drawing immidiatly", Vdp1Regs->EDSR);
       LOG("[VDP1] Start Drawing");
       Vdp1Regs->addr = 0;
@@ -1424,7 +1418,7 @@ void Vdp2VBlankOUT(void) {
     *Vdp2External.perline_alpha = 0;
   }
 
-  if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1 && (Vdp1Regs->FBCR &0x03) == 0x03 ){  // VBlank Erace (VBE1)
+  if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){  // VBlank Erace (VBE1)
     Vdp1External.vbalnk_erase = 1;
   }else{
     Vdp1External.vbalnk_erase = 0;

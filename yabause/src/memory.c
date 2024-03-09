@@ -498,17 +498,17 @@ static u8 FASTCALL BupRamMemoryReadByte(u32 addr)
 #endif
   if (yabsys.extend_backup ) {
 
-     if( yabsys.emulatebios == 1 ) {
+     //if( yabsys.emulatebios == 1 ) {
         addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
         if (addr >= tweak_backup_file_size) {
            return 0;
         }
-     }else{
-        addr = (addr&0x0000FFFF );
-        if (addr >= tweak_backup_file_size) {
-           return 0;
-        }
-     }
+     //}else{
+    //    addr = (addr&0x0000FFFF );
+    //    if (addr >= tweak_backup_file_size) {
+    //       return 0;
+    //    }
+     //}
   }
   else {
     addr = addr & 0x0000FFFF;
@@ -554,17 +554,17 @@ static void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
   }
 #endif
   if (yabsys.extend_backup ) {
-     if( yabsys.emulatebios == 1 ) {
+     //if( yabsys.emulatebios == 1 ) {
         addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
         if (addr >= tweak_backup_file_size) {
            return;
         }
-     }else{
-        addr = (addr&0x0000FFFF );
-        if (addr >= tweak_backup_file_size) {
-           return;
-        }
-     }
+     //}else{
+     //   addr = (addr&0x0000FFFF );
+     //   if (addr >= tweak_backup_file_size) {
+     //      return;
+     //   }
+     //}
   }
   else {
     addr = addr & 0x0000FFFF;
@@ -785,7 +785,7 @@ inline u32 getMemClock(u32 addr) {
   }
   else if (addr >= 0x05e00000 && addr < 0x05E80000) {
     if (yabsys.LineCount >= yabsys.VBlankLineCount) {
-      return 80 >> clock_shift;
+      return 40 >> clock_shift;
     }
     if ((addr & 0x000F0000) < 0x00040000) {
       return Vdp2External.cpu_cycle_a >> clock_shift;
@@ -1635,6 +1635,10 @@ int YabSaveStateStream(FILE *fp)
    ywrite(&check, (void *)&temp32, sizeof(u32), 1, fp);
    ywrite(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    ywrite(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
+   ywrite(&check, (void *)&yabsys.saved_scsp_cycles, sizeof(u32), 1, fp);
+   ywrite(&check, (void *)&yabsys.saved_m68k_cycles, sizeof(u64), 1, fp);
+   ywrite(&check, (void *)&yabsys.scsp_main_mode, sizeof(u32), 1, fp);
+
 
    VIDCore->GetGlSize(&outputwidth, &outputheight);
 
@@ -1886,6 +1890,9 @@ int YabLoadStateStream(FILE *fp)
    yread(&check, (void *)&temp32, sizeof(u32), 1, fp);
    yread(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    yread(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
+   yread(&check, (void *)&yabsys.saved_scsp_cycles, sizeof(u32), 1, fp);
+   yread(&check, (void *)&yabsys.saved_m68k_cycles, sizeof(u64), 1, fp);
+   yread(&check, (void *)&yabsys.scsp_main_mode, sizeof(u32), 1, fp);
    YabauseChangeTiming(yabsys.CurSH2FreqType);
    yabsys.UsecFrac = (temp32 << YABSYS_TIMING_BITS) * temp / 10;
 

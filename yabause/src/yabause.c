@@ -127,9 +127,7 @@ ScspDsp scsp_dsp = { 0 };
 char ssf_track_name[256] = { 0 };
 char ssf_artist[256] = { 0 };
 
-u32 saved_scsp_cycles = 0;//fixed point
-volatile u64 saved_m68k_cycles = 0;//fixed point
-static u32 g_scsp_main_mode = 1;
+
 
 extern char * getLastShaderError();
 
@@ -190,6 +188,9 @@ int YabauseInit(yabauseinit_struct *init)
   if( init->use_cpu_affinity ){
    YabThreadSetCurrentThreadAffinityMask(YabThreadGetFastestCpuIndex());
   }
+
+  yabsys.saved_m68k_cycles = 0;
+  yabsys.saved_scsp_cycles = 0;
 
   yabsys.use_cpu_affinity = init->use_cpu_affinity;
 
@@ -323,7 +324,7 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   g_scsp_main_mode = init->scsp_main_mode;
+   yabsys.scsp_main_mode = init->scsp_main_mode;
    if (ScspInit(init->sndcoretype, init->scsp_sync_count_per_frame, init->scsp_main_mode ) != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("SCSP/M68K"));
@@ -747,7 +748,7 @@ int YabauseEmulate(void) {
       yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
 
 #ifdef YAB_STATICS
-      u64 current_cpu_clock = YabauseGetTicks();
+      s64 current_cpu_clock = YabauseGetTicks();
 #endif
       if( sync_shift != 0 ){
         u32 i;
@@ -844,10 +845,10 @@ int YabauseEmulate(void) {
 
          PROFILE_START("68K");
          cycles = m68kcycles;
-         saved_centicycles += m68kcenticycles;
-         if (saved_centicycles >= 100) {
+         yabsys.saved_centicycles += m68kcenticycles;
+         if (yabsys.saved_centicycles >= 100) {
             cycles++;
-            saved_centicycles -= 100;
+            yabsys.saved_centicycles -= 100;
          }
          M68KExec(cycles);
          PROFILE_STOP("68K");
@@ -856,19 +857,19 @@ int YabauseEmulate(void) {
       {
 
          u32 m68k_integer_part = 0, scsp_integer_part = 0;
-         saved_m68k_cycles += m68k_cycles_per_deciline;
-         m68k_integer_part = saved_m68k_cycles >> SCSP_FRACTIONAL_BITS;
+         yabsys.saved_m68k_cycles += m68k_cycles_per_deciline;
+         m68k_integer_part = yabsys.saved_m68k_cycles >> SCSP_FRACTIONAL_BITS;
          M68KExec(m68k_integer_part);
-         saved_m68k_cycles -= m68k_integer_part << SCSP_FRACTIONAL_BITS;
+         yabsys.saved_m68k_cycles -= m68k_integer_part << SCSP_FRACTIONAL_BITS;
 
-         saved_scsp_cycles += scsp_cycles_per_deciline;
-         scsp_integer_part = saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
+         yabsys.saved_scsp_cycles += scsp_cycles_per_deciline;
+         scsp_integer_part = yabsys.saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
          new_scsp_exec(scsp_integer_part);
-         saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
+         yabsys.saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
 #else
       {
-        saved_m68k_cycles  += m68k_cycles_per_deciline;
-        setM68kCounter(saved_m68k_cycles);
+        yabsys.saved_m68k_cycles  += m68k_cycles_per_deciline;
+        setM68kCounter(yabsys.saved_m68k_cycles);
 #endif
       }
       PROFILE_STOP("Total Emulation");
@@ -930,10 +931,10 @@ int YabauseEmulate(void) {
 
 void SyncCPUtoSCSP() {
   //LOG("[SH2] WAIT SCSP");
-  if (g_scsp_main_mode == 0) {
+  if (yabsys.scsp_main_mode == 0) {
     YabWaitEventQueue(q_scsp_finish);
-    saved_m68k_cycles = 0;
-    setM68kCounter(saved_m68k_cycles);
+    yabsys.saved_m68k_cycles = 0;
+    setM68kCounter(yabsys.saved_m68k_cycles);
     YabAddEventQueue(q_scsp_frame_start, 0);
   }
   //LOG("[SH2] START SCSP");
@@ -1007,13 +1008,13 @@ void YabauseStopSlave(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u64 YabauseGetTicks(void) {
+s64 YabauseGetTicks(void) {
 #ifdef WIN32
-   u64 ticks;
-   QueryPerformanceCounter((LARGE_INTEGER *)&ticks);
-   return ticks;
+  LARGE_INTEGER ticks;
+   QueryPerformanceCounter(&ticks);
+   return (s64)ticks.QuadPart;
 #elif defined(_arch_dreamcast)
-   return (u64) timer_ms_gettime64();
+   return (s64) timer_ms_gettime64();
 #elif defined(GEKKO)  
    return gettime();
 #elif defined(PSP)
@@ -1021,13 +1022,13 @@ u64 YabauseGetTicks(void) {
 #elif defined(ANDROID)
 	struct timespec clock_time;
 	clock_gettime(CLOCK_REALTIME , &clock_time);
-	return (u64)clock_time.tv_sec * 1000000 + clock_time.tv_nsec/1000;
+	return (s64)clock_time.tv_sec * 1000000 + clock_time.tv_nsec/1000;
 #elif defined(HAVE_GETTIMEOFDAY)
    struct timeval tv;
    gettimeofday(&tv, NULL);
-   return (u64)tv.tv_sec * 1000000 + tv.tv_usec;
+   return (s64)tv.tv_sec * 1000000 + tv.tv_usec;
 #elif defined(HAVE_LIBSDL)
-   return (u64)SDL_GetTicks();
+   return (s64)SDL_GetTicks();
 #endif
 }
 

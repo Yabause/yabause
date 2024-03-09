@@ -389,7 +389,7 @@ typedef struct {
 } Vdp2Internal_struct;
 
 extern Vdp2Internal_struct Vdp2Internal;
-extern u64 lastticks;
+extern s64 lastticks;
 extern int vdp2_is_odd_frame;
 extern Vdp2 Vdp2Lines[270];
 

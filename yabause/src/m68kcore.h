@@ -65,8 +65,26 @@ typedef struct {
 	void (*SetWriteB)(M68K_WRITE *Func);
 	void (*SetWriteW)(M68K_WRITE *Func);
 
-   void (*SaveState)(FILE* fp);
-   void (*LoadState)(FILE* fp);
+  u32(*GetISP)(void);
+  u32(*GetVBR)(void);
+  u32(*GetSFC)(void);
+  u32(*GetDFC)(void);
+  u32(*GetCACR)(void);
+  u32(*GetCAAR)(void);
+  u32(*GetPPC)(void);
+  u32(*GetIR)(void);
+
+  void(*SetISP)(u32 val);
+  void(*SetVBR)(u32 val);
+  void(*SetSFC)(u32 val);
+  void(*SetDFC)(u32 val);
+  void(*SetCACR)(u32 val);
+  void(*SetCAAR)(u32 val);
+  void(*SetPPC)(u32 val);
+  void(*SetIR)(u32 val);
+
+
+
 } M68K_struct;
 
 extern M68K_struct * M68K;
