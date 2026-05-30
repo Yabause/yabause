@@ -31,7 +31,9 @@
 #include "debug.h"
 #include <stdarg.h>
 #include "cd_drive.h"
+#ifdef ENABLE_TSUNAMI
 #include "tsunami/yab_tsunami.h"
+#endif
 #include "mpeg_card.h"
 
 //#define SH1_MEM_DEBUG
@@ -5513,14 +5515,18 @@ int num_output_enables = 0;
 
 void sh1_set_output_enable_rising_edge()
 {
+#ifdef ENABLE_TSUNAMI
    tsunami_log_value("OE", 1, 1);
+#endif
 }
 //signal from the cd drive board microcontroller
 //falling edge
 void sh1_set_output_enable_falling_edge()
 {
+#ifdef ENABLE_TSUNAMI
    //input capture
    tsunami_log_value("OE", 0, 1);
+#endif
 
    if (sh1_cxt.onchip.itu.channel[3].tsr & (1 << 1))
    {
@@ -5566,7 +5572,9 @@ void sh1_serial_recieve_bit(int bit, int channel)
    sh1_cxt.onchip.sci[channel].rsr |= bit;
    sh1_cxt.onchip.sci[channel].rsr_counter++;
 
+#ifdef ENABLE_TSUNAMI
    tsunami_log_value("SCK", sh1_cxt.onchip.sci[channel].rsr_counter, 4);
+#endif
 
    //a full byte has been received, transfer data to rdr
    if (sh1_cxt.onchip.sci[channel].rsr_counter == 8)
@@ -5576,13 +5584,17 @@ void sh1_serial_recieve_bit(int bit, int channel)
       sh1_cxt.onchip.sci[channel].rsr = 0;
       sh1_cxt.onchip.sci[channel].ssr |= SCI_RDRF;
 
+#ifdef ENABLE_TSUNAMI
       tsunami_log_value("STA", sh1_cxt.onchip.sci[channel].rdr, 8);
+#endif
 
       //trigger interrupt
       if (sh1_cxt.onchip.sci[0].scr & SCI_RIE)//receive data full interrupt is enabled
       {
          SH2SendInterrupt(SH1, 101, sh1_cxt.onchip.intc.iprd & 0xf);
+#ifdef ENABLE_TSUNAMI
          tsunami_log_pulse("RXIO", 1);
+#endif
       }
    }
 }
@@ -5624,7 +5636,9 @@ void sh1_serial_transmit_bit(int channel, int* output_bit)
 //pb2
 void sh1_set_start(int state)
 {
+#ifdef ENABLE_TSUNAMI
    tsunami_log_value("START", state,1);
+#endif
 
    if (state)
       sh1_cxt.onchip.pbdr &= ~0x04;

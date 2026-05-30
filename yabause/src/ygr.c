@@ -28,7 +28,9 @@
 #include "memory.h"
 #include "debug.h"
 #include <stdarg.h>
+#ifdef ENABLE_TSUNAMI
 #include "tsunami/yab_tsunami.h"
+#endif
 #include "mpeg_card.h"
 #ifdef WIN32
 #include "windows.h"
@@ -139,10 +141,12 @@ void write_fifo(u16 data)
 
 int fifo_full()
 {
+#ifdef ENABLE_TSUNAMI
    if (ygr_cxt.fifo_num_stored == FIFO_SIZE)
       tsunami_log_value("FIFO_FULL", 1, 1);
    else
       tsunami_log_value("FIFO_FULL", 0, 1);
+#endif
 
    return ygr_cxt.fifo_num_stored == FIFO_SIZE;
 }
@@ -208,13 +212,17 @@ int ygr_dreq_asserted()
    }
    else if (fifo_full())
    {
+#ifdef ENABLE_TSUNAMI
       tsunami_log_value("DREQ", 0, 1);
+#endif
       return 0;
    }
    else
    {
       int dreq = (ygr_cxt.transfer_ctrl >> 2) & 1;
+#ifdef ENABLE_TSUNAMI
       tsunami_log_value("DREQ", dreq, 1);
+#endif
       return dreq;
    }
 }
@@ -261,7 +269,9 @@ u16 ygr_sh1_read_word(u32 addr)
    case 0:
    {
       u16 val = read_fifo();
+#ifdef ENABLE_TSUNAMI
       tsunami_log_value("SH1_R_FIFO", val, 16);
+#endif
       return val;
    }
    case 2:
@@ -316,7 +326,9 @@ void ygr_sh1_write_word(u32 addr, u16 data)
    CDTRACE("wwlsi: %08X %04X\n", addr, data);
    switch (addr & 0xffff) {
    case 0:
+#ifdef ENABLE_TSUNAMI
       tsunami_log_value("SH1_W_FIFO", data, 16);
+#endif
       write_fifo(data);
       return;
    case 2:
@@ -453,7 +465,9 @@ u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
       {
          u16 val = read_fifo();
          verify_fifo_log(val);
+#ifdef ENABLE_TSUNAMI
          tsunami_log_value("SH2_R_FIFO", val, 16);
+#endif
          return val;
       }
       break;
@@ -804,10 +818,14 @@ u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
       {
          u32 top;
          top = read_fifo();
+#ifdef ENABLE_TSUNAMI
          tsunami_log_value("SH2_R_FIFO", top & 0xffff, 16);
+#endif
          top <<= 16;
          top |= read_fifo();
+#ifdef ENABLE_TSUNAMI
          tsunami_log_value("SH2_R_FIFO", top & 0xffff, 16);
+#endif
          make_fifo_log(top);
          verify_fifo_log(top);
          return top;

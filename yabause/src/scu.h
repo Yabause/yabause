@@ -314,8 +314,8 @@ int ScuDspAddCodeBreakpoint(u32 addr);
 int ScuDspDelCodeBreakpoint(u32 addr);
 scucodebreakpoint_struct *ScuDspGetBreakpointList(void);
 void ScuDspClearCodeBreakpoints(void);
-int ScuSaveState(FILE *fp);
-int ScuLoadState(FILE *fp, int version, int size);
+int ScuSaveState(void ** stream);
+int ScuLoadState(const void * stream, int version, int size);
 
 struct ScuDspInterface
 {

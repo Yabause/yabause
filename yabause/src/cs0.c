@@ -1404,29 +1404,29 @@ void CartDeInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int CartSaveState(FILE * fp)
+int CartSaveState(void ** stream)
 {
    int offset;
 
-   offset = StateWriteHeader(fp, "CART", 1);
+   offset = MemStateWriteHeader(stream, "CART", 1);
 
    // Write cart type
-   fwrite((void *)&CartridgeArea->carttype, 4, 1, fp);
+   MemStateWrite((void *)&CartridgeArea->carttype, 4, 1, stream);
 
    // Write the areas associated with the cart type here
 
-   return StateFinishHeader(fp, offset);
+   return MemStateFinishHeader(stream, offset);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-int CartLoadState(FILE * fp, UNUSED int version, int size)
+int CartLoadState(const void * stream, UNUSED int version, int size)
 {
    int newtype;
    size_t num_read = 0;
 
    // Read cart type
-   num_read = fread((void *)&newtype, 4, 1, fp);
+   MemStateRead((void *)&newtype, 4, 1, stream);
 
    // Check to see if old cart type and new cart type match, if they don't,
    // reallocate memory areas

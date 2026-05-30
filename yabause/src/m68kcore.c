@@ -141,10 +141,10 @@ static void M68KDummySetWriteB(UNUSED M68K_WRITE *Func) {
 static void M68KDummySetWriteW(UNUSED M68K_WRITE *Func) {
 }
 
-static void M68KDummySaveState(UNUSED FILE *fp) {
+static void M68KDummySaveState(UNUSED void ** stream) {
 }
 
-static void M68KDummyLoadState(UNUSED FILE *fp) {
+static void M68KDummyLoadState(UNUSED const void * stream) {
 }
 
 M68K_struct M68KDummy = {
@@ -174,6 +174,6 @@ M68K_struct M68KDummy = {
 	M68KDummySetReadW,
 	M68KDummySetWriteB,
 	M68KDummySetWriteW,
-   M68KDummySaveState,
-   M68KDummyLoadState
+	M68KDummySaveState,
+	M68KDummyLoadState
 };

@@ -417,8 +417,8 @@ void FASTCALL   Sh2Vdp2WriteByte(SH2_struct *, u32, u8);
 void FASTCALL   Sh2Vdp2WriteWord(SH2_struct *, u32, u16);
 void FASTCALL   Sh2Vdp2WriteLong(SH2_struct *, u32, u32);
 
-int Vdp2SaveState(FILE *fp);
-int Vdp2LoadState(FILE *fp, int version, int size);
+int Vdp2SaveState(void ** stream);
+int Vdp2LoadState(const void * stream, int version, int size);
 
 void ToggleNBG0(void);
 void ToggleNBG1(void);

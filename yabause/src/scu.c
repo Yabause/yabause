@@ -4124,33 +4124,30 @@ void ScuSendExternalInterrupt15(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int ScuSaveState(FILE *fp)
+int ScuSaveState(void ** stream)
 {
    int offset;
-   IOCheck_struct check = { 0, 0 };
 
-   offset = StateWriteHeader(fp, "SCU ", 1);
+   offset = MemStateWriteHeader(stream, "SCU ", 1);
 
    // Write registers and internal variables
-   ywrite(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
+   MemStateWrite((void *)ScuRegs, sizeof(Scu), 1, stream);
 
    // Write DSP area
-   ywrite(&check, (void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
+   MemStateWrite((void *)ScuDsp, sizeof(scudspregs_struct), 1, stream);
 
-   return StateFinishHeader(fp, offset);
+   return MemStateFinishHeader(stream, offset);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-int ScuLoadState(FILE *fp, UNUSED int version, int size)
+int ScuLoadState(const void * stream, UNUSED int version, int size)
 {
-   IOCheck_struct check = { 0, 0 };
-
    // Read registers and internal variables
-   yread(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
+   MemStateRead((void *)ScuRegs, sizeof(Scu), 1, stream);
 
    // Read DSP area
-   yread(&check, (void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
+   MemStateRead((void *)ScuDsp, sizeof(scudspregs_struct), 1, stream);
 
    return size;
 }

@@ -2855,41 +2855,40 @@ void SCITransmitByte(UNUSED u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SH2SaveState(SH2_struct *context, FILE *fp)
+int SH2SaveState(SH2_struct *context, void ** stream)
 {
    int offset;
-   IOCheck_struct check = { 0, 0 };
    sh2regs_struct regs;
 
 	if (context->model == SHMT_SH1)
 	{
-		offset = StateWriteHeader(fp, "SH1 ", 1);
+		offset = MemStateWriteHeader(stream, "SH1 ", 1);
 	}
 	else if (context->model == SHMT_SH2)
 	{
 		// Write header
 		if (context->isslave == 0)
-			offset = StateWriteHeader(fp, "MSH2", 1);
+			offset = MemStateWriteHeader(stream, "MSH2", 1);
 		else
 		{
-			offset = StateWriteHeader(fp, "SSH2", 1);
-			ywrite(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
+			offset = MemStateWriteHeader(stream, "SSH2", 1);
+			MemStateWrite((void *)&yabsys.IsSSH2Running, 1, 1, stream);
 		}
 	}
 
    // Write registers
    SH2GetRegisters(context, &regs);
-   ywrite(&check, (void *)&regs, sizeof(sh2regs_struct), 1, fp);
+   MemStateWrite((void *)&regs, sizeof(sh2regs_struct), 1, stream);
 
    // Write onchip registers
-   ywrite(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
+   MemStateWrite((void *)&context->onchip, sizeof(Onchip_struct), 1, stream);
 
    // Write internal variables
    // FIXME: write the clock divisor rather than the shift amount for
    // backward compatibility (fix this next time the save state version
    // is updated)
    context->frc.shift = 1 << context->frc.shift;
-   ywrite(&check, (void *)&context->frc, sizeof(context->frc), 1, fp);
+   MemStateWrite((void *)&context->frc, sizeof(context->frc), 1, stream);
    {
       u32 div = context->frc.shift;
       context->frc.shift = 0;
@@ -2897,54 +2896,53 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
          context->frc.shift++;
    }
    context->NumberOfInterrupts = SH2Core->GetInterrupts(context, context->interrupts);
-   ywrite(&check, (void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, fp);
-   ywrite(&check, (void *)&context->NumberOfInterrupts, sizeof(u32), 1, fp);
-   ywrite(&check, (void *)context->AddressArray, sizeof(u32), 0x100, fp);
-   ywrite(&check, (void *)context->DataArray, sizeof(u8), 0x1000, fp);
-   ywrite(&check, (void *)&context->delay, sizeof(u32), 1, fp);
-   ywrite(&check, (void *)&context->cycles, sizeof(u32), 1, fp);
-   ywrite(&check, (void *)&context->isslave, sizeof(u8), 1, fp);
-   ywrite(&check, (void *)&context->isIdle, sizeof(u8), 1, fp);
-   ywrite(&check, (void *)&context->instruction, sizeof(u16), 1, fp);
+   MemStateWrite((void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, stream);
+   MemStateWrite((void *)&context->NumberOfInterrupts, sizeof(u32), 1, stream);
+   MemStateWrite((void *)context->AddressArray, sizeof(u32), 0x100, stream);
+   MemStateWrite((void *)context->DataArray, sizeof(u8), 0x1000, stream);
+   MemStateWrite((void *)&context->delay, sizeof(u32), 1, stream);
+   MemStateWrite((void *)&context->cycles, sizeof(u32), 1, stream);
+   MemStateWrite((void *)&context->isslave, sizeof(u8), 1, stream);
+   MemStateWrite((void *)&context->isIdle, sizeof(u8), 1, stream);
+   MemStateWrite((void *)&context->instruction, sizeof(u16), 1, stream);
 
-   return StateFinishHeader(fp, offset);
+   return MemStateFinishHeader(stream, offset);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
+int SH2LoadState(SH2_struct *context, const void * stream, UNUSED int version, int size)
 {
-   IOCheck_struct check = { 0, 0 };
    sh2regs_struct regs;
 
    if (context->isslave == 1)
-      yread(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
+      MemStateRead((void *)&yabsys.IsSSH2Running, 1, 1, stream);
 
    // Read registers
-   yread(&check, (void *)&regs, sizeof(sh2regs_struct), 1, fp);
+   MemStateRead((void *)&regs, sizeof(sh2regs_struct), 1, stream);
    SH2SetRegisters(context, &regs);
 
    // Read onchip registers
-   yread(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
+   MemStateRead((void *)&context->onchip, sizeof(Onchip_struct), 1, stream);
 
    // Read internal variables
-   yread(&check, (void *)&context->frc, sizeof(context->frc), 1, fp);
+   MemStateRead((void *)&context->frc, sizeof(context->frc), 1, stream);
    {  // FIXME: backward compatibility hack (see SH2SaveState() comment)
       u32 div = context->frc.shift;
       context->frc.shift = 0;
       while ((div >>= 1) != 0)
          context->frc.shift++;
    }
-   yread(&check, (void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, fp);
-   yread(&check, (void *)&context->NumberOfInterrupts, sizeof(u32), 1, fp);
+   MemStateRead((void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, stream);
+   MemStateRead((void *)&context->NumberOfInterrupts, sizeof(u32), 1, stream);
    SH2Core->SetInterrupts(context, context->NumberOfInterrupts, context->interrupts);
-   yread(&check, (void *)context->AddressArray, sizeof(u32), 0x100, fp);
-   yread(&check, (void *)context->DataArray, sizeof(u8), 0x1000, fp);
-   yread(&check, (void *)&context->delay, sizeof(u32), 1, fp);
-   yread(&check, (void *)&context->cycles, sizeof(u32), 1, fp);
-   yread(&check, (void *)&context->isslave, sizeof(u8), 1, fp);
-   yread(&check, (void *)&context->isIdle, sizeof(u8), 1, fp);
-   yread(&check, (void *)&context->instruction, sizeof(u16), 1, fp);
+   MemStateRead((void *)context->AddressArray, sizeof(u32), 0x100, stream);
+   MemStateRead((void *)context->DataArray, sizeof(u8), 0x1000, stream);
+   MemStateRead((void *)&context->delay, sizeof(u32), 1, stream);
+   MemStateRead((void *)&context->cycles, sizeof(u32), 1, stream);
+   MemStateRead((void *)&context->isslave, sizeof(u8), 1, stream);
+   MemStateRead((void *)&context->isIdle, sizeof(u8), 1, stream);
+   MemStateRead((void *)&context->instruction, sizeof(u16), 1, stream);
 
    #if defined(SH2_DYNAREC)
    if(SH2Core->id==2) {
